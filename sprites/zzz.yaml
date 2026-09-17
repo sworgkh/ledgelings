@@ -1,0 +1,25 @@
+# zzz — the "Z" that floats up from a sleeping creature. One cell. The app draws
+# several copies of it, rising, growing and fading.
+#
+#   python -m spritetool build sprites/zzz.yaml
+
+version: 1
+name: zzz
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [10, 10]
+
+background:
+  color: "#ff00ff"
+  tolerance: 60
+
+painter: zzz
+
+style: pixel art, a single white capital letter Z with a 1px dark outline
+
+poses:
+  - {name: z, prompt: a capital letter Z filling the cell}
+
+animations:
+  float: {frames: [z], fps: 1, loop: true}

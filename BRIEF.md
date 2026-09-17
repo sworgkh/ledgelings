@@ -86,11 +86,20 @@ Tests/
   GeometryTests/  the only part worth heavy tests up front
 ```
 
+## How "portals" turned out
+
+The plan above gave each screen its own loop, joined by portals. What got built is
+simpler and does the same job: `EdgeWorld` fuses touching screens into ONE outline
+(the union of the screen rects, pulled in by half a body), so there is nothing to
+hand over at a seam -- the creature is just further along the same loop. Screens
+that touch only at a corner stay separate loops; jumps still reach them.
+
 ## Open questions for the next session
 
-1. Sprite art or procedural/vector creatures? (Blocks the renderer.)
-2. SpriteKit for the overlay content, or plain `CALayer`? SpriteKit is easier for
-   animation, heavier at idle.
+1. ~~Sprite art or procedural/vector creatures?~~ **Decided: sprite sheets**, built
+   from YAML recipes by `spritetool/`. See the README.
+2. ~~SpriteKit or plain `CALayer`?~~ **Decided: plain `CALayer`**, one per creature,
+   nearest-neighbour scaled. Measured 0.7-1.6% CPU (debug build) with 3 creatures across 3 monitors.
 3. Menu bar creature — does one live *on* the menu bar, in front of the clock?
 4. Distribution: personal use only, or eventually a signed/notarised build?
 5. Name: "Ledgelings" is a placeholder. Alternatives: Edgelings, Screenmites,
