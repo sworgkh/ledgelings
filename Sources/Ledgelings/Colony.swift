@@ -46,6 +46,9 @@ final class Colony: NSObject {
     private var worn: [Int: (flower: String, until: Double)] = [:]
     /// A flower on its way from one creature to another.
     private var flight: (flower: String, from: Int, to: Int, started: Double)?
+    /// A Shift-press on a creature that has not moved yet: a poke if it lets go, a carry if it drags.
+    private var poke: (index: Int, at: CGPoint)?
+    private static let dragThreshold: CGFloat = 4
     /// Two creatures stopped face to face. `releaseAt` is nil while the words are still coming.
     private var chat: (a: Int, b: Int, releaseAt: Double?)?
     /// Pixel stars from the last bump, and the colours they wear.
@@ -191,12 +194,14 @@ final class Colony: NSObject {
         return "\(name) is \(c.isSleeping ? "asleep on" : "on") \(edgeName(c))"
     }
 
-    /// The menu's "Make Someone Talk": a random speaker, and whoever is nearest listens.
-    func talkNow() {
+    /// "Make Someone Talk" from the menu, or a Shift-poke on `chosen`: the speaker
+    /// says something to whoever is nearest.
+    func talkNow(from chosen: Int? = nil) {
         guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
         guard !talking else { return }
         let awake = creatures.indices.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
-        guard let speaker = (awake.isEmpty ? Array(creatures.indices) : awake).randomElement(using: &rng) else { return }
+        guard let speaker = chosen ?? (awake.isEmpty ? Array(creatures.indices) : awake).randomElement(using: &rng),
+              creatures.indices.contains(speaker) else { return }
         let me = creatures[speaker].position
         let listener = creatures.indices.filter { $0 != speaker }.min {
             hypot(creatures[$0].position.x - me.x, creatures[$0].position.y - me.y)
@@ -369,16 +374,26 @@ final class Colony: NSObject {
                 break
             }
             if shift {
-                creatures[i].toggleNap(using: &rng)
+                poke = (i, point)          // decided on release: a poke, or a drag
             } else if creatures[i].pickUp() {
                 let p = creatures[i].position
                 held = (i, CGVector(dx: p.x - point.x, dy: p.y - point.y))
             }
         case .dragged(let point):
+            if let poke, hypot(point.x - poke.at.x, point.y - poke.at.y) >= Self.dragThreshold {
+                self.poke = nil
+                if creatures.indices.contains(poke.index), creatures[poke.index].pickUp(evenAwake: true) {
+                    let p = creatures[poke.index].position
+                    held = (poke.index, CGVector(dx: p.x - poke.at.x, dy: p.y - poke.at.y))
+                }
+            }
             guard let held else { return }
             creatures[held.index].drag(to: CGPoint(x: point.x + held.grab.dx, y: point.y + held.grab.dy))
         case .up:
+            if let poke { self.poke = nil; talkNow(from: poke.index) }
             letGo()
+        case .secondaryDown(let point):
+            if let i = creature(at: point) { creatures[i].toggleNap(using: &rng) }
         }
         render()      // follow the hand at the mouse's rate, not the display link's
     }
@@ -390,7 +405,7 @@ final class Colony: NSObject {
 
     /// Make an overlay clickable only while the cursor is on something the user
     /// can act on: any sleeper, any creature at all while Shift is down, or a
-    /// speech bubble.
+    /// speech bubble. Shift is also how you get close enough to right-click one.
     private func updateClickability(cursor: CGPoint, shift: Bool) {
         let target = held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
             || bubble(at: cursor) != nil

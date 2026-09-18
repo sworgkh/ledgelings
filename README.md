@@ -32,8 +32,10 @@ eyes and floats Zs. At dawn they wake a few seconds apart.
 | You do | What happens |
 |---|---|
 | Hold **Shift** | Nobody flees, so you can get the cursor onto one |
-| **Shift-click** a creature | It naps on the spot, day or night. Shift-click a sleeper to wake it. A nap also ends at the next dawn |
-| **Drag** a sleeper | It comes along, still asleep. Let go and it drops to the nearest edge of whichever monitor it is over |
+| **Shift-click** a creature | A poke: it says something to whoever is nearest, and they stop to talk |
+| **Shift-drag** a creature | It comes along, awake or asleep, and lands the same way on the nearest edge of whichever monitor it is over |
+| **Drag** a sleeper | Same, no Shift needed: a sleeper never notices the cursor |
+| **Shift-right-click** a creature | It naps on the spot, day or night. Same again to wake it. A nap also ends at the next dawn |
 
 A sleeper never notices the cursor — that is what lets you grab it. The overlay is
 still click-through: it turns clickable only while the cursor is on a creature you

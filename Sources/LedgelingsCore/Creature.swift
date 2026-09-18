@@ -70,6 +70,8 @@ public struct Creature: Sendable {
     private var sleepsThroughLanding = false
     /// The way it was going before it turned to talk to someone.
     private var courseBeforeChat: CGFloat = 1
+    /// Whether it was asleep when picked up, so it lands the same way.
+    private var napsInHand = false
 
     /// half -> closed -> half, in seconds.
     static let blinkPhases: [(Eyes, Double)] = [(.half, 0.05), (.closed, 0.09), (.half, 0.05)]
@@ -100,7 +102,8 @@ public struct Creature: Sendable {
         case .idle: "idle"
         case .jumping: "jump"
         case .landing: "land"
-        case .sleeping, .held: "sleep"
+        case .sleeping: "sleep"
+        case .held: napsInHand ? "sleep" : "idle"
         case .chatting: animationTime < config.landDuration ? "land" : "idle"      // a squash on impact
         }
     }
@@ -113,7 +116,8 @@ public struct Creature: Sendable {
     /// Asleep on an edge, or asleep in the user's hand.
     public var isSleeping: Bool {
         switch mode {
-        case .sleeping, .held: true
+        case .sleeping: true
+        case .held: napsInHand
         default: false
         }
     }
@@ -136,7 +140,7 @@ public struct Creature: Sendable {
         noticeTimeOfDay(isNight: isNight, using: &rng)
 
         // A sleeper does not notice the cursor. That is what lets you pick it up.
-        if !isJumping, !looksAsleep, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
+        if !isJumping, !looksAsleep, !isHeld, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
             startle(using: &rng)
         }
 
@@ -246,10 +250,12 @@ public struct Creature: Sendable {
         }
     }
 
-    /// Only a sleeper can be picked up. Returns whether it was.
+    /// A sleeper can always be picked up; an awake one only when the caller
+    /// says so (a Shift-drag). Returns whether it was.
     @discardableResult
-    public mutating func pickUp() -> Bool {
-        guard case .sleeping = mode else { return false }
+    public mutating func pickUp(evenAwake: Bool = false) -> Bool {
+        guard !isJumping, !isHeld else { return false }
+        if case .sleeping = mode { napsInHand = true } else if evenAwake { napsInHand = false } else { return false }
         enter(.held)
         return true
     }
@@ -259,13 +265,13 @@ public struct Creature: Sendable {
         position = point
     }
 
-    /// Let go: it drops to the nearest edge of any monitor, without waking.
+    /// Let go: it drops to the nearest edge of any monitor, asleep if it was asleep.
     public mutating func drop() {
         guard isHeld else { return }
         let to = world.nearest(to: position)
         let target = world.point(at: to)
         let distance = hypot(target.x - position.x, target.y - position.y)
-        sleepsThroughLanding = true
+        sleepsThroughLanding = napsInHand
         enter(.jumping(Jump(from: position, fromRotation: rotation, to: to, bulge: .zero,
                             duration: max(0.12, min(Double(distance / config.jumpSpeed), config.jumpDuration.upperBound)))))
     }

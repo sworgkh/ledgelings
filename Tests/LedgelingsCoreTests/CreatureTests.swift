@@ -301,3 +301,49 @@ struct SeededRNG: RandomNumberGenerator {
         #expect(c.isSleeping && !c.isChatting)
     }
 }
+
+@Suite struct CarryingAwakeTests {
+    let world = EdgeWorld(screens: [CGRect(x: 0, y: 0, width: 1020, height: 620)], inset: 10)
+    func creature(at t: CGFloat) -> Creature { Creature(world: world, spot: .init(loop: 0, t: t)) }
+
+    func run(_ creature: inout Creature, seconds: Double, cursor: CGPoint? = nil, rng: inout SeededRNG) {
+        for _ in 0..<Int(seconds * 30) { creature.update(dt: 1.0 / 30, cursor: cursor, using: &rng) }
+    }
+
+    @Test func anAwakeCreatureCanBeCarriedWhenAllowedAndLandsAwake() {
+        var rng = SeededRNG(state: 11)
+        var c = creature(at: 100)
+        let refused = c.pickUp()
+        #expect(!refused)
+        let taken = c.pickUp(evenAwake: true)
+        #expect(taken)
+        #expect(c.isHeld && !c.looksAsleep && !c.isSleeping)
+        #expect(c.animation == "idle", "it does not pretend to sleep in your hand")
+        c.drag(to: CGPoint(x: 500, y: 300))
+        c.drop()
+        run(&c, seconds: 2, rng: &rng)
+        #expect(!c.isSleeping && !c.isJumping)
+        #expect(c.animation == "walk" || c.animation == "idle")
+    }
+
+    @Test func aCarriedSleeperStillLandsAsleep() {
+        var rng = SeededRNG(state: 12)
+        var c = creature(at: 100)
+        c.toggleNap(using: &rng)
+        let taken = c.pickUp(evenAwake: true)
+        #expect(taken)
+        #expect(c.looksAsleep)
+        c.drag(to: CGPoint(x: 500, y: 300))
+        c.drop()
+        run(&c, seconds: 2, rng: &rng)
+        #expect(c.isSleeping)
+    }
+
+    @Test func aCarriedAwakeCreatureIsNotStartledByTheCursorOnIt() {
+        var rng = SeededRNG(state: 13)
+        var c = creature(at: 100)
+        c.pickUp(evenAwake: true)
+        run(&c, seconds: 0.5, cursor: c.position, rng: &rng)
+        #expect(c.isHeld)
+    }
+}
