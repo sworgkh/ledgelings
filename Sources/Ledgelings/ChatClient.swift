@@ -59,6 +59,9 @@ struct ChatClient: Sendable {
         ChatClient(provider: .openRouter, baseURL: openRouterURL, apiKey: key, model: model)
     }
 
+    /// Enough to read OpenRouter's public model list; it needs no key.
+    static let openRouterPublic = ChatClient(provider: .openRouter, baseURL: openRouterURL, apiKey: nil, model: "")
+
     var modelsURL: URL { baseURL.appendingPathComponent("models") }
 
     // MARK: Requests and replies, no network
@@ -91,17 +94,10 @@ struct ChatClient: Sendable {
         return text
     }
 
-    static func parseModels(_ data: Data) throws -> [String] {
-        struct Reply: Decodable { struct Row: Decodable { let id: String }; let data: [Row] }
-        if let message = serverError(in: data) { throw Failure.refused(message) }
-        guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
-            throw Failure.badReply(String(decoding: data.prefix(120), as: UTF8.self))
-        }
-        return reply.data.map(\.id)
-    }
+    static func parseModels(_ data: Data) throws -> [String] { try ModelCatalog.parse(data).map(\.id) }
 
     /// Both servers report trouble as `{"error": {"message": ...}}`.
-    private static func serverError(in data: Data) -> String? {
+    static func serverError(in data: Data) -> String? {
         struct Reply: Decodable { struct Error: Decodable { let message: String }; let error: Error }
         return (try? JSONDecoder().decode(Reply.self, from: data))?.error.message
     }
@@ -119,8 +115,11 @@ struct ChatClient: Sendable {
 
     // MARK: Network
 
-    func listModels() async throws -> [String] {
-        try Self.parseModels(try await fetch(authorised(URLRequest(url: modelsURL, timeoutInterval: 10))))
+    func listModels() async throws -> [String] { try await catalog().models.map(\.id) }
+
+    /// Everything the provider offers, with names and prices where it gives them.
+    func catalog() async throws -> ModelCatalog {
+        ModelCatalog(models: try ModelCatalog.parse(try await fetch(authorised(URLRequest(url: modelsURL, timeoutInterval: 15)))))
     }
 
     func checkModel() async throws {

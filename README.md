@@ -49,8 +49,12 @@ and Settings → Talk → **Brain** picks which one:
 - **OpenRouter**: any model on [openrouter.ai](https://openrouter.ai), for better
   lines at a few cents a day. Paste an API key (it goes in your keychain, not in a
   preferences file) and a model id; the default is `anthropic/claude-haiku-4.5`.
-  Give the key a spending limit when you make it. **Check** confirms the key,
-  shows what it has spent, and lists models.
+  Give the key a spending limit when you make it. **Check** confirms the key and
+  shows what it has spent. Below it, the whole OpenRouter catalogue is fetched
+  live: search by any words in the id or name ("flash lite", "gemma", "free"),
+  cheapest first with prices per million tokens, click to pick. For one-line
+  banter, `google/gemini-2.5-flash-lite` or `google/gemma-3-12b-it` cost about a
+  tenth of Haiku and are quicker.
 
 Each creature has a character: a name and a personality that goes into the prompt.
 Six come built in; edit them, and the prompts themselves, in Settings → Talk.

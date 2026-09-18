@@ -229,20 +229,19 @@ private struct LMStudioFields: View {
     }
 }
 
-/// Key, model, Check. The key is validated against OpenRouter and never shown in full.
+/// Key, model, Check, and a live browser of everything OpenRouter offers.
 private struct OpenRouterFields: View {
     @ObservedObject var settings: AppSettings
     @State private var check = "not checked"
-    @State private var models: [String] = []
 
     var body: some View {
         SecureField("API key", text: $settings.openRouterKey, prompt: Text("sk-or-…"))
         HStack {
             TextField("Model", text: $settings.openRouterModel, prompt: Text(AppSettings.defaultOpenRouterModel))
-            ModelMenu(title: "Models", models: models, typed: settings.openRouterModel) { settings.openRouterModel = $0 }
             Button("Check") { Task { await run() } }
         }
         LabeledContent("Status") { Text(check).foregroundStyle(.secondary).textSelection(.enabled) }
+        ModelBrowser(chosen: $settings.openRouterModel)
     }
 
     private func run() async {
@@ -250,14 +249,77 @@ private struct OpenRouterFields: View {
         check = "checking…"
         do {
             let key = try await client.describeKey()
-            let found = try await client.listModels()
-            models = found
-            check = found.contains(client.model)
+            let models = try await client.listModels()
+            check = models.contains(client.model)
                 ? "ready: \(key); \(client.model) is available"
-                : "\(key), but there is no model \(client.model). Type part of a name and pick one under \"Models\"."
+                : "\(key), but there is no model \(client.model). Search below and click one."
         } catch {
-            models = []
             check = "\(error)"
+        }
+    }
+}
+
+/// OpenRouter's whole model list, fetched from its API when this appears, searched
+/// by any words from the id or name, cheapest first. A click picks the model.
+private struct ModelBrowser: View {
+    static let most = 60
+    @Binding var chosen: String
+    @State private var query = ""
+    @State private var catalog: ModelCatalog?
+    @State private var status = "loading models…"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                TextField("Search models", text: $query, prompt: Text("e.g. flash lite, gemma, free"))
+                    .textFieldStyle(.roundedBorder)
+                Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") }
+                    .help("Fetch the list again")
+            }
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(shown) { model in row(model) }
+                    if hits.count > Self.most {
+                        Text("\(hits.count - Self.most) more; add a word to narrow it down")
+                            .font(.caption).foregroundStyle(.secondary).padding(6)
+                    }
+                }
+            }
+            .frame(height: 220)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
+            Text(status).font(.caption).foregroundStyle(.secondary)
+        }
+        .task { await load() }
+    }
+
+    private var hits: [ModelCatalog.Model] { catalog?.search(query) ?? [] }
+    private var shown: ArraySlice<ModelCatalog.Model> { hits.prefix(Self.most) }
+
+    private func row(_ model: ModelCatalog.Model) -> some View {
+        Button { chosen = model.id } label: {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(model.id).font(.system(.body, design: .monospaced))
+                    if model.name != model.id { Text(model.name).font(.caption).foregroundStyle(.secondary) }
+                }
+                Spacer()
+                Text(model.priceLabel).font(.caption).monospacedDigit().foregroundStyle(model.isFree ? .green : .secondary)
+            }
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .contentShape(Rectangle())
+            .background(model.id == chosen ? Color.accentColor.opacity(0.18) : .clear)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func load() async {
+        status = "loading models…"
+        do {
+            let found = try await ChatClient.openRouterPublic.catalog()
+            catalog = found
+            status = "\(found.models.count) models on OpenRouter, cheapest first. Prices are dollars per million tokens."
+        } catch {
+            status = "could not load the list: \(error)"
         }
     }
 }
