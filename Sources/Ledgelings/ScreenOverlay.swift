@@ -68,7 +68,7 @@ final class ScreenOverlay {
     private lazy var house: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
-        layer.zPosition = -1          // behind the creatures, so they walk "into" it
+        layer.zPosition = 1           // in front of the creatures, so they vanish into the doorway
         view.layer?.addSublayer(layer)
         return layer
     }()

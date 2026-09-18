@@ -66,9 +66,10 @@ Each creature has a character: a name and a personality that goes into the promp
 Six come built in; edit them, and the prompts themselves, in Settings → Talk.
 
 **They can go home for a while.** **Hide Them for a While…** in the menu asks how
-long (5 minutes to "until tomorrow morning"). A little house appears on the bottom
-edge of the main screen, everyone runs or jumps home, the house shrinks to
-nothing, and when the time is up it grows back and they walk out one by one. The
+long (5 minutes to "until tomorrow morning"). A little house appears in the bottom
+right corner of the main screen, everyone runs or jumps in through its door, the
+house shrinks to nothing, and when the time is up it grows back and they walk out
+one by one. The
 same menu item, now **Bring Them Back Now**, ends it early.
 
 **Every chat is kept.** Each conversation goes to

@@ -1,6 +1,8 @@
 # house — where the Ledgelings hide when asked to go away for a while.
-# One cell, drawn STANDING ON THE FLOOR of the cell, so it sits on the bottom
-# edge of the main screen and can shrink to nothing about its own centre.
+# One cell, drawn STANDING ON THE FLOOR of the cell, so it sits in the bottom
+# right corner of the main screen and can shrink to nothing about its own centre.
+# Drawn with the creature's own rules: flat blocks, dark-tint outline, light
+# line top-left, shade line bottom-right, black squares for windows.
 #
 #   python -m spritetool build sprites/house.yaml
 
@@ -9,8 +11,10 @@ name: house
 output: Sources/Ledgelings/Resources/sprites
 
 grid:
-  cell: [40, 36]
-  content_box: [2, 2, 36, 34]
+  cell: [68, 60]
+  # The glyph fills the box; the doorway is on the left, 26px wide and 28px
+  # tall from the floor, so a creature (22px body) walks straight in.
+  content_box: [2, 2, 64, 58]
 
 background:
   color: "#ff00ff"
@@ -19,11 +23,12 @@ background:
 painter: house
 
 style: >-
-  pixel art, flat colour, 1px dark outline, a small cottage with a red tiled
-  roof, cream walls, an arched brown door and two blue windows
+  pixel art, flat colour, 1px outline in a dark tint of each block's colour,
+  a squat cottage of plain blocks: cream wall, two red roof slabs, a stone
+  chimney, a dark open doorway on the left, two black square windows
 
 poses:
-  - {name: house, prompt: a cute little cottage, door in the middle, chimney on the right}
+  - {name: house, prompt: a squat blocky cottage, open doorway on the left, chimney on the right}
 
 animations:
   house: {frames: [house], fps: 1, loop: true}

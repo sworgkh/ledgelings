@@ -5,19 +5,31 @@ import LedgelingsCore
 /// everyone runs (or jumps) home, the house packs itself away, and when the
 /// time is up it comes back and they walk out one by one.
 extension Colony {
-    /// Screen points per sheet pixel for the house, when fully grown.
-    static let houseScale: CGFloat = 2.5
+    /// The house is drawn at the largest creature's pixel scale, so its doorway
+    /// (26 sheet px) takes a 22 px body with room to spare.
+    var houseScale: CGFloat { CGFloat(settings.maxSize) }
+    /// The doorway's middle, in sheet pixels from the cell's left edge:
+    /// content box x (2) + DOOR_X (4) + DOOR_W / 2 (13). See spritetool/painters/house.py.
+    static let doorMiddle: CGFloat = 19
     /// How close to the door, along the loop, counts as "in".
     static let doorReach: CGFloat = 6
 
-    /// On the floor of the first (primary) screen, a fifth of the way in.
+    /// The primary screen's bottom-right corner, flush with both edges.
     var housePoint: CGPoint {
         let frame = (NSScreen.screens.first ?? NSScreen.main)?.frame ?? CGRect(x: 0, y: 0, width: 1000, height: 600)
-        return CGPoint(x: frame.minX + frame.width * 0.2, y: frame.minY + houseCell.height * Self.houseScale / 2)
+        let scale = houseScale
+        // Two sheet px of margin sit right of the wall; let them hang off the screen.
+        return CGPoint(x: frame.maxX + 2 * scale - houseCell.width * scale / 2, y: frame.minY + houseCell.height * scale / 2)
     }
 
-    /// The nearest point of this creature's own loops to the house.
-    func doorSpot(for i: Int) -> EdgeWorld.Spot { creatures[i].world.nearest(to: housePoint) }
+    /// Where a creature should be to count as inside: the middle of the doorway, on the floor.
+    var doorPoint: CGPoint {
+        let home = housePoint
+        return CGPoint(x: home.x - houseCell.width * houseScale / 2 + Self.doorMiddle * houseScale, y: home.y - houseCell.height * houseScale / 2)
+    }
+
+    /// The nearest point of this creature's own loops to the doorway.
+    func doorSpot(for i: Int) -> EdgeWorld.Spot { creatures[i].world.nearest(to: doorPoint) }
 
     var isHiding: Bool { hideout.isActive }
 
@@ -40,7 +52,8 @@ extension Colony {
                 for i in stragglers { hideout.entered(i, at: elapsed) }
             case .letOut(let i):
                 guard creatures.indices.contains(i) else { continue }
-                creatures[i].emerge(at: doorSpot(for: i), facing: Bool.random(using: &rng) ? 1 : -1, using: &rng)
+                // Out through the door and away from the corner, so nobody walks straight behind the house.
+                creatures[i].emerge(at: doorSpot(for: i), facing: -1, using: &rng)
             }
         }
         if hideout.phase == .gathering {
@@ -68,6 +81,6 @@ extension Colony {
         let grown = CGFloat(hideout.scale(at: elapsed))
         guard grown > 0 else { return nil }
         return HouseSnapshot(image: houseFrames.frame(animation: "house", time: 0), position: housePoint,
-                             scale: Self.houseScale * grown)
+                             scale: houseScale * grown)
     }
 }

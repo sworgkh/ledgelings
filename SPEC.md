@@ -518,14 +518,17 @@ away → appearing (0.4 s) → gathering → shrinking (0.5 s) → hidden … un
 time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing (0.5 s) → away
 ```
 
-- **House**: a 40×36 sheet-pixel sprite drawn at `2.5 · scale(phase)` points
-  per pixel, standing on the floor of the primary monitor, a fifth of the way
-  in from its left edge (`x = minX + 0.2·width`, centre `y = minY + 36·2.5/2`).
-  `scale` ramps 0→1 during appearing and growing, 1→0 during shrinking and
-  vanishing, 1 while gathering and releasing, 0 otherwise. Drawn behind the
-  creatures.
-- **Door**: for each creature, the nearest point of its own world to the
-  house's position.
+- **House**: a 68×60 sheet-pixel sprite (content box `[2,2,64,58]`), drawn
+  at `maxSize · scale(phase)` points per pixel, so its doorway takes the
+  largest creature. It stands flush in the primary monitor's bottom-right
+  corner: centre `x = maxX + 2·s − 68·s/2`, centre `y = minY + 60·s/2` with
+  `s = maxSize`. `scale` ramps 0→1 during appearing and growing, 1→0 during
+  shrinking and vanishing, 1 while gathering and releasing, 0 otherwise. Drawn
+  **in front of** the creatures, so they vanish into the doorway.
+- **Doorway**: on the house's left, 26 px wide and 28 px tall from the floor,
+  its middle 19 sheet px from the cell's left edge. The door point is that
+  middle on the floor; each creature's door spot is the nearest point of its
+  own world to it.
 - **Gathering**, every frame, for every creature not yet inside: if held, let
   go; if in the air, wait; if on another loop than its door, `leap` to the
   door; else if within 6 points of the door along the loop, or `hasArrived`,
@@ -534,8 +537,9 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
   house is out. When every creature is inside, or 25 s have passed (the rest
   are pulled in), the house shrinks.
 - **Hidden**: the frame rate drops to 12 fps. No bumps, no talk, no clicks.
-- **Releasing**: the smallest index still inside `emerge`s at its door facing a
-  random way, one every 0.6 s; when nobody is left the house vanishes.
+- **Releasing**: the smallest index still inside `emerge`s at its door walking
+  left (away from the corner), one every 0.6 s; when nobody is left the house
+  vanishes.
 - **Bring Them Back Now** (the same menu item while hiding): from hidden →
   growing; from shrinking → growing from the current size; from appearing or
   gathering → releasing whoever is inside, the rest just carry on.
@@ -629,11 +633,15 @@ Shipped sheets:
 | blocky | 288×96 | 32×32 | [5,5,22,22] | 9 poses × 3 eye rows: idle, walk-0..3, jump, land, sleep-0, sleep-1 × open/half/closed | idle 1 fps; walk 4 frames 8 fps loop; jump; land; sleep 2 frames 0.8 fps loop |
 | zzz | 10×10 | 10×10 | whole | `z` | float |
 | flowers | 160×16 | 16×16 | [1,1,14,15] | ten flowers, one frame each | one per flower |
-| house | 40×36 | 40×36 | [2,2,36,34] | `house` | house |
+| house | 68×60 | 68×60 | [2,2,64,58] | `house` | house |
 
 Art rules for any new creature sheet: drawn **standing on a floor, facing
 right**, body **centred in its cell** (rotation is about the cell centre), eyes
-pure black, the four palette colours used only for the body. Pixel art; the
+pure black, the four palette colours used only for the body. Every block in
+the game (creature body, house wall, roof slabs, chimney) is drawn the same
+way: flat fill, a 1 px outline of `mix(fill, black, 0.76)`, a 1 px line of
+`mix(fill, white, 0.36)` along the top and left inside the outline, a 1 px
+line of `mix(fill, black, 0.17)` along the bottom and right. Pixel art; the
 flowers carry a 1 px rim of `#281e32` (40, 30, 50), added automatically around
 every filled pixel.
 

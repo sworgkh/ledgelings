@@ -163,7 +163,9 @@ def test_every_flower_stands_on_the_floor_inside_the_box_and_looks_different():
 HOUSE = Path(__file__).resolve().parents[2] / "sprites" / "house.yaml"
 
 
-def test_the_house_stands_on_the_floor_inside_its_box_with_a_door_and_windows():
+def test_the_house_is_blocky_with_a_creature_sized_doorway_on_the_left():
+    from spritetool.painters import house as painter
+
     recipe = load_recipe(HOUSE)
     assert [a.name for a in recipe.animations] == ["house"]
     sheet = key_out(get_painter("house")(recipe), recipe.background, recipe.tolerance)
@@ -173,5 +175,20 @@ def test_the_house_stands_on_the_floor_inside_its_box_with_a_door_and_windows():
     left, top, right, bottom = cell.getchannel("A").getbbox()
     assert left >= bx and top >= by and right <= bx + bw
     assert bottom == by + bh, "the house does not stand on the floor"
-    colours = {cell.getpixel((px, py))[:3] for px in range(w) for py in range(h) if cell.getpixel((px, py))[3]}
-    assert (146, 92, 52) in colours and (150, 200, 250) in colours, "no door or no glass"
+    # The doorway is a hole of the wall's outline colour, wide enough for a 22px creature.
+    assert painter.DOOR_W >= 24 and painter.DOOR_H >= 24
+    dark = painter.shades(painter.WALL)["outline"]
+    floor = by + bh
+    door_row = [cell.getpixel((px, floor - 5))[:3] == dark for px in range(bx, bx + bw)]
+    runs, start = [], None
+    for i, dark_px in enumerate(door_row + [False]):
+        if dark_px and start is None:
+            start = i
+        elif not dark_px and start is not None:
+            runs.append((i - start, start))
+            start = None
+    width, first = max(runs)           # the wall outline is a 1px run; the door is the long one
+    assert first == painter.DOOR_X and width == painter.DOOR_W
+    assert cell.getpixel((bx + painter.DOOR_X + painter.DOOR_W // 2, floor - painter.DOOR_H + 1))[:3] == dark
+    # Windows are eye-black, like the creature.
+    assert (0, 0, 0) in {cell.getpixel((px, py))[:3] for px in range(w) for py in range(h) if cell.getpixel((px, py))[3]}

@@ -2,14 +2,14 @@
   "name": "house",
   "image": "house.png",
   "cell": [
-    40,
-    36
+    68,
+    60
   ],
   "contentBox": [
     2,
     2,
-    36,
-    34
+    64,
+    58
   ],
   "variants": [],
   "palette": {},
@@ -17,8 +17,8 @@
     "house": {
       "x": 0,
       "y": 0,
-      "w": 40,
-      "h": 36
+      "w": 68,
+      "h": 60
     }
   },
   "animations": {
