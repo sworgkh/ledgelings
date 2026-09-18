@@ -108,16 +108,16 @@ struct TalkSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Creatures talk to each other", isOn: $settings.talkEnabled)
-                LabeledContent("Every") {
+                Toggle("Creatures talk when they bump into each other", isOn: $settings.talkEnabled)
+                LabeledContent("Bubble stays") {
                     HStack {
-                        Slider(value: $settings.talkEveryMinutes, in: 0...180, step: 5)
-                        Text(settings.talkEveryMinutes == 0 ? "on request" : String(format: "%g min", settings.talkEveryMinutes))
+                        Slider(value: $settings.bubbleSeconds, in: AppSettings.bubbleRange, step: 1)
+                        Text(String(format: "%g s", settings.bubbleSeconds))
                             .monospacedDigit().frame(width: 76, alignment: .trailing)
                     }
                 }
             } footer: {
-                Text("\"Make Someone Talk\" in the menu works at any time. Set the slider to 0 to talk only on request.")
+                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower. \"Make Someone Talk\" in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
             }
 
             Section {

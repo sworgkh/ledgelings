@@ -27,3 +27,20 @@ import Testing
         #expect(out.count <= 31 && out.hasSuffix("…"))
     }
 }
+
+@Suite struct BubbleTimeTests {
+    @Test func aTypicalLineStaysAboutTheBaseTime() {
+        let eight = "one two three four five six seven eight"
+        #expect(abs(Banter.showTime(eight, base: 14) - 14.2) < 0.01)
+    }
+
+    @Test func longerLinesStayLongerButNeverPastTwiceTheBase() {
+        let long = Array(repeating: "word", count: 60).joined(separator: " ")
+        #expect(Banter.showTime(long, base: 14) == 28)
+        #expect(Banter.showTime("hi", base: 14) < Banter.showTime("hi there friend", base: 14))
+    }
+
+    @Test func theDefaultBaseIsFourteenSeconds() {
+        #expect(Banter.defaultBubbleSeconds == 14)
+    }
+}

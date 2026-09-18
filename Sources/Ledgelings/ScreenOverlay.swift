@@ -15,6 +15,16 @@ struct CreatureSnapshot {
     var inward: CGVector = CGVector(dx: 0, dy: 1)
     /// What it is saying right now, if anything.
     var bubble: String?
+    /// The flower on its head, if it was given one.
+    var hat: CGImage?
+}
+
+/// A flower on its way from one creature to another, in GLOBAL coordinates.
+struct FlowerFlight {
+    var image: CGImage?
+    var position: CGPoint
+    var rotation: Double
+    var scale: CGFloat
 }
 
 /// One monitor's glass, and a set of layers for EVERY creature -- not only the
@@ -28,7 +38,13 @@ final class ScreenOverlay {
     let screen: NSScreen
     let view: OverlayView
     private let window: OverlayWindow
-    private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer])] = []
+    private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer)] = []
+    private lazy var flight: CALayer = {
+        let layer = makeLayers().sprite
+        layer.isHidden = true
+        view.layer?.addSublayer(layer)
+        return layer
+    }()
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
     private static let bubbleMaxWidth: CGFloat = 250
@@ -50,7 +66,15 @@ final class ScreenOverlay {
         if window.ignoresMouseEvents == clickable { window.ignoresMouseEvents = !clickable }
     }
 
-    func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize) {
+    /// The creature whose speech bubble is under `point`, if any.
+    func bubbleIndex(at point: CGPoint) -> Int? {
+        let origin = screen.frame.origin
+        return bubbles.first { $0.value.plate.frame.offsetBy(dx: origin.x, dy: origin.y).contains(point) }?.key
+    }
+
+    func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize,
+                flowerCell: CGSize, flight inFlight: FlowerFlight? = nil) {
+        renderFlight(inFlight, flowerCell: flowerCell)
         while creatures.count < snapshots.count { creatures.append(makeLayers()) }
         while creatures.count > snapshots.count {
             creatures.removeLast().body.removeFromSuperlayer()
@@ -67,7 +91,8 @@ final class ScreenOverlay {
             let here = visible.contains(snap.position)
             if layers.body.isHidden == here { layers.body.isHidden = !here }
             guard here else { removeBubble(for: index); continue }
-            renderBubble(snap, index: index, bodyHalf: cell.width * scale / 2)
+            let hatHeight = snap.hat == nil ? 0 : flowerCell.height * scale
+            renderBubble(snap, index: index, bodyHalf: cell.width * scale / 2 + hatHeight)
             // The body layer carries position and the turn onto the edge; the
             // sprite inside it carries only the mirror, so the Zs never flip.
             layers.body.position = CGPoint(x: snap.position.x - origin.x, y: snap.position.y - origin.y)
@@ -75,6 +100,17 @@ final class ScreenOverlay {
             layers.sprite.bounds = CGRect(x: 0, y: 0, width: cell.width * scale, height: bodyHeight)
             if (layers.sprite.contents as AnyObject?) !== snap.image { layers.sprite.contents = snap.image }
             layers.sprite.transform = CATransform3DMakeScale(snap.isMirrored ? -1 : 1, 1, 1)
+
+            // The flower stands on the head: inside the body layer, so it turns
+            // with the creature onto walls and the ceiling, but never mirrors.
+            if let hat = snap.hat {
+                layers.hat.isHidden = false
+                layers.hat.contents = hat
+                layers.hat.bounds = CGRect(x: 0, y: 0, width: flowerCell.width * scale, height: hatHeight)
+                layers.hat.position = CGPoint(x: 0, y: bodyHeight / 2 + hatHeight / 2 - scale)
+            } else if !layers.hat.isHidden {
+                layers.hat.isHidden = true
+            }
 
             for (k, layer) in layers.zs.enumerated() {
                 guard let asleep = snap.asleepFor else { if layer.opacity != 0 { layer.opacity = 0 }; continue }
@@ -91,6 +127,19 @@ final class ScreenOverlay {
                 layer.transform = CATransform3DScale(CATransform3DMakeRotation(-snap.rotation, 0, 0, 1), grow, grow, 1)
             }
         }
+    }
+
+    private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {
+        guard let inFlight, let image = inFlight.image else {
+            if !flight.isHidden { flight.isHidden = true }
+            return
+        }
+        let origin = screen.frame.origin
+        flight.isHidden = false
+        flight.contents = image
+        flight.bounds = CGRect(x: 0, y: 0, width: flowerCell.width * inFlight.scale, height: flowerCell.height * inFlight.scale)
+        flight.position = CGPoint(x: inFlight.position.x - origin.x, y: inFlight.position.y - origin.y)
+        flight.transform = CATransform3DMakeRotation(inFlight.rotation, 0, 0, 1)
     }
 
     // MARK: Speech
@@ -152,7 +201,7 @@ final class ScreenOverlay {
         bubbles.removeValue(forKey: index)?.plate.removeFromSuperlayer()
     }
 
-    private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer]) {
+    private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer) {
         func pixelLayer() -> CALayer {
             let layer = CALayer()
             layer.magnificationFilter = .nearest
@@ -167,8 +216,11 @@ final class ScreenOverlay {
         body.addSublayer(sprite)
         let zs = (0..<Self.zCount).map { _ in pixelLayer() }
         zs.forEach { $0.opacity = 0; body.addSublayer($0) }
+        let hat = pixelLayer()
+        hat.isHidden = true
+        body.addSublayer(hat)
         view.layer?.addSublayer(body)
-        return (body, sprite, zs)
+        return (body, sprite, zs, hat)
     }
 
     private static let noAnimations: [String: any CAAction] = [

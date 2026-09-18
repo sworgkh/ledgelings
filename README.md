@@ -5,7 +5,7 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.2 — a colony on every monitor, with settings and a day/night cycle.
+**Status:** v0.4 — a colony on every monitor that talks when it meets, and gives flowers.
 See [BRIEF.md](BRIEF.md) for the plan.
 
 ## What it does
@@ -38,12 +38,18 @@ A sleeper never notices the cursor — that is what lets you grab it. The overla
 still click-through: it turns clickable only while the cursor is on a creature you
 can act on, and it never takes focus from the app you are in.
 
-**They talk.** Once an hour, or when you pick **Make Someone Talk** in the menu, one
-creature says a line to its nearest neighbour and the neighbour answers. The lines
+**They talk.** When two creatures walk into each other on the same edge, or when you
+pick **Make Someone Talk** in the menu, one says a line to the other and the other
+answers. Click a speech bubble to close it. The lines
 come from a small language model running on your Mac in [LM Studio](https://lmstudio.ai),
 so nothing leaves the machine. Each creature has a character: a name and a
 personality that goes into the prompt. Six come built in; edit them, and the
 prompts themselves, in Settings → Talk.
+
+**They give flowers.** Every third time the same two creatures bump into each other,
+one hands the other a flower, which it then wears on its head. Ten flowers, drawn
+by `sprites/flowers.yaml`: poppy, tulip, daisy, sunflower, rose, bluebell,
+dandelion, lavender, lily and forget-me-not.
 
 To make it work: install LM Studio, download `google/gemma-3-1b` in it, and keep its
 local server running:
@@ -65,7 +71,7 @@ model. If LM Studio is off, the creatures simply stay quiet; the menu shows why.
 | Colours | 6 | creature 1 wears colour 1, and so on, wrapping round. Eyes stay black |
 | Day lasts | 3 min | |
 | Night lasts | 5 min | 0 = they never sleep |
-| Talk every | 60 min | 0 = only on request |
+| Bubble stays | 14 s | 4 to 60 s; longer lines stay a little longer, never past twice this |
 | Server, model | `http://localhost:1234`, `google/gemma-3-1b` | any model LM Studio has installed |
 | Characters | 6 built in | name + personality; creature 1 is character 1, wrapping round |
 | Prompts | built in | the system prompt, the opening line and the reply, with `{placeholders}` |
@@ -89,7 +95,7 @@ Everything else is under the menu-bar icon, a filled square.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.4.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.5.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
@@ -134,6 +140,8 @@ artist. `pack` then cuts the key colour to real 1-bit transparency itself rather
 than trusting anyone to deliver clean alpha.
 
 `sprites/zzz.yaml` is a second, one-cell recipe: the Z a sleeper floats.
+`sprites/flowers.yaml` is the ten flowers, one cell each, drawn by
+`spritetool/painters/flowers.py` from hand-placed pixel glyphs with the outline added in code.
 
 A recipe may declare a `palette`. The painter draws with exactly those colours and
 they are written into the atlas, which is how the app recolours a creature: it

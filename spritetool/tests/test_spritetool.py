@@ -131,3 +131,30 @@ def test_icon_set_has_every_size_macos_asks_for_with_the_creature_on_it(recipe, 
     assert big.size == (1024, 1024)
     assert big.getpixel((0, 0))[3] == 0                     # transparent outside the rounded plate
     assert (255, 138, 61, 255) in set(big.getdata())        # the creature's exact orange survived
+
+
+FLOWERS = Path(__file__).resolve().parents[2] / "sprites" / "flowers.yaml"
+
+
+def test_flowers_recipe_has_ten_single_frame_animations():
+    recipe = load_recipe(FLOWERS)
+    assert recipe.cols == 10 and recipe.rows == 1
+    assert {a.name for a in recipe.animations} == {p for p, _ in recipe.poses}
+    assert all(len(a.frames) == 1 for a in recipe.animations)
+
+
+def test_every_flower_stands_on_the_floor_inside_the_box_and_looks_different():
+    recipe = load_recipe(FLOWERS)
+    sheet = key_out(get_painter("flowers")(recipe), recipe.background, recipe.tolerance)
+    bx, by, bw, bh = recipe.content_box
+    seen = []
+    for col, row, pose, _ in recipe.cells():
+        x, y, w, h = recipe.cell_rect(col, row)
+        cell = sheet.crop((x, y, x + w, y + h))
+        box = cell.getchannel("A").getbbox()
+        assert box, f"{pose} is empty"
+        left, top, right, bottom = box
+        assert left >= bx and top >= by and right <= bx + bw, f"{pose} leaves the content box"
+        assert bottom == by + bh, f"{pose} does not stand on the floor"
+        assert cell.tobytes() not in seen, f"{pose} is a copy of another flower"
+        seen.append(cell.tobytes())

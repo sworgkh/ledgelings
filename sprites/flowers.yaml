@@ -1,0 +1,47 @@
+# flowers — what a Ledgeling gives another after they bump three times.
+# Ten flowers, one cell each, drawn STANDING ON THE FLOOR of the cell so the
+# app can stand one on a creature's head and turn it with the creature.
+#
+#   python -m spritetool build sprites/flowers.yaml
+
+version: 1
+name: flowers
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [16, 16]
+  content_box: [1, 1, 14, 15]
+
+background:
+  color: "#ff00ff"
+  tolerance: 60
+
+painter: flowers
+
+style: >-
+  pixel art, flat colour, 1px dark outline, no gradients, no anti-aliasing,
+  one small flower on a short green stem, stem bottom exactly on the floor line
+
+poses:
+  - {name: poppy,        prompt: a red poppy, round with a black centre}
+  - {name: tulip,        prompt: a red tulip, a cup with three pointed tips}
+  - {name: daisy,        prompt: a white daisy with a yellow centre}
+  - {name: sunflower,    prompt: a sunflower, spiky yellow petals round a brown centre}
+  - {name: rose,         prompt: a pink rose, a swirl of petals}
+  - {name: bluebell,     prompt: a bluebell hanging from a bent stem}
+  - {name: dandelion,    prompt: a dandelion seed puff, white and fluffy}
+  - {name: lavender,     prompt: a lavender spike of small purple clusters}
+  - {name: lily,         prompt: an orange lily, six pointed petals with dark spots}
+  - {name: forget-me-not, prompt: three tiny light-blue forget-me-nots with yellow centres}
+
+animations:
+  poppy:         {frames: [poppy], fps: 1, loop: true}
+  tulip:         {frames: [tulip], fps: 1, loop: true}
+  daisy:         {frames: [daisy], fps: 1, loop: true}
+  sunflower:     {frames: [sunflower], fps: 1, loop: true}
+  rose:          {frames: [rose], fps: 1, loop: true}
+  bluebell:      {frames: [bluebell], fps: 1, loop: true}
+  dandelion:     {frames: [dandelion], fps: 1, loop: true}
+  lavender:      {frames: [lavender], fps: 1, loop: true}
+  lily:          {frames: [lily], fps: 1, loop: true}
+  forget-me-not: {frames: [forget-me-not], fps: 1, loop: true}

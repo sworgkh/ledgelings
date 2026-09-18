@@ -45,4 +45,13 @@ import Testing
         let repaired = AppSettings(defaults: defaults)
         #expect(repaired.minSize == 1 && repaired.maxSize == 5)
     }
+
+    @Test func bubbleTimeDefaultsToFourteenSecondsAndIsClampedOnLoad() {
+        let (s, defaults) = fresh()
+        #expect(s.bubbleSeconds == 14)
+        s.bubbleSeconds = 30
+        #expect(AppSettings(defaults: defaults).bubbleSeconds == 30)
+        defaults.set(1.0, forKey: "bubbleSeconds")
+        #expect(AppSettings(defaults: defaults).bubbleSeconds == AppSettings.bubbleRange.lowerBound)
+    }
 }

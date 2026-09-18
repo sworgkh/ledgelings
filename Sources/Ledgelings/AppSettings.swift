@@ -30,12 +30,13 @@ final class AppSettings: ObservableObject {
 
     static let defaultTalkServer = "http://localhost:1234"
     static let defaultTalkModel = "google/gemma-3-1b"
+    /// Seconds a speech bubble stays up, for a line of typical length.
+    static let bubbleRange = 4.0...60.0
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
     @Published var talkServer: String { didSet { save(talkServer, "talkServer") } }
     @Published var talkModel: String { didSet { save(talkModel, "talkModel") } }
-    /// Minutes between one creature speaking to another on its own. Zero: only on request.
-    @Published var talkEveryMinutes: Double { didSet { save(talkEveryMinutes, "talkEveryMinutes") } }
+    @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
     /// Creature i is character i, wrapping round like the colours.
     @Published var characters: [Character] { didSet { saveJSON(characters, "characters") } }
     @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
@@ -63,7 +64,8 @@ final class AppSettings: ObservableObject {
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
         talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
         talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel
-        talkEveryMinutes = max(0, defaults.object(forKey: "talkEveryMinutes") as? Double ?? 60)
+        let bubble = defaults.object(forKey: "bubbleSeconds") as? Double ?? Banter.defaultBubbleSeconds
+        bubbleSeconds = min(max(bubble, Self.bubbleRange.lowerBound), Self.bubbleRange.upperBound)
         let savedCast = defaults.data(forKey: "characters").flatMap { try? JSONDecoder().decode([Character].self, from: $0) } ?? []
         characters = savedCast.isEmpty ? Banter.defaultCharacters : savedCast
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt

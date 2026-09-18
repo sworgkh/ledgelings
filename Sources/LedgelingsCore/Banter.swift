@@ -43,6 +43,16 @@ public enum Banter {
         Character(name: "Ruth", persona: "Bossy, organised, keeps count of everything. Disapproves of jumping."),
     ]
 
+    /// How long a bubble stays up for a line of typical length, in seconds.
+    public static let defaultBubbleSeconds: Double = 14
+
+    /// Seconds a bubble stays. `base` is the time for a line of about eight
+    /// words; longer lines get a little more, never past twice the base.
+    public static func showTime(_ text: String, base: Double) -> Double {
+        let words = Double(text.split(separator: " ").count)
+        return min(base * 2, base / 2 + words * 0.9)
+    }
+
     /// Replace every `{key}` in `template` with its value. Unknown keys are left as they are.
     public static func render(_ template: String, _ values: [String: String]) -> String {
         values.reduce(template) { text, pair in text.replacingOccurrences(of: "{\(pair.key)}", with: pair.value) }

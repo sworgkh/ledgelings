@@ -4,14 +4,14 @@
 #   build/Ledgelings-<version>.dmg   disk image, drag the app onto Applications
 # Both wear the creature as their Finder icon.
 #
-#   scripts/make-installer.sh              # version 0.3.0
+#   scripts/make-installer.sh              # version 0.4.0
 #   VERSION=0.3.0 scripts/make-installer.sh
 #
 # The app is ad-hoc signed, not notarised. On another Mac, Gatekeeper will
 # object the first time: right-click the app (or the .pkg) and choose Open.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export VERSION="${VERSION:-0.3.0}"
+export VERSION="${VERSION:-0.4.0}"
 
 scripts/make-app.sh
 APP=build/Ledgelings.app
