@@ -520,20 +520,23 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
 
 - **House**: a 68×60 sheet-pixel sprite (content box `[2,2,64,58]`), drawn
   at `maxSize · scale(phase)` points per pixel, so its doorway takes the
-  largest creature. It stands flush in the primary monitor's bottom-right
-  corner: centre `x = maxX + 2·s − 68·s/2`, centre `y = minY + 60·s/2` with
-  `s = maxSize`. `scale` ramps 0→1 during appearing and growing, 1→0 during
-  shrinking and vanishing, 1 while gathering and releasing, 0 otherwise. Drawn
-  **in front of** the creatures, so they vanish into the doorway.
+  largest creature. Its own bottom-right corner is pinned to the primary
+  monitor's bottom-right corner (`x = maxX + 2·s`, `y = minY`, `s = maxSize`),
+  and it grows and shrinks **about that corner**, never about its centre.
+  `scale` ramps 0→1 during appearing and growing, 1→0 during shrinking and
+  vanishing, 1 while gathering and releasing, 0 otherwise. Drawn **in front
+  of** the creatures, so they vanish into the doorway.
 - **Doorway**: on the house's left, 26 px wide and 28 px tall from the floor,
   its middle 19 sheet px from the cell's left edge. The door point is that
   middle on the floor; each creature's door spot is the nearest point of its
   own world to it.
-- **Gathering**, every frame, for every creature not yet inside: if held, let
-  go; if in the air, wait; if on another loop than its door, `leap` to the
-  door; else if within 6 points of the door along the loop, or `hasArrived`,
-  it is **inside** (skipped by update and render from now on); else if not
-  already running, `run` to the door. Cursor is ignored by everyone while the
+- **Porch**: a point 150 points left of the doorway on the floor.
+- **Gathering**, every frame, for every creature not yet inside, with `along`
+  = its loop distance to the door (infinite on another loop): if held, let
+  go; if in the air, wait; if `along ≤ 6` it is **inside** (skipped by update
+  and render from now on); else if `along > 420` and it has not just landed,
+  `leap` to the porch; else if not already running, `run` to the door. So the
+  far-away ones jump to the porch and walk the last stretch in. Cursor is ignored by everyone while the
   house is out. When every creature is inside, or 25 s have passed (the rest
   are pulled in), the house shrinks.
 - **Hidden**: the frame rate drops to 12 fps. No bumps, no talk, no clicks.

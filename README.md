@@ -131,6 +131,10 @@ OPENROUTER_API_KEY=sk-or-… swift test --filter ChatClientLiveTests   # and thr
 
 Everything else is under the menu-bar icon, a filled square.
 
+Inside a [dev3](https://dev3.h0x91b.com) task, `.dev3/config.json` makes
+`dev3 dev-server start` run `swift run Ledgelings` from the task's worktree, so a
+dev build walks beside the installed one.
+
 ## Install it
 
 ```bash

@@ -13,23 +13,30 @@ extension Colony {
     static let doorMiddle: CGFloat = 19
     /// How close to the door, along the loop, counts as "in".
     static let doorReach: CGFloat = 6
+    /// Farther than this along the loop, a creature jumps to the porch instead of running the whole way.
+    static let runReach: CGFloat = 420
+    /// The porch: this far left of the doorway, on the floor. Jumps land here, then it is a short run in.
+    static let porchOffset: CGFloat = 150
 
-    /// The primary screen's bottom-right corner, flush with both edges.
-    var housePoint: CGPoint {
+    /// The house's own bottom-right corner sits on the primary screen's bottom-right
+    /// corner, so growing and shrinking happen about that corner.
+    var houseCorner: CGPoint {
         let frame = (NSScreen.screens.first ?? NSScreen.main)?.frame ?? CGRect(x: 0, y: 0, width: 1000, height: 600)
-        let scale = houseScale
         // Two sheet px of margin sit right of the wall; let them hang off the screen.
-        return CGPoint(x: frame.maxX + 2 * scale - houseCell.width * scale / 2, y: frame.minY + houseCell.height * scale / 2)
+        return CGPoint(x: frame.maxX + 2 * houseScale, y: frame.minY)
     }
 
     /// Where a creature should be to count as inside: the middle of the doorway, on the floor.
     var doorPoint: CGPoint {
-        let home = housePoint
-        return CGPoint(x: home.x - houseCell.width * houseScale / 2 + Self.doorMiddle * houseScale, y: home.y - houseCell.height * houseScale / 2)
+        CGPoint(x: houseCorner.x - houseCell.width * houseScale + Self.doorMiddle * houseScale, y: houseCorner.y)
     }
 
     /// The nearest point of this creature's own loops to the doorway.
     func doorSpot(for i: Int) -> EdgeWorld.Spot { creatures[i].world.nearest(to: doorPoint) }
+
+    func porchSpot(for i: Int) -> EdgeWorld.Spot {
+        creatures[i].world.nearest(to: CGPoint(x: doorPoint.x - Self.porchOffset, y: doorPoint.y))
+    }
 
     var isHiding: Bool { hideout.isActive }
 
@@ -61,16 +68,19 @@ extension Colony {
         }
     }
 
-    /// Send one creature home: run along its loop if the door is on it, jump otherwise.
+    /// Send one creature home: a short run in if it is near the door, otherwise a
+    /// jump to the porch first (from anywhere: another monitor, the ceiling, far
+    /// down the floor), then the run.
     private func herd(_ i: Int) {
         if held?.index == i { letGo() }
         guard !creatures[i].isJumping else { return }
         let door = doorSpot(for: i)
         let c = creatures[i]
-        guard c.spot.loop == door.loop else { creatures[i].leap(to: door); return }
-        let along = min(c.loop.wrap(c.t - door.t), c.loop.wrap(door.t - c.t))
-        if along <= Self.doorReach || c.hasArrived {
+        let along = c.spot.loop == door.loop ? min(c.loop.wrap(c.t - door.t), c.loop.wrap(door.t - c.t)) : .infinity
+        if along <= Self.doorReach {
             hideout.entered(i, at: elapsed)
+        } else if along > Self.runReach, !c.hasArrived {
+            creatures[i].leap(to: porchSpot(for: i))
         } else if !c.isRunning {
             creatures[i].run(to: door.t)
         }
@@ -80,7 +90,7 @@ extension Colony {
         guard hideout.isActive else { return nil }
         let grown = CGFloat(hideout.scale(at: elapsed))
         guard grown > 0 else { return nil }
-        return HouseSnapshot(image: houseFrames.frame(animation: "house", time: 0), position: housePoint,
+        return HouseSnapshot(image: houseFrames.frame(animation: "house", time: 0), corner: houseCorner,
                              scale: houseScale * grown)
     }
 }

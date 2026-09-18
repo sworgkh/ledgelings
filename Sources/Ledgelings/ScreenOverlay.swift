@@ -21,10 +21,10 @@ struct CreatureSnapshot {
     var hidden = false
 }
 
-/// The house, at whatever size it currently is.
+/// The house, at whatever size it currently is, pinned by its bottom-right corner.
 struct HouseSnapshot {
     var image: CGImage?
-    var position: CGPoint
+    var corner: CGPoint
     /// Screen points per sheet pixel, already multiplied by the grow/shrink factor.
     var scale: CGFloat
 }
@@ -69,6 +69,7 @@ final class ScreenOverlay {
         let layer = makeLayers().sprite
         layer.isHidden = true
         layer.zPosition = 1           // in front of the creatures, so they vanish into the doorway
+        layer.anchorPoint = CGPoint(x: 1, y: 0)   // grows and shrinks about its bottom-right corner
         view.layer?.addSublayer(layer)
         return layer
     }()
@@ -187,7 +188,7 @@ final class ScreenOverlay {
         house.isHidden = false
         house.contents = image
         house.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
-        house.position = CGPoint(x: inHouse.position.x - origin.x, y: inHouse.position.y - origin.y)
+        house.position = CGPoint(x: inHouse.corner.x - origin.x, y: inHouse.corner.y - origin.y)
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {
