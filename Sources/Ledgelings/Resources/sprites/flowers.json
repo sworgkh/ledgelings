@@ -1,0 +1,150 @@
+{
+  "name": "flowers",
+  "image": "flowers.png",
+  "cell": [
+    16,
+    16
+  ],
+  "contentBox": [
+    1,
+    1,
+    14,
+    15
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "poppy": {
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "tulip": {
+      "x": 16,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "daisy": {
+      "x": 32,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "sunflower": {
+      "x": 48,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "rose": {
+      "x": 64,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "bluebell": {
+      "x": 80,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "dandelion": {
+      "x": 96,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "lavender": {
+      "x": 112,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "lily": {
+      "x": 128,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "forget-me-not": {
+      "x": 144,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    }
+  },
+  "animations": {
+    "poppy": {
+      "frames": [
+        "poppy"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "tulip": {
+      "frames": [
+        "tulip"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "daisy": {
+      "frames": [
+        "daisy"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "sunflower": {
+      "frames": [
+        "sunflower"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "rose": {
+      "frames": [
+        "rose"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "bluebell": {
+      "frames": [
+        "bluebell"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "dandelion": {
+      "frames": [
+        "dandelion"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "lavender": {
+      "frames": [
+        "lavender"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "lily": {
+      "frames": [
+        "lily"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "forget-me-not": {
+      "frames": [
+        "forget-me-not"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}

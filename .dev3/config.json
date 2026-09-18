@@ -1,0 +1,5 @@
+{
+  "setupScript": "swift build",
+  "devScript": "swift run Ledgelings",
+  "defaultBaseBranch": "main"
+}

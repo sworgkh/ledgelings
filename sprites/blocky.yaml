@@ -1,0 +1,66 @@
+# blocky — the first Ledgeling: a square body, two black rectangle eyes.
+#
+# A recipe declares the sheet's LAYOUT, never its pixels:
+#   columns = poses, rows = variants (here: how far the eyes are closed).
+# Every frame is named "<pose>_<variant>", e.g. "walk-1_half".
+#
+#   python -m spritetool template sprites/blocky.yaml   # layout PNG to paint into
+#   python -m spritetool build    sprites/blocky.yaml   # draw + pack + preview
+#
+# The creature is drawn STANDING ON A FLOOR, FACING RIGHT. The app rotates it
+# for the other three screen edges and mirrors it to walk the other way.
+
+version: 1
+name: blocky
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [32, 32]
+  # The square the creature must stay inside: [x, y, w, h] in cell pixels.
+  # It is centred in the cell on purpose -- the app turns corners by rotating
+  # the sprite about the cell centre, which only works if the body is centred.
+  content_box: [5, 5, 22, 22]
+
+background:
+  color: "#ff00ff"      # never used by the artwork, so nothing real is cut
+  tolerance: 60
+
+# Procedural painter in spritetool/painters/. Omit it for a sheet that is
+# painted by hand or by an image model from the template.
+painter: blocky
+
+# The painter draws with exactly these colours, and they are written into the
+# atlas. The app recolours a creature by swapping them -- eyes stay black.
+palette:
+  body: "#ff8a3d"
+  light: "#ffb27a"
+  shade: "#d66220"
+  outline: "#3b1f0f"
+
+style: >-
+  pixel art, flat colour, 1px dark outline, no gradients, no anti-aliasing,
+  a simple square orange creature with two black rectangular eyes and two tiny
+  feet, side view, facing right, feet exactly on the floor line
+
+poses:
+  - {name: idle,   prompt: standing still}
+  - {name: walk-0, prompt: crawl cycle 1 of 4, neutral, both feet down}
+  - {name: walk-1, prompt: crawl cycle 2 of 4, squashed wide and low, front foot lifted}
+  - {name: walk-2, prompt: crawl cycle 3 of 4, neutral, both feet down}
+  - {name: walk-3, prompt: crawl cycle 4 of 4, stretched tall and narrow, back foot lifted}
+  - {name: jump,   prompt: mid-air, stretched tall, feet tucked in, eyes wide}
+  - {name: land,   prompt: just landed, squashed very flat and wide}
+  - {name: sleep-0, prompt: asleep, slumped low, eyes closed in EVERY row, breathing in}
+  - {name: sleep-1, prompt: asleep, one pixel lower than the previous column, breathing out}
+
+variants:
+  - {name: open,   prompt: eyes fully open}
+  - {name: half,   prompt: eyes half closed}
+  - {name: closed, prompt: eyes closed to a thin line}
+
+animations:
+  idle: {frames: [idle], fps: 1, loop: true}
+  walk: {frames: [walk-0, walk-1, walk-2, walk-3], fps: 8, loop: true}
+  jump: {frames: [jump], fps: 1, loop: true}
+  land: {frames: [land], fps: 1, loop: true}
+  sleep: {frames: [sleep-0, sleep-1], fps: 0.8, loop: true}
