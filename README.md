@@ -7,7 +7,8 @@ Ambient, click-through, menu-bar only. Not a game, not a widget.
 
 **Status:** v0.5 — a colony on every monitor that talks when it meets, gives flowers,
 and can think locally or through OpenRouter.
-See [BRIEF.md](BRIEF.md) for the plan.
+See [BRIEF.md](BRIEF.md) for the original plan and [SPEC.md](SPEC.md) for the full,
+platform-neutral specification of everything the app does.
 
 ## What it does
 
