@@ -181,12 +181,21 @@ rotates it about the cell centre to turn a corner.
 Sources/LedgelingsCore/   pure logic, no AppKit:
                             EdgeWorld  fuses the monitors into walkable loops
                             EdgeLoop   one closed loop; a position is a single number
-                            Creature   the brain: walk, idle, blink, jump, sleep
+                            Creature   the brain: walk, idle, blink, jump, sleep, stop to chat
                             DayNight   the colony's clock
+                            Meetings   who bumped into whom, once per touch, with a cooldown
+                            Gifts      flowers in flight and on heads
+                            Sparks     the pixel stars of a bump
                             Banter     characters, prompt templates, cleaning a model's line
-Sources/Ledgelings/       the app: Colony (creatures + clock + talk), one ScreenOverlay per monitor
-                          with sprites and speech bubbles, ChatClient (LM Studio or OpenRouter, for
-                          banter and anything else that wants words), Keychain, SpriteAtlas, settings
+Sources/Ledgelings/       the app:
+                            Colony            creatures + clock + monitors + the frame loop
+                            Colony+Meetings   the stop, the stars, the flower, letting go
+                            Colony+Talk       who says what to whom, the bubbles
+                            Colony+Hand       clicks, pokes, drags
+                            ScreenOverlay     one per monitor: sprites, bubbles, stars, flowers
+                            ChatClient        LM Studio or OpenRouter, for banter and anything else
+                            ModelCatalog      OpenRouter's model list, searched and priced
+                            Keychain, SpriteAtlas, AppSettings, SettingsView, TalkSettingsView
 Tests/                    unit tests for both
 spritetool/               the sprite sheet tool (Python: Pillow + PyYAML)
 sprites/                  recipes

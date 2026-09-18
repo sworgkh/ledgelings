@@ -19,8 +19,8 @@ struct SettingsView: View {
                 Stepper(value: $settings.creatureCount, in: AppSettings.countRange) {
                     LabeledContent("How many", value: "\(settings.creatureCount)")
                 }
-                size("Smallest", value: $settings.minSize)
-                size("Largest", value: $settings.maxSize)
+                SliderRow("Smallest", value: $settings.minSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
+                SliderRow("Largest", value: $settings.maxSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
             } header: {
                 Text("Creatures")
             } footer: {
@@ -49,8 +49,8 @@ struct SettingsView: View {
             }
 
             Section {
-                minutes("Day lasts", value: $settings.dayMinutes, range: 0.5...60)
-                minutes("Night lasts", value: $settings.nightMinutes, range: 0...60)
+                SliderRow("Day lasts", value: $settings.dayMinutes, in: 0.5...60, step: 0.5, unit: " min")
+                SliderRow("Night lasts", value: $settings.nightMinutes, in: 0...60, step: 0.5, unit: " min", zero: "never")
             } header: {
                 Text("Day and night")
             } footer: {
@@ -58,28 +58,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-    }
-
-    private func size(_ title: String, value: Binding<Double>) -> some View {
-        LabeledContent(title) {
-            HStack {
-                Slider(value: value, in: AppSettings.sizeRange, step: AppSettings.sizeStep)
-                Text(String(format: "%g×", value.wrappedValue))
-                    .monospacedDigit()
-                    .frame(width: 62, alignment: .trailing)
-            }
-        }
-    }
-
-    private func minutes(_ title: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
-        LabeledContent(title) {
-            HStack {
-                Slider(value: value, in: range, step: 0.5)
-                Text(value.wrappedValue == 0 ? "never" : String(format: "%g min", value.wrappedValue))
-                    .monospacedDigit()
-                    .frame(width: 62, alignment: .trailing)
-            }
-        }
     }
 
     private func colorBinding(_ index: Int) -> Binding<Color> {
@@ -99,254 +77,34 @@ struct SettingsView: View {
     }
 }
 
-/// Everything about the creatures talking to each other, and which model does the talking.
-struct TalkSettingsView: View {
-    @ObservedObject var settings: AppSettings
-
-    var body: some View {
-        Form {
-            Section {
-                Toggle("Creatures talk when they bump into each other", isOn: $settings.talkEnabled)
-                LabeledContent("Bubble stays") {
-                    HStack {
-                        Slider(value: $settings.bubbleSeconds, in: AppSettings.bubbleRange, step: 1)
-                        Text(String(format: "%g s", settings.bubbleSeconds))
-                            .monospacedDigit().frame(width: 76, alignment: .trailing)
-                    }
-                }
-                LabeledContent("Flower lasts") {
-                    HStack {
-                        Slider(value: $settings.flowerMinutes, in: AppSettings.flowerRange, step: 0.5)
-                        Text(String(format: "%g min", settings.flowerMinutes))
-                            .monospacedDigit().frame(width: 76, alignment: .trailing)
-                    }
-                }
-            } footer: {
-                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts. \"Make Someone Talk\" in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
-            }
-
-            Section {
-                Picker("Brain", selection: $settings.brainProvider) {
-                    ForEach(ChatClient.Provider.allCases, id: \.self) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                switch settings.brainProvider {
-                case .lmStudio: LMStudioFields(settings: settings)
-                case .openRouter: OpenRouterFields(settings: settings)
-                }
-            } header: {
-                Text("Brain")
-            } footer: {
-                Text(settings.brainProvider == .lmStudio
-                     ? "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
-                     : "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models.")
-            }
-
-            Section {
-                ForEach(settings.characters.indices, id: \.self) { i in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            TextField("Name", text: binding(\.characters[i].name)).font(.headline)
-                            Button(role: .destructive) { settings.characters.remove(at: i) } label: { Image(systemName: "minus.circle") }
-                                .buttonStyle(.borderless).disabled(settings.characters.count <= 2)
-                        }
-                        TextField("Who they are", text: binding(\.characters[i].persona), axis: .vertical).lineLimit(2...4)
-                    }
-                    .padding(.vertical, 2)
-                }
-                HStack {
-                    Button("Add Character") { settings.characters.append(Character(name: "Newcomer", persona: "Describe the personality here.")) }
-                    Spacer()
-                    Button("Reset Cast") { settings.characters = Banter.defaultCharacters }
-                }
-            } header: {
-                Text("Characters")
-            } footer: {
-                Text("Creature 1 is character 1, creature 2 is character 2, and so on, starting over when the cast runs out. The colours follow the same rule, so creature 1 is always the first colour and the first character.")
-            }
-
-            Section {
-                prompt("Who is speaking (system prompt)", text: $settings.systemPrompt)
-                prompt("Opening line", text: $settings.linePrompt)
-                prompt("Reply", text: $settings.replyPrompt)
-                HStack { Spacer(); Button("Reset Prompts") { settings.resetPrompts() } }
-            } header: {
-                Text("Prompts")
-            } footer: {
-                Text("Placeholders: " + Banter.placeholders.map { "{\($0)}" }.joined(separator: " ") + ". {situation} is written by the app: time of day and where each creature is. {line} is what was just said, for the reply.")
-            }
-        }
-        .formStyle(.grouped)
-    }
-
-    private func prompt(_ title: String, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.subheadline.weight(.semibold))
-            TextEditor(text: text)
-                .font(.system(.body, design: .monospaced))
-                .frame(minHeight: 72)
-                .scrollContentBackground(.hidden)
-                .padding(4)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
-        }
-    }
-
-    private func binding<T>(_ path: ReferenceWritableKeyPath<AppSettings, T>) -> Binding<T> {
-        Binding(get: { settings[keyPath: path] }, set: { settings[keyPath: path] = $0 })
-    }
-
-}
-
-/// Server, model, Check. The model must be one LM Studio has installed.
-private struct LMStudioFields: View {
-    @ObservedObject var settings: AppSettings
-    @State private var check = "not checked"
-    @State private var models: [String] = []
-
-    var body: some View {
-        TextField("Server", text: $settings.talkServer, prompt: Text(AppSettings.defaultTalkServer))
-        HStack {
-            TextField("Model", text: $settings.talkModel, prompt: Text(AppSettings.defaultTalkModel))
-            ModelMenu(title: "Installed", models: models, typed: settings.talkModel) { settings.talkModel = $0 }
-            Button("Check") { Task { await run() } }
-        }
-        LabeledContent("Status") { Text(check).foregroundStyle(.secondary).textSelection(.enabled) }
-    }
-
-    private func run() async {
-        guard let client = settings.chatClient() else { check = settings.brainProblem; return }
-        check = "checking…"
-        do {
-            let found = try await client.listModels()
-            models = found
-            check = found.contains(client.model)
-                ? "ready: \(client.model) is installed"
-                : "server is up, but \(client.model) is not installed. Pick one under \"Installed\"."
-        } catch {
-            models = []
-            check = "\(error)"
-        }
-    }
-}
-
-/// Key, model, Check, and a live browser of everything OpenRouter offers.
-private struct OpenRouterFields: View {
-    @ObservedObject var settings: AppSettings
-    @State private var check = "not checked"
-
-    var body: some View {
-        SecureField("API key", text: $settings.openRouterKey, prompt: Text("sk-or-…"))
-        HStack {
-            TextField("Model", text: $settings.openRouterModel, prompt: Text(AppSettings.defaultOpenRouterModel))
-            Button("Check") { Task { await run() } }
-        }
-        LabeledContent("Status") { Text(check).foregroundStyle(.secondary).textSelection(.enabled) }
-        ModelBrowser(chosen: $settings.openRouterModel)
-    }
-
-    private func run() async {
-        guard let client = settings.chatClient() else { check = settings.brainProblem; return }
-        check = "checking…"
-        do {
-            let key = try await client.describeKey()
-            let models = try await client.listModels()
-            check = models.contains(client.model)
-                ? "ready: \(key); \(client.model) is available"
-                : "\(key), but there is no model \(client.model). Search below and click one."
-        } catch {
-            check = "\(error)"
-        }
-    }
-}
-
-/// OpenRouter's whole model list, fetched from its API when this appears, searched
-/// by any words from the id or name, cheapest first. A click picks the model.
-private struct ModelBrowser: View {
-    static let most = 60
-    @Binding var chosen: String
-    @State private var query = ""
-    @State private var catalog: ModelCatalog?
-    @State private var status = "loading models…"
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                TextField("Search models", text: $query, prompt: Text("e.g. flash lite, gemma, free"))
-                    .textFieldStyle(.roundedBorder)
-                Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") }
-                    .help("Fetch the list again")
-            }
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(shown) { model in row(model) }
-                    if hits.count > Self.most {
-                        Text("\(hits.count - Self.most) more; add a word to narrow it down")
-                            .font(.caption).foregroundStyle(.secondary).padding(6)
-                    }
-                }
-            }
-            .frame(height: 220)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
-            Text(status).font(.caption).foregroundStyle(.secondary)
-        }
-        .task { await load() }
-    }
-
-    private var hits: [ModelCatalog.Model] { catalog?.search(query) ?? [] }
-    private var shown: ArraySlice<ModelCatalog.Model> { hits.prefix(Self.most) }
-
-    private func row(_ model: ModelCatalog.Model) -> some View {
-        Button { chosen = model.id } label: {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(model.id).font(.system(.body, design: .monospaced))
-                    if model.name != model.id { Text(model.name).font(.caption).foregroundStyle(.secondary) }
-                }
-                Spacer()
-                Text(model.priceLabel).font(.caption).monospacedDigit().foregroundStyle(model.isFree ? .green : .secondary)
-            }
-            .padding(.horizontal, 8).padding(.vertical, 4)
-            .contentShape(Rectangle())
-            .background(model.id == chosen ? Color.accentColor.opacity(0.18) : .clear)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func load() async {
-        status = "loading models…"
-        do {
-            let found = try await ChatClient.openRouterPublic.catalog()
-            catalog = found
-            status = "\(found.models.count) models on OpenRouter, cheapest first. Prices are dollars per million tokens."
-        } catch {
-            status = "could not load the list: \(error)"
-        }
-    }
-}
-
-/// A menu of model ids, narrowed to those containing what is typed so far, because
-/// OpenRouter lists hundreds. Hidden until a Check has fetched the list.
-private struct ModelMenu: View {
-    static let most = 40
+/// A labelled slider with its value printed beside it: "3×", "5 min", "14 s".
+struct SliderRow: View {
     let title: String
-    let models: [String]
-    let typed: String
-    let pick: (String) -> Void
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let unit: String
+    /// What to print instead of "0" when zero means off.
+    var zero: String? = nil
 
-    var body: some View {
-        if !models.isEmpty {
-            Menu(title) {
-                ForEach(shown, id: \.self) { id in Button(id) { pick(id) } }
-                if shown.count == Self.most { Text("… type more to narrow the list") }
-            }
-            .fixedSize()
-        }
+    init(_ title: String, value: Binding<Double>, in range: ClosedRange<Double>, step: Double, unit: String, zero: String? = nil) {
+        self.title = title
+        _value = value
+        self.range = range
+        self.step = step
+        self.unit = unit
+        self.zero = zero
     }
 
-    private var shown: [String] {
-        let needle = typed.trimmingCharacters(in: .whitespaces).lowercased()
-        let matching = needle.isEmpty || models.contains(typed) ? models : models.filter { $0.lowercased().contains(needle) }
-        return Array(matching.prefix(Self.most))
+    var body: some View {
+        LabeledContent(title) {
+            HStack {
+                Slider(value: $value, in: range, step: step)
+                Text(value == 0 && zero != nil ? zero! : String(format: "%g", value) + unit)
+                    .monospacedDigit()
+                    .frame(width: 70, alignment: .trailing)
+            }
+        }
     }
 }
 

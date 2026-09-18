@@ -51,8 +51,8 @@ private func colours(in image: CGImage) -> Set<RGB> {
 
     @Test func everyFlowerTheColonyCanGiveIsInTheSheet() throws {
         let frames = try SpriteAtlas(named: "flowers").frames()
-        #expect(Colony.flowerNames.count == 10)
-        for flower in Colony.flowerNames {
+        #expect(Gifts.flowers.count == 10)
+        for flower in Gifts.flowers {
             #expect(frames.frame(animation: flower, time: 0) != nil, "\(flower)")
         }
     }

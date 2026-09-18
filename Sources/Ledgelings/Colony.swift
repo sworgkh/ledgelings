@@ -7,60 +7,54 @@ import QuartzCore
 @MainActor
 final class Colony: NSObject {
     /// Cap on one simulation step, so a stalled display link cannot teleport anyone.
-    private static let maxStep: Double = 1.0 / 10
+    static let maxStep: Double = 1.0 / 10
 
-    private let settings: AppSettings
-    private let atlas: SpriteAtlas
-    private let zFrames: SpriteAtlas.Frames
-    private let zCell: CGSize
-    private let flowerFrames: SpriteAtlas.Frames
-    private let flowerCell: CGSize
+    let settings: AppSettings
+    let atlas: SpriteAtlas
+    let zFrames: SpriteAtlas.Frames
+    let zCell: CGSize
+    let flowerFrames: SpriteAtlas.Frames
+    let flowerCell: CGSize
 
     /// A bigger body walks further from the screen edge, so each size has its
     /// own outline. Sizes come in half steps, so this stays a handful of entries.
-    private var worlds: [Double: EdgeWorld] = [:]
-    private var creatures: [Creature] = []
+    var worlds: [Double: EdgeWorld] = [:]
+    var creatures: [Creature] = []
     /// Where each creature sits in the min...max size range, 0...1. Fixed at
     /// birth, so moving the sliders resizes everyone without reshuffling who is big.
-    private var sizeShares: [Double] = []
-    private var sizes: [Double] = []
-    private var asleepFor: [Double] = []
-    private var frames: [SpriteAtlas.Frames] = []
-    private var frameCache: [RGB: SpriteAtlas.Frames] = [:]
-    private var overlays: [ScreenOverlay] = []
-    private var rng = SystemRandomNumberGenerator()
+    var sizeShares: [Double] = []
+    var sizes: [Double] = []
+    var asleepFor: [Double] = []
+    var frames: [SpriteAtlas.Frames] = []
+    var frameCache: [RGB: SpriteAtlas.Frames] = [:]
+    var overlays: [ScreenOverlay] = []
+    var rng = SystemRandomNumberGenerator()
 
-    private var link: CADisplayLink?
-    private var lastTick: CFTimeInterval?
+    var link: CADisplayLink?
+    var lastTick: CFTimeInterval?
     /// The creature in the user's hand, and where on its body it was grabbed.
-    private var held: (index: Int, grab: CGVector)?
-    private var watchers: Set<AnyCancellable> = []
+    var held: (index: Int, grab: CGVector)?
+    var watchers: Set<AnyCancellable> = []
 
-    private(set) var clock: DayNight
+    var clock: DayNight
     /// One line per talking creature, and when it stops showing.
-    private var bubbles: [Int: (text: String, until: Double)] = [:]
-    private var talking = false
+    var bubbles: [Int: (text: String, until: Double)] = [:]
+    var talking = false
     /// Who has walked into whom, and how often.
-    private var meetings = Meetings()
-    /// The flower each creature wears on its head, by creature index, and when it wilts.
-    private var worn: [Int: (flower: String, until: Double)] = [:]
-    /// A flower on its way from one creature to another.
-    private var flight: (flower: String, from: Int, to: Int, started: Double)?
+    var meetings = Meetings()
+    /// Flowers in the air and on heads.
+    var gifts = Gifts()
     /// A Shift-press on a creature that has not moved yet: a poke if it lets go, a carry if it drags.
-    private var poke: (index: Int, at: CGPoint)?
-    private static let dragThreshold: CGFloat = 4
+    var poke: (index: Int, at: CGPoint)?
+    static let dragThreshold: CGFloat = 4
     /// Two creatures stopped face to face. `releaseAt` is nil while the words are still coming.
-    private var chat: (a: Int, b: Int, releaseAt: Double?)?
+    var chat: (a: Int, b: Int, releaseAt: Double?)?
     /// Pixel stars from the last bump, and the colours they wear.
-    private var sparks = Sparks()
-    private var sparkPalette: [CGColor] = []
-    private static let flightTime = 0.6
-    /// Everything a creature can give. Each is an animation in the flowers sheet.
-    nonisolated static let flowerNames = ["poppy", "tulip", "daisy", "sunflower", "rose", "bluebell",
-                              "dandelion", "lavender", "lily", "forget-me-not"]
+    var sparks = Sparks()
+    var sparkPalette: [CGColor] = []
     /// The last thing that happened with the model, for the menu.
-    private(set) var talkStatus = "not tried yet"
-    private(set) var elapsed: Double = 0
+    var talkStatus = "not tried yet"
+    var elapsed: Double = 0
 
     var isNight: Bool { clock.isNight(at: elapsed) }
     var secondsLeftInPhase: Double { clock.remaining(at: elapsed) }
@@ -100,15 +94,14 @@ final class Colony: NSObject {
 
     // MARK: Reacting to change
 
-    private func applySettings() {
+    func applySettings() {
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
 
         if let held, held.index >= settings.creatureCount { letGo() }
         while creatures.count > settings.creatureCount {
             creatures.removeLast(); asleepFor.removeLast(); sizeShares.removeLast(); sizes.removeLast()
         }
-        worn = worn.filter { $0.key < creatures.count }
-        if let flight, max(flight.from, flight.to) >= creatures.count { self.flight = nil }
+        gifts.forget(creaturesFrom: creatures.count)
         while creatures.count < settings.creatureCount {
             let share = Double.random(in: 0...1, using: &rng), size = settings.size(forShare: share)
             creatures.append(spawn(size: size)); asleepFor.append(0); sizeShares.append(share); sizes.append(size)
@@ -131,14 +124,14 @@ final class Colony: NSObject {
         render()
     }
 
-    @objc private func screensChanged() {
+    @objc func screensChanged() {
         rebuildOverlays()
         worlds.removeAll()
         for i in creatures.indices { creatures[i].rehome(to: world(forSize: sizes[i])) }
         render()
     }
 
-    private func world(forSize size: Double) -> EdgeWorld {
+    func world(forSize size: Double) -> EdgeWorld {
         if let made = worlds[size] { return made }
         let made = EdgeWorld(screens: NSScreen.screens.map(\.frame), inset: atlas.bodyHalfSize * CGFloat(size))
         worlds[size] = made
@@ -147,11 +140,11 @@ final class Colony: NSObject {
 
     /// Measured from the creature's centre, so a big one needs a bigger bubble
     /// to feel equally skittish.
-    private func fleeRadius(forSize size: Double) -> CGFloat {
+    func fleeRadius(forSize size: Double) -> CGFloat {
         atlas.bodyHalfSize * CGFloat(size) + 68
     }
 
-    private func rebuildOverlays() {
+    func rebuildOverlays() {
         link?.invalidate()
         overlays.forEach { $0.close() }
         overlays = NSScreen.screens.map(ScreenOverlay.init)
@@ -165,7 +158,7 @@ final class Colony: NSObject {
         setFrameRate(asleep: false)
     }
 
-    private func spawn(size: Double) -> Creature {
+    func spawn(size: Double) -> Creature {
         let world = world(forSize: size)
         let places = world.segments
         let place = places.randomElement(using: &rng)!
@@ -177,244 +170,9 @@ final class Colony: NSObject {
                         facingForwards: .random(using: &rng), config: config)
     }
 
-    // MARK: Talk
-
-    private static let edgeNames: [(Double, String)] = [(0, "the bottom edge"), (.pi / 2, "the right edge"),
-                                                        (.pi, "the ceiling"), (3 * .pi / 2, "the left edge")]
-    private func edgeName(_ c: Creature) -> String {
-        Self.edgeNames.min {
-            abs(Creature.shortestArc(from: c.rotation, to: $0.0)) < abs(Creature.shortestArc(from: c.rotation, to: $1.0))
-        }!.1
-    }
-
-    private func describe(_ i: Int) -> String {
-        let c = creatures[i], name = settings.character(forCreature: i).name
-        if c.isHeld { return "\(name) is dangling from the user's cursor" }
-        if c.isJumping { return "\(name) is mid-jump" }
-        return "\(name) is \(c.isSleeping ? "asleep on" : "on") \(edgeName(c))"
-    }
-
-    /// "Make Someone Talk" from the menu, or a Shift-poke on `chosen`: the speaker
-    /// says something to whoever is nearest.
-    func talkNow(from chosen: Int? = nil) {
-        guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
-        guard !talking else { return }
-        let awake = creatures.indices.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
-        guard let speaker = chosen ?? (awake.isEmpty ? Array(creatures.indices) : awake).randomElement(using: &rng),
-              creatures.indices.contains(speaker) else { return }
-        let me = creatures[speaker].position
-        let listener = creatures.indices.filter { $0 != speaker }.min {
-            hypot(creatures[$0].position.x - me.x, creatures[$0].position.y - me.y)
-                < hypot(creatures[$1].position.x - me.x, creatures[$1].position.y - me.y)
-        }!
-        hold(speaker, and: listener)
-        if !talk(from: speaker, to: listener) { endChat(after: 1) }
-    }
-
-    // MARK: Meeting on the edge
-
-    private func parties() -> [Meetings.Party] {
-        creatures.indices.map { i in
-            let c = creatures[i]
-            return Meetings.Party(loop: c.spot.loop, segment: c.segment, position: c.position,
-                                  halfSize: atlas.bodyHalfSize * CGFloat(sizes[i]),
-                                  canTalk: !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
-        }
-    }
-
-    /// Two creatures walked into each other. They chat about it, and every
-    /// third time one of them brings a flower.
-    private func bumped(_ bump: Meetings.Bump) {
-        let (giver, receiver) = Bool.random(using: &rng) ? (bump.a, bump.b) : (bump.b, bump.a)
-        hold(bump.a, and: bump.b)
-        let pa = creatures[bump.a].position, pb = creatures[bump.b].position
-        sparkPalette = [CGColor.white, CGColor(red: 1, green: 0.82, blue: 0.24, alpha: 1),
-                        star(settings.color(forCreature: bump.a)), star(settings.color(forCreature: bump.b))]
-        sparks.burst(at: CGPoint(x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2),
-                     inward: creatures[bump.a].loop.inward(ofSegment: creatures[bump.a].segment), using: &rng)
-        var event = "They just walked into each other."
-        if bump.gift, flight == nil {
-            let flower = Self.flowerNames.randomElement(using: &rng)!
-            flight = (flower, giver, receiver, elapsed)
-            let a = settings.character(forCreature: giver).name, b = settings.character(forCreature: receiver).name
-            event = "\(a) just walked into \(b) and gave \(b) a \(flower)."
-        }
-        if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event) { endChat(after: 2) }
-    }
-
-    private func star(_ rgb: RGB) -> CGColor {
-        CGColor(red: CGFloat(rgb.r) / 255, green: CGFloat(rgb.g) / 255, blue: CGFloat(rgb.b) / 255, alpha: 1)
-    }
-
-    /// Both stop and turn to face each other, like two people who meet in the street.
-    private func hold(_ i: Int, and j: Int) {
-        guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
-        creatures[i].meet(facing: facing(i, toward: j))
-        creatures[j].meet(facing: facing(j, toward: i))
-        chat = (i, j, nil)
-    }
-
-    /// +1 when `j` is further round the loop from `i`, -1 when behind; on another
-    /// loop there is nothing to face, so keep the current heading.
-    private func facing(_ i: Int, toward j: Int) -> CGFloat {
-        let a = creatures[i], b = creatures[j]
-        guard a.spot.loop == b.spot.loop else { return a.direction }
-        return a.loop.wrap(b.t - a.t) < a.loop.length / 2 ? 1 : -1
-    }
-
-    /// The conversation is done, or never started: let them go in a moment.
-    private func endChat(after seconds: Double) {
-        guard var current = chat else { return }
-        current.releaseAt = min(current.releaseAt ?? .infinity, elapsed + seconds)
-        chat = current
-    }
-
-    private func releaseChat() {
-        guard let chat else { return }
-        for i in [chat.a, chat.b] where creatures.indices.contains(i) { creatures[i].walkOn(using: &rng) }
-        self.chat = nil
-    }
-
-    /// Where a flower sits or lands: on the head, away from the edge.
-    private func head(of i: Int) -> CGPoint {
-        let c = creatures[i], up = c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment)
-        let lift = (atlas.bodyHalfSize + flowerCell.height / 2) * CGFloat(sizes[i])
-        return CGPoint(x: c.position.x + up.dx * lift, y: c.position.y + up.dy * lift)
-    }
-
-    private func flightSnapshot() -> FlowerFlight? {
-        guard let flight, creatures.indices.contains(flight.from), creatures.indices.contains(flight.to) else { return nil }
-        let p = min(1, (elapsed - flight.started) / Self.flightTime)
-        let from = head(of: flight.from), to = head(of: flight.to)
-        let arc = sin(p * .pi) * 24
-        let up = creatures[flight.to].loop.inward(ofSegment: creatures[flight.to].segment)
-        return FlowerFlight(
-            image: flowerFrames.frame(animation: flight.flower, time: 0),
-            position: CGPoint(x: from.x + (to.x - from.x) * p + up.dx * arc, y: from.y + (to.y - from.y) * p + up.dy * arc),
-            rotation: creatures[flight.to].rotation,
-            scale: CGFloat(sizes[flight.to])
-        )
-    }
-
-    /// One creature says a line to another; the other answers. Runs in the background.
-    /// Returns false when it could not even start, so the caller can release the pair.
-    @discardableResult
-    private func talk(from speaker: Int, to listener: Int, because event: String? = nil) -> Bool {
-        guard !talking, creatures.indices.contains(speaker), creatures.indices.contains(listener) else { return false }
-        guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
-        let a = settings.character(forCreature: speaker), b = settings.character(forCreature: listener)
-        var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
-        if let event { situation += " " + event }
-        var vars = ["speaker": a.name, "speakerPersona": a.persona, "listener": b.name,
-                    "listenerPersona": b.persona, "situation": situation, "line": ""]
-        let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
-        let bubbleSeconds = settings.bubbleSeconds
-
-        talking = true
-        talkStatus = "asking \(service.model) via \(service.provider.title)…"
-        Task { [weak self] in
-            defer { self?.talking = false; self?.endChat(after: 1.2) }
-            do {
-                try await service.checkModel()
-                let first = Banter.cleanLine(
-                    try await service.reply(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars)),
-                    speaker: a.name)
-                guard let self else { return }
-                guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
-                say(first, from: speaker)
-                talkStatus = "\(a.name): \(first)"
-
-                // Swap seats for the answer.
-                vars["speaker"] = b.name; vars["speakerPersona"] = b.persona
-                vars["listener"] = a.name; vars["listenerPersona"] = a.persona; vars["line"] = first
-                let reply = Banter.cleanLine(
-                    try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars)),
-                    speaker: b.name)
-                try await Task.sleep(for: .seconds(Banter.showTime(first, base: bubbleSeconds) * 0.6))
-                guard !reply.isEmpty else { return }
-                say(reply, from: listener)
-                talkStatus = "\(b.name): \(reply)"
-            } catch {
-                self?.talkStatus = "\(error)"
-                FileHandle.standardError.write(Data("Ledgelings talk: \(error)\n".utf8))
-            }
-        }
-        return true
-    }
-
-    private func say(_ text: String, from index: Int) {
-        guard creatures.indices.contains(index) else { return }
-        bubbles[index] = (text, elapsed + Banter.showTime(text, base: settings.bubbleSeconds))
-        render()
-    }
-
-    /// The creature whose speech bubble is under `point`, on any monitor.
-    private func bubble(at point: CGPoint) -> Int? {
-        overlays.lazy.compactMap { $0.bubbleIndex(at: point) }.first
-    }
-
-    // MARK: The user's hand
-
-    /// The topmost creature whose body is under `point`.
-    private func creature(at point: CGPoint) -> Int? {
-        creatures.indices.reversed().first { i in
-            let half = atlas.bodyHalfSize * CGFloat(sizes[i]) + 4      // a little forgiveness
-            let p = creatures[i].position
-            return abs(point.x - p.x) <= half && abs(point.y - p.y) <= half
-        }
-    }
-
-    /// Shift-click naps or wakes. A plain press on a sleeper picks it up. A
-    /// press on a speech bubble closes it.
-    private func hand(_ event: HandEvent) {
-        switch event {
-        case .down(let point, let shift):
-            guard let i = creature(at: point) else {
-                if let spoken = bubble(at: point) { bubbles.removeValue(forKey: spoken) }
-                break
-            }
-            if shift {
-                poke = (i, point)          // decided on release: a poke, or a drag
-            } else if creatures[i].pickUp() {
-                let p = creatures[i].position
-                held = (i, CGVector(dx: p.x - point.x, dy: p.y - point.y))
-            }
-        case .dragged(let point):
-            if let poke, hypot(point.x - poke.at.x, point.y - poke.at.y) >= Self.dragThreshold {
-                self.poke = nil
-                if creatures.indices.contains(poke.index), creatures[poke.index].pickUp(evenAwake: true) {
-                    let p = creatures[poke.index].position
-                    held = (poke.index, CGVector(dx: p.x - poke.at.x, dy: p.y - poke.at.y))
-                }
-            }
-            guard let held else { return }
-            creatures[held.index].drag(to: CGPoint(x: point.x + held.grab.dx, y: point.y + held.grab.dy))
-        case .up:
-            if let poke { self.poke = nil; talkNow(from: poke.index) }
-            letGo()
-        case .secondaryDown(let point):
-            if let i = creature(at: point) { creatures[i].toggleNap(using: &rng) }
-        }
-        render()      // follow the hand at the mouse's rate, not the display link's
-    }
-
-    private func letGo() {
-        if let held, creatures.indices.contains(held.index) { creatures[held.index].drop() }
-        held = nil
-    }
-
-    /// Make an overlay clickable only while the cursor is on something the user
-    /// can act on: any sleeper, any creature at all while Shift is down, or a
-    /// speech bubble. Shift is also how you get close enough to right-click one.
-    private func updateClickability(cursor: CGPoint, shift: Bool) {
-        let target = held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
-            || bubble(at: cursor) != nil
-        for overlay in overlays { overlay.setClickable(target && overlay.screen.frame.contains(cursor)) }
-    }
-
     // MARK: The frame
 
-    @objc private func tick(_ link: CADisplayLink) {
+    @objc func tick(_ link: CADisplayLink) {
         let now = link.timestamp
         defer { lastTick = now }
         guard let last = lastTick else { return }
@@ -432,29 +190,22 @@ final class Colony: NSObject {
         updateClickability(cursor: cursor, shift: shift)
 
         for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count { bubbles.removeValue(forKey: i) }
-        if let flight, elapsed - flight.started >= Self.flightTime {
-            if creatures.indices.contains(flight.to) { worn[flight.to] = (flight.flower, elapsed + settings.flowerMinutes * 60) }
-            self.flight = nil
-        }
-        for (i, hat) in worn where hat.until <= elapsed { worn.removeValue(forKey: i) }
+        gifts.update(at: elapsed, wearFor: settings.flowerMinutes * 60)
         sparks.update(dt: dt)
-        if let chat {
-            let stillThere = [chat.a, chat.b].allSatisfy { creatures.indices.contains($0) && creatures[$0].isChatting }
-            if !stillThere || (chat.releaseAt.map { $0 <= elapsed } ?? false) { releaseChat() }
-        }
+        releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         render()
         setFrameRate(asleep: held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping))
     }
 
     /// A sleeping colony only breathes and floats Zs: 12 fps is plenty.
-    private func setFrameRate(asleep: Bool) {
+    func setFrameRate(asleep: Bool) {
         let top: Float = asleep ? 12 : 30
         let wanted = CAFrameRateRange(minimum: min(10, top), maximum: top, preferred: top)
         if link?.preferredFrameRateRange != wanted { link?.preferredFrameRateRange = wanted }
     }
 
-    private func render() {
+    func render() {
         let snapshots = creatures.indices.map { i in
             let c = creatures[i]
             return CreatureSnapshot(
@@ -464,17 +215,11 @@ final class Colony: NSObject {
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
                 inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
                 bubble: bubbles[i]?.text,
-                hat: worn[i].flatMap { flowerFrames.frame(animation: $0.flower, time: 0) }
+                hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) }
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)
-        let inFlight = flightSnapshot()
-        let starSize = CGFloat(2 * (sizes.max() ?? 2))
-        let stars = sparks.alive.map { spark in
-            SparkSnapshot(position: spark.position, size: starSize,
-                          color: sparkPalette.isEmpty ? .white : sparkPalette[spark.tint % sparkPalette.count],
-                          opacity: Float(spark.opacity))
-        }
+        let inFlight = flightSnapshot(), stars = sparkSnapshots()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars)
