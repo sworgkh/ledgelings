@@ -38,6 +38,24 @@ A sleeper never notices the cursor — that is what lets you grab it. The overla
 still click-through: it turns clickable only while the cursor is on a creature you
 can act on, and it never takes focus from the app you are in.
 
+**They talk.** Once an hour, or when you pick **Make Someone Talk** in the menu, one
+creature says a line to its nearest neighbour and the neighbour answers. The lines
+come from a small language model running on your Mac in [LM Studio](https://lmstudio.ai),
+so nothing leaves the machine. Each creature has a character: a name and a
+personality that goes into the prompt. Six come built in; edit them, and the
+prompts themselves, in Settings → Talk.
+
+To make it work: install LM Studio, download `google/gemma-3-1b` in it, and keep its
+local server running:
+
+```bash
+lms get google/gemma-3-1b --mlx
+lms server start
+```
+
+Settings → Talk → **Check** tells you whether the app can see the server and the
+model. If LM Studio is off, the creatures simply stay quiet; the menu shows why.
+
 **Settings** (menu bar icon → Settings…), all saved:
 
 | Setting | Default | Notes |
@@ -47,6 +65,10 @@ can act on, and it never takes focus from the app you are in.
 | Colours | 6 | creature 1 wears colour 1, and so on, wrapping round. Eyes stay black |
 | Day lasts | 3 min | |
 | Night lasts | 5 min | 0 = they never sleep |
+| Talk every | 60 min | 0 = only on request |
+| Server, model | `http://localhost:1234`, `google/gemma-3-1b` | any model LM Studio has installed |
+| Characters | 6 built in | name + personality; creature 1 is character 1, wrapping round |
+| Prompts | built in | the system prompt, the opening line and the reply, with `{placeholders}` |
 
 The menu also shows the time left until dusk or dawn, and has **Put Them to Sleep
 Now / Wake Them Up Now** and **Make Them Jump**.
@@ -58,7 +80,8 @@ Not yet: launch at login, more species.
 ```bash
 swift run Ledgelings                                   # from a terminal; Ctrl-C to stop
 scripts/make-app.sh && open build/Ledgelings.app       # a real menu-bar app
-swift test                                             # outline geometry, the creature's brain, recolouring
+swift test                                             # geometry, brain, recolouring, prompts
+LEDGELINGS_LIVE=1 swift test --filter TalkServiceTests     # a real exchange through LM Studio
 ```
 
 Everything else is under the menu-bar icon, a filled square.
@@ -128,8 +151,9 @@ Sources/LedgelingsCore/   pure logic, no AppKit:
                             EdgeLoop   one closed loop; a position is a single number
                             Creature   the brain: walk, idle, blink, jump, sleep
                             DayNight   the colony's clock
-Sources/Ledgelings/       the app: Colony (creatures + clock + display link), one ScreenOverlay
-                          per monitor, SpriteAtlas (frames + recolouring), settings, menu bar item
+                            Banter     characters, prompt templates, cleaning a model's line
+Sources/Ledgelings/       the app: Colony (creatures + clock + talk), one ScreenOverlay per monitor
+                          with sprites and speech bubbles, TalkService (LM Studio), SpriteAtlas, settings
 Tests/                    unit tests for both
 spritetool/               the sprite sheet tool (Python: Pillow + PyYAML)
 sprites/                  recipes

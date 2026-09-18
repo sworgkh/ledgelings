@@ -325,7 +325,7 @@ public struct Creature: Sendable {
     }
 
     /// The signed angle in (-π, π] that takes `from` to `to` the short way round.
-    static func shortestArc(from: Double, to: Double) -> Double {
+    public static func shortestArc(from: Double, to: Double) -> Double {
         var delta = (to - from).truncatingRemainder(dividingBy: 2 * .pi)
         if delta > .pi { delta -= 2 * .pi }
         if delta <= -.pi { delta += 2 * .pi }

@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import LedgelingsCore
 
 /// Everything the user can change, saved to UserDefaults as it changes.
 @MainActor
@@ -25,6 +26,22 @@ final class AppSettings: ObservableObject {
     /// Zero means they never sleep.
     @Published var nightMinutes: Double { didSet { save(nightMinutes, "nightMinutes") } }
 
+    // MARK: Talk
+
+    static let defaultTalkServer = "http://localhost:1234"
+    static let defaultTalkModel = "google/gemma-3-1b"
+
+    @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
+    @Published var talkServer: String { didSet { save(talkServer, "talkServer") } }
+    @Published var talkModel: String { didSet { save(talkModel, "talkModel") } }
+    /// Minutes between one creature speaking to another on its own. Zero: only on request.
+    @Published var talkEveryMinutes: Double { didSet { save(talkEveryMinutes, "talkEveryMinutes") } }
+    /// Creature i is character i, wrapping round like the colours.
+    @Published var characters: [Character] { didSet { saveJSON(characters, "characters") } }
+    @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
+    @Published var linePrompt: String { didSet { save(linePrompt, "linePrompt") } }
+    @Published var replyPrompt: String { didSet { save(replyPrompt, "replyPrompt") } }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -42,6 +59,31 @@ final class AppSettings: ObservableObject {
         maxSize = max(low, high)
         dayMinutes = max(0.5, defaults.object(forKey: "dayMinutes") as? Double ?? 3)
         nightMinutes = max(0, defaults.object(forKey: "nightMinutes") as? Double ?? 5)
+
+        talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
+        talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
+        talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel
+        talkEveryMinutes = max(0, defaults.object(forKey: "talkEveryMinutes") as? Double ?? 60)
+        let savedCast = defaults.data(forKey: "characters").flatMap { try? JSONDecoder().decode([Character].self, from: $0) } ?? []
+        characters = savedCast.isEmpty ? Banter.defaultCharacters : savedCast
+        systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
+        linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
+        replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt
+    }
+
+    func character(forCreature index: Int) -> Character {
+        characters.isEmpty ? Banter.defaultCharacters[index % Banter.defaultCharacters.count]
+                           : characters[index % characters.count]
+    }
+
+    var talkServerURL: URL? {
+        URL(string: talkServer.trimmingCharacters(in: .whitespaces)).flatMap { $0.host == nil ? nil : $0 }
+    }
+
+    func resetPrompts() {
+        systemPrompt = Banter.defaultSystemPrompt
+        linePrompt = Banter.defaultLinePrompt
+        replyPrompt = Banter.defaultReplyPrompt
     }
 
     /// The size for a creature whose place in the range is `share` (0 = smallest,
@@ -56,4 +98,7 @@ final class AppSettings: ObservableObject {
     }
 
     private func save(_ value: Any, _ key: String) { defaults.set(value, forKey: key) }
+    private func saveJSON(_ value: some Encodable, _ key: String) {
+        if let data = try? JSONEncoder().encode(value) { defaults.set(data, forKey: key) }
+    }
 }

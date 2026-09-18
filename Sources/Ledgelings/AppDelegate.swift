@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let skipItem = NSMenuItem(title: "", action: #selector(skipPhase), keyEquivalent: "")
+    private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
@@ -31,6 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(skipItem)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Make Them Jump", action: #selector(makeThemJump), keyEquivalent: "j").target = self
+        menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
+        talkStatusItem.isEnabled = false
+        menu.addItem(talkStatusItem)
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Ledgelings", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -46,9 +50,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         skipItem.title = colony.isNight ? "Wake Them Up Now" : "Put Them to Sleep Now"
         skipItem.isHidden = settings.nightMinutes == 0
         if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
+        talkStatusItem.title = "   " + String(colony.talkStatus.prefix(70))
     }
 
     @objc private func makeThemJump() { colony?.startleEveryone() }
     @objc private func skipPhase() { colony?.skipPhase() }
+    @objc private func makeSomeoneTalk() { colony?.talkNow() }
     @objc private func openSettings() { settingsWindow.show() }
 }

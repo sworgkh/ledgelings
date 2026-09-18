@@ -35,6 +35,12 @@ final class Colony: NSObject {
     private var watchers: Set<AnyCancellable> = []
 
     private(set) var clock: DayNight
+    /// One line per talking creature, and when it stops showing.
+    private var bubbles: [Int: (text: String, until: Double)] = [:]
+    private var nextTalkAt: Double = 0
+    private var talking = false
+    /// The last thing that happened with the model, for the menu.
+    private(set) var talkStatus = "not tried yet"
     private(set) var elapsed: Double = 0
 
     var isNight: Bool { clock.isNight(at: elapsed) }
@@ -74,6 +80,7 @@ final class Colony: NSObject {
 
     private func applySettings() {
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
+        nextTalkAt = min(nextTalkAt, elapsed + settings.talkEveryMinutes * 60)
 
         if let held, held.index >= settings.creatureCount { letGo() }
         while creatures.count > settings.creatureCount {
@@ -147,6 +154,84 @@ final class Colony: NSObject {
                         facingForwards: .random(using: &rng), config: config)
     }
 
+    // MARK: Talk
+
+    private static let edgeNames: [(Double, String)] = [(0, "the bottom edge"), (.pi / 2, "the right edge"),
+                                                        (.pi, "the ceiling"), (3 * .pi / 2, "the left edge")]
+    private func edgeName(_ c: Creature) -> String {
+        Self.edgeNames.min {
+            abs(Creature.shortestArc(from: c.rotation, to: $0.0)) < abs(Creature.shortestArc(from: c.rotation, to: $1.0))
+        }!.1
+    }
+
+    private func describe(_ i: Int) -> String {
+        let c = creatures[i], name = settings.character(forCreature: i).name
+        if c.isHeld { return "\(name) is dangling from the user's cursor" }
+        if c.isJumping { return "\(name) is mid-jump" }
+        return "\(name) is \(c.isSleeping ? "asleep on" : "on") \(edgeName(c))"
+    }
+
+    /// One creature says a line to another; the other answers. Runs in the background.
+    func talkNow() {
+        guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
+        guard !talking else { return }
+        guard let url = settings.talkServerURL else { talkStatus = "bad server address"; return }
+        let awake = creatures.indices.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
+        guard let speaker = (awake.isEmpty ? Array(creatures.indices) : awake).randomElement(using: &rng) else { return }
+        let me = creatures[speaker].position
+        let listener = creatures.indices.filter { $0 != speaker }.min {
+            hypot(creatures[$0].position.x - me.x, creatures[$0].position.y - me.y)
+                < hypot(creatures[$1].position.x - me.x, creatures[$1].position.y - me.y)
+        }!
+
+        let a = settings.character(forCreature: speaker), b = settings.character(forCreature: listener)
+        let situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
+        var vars = ["speaker": a.name, "speakerPersona": a.persona, "listener": b.name,
+                    "listenerPersona": b.persona, "situation": situation, "line": ""]
+        let service = TalkService(baseURL: url, model: settings.talkModel)
+        let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
+
+        talking = true
+        talkStatus = "asking \(settings.talkModel)…"
+        Task { [weak self] in
+            defer { self?.talking = false }
+            do {
+                try await service.checkModel()
+                let first = Banter.cleanLine(
+                    try await service.line(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars)),
+                    speaker: a.name)
+                guard let self else { return }
+                guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
+                say(first, from: speaker)
+                talkStatus = "\(a.name): \(first)"
+
+                // Swap seats for the answer.
+                vars["speaker"] = b.name; vars["speakerPersona"] = b.persona
+                vars["listener"] = a.name; vars["listenerPersona"] = a.persona; vars["line"] = first
+                let reply = Banter.cleanLine(
+                    try await service.line(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars)),
+                    speaker: b.name)
+                try await Task.sleep(for: .seconds(Self.showTime(first) * 0.6))
+                guard !reply.isEmpty else { return }
+                say(reply, from: listener)
+                talkStatus = "\(b.name): \(reply)"
+            } catch {
+                self?.talkStatus = "\(error)"
+                FileHandle.standardError.write(Data("Ledgelings talk: \(error)\n".utf8))
+            }
+        }
+    }
+
+    private static func showTime(_ text: String) -> Double {
+        min(14, 3.5 + Double(text.split(separator: " ").count) * 0.45)
+    }
+
+    private func say(_ text: String, from index: Int) {
+        guard creatures.indices.contains(index) else { return }
+        bubbles[index] = (text, elapsed + Self.showTime(text))
+        render()
+    }
+
     // MARK: The user's hand
 
     /// The topmost creature whose body is under `point`.
@@ -208,6 +293,12 @@ final class Colony: NSObject {
             asleepFor[i] = creatures[i].looksAsleep ? asleepFor[i] + dt : 0
         }
         updateClickability(cursor: cursor, shift: shift)
+
+        for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count { bubbles.removeValue(forKey: i) }
+        if settings.talkEnabled, settings.talkEveryMinutes > 0, elapsed >= nextTalkAt {
+            nextTalkAt = elapsed + settings.talkEveryMinutes * 60
+            if elapsed > 1 { talkNow() }     // not on the very first tick
+        }
         render()
         setFrameRate(asleep: held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping))
     }
@@ -226,7 +317,9 @@ final class Colony: NSObject {
                 position: c.position, rotation: c.rotation, isMirrored: c.isMirrored,
                 image: frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes),
                 scale: CGFloat(sizes[i]),
-                asleepFor: c.looksAsleep ? asleepFor[i] : nil
+                asleepFor: c.looksAsleep ? asleepFor[i] : nil,
+                inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
+                bubble: bubbles[i]?.text
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)

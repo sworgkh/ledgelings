@@ -11,6 +11,10 @@ struct CreatureSnapshot {
     var scale: CGFloat
     /// Seconds asleep, or nil when awake. Drives the floating Zs.
     var asleepFor: Double?
+    /// Which way is "up" for this creature: away from its edge, into the screen.
+    var inward: CGVector = CGVector(dx: 0, dy: 1)
+    /// What it is saying right now, if anything.
+    var bubble: String?
 }
 
 /// One monitor's glass, and a set of layers for EVERY creature -- not only the
@@ -25,6 +29,10 @@ final class ScreenOverlay {
     let view: OverlayView
     private let window: OverlayWindow
     private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer])] = []
+    private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
+    private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
+    private static let bubbleMaxWidth: CGFloat = 250
+    private static let bubblePad: CGFloat = 8
 
     init(screen: NSScreen) {
         self.screen = screen
@@ -44,18 +52,22 @@ final class ScreenOverlay {
 
     func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize) {
         while creatures.count < snapshots.count { creatures.append(makeLayers()) }
-        while creatures.count > snapshots.count { creatures.removeLast().body.removeFromSuperlayer() }
+        while creatures.count > snapshots.count {
+            creatures.removeLast().body.removeFromSuperlayer()
+            removeBubble(for: creatures.count)
+        }
 
         let origin = screen.frame.origin
         // A creature nowhere near this monitor costs it nothing: hidden layer, no
         // commit, so the window server has no reason to recomposite this screen.
-        for (layers, snap) in zip(creatures, snapshots) {
+        for (index, (layers, snap)) in zip(creatures, snapshots).enumerated() {
             let scale = snap.scale, bodyHeight = cell.height * scale
             let reach = max(cell.width, cell.height) * scale * 2.5
             let visible = screen.frame.insetBy(dx: -reach, dy: -reach)
             let here = visible.contains(snap.position)
             if layers.body.isHidden == here { layers.body.isHidden = !here }
-            guard here else { continue }
+            guard here else { removeBubble(for: index); continue }
+            renderBubble(snap, index: index, bodyHalf: cell.width * scale / 2)
             // The body layer carries position and the turn onto the edge; the
             // sprite inside it carries only the mirror, so the Zs never flip.
             layers.body.position = CGPoint(x: snap.position.x - origin.x, y: snap.position.y - origin.y)
@@ -79,6 +91,65 @@ final class ScreenOverlay {
                 layer.transform = CATransform3DScale(CATransform3DMakeRotation(-snap.rotation, 0, 0, 1), grow, grow, 1)
             }
         }
+    }
+
+    // MARK: Speech
+
+    private func renderBubble(_ snap: CreatureSnapshot, index: Int, bodyHalf: CGFloat) {
+        guard let text = snap.bubble, !text.isEmpty else { removeBubble(for: index); return }
+        let origin = screen.frame.origin
+        let entry: (plate: CALayer, text: CATextLayer, for: String)
+        if let existing = bubbles[index], existing.for == text {
+            entry = existing
+        } else {
+            removeBubble(for: index)
+            entry = makeBubble(text)
+            bubbles[index] = entry
+        }
+        // Float it off the creature's "head", then keep it on this screen.
+        let size = entry.plate.bounds.size
+        var centre = CGPoint(
+            x: snap.position.x + snap.inward.dx * (bodyHalf + 10 + size.width / 2),
+            y: snap.position.y + snap.inward.dy * (bodyHalf + 10 + size.height / 2)
+        )
+        let room = screen.frame.insetBy(dx: size.width / 2 + 6, dy: size.height / 2 + 6)
+        centre.x = min(max(centre.x, room.minX), room.maxX)
+        centre.y = min(max(centre.y, room.minY), room.maxY)
+        entry.plate.position = CGPoint(x: (centre.x - origin.x).rounded(), y: (centre.y - origin.y).rounded())
+    }
+
+    private func makeBubble(_ text: String) -> (plate: CALayer, text: CATextLayer, for: String) {
+        let pad = Self.bubblePad
+        let attributed = NSAttributedString(string: text, attributes: [
+            .font: Self.bubbleFont, .foregroundColor: NSColor.white,
+        ])
+        let measured = attributed.boundingRect(
+            with: CGSize(width: Self.bubbleMaxWidth, height: 400),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]
+        ).size
+        let textSize = CGSize(width: ceil(measured.width) + 2, height: ceil(measured.height) + 2)
+
+        let plate = CALayer()
+        plate.actions = Self.noAnimations
+        plate.bounds = CGRect(x: 0, y: 0, width: textSize.width + pad * 2, height: textSize.height + pad * 2)
+        plate.backgroundColor = CGColor(srgbRed: 43 / 255, green: 36 / 255, blue: 64 / 255, alpha: 0.96)
+        plate.borderColor = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.35)
+        plate.borderWidth = 1
+        plate.cornerRadius = 6
+
+        let label = CATextLayer()
+        label.actions = Self.noAnimations
+        label.string = attributed
+        label.isWrapped = true
+        label.contentsScale = screen.backingScaleFactor
+        label.frame = CGRect(x: pad, y: pad, width: textSize.width, height: textSize.height)
+        plate.addSublayer(label)
+        view.layer?.addSublayer(plate)
+        return (plate, label, text)
+    }
+
+    private func removeBubble(for index: Int) {
+        bubbles.removeValue(forKey: index)?.plate.removeFromSuperlayer()
     }
 
     private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer]) {
