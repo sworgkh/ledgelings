@@ -67,9 +67,28 @@ struct SettingsView: View {
             } footer: {
                 Text("They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake.")
             }
+
+            Section {
+                Toggle("Start Ledgelings when you log in", isOn: $startsAtLogin)
+                    .onChange(of: startsAtLogin) { _, wanted in
+                        guard wanted != LaunchAtLogin.isOn else { return }
+                        do { try LaunchAtLogin.set(wanted) } catch { loginStatus = "\(error.localizedDescription)" ; return }
+                        loginStatus = LaunchAtLogin.status
+                        startsAtLogin = LaunchAtLogin.isOn
+                    }
+                LabeledContent("Status") { Text(loginStatus).foregroundStyle(.secondary) }
+            } header: {
+                Text("Startup")
+            } footer: {
+                Text("Uses the system's Login Items list; you can also change it in System Settings › General › Login Items.")
+            }
         }
         .formStyle(.grouped)
+        .onAppear { startsAtLogin = LaunchAtLogin.isOn; loginStatus = LaunchAtLogin.status }
     }
+
+    @State private var startsAtLogin = false
+    @State private var loginStatus = "not checked"
 
     private func colorBinding(_ index: Int) -> Binding<Color> {
         Binding(

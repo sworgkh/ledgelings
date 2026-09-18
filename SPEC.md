@@ -370,9 +370,11 @@ creature's current rotation.
 
 ### 6.2 One conversation
 
-`talk(speaker, listener, event?)`. Refused (returns false) if a conversation is
-already running, an index is invalid, or no brain is configured (§8). Then, in
-the background:
+`talk(speaker, listener, event?)`. Refused (returns false) if either creature
+is already in a conversation (`busy`), an index is invalid, or no brain is
+configured (§8). Other pairs may talk at the same time; a busy creature is not
+eligible for bumps or pokes until its conversation ends. Then, in the
+background:
 
 1. `checkModel()` (§8.2).
 2. Ask for the opening line: system = rendered system prompt, user = rendered
@@ -429,8 +431,8 @@ buttons that open the folder in the file manager and in a terminal.
 
 ### 6.6 Menu and poke
 
-"Make Someone Talk" picks a random awake, non-jumping creature (anyone if none
-is awake), the nearest other creature listens. A Shift-poke (§11) does the same
+"Make Someone Talk" picks a random awake, non-jumping creature that is not
+busy (anyone free if none is awake); the nearest free creature listens. A Shift-poke (§11) does the same
 with the poked creature as speaker. Both first **hold** the pair (§7.2). If the
 talk could not start, release after 1 s.
 
@@ -757,6 +759,7 @@ falls through to whatever is underneath.
 | Menu: Hide Them for a While… / Bring Them Back Now | §7.5; while hiding the item shows the time left |
 | Menu: Chat History… | the settings window on the Chats tab (§6.5) |
 | Menu: Settings… | the settings window |
+| Settings › Startup: Start at login | registers the app in the system's login items (macOS `SMAppService`); only an installed .app can |
 
 The menu also shows `"Day — they sleep in m:ss"` / `"Night — they wake in
 m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
