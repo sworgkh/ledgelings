@@ -13,6 +13,8 @@ extension Colony {
     static let doorMiddle: CGFloat = 19
     /// How close to the door, along the loop, counts as "in".
     static let doorReach: CGFloat = 6
+    /// Seconds to shrink into the doorway, and to grow back out of it.
+    static let doorTime = 0.35
     /// Farther than this along the loop, a creature jumps to the porch instead of running the whole way.
     static let runReach: CGFloat = 420
     /// The porch: this far left of the doorway, on the floor. Jumps land here, then it is a short run in.
@@ -45,6 +47,8 @@ extension Colony {
         letGo()
         releaseChat()
         bubbles.removeAll()
+        entering.removeAll()
+        leaving.removeAll()
         hideout.hide(count: creatures.count, at: elapsed, for: seconds)
         render()
     }
@@ -61,11 +65,26 @@ extension Colony {
                 guard creatures.indices.contains(i) else { continue }
                 // Out through the door and away from the corner, so nobody walks straight behind the house.
                 creatures[i].emerge(at: doorSpot(for: i), facing: -1, using: &rng)
+                leaving[i] = elapsed
             }
         }
         if hideout.phase == .gathering {
-            for i in creatures.indices where !hideout.isInside(i) { herd(i) }
+            for (i, since) in entering where elapsed - since >= Self.doorTime {
+                entering.removeValue(forKey: i)
+                hideout.entered(i, at: elapsed)
+            }
+            for i in creatures.indices where !hideout.isInside(i) && entering[i] == nil { herd(i) }
+        } else if !entering.isEmpty {
+            entering.removeAll()          // recalled mid-shrink: pop back to full size and stay out
         }
+        for (i, since) in leaving where elapsed - since >= Self.doorTime { leaving.removeValue(forKey: i) }
+    }
+
+    /// 1 = full size; on the way in it falls to 0, on the way out it rises from 0.
+    func doorShrink(of i: Int) -> CGFloat {
+        if let since = entering[i] { return CGFloat(max(0, 1 - (elapsed - since) / Self.doorTime)) }
+        if let since = leaving[i] { return CGFloat(min(1, (elapsed - since) / Self.doorTime)) }
+        return 1
     }
 
     /// Send one creature home: a short run in if it is near the door, otherwise a
@@ -78,7 +97,7 @@ extension Colony {
         let c = creatures[i]
         let along = c.spot.loop == door.loop ? min(c.loop.wrap(c.t - door.t), c.loop.wrap(door.t - c.t)) : .infinity
         if along <= Self.doorReach {
-            hideout.entered(i, at: elapsed)
+            entering[i] = elapsed         // at the door: shrink away, then it is inside
         } else if along > Self.runReach, !c.hasArrived {
             creatures[i].leap(to: porchSpot(for: i))
         } else if !c.isRunning {
@@ -91,7 +110,6 @@ extension Colony {
         let grown = CGFloat(hideout.scale(at: elapsed))
         guard grown > 0 else { return nil }
         return HouseSnapshot(image: houseFrames.frame(animation: "house", time: 0),
-                             door: houseFrames.frame(animation: "door", time: 0),
                              corner: houseCorner, scale: houseScale * grown)
     }
 }

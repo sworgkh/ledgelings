@@ -524,11 +524,13 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
   monitor's bottom-right corner (`x = maxX + 2·s`, `y = minY`, `s = maxSize`),
   and it grows and shrinks **about that corner**, never about its centre.
   `scale` ramps 0→1 during appearing and growing, 1→0 during shrinking and
-  vanishing, 1 while gathering and releasing, 0 otherwise. Two layers at the
-  same place and scale: the whole house **behind** the creatures, and the
-  doorway alone (frame `door`) **in front** of them, so a creature walks up
-  the front of the house and is swallowed by the dark doorway, never by the
-  wall.
+  vanishing, 1 while gathering and releasing, 0 otherwise. Drawn **behind**
+  the creatures.
+- **Through the door**: a creature that reaches the doorway's middle stands
+  there and shrinks to nothing over 0.35 s, scaled about its centre while its
+  centre sinks toward the floor (`centre −= inward · bodyHalf · (1 − shrink)`),
+  so its feet stay down; then it is inside. Coming out it grows from 0 to 1
+  over 0.35 s the same way while already walking.
 - **Doorway**: on the house's left, 26 px wide and 28 px tall from the floor,
   its middle 19 sheet px from the cell's left edge. The door point is that
   middle on the floor; each creature's door spot is the nearest point of its
@@ -536,8 +538,9 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
 - **Porch**: a point 150 points left of the doorway on the floor.
 - **Gathering**, every frame, for every creature not yet inside, with `along`
   = its loop distance to the door (infinite on another loop): if held, let
-  go; if in the air, wait; if `along ≤ 6` it is **inside** (skipped by update
-  and render from now on); else if `along > 420` and it has not just landed,
+  go; if in the air, wait; if `along ≤ 6` it starts shrinking into the door
+  and 0.35 s later is **inside** (skipped by update and render from now on);
+  else if `along > 420` and it has not just landed,
   `leap` to the porch; else if not already running, `run` to the door. So the
   far-away ones jump to the porch and walk the last stretch in. Cursor is ignored by everyone while the
   house is out. When every creature is inside, or 25 s have passed (the rest
@@ -639,7 +642,7 @@ Shipped sheets:
 | blocky | 288×96 | 32×32 | [5,5,22,22] | 9 poses × 3 eye rows: idle, walk-0..3, jump, land, sleep-0, sleep-1 × open/half/closed | idle 1 fps; walk 4 frames 8 fps loop; jump; land; sleep 2 frames 0.8 fps loop |
 | zzz | 10×10 | 10×10 | whole | `z` | float |
 | flowers | 160×16 | 16×16 | [1,1,14,15] | ten flowers, one frame each | one per flower |
-| house | 136×60 | 68×60 | [2,2,64,58] | `house`, `door` (the doorway alone) | house, door |
+| house | 68×60 | 68×60 | [2,2,64,58] | `house` | house |
 
 Art rules for any new creature sheet: drawn **standing on a floor, facing
 right**, body **centred in its cell** (rotation is about the cell centre), eyes

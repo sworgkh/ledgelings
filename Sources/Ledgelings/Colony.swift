@@ -58,6 +58,9 @@ final class Colony: NSObject {
     var sparkPalette: [CGColor] = []
     /// The house they hide in when asked to go away for a while.
     var hideout = Hideout()
+    /// Creatures shrinking into the doorway, and creatures growing out of it, by when they started.
+    var entering: [Int: Double] = [:]
+    var leaving: [Int: Double] = [:]
     /// The last thing that happened with the model, for the menu.
     var talkStatus = "not tried yet"
     var elapsed: Double = 0
@@ -219,15 +222,21 @@ final class Colony: NSObject {
     func render() {
         let snapshots = creatures.indices.map { i in
             let c = creatures[i]
+            let shrink = doorShrink(of: i)
+            let inward = c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment)
+            // Shrinking, it keeps its feet on the floor: the centre sinks as the body gets smaller.
+            let sink = atlas.bodyHalfSize * CGFloat(sizes[i]) * (1 - shrink)
             return CreatureSnapshot(
-                position: c.position, rotation: c.rotation, isMirrored: c.isMirrored,
+                position: CGPoint(x: c.position.x - inward.dx * sink, y: c.position.y - inward.dy * sink),
+                rotation: c.rotation, isMirrored: c.isMirrored,
                 image: frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes),
                 scale: CGFloat(sizes[i]),
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
                 inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
                 bubble: bubbles[i]?.text,
                 hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) },
-                hidden: hideout.isInside(i)
+                hidden: hideout.isInside(i),
+                shrink: shrink
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)

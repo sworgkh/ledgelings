@@ -60,7 +60,6 @@ private func colours(in image: CGImage) -> Set<RGB> {
     @Test func theHouseIsInItsSheet() throws {
         let house = try SpriteAtlas(named: "house")
         #expect(house.frames().frame(animation: "house", time: 0) != nil)
-        #expect(house.frames().frame(animation: "door", time: 0) != nil, "the doorway is its own frame, drawn in front")
         #expect(house.cellSize.width >= 32 && house.cellSize.height >= 32)
     }
 }

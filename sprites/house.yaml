@@ -27,13 +27,8 @@ style: >-
   a squat cottage of plain blocks: cream wall, two red roof slabs, a stone
   chimney, a dark open doorway on the left, two black square windows
 
-# "door" is the doorway on its own, at the same place in the cell. The app draws
-# it in front of the creatures and the rest of the house behind them, so a
-# creature walks up the front of the house and disappears into the doorway.
 poses:
   - {name: house, prompt: a squat blocky cottage, open doorway on the left, chimney on the right}
-  - {name: door,  prompt: only the dark open doorway of that cottage, nothing else}
 
 animations:
   house: {frames: [house], fps: 1, loop: true}
-  door:  {frames: [door], fps: 1, loop: true}

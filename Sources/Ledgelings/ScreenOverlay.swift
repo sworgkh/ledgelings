@@ -19,14 +19,14 @@ struct CreatureSnapshot {
     var hat: CGImage?
     /// Inside the house: draw nothing at all.
     var hidden = false
+    /// 1 = full size; falls to 0 as it disappears into the doorway, rises from 0 as it comes out.
+    var shrink: CGFloat = 1
 }
 
 /// The house, at whatever size it currently is, pinned by its bottom-right corner.
-/// `image` is the whole house, drawn behind the creatures; `door` is the doorway
-/// alone, drawn in front of them, so they vanish into it.
+/// Drawn behind the creatures; at the doorway they shrink to nothing on top of it.
 struct HouseSnapshot {
     var image: CGImage?
-    var door: CGImage?
     var corner: CGPoint
     /// Screen points per sheet pixel, already multiplied by the grow/shrink factor.
     var scale: CGFloat
@@ -68,17 +68,14 @@ final class ScreenOverlay {
     }()
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
     private var sparkLayers: [CALayer] = []
-    private lazy var house = houseLayer(z: -1)     // walls and roof, behind the creatures
-    private lazy var door = houseLayer(z: 1)       // the doorway, in front: it swallows them
-
-    private func houseLayer(z: CGFloat) -> CALayer {
+    private lazy var house: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
-        layer.zPosition = z
-        layer.anchorPoint = CGPoint(x: 1, y: 0)   // grows and shrinks about its bottom-right corner
+        layer.zPosition = -1                       // behind the creatures
+        layer.anchorPoint = CGPoint(x: 1, y: 0)    // grows and shrinks about its bottom-right corner
         view.layer?.addSublayer(layer)
         return layer
-    }
+    }()
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
     private static let bubbleMaxWidth: CGFloat = 250
     private static let bubblePad: CGFloat = 8
@@ -132,7 +129,7 @@ final class ScreenOverlay {
             // The body layer carries position and the turn onto the edge; the
             // sprite inside it carries only the mirror, so the Zs never flip.
             layers.body.position = CGPoint(x: snap.position.x - origin.x, y: snap.position.y - origin.y)
-            layers.body.transform = CATransform3DMakeRotation(snap.rotation, 0, 0, 1)
+            layers.body.transform = CATransform3DScale(CATransform3DMakeRotation(snap.rotation, 0, 0, 1), snap.shrink, snap.shrink, 1)
             layers.sprite.bounds = CGRect(x: 0, y: 0, width: cell.width * scale, height: bodyHeight)
             if (layers.sprite.contents as AnyObject?) !== snap.image { layers.sprite.contents = snap.image }
             layers.sprite.transform = CATransform3DMakeScale(snap.isMirrored ? -1 : 1, 1, 1)
@@ -187,16 +184,14 @@ final class ScreenOverlay {
 
     private func renderHouse(_ inHouse: HouseSnapshot?, cell: CGSize) {
         guard let inHouse, let image = inHouse.image, inHouse.scale > 0 else {
-            if !house.isHidden { house.isHidden = true; door.isHidden = true }
+            if !house.isHidden { house.isHidden = true }
             return
         }
         let origin = screen.frame.origin
-        for (layer, contents) in [(house, image), (door, inHouse.door ?? image)] {
-            layer.isHidden = false
-            layer.contents = contents
-            layer.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
-            layer.position = CGPoint(x: inHouse.corner.x - origin.x, y: inHouse.corner.y - origin.y)
-        }
+        house.isHidden = false
+        house.contents = image
+        house.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
+        house.position = CGPoint(x: inHouse.corner.x - origin.x, y: inHouse.corner.y - origin.y)
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {

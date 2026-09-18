@@ -167,7 +167,7 @@ def test_the_house_is_blocky_with_a_creature_sized_doorway_on_the_left():
     from spritetool.painters import house as painter
 
     recipe = load_recipe(HOUSE)
-    assert [a.name for a in recipe.animations] == ["house", "door"]
+    assert [a.name for a in recipe.animations] == ["house"]
     sheet = key_out(get_painter("house")(recipe), recipe.background, recipe.tolerance)
     bx, by, bw, bh = recipe.content_box
     x, y, w, h = recipe.cell_rect(0, 0)
@@ -192,10 +192,3 @@ def test_the_house_is_blocky_with_a_creature_sized_doorway_on_the_left():
     assert cell.getpixel((bx + painter.DOOR_X + painter.DOOR_W // 2, floor - painter.DOOR_H + 1))[:3] == dark
     # Windows are eye-black, like the creature.
     assert (0, 0, 0) in {cell.getpixel((px, py))[:3] for px in range(w) for py in range(h) if cell.getpixel((px, py))[3]}
-    # The door frame is the doorway alone, exactly where it is in the house.
-    x2, y2, _, _ = recipe.cell_rect(1, 0)
-    door = sheet.crop((x2, y2, x2 + w, y2 + h))
-    dleft, dtop, dright, dbottom = door.getchannel("A").getbbox()
-    assert (dleft, dright) == (bx + painter.DOOR_X, bx + painter.DOOR_X + painter.DOOR_W)
-    assert dbottom == floor and dtop == floor - painter.DOOR_H
-    assert {door.getpixel((px, py))[:3] for px in range(dleft, dright) for py in range(dtop, dbottom)} == {dark}

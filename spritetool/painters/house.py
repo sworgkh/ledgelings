@@ -51,12 +51,8 @@ def block(draw: ImageDraw.ImageDraw, x0: int, y0: int, x1: int, y1: int, colour)
 
 
 def paint_door(draw: ImageDraw.ImageDraw, ox: int, oy: int) -> None:
-    """The doorway alone: an open hole in the wall colour's outline, corners knocked off.
-
-    Drawn as its own frame so the app can put it IN FRONT of the creatures while
-    the rest of the house stays behind them: a creature walks up the front of
-    the house and is swallowed by the doorway, not by the wall.
-    """
+    """The doorway: an open hole in the wall colour's outline. A creature that
+    reaches its middle shrinks to nothing on top of it."""
     floor = oy + GLYPH_H
     dark = shades(WALL)["outline"]
     dl, dr, dt = ox + DOOR_X, ox + DOOR_X + DOOR_W, floor - DOOR_H
@@ -86,19 +82,15 @@ def paint_house(draw: ImageDraw.ImageDraw, ox: int, oy: int) -> None:
         draw.rectangle([wx, wy, wx + 7, wy + 7], fill=EYE)
 
 
-PAINTERS = {"house": paint_house, "door": paint_door}
-
-
 def paint(recipe: Recipe) -> Image.Image:
-    missing = [p for p, _ in recipe.poses if p not in PAINTERS]
-    if missing:
-        raise ValueError(f"the house painter cannot draw {missing}")
+    if [p for p, _ in recipe.poses] != ["house"]:
+        raise ValueError("the house painter draws exactly one pose, 'house'")
     bx, by, bw, bh = recipe.content_box
     if (bw, bh) != (GLYPH_W, GLYPH_H):
         raise ValueError(f"the house needs a {GLYPH_W}x{GLYPH_H} content box, got {bw}x{bh}")
     img = Image.new("RGB", recipe.size, recipe.background)
     draw = ImageDraw.Draw(img)
-    for col, row, pose, _ in recipe.cells():
+    for col, row, _, _ in recipe.cells():
         cx, cy, _, _ = recipe.cell_rect(col, row)
-        PAINTERS[pose](draw, cx + bx, cy + by)
+        paint_house(draw, cx + bx, cy + by)
     return img
