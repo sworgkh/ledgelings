@@ -42,8 +42,8 @@ final class Colony: NSObject {
     private var talking = false
     /// Who has walked into whom, and how often.
     private var meetings = Meetings()
-    /// The flower each creature wears on its head, by creature index.
-    private var worn: [Int: String] = [:]
+    /// The flower each creature wears on its head, by creature index, and when it wilts.
+    private var worn: [Int: (flower: String, until: Double)] = [:]
     /// A flower on its way from one creature to another.
     private var flight: (flower: String, from: Int, to: Int, started: Double)?
     private static let flightTime = 0.6
@@ -370,9 +370,10 @@ final class Colony: NSObject {
 
         for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count { bubbles.removeValue(forKey: i) }
         if let flight, elapsed - flight.started >= Self.flightTime {
-            if creatures.indices.contains(flight.to) { worn[flight.to] = flight.flower }
+            if creatures.indices.contains(flight.to) { worn[flight.to] = (flight.flower, elapsed + settings.flowerMinutes * 60) }
             self.flight = nil
         }
+        for (i, hat) in worn where hat.until <= elapsed { worn.removeValue(forKey: i) }
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         render()
         setFrameRate(asleep: held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping))
@@ -395,7 +396,7 @@ final class Colony: NSObject {
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
                 inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
                 bubble: bubbles[i]?.text,
-                hat: worn[i].flatMap { flowerFrames.frame(animation: $0, time: 0) }
+                hat: worn[i].flatMap { flowerFrames.frame(animation: $0.flower, time: 0) }
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)

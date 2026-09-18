@@ -33,6 +33,8 @@ final class AppSettings: ObservableObject {
     static let defaultOpenRouterModel = "anthropic/claude-haiku-4.5"
     /// Seconds a speech bubble stays up, for a line of typical length.
     static let bubbleRange = 4.0...60.0
+    /// Minutes a gifted flower stays on a head before it wilts away.
+    static let flowerRange = 0.5...30.0
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
     /// Which model answers, for banter and for anything else that wants words.
@@ -44,6 +46,7 @@ final class AppSettings: ObservableObject {
     /// Lives in the keychain, never in the preferences file. Empty means no key.
     @Published var openRouterKey: String { didSet { keychain.set(openRouterKey, for: Self.keychainKeyAccount) } }
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
+    @Published var flowerMinutes: Double { didSet { save(flowerMinutes, "flowerMinutes") } }
     /// Creature i is character i, wrapping round like the colours.
     @Published var characters: [Character] { didSet { saveJSON(characters, "characters") } }
     @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
@@ -79,6 +82,8 @@ final class AppSettings: ObservableObject {
         openRouterKey = keychain.get(Self.keychainKeyAccount) ?? ""
         let bubble = defaults.object(forKey: "bubbleSeconds") as? Double ?? Banter.defaultBubbleSeconds
         bubbleSeconds = min(max(bubble, Self.bubbleRange.lowerBound), Self.bubbleRange.upperBound)
+        let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2
+        flowerMinutes = min(max(flower, Self.flowerRange.lowerBound), Self.flowerRange.upperBound)
         let savedCast = defaults.data(forKey: "characters").flatMap { try? JSONDecoder().decode([Character].self, from: $0) } ?? []
         characters = savedCast.isEmpty ? Banter.defaultCharacters : savedCast
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt

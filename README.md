@@ -56,7 +56,8 @@ Each creature has a character: a name and a personality that goes into the promp
 Six come built in; edit them, and the prompts themselves, in Settings → Talk.
 
 **They give flowers.** Every third time the same two creatures bump into each other,
-one hands the other a flower, which it then wears on its head. Ten flowers, drawn
+one hands the other a flower, which it then wears on its head for a couple of
+minutes before it wilts away. Ten flowers, drawn
 by `sprites/flowers.yaml`: poppy, tulip, daisy, sunflower, rose, bluebell,
 dandelion, lavender, lily and forget-me-not.
 
@@ -82,6 +83,7 @@ the menu shows why.
 | Day lasts | 3 min | |
 | Night lasts | 5 min | 0 = they never sleep |
 | Bubble stays | 14 s | 4 to 60 s; longer lines stay a little longer, never past twice this |
+| Flower lasts | 2 min | 0.5 to 30 min on the head, then it wilts |
 | Brain | LM Studio | or OpenRouter |
 | LM Studio server, model | `http://localhost:1234`, `google/gemma-3-1b` | any model LM Studio has installed |
 | OpenRouter key, model | none, `anthropic/claude-haiku-4.5` | key in the keychain; any id from openrouter.ai/models |

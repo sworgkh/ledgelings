@@ -114,8 +114,15 @@ struct TalkSettingsView: View {
                             .monospacedDigit().frame(width: 76, alignment: .trailing)
                     }
                 }
+                LabeledContent("Flower lasts") {
+                    HStack {
+                        Slider(value: $settings.flowerMinutes, in: AppSettings.flowerRange, step: 0.5)
+                        Text(String(format: "%g min", settings.flowerMinutes))
+                            .monospacedDigit().frame(width: 76, alignment: .trailing)
+                    }
+                }
             } footer: {
-                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower. \"Make Someone Talk\" in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
+                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts. \"Make Someone Talk\" in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
             }
 
             Section {

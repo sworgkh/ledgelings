@@ -87,6 +87,15 @@ import Testing
         #expect(repaired.minSize == 1 && repaired.maxSize == 5)
     }
 
+    @Test func aFlowerIsWornForTwoMinutesByDefaultAndTheTimeIsClampedOnLoad() {
+        let (s, defaults) = fresh()
+        #expect(s.flowerMinutes == 2)
+        s.flowerMinutes = 10
+        #expect(AppSettings(defaults: defaults).flowerMinutes == 10)
+        defaults.set(0.0, forKey: "flowerMinutes")
+        #expect(AppSettings(defaults: defaults).flowerMinutes == AppSettings.flowerRange.lowerBound)
+    }
+
     @Test func bubbleTimeDefaultsToFourteenSecondsAndIsClampedOnLoad() {
         let (s, defaults) = fresh()
         #expect(s.bubbleSeconds == 14)
