@@ -20,27 +20,30 @@ extension Colony {
     }
 
     /// "Make Someone Talk" from the menu, or a Shift-poke on `chosen`: the speaker
-    /// says something to whoever is nearest.
+    /// says something to the nearest creature that is not already talking.
     func talkNow(from chosen: Int? = nil) {
         guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
-        guard !talking, !hideout.isActive else { return }
-        let awake = creatures.indices.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
-        guard let speaker = chosen ?? (awake.isEmpty ? Array(creatures.indices) : awake).randomElement(using: &rng),
-              creatures.indices.contains(speaker) else { return }
+        guard !hideout.isActive else { return }
+        let free = creatures.indices.filter { !busy.contains($0) }
+        let awake = free.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
+        guard let speaker = chosen ?? (awake.isEmpty ? free : awake).randomElement(using: &rng),
+              creatures.indices.contains(speaker), !busy.contains(speaker) else { talkStatus = "everyone is mid-conversation"; return }
         let me = creatures[speaker].position
-        let listener = creatures.indices.filter { $0 != speaker }.min {
+        guard let listener = free.filter({ $0 != speaker }).min(by: {
             hypot(creatures[$0].position.x - me.x, creatures[$0].position.y - me.y)
                 < hypot(creatures[$1].position.x - me.x, creatures[$1].position.y - me.y)
-        }!
+        }) else { talkStatus = "nobody free to listen"; return }
         hold(speaker, and: listener)
-        if !talk(from: speaker, to: listener) { endChat(after: 1) }
+        if !talk(from: speaker, to: listener) { endChat(speaker, listener, after: 1) }
     }
 
-    /// One creature says a line to another; the other answers. Runs in the background.
-    /// Returns false when it could not even start, so the caller can release the pair.
+    /// One creature says a line to another; the other answers. Runs in the background;
+    /// other pairs can talk at the same time. Returns false when it could not even
+    /// start, so the caller can release the pair.
     @discardableResult
     func talk(from speaker: Int, to listener: Int, because event: String? = nil) -> Bool {
-        guard !talking, creatures.indices.contains(speaker), creatures.indices.contains(listener) else { return false }
+        guard creatures.indices.contains(speaker), creatures.indices.contains(listener), speaker != listener,
+              !busy.contains(speaker), !busy.contains(listener) else { return false }
         guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
         let a = settings.character(forCreature: speaker), b = settings.character(forCreature: listener)
         var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
@@ -58,10 +61,14 @@ extension Colony {
                                             model: service.model, lines: spoken))
         }
 
-        talking = true
+        busy.formUnion([speaker, listener])
         talkStatus = "asking \(service.model) via \(service.provider.title)…"
         Task { [weak self] in
-            defer { self?.talking = false; self?.endChat(after: 1.2); keep() }
+            defer {
+                self?.busy.subtract([speaker, listener])
+                self?.endChat(speaker, listener, after: 1.2)
+                keep()
+            }
             do {
                 try await service.checkModel()
                 let first = Banter.cleanLine(

@@ -4,13 +4,21 @@ import LedgelingsCore
 /// What happens when two creatures walk into each other: the stop, the stars,
 /// the flower every third time, and letting them go again.
 extension Colony {
+    /// Two creatures stopped face to face. Several pairs can be talking at once.
+    struct Conversation {
+        var a: Int
+        var b: Int
+        var releaseAt: Double?
+        func involves(_ i: Int) -> Bool { i == a || i == b }
+    }
 
     func parties() -> [Meetings.Party] {
         creatures.indices.map { i in
             let c = creatures[i]
             return Meetings.Party(loop: c.spot.loop, segment: c.segment, position: c.position,
                                   halfSize: atlas.bodyHalfSize * CGFloat(sizes[i]),
-                                  canTalk: !hideout.isActive && !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
+                                  canTalk: !hideout.isActive && !busy.contains(i)
+                                      && !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
         }
     }
 
@@ -29,7 +37,7 @@ extension Colony {
             let a = settings.character(forCreature: giver).name, b = settings.character(forCreature: receiver).name
             event = "\(a) just walked into \(b) and gave \(b) a \(flower)."
         }
-        if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event) { endChat(after: 2) }
+        if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event) { endChat(giver, receiver, after: 2) }
     }
 
     private func star(_ rgb: RGB) -> CGColor {
@@ -50,7 +58,8 @@ extension Colony {
         guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
         creatures[i].meet(facing: facing(i, toward: j))
         creatures[j].meet(facing: facing(j, toward: i))
-        chat = (i, j, nil)
+        chats.removeAll { $0.involves(i) || $0.involves(j) }
+        chats.append(Conversation(a: i, b: j, releaseAt: nil))
     }
 
     /// +1 when `j` is further round the loop from `i`, -1 when behind; on another
@@ -61,17 +70,21 @@ extension Colony {
         return a.loop.wrap(b.t - a.t) < a.loop.length / 2 ? 1 : -1
     }
 
-    /// The conversation is done, or never started: let them go in a moment.
-    func endChat(after seconds: Double) {
-        guard var current = chat else { return }
-        current.releaseAt = min(current.releaseAt ?? .infinity, elapsed + seconds)
-        chat = current
+    /// This pair's conversation is done, or never started: let them go in a moment.
+    func endChat(_ i: Int, _ j: Int, after seconds: Double) {
+        for k in chats.indices where chats[k].involves(i) && chats[k].involves(j) {
+            chats[k].releaseAt = min(chats[k].releaseAt ?? .infinity, elapsed + seconds)
+        }
     }
 
+    /// Everyone walks on, now.
     func releaseChat() {
-        guard let chat else { return }
+        for chat in chats { release(chat) }
+        chats.removeAll()
+    }
+
+    private func release(_ chat: Conversation) {
         for i in [chat.a, chat.b] where creatures.indices.contains(i) { creatures[i].walkOn(using: &rng) }
-        self.chat = nil
     }
 
     /// Where a flower sits or lands: on the head, away from the edge.
@@ -81,11 +94,15 @@ extension Colony {
         return CGPoint(x: c.position.x + up.dx * lift, y: c.position.y + up.dy * lift)
     }
 
-    /// Let the pair go once the reply is out, or as soon as one of them is no longer standing there.
+    /// Let a pair go once its reply is out, or as soon as one of them is no longer standing there.
     func releaseChatIfOver() {
-        guard let chat else { return }
-        let stillThere = [chat.a, chat.b].allSatisfy { creatures.indices.contains($0) && creatures[$0].isChatting }
-        if !stillThere || (chat.releaseAt.map { $0 <= elapsed } ?? false) { releaseChat() }
+        let over = chats.filter { chat in
+            let stillThere = [chat.a, chat.b].allSatisfy { creatures.indices.contains($0) && creatures[$0].isChatting }
+            return !stillThere || (chat.releaseAt.map { $0 <= elapsed } ?? false)
+        }
+        guard !over.isEmpty else { return }
+        for chat in over { release(chat) }
+        chats.removeAll { chat in over.contains { $0.a == chat.a && $0.b == chat.b } }
     }
 
     // MARK: Flowers and stars, as the overlay draws them

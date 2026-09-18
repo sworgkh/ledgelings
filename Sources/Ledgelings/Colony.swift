@@ -43,7 +43,8 @@ final class Colony: NSObject {
     var clock: DayNight
     /// One line per talking creature, and when it stops showing.
     var bubbles: [Int: (text: String, until: Double)] = [:]
-    var talking = false
+    /// Creatures in a running conversation: a bump or a poke involving them waits.
+    var busy: Set<Int> = []
     /// Who has walked into whom, and how often.
     var meetings = Meetings()
     /// Flowers in the air and on heads.
@@ -51,8 +52,8 @@ final class Colony: NSObject {
     /// A Shift-press on a creature that has not moved yet: a poke if it lets go, a carry if it drags.
     var poke: (index: Int, at: CGPoint)?
     static let dragThreshold: CGFloat = 4
-    /// Two creatures stopped face to face. `releaseAt` is nil while the words are still coming.
-    var chat: (a: Int, b: Int, releaseAt: Double?)?
+    /// Every pair stopped face to face right now. `releaseAt` is nil while the words are still coming.
+    var chats: [Conversation] = []
     /// Pixel stars from the last bump, and the colours they wear.
     var sparks = Sparks()
     var sparkPalette: [CGColor] = []

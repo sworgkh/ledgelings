@@ -5,8 +5,9 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.7 — a colony on every monitor that talks when it meets, gives flowers,
-thinks locally or through OpenRouter, keeps every chat, and goes home when asked.
+**Status:** v0.8 — a colony on every monitor that talks when it meets, gives flowers,
+thinks locally or through OpenRouter, keeps every chat, goes home when asked, and
+starts with your Mac if you like.
 See [BRIEF.md](BRIEF.md) for the original plan and [SPEC.md](SPEC.md) for the full,
 platform-neutral specification of everything the app does.
 
@@ -105,6 +106,7 @@ the menu shows why.
 | Colours | 6 | creature 1 wears colour 1, and so on, wrapping round. Eyes stay black |
 | Day lasts | 3 min | |
 | Night lasts | 5 min | 0 = they never sleep |
+| Start at login | off | the system's Login Items list; only the installed app can register |
 | Bubble stays | 14 s | 4 to 60 s; longer lines stay a little longer, never past twice this |
 | Flower lasts | 2 min | 0.5 to 30 min on the head, then it wilts |
 | Brain | LM Studio | or OpenRouter |
@@ -117,7 +119,7 @@ The menu also shows the time left until dusk or dawn, and has **Put Them to Slee
 Now / Wake Them Up Now**, **Make Them Jump**, **Hide Them for a While…**, **Make Someone
 Talk** and **Chat History…**.
 
-Not yet: launch at login, more species.
+Not yet: more species.
 
 ## Run it
 
@@ -138,7 +140,7 @@ dev build walks beside the installed one.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.8.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.9.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
