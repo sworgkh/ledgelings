@@ -246,3 +246,58 @@ struct SeededRNG: RandomNumberGenerator {
         #expect(abs(Creature.shortestArc(from: 0, to: 3 * .pi / 2) + .pi / 2) < 1e-9)
     }
 }
+
+@Suite struct MeetingBehaviourTests {
+    let world = EdgeWorld(screens: [CGRect(x: 0, y: 0, width: 1020, height: 620)], inset: 10)
+    func creature(at t: CGFloat) -> Creature { Creature(world: world, spot: .init(loop: 0, t: t)) }
+
+    func run(_ creature: inout Creature, seconds: Double, cursor: CGPoint? = nil, rng: inout SeededRNG) {
+        for _ in 0..<Int(seconds * 30) { creature.update(dt: 1.0 / 30, cursor: cursor, using: &rng) }
+    }
+
+    @Test func meetingStopsItFacingTheOtherAndWalkingOnRestoresItsCourse() {
+        var rng = SeededRNG(state: 3)
+        var c = creature(at: 200)
+        #expect(c.direction == 1)
+        c.meet(facing: -1)
+        let stood = c.position
+        #expect(c.isChatting)
+        #expect(c.isMirrored, "turned round to face the one behind it")
+        #expect(c.animation == "land", "a little squash on impact")
+        run(&c, seconds: 1, rng: &rng)
+        #expect(c.position == stood)
+        #expect(c.animation == "idle")
+        c.walkOn(using: &rng)
+        #expect(!c.isChatting)
+        #expect(c.direction == 1, "back on its old course, not the way it turned to chat")
+        run(&c, seconds: 1, rng: &rng)
+        #expect(c.position != stood)
+    }
+
+    @Test func aChatEndsOnItsOwnAfterItsTimeLimit() {
+        var rng = SeededRNG(state: 4)
+        var c = creature(at: 200)
+        c.meet(facing: 1, for: 2)
+        run(&c, seconds: 1.5, rng: &rng)
+        #expect(c.isChatting)
+        run(&c, seconds: 1, rng: &rng)
+        #expect(!c.isChatting)
+    }
+
+    @Test func theCursorStillStartlesAChatterAway() {
+        var rng = SeededRNG(state: 5)
+        var c = creature(at: 200)
+        c.meet(facing: 1)
+        run(&c, seconds: 0.2, cursor: c.position, rng: &rng)
+        #expect(c.isJumping)
+        #expect(!c.isChatting)
+    }
+
+    @Test func aSleeperOrJumperCannotBePulledIntoAChat() {
+        var rng = SeededRNG(state: 6)
+        var c = creature(at: 200)
+        c.toggleNap(using: &rng)
+        c.meet(facing: 1)
+        #expect(c.isSleeping && !c.isChatting)
+    }
+}

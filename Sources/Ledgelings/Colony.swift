@@ -46,6 +46,11 @@ final class Colony: NSObject {
     private var worn: [Int: (flower: String, until: Double)] = [:]
     /// A flower on its way from one creature to another.
     private var flight: (flower: String, from: Int, to: Int, started: Double)?
+    /// Two creatures stopped face to face. `releaseAt` is nil while the words are still coming.
+    private var chat: (a: Int, b: Int, releaseAt: Double?)?
+    /// Pixel stars from the last bump, and the colours they wear.
+    private var sparks = Sparks()
+    private var sparkPalette: [CGColor] = []
     private static let flightTime = 0.6
     /// Everything a creature can give. Each is an animation in the flowers sheet.
     nonisolated static let flowerNames = ["poppy", "tulip", "daisy", "sunflower", "rose", "bluebell",
@@ -197,7 +202,8 @@ final class Colony: NSObject {
             hypot(creatures[$0].position.x - me.x, creatures[$0].position.y - me.y)
                 < hypot(creatures[$1].position.x - me.x, creatures[$1].position.y - me.y)
         }!
-        talk(from: speaker, to: listener)
+        hold(speaker, and: listener)
+        if !talk(from: speaker, to: listener) { endChat(after: 1) }
     }
 
     // MARK: Meeting on the edge
@@ -207,7 +213,7 @@ final class Colony: NSObject {
             let c = creatures[i]
             return Meetings.Party(loop: c.spot.loop, segment: c.segment, position: c.position,
                                   halfSize: atlas.bodyHalfSize * CGFloat(sizes[i]),
-                                  canTalk: !c.isJumping && !c.looksAsleep && !c.isHeld)
+                                  canTalk: !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
         }
     }
 
@@ -215,6 +221,12 @@ final class Colony: NSObject {
     /// third time one of them brings a flower.
     private func bumped(_ bump: Meetings.Bump) {
         let (giver, receiver) = Bool.random(using: &rng) ? (bump.a, bump.b) : (bump.b, bump.a)
+        hold(bump.a, and: bump.b)
+        let pa = creatures[bump.a].position, pb = creatures[bump.b].position
+        sparkPalette = [CGColor.white, CGColor(red: 1, green: 0.82, blue: 0.24, alpha: 1),
+                        star(settings.color(forCreature: bump.a)), star(settings.color(forCreature: bump.b))]
+        sparks.burst(at: CGPoint(x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2),
+                     inward: creatures[bump.a].loop.inward(ofSegment: creatures[bump.a].segment), using: &rng)
         var event = "They just walked into each other."
         if bump.gift, flight == nil {
             let flower = Self.flowerNames.randomElement(using: &rng)!
@@ -222,7 +234,40 @@ final class Colony: NSObject {
             let a = settings.character(forCreature: giver).name, b = settings.character(forCreature: receiver).name
             event = "\(a) just walked into \(b) and gave \(b) a \(flower)."
         }
-        if settings.talkEnabled { talk(from: giver, to: receiver, because: event) }
+        if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event) { endChat(after: 2) }
+    }
+
+    private func star(_ rgb: RGB) -> CGColor {
+        CGColor(red: CGFloat(rgb.r) / 255, green: CGFloat(rgb.g) / 255, blue: CGFloat(rgb.b) / 255, alpha: 1)
+    }
+
+    /// Both stop and turn to face each other, like two people who meet in the street.
+    private func hold(_ i: Int, and j: Int) {
+        guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
+        creatures[i].meet(facing: facing(i, toward: j))
+        creatures[j].meet(facing: facing(j, toward: i))
+        chat = (i, j, nil)
+    }
+
+    /// +1 when `j` is further round the loop from `i`, -1 when behind; on another
+    /// loop there is nothing to face, so keep the current heading.
+    private func facing(_ i: Int, toward j: Int) -> CGFloat {
+        let a = creatures[i], b = creatures[j]
+        guard a.spot.loop == b.spot.loop else { return a.direction }
+        return a.loop.wrap(b.t - a.t) < a.loop.length / 2 ? 1 : -1
+    }
+
+    /// The conversation is done, or never started: let them go in a moment.
+    private func endChat(after seconds: Double) {
+        guard var current = chat else { return }
+        current.releaseAt = min(current.releaseAt ?? .infinity, elapsed + seconds)
+        chat = current
+    }
+
+    private func releaseChat() {
+        guard let chat else { return }
+        for i in [chat.a, chat.b] where creatures.indices.contains(i) { creatures[i].walkOn(using: &rng) }
+        self.chat = nil
     }
 
     /// Where a flower sits or lands: on the head, away from the edge.
@@ -247,9 +292,11 @@ final class Colony: NSObject {
     }
 
     /// One creature says a line to another; the other answers. Runs in the background.
-    private func talk(from speaker: Int, to listener: Int, because event: String? = nil) {
-        guard !talking, creatures.indices.contains(speaker), creatures.indices.contains(listener) else { return }
-        guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return }
+    /// Returns false when it could not even start, so the caller can release the pair.
+    @discardableResult
+    private func talk(from speaker: Int, to listener: Int, because event: String? = nil) -> Bool {
+        guard !talking, creatures.indices.contains(speaker), creatures.indices.contains(listener) else { return false }
+        guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
         let a = settings.character(forCreature: speaker), b = settings.character(forCreature: listener)
         var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
         if let event { situation += " " + event }
@@ -261,7 +308,7 @@ final class Colony: NSObject {
         talking = true
         talkStatus = "asking \(service.model) via \(service.provider.title)…"
         Task { [weak self] in
-            defer { self?.talking = false }
+            defer { self?.talking = false; self?.endChat(after: 1.2) }
             do {
                 try await service.checkModel()
                 let first = Banter.cleanLine(
@@ -287,6 +334,7 @@ final class Colony: NSObject {
                 FileHandle.standardError.write(Data("Ledgelings talk: \(error)\n".utf8))
             }
         }
+        return true
     }
 
     private func say(_ text: String, from index: Int) {
@@ -374,6 +422,11 @@ final class Colony: NSObject {
             self.flight = nil
         }
         for (i, hat) in worn where hat.until <= elapsed { worn.removeValue(forKey: i) }
+        sparks.update(dt: dt)
+        if let chat {
+            let stillThere = [chat.a, chat.b].allSatisfy { creatures.indices.contains($0) && creatures[$0].isChatting }
+            if !stillThere || (chat.releaseAt.map { $0 <= elapsed } ?? false) { releaseChat() }
+        }
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         render()
         setFrameRate(asleep: held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping))
@@ -401,8 +454,15 @@ final class Colony: NSObject {
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot()
+        let starSize = CGFloat(2 * (sizes.max() ?? 2))
+        let stars = sparks.alive.map { spark in
+            SparkSnapshot(position: spark.position, size: starSize,
+                          color: sparkPalette.isEmpty ? .white : sparkPalette[spark.tint % sparkPalette.count],
+                          opacity: Float(spark.opacity))
+        }
         for overlay in overlays {
-            overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell, flight: inFlight)
+            overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
+                           flight: inFlight, sparks: stars)
         }
     }
 }

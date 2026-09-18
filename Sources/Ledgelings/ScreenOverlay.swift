@@ -27,6 +27,14 @@ struct FlowerFlight {
     var scale: CGFloat
 }
 
+/// One pixel star from a bump, already coloured and faded.
+struct SparkSnapshot {
+    var position: CGPoint
+    var size: CGFloat
+    var color: CGColor
+    var opacity: Float
+}
+
 /// One monitor's glass, and a set of layers for EVERY creature -- not only the
 /// ones on this monitor. A window cannot span two displays, so a creature
 /// crossing a seam is drawn by both overlays, each clipping its own half.
@@ -46,6 +54,7 @@ final class ScreenOverlay {
         return layer
     }()
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
+    private var sparkLayers: [CALayer] = []
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
     private static let bubbleMaxWidth: CGFloat = 250
     private static let bubblePad: CGFloat = 8
@@ -73,8 +82,9 @@ final class ScreenOverlay {
     }
 
     func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize,
-                flowerCell: CGSize, flight inFlight: FlowerFlight? = nil) {
+                flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = []) {
         renderFlight(inFlight, flowerCell: flowerCell)
+        renderSparks(sparks)
         while creatures.count < snapshots.count { creatures.append(makeLayers()) }
         while creatures.count > snapshots.count {
             creatures.removeLast().body.removeFromSuperlayer()
@@ -127,6 +137,26 @@ final class ScreenOverlay {
                 layer.transform = CATransform3DScale(CATransform3DMakeRotation(-snap.rotation, 0, 0, 1), grow, grow, 1)
             }
         }
+    }
+
+    /// Plain square layers, one per star; the pool grows to the biggest burst and stays.
+    private func renderSparks(_ sparks: [SparkSnapshot]) {
+        let origin = screen.frame.origin
+        while sparkLayers.count < sparks.count {
+            let layer = CALayer()
+            layer.actions = ["position": NSNull(), "bounds": NSNull(), "opacity": NSNull(), "hidden": NSNull(), "backgroundColor": NSNull()]
+            layer.zPosition = 3
+            view.layer?.addSublayer(layer)
+            sparkLayers.append(layer)
+        }
+        for (layer, spark) in zip(sparkLayers, sparks) {
+            layer.isHidden = false
+            layer.bounds = CGRect(x: 0, y: 0, width: spark.size, height: spark.size)
+            layer.position = CGPoint(x: spark.position.x - origin.x, y: spark.position.y - origin.y)
+            layer.backgroundColor = spark.color
+            layer.opacity = spark.opacity
+        }
+        for layer in sparkLayers.dropFirst(sparks.count) where !layer.isHidden { layer.isHidden = true }
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {

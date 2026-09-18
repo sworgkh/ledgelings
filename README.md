@@ -39,9 +39,12 @@ A sleeper never notices the cursor — that is what lets you grab it. The overla
 still click-through: it turns clickable only while the cursor is on a creature you
 can act on, and it never takes focus from the app you are in.
 
-**They talk.** When two creatures walk into each other on the same edge, or when you
-pick **Make Someone Talk** in the menu, one says a line to the other and the other
-answers. Click a speech bubble to close it. The lines come from a language model,
+**They talk.** When two creatures walk into each other on the same edge, a few pixel
+stars fly up, both stop and turn to face each other, one says a line, the other
+answers, and then each goes on its way, like two people who meet in the street. A
+pair only meets once a minute, so passing each other in between is just passing.
+**Make Someone Talk** in the menu does the same at any time. Click a speech bubble
+to close it. The lines come from a language model,
 and Settings → Talk → **Brain** picks which one:
 
 - **LM Studio** (default): a small model running on your Mac in

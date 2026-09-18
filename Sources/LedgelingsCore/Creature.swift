@@ -45,6 +45,8 @@ public struct Creature: Sendable {
         case sleeping(wakeIn: Double?)
         /// Picked up by the user, fast asleep, going wherever the cursor goes.
         case held
+        /// Stopped to talk to another creature; walks on when told, or when this runs out.
+        case chatting(remaining: Double)
     }
 
     public private(set) var world: EdgeWorld
@@ -66,6 +68,8 @@ public struct Creature: Sendable {
     public private(set) var isNapping = false
     /// Set while a dropped sleeper falls back to an edge, so it lands still asleep.
     private var sleepsThroughLanding = false
+    /// The way it was going before it turned to talk to someone.
+    private var courseBeforeChat: CGFloat = 1
 
     /// half -> closed -> half, in seconds.
     static let blinkPhases: [(Eyes, Double)] = [(.half, 0.05), (.closed, 0.09), (.half, 0.05)]
@@ -97,7 +101,13 @@ public struct Creature: Sendable {
         case .jumping: "jump"
         case .landing: "land"
         case .sleeping, .held: "sleep"
+        case .chatting: animationTime < config.landDuration ? "land" : "idle"      // a squash on impact
         }
+    }
+
+    public var isChatting: Bool {
+        if case .chatting = mode { return true }
+        return false
     }
 
     /// Asleep on an edge, or asleep in the user's hand.
@@ -197,7 +207,29 @@ public struct Creature: Sendable {
 
         case .held:
             turn(toward: 0, dt: dt)      // dangles upright
+
+        case .chatting(let remaining):
+            turn(toward: restingRotation, dt: dt)
+            if remaining - dt <= 0 { walkOn(using: &rng) } else { mode = .chatting(remaining: remaining - dt) }
         }
+    }
+
+    // MARK: Meeting someone
+
+    /// Stop and face the other creature: `facing` is +1 when it is further along
+    /// the loop, -1 when it is behind. Only an awake creature on the ground can.
+    public mutating func meet(facing: CGFloat, for seconds: Double = 30) {
+        guard !isJumping, !looksAsleep, !isHeld else { return }
+        if !isChatting { courseBeforeChat = direction }
+        direction = facing < 0 ? -1 : 1
+        enter(.chatting(remaining: seconds))
+    }
+
+    /// The conversation is over: back on the old course.
+    public mutating func walkOn(using rng: inout some RandomNumberGenerator) {
+        guard isChatting else { return }
+        direction = courseBeforeChat
+        enter(.walking(remaining: .random(in: config.walkSpell, using: &rng)))
     }
 
     // MARK: The user's hand
