@@ -47,6 +47,8 @@ public struct Creature: Sendable {
         case held
         /// Stopped to talk to another creature; walks on when told, or when this runs out.
         case chatting(remaining: Double)
+        /// Hurrying to a spot on its own loop: home, when the house is out.
+        case running(to: CGFloat)
     }
 
     public private(set) var world: EdgeWorld
@@ -72,6 +74,10 @@ public struct Creature: Sendable {
     private var courseBeforeChat: CGFloat = 1
     /// Whether it was asleep when picked up, so it lands the same way.
     private var napsInHand = false
+    /// A `leap` lands and waits instead of walking off.
+    private var waitsAfterLanding = false
+    /// Reached the spot it was running or leaping to, and has not moved since.
+    public private(set) var hasArrived = false
 
     /// half -> closed -> half, in seconds.
     static let blinkPhases: [(Eyes, Double)] = [(.half, 0.05), (.closed, 0.09), (.half, 0.05)]
@@ -105,7 +111,13 @@ public struct Creature: Sendable {
         case .sleeping: "sleep"
         case .held: napsInHand ? "sleep" : "idle"
         case .chatting: animationTime < config.landDuration ? "land" : "idle"      // a squash on impact
+        case .running: "walk"
         }
+    }
+
+    public var isRunning: Bool {
+        if case .running = mode { return true }
+        return false
     }
 
     public var isChatting: Bool {
@@ -140,7 +152,7 @@ public struct Creature: Sendable {
         noticeTimeOfDay(isNight: isNight, using: &rng)
 
         // A sleeper does not notice the cursor. That is what lets you pick it up.
-        if !isJumping, !looksAsleep, !isHeld, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
+        if !isJumping, !looksAsleep, !isHeld, !isRunning, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
             startle(using: &rng)
         }
 
@@ -194,6 +206,10 @@ public struct Creature: Sendable {
             if remaining - dt <= 0, sleepsThroughLanding {
                 sleepsThroughLanding = false
                 enter(.sleeping(wakeIn: nil))
+            } else if remaining - dt <= 0, waitsAfterLanding {
+                waitsAfterLanding = false
+                enter(.idle(remaining: .infinity))
+                hasArrived = true
             } else if remaining - dt <= 0 {
                 enter(.walking(remaining: .random(in: isNight ? config.restlessSpell : config.walkSpell, using: &rng)))
             } else {
@@ -215,7 +231,60 @@ public struct Creature: Sendable {
         case .chatting(let remaining):
             turn(toward: restingRotation, dt: dt)
             if remaining - dt <= 0 { walkOn(using: &rng) } else { mode = .chatting(remaining: remaining - dt) }
+
+        case .running(let target):
+            let step = config.walkSpeed * 2.5 * dt
+            let left = direction > 0 ? loop.wrap(target - spot.t) : loop.wrap(spot.t - target)
+            if left <= step {
+                spot.t = target
+                enter(.idle(remaining: .infinity))
+                hasArrived = true
+            } else {
+                spot.t = loop.wrap(spot.t + direction * step)
+            }
+            position = world.point(at: spot)
+            turn(toward: restingRotation, dt: dt)
         }
+    }
+
+    // MARK: Going home
+
+    /// Hurry to `target` on this loop, the short way round, waking up if needed.
+    /// Not from the air or the user's hand; the caller waits for those.
+    public mutating func run(to target: CGFloat) {
+        guard !isJumping, !isHeld else { return }
+        isNapping = false
+        sleepsThroughLanding = false
+        let ahead = loop.wrap(target - spot.t)
+        direction = ahead <= loop.length / 2 ? 1 : -1
+        enter(.running(to: loop.wrap(target)))
+    }
+
+    /// Jump straight to `spot` (any loop) and wait there.
+    public mutating func leap(to spot: EdgeWorld.Spot) {
+        guard !isJumping, !isHeld else { return }
+        isNapping = false
+        sleepsThroughLanding = false
+        waitsAfterLanding = true
+        let landing = world.loops[spot.loop]
+        let target = world.point(at: spot)
+        let distance = hypot(target.x - position.x, target.y - position.y)
+        let duration = min(max(Double(distance / config.jumpSpeed), config.jumpDuration.lowerBound), config.jumpDuration.upperBound)
+        let a = loop.inward(ofSegment: segment), b = landing.inward(ofSegment: landing.segment(at: spot.t))
+        enter(.jumping(Jump(from: position, fromRotation: rotation, to: spot,
+                            bulge: CGVector(dx: (a.dx + b.dx) / 2, dy: (a.dy + b.dy) / 2), duration: duration)))
+    }
+
+    /// Step out of the door at `spot`, walking `facing` (+1 or -1).
+    public mutating func emerge(at spot: EdgeWorld.Spot, facing: CGFloat, using rng: inout some RandomNumberGenerator) {
+        self.spot = EdgeWorld.Spot(loop: spot.loop, t: world.loops[spot.loop].wrap(spot.t))
+        position = world.point(at: self.spot)
+        rotation = restingRotation
+        direction = facing < 0 ? -1 : 1
+        isNapping = false
+        sleepsThroughLanding = false
+        waitsAfterLanding = false
+        enter(.walking(remaining: .random(in: config.walkSpell, using: &rng)))
     }
 
     // MARK: Meeting someone
@@ -334,6 +403,7 @@ public struct Creature: Sendable {
     private mutating func enter(_ newMode: Mode) {
         mode = newMode
         animationTime = 0
+        hasArrived = false
     }
 
     private mutating func turn(toward goal: Double, dt: Double) {

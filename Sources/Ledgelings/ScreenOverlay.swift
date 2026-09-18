@@ -17,6 +17,16 @@ struct CreatureSnapshot {
     var bubble: String?
     /// The flower on its head, if it was given one.
     var hat: CGImage?
+    /// Inside the house: draw nothing at all.
+    var hidden = false
+}
+
+/// The house, at whatever size it currently is.
+struct HouseSnapshot {
+    var image: CGImage?
+    var position: CGPoint
+    /// Screen points per sheet pixel, already multiplied by the grow/shrink factor.
+    var scale: CGFloat
 }
 
 /// A flower on its way from one creature to another, in GLOBAL coordinates.
@@ -55,6 +65,13 @@ final class ScreenOverlay {
     }()
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
     private var sparkLayers: [CALayer] = []
+    private lazy var house: CALayer = {
+        let layer = makeLayers().sprite
+        layer.isHidden = true
+        layer.zPosition = -1          // behind the creatures, so they walk "into" it
+        view.layer?.addSublayer(layer)
+        return layer
+    }()
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
     private static let bubbleMaxWidth: CGFloat = 250
     private static let bubblePad: CGFloat = 8
@@ -82,9 +99,11 @@ final class ScreenOverlay {
     }
 
     func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize,
-                flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = []) {
+                flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = [],
+                house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero) {
         renderFlight(inFlight, flowerCell: flowerCell)
         renderSparks(sparks)
+        renderHouse(inHouse, cell: houseCell)
         while creatures.count < snapshots.count { creatures.append(makeLayers()) }
         while creatures.count > snapshots.count {
             creatures.removeLast().body.removeFromSuperlayer()
@@ -98,7 +117,7 @@ final class ScreenOverlay {
             let scale = snap.scale, bodyHeight = cell.height * scale
             let reach = max(cell.width, cell.height) * scale * 2.5
             let visible = screen.frame.insetBy(dx: -reach, dy: -reach)
-            let here = visible.contains(snap.position)
+            let here = !snap.hidden && visible.contains(snap.position)
             if layers.body.isHidden == here { layers.body.isHidden = !here }
             guard here else { removeBubble(for: index); continue }
             let hatHeight = snap.hat == nil ? 0 : flowerCell.height * scale
@@ -157,6 +176,18 @@ final class ScreenOverlay {
             layer.opacity = spark.opacity
         }
         for layer in sparkLayers.dropFirst(sparks.count) where !layer.isHidden { layer.isHidden = true }
+    }
+
+    private func renderHouse(_ inHouse: HouseSnapshot?, cell: CGSize) {
+        guard let inHouse, let image = inHouse.image, inHouse.scale > 0 else {
+            if !house.isHidden { house.isHidden = true }
+            return
+        }
+        let origin = screen.frame.origin
+        house.isHidden = false
+        house.contents = image
+        house.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
+        house.position = CGPoint(x: inHouse.position.x - origin.x, y: inHouse.position.y - origin.y)
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {

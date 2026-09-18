@@ -7,6 +7,7 @@ extension Colony {
     /// The topmost creature whose body is under `point`.
     func creature(at point: CGPoint) -> Int? {
         creatures.indices.reversed().first { i in
+            guard !hideout.isInside(i) else { return false }
             let half = atlas.bodyHalfSize * CGFloat(sizes[i]) + 4      // a little forgiveness
             let p = creatures[i].position
             return abs(point.x - p.x) <= half && abs(point.y - p.y) <= half

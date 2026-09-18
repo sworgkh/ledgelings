@@ -5,8 +5,8 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.6 — a colony on every monitor that talks when it meets, gives flowers,
-thinks locally or through OpenRouter, and keeps every chat.
+**Status:** v0.7 — a colony on every monitor that talks when it meets, gives flowers,
+thinks locally or through OpenRouter, keeps every chat, and goes home when asked.
 See [BRIEF.md](BRIEF.md) for the original plan and [SPEC.md](SPEC.md) for the full,
 platform-neutral specification of everything the app does.
 
@@ -65,6 +65,12 @@ and Settings → Talk → **Brain** picks which one:
 Each creature has a character: a name and a personality that goes into the prompt.
 Six come built in; edit them, and the prompts themselves, in Settings → Talk.
 
+**They can go home for a while.** **Hide Them for a While…** in the menu asks how
+long (5 minutes to "until tomorrow morning"). A little house appears on the bottom
+edge of the main screen, everyone runs or jumps home, the house shrinks to
+nothing, and when the time is up it grows back and they walk out one by one. The
+same menu item, now **Bring Them Back Now**, ends it early.
+
 **Every chat is kept.** Each conversation goes to
 `~/Library/Application Support/Ledgelings/chats/YYYY-MM-DD.jsonl`, one line per
 exchange with the time, the situation, the model and what each of them said.
@@ -107,7 +113,8 @@ the menu shows why.
 | Prompts | built in | the system prompt, the opening line and the reply, with `{placeholders}` |
 
 The menu also shows the time left until dusk or dawn, and has **Put Them to Sleep
-Now / Wake Them Up Now**, **Make Them Jump**, **Make Someone Talk** and **Chat History…**.
+Now / Wake Them Up Now**, **Make Them Jump**, **Hide Them for a While…**, **Make Someone
+Talk** and **Chat History…**.
 
 Not yet: launch at login, more species.
 
@@ -126,7 +133,7 @@ Everything else is under the menu-bar icon, a filled square.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.7.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.8.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
@@ -171,6 +178,7 @@ artist. `pack` then cuts the key colour to real 1-bit transparency itself rather
 than trusting anyone to deliver clean alpha.
 
 `sprites/zzz.yaml` is a second, one-cell recipe: the Z a sleeper floats.
+`sprites/house.yaml` is the house, drawn from shapes by `spritetool/painters/house.py`.
 `sprites/flowers.yaml` is the ten flowers, one cell each, drawn by
 `spritetool/painters/flowers.py` from hand-placed pixel glyphs with the outline added in code.
 
@@ -193,6 +201,7 @@ Sources/LedgelingsCore/   pure logic, no AppKit:
                             Meetings   who bumped into whom, once per touch, with a cooldown
                             Gifts      flowers in flight and on heads
                             Sparks     the pixel stars of a bump
+                            Hideout    the house: appear, gather, shrink, hide, grow, release
                             Banter     characters, prompt templates, cleaning a model's line
                             ChatLog    conversations on disk, one JSON-lines file per day
 Sources/Ledgelings/       the app:
@@ -200,6 +209,7 @@ Sources/Ledgelings/       the app:
                             Colony+Meetings   the stop, the stars, the flower, letting go
                             Colony+Talk       who says what to whom, the bubbles
                             Colony+Hand       clicks, pokes, drags
+                            Colony+Hideout    sending everyone home and letting them out
                             ScreenOverlay     one per monitor: sprites, bubbles, stars, flowers
                             ChatClient        LM Studio or OpenRouter, for banter and anything else
                             ModelCatalog      OpenRouter's model list, searched and priced

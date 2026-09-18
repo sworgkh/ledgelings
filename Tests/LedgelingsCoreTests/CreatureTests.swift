@@ -347,3 +347,65 @@ struct SeededRNG: RandomNumberGenerator {
         #expect(c.isHeld)
     }
 }
+
+@Suite struct GoingHomeTests {
+    let world = EdgeWorld(screens: [CGRect(x: 0, y: 0, width: 1020, height: 620)], inset: 10)
+    var loop: EdgeLoop { world.loops[0] }
+    func creature(at t: CGFloat) -> Creature { Creature(world: world, spot: .init(loop: 0, t: t)) }
+
+    func run(_ creature: inout Creature, seconds: Double, night: Bool = false, rng: inout SeededRNG) {
+        for _ in 0..<Int(seconds * 30) { creature.update(dt: 1.0 / 30, cursor: nil, isNight: night, using: &rng) }
+    }
+
+    @Test func runsHomeTheShortWayRoundAtTwoAndAHalfTimesWalkingSpeed() {
+        var rng = SeededRNG(state: 21)
+        var c = creature(at: 100)
+        c.run(to: 60)                              // just behind it: turn round
+        #expect(c.isRunning && c.direction == -1)
+        run(&c, seconds: 0.2, rng: &rng)
+        #expect(abs((100 - c.t) - 55 * 2.5 * 0.2) < 1)
+        run(&c, seconds: 1, rng: &rng)
+        #expect(c.hasArrived && c.t == 60)
+        #expect(c.animation == "idle")
+    }
+
+    @Test func runningWrapsAroundTheLoopEndIfThatIsShorter() {
+        var rng = SeededRNG(state: 22)
+        var c = creature(at: 5)
+        c.run(to: loop.length - 5)                 // 10 units back across the seam, not a lap forward
+        #expect(c.direction == -1)
+        run(&c, seconds: 0.5, rng: &rng)
+        #expect(c.hasArrived)
+    }
+
+    @Test func aSleeperWakesToRunAndNightDoesNotStopIt() {
+        var rng = SeededRNG(state: 23)
+        var c = creature(at: 100)
+        c.toggleNap(using: &rng)
+        c.run(to: 300)
+        #expect(c.isRunning && !c.isSleeping)
+        run(&c, seconds: 1, night: true, rng: &rng)
+        #expect(c.isRunning || c.hasArrived)
+        #expect(!c.isSleeping)
+    }
+
+    @Test func leapsStraightToAGivenSpotAndLandsThere() {
+        var rng = SeededRNG(state: 24)
+        var c = creature(at: 100)
+        let door = EdgeWorld.Spot(loop: 0, t: 1500)
+        c.leap(to: door)
+        #expect(c.isJumping)
+        run(&c, seconds: 1.5, rng: &rng)
+        #expect(!c.isJumping)
+        #expect(abs(c.t - 1500) < 0.001)
+    }
+
+    @Test func emergingPutsItAtTheDoorWalkingTheGivenWay() {
+        var rng = SeededRNG(state: 25)
+        var c = creature(at: 100)
+        c.emerge(at: EdgeWorld.Spot(loop: 0, t: 400), facing: -1, using: &rng)
+        #expect(c.t == 400 && c.direction == -1 && c.animation == "walk" && !c.hasArrived)
+        run(&c, seconds: 0.5, rng: &rng)
+        #expect(c.t < 400)
+    }
+}

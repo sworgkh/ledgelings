@@ -17,6 +17,8 @@ final class Colony: NSObject {
     let zCell: CGSize
     let flowerFrames: SpriteAtlas.Frames
     let flowerCell: CGSize
+    let houseFrames: SpriteAtlas.Frames
+    let houseCell: CGSize
 
     /// A bigger body walks further from the screen edge, so each size has its
     /// own outline. Sizes come in half steps, so this stays a handful of entries.
@@ -54,6 +56,8 @@ final class Colony: NSObject {
     /// Pixel stars from the last bump, and the colours they wear.
     var sparks = Sparks()
     var sparkPalette: [CGColor] = []
+    /// The house they hide in when asked to go away for a while.
+    var hideout = Hideout()
     /// The last thing that happened with the model, for the menu.
     var talkStatus = "not tried yet"
     var elapsed: Double = 0
@@ -71,6 +75,9 @@ final class Colony: NSObject {
         let flowers = try SpriteAtlas(named: "flowers")
         flowerFrames = flowers.frames()
         flowerCell = flowers.cellSize
+        let house = try SpriteAtlas(named: "house")
+        houseFrames = house.frames()
+        houseCell = house.cellSize
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
         super.init()
 
@@ -186,10 +193,11 @@ final class Colony: NSObject {
         let cursor = NSEvent.mouseLocation          // global, and needs no permission
         // Holding Shift calms them: nobody flees, so you can get close enough to click.
         let shift = NSEvent.modifierFlags.contains(.shift)
-        for i in creatures.indices {
-            creatures[i].update(dt: dt, cursor: shift ? nil : cursor, isNight: night, using: &rng)
+        for i in creatures.indices where !hideout.isInside(i) {
+            creatures[i].update(dt: dt, cursor: shift || hideout.isActive ? nil : cursor, isNight: night, using: &rng)
             asleepFor[i] = creatures[i].looksAsleep ? asleepFor[i] + dt : 0
         }
+        updateHideout()
         updateClickability(cursor: cursor, shift: shift)
 
         for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count { bubbles.removeValue(forKey: i) }
@@ -198,7 +206,7 @@ final class Colony: NSObject {
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         render()
-        setFrameRate(asleep: held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping))
+        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
 
     /// A sleeping colony only breathes and floats Zs: 12 fps is plenty.
@@ -218,14 +226,15 @@ final class Colony: NSObject {
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
                 inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
                 bubble: bubbles[i]?.text,
-                hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) }
+                hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) },
+                hidden: hideout.isInside(i)
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)
-        let inFlight = flightSnapshot(), stars = sparkSnapshots()
+        let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
-                           flight: inFlight, sparks: stars)
+                           flight: inFlight, sparks: stars, house: home, houseCell: houseCell)
         }
     }
 }

@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.6). Where the
+Every number here is the one the macOS app ships with (v0.7). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -161,11 +161,12 @@ landing(remaining)   squash frame
 sleeping(wakeIn?)    wakeIn is nil during the night, a countdown once day breaks
 held                 in the user's hand (§4.7)
 chatting(remaining)  stopped to talk (§4.8)
+running(to)          hurrying home along its loop (§4.9)
 ```
 
 Animation name per mode: walking→`walk`, idle→`idle`, jumping→`jump`,
 landing→`land`, sleeping→`sleep`, held→`sleep` if it was asleep when picked up
-else `idle`, chatting→`land` for the first 0.16 s then `idle`.
+else `idle`, chatting→`land` for the first 0.16 s then `idle`, running→`walk`.
 
 `animationTime` resets to 0 on every mode change ("enter").
 
@@ -194,6 +195,9 @@ else `idle`, chatting→`land` for the first 0.16 s then `idle`.
      → walking with `walkSpell`.
    - held: rotation chases 0 (dangles upright).
    - chatting: rotation chases the segment; when out → walk on (§4.8).
+   - running(to): step `walkSpeed·2.5·dt` toward the target the way chosen at
+     the start; when the distance left is within one step, snap to it, enter
+     idle with no end, and set `hasArrived`.
 
 "Rotation chases X" = move `rotation` toward X along the shortest arc by at
 most `turnSpeed·dt`, snapping when within reach.
@@ -253,6 +257,18 @@ leaves and the one it lands on. Direction after landing: random.
 - `walkOn()`: only from chatting. Restores the remembered direction and enters
   walking with a fresh `walkSpell`.
 - A startle (cursor) or anything else that changes mode ends the chat.
+
+### 4.9 Going home
+
+- `run(to t)`: refused while jumping or held. Wakes a sleeper, ends a nap.
+  Direction = +1 if `wrap(t − here) ≤ length/2` else −1. Enter running.
+  Running ignores the cursor and the night.
+- `leap(to spot)`: a directed jump (same arc as §4.5, bulge from the two
+  inward vectors, duration clamped as in §4.6) that on landing enters an
+  endless idle with `hasArrived` set, instead of walking off.
+- `emerge(at spot, facing)`: placed at the spot, rotation snapped, walking
+  `facing` with a fresh `walkSpell`.
+- `hasArrived` clears on any mode change.
 
 ---
 
@@ -491,6 +507,42 @@ velocity += gravity·dt, position += velocity·dt, age += dt; dead when
 
 ---
 
+### 7.5 Hiding in the house
+
+"Hide Them for a While…" asks for a duration (5, 15, 30 minutes, 1, 2, 4
+hours, or until 08:00 tomorrow) and starts the `Hideout` state machine with
+`count` = number of creatures:
+
+```
+away → appearing (0.4 s) → gathering → shrinking (0.5 s) → hidden … until the
+time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing (0.5 s) → away
+```
+
+- **House**: a 40×36 sheet-pixel sprite drawn at `2.5 · scale(phase)` points
+  per pixel, standing on the floor of the primary monitor, a fifth of the way
+  in from its left edge (`x = minX + 0.2·width`, centre `y = minY + 36·2.5/2`).
+  `scale` ramps 0→1 during appearing and growing, 1→0 during shrinking and
+  vanishing, 1 while gathering and releasing, 0 otherwise. Drawn behind the
+  creatures.
+- **Door**: for each creature, the nearest point of its own world to the
+  house's position.
+- **Gathering**, every frame, for every creature not yet inside: if held, let
+  go; if in the air, wait; if on another loop than its door, `leap` to the
+  door; else if within 6 points of the door along the loop, or `hasArrived`,
+  it is **inside** (skipped by update and render from now on); else if not
+  already running, `run` to the door. Cursor is ignored by everyone while the
+  house is out. When every creature is inside, or 25 s have passed (the rest
+  are pulled in), the house shrinks.
+- **Hidden**: the frame rate drops to 12 fps. No bumps, no talk, no clicks.
+- **Releasing**: the smallest index still inside `emerge`s at its door facing a
+  random way, one every 0.6 s; when nobody is left the house vanishes.
+- **Bring Them Back Now** (the same menu item while hiding): from hidden →
+  growing; from shrinking → growing from the current size; from appearing or
+  gathering → releasing whoever is inside, the rest just carry on.
+- Starting a hide clears bubbles, releases any chat and drops anything held.
+  A second hide while one is active is ignored. Not persisted: a restart
+  brings everyone back.
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -577,6 +629,7 @@ Shipped sheets:
 | blocky | 288×96 | 32×32 | [5,5,22,22] | 9 poses × 3 eye rows: idle, walk-0..3, jump, land, sleep-0, sleep-1 × open/half/closed | idle 1 fps; walk 4 frames 8 fps loop; jump; land; sleep 2 frames 0.8 fps loop |
 | zzz | 10×10 | 10×10 | whole | `z` | float |
 | flowers | 160×16 | 16×16 | [1,1,14,15] | ten flowers, one frame each | one per flower |
+| house | 40×36 | 40×36 | [2,2,36,34] | `house` | house |
 
 Art rules for any new creature sheet: drawn **standing on a floor, facing
 right**, body **centred in its cell** (rotation is about the cell centre), eyes
@@ -684,6 +737,7 @@ falls through to whatever is underneath.
 | Menu: Make Them Jump | every creature startles |
 | Menu: Make Someone Talk | §6.5 |
 | Menu: Put Them to Sleep Now / Wake Them Up Now | skip to the next phase (hidden when night = 0) |
+| Menu: Hide Them for a While… / Bring Them Back Now | §7.5; while hiding the item shows the time left |
 | Menu: Chat History… | the settings window on the Chats tab (§6.5) |
 | Menu: Settings… | the settings window |
 
@@ -780,6 +834,13 @@ time; removed creatures lose their flowers; ten distinct flower names.
 
 Sparks: 8 per burst; all thrown into the screen at first; gone after about a
 second; opacity falls with age; gravity pulls back toward the edge.
+
+Hideout: the whole cycle with the scale at each phase; stragglers forced in
+after the cap; recall from hidden opens now; recall during gathering releases
+whoever is in; a second hide is ignored. Creature: runs home the short way at
+2.5× walking speed and arrives; running wraps across the loop's seam; a sleeper
+wakes to run and night does not stop it; a leap lands exactly on the spot and
+waits; emerging places it at the door walking the given way.
 
 Banter: placeholders render; unknown ones stay; `cleanLine` strips think tags,
 name prefixes, quotes, caps length; `showTime` gives ≈ base for 8 words, caps at

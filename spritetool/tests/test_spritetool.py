@@ -158,3 +158,20 @@ def test_every_flower_stands_on_the_floor_inside_the_box_and_looks_different():
         assert bottom == by + bh, f"{pose} does not stand on the floor"
         assert cell.tobytes() not in seen, f"{pose} is a copy of another flower"
         seen.append(cell.tobytes())
+
+
+HOUSE = Path(__file__).resolve().parents[2] / "sprites" / "house.yaml"
+
+
+def test_the_house_stands_on_the_floor_inside_its_box_with_a_door_and_windows():
+    recipe = load_recipe(HOUSE)
+    assert [a.name for a in recipe.animations] == ["house"]
+    sheet = key_out(get_painter("house")(recipe), recipe.background, recipe.tolerance)
+    bx, by, bw, bh = recipe.content_box
+    x, y, w, h = recipe.cell_rect(0, 0)
+    cell = sheet.crop((x, y, x + w, y + h))
+    left, top, right, bottom = cell.getchannel("A").getbbox()
+    assert left >= bx and top >= by and right <= bx + bw
+    assert bottom == by + bh, "the house does not stand on the floor"
+    colours = {cell.getpixel((px, py))[:3] for px in range(w) for py in range(h) if cell.getpixel((px, py))[3]}
+    assert (146, 92, 52) in colours and (150, 200, 250) in colours, "no door or no glass"

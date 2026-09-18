@@ -1,0 +1,33 @@
+{
+  "name": "house",
+  "image": "house.png",
+  "cell": [
+    40,
+    36
+  ],
+  "contentBox": [
+    2,
+    2,
+    36,
+    34
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "house": {
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 36
+    }
+  },
+  "animations": {
+    "house": {
+      "frames": [
+        "house"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}

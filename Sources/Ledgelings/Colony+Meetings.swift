@@ -10,7 +10,7 @@ extension Colony {
             let c = creatures[i]
             return Meetings.Party(loop: c.spot.loop, segment: c.segment, position: c.position,
                                   halfSize: atlas.bodyHalfSize * CGFloat(sizes[i]),
-                                  canTalk: !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
+                                  canTalk: !hideout.isActive && !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
         }
     }
 

@@ -23,7 +23,7 @@ extension Colony {
     /// says something to whoever is nearest.
     func talkNow(from chosen: Int? = nil) {
         guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
-        guard !talking else { return }
+        guard !talking, !hideout.isActive else { return }
         let awake = creatures.indices.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
         guard let speaker = chosen ?? (awake.isEmpty ? Array(creatures.indices) : awake).randomElement(using: &rng),
               creatures.indices.contains(speaker) else { return }
