@@ -5,8 +5,8 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.5 — a colony on every monitor that talks when it meets, gives flowers,
-and can think locally or through OpenRouter.
+**Status:** v0.6 — a colony on every monitor that talks when it meets, gives flowers,
+thinks locally or through OpenRouter, and keeps every chat.
 See [BRIEF.md](BRIEF.md) for the original plan and [SPEC.md](SPEC.md) for the full,
 platform-neutral specification of everything the app does.
 
@@ -65,6 +65,12 @@ and Settings → Talk → **Brain** picks which one:
 Each creature has a character: a name and a personality that goes into the prompt.
 Six come built in; edit them, and the prompts themselves, in Settings → Talk.
 
+**Every chat is kept.** Each conversation goes to
+`~/Library/Application Support/Ledgelings/chats/YYYY-MM-DD.jsonl`, one line per
+exchange with the time, the situation, the model and what each of them said.
+**Chat History…** in the menu (or Settings → Chats) shows each day's chats, with
+buttons to open the folder in Finder or Terminal.
+
 **They give flowers.** Every third time the same two creatures bump into each other,
 one hands the other a flower, which it then wears on its head for a couple of
 minutes before it wilts away. Ten flowers, drawn
@@ -101,7 +107,7 @@ the menu shows why.
 | Prompts | built in | the system prompt, the opening line and the reply, with `{placeholders}` |
 
 The menu also shows the time left until dusk or dawn, and has **Put Them to Sleep
-Now / Wake Them Up Now** and **Make Them Jump**.
+Now / Wake Them Up Now**, **Make Them Jump**, **Make Someone Talk** and **Chat History…**.
 
 Not yet: launch at login, more species.
 
@@ -120,7 +126,7 @@ Everything else is under the menu-bar icon, a filled square.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.6.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.7.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
@@ -188,6 +194,7 @@ Sources/LedgelingsCore/   pure logic, no AppKit:
                             Gifts      flowers in flight and on heads
                             Sparks     the pixel stars of a bump
                             Banter     characters, prompt templates, cleaning a model's line
+                            ChatLog    conversations on disk, one JSON-lines file per day
 Sources/Ledgelings/       the app:
                             Colony            creatures + clock + monitors + the frame loop
                             Colony+Meetings   the stop, the stars, the flower, letting go
@@ -196,6 +203,7 @@ Sources/Ledgelings/       the app:
                             ScreenOverlay     one per monitor: sprites, bubbles, stars, flowers
                             ChatClient        LM Studio or OpenRouter, for banter and anything else
                             ModelCatalog      OpenRouter's model list, searched and priced
+                            ChatHistory       the log folder, and the Chats tab (ChatHistoryView)
                             Keychain, SpriteAtlas, AppSettings, SettingsView, TalkSettingsView
 Tests/                    unit tests for both
 spritetool/               the sprite sheet tool (Python: Pillow + PyYAML)

@@ -2,15 +2,26 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
+enum SettingsTab: Hashable { case creatures, talk, chats }
+
+/// Which tab the window shows; the menu can point it at one.
+@MainActor
+final class SettingsNavigation: ObservableObject {
+    @Published var tab: SettingsTab = .creatures
+}
+
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject var history: ChatHistory
+    @ObservedObject var navigation: SettingsNavigation
 
     var body: some View {
-        TabView {
-            creaturesTab.tabItem { Text("Creatures") }
-            TalkSettingsView(settings: settings).tabItem { Text("Talk") }
+        TabView(selection: $navigation.tab) {
+            creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
+            TalkSettingsView(settings: settings).tabItem { Text("Talk") }.tag(SettingsTab.talk)
+            ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
         }
-        .frame(width: 520, height: 600)
+        .frame(width: 560, height: 600)
     }
 
     private var creaturesTab: some View {
@@ -112,12 +123,18 @@ struct SliderRow: View {
 final class SettingsWindowController {
     private var window: NSWindow?
     private let settings: AppSettings
+    private let history: ChatHistory
+    private let navigation = SettingsNavigation()
 
-    init(settings: AppSettings) { self.settings = settings }
+    init(settings: AppSettings, history: ChatHistory) {
+        self.settings = settings
+        self.history = history
+    }
 
-    func show() {
+    func show(tab: SettingsTab? = nil) {
+        if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, navigation: navigation))
             let made = NSWindow(contentViewController: hosting)
             made.title = "Ledgelings Settings"
             made.styleMask = [.titled, .closable]

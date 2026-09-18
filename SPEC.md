@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.5). Where the
+Every number here is the one the macOS app ships with (v0.6). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -389,7 +389,29 @@ count of space-separated pieces and `base` is the "Bubble stays" setting
 (default 14 s, range 4–60). A bubble is removed when its time is up, when its
 creature disappears, or when the user clicks it.
 
-### 6.5 Menu and poke
+### 6.5 The chat log
+
+Every conversation that produced at least one line is written to disk when it
+ends, to `<app support>/Ledgelings/chats/YYYY-MM-DD.jsonl` (the day in the
+local calendar, from the time the conversation started). One JSON object per
+line, ISO-8601 time:
+
+```json
+{"time": "2026-09-18T14:03:11Z",
+ "situation": "It is day. Dot is on the bottom edge. Blocky is on the bottom edge. They just walked into each other.",
+ "provider": "LM Studio", "model": "google/gemma-3-1b",
+ "lines": [{"speaker": "Dot", "text": "Move, boulder."}, {"speaker": "Blocky", "text": "Says the pebble."}]}
+```
+
+A one-sided exchange (the reply failed or came back empty) is still written
+with its one line. Reading: list days = files named `YYYY-MM-DD.jsonl`, newest
+first; a day's exchanges are its lines in file order; a line that does not
+parse is skipped. The viewer (Settings › Chats, also "Chat History…" in the
+menu) lists days on the left, naming today and yesterday, and shows each
+exchange as time, model, situation, then `**Name:** text` per line, with
+buttons that open the folder in the file manager and in a terminal.
+
+### 6.6 Menu and poke
 
 "Make Someone Talk" picks a random awake, non-jumping creature (anyone if none
 is awake), the nearest other creature listens. A Shift-poke (§11) does the same
@@ -662,6 +684,7 @@ falls through to whatever is underneath.
 | Menu: Make Them Jump | every creature startles |
 | Menu: Make Someone Talk | §6.5 |
 | Menu: Put Them to Sleep Now / Wake Them Up Now | skip to the next phase (hidden when night = 0) |
+| Menu: Chat History… | the settings window on the Chats tab (§6.5) |
 | Menu: Settings… | the settings window |
 
 The menu also shows `"Day — they sleep in m:ss"` / `"Night — they wake in

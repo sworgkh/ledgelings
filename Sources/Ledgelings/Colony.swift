@@ -10,6 +10,8 @@ final class Colony: NSObject {
     static let maxStep: Double = 1.0 / 10
 
     let settings: AppSettings
+    /// Every conversation, written to disk as it ends.
+    let history: ChatHistory
     let atlas: SpriteAtlas
     let zFrames: SpriteAtlas.Frames
     let zCell: CGSize
@@ -59,8 +61,9 @@ final class Colony: NSObject {
     var isNight: Bool { clock.isNight(at: elapsed) }
     var secondsLeftInPhase: Double { clock.remaining(at: elapsed) }
 
-    init(settings: AppSettings) throws {
+    init(settings: AppSettings, history: ChatHistory) throws {
         self.settings = settings
+        self.history = history
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
         zFrames = zzz.frames()

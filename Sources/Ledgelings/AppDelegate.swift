@@ -3,7 +3,8 @@ import AppKit
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let settings = AppSettings()
-    private lazy var settingsWindow = SettingsWindowController(settings: settings)
+    private let history = ChatHistory()
+    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history)
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -12,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
-            colony = try Colony(settings: settings)
+            colony = try Colony(settings: settings, history: history)
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
             NSApp.terminate(nil)
@@ -35,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
+        menu.addItem(withTitle: "Chat History…", action: #selector(openChats), keyEquivalent: "h").target = self
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Ledgelings", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -57,4 +59,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func skipPhase() { colony?.skipPhase() }
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
     @objc private func openSettings() { settingsWindow.show() }
+    @objc private func openChats() { settingsWindow.show(tab: .chats) }
 }
