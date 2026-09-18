@@ -30,12 +30,19 @@ final class AppSettings: ObservableObject {
 
     static let defaultTalkServer = "http://localhost:1234"
     static let defaultTalkModel = "google/gemma-3-1b"
+    static let defaultOpenRouterModel = "anthropic/claude-haiku-4.5"
     /// Seconds a speech bubble stays up, for a line of typical length.
     static let bubbleRange = 4.0...60.0
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
+    /// Which model answers, for banter and for anything else that wants words.
+    @Published var brainProvider: ChatClient.Provider { didSet { save(brainProvider.rawValue, "brainProvider") } }
+    /// LM Studio's local server and the model loaded in it.
     @Published var talkServer: String { didSet { save(talkServer, "talkServer") } }
     @Published var talkModel: String { didSet { save(talkModel, "talkModel") } }
+    @Published var openRouterModel: String { didSet { save(openRouterModel, "openRouterModel") } }
+    /// Lives in the keychain, never in the preferences file. Empty means no key.
+    @Published var openRouterKey: String { didSet { keychain.set(openRouterKey, for: Self.keychainKeyAccount) } }
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
     /// Creature i is character i, wrapping round like the colours.
     @Published var characters: [Character] { didSet { saveJSON(characters, "characters") } }
@@ -44,9 +51,12 @@ final class AppSettings: ObservableObject {
     @Published var replyPrompt: String { didSet { save(replyPrompt, "replyPrompt") } }
 
     private let defaults: UserDefaults
+    private let keychain: Keychain
+    private static let keychainKeyAccount = "openRouterKey"
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, keychain: Keychain = Keychain()) {
         self.defaults = defaults
+        self.keychain = keychain
         let count = defaults.object(forKey: "creatureCount") as? Int ?? 3
         creatureCount = min(max(count, Self.countRange.lowerBound), Self.countRange.upperBound)
         let saved = (defaults.stringArray(forKey: "colors") ?? []).filter { RGB(hex: $0) != nil }
@@ -62,8 +72,11 @@ final class AppSettings: ObservableObject {
         nightMinutes = max(0, defaults.object(forKey: "nightMinutes") as? Double ?? 5)
 
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
+        brainProvider = defaults.string(forKey: "brainProvider").flatMap(ChatClient.Provider.init(rawValue:)) ?? .lmStudio
         talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
         talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel
+        openRouterModel = defaults.string(forKey: "openRouterModel") ?? Self.defaultOpenRouterModel
+        openRouterKey = keychain.get(Self.keychainKeyAccount) ?? ""
         let bubble = defaults.object(forKey: "bubbleSeconds") as? Double ?? Banter.defaultBubbleSeconds
         bubbleSeconds = min(max(bubble, Self.bubbleRange.lowerBound), Self.bubbleRange.upperBound)
         let savedCast = defaults.data(forKey: "characters").flatMap { try? JSONDecoder().decode([Character].self, from: $0) } ?? []
@@ -80,6 +93,27 @@ final class AppSettings: ObservableObject {
 
     var talkServerURL: URL? {
         URL(string: talkServer.trimmingCharacters(in: .whitespaces)).flatMap { $0.host == nil ? nil : $0 }
+    }
+
+    /// The model any feature should ask, or nil with `brainProblem` saying what is missing.
+    func chatClient() -> ChatClient? {
+        switch brainProvider {
+        case .lmStudio:
+            guard let url = talkServerURL else { return nil }
+            return .lmStudio(server: url, model: talkModel.trimmingCharacters(in: .whitespaces))
+        case .openRouter:
+            let key = openRouterKey.trimmingCharacters(in: .whitespaces)
+            guard !key.isEmpty else { return nil }
+            return .openRouter(key: key, model: openRouterModel.trimmingCharacters(in: .whitespaces))
+        }
+    }
+
+    /// Why `chatClient()` came back empty, in words for the menu and the settings window.
+    var brainProblem: String {
+        switch brainProvider {
+        case .lmStudio: "LM Studio server address is not a URL"
+        case .openRouter: "no OpenRouter API key; add one in Settings › Talk"
+        }
     }
 
     func resetPrompts() {

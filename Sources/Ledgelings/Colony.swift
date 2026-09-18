@@ -249,24 +249,23 @@ final class Colony: NSObject {
     /// One creature says a line to another; the other answers. Runs in the background.
     private func talk(from speaker: Int, to listener: Int, because event: String? = nil) {
         guard !talking, creatures.indices.contains(speaker), creatures.indices.contains(listener) else { return }
-        guard let url = settings.talkServerURL else { talkStatus = "bad server address"; return }
+        guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return }
         let a = settings.character(forCreature: speaker), b = settings.character(forCreature: listener)
         var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
         if let event { situation += " " + event }
         var vars = ["speaker": a.name, "speakerPersona": a.persona, "listener": b.name,
                     "listenerPersona": b.persona, "situation": situation, "line": ""]
-        let service = TalkService(baseURL: url, model: settings.talkModel)
         let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
         let bubbleSeconds = settings.bubbleSeconds
 
         talking = true
-        talkStatus = "asking \(settings.talkModel)…"
+        talkStatus = "asking \(service.model) via \(service.provider.title)…"
         Task { [weak self] in
             defer { self?.talking = false }
             do {
                 try await service.checkModel()
                 let first = Banter.cleanLine(
-                    try await service.line(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars)),
+                    try await service.reply(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars)),
                     speaker: a.name)
                 guard let self else { return }
                 guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
@@ -277,7 +276,7 @@ final class Colony: NSObject {
                 vars["speaker"] = b.name; vars["speakerPersona"] = b.persona
                 vars["listener"] = a.name; vars["listenerPersona"] = a.persona; vars["line"] = first
                 let reply = Banter.cleanLine(
-                    try await service.line(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars)),
+                    try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars)),
                     speaker: b.name)
                 try await Task.sleep(for: .seconds(Banter.showTime(first, base: bubbleSeconds) * 0.6))
                 guard !reply.isEmpty else { return }

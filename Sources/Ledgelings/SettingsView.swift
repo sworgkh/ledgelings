@@ -99,11 +99,9 @@ struct SettingsView: View {
     }
 }
 
-/// Everything about the creatures talking to each other through LM Studio.
+/// Everything about the creatures talking to each other, and which model does the talking.
 struct TalkSettingsView: View {
     @ObservedObject var settings: AppSettings
-    @State private var check = "not checked"
-    @State private var models: [String] = []
 
     var body: some View {
         Form {
@@ -121,22 +119,20 @@ struct TalkSettingsView: View {
             }
 
             Section {
-                TextField("Server", text: $settings.talkServer, prompt: Text(AppSettings.defaultTalkServer))
-                HStack {
-                    TextField("Model", text: $settings.talkModel, prompt: Text(AppSettings.defaultTalkModel))
-                    if !models.isEmpty {
-                        Menu("Installed") {
-                            ForEach(models, id: \.self) { id in Button(id) { settings.talkModel = id } }
-                        }
-                        .fixedSize()
-                    }
-                    Button("Check") { Task { await checkServer() } }
+                Picker("Brain", selection: $settings.brainProvider) {
+                    ForEach(ChatClient.Provider.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
-                LabeledContent("Status") { Text(check).foregroundStyle(.secondary).textSelection(.enabled) }
+                .pickerStyle(.segmented)
+                switch settings.brainProvider {
+                case .lmStudio: LMStudioFields(settings: settings)
+                case .openRouter: OpenRouterFields(settings: settings)
+                }
             } header: {
-                Text("LM Studio")
+                Text("Brain")
             } footer: {
-                Text("LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them.")
+                Text(settings.brainProvider == .lmStudio
+                     ? "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
+                     : "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models.")
             }
 
             Section {
@@ -192,19 +188,96 @@ struct TalkSettingsView: View {
         Binding(get: { settings[keyPath: path] }, set: { settings[keyPath: path] = $0 })
     }
 
-    private func checkServer() async {
-        guard let url = settings.talkServerURL else { check = "that is not a URL"; return }
+}
+
+/// Server, model, Check. The model must be one LM Studio has installed.
+private struct LMStudioFields: View {
+    @ObservedObject var settings: AppSettings
+    @State private var check = "not checked"
+    @State private var models: [String] = []
+
+    var body: some View {
+        TextField("Server", text: $settings.talkServer, prompt: Text(AppSettings.defaultTalkServer))
+        HStack {
+            TextField("Model", text: $settings.talkModel, prompt: Text(AppSettings.defaultTalkModel))
+            ModelMenu(title: "Installed", models: models, typed: settings.talkModel) { settings.talkModel = $0 }
+            Button("Check") { Task { await run() } }
+        }
+        LabeledContent("Status") { Text(check).foregroundStyle(.secondary).textSelection(.enabled) }
+    }
+
+    private func run() async {
+        guard let client = settings.chatClient() else { check = settings.brainProblem; return }
         check = "checking…"
         do {
-            let found = try await TalkService(baseURL: url, model: settings.talkModel).listModels()
+            let found = try await client.listModels()
             models = found
-            check = found.contains(settings.talkModel)
-                ? "ready: \(settings.talkModel) is installed"
-                : "server is up, but \(settings.talkModel) is not installed. Pick one under \"Installed\"."
+            check = found.contains(client.model)
+                ? "ready: \(client.model) is installed"
+                : "server is up, but \(client.model) is not installed. Pick one under \"Installed\"."
         } catch {
             models = []
             check = "\(error)"
         }
+    }
+}
+
+/// Key, model, Check. The key is validated against OpenRouter and never shown in full.
+private struct OpenRouterFields: View {
+    @ObservedObject var settings: AppSettings
+    @State private var check = "not checked"
+    @State private var models: [String] = []
+
+    var body: some View {
+        SecureField("API key", text: $settings.openRouterKey, prompt: Text("sk-or-…"))
+        HStack {
+            TextField("Model", text: $settings.openRouterModel, prompt: Text(AppSettings.defaultOpenRouterModel))
+            ModelMenu(title: "Models", models: models, typed: settings.openRouterModel) { settings.openRouterModel = $0 }
+            Button("Check") { Task { await run() } }
+        }
+        LabeledContent("Status") { Text(check).foregroundStyle(.secondary).textSelection(.enabled) }
+    }
+
+    private func run() async {
+        guard let client = settings.chatClient() else { check = settings.brainProblem; return }
+        check = "checking…"
+        do {
+            let key = try await client.describeKey()
+            let found = try await client.listModels()
+            models = found
+            check = found.contains(client.model)
+                ? "ready: \(key); \(client.model) is available"
+                : "\(key), but there is no model \(client.model). Type part of a name and pick one under \"Models\"."
+        } catch {
+            models = []
+            check = "\(error)"
+        }
+    }
+}
+
+/// A menu of model ids, narrowed to those containing what is typed so far, because
+/// OpenRouter lists hundreds. Hidden until a Check has fetched the list.
+private struct ModelMenu: View {
+    static let most = 40
+    let title: String
+    let models: [String]
+    let typed: String
+    let pick: (String) -> Void
+
+    var body: some View {
+        if !models.isEmpty {
+            Menu(title) {
+                ForEach(shown, id: \.self) { id in Button(id) { pick(id) } }
+                if shown.count == Self.most { Text("… type more to narrow the list") }
+            }
+            .fixedSize()
+        }
+    }
+
+    private var shown: [String] {
+        let needle = typed.trimmingCharacters(in: .whitespaces).lowercased()
+        let matching = needle.isEmpty || models.contains(typed) ? models : models.filter { $0.lowercased().contains(needle) }
+        return Array(matching.prefix(Self.most))
     }
 }
 

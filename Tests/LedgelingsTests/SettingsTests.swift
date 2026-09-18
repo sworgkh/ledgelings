@@ -8,7 +8,48 @@ import Testing
         let name = "ledgelings-tests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
         defaults.removePersistentDomain(forName: name)
-        return (AppSettings(defaults: defaults), defaults)
+        return (AppSettings(defaults: defaults, keychain: Keychain(service: name)), defaults)
+    }
+
+    @Test func theBrainIsLMStudioUntilChosenOtherwise() {
+        let (s, _) = fresh()
+        #expect(s.brainProvider == .lmStudio)
+        #expect(s.openRouterModel == AppSettings.defaultOpenRouterModel)
+        #expect(s.openRouterKey == "")
+        let client = s.chatClient()
+        #expect(client?.provider == .lmStudio)
+        #expect(client?.baseURL.absoluteString == "http://localhost:1234/v1")
+        #expect(client?.model == AppSettings.defaultTalkModel)
+    }
+
+    @Test func choosingOpenRouterBuildsAClientWithTheKeyAndModel() {
+        let (s, defaults) = fresh()
+        s.brainProvider = .openRouter
+        s.openRouterKey = "sk-or-abc"
+        s.openRouterModel = "openai/gpt-4o-mini"
+        let client = s.chatClient()
+        #expect(client?.provider == .openRouter)
+        #expect(client?.apiKey == "sk-or-abc")
+        #expect(client?.model == "openai/gpt-4o-mini")
+        #expect(client?.baseURL == ChatClient.openRouterURL)
+        #expect(defaults.string(forKey: "brainProvider") == "openRouter")
+        #expect(defaults.string(forKey: "openRouterKey") == nil, "the key never lands in the preferences file")
+        s.openRouterKey = ""
+    }
+
+    @Test func theKeyComesBackFromTheKeychainOnTheNextLaunch() {
+        let name = "ledgelings-tests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        let keychain = Keychain(service: name)
+        defer { keychain.set(nil, for: "openRouterKey") }
+        AppSettings(defaults: defaults, keychain: keychain).openRouterKey = "sk-or-kept"
+        #expect(AppSettings(defaults: defaults, keychain: keychain).openRouterKey == "sk-or-kept")
+    }
+
+    @Test func openRouterWithoutAKeyGivesNoClient() {
+        let (s, _) = fresh()
+        s.brainProvider = .openRouter
+        #expect(s.chatClient() == nil)
     }
 
     @Test func creaturesSpreadAcrossTheSizeRangeInHalfSteps() {
