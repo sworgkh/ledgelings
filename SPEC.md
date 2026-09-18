@@ -524,8 +524,11 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
   monitor's bottom-right corner (`x = maxX + 2·s`, `y = minY`, `s = maxSize`),
   and it grows and shrinks **about that corner**, never about its centre.
   `scale` ramps 0→1 during appearing and growing, 1→0 during shrinking and
-  vanishing, 1 while gathering and releasing, 0 otherwise. Drawn **in front
-  of** the creatures, so they vanish into the doorway.
+  vanishing, 1 while gathering and releasing, 0 otherwise. Two layers at the
+  same place and scale: the whole house **behind** the creatures, and the
+  doorway alone (frame `door`) **in front** of them, so a creature walks up
+  the front of the house and is swallowed by the dark doorway, never by the
+  wall.
 - **Doorway**: on the house's left, 26 px wide and 28 px tall from the floor,
   its middle 19 sheet px from the cell's left edge. The door point is that
   middle on the floor; each creature's door spot is the nearest point of its
@@ -636,7 +639,7 @@ Shipped sheets:
 | blocky | 288×96 | 32×32 | [5,5,22,22] | 9 poses × 3 eye rows: idle, walk-0..3, jump, land, sleep-0, sleep-1 × open/half/closed | idle 1 fps; walk 4 frames 8 fps loop; jump; land; sleep 2 frames 0.8 fps loop |
 | zzz | 10×10 | 10×10 | whole | `z` | float |
 | flowers | 160×16 | 16×16 | [1,1,14,15] | ten flowers, one frame each | one per flower |
-| house | 68×60 | 68×60 | [2,2,64,58] | `house` | house |
+| house | 136×60 | 68×60 | [2,2,64,58] | `house`, `door` (the doorway alone) | house, door |
 
 Art rules for any new creature sheet: drawn **standing on a floor, facing
 right**, body **centred in its cell** (rotation is about the cell centre), eyes

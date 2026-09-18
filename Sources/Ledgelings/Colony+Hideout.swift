@@ -90,7 +90,8 @@ extension Colony {
         guard hideout.isActive else { return nil }
         let grown = CGFloat(hideout.scale(at: elapsed))
         guard grown > 0 else { return nil }
-        return HouseSnapshot(image: houseFrames.frame(animation: "house", time: 0), corner: houseCorner,
-                             scale: houseScale * grown)
+        return HouseSnapshot(image: houseFrames.frame(animation: "house", time: 0),
+                             door: houseFrames.frame(animation: "door", time: 0),
+                             corner: houseCorner, scale: houseScale * grown)
     }
 }

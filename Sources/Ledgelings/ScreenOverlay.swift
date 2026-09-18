@@ -22,8 +22,11 @@ struct CreatureSnapshot {
 }
 
 /// The house, at whatever size it currently is, pinned by its bottom-right corner.
+/// `image` is the whole house, drawn behind the creatures; `door` is the doorway
+/// alone, drawn in front of them, so they vanish into it.
 struct HouseSnapshot {
     var image: CGImage?
+    var door: CGImage?
     var corner: CGPoint
     /// Screen points per sheet pixel, already multiplied by the grow/shrink factor.
     var scale: CGFloat
@@ -65,14 +68,17 @@ final class ScreenOverlay {
     }()
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
     private var sparkLayers: [CALayer] = []
-    private lazy var house: CALayer = {
+    private lazy var house = houseLayer(z: -1)     // walls and roof, behind the creatures
+    private lazy var door = houseLayer(z: 1)       // the doorway, in front: it swallows them
+
+    private func houseLayer(z: CGFloat) -> CALayer {
         let layer = makeLayers().sprite
         layer.isHidden = true
-        layer.zPosition = 1           // in front of the creatures, so they vanish into the doorway
+        layer.zPosition = z
         layer.anchorPoint = CGPoint(x: 1, y: 0)   // grows and shrinks about its bottom-right corner
         view.layer?.addSublayer(layer)
         return layer
-    }()
+    }
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
     private static let bubbleMaxWidth: CGFloat = 250
     private static let bubblePad: CGFloat = 8
@@ -181,14 +187,16 @@ final class ScreenOverlay {
 
     private func renderHouse(_ inHouse: HouseSnapshot?, cell: CGSize) {
         guard let inHouse, let image = inHouse.image, inHouse.scale > 0 else {
-            if !house.isHidden { house.isHidden = true }
+            if !house.isHidden { house.isHidden = true; door.isHidden = true }
             return
         }
         let origin = screen.frame.origin
-        house.isHidden = false
-        house.contents = image
-        house.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
-        house.position = CGPoint(x: inHouse.corner.x - origin.x, y: inHouse.corner.y - origin.y)
+        for (layer, contents) in [(house, image), (door, inHouse.door ?? image)] {
+            layer.isHidden = false
+            layer.contents = contents
+            layer.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
+            layer.position = CGPoint(x: inHouse.corner.x - origin.x, y: inHouse.corner.y - origin.y)
+        }
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {

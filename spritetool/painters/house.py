@@ -50,6 +50,19 @@ def block(draw: ImageDraw.ImageDraw, x0: int, y0: int, x1: int, y1: int, colour)
     draw.line([(x1 - 2, y0 + 2), (x1 - 2, y1 - 2)], fill=c["shade"])
 
 
+def paint_door(draw: ImageDraw.ImageDraw, ox: int, oy: int) -> None:
+    """The doorway alone: an open hole in the wall colour's outline, corners knocked off.
+
+    Drawn as its own frame so the app can put it IN FRONT of the creatures while
+    the rest of the house stays behind them: a creature walks up the front of
+    the house and is swallowed by the doorway, not by the wall.
+    """
+    floor = oy + GLYPH_H
+    dark = shades(WALL)["outline"]
+    dl, dr, dt = ox + DOOR_X, ox + DOOR_X + DOOR_W, floor - DOOR_H
+    draw.rectangle([dl, dt, dr - 1, floor - 1], fill=dark)
+
+
 def paint_house(draw: ImageDraw.ImageDraw, ox: int, oy: int) -> None:
     """Origin is the glyph's top-left; the floor is the row just below oy + GLYPH_H."""
     floor = oy + GLYPH_H
@@ -61,10 +74,9 @@ def paint_house(draw: ImageDraw.ImageDraw, ox: int, oy: int) -> None:
     block(draw, ox + 10, wall_t - 18, ox + 54, wall_t - 9, ROOF)
     # Chimney: a small stone block through the upper slab, on the right.
     block(draw, ox + 44, wall_t - 22, ox + 52, wall_t - 12, STONE)
-    # Doorway: an open hole in the wall colour's outline, corners knocked off.
-    dark = shades(WALL)["outline"]
+    # Doorway, drawn here too so the house reads whole wherever it is shown alone.
+    paint_door(draw, ox, oy)
     dl, dr, dt = ox + DOOR_X, ox + DOOR_X + DOOR_W, floor - DOOR_H
-    draw.rectangle([dl, dt, dr - 1, floor - 1], fill=dark)
     for x, y in ((dl, dt), (dr - 1, dt), (dl, dt + 1), (dr - 1, dt + 1), (dl + 1, dt), (dr - 2, dt)):
         draw.point((x, y), fill=shades(WALL)["body"])
     # Two windows like the eyes: black squares with a thin frame of the wall's light.
@@ -74,15 +86,19 @@ def paint_house(draw: ImageDraw.ImageDraw, ox: int, oy: int) -> None:
         draw.rectangle([wx, wy, wx + 7, wy + 7], fill=EYE)
 
 
+PAINTERS = {"house": paint_house, "door": paint_door}
+
+
 def paint(recipe: Recipe) -> Image.Image:
-    if [p for p, _ in recipe.poses] != ["house"]:
-        raise ValueError("the house painter draws exactly one pose, 'house'")
+    missing = [p for p, _ in recipe.poses if p not in PAINTERS]
+    if missing:
+        raise ValueError(f"the house painter cannot draw {missing}")
     bx, by, bw, bh = recipe.content_box
     if (bw, bh) != (GLYPH_W, GLYPH_H):
         raise ValueError(f"the house needs a {GLYPH_W}x{GLYPH_H} content box, got {bw}x{bh}")
     img = Image.new("RGB", recipe.size, recipe.background)
     draw = ImageDraw.Draw(img)
-    for col, row, _, _ in recipe.cells():
+    for col, row, pose, _ in recipe.cells():
         cx, cy, _, _ = recipe.cell_rect(col, row)
-        paint_house(draw, cx + bx, cy + by)
+        PAINTERS[pose](draw, cx + bx, cy + by)
     return img
