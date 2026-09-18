@@ -89,7 +89,7 @@ Everything else is under the menu-bar icon, a filled square.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.3.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.4.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
