@@ -12,6 +12,8 @@ final class AppSettings: ObservableObject {
     static let defaultColors = ["#ff8a3d", "#3dc7b5", "#ff6fa3", "#ffd23d", "#9b7bff", "#7bd65a"]
 
     @Published var creatureCount: Int { didSet { save(creatureCount, "creatureCount") } }
+    /// Names of the sprite sheets in use; creature i wears species i, wrapping round.
+    @Published var species: [String] { didSet { save(species, "species") } }
     /// Creature number i wears colour i, wrapping round when there are more creatures than colours.
     @Published var colors: [String] { didSet { save(colors, "colors") } }
     /// Each creature gets its own size somewhere from `minSize` to `maxSize`.
@@ -62,6 +64,7 @@ final class AppSettings: ObservableObject {
         self.keychain = keychain
         let count = defaults.object(forKey: "creatureCount") as? Int ?? 3
         creatureCount = min(max(count, Self.countRange.lowerBound), Self.countRange.upperBound)
+        species = defaults.stringArray(forKey: "species") ?? ["blocky"]
         let saved = (defaults.stringArray(forKey: "colors") ?? []).filter { RGB(hex: $0) != nil }
         colors = saved.isEmpty ? Self.defaultColors : saved
         func size(_ key: String, _ fallback: Double) -> Double {
@@ -89,6 +92,10 @@ final class AppSettings: ObservableObject {
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
         replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt
+    }
+
+    func species(forCreature index: Int) -> String {
+        species.isEmpty ? "blocky" : species[index % species.count]
     }
 
     func character(forCreature index: Int) -> Character {

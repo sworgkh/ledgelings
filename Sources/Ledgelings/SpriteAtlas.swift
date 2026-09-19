@@ -49,8 +49,13 @@ struct SpriteAtlas {
     /// Half the width of the square the creature is drawn inside, in sheet pixels.
     var bodyHalfSize: CGFloat { CGFloat(meta.contentBox[2]) / 2 }
 
+    /// A sheet shipped inside the app.
     init(named name: String) throws {
-        let directory = try Self.spritesDirectory()
+        try self.init(directory: try Self.spritesDirectory(), name: name)
+    }
+
+    /// A sheet in any folder: `<name>.json` next to the PNG it names.
+    init(directory: URL, name: String) throws {
         let jsonURL = directory.appendingPathComponent("\(name).json")
         guard let data = try? Data(contentsOf: jsonURL) else { throw LoadError.notFound(jsonURL.path) }
         meta = try JSONDecoder().decode(Meta.self, from: data)
@@ -63,6 +68,23 @@ struct SpriteAtlas {
         for (frame, r) in meta.frames where r.x + r.w > image.width || r.y + r.h > image.height {
             throw LoadError.badFrame(frame)
         }
+    }
+
+    /// The whole sheet as bytes, rows top to bottom, straight (not premultiplied) alpha.
+    func image() throws -> SpriteText.Image {
+        let w = sheet.width, h = sheet.height
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
+              let data = ctx.data else { throw LoadError.unreadable(meta.image) }
+        ctx.draw(sheet, in: CGRect(x: 0, y: 0, width: w, height: h))
+        let px = data.bindMemory(to: UInt8.self, capacity: w * h * 4)
+        var rgba = [UInt8](repeating: 0, count: w * h * 4)
+        for i in stride(from: 0, to: w * h * 4, by: 4) where px[i + 3] >= 128 {
+            // Pixel art has 1-bit alpha, so "premultiplied" is a no-op once we drop the faint ones.
+            rgba[i] = px[i]; rgba[i + 1] = px[i + 1]; rgba[i + 2] = px[i + 2]; rgba[i + 3] = 255
+        }
+        return SpriteText.Image(width: w, height: h, rgba: rgba)
     }
 
     /// The sheet cut into frames, recoloured around `body` when the atlas has a

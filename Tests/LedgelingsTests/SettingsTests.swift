@@ -11,6 +11,16 @@ import Testing
         return (AppSettings(defaults: defaults, keychain: Keychain(service: name)), defaults)
     }
 
+    @Test func creaturesCycleThroughTheSpeciesInUseAndBlockyIsTheFallback() {
+        let (s, defaults) = fresh()
+        #expect(s.species == ["blocky"])
+        s.species = ["pip", "blocky"]
+        #expect(s.species(forCreature: 0) == "pip" && s.species(forCreature: 1) == "blocky" && s.species(forCreature: 2) == "pip")
+        #expect(AppSettings(defaults: defaults).species == ["pip", "blocky"])
+        s.species = []
+        #expect(s.species(forCreature: 0) == "blocky")
+    }
+
     @Test func theBrainIsLMStudioUntilChosenOtherwise() {
         let (s, _) = fresh()
         #expect(s.brainProvider == .lmStudio)

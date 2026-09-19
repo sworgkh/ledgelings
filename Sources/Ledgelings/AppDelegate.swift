@@ -4,7 +4,8 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let settings = AppSettings()
     private let history = ChatHistory()
-    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history)
+    private let library = SpriteLibrary()
+    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library)
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -19,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
-            colony = try Colony(settings: settings, history: history)
+            colony = try Colony(settings: settings, history: history, library: library)
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
             NSApp.terminate(nil)

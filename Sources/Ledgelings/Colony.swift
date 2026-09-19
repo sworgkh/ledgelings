@@ -12,6 +12,9 @@ final class Colony: NSObject {
     let settings: AppSettings
     /// Every conversation, written to disk as it ends.
     let history: ChatHistory
+    /// The built-in and imported creature sheets.
+    let library: SpriteLibrary
+    /// The built-in sheet: every sheet shares its cell and body box, so it is the geometry for all.
     let atlas: SpriteAtlas
     let zFrames: SpriteAtlas.Frames
     let zCell: CGSize
@@ -30,7 +33,7 @@ final class Colony: NSObject {
     var sizes: [Double] = []
     var asleepFor: [Double] = []
     var frames: [SpriteAtlas.Frames] = []
-    var frameCache: [RGB: SpriteAtlas.Frames] = [:]
+    var frameCache: [String: SpriteAtlas.Frames] = [:]
     var overlays: [ScreenOverlay] = []
     var rng = SystemRandomNumberGenerator()
 
@@ -69,9 +72,10 @@ final class Colony: NSObject {
     var isNight: Bool { clock.isNight(at: elapsed) }
     var secondsLeftInPhase: Double { clock.remaining(at: elapsed) }
 
-    init(settings: AppSettings, history: ChatHistory) throws {
+    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary) throws {
         self.settings = settings
         self.history = history
+        self.library = library
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
         zFrames = zzz.frames()
@@ -90,6 +94,9 @@ final class Colony: NSObject {
         // `objectWillChange` fires BEFORE the value lands, so read it a turn later.
         settings.objectWillChange.receive(on: RunLoop.main)
             .sink { [weak self] in self?.applySettings() }
+            .store(in: &watchers)
+        library.objectWillChange.receive(on: RunLoop.main)
+            .sink { [weak self] in self?.frameCache.removeAll(); self?.applySettings() }
             .store(in: &watchers)
         NotificationCenter.default.addObserver(
             self, selector: #selector(screensChanged),
@@ -129,10 +136,11 @@ final class Colony: NSObject {
         }
 
         frames = creatures.indices.map { index in
-            let colour = settings.color(forCreature: index)
-            if let cached = frameCache[colour] { return cached }
-            let made = atlas.frames(body: colour)
-            frameCache[colour] = made
+            let colour = settings.color(forCreature: index), name = settings.species(forCreature: index)
+            let key = "\(name) \(colour.hex)"
+            if let cached = frameCache[key] { return cached }
+            let made = (library.atlas(named: name) ?? atlas).frames(body: colour)
+            frameCache[key] = made
             return made
         }
         render()
