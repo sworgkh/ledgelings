@@ -14,6 +14,9 @@ struct SpriteAtlas {
         let palette: [String: String]?
         let frames: [String: Rect]
         let animations: [String: Animation]
+        /// What the creature is, and who its creatures are, when the sheet says.
+        let kind: String?
+        let cast: [Character]?
     }
 
     /// One recolouring of the sheet, already cut into frames.

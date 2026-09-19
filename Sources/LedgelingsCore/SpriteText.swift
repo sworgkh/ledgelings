@@ -73,6 +73,10 @@ public enum SpriteText {
 
     public struct Sheet: Equatable, Sendable {
         public var name: String
+        /// What the creature is, for the model: "a fat green frog with big eyes".
+        public var kind: String?
+        /// Who its creatures are; creatures of this species take these in turn.
+        public var cast: [Character]
         /// pose → 32 rows of 32 inks, eyes open.
         public var poses: [String: [[Ink]]]
     }
@@ -116,6 +120,8 @@ public enum SpriteText {
 
     public static func parse(_ text: String) throws -> Sheet {
         var name: String?
+        var kind: String?
+        var cast: [Character] = []
         var poses: [String: [[Ink]]] = [:]
         var current: String?
         var rows: [[Ink]] = []
@@ -134,6 +140,13 @@ public enum SpriteText {
             if raw.trimmingCharacters(in: .newlines).isEmpty || line.hasPrefix("#") { continue }
             if line.isEmpty, current == nil { continue }
             if let value = keyed(line, "name") { name = value; continue }
+            if let value = keyed(line, "kind") { kind = value.isEmpty ? nil : value; continue }
+            if let value = keyed(line, "character") {
+                // "Name: what they are like" — the first colon splits them.
+                let parts = value.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+                if let who = parts.first, !who.isEmpty { cast.append(Character(name: who, persona: parts.count > 1 ? parts[1] : "")) }
+                continue
+            }
             if let value = keyed(line, "pose") {
                 try finish()
                 guard Self.poses.contains(value) else { throw ParseError.unknownPose(value) }
@@ -157,7 +170,7 @@ public enum SpriteText {
         try finish()
         guard let name, !name.isEmpty else { throw ParseError.noName }
         for pose in Self.poses where poses[pose] == nil { throw ParseError.missingPose(pose) }
-        return Sheet(name: name, poses: poses)
+        return Sheet(name: name, kind: kind, cast: cast, poses: poses)
     }
 
     private static func keyed(_ line: String, _ key: String) -> String? {
@@ -247,7 +260,7 @@ public enum SpriteText {
     // MARK: The atlas file
 
     /// The JSON the app loads, for a sheet laid out by `pixels`.
-    public static func atlas(name: String, palette: Palette = .blocky) -> [String: Any] {
+    public static func atlas(name: String, palette: Palette = .blocky, kind: String? = nil, cast: [Character] = []) -> [String: Any] {
         var frames: [String: [String: Int]] = [:]
         for (column, pose) in poses.enumerated() {
             for (row, variant) in variants.enumerated() {
@@ -256,13 +269,16 @@ public enum SpriteText {
         }
         var animations: [String: [String: Any]] = [:]
         for (key, a) in Self.animations { animations[key] = ["frames": a.frames, "fps": a.fps, "loop": a.loop] }
-        return [
+        var meta: [String: Any] = [
             "name": name, "image": "\(name).png",
             "cell": [cell, cell], "contentBox": [box.x, box.y, box.w, box.h],
             "variants": variants,
             "palette": ["body": palette.body.hex, "light": palette.light.hex, "shade": palette.shade.hex, "outline": palette.outline.hex],
             "frames": frames, "animations": animations,
         ]
+        if let kind { meta["kind"] = kind }
+        if !cast.isEmpty { meta["cast"] = cast.map { ["name": $0.name, "persona": $0.persona] } }
+        return meta
     }
 
     // MARK: The prompt
@@ -276,6 +292,10 @@ public enum SpriteText {
         Write it as a sprite sheet in this exact text format and nothing else:
 
         name: <one lowercase word, letters and digits only>
+        kind: <what it is, in a few words, e.g. "a fat green frog with big eyes">
+        character: <a name>: <its personality in one or two sentences>
+        character: <another name>: <another personality>
+        character: <a third name>: <a third personality>
         pose: idle
         <32 rows of exactly 32 characters>
         pose: walk-0
@@ -300,6 +320,8 @@ public enum SpriteText {
             jump is stretched tall with feet tucked in. land is squashed very flat and wide. sleep-0 and sleep-1 are slumped low,
             eyes still drawn as k (the app closes them), sleep-1 one row lower than sleep-0.
           - Use only . o b l s k x. Do not add colours, comments or explanations. Output the text block and nothing else.
+          - The three characters are who the creatures of this kind will be when they talk to each other: give each a
+            distinct voice that fits what the creature is.
 
         Here is the built-in creature's idle pose, as an example of the size and style (a square body, two eyes, small feet):
 

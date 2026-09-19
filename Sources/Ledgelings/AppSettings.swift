@@ -49,8 +49,8 @@ final class AppSettings: ObservableObject {
     @Published var openRouterKey: String { didSet { keychain.set(openRouterKey, for: Self.keychainKeyAccount) } }
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
     @Published var flowerMinutes: Double { didSet { save(flowerMinutes, "flowerMinutes") } }
-    /// Creature i is character i, wrapping round like the colours.
-    @Published var characters: [Character] { didSet { saveJSON(characters, "characters") } }
+    /// The user's own cast per species; a species not listed uses its sheet's cast.
+    @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
     @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
     @Published var linePrompt: String { didSet { save(linePrompt, "linePrompt") } }
     @Published var replyPrompt: String { didSet { save(replyPrompt, "replyPrompt") } }
@@ -87,8 +87,12 @@ final class AppSettings: ObservableObject {
         bubbleSeconds = min(max(bubble, Self.bubbleRange.lowerBound), Self.bubbleRange.upperBound)
         let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2
         flowerMinutes = min(max(flower, Self.flowerRange.lowerBound), Self.flowerRange.upperBound)
-        let savedCast = defaults.data(forKey: "characters").flatMap { try? JSONDecoder().decode([Character].self, from: $0) } ?? []
-        characters = savedCast.isEmpty ? Banter.defaultCharacters : savedCast
+        var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
+        // Before species existed, one cast served everyone: it was blocky's.
+        if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {
+            casts["blocky"] = old
+        }
+        self.casts = casts
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
         replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt
@@ -98,9 +102,9 @@ final class AppSettings: ObservableObject {
         species.isEmpty ? "blocky" : species[index % species.count]
     }
 
-    func character(forCreature index: Int) -> Character {
-        characters.isEmpty ? Banter.defaultCharacters[index % Banter.defaultCharacters.count]
-                           : characters[index % characters.count]
+    /// The cast of a species: the user's edit if there is one, else `fallback` (the sheet's).
+    func cast(of species: String, fallback: [Character]) -> [Character] {
+        casts[species].map { $0.isEmpty ? fallback : $0 } ?? fallback
     }
 
     var talkServerURL: URL? {

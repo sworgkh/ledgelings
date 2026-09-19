@@ -1,0 +1,245 @@
+{
+  "animations" : {
+    "idle" : {
+      "fps" : 1,
+      "frames" : [
+        "idle"
+      ],
+      "loop" : true
+    },
+    "jump" : {
+      "fps" : 1,
+      "frames" : [
+        "jump"
+      ],
+      "loop" : true
+    },
+    "land" : {
+      "fps" : 1,
+      "frames" : [
+        "land"
+      ],
+      "loop" : true
+    },
+    "sleep" : {
+      "fps" : 0.80000000000000004,
+      "frames" : [
+        "sleep-0",
+        "sleep-1"
+      ],
+      "loop" : true
+    },
+    "walk" : {
+      "fps" : 8,
+      "frames" : [
+        "walk-0",
+        "walk-1",
+        "walk-2",
+        "walk-3"
+      ],
+      "loop" : true
+    }
+  },
+  "cast" : [
+    {
+      "name" : "Unit 7",
+      "persona" : "Literal and precise. Reports its own status in numbers."
+    },
+    {
+      "name" : "Sprocket",
+      "persona" : "Enthusiastic about maintenance. Offers to tighten everyone's bolts."
+    },
+    {
+      "name" : "Glitch",
+      "persona" : "Occasionally repeats a word word. Suspects the cursor is a virus."
+    }
+  ],
+  "cell" : [
+    32,
+    32
+  ],
+  "contentBox" : [
+    5,
+    5,
+    22,
+    22
+  ],
+  "frames" : {
+    "idle_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 0,
+      "y" : 64
+    },
+    "idle_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 0,
+      "y" : 32
+    },
+    "idle_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 0,
+      "y" : 0
+    },
+    "jump_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 160,
+      "y" : 64
+    },
+    "jump_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 160,
+      "y" : 32
+    },
+    "jump_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 160,
+      "y" : 0
+    },
+    "land_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 192,
+      "y" : 64
+    },
+    "land_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 192,
+      "y" : 32
+    },
+    "land_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 192,
+      "y" : 0
+    },
+    "sleep-0_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 224,
+      "y" : 64
+    },
+    "sleep-0_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 224,
+      "y" : 32
+    },
+    "sleep-0_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 224,
+      "y" : 0
+    },
+    "sleep-1_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 256,
+      "y" : 64
+    },
+    "sleep-1_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 256,
+      "y" : 32
+    },
+    "sleep-1_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 256,
+      "y" : 0
+    },
+    "walk-0_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 32,
+      "y" : 64
+    },
+    "walk-0_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 32,
+      "y" : 32
+    },
+    "walk-0_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 32,
+      "y" : 0
+    },
+    "walk-1_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 64,
+      "y" : 64
+    },
+    "walk-1_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 64,
+      "y" : 32
+    },
+    "walk-1_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 64,
+      "y" : 0
+    },
+    "walk-2_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 96,
+      "y" : 64
+    },
+    "walk-2_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 96,
+      "y" : 32
+    },
+    "walk-2_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 96,
+      "y" : 0
+    },
+    "walk-3_closed" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 128,
+      "y" : 64
+    },
+    "walk-3_half" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 128,
+      "y" : 32
+    },
+    "walk-3_open" : {
+      "h" : 32,
+      "w" : 32,
+      "x" : 128,
+      "y" : 0
+    }
+  },
+  "image" : "robot.png",
+  "kind" : "a boxy little robot with an antenna, square eyes and a row of rivets",
+  "name" : "robot",
+  "palette" : {
+    "body" : "#ff8a3d",
+    "light" : "#ffb27a",
+    "outline" : "#3b1f0f",
+    "shade" : "#d66220"
+  },
+  "variants" : [
+    "open",
+    "half",
+    "closed"
+  ]
+}

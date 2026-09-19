@@ -112,10 +112,29 @@ import Testing
         #expect(back == Self.grid())
     }
 
+    @Test func aSheetCanSayWhatItIsAndWhoItsCreaturesAre() throws {
+        let text = "name: frog\nkind: a fat green frog with big eyes\ncharacter: Hopper: Bouncy and loud. Brags about jumping.\ncharacter: Mossy : Slow, damp, philosophical.\n"
+            + Self.text(name: "frog").replacingOccurrences(of: "name: frog\n", with: "")
+        let sheet = try SpriteText.parse(text)
+        #expect(sheet.kind == "a fat green frog with big eyes")
+        #expect(sheet.cast.map(\.name) == ["Hopper", "Mossy"])
+        #expect(sheet.cast[1].persona == "Slow, damp, philosophical.")
+        let meta = SpriteText.atlas(name: "frog", kind: sheet.kind, cast: sheet.cast)
+        #expect(meta["kind"] as? String == sheet.kind)
+        #expect((meta["cast"] as? [[String: String]])?.first?["name"] == "Hopper")
+    }
+
+    @Test func aSheetWithoutKindOrCastStillParses() throws {
+        let sheet = try SpriteText.parse(Self.text())
+        #expect(sheet.kind == nil && sheet.cast.isEmpty)
+        #expect(SpriteText.atlas(name: "boxy")["kind"] == nil)
+    }
+
     @Test func thePromptCarriesTheRulesAndTheExample() {
         let prompt = SpriteText.prompt(example: ["....", "..o."])
         #expect(prompt.contains("pose: idle") && prompt.contains("32") && prompt.contains("..o."))
         #expect(prompt.contains(SpriteText.describePlaceholder))
+        #expect(prompt.contains("kind:") && prompt.contains("character:"))
         for pose in SpriteText.poses { #expect(prompt.contains(pose)) }
     }
 }

@@ -14,11 +14,14 @@ public struct Character: Codable, Equatable, Sendable {
 /// The words that go to the model. Pure string work, so it is testable without
 /// a server: templates with `{placeholders}`, filled from a small dictionary.
 public enum Banter {
-    public static let placeholders = ["speaker", "speakerPersona", "listener", "listenerPersona", "situation", "line"]
+    public static let placeholders = ["speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona", "situation", "line"]
+
+    /// What the built-in creature is, for the prompt.
+    public static let defaultKind = "a small square creature"
 
     public static let defaultSystemPrompt = """
-    You are {speaker}, a small square creature who lives on the edge of a computer screen. {speakerPersona}
-    You are talking to {listener}, another creature on the same edge. {listenerPersona}
+    You are {speaker}, {speakerKind}, living on the edge of a computer screen. {speakerPersona}
+    You are talking to {listener}, {listenerKind}, who lives on the same edge. {listenerPersona}
     Say ONE line to {listener}: a joke, a jab or a tease, at most 20 words, in your own voice.
     Output only the line. No quotes, no name prefix, no explanation.
     """

@@ -5,6 +5,8 @@ import SwiftUI
 /// Everything about the creatures talking to each other, and which model does the talking.
 struct TalkSettingsView: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject var library: SpriteLibrary
+    @State private var castSpecies = "blocky"
 
     var body: some View {
         Form {
@@ -34,26 +36,30 @@ struct TalkSettingsView: View {
             }
 
             Section {
-                ForEach(settings.characters.indices, id: \.self) { i in
+                Picker("Species", selection: $castSpecies) {
+                    ForEach(library.species) { Text($0.name).tag($0.name) }
+                }
+                Text(library.kind(of: castSpecies)).font(.caption).foregroundStyle(.secondary)
+                ForEach(cast.indices, id: \.self) { i in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            TextField("Name", text: binding(\.characters[i].name)).font(.headline)
-                            Button(role: .destructive) { settings.characters.remove(at: i) } label: { Image(systemName: "minus.circle") }
-                                .buttonStyle(.borderless).disabled(settings.characters.count <= 2)
+                            TextField("Name", text: member(i, \.name)).font(.headline)
+                            Button(role: .destructive) { var c = cast; c.remove(at: i); setCast(c) } label: { Image(systemName: "minus.circle") }
+                                .buttonStyle(.borderless).disabled(cast.count <= 1)
                         }
-                        TextField("Who they are", text: binding(\.characters[i].persona), axis: .vertical).lineLimit(2...4)
+                        TextField("Who they are", text: member(i, \.persona), axis: .vertical).lineLimit(2...4)
                     }
                     .padding(.vertical, 2)
                 }
                 HStack {
-                    Button("Add Character") { settings.characters.append(Character(name: "Newcomer", persona: "Describe the personality here.")) }
+                    Button("Add Character") { setCast(cast + [Character(name: "Newcomer", persona: "Describe the personality here.")]) }
                     Spacer()
-                    Button("Reset Cast") { settings.characters = Banter.defaultCharacters }
+                    Button("Reset Cast") { settings.casts.removeValue(forKey: castSpecies) }
                 }
             } header: {
                 Text("Characters")
             } footer: {
-                Text("Creature 1 is character 1, creature 2 is character 2, and so on, starting over when the cast runs out. The colours follow the same rule, so creature 1 is always the first colour and the first character.")
+                Text("Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog.")
             }
 
             Section {
@@ -82,8 +88,15 @@ struct TalkSettingsView: View {
         }
     }
 
-    private func binding<T>(_ path: ReferenceWritableKeyPath<AppSettings, T>) -> Binding<T> {
-        Binding(get: { settings[keyPath: path] }, set: { settings[keyPath: path] = $0 })
+    private var cast: [Character] { settings.cast(of: castSpecies, fallback: library.cast(of: castSpecies)) }
+
+    private func setCast(_ new: [Character]) { settings.casts[castSpecies] = new }
+
+    private func member(_ i: Int, _ path: WritableKeyPath<Character, String>) -> Binding<String> {
+        Binding(
+            get: { cast.indices.contains(i) ? cast[i][keyPath: path] : "" },
+            set: { value in var c = cast; guard c.indices.contains(i) else { return }; c[i][keyPath: path] = value; setCast(c) }
+        )
     }
 
 }

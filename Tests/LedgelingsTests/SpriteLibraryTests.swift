@@ -13,10 +13,13 @@ import Testing
 
     @Test func theBuiltInCreatureIsAlwaysThereAndCannotBeRemoved() throws {
         let library = fresh()
-        #expect(library.species.map(\.name) == ["blocky"])
-        #expect(library.species[0].isBuiltIn)
+        #expect(library.species.map(\.name) == SpriteLibrary.builtIn)
+        let allBuiltIn = library.species.allSatisfy { $0.isBuiltIn }
+        #expect(allBuiltIn)
         library.remove("blocky")
-        #expect(library.species.map(\.name) == ["blocky"])
+        #expect(library.species.map(\.name) == SpriteLibrary.builtIn)
+        #expect(library.kind(of: "frog").contains("frog") && library.cast(of: "frog").count == 3)
+        #expect(library.cast(of: "blocky") == Banter.defaultCharacters)
     }
 
     @Test func theBuiltInCreatureRoundTripsThroughTheTextFormat() throws {
@@ -36,13 +39,13 @@ import Testing
         try library.exampleText.replacingOccurrences(of: "name: blocky", with: "name: pip").write(to: file, atomically: true, encoding: .utf8)
         let name = try library.importFile(file)
         #expect(name == "pip")
-        #expect(library.species.map(\.name) == ["blocky", "pip"])
+        #expect(library.species.map(\.name) == SpriteLibrary.builtIn + ["pip"])
         let atlas = try SpriteAtlas(directory: library.directory.appendingPathComponent("pip"), name: "pip")
         #expect(atlas.meta.frames.count == 27)
         #expect(atlas.frames().frame(animation: "walk", time: 0.2, eyes: .half) != nil)
         #expect(atlas.bodyHalfSize == 11)
         library.remove("pip")
-        #expect(library.species.map(\.name) == ["blocky"])
+        #expect(library.species.map(\.name) == SpriteLibrary.builtIn)
         #expect(!FileManager.default.fileExists(atPath: library.directory.appendingPathComponent("pip").path))
     }
 
@@ -70,7 +73,7 @@ import Testing
         do { _ = try library.importFile(file); Issue.record("should have refused") } catch {
             #expect("\(error)".contains("rows"))
         }
-        #expect(library.species.count == 1)
+        #expect(library.species.count == SpriteLibrary.builtIn.count)
     }
 
     @Test func thePromptShowsTheBuiltInIdlePoseAsLetters() {
