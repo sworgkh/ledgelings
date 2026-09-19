@@ -5,9 +5,9 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.8 — a colony on every monitor that talks when it meets, gives flowers,
-thinks locally or through OpenRouter, keeps every chat, goes home when asked, and
-starts with your Mac if you like.
+**Status:** v0.9 — a colony on every monitor that talks when it meets, gives flowers,
+thinks locally or through OpenRouter, keeps every chat, goes home when asked, starts
+with your Mac if you like, and wears creatures you describe to any chat model.
 See [BRIEF.md](BRIEF.md) for the original plan and [SPEC.md](SPEC.md) for the full,
 platform-neutral specification of everything the app does.
 
@@ -73,6 +73,16 @@ house shrinks to nothing, and when the time is up it grows back and they walk ou
 one by one. The
 same menu item, now **Bring Them Back Now**, ends it early.
 
+**Your own creatures.** Settings → Sprites lists the creature sheets in use and
+imports new ones. The **sprite kit** there is a prompt for any chat model: copy it,
+paste it with a description of the creature you want, and the model answers with
+the creature as nine 32×32 grids of letters (`.` nothing, `o` outline, `b` body,
+`l` light, `s` shade, `k` eyes). Save that as a .txt and import it; the app turns
+the letters into a real sheet with the game's palette, so the new creature blinks
+and takes your colours like the built-in one. Image models and paint programs are
+served too: save the PNG template, paint on magenta, import the PNG. Sheets live in
+`~/Library/Application Support/Ledgelings/sprites/`.
+
 **Every chat is kept.** Each conversation goes to
 `~/Library/Application Support/Ledgelings/chats/YYYY-MM-DD.jsonl`, one line per
 exchange with the time, the situation, the model and what each of them said.
@@ -104,6 +114,7 @@ the menu shows why.
 | How many | 3 | 1 to 24 |
 | Smallest / Largest | 1.5× / 3× | 1× to 5× in half steps. Every creature gets its own size between the two; set them equal and they all match |
 | Colours | 6 | creature 1 wears colour 1, and so on, wrapping round. Eyes stay black |
+| Sheets in use | blocky | creature 1 wears the first sheet, and so on, wrapping round |
 | Day lasts | 3 min | |
 | Night lasts | 5 min | 0 = they never sleep |
 | Start at login | off | the system's Login Items list; only the installed app can register |
@@ -119,7 +130,7 @@ The menu also shows the time left until dusk or dawn, and has **Put Them to Slee
 Now / Wake Them Up Now**, **Make Them Jump**, **Hide Them for a While…**, **Make Someone
 Talk** and **Chat History…**.
 
-Not yet: more species.
+Not yet: sheets with a different cell size.
 
 ## Run it
 
@@ -140,7 +151,7 @@ dev build walks beside the installed one.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.9.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.10.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
@@ -211,6 +222,7 @@ Sources/LedgelingsCore/   pure logic, no AppKit:
                             Hideout    the house: appear, gather, shrink, hide, grow, release
                             Banter     characters, prompt templates, cleaning a model's line
                             ChatLog    conversations on disk, one JSON-lines file per day
+                            SpriteText a creature as letters: parse, eye variants, pixels, the kit prompt
 Sources/Ledgelings/       the app:
                             Colony            creatures + clock + monitors + the frame loop
                             Colony+Meetings   the stop, the stars, the flower, letting go
@@ -221,6 +233,7 @@ Sources/Ledgelings/       the app:
                             ChatClient        LM Studio or OpenRouter, for banter and anything else
                             ModelCatalog      OpenRouter's model list, searched and priced
                             ChatHistory       the log folder, and the Chats tab (ChatHistoryView)
+                            SpriteLibrary     built-in and imported sheets, import, the Sprites tab (SpritesSettingsView)
                             Keychain, SpriteAtlas, AppSettings, SettingsView, TalkSettingsView
 Tests/                    unit tests for both
 spritetool/               the sprite sheet tool (Python: Pillow + PyYAML)

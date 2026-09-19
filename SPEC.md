@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.7). Where the
+Every number here is the one the macOS app ships with (v0.9). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -655,6 +655,43 @@ way: flat fill, a 1 px outline of `mix(fill, black, 0.76)`, a 1 px line of
 line of `mix(fill, black, 0.17)` along the bottom and right. Pixel art; the
 flowers carry a 1 px rim of `#281e32` (40, 30, 50), added automatically around
 every filled pixel.
+
+### 9.1.1 User sheets and the text format
+
+Imported creatures live in `<app support>/Ledgelings/sprites/<name>/` as
+`<name>.png` + `<name>.json` in exactly the built-in layout (32×32 cells,
+body box `[5,5,22,22]`, 9 pose columns × 3 eye-variant rows, same palette),
+so the app treats them like its own. Creature `i` wears species
+`speciesInUse[i mod count]` ("blocky" when the list is empty).
+
+Two import routes:
+
+- **Text** (`.txt`/`.md`), the format a chat model can write:
+
+  ```
+  name: pip
+  pose: idle
+  <32 rows of 32 letters>
+  pose: walk-0 … walk-3, jump, land, sleep-0, sleep-1
+  ```
+
+  Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade, `k` eye
+  (black, blinks), `x` black that never blinks. `-`, `_` and space also mean
+  nothing; a short row of nothing is padded; `#` lines are comments; an empty
+  line is skipped. Rejected: a missing or unknown pose, a row that is not 32
+  wide, an unknown letter, ink outside the body box (columns 6–27, rows 6–27,
+  1-based), an empty pose, or no ink on row 27 (the floor). Eye variants are
+  derived: for each vertical run of `k`, `half` keeps the lower half (rounded
+  up), `closed` keeps the bottom row; what the lid covers becomes body.
+  Pixels use the built-in palette, so recolouring (§9.2) works.
+- **PNG** on magenta `#ff00ff` (tolerance 60 in RGB distance), 288×96 or a
+  whole multiple of it (sampled down at cell centres), alpha hardened to 1 bit.
+
+The **sprite kit** in Settings › Sprites offers: the prompt (the format above,
+the rules, and the built-in creature's idle pose written in letters as the
+example, with a placeholder for the user's description), the built-in creature
+as a whole text file, and a PNG template: magenta with cell borders and body
+boxes marked.
 
 ### 9.2 Recolouring
 
