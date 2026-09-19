@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.9). Where the
+Every number here is the one the macOS app ships with (v0.10). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -329,15 +329,22 @@ A character is `{name, persona}`. Six ship by default:
 | Dot | Tiny, fast and sarcastic. Brags about speed. Calls everyone else a boulder. |
 | Ruth | Bossy, organised, keeps count of everything. Disapproves of jumping. |
 
-Three editable templates with `{placeholders}`: `speaker`, `speakerPersona`,
-`listener`, `listenerPersona`, `situation`, `line`. Unknown placeholders are
-left as written.
+Every species has a **kind** (what it is, for the model: blocky is "a small
+square creature") and a **cast**: blocky's is the six above; the other
+built-ins carry three each in their sheet; an imported sheet without a cast
+gets one placeholder character. The user may replace any species' cast in
+Settings › Talk. The k-th creature wearing a species is that species' k-th
+character, wrapping round.
+
+Three editable templates with `{placeholders}`: `speaker`, `speakerKind`,
+`speakerPersona`, `listener`, `listenerKind`, `listenerPersona`, `situation`,
+`line`. Unknown placeholders are left as written.
 
 System prompt (default):
 
 ```
-You are {speaker}, a small square creature who lives on the edge of a computer screen. {speakerPersona}
-You are talking to {listener}, another creature on the same edge. {listenerPersona}
+You are {speaker}, {speakerKind}, living on the edge of a computer screen. {speakerPersona}
+You are talking to {listener}, {listenerKind}, who lives on the same edge. {listenerPersona}
 Say ONE line to {listener}: a joke, a jab or a tease, at most 20 words, in your own voice.
 Output only the line. No quotes, no name prefix, no explanation.
 ```
@@ -658,7 +665,10 @@ every filled pixel.
 
 ### 9.1.1 User sheets and the text format
 
-Imported creatures live in `<app support>/Ledgelings/sprites/<name>/` as
+Six species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
+`ghost`, `slime`, `robot`, each written in the text format below
+(`sprites/text/<name>.txt`) and turned into a sheet at build time. Their
+names are reserved. Imported creatures live in `<app support>/Ledgelings/sprites/<name>/` as
 `<name>.png` + `<name>.json` in exactly the built-in layout (32×32 cells,
 body box `[5,5,22,22]`, 9 pose columns × 3 eye-variant rows, same palette),
 so the app treats them like its own. Creature `i` wears species
@@ -670,10 +680,15 @@ Two import routes:
 
   ```
   name: pip
+  kind: a fat green frog with big eyes            (optional)
+  character: Hopper: Bouncy and loud.             (optional, any number; "Name: persona")
   pose: idle
   <32 rows of 32 letters>
   pose: walk-0 … walk-3, jump, land, sleep-0, sleep-1
   ```
+
+  `kind` and `cast` go into the atlas JSON as `kind` (string) and `cast`
+  (array of `{name, persona}`).
 
   Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade, `k` eye
   (black, blinks), `x` black that never blinks. `-`, `_` and space also mean
@@ -687,11 +702,14 @@ Two import routes:
 - **PNG** on magenta `#ff00ff` (tolerance 60 in RGB distance), 288×96 or a
   whole multiple of it (sampled down at cell centres), alpha hardened to 1 bit.
 
-The **sprite kit** in Settings › Sprites offers: the prompt (the format above,
-the rules, and the built-in creature's idle pose written in letters as the
-example, with a placeholder for the user's description), the built-in creature
-as a whole text file, and a PNG template: magenta with cell borders and body
-boxes marked.
+Settings › Sprites shows every species as a card (idle pose at 3×, name, a
+check overlay when it is in the colony); a click toggles it; imported ones
+have a delete button. The **sprite kit** below offers: the prompt (the format
+above including `kind` and three `character` lines, the rules, and the
+built-in creature's idle pose written in letters as the example, with a
+placeholder for the user's description), the built-in creature as a whole
+text file, and a PNG template: magenta with cell borders and body boxes
+marked.
 
 ### 9.2 Recolouring
 

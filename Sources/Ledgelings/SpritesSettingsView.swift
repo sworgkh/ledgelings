@@ -14,21 +14,10 @@ struct SpritesSettingsView: View {
     var body: some View {
         Form {
             Section {
-                ForEach(library.species) { species in
-                    HStack(spacing: 12) {
-                        Image(nsImage: preview(species.atlas))
-                            .interpolation(.none)
-                            .frame(width: 48, height: 48)
-                        Text(species.name).font(.headline)
-                        if species.isBuiltIn { Text("built in").font(.caption).foregroundStyle(.secondary) }
-                        Spacer()
-                        Toggle("In use", isOn: inUse(species.name)).toggleStyle(.switch).labelsHidden()
-                        Button(role: .destructive) { library.remove(species.name); settings.species.removeAll { $0 == species.name } } label: {
-                            Image(systemName: "trash")
-                        }
-                        .buttonStyle(.borderless).disabled(species.isBuiltIn)
-                    }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 12)], spacing: 12) {
+                    ForEach(library.species) { species in card(species) }
                 }
+                .padding(.vertical, 4)
                 HStack {
                     Button("Import Sheet…") { importSheet() }
                     Button("Open Folder") { library.openFolder() }
@@ -36,9 +25,9 @@ struct SpritesSettingsView: View {
                     Text(status).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                 }
             } header: {
-                Text("Creature sheets")
+                Text("Creatures")
             } footer: {
-                Text("Creature 1 wears the first sheet in use, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in \(library.directory.path).")
+                Text("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in \(library.directory.path).")
             }
 
             Section {
@@ -69,19 +58,47 @@ struct SpritesSettingsView: View {
         .formStyle(.grouped)
     }
 
-    private func inUse(_ name: String) -> Binding<Bool> {
-        Binding(
-            get: { settings.species.contains(name) },
-            set: { on in
-                if on { if !settings.species.contains(name) { settings.species.append(name) } }
-                else { settings.species.removeAll { $0 == name } }
+    /// One creature: its idle pose at 3×, its name, a check when it is in the colony.
+    private func card(_ species: SpriteLibrary.Species) -> some View {
+        let chosen = settings.species.contains(species.name)
+        return Button { toggle(species.name) } label: {
+            VStack(spacing: 6) {
+                ZStack(alignment: .topTrailing) {
+                    Image(nsImage: preview(species.atlas))
+                        .interpolation(.none)
+                        .resizable()
+                        .frame(width: 96, height: 96)
+                    Image(systemName: chosen ? "checkmark.circle.fill" : "circle")
+                        .font(.title2)
+                        .foregroundStyle(chosen ? Color.accentColor : Color.secondary.opacity(0.5))
+                        .padding(4)
+                }
+                HStack(spacing: 4) {
+                    Text(species.name).font(.callout.weight(chosen ? .semibold : .regular)).lineLimit(1)
+                    if !species.isBuiltIn {
+                        Button { library.remove(species.name); settings.species.removeAll { $0 == species.name } } label: {
+                            Image(systemName: "trash").font(.caption)
+                        }
+                        .buttonStyle(.borderless).help("Delete this imported creature")
+                    }
+                }
             }
-        )
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 10).fill(chosen ? Color.accentColor.opacity(0.14) : Color(nsColor: .controlBackgroundColor)))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(chosen ? Color.accentColor : Color.clear, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggle(_ name: String) {
+        if settings.species.contains(name) { settings.species.removeAll { $0 == name } }
+        else { settings.species.append(name) }
     }
 
     private func preview(_ atlas: SpriteAtlas) -> NSImage {
         guard let cg = atlas.frames().frame(animation: "idle", time: 0) else { return NSImage() }
-        return NSImage(cgImage: cg, size: NSSize(width: 48, height: 48))
+        return NSImage(cgImage: cg, size: NSSize(width: 32, height: 32))
     }
 
     private func importSheet() {

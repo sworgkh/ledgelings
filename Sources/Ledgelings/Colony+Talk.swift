@@ -12,8 +12,20 @@ extension Colony {
         }!.1
     }
 
+    /// Who creature `i` is: the k-th creature wearing its species takes the k-th
+    /// character of that species' cast, wrapping round.
+    func character(forCreature i: Int) -> Character {
+        let species = settings.species(forCreature: i)
+        let cast = settings.cast(of: species, fallback: library.cast(of: species))
+        guard !cast.isEmpty else { return Character(name: "Ledgeling \(i + 1)", persona: "") }
+        let k = (0..<i).filter { settings.species(forCreature: $0) == species }.count
+        return cast[k % cast.count]
+    }
+
+    func kind(ofCreature i: Int) -> String { library.kind(of: settings.species(forCreature: i)) }
+
     func describe(_ i: Int) -> String {
-        let c = creatures[i], name = settings.character(forCreature: i).name
+        let c = creatures[i], name = character(forCreature: i).name
         if c.isHeld { return "\(name) is dangling from the user's cursor" }
         if c.isJumping { return "\(name) is mid-jump" }
         return "\(name) is \(c.isSleeping ? "asleep on" : "on") \(edgeName(c))"
@@ -45,11 +57,13 @@ extension Colony {
         guard creatures.indices.contains(speaker), creatures.indices.contains(listener), speaker != listener,
               !busy.contains(speaker), !busy.contains(listener) else { return false }
         guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
-        let a = settings.character(forCreature: speaker), b = settings.character(forCreature: listener)
+        let a = character(forCreature: speaker), b = character(forCreature: listener)
+        let aKind = kind(ofCreature: speaker), bKind = kind(ofCreature: listener)
         var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
         if let event { situation += " " + event }
-        var vars = ["speaker": a.name, "speakerPersona": a.persona, "listener": b.name,
-                    "listenerPersona": b.persona, "situation": situation, "line": ""]
+        var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
+                    "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
+                    "situation": situation, "line": ""]
         let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
         let bubbleSeconds = settings.bubbleSeconds
         let started = Date()
@@ -81,8 +95,9 @@ extension Colony {
                 talkStatus = "\(a.name): \(first)"
 
                 // Swap seats for the answer.
-                vars["speaker"] = b.name; vars["speakerPersona"] = b.persona
-                vars["listener"] = a.name; vars["listenerPersona"] = a.persona; vars["line"] = first
+                vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
+                vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
+                vars["line"] = first
                 let reply = Banter.cleanLine(
                     try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars)),
                     speaker: b.name)

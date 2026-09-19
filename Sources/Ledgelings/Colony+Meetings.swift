@@ -34,7 +34,7 @@ extension Colony {
                      inward: creatures[bump.a].loop.inward(ofSegment: creatures[bump.a].segment), using: &rng)
         var event = "They just walked into each other."
         if bump.gift, let flower = Gifts.flowers.randomElement(using: &rng), gifts.give(flower, from: giver, to: receiver, at: elapsed) {
-            let a = settings.character(forCreature: giver).name, b = settings.character(forCreature: receiver).name
+            let a = character(forCreature: giver).name, b = character(forCreature: receiver).name
             event = "\(a) just walked into \(b) and gave \(b) a \(flower)."
         }
         if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event) { endChat(giver, receiver, after: 2) }

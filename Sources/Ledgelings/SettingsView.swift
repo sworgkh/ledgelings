@@ -20,7 +20,7 @@ struct SettingsView: View {
         TabView(selection: $navigation.tab) {
             creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
-            TalkSettingsView(settings: settings).tabItem { Text("Talk") }.tag(SettingsTab.talk)
+            TalkSettingsView(settings: settings, library: library).tabItem { Text("Talk") }.tag(SettingsTab.talk)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
         }
         .frame(width: 560, height: 600)

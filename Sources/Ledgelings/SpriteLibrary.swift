@@ -25,16 +25,19 @@ final class SpriteLibrary: ObservableObject {
             case .unreadable(let what): "cannot read \(what)"
             case .notASheet(let what): "\(what) is neither a sprite text file (.txt, .md) nor a PNG"
             case .wrongSize(let w, let h): "the PNG is \(w)×\(h); a sheet is 288×96, or a whole multiple of that"
-            case .badName(let n): "\"\(n)\" is not a name: use lowercase letters, digits and dashes"
+            case .badName(let n): "\"\(n)\" cannot be used: lowercase letters, digits and dashes only, and not a built-in name"
             }
         }
     }
 
+    /// The sheets shipped in the app, in the order the Sprites tab shows them.
+    nonisolated static let builtIn = ["blocky", "frog", "cat", "ghost", "slime", "robot"]
+
     static var defaultDirectory: URL {
         ChatHistory.defaultDirectory.deletingLastPathComponent().appendingPathComponent("sprites", isDirectory: true)
     }
-    static let keyColour = SpriteText.Tint(r: 255, g: 0, b: 255)
-    static let keyTolerance = 60
+    nonisolated static let keyColour = SpriteText.Tint(r: 255, g: 0, b: 255)
+    nonisolated static let keyTolerance = 60
 
     let directory: URL
     @Published private(set) var species: [Species] = []
@@ -46,9 +49,11 @@ final class SpriteLibrary: ObservableObject {
 
     func reload() {
         var found: [Species] = []
-        if let builtIn = try? SpriteAtlas(named: "blocky") { found.append(Species(name: "blocky", isBuiltIn: true, atlas: builtIn)) }
+        for name in Self.builtIn {
+            if let atlas = try? SpriteAtlas(named: name) { found.append(Species(name: name, isBuiltIn: true, atlas: atlas)) }
+        }
         let names = ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []).sorted()
-        for name in names where name != "blocky" {
+        for name in names where !Self.builtIn.contains(name) {
             guard let atlas = try? SpriteAtlas(directory: directory.appendingPathComponent(name), name: name) else { continue }
             found.append(Species(name: name, isBuiltIn: false, atlas: atlas))
         }
@@ -57,12 +62,27 @@ final class SpriteLibrary: ObservableObject {
 
     func atlas(named name: String) -> SpriteAtlas? { species.first { $0.name == name }?.atlas }
 
+    /// What a species is, for the prompt: from its sheet, or the built-in wording.
+    func kind(of name: String) -> String {
+        if name == "blocky" { return Banter.defaultKind }
+        return atlas(named: name)?.meta.kind ?? "a small pixel creature"
+    }
+
+    /// Who a species' creatures are, before the user edits them.
+    func cast(of name: String) -> [Character] {
+        if name == "blocky" { return Banter.defaultCharacters }
+        let cast = atlas(named: name)?.meta.cast ?? []
+        return cast.isEmpty ? [Character(name: name.capitalized, persona: "Curious and new here.")] : cast
+    }
+
     /// Import a text sheet or a painted PNG. Returns the species name.
     @discardableResult
     func importFile(_ url: URL) throws -> String {
         let ext = url.pathExtension.lowercased()
         let sheet: SpriteText.Image
         let name: String
+        var kind: String?
+        var cast: [Character] = []
         var source: (data: Data, ext: String)?
         if ext == "png" {
             sheet = try Self.keyedOut(try Self.readPNG(url))
@@ -72,17 +92,19 @@ final class SpriteLibrary: ObservableObject {
             let parsed = try SpriteText.parse(text)
             sheet = SpriteText.pixels(parsed, palette: .blocky)
             name = parsed.name
+            kind = parsed.kind
+            cast = parsed.cast
             source = (Data(text.utf8), "txt")
         } else {
             throw ImportError.notASheet(url.lastPathComponent)
         }
-        guard name.range(of: "^[a-z0-9][a-z0-9-]*$", options: .regularExpression) != nil, name != "blocky" else {
+        guard name.range(of: "^[a-z0-9][a-z0-9-]*$", options: .regularExpression) != nil, !Self.builtIn.contains(name) else {
             throw ImportError.badName(name)
         }
         let folder = directory.appendingPathComponent(name, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Self.writePNG(sheet, to: folder.appendingPathComponent("\(name).png"))
-        let meta = try JSONSerialization.data(withJSONObject: SpriteText.atlas(name: name), options: [.prettyPrinted, .sortedKeys])
+        let meta = try JSONSerialization.data(withJSONObject: SpriteText.atlas(name: name, kind: kind, cast: cast), options: [.prettyPrinted, .sortedKeys])
         try meta.write(to: folder.appendingPathComponent("\(name).json"))
         if let source { try source.data.write(to: folder.appendingPathComponent("\(name).\(source.ext)")) }
         reload()
@@ -144,7 +166,7 @@ final class SpriteLibrary: ObservableObject {
 
     // MARK: PNG in and out
 
-    static func readPNG(_ url: URL) throws -> SpriteText.Image {
+    nonisolated static func readPNG(_ url: URL) throws -> SpriteText.Image {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let cg = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw ImportError.unreadable(url.lastPathComponent) }
         let w = cg.width, h = cg.height
@@ -159,7 +181,7 @@ final class SpriteLibrary: ObservableObject {
 
     /// Magenta (within tolerance) becomes transparent; alpha is hardened to 1 bit;
     /// a sheet painted at a whole-number scale is brought down by sampling.
-    static func keyedOut(_ image: SpriteText.Image) throws -> SpriteText.Image {
+    nonisolated static func keyedOut(_ image: SpriteText.Image) throws -> SpriteText.Image {
         let w = SpriteText.poses.count * SpriteText.cell, h = SpriteText.variants.count * SpriteText.cell
         guard image.width % w == 0, image.height % h == 0, image.width / w == image.height / h, image.width >= w else {
             throw ImportError.wrongSize(image.width, image.height)
@@ -179,7 +201,7 @@ final class SpriteLibrary: ObservableObject {
         return SpriteText.Image(width: w, height: h, rgba: out)
     }
 
-    static func writePNG(_ image: SpriteText.Image, to url: URL) throws {
+    nonisolated static func writePNG(_ image: SpriteText.Image, to url: URL) throws {
         var bytes = image.rgba
         let cg: CGImage? = bytes.withUnsafeMutableBytes { raw in
             guard let ctx = CGContext(data: raw.baseAddress, width: image.width, height: image.height, bitsPerComponent: 8,
