@@ -63,6 +63,8 @@ struct ChatHistoryView: View {
                 Text(x.time, style: .time).monospacedDigit()
                 Text(x.model).lineLimit(1)
                 Spacer()
+                if let cost = x.cost { Text(Spend.label(cost)).monospacedDigit() }
+                if let tokens = x.tokens { Text("\(tokens) tok").monospacedDigit() }
             }
             .font(.caption).foregroundStyle(.secondary)
             Text(x.situation).font(.caption).foregroundStyle(.tertiary)

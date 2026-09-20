@@ -16,6 +16,22 @@ import Testing
                                 provider: "LM Studio", model: "google/gemma-3-1b", lines: lines)
     }
 
+    @Test func anExchangeMayCarryWhatItCostAndOldLinesStillRead() throws {
+        let log = ChatLog(directory: temp())
+        defer { try? FileManager.default.removeItem(at: log.directory) }
+        let noon = Calendar.current.date(from: DateComponents(year: 2026, month: 9, day: 20, hour: 12))!
+        var priced = exchange(at: noon)
+        priced.cost = 0.0007; priced.tokens = 410
+        try log.append(priced)
+        let old = #"{"time":"2026-09-20T13:00:00Z","situation":"s","provider":"LM Studio","model":"m","lines":[]}"#
+        let handle = try FileHandle(forWritingTo: log.file(for: "2026-09-20"))
+        try handle.seekToEnd(); try handle.write(contentsOf: Data((old + "\n").utf8)); try handle.close()
+        let back = try log.exchanges(on: "2026-09-20")
+        #expect(back.count == 2)
+        #expect(back[0].cost == 0.0007 && back[0].tokens == 410)
+        #expect(back[1].cost == nil && back[1].tokens == nil)
+    }
+
     @Test func aDayIsNamedByTheLocalCalendarDate() {
         var parts = DateComponents(); parts.year = 2026; parts.month = 9; parts.day = 18; parts.hour = 23; parts.minute = 59
         let late = Calendar.current.date(from: parts)!
