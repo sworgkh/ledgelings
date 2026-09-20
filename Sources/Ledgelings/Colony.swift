@@ -117,6 +117,7 @@ final class Colony: NSObject {
 
     func applySettings() {
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
+        settings.keepSpecies(among: library.species.map(\.name))
 
         if let held, held.index >= settings.creatureCount { letGo() }
         while creatures.count > settings.creatureCount {

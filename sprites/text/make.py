@@ -175,38 +175,6 @@ def blocky_feet(left, right, bottom):
     return f
 
 
-def rabbit(top, bottom, lf, rf, ear_h=8, lean=0, eye_h=None):
-    """The square with two tall ears; `lean` bends the ears back by that many pixels at the tip."""
-    body = rect(L, top, R, bottom)
-    ears, d = set(), {}
-    for k in range(ear_h):
-        y = top - 1 - k
-        dx = -round(lean * k / max(1, ear_h - 1))
-        ears |= rect(8 + dx, y, 12 + dx, y) | rect(19 + dx, y, 23 + dx, y)
-    height = bottom - top + 1
-    d |= blocky_eyes(top, height, eye_h)
-    eye_bottom = top + max(3, height // 4) + (eye_h or max(3, min(6, height // 3)))
-    if eye_bottom + 3 <= bottom - 1:
-        d |= line(14, 21, eye_bottom + 1)                                   # mouth
-        d |= {(x, y): "l" for x in (16, 17, 19, 20) for y in (eye_bottom + 2, eye_bottom + 3)}   # two big teeth
-    return body | ears, d, blocky_feet(lf, rf, bottom)
-
-
-def pig(top, bottom, lf, rf, eye_h=None):
-    """The square with two ear blocks on top and a snout block on its face."""
-    body = rect(L, top, R, bottom)
-    ears = rect(6, top - 3, 9, top) | rect(22, top - 3, 25, top)
-    height = bottom - top + 1
-    d = blocky_eyes(top, height, eye_h)
-    sy = top + max(3, height // 4) + (eye_h or max(3, min(6, height // 3))) + 1
-    if sy + 3 <= bottom - 1:                                                # the snout: an outlined block with two nostrils
-        d |= {(x, y): "o" for x in range(13, 22) for y in (sy, sy + 3)}
-        d |= {(x, y): "o" for x in (13, 21) for y in (sy + 1, sy + 2)}
-        d |= {(x, y): "b" for x in range(14, 21) for y in (sy + 1, sy + 2)}
-        d |= {(x, y): "x" for x in (15, 16, 18, 19) for y in (sy + 1, sy + 2)}
-    elif sy + 1 <= bottom - 1:
-        d |= {(x, y): "x" for x in (15, 16, 18, 19) for y in (sy, sy + 1)}
-    return body | ears, d, blocky_feet(lf, rf, bottom)
 
 
 def triangle(top, bottom, lf, rf, lean=0, band=3, widths=(1, 3, 5, 7, 9, 10, 10), eye_h=None):
@@ -226,17 +194,6 @@ def triangle(top, bottom, lf, rf, lean=0, band=3, widths=(1, 3, 5, 7, 9, 10, 10)
     return mask, d, blocky_feet(lf, rf, bottom)
 
 
-def ball(top, bottom, x0=L, x1=R, corner=0, cuts=(6, 4, 3, 2, 1, 1), eye_h=None):
-    """A square with its corners stepped off, and a dark panel that moves round the corners as it rolls."""
-    body = cut_rect(x0, top, x1, bottom, cuts)
-    height = bottom - top + 1
-    px = (x1 - 7, x1 - 7, x0 + 3, x0 + 3)[corner]
-    py = (top + 2, bottom - 6, bottom - 6, top + 2)[corner]
-    d = {(x, y): "s" for x in range(px, px + 5) for y in range(py, py + 5) if (x, y) in body}
-    d |= {(x, y): "o" for x in range(px + 1, px + 4) for y in range(py + 1, py + 4) if (x, y) in body}
-    d |= blocky_eyes(top, height, eye_h)
-    return body, d, set()
-
 
 def mushroom(top, cap_h, bottom, lf, rf, eye_h=None):
     """A wide flat cap with stepped corners on a pale stem; the eyes are on the stem."""
@@ -250,27 +207,6 @@ def mushroom(top, cap_h, bottom, lf, rf, eye_h=None):
     d |= blocky_eyes(cap_bottom, stem_h, eye_h)
     return cap | stem, d, blocky_feet(lf, rf, bottom)
 
-
-def snail(shell_top, head_x0, stalk_h, cuts=(4, 2, 1), eye_h=3, bottom=FLOOR):
-    """A flat foot, a square shell with a square spiral, a head in front with block eyes on two stalks."""
-    foot = rect(L, bottom - 3, R, bottom)
-    head = rect(head_x0, bottom - 9, R, bottom)
-    shell = cut_rect(6, shell_top, 19, bottom - 3, cuts)
-    d = {(19, y): "o" for y in range(bottom - 9, bottom - 2)}               # the shell's edge against the head
-    sy0, sy1 = shell_top + 3, bottom - 6                                    # the spiral: a square ring open on the left
-    if sy1 - sy0 >= 4:
-        d |= line(9, 16, sy0, "o") | line(9, 16, sy1, "o")
-        d |= {(16, y): "o" for y in range(sy0, sy1 + 1)} | {(9, y): "o" for y in range(sy0 + 3, sy1 + 1)}
-        my = (sy0 + sy1) // 2
-        d |= {(x, y): "o" for x in (12, 13) for y in (my, my + 1)}
-    stalks = set()
-    if stalk_h > 0:
-        s_top = bottom - 10 - stalk_h + 1
-        stalks = rect(21, s_top, 22, bottom - 10) | rect(25, s_top, 26, bottom - 10)
-        d |= {(x, y): "k" for x in (20, 21, 22, 24, 25, 26) for y in range(s_top - eye_h, s_top)}
-    else:
-        d |= {(x, y): "k" for x in (20, 21, 22, 24, 25) for y in range(bottom - 8, bottom - 8 + eye_h)}
-    return foot | head | shell | stalks, d, set()
 
 
 CREATURES = {
@@ -324,27 +260,6 @@ CREATURES = {
          "walk-2": robot(12, 25, 1, 1), "walk-3": robot(11, 25, 0, 1), "jump": robot(10, 26, 0, 0, eye_h=4),
          "land": robot(19, 25, 1, 1, eye_h=2), "sleep-0": robot(16, 25, 1, 1, eye_h=2), "sleep-1": robot(17, 25, 1, 1, eye_h=2)},
     ),
-    "rabbit": (
-        None,
-        "a square rabbit with two tall ears and big front teeth",
-        [("Thumper", "Jumpy and easily startled. Everything is a possible fox."),
-         ("Clover", "Gentle and hungry. Asks whether anything on the screen is edible."),
-         ("Bramble", "Fast talker. Brags about ear length and speed, in that order.")],
-        {"idle": rabbit(13, 24, 0, 0), "walk-0": rabbit(13, 24, 0, 0), "walk-1": rabbit(15, 24, 0, 1, lean=1),
-         "walk-2": rabbit(13, 24, 0, 0), "walk-3": rabbit(12, 24, 1, 0, ear_h=7),
-         "jump": rabbit(11, 26, None, None, ear_h=6, lean=1, eye_h=6), "land": rabbit(19, 24, 0, 0, ear_h=6, lean=1, eye_h=3),
-         "sleep-0": rabbit(16, 24, 0, 0, ear_h=6, lean=1, eye_h=3), "sleep-1": rabbit(17, 24, 0, 0, ear_h=6, lean=1, eye_h=3)},
-    ),
-    "pig": (
-        "#f2a2b8",
-        "a square pink pig with a big snout and little square ears",
-        [("Truffle", "Content and greedy. Rates everything by how it would taste."),
-         ("Muddy", "Loves mess. Suggests rolling in things. Cannot see the appeal of clean."),
-         ("Professor Oink", "Very proud of being clever for a pig. Corrects people, kindly.")],
-        {"idle": pig(8, 24, 0, 0), "walk-0": pig(8, 24, 0, 0), "walk-1": pig(10, 24, 0, 1),
-         "walk-2": pig(8, 24, 0, 0), "walk-3": pig(8, 24, 1, 0), "jump": pig(8, 26, None, None, eye_h=6),
-         "land": pig(15, 24, 0, 0, eye_h=3), "sleep-0": pig(12, 24, 0, 0, eye_h=3), "sleep-1": pig(13, 24, 0, 0, eye_h=3)},
-    ),
     "triangle": (
         None,
         "a stepped triangle creature, point up, that rocks from side to side as it walks",
@@ -358,17 +273,6 @@ CREATURES = {
          "sleep-0": triangle(9, 24, 0, 0, band=2, widths=(1, 3, 5, 7, 9, 10, 10, 10), eye_h=3),
          "sleep-1": triangle(10, 24, 0, 0, band=2, widths=(1, 3, 5, 7, 9, 10, 10, 10), eye_h=3)},
     ),
-    "ball": (
-        None,
-        "a round bouncy ball with a face; it rolls along instead of walking",
-        [("Bounce", "Restless. Cannot stay still, says so in every sentence."),
-         ("Roly", "Easygoing. Goes wherever the slope goes and is fine with it."),
-         ("Dot", "Small talk expert. Asks lots of questions, rolls away before the answers.")],
-        {"idle": ball(7, 26, corner=0), "walk-0": ball(7, 26, corner=0), "walk-1": ball(8, 26, corner=1),
-         "walk-2": ball(7, 26, corner=2), "walk-3": ball(6, 26, L + 1, R - 1, corner=3),
-         "jump": ball(5, 26, L + 2, R - 2, corner=0, eye_h=7), "land": ball(13, 26, corner=0, cuts=(4, 2, 1), eye_h=4),
-         "sleep-0": ball(10, 26, corner=0, cuts=(5, 3, 2, 1), eye_h=4), "sleep-1": ball(11, 26, corner=0, cuts=(5, 3, 2, 1), eye_h=4)},
-    ),
     "mushroom": (
         "#d9483b",
         "a small red mushroom with light spots on its flat cap and a face on its pale stem",
@@ -378,16 +282,6 @@ CREATURES = {
         {"idle": mushroom(5, 8, 24, 0, 0), "walk-0": mushroom(5, 8, 24, 0, 0), "walk-1": mushroom(7, 8, 24, 0, 1),
          "walk-2": mushroom(5, 8, 24, 0, 0), "walk-3": mushroom(5, 7, 24, 1, 0), "jump": mushroom(5, 7, 26, None, None, eye_h=6),
          "land": mushroom(13, 6, 24, 0, 0, eye_h=3), "sleep-0": mushroom(9, 7, 24, 0, 0, eye_h=3), "sleep-1": mushroom(10, 7, 24, 0, 0, eye_h=3)},
-    ),
-    "snail": (
-        "#c98a4b",
-        "a slow snail with a square spiral shell and eyes on two stalks",
-        [("Shelby", "Unhurried. Takes a long pause before every answer and says so."),
-         ("Gary", "Homebody. Points out it is already home, wherever it is."),
-         ("Turbo", "Convinced it is the fastest thing on the screen. It is not.")],
-        {"idle": snail(10, 19, 3), "walk-0": snail(10, 19, 3), "walk-1": snail(11, 20, 3),
-         "walk-2": snail(10, 19, 3), "walk-3": snail(10, 18, 3), "jump": snail(8, 19, 4),
-         "land": snail(14, 19, 1, cuts=(3, 1)), "sleep-0": snail(11, 19, 0), "sleep-1": snail(12, 19, 0)},
     ),
 }
 
