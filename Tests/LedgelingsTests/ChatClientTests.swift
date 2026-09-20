@@ -1,4 +1,5 @@
 import Foundation
+import LedgelingsCore
 import Testing
 @testable import Ledgelings
 
@@ -34,7 +35,25 @@ import Testing
 
     @Test func aReplyIsTheFirstChoicesText() throws {
         let data = Data(#"{"choices":[{"message":{"role":"assistant","content":"Hello there."}}]}"#.utf8)
-        #expect(try ChatClient.parseReply(data) == "Hello there.")
+        let answer = try ChatClient.parseReply(data)
+        #expect(answer.text == "Hello there." && answer.usage == nil)
+    }
+
+    @Test func aReplyCarriesWhatItCostWhenTheServerSaysSo() throws {
+        let data = Data(#"{"choices":[{"message":{"content":"Hi."}}],"usage":{"prompt_tokens":312,"completion_tokens":18,"total_tokens":330,"cost":0.00042}}"#.utf8)
+        let answer = try ChatClient.parseReply(data)
+        #expect(answer.usage == Spend.Usage(promptTokens: 312, completionTokens: 18, cost: 0.00042))
+        let local = Data(#"{"choices":[{"message":{"content":"Hi."}}],"usage":{"prompt_tokens":5,"completion_tokens":2,"total_tokens":7}}"#.utf8)
+        #expect(try ChatClient.parseReply(local).usage == Spend.Usage(promptTokens: 5, completionTokens: 2, cost: nil))
+    }
+
+    @Test func openRouterIsAskedToReportTheCostAndLMStudioIsNot() throws {
+        let remote = try ChatClient.openRouter(key: "k", model: "m").request(system: "s", user: "u")
+        let body = try #require(remote.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })
+        #expect((body["usage"] as? [String: Bool]) == ["include": true])
+        let local = try ChatClient.lmStudio(server: URL(string: "http://localhost:1234")!, model: "m").request(system: "s", user: "u")
+        let localBody = try #require(local.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })
+        #expect(localBody["usage"] == nil)
     }
 
     @Test func aServerErrorIsReportedInItsOwnWords() {
@@ -65,7 +84,7 @@ import Testing
     @Test(.enabled(if: lmStudio)) func lmStudioAnswers() async throws {
         let client = ChatClient.lmStudio(server: URL(string: "http://localhost:1234")!, model: "google/gemma-3-1b")
         try await client.checkModel()
-        let text = try await client.reply(system: "You are a cheerful sprite. Answer in one short sentence.", user: "Say hello.")
+        let text = try await client.reply(system: "You are a cheerful sprite. Answer in one short sentence.", user: "Say hello.").text
         print("LM Studio: \(text)")
         #expect(!text.isEmpty)
     }
@@ -78,9 +97,10 @@ import Testing
     @Test(.enabled(if: openRouterKey != nil)) func openRouterAnswers() async throws {
         let client = ChatClient.openRouter(key: Self.openRouterKey!, model: "anthropic/claude-haiku-4.5")
         try await client.checkModel()
-        let text = try await client.reply(system: "You are a cheerful sprite. Answer in one short sentence.", user: "Say hello.")
-        print("OpenRouter: \(text)")
-        #expect(!text.isEmpty)
+        let answer = try await client.reply(system: "You are a cheerful sprite. Answer in one short sentence.", user: "Say hello.")
+        print("OpenRouter: \(answer.text) — \(String(describing: answer.usage))")
+        #expect(!answer.text.isEmpty)
+        #expect(answer.usage?.cost != nil, "OpenRouter prices the call when asked with usage.include")
     }
 
     @Test(.enabled(if: openRouterKey != nil)) func openRouterDescribesTheKey() async throws {

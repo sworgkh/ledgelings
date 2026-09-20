@@ -14,13 +14,14 @@ struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var history: ChatHistory
     @ObservedObject var library: SpriteLibrary
+    @ObservedObject var spend: SpendLedger
     @ObservedObject var navigation: SettingsNavigation
 
     var body: some View {
         TabView(selection: $navigation.tab) {
             creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
-            TalkSettingsView(settings: settings, library: library).tabItem { Text("Talk") }.tag(SettingsTab.talk)
+            TalkSettingsView(settings: settings, library: library, spend: spend).tabItem { Text("Talk") }.tag(SettingsTab.talk)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
         }
         .frame(width: 560, height: 600)
@@ -146,18 +147,20 @@ final class SettingsWindowController {
     private let settings: AppSettings
     private let history: ChatHistory
     private let library: SpriteLibrary
+    private let spend: SpendLedger
     private let navigation = SettingsNavigation()
 
-    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary) {
+    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger) {
         self.settings = settings
         self.history = history
         self.library = library
+        self.spend = spend
     }
 
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, navigation: navigation))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, navigation: navigation))
             let made = NSWindow(contentViewController: hosting)
             made.title = "Ledgelings Settings"
             made.styleMask = [.titled, .closable]

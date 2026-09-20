@@ -5,7 +5,7 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.11 — eight creatures with their own personalities, on every monitor,
+**Status:** v0.12 — eight creatures with their own personalities, on every monitor,
 talking when they meet, giving flowers, thinking locally or through OpenRouter,
 keeping every chat, going home when asked, and wearing creatures you describe to
 any chat model.
@@ -96,6 +96,13 @@ exchange with the time, the situation, the model and what each of them said.
 **Chat History…** in the menu (or Settings → Chats) shows each day's chats, with
 buttons to open the folder in Finder or Terminal.
 
+**It counts what the talking costs.** Every call to the model is written to
+`~/Library/Application Support/Ledgelings/spend.jsonl` with its tokens and, for
+OpenRouter, the price OpenRouter itself reports for that call (the request asks
+for it). LM Studio is free. Settings → Talk → Spend shows today, this month and
+all time, with the dearest models; the menu shows today's and this month's
+total; each chat in the Chats tab shows what it cost.
+
 **They give flowers.** Every third time the same two creatures bump into each other,
 one hands the other a flower, which it then wears on its head for a couple of
 minutes before it wilts away. Ten flowers, drawn
@@ -158,7 +165,7 @@ dev build walks beside the installed one.
 ## Install it
 
 ```bash
-scripts/make-installer.sh        # VERSION=0.11.0 scripts/make-installer.sh to set the version
+scripts/make-installer.sh        # VERSION=0.12.0 scripts/make-installer.sh to set the version
 ```
 
 | File | What it is |
@@ -245,6 +252,7 @@ Sources/Ledgelings/       the app:
                             ChatClient        LM Studio or OpenRouter, for banter and anything else
                             ModelCatalog      OpenRouter's model list, searched and priced
                             ChatHistory       the log folder, and the Chats tab (ChatHistoryView)
+                            SpendLedger       spend.jsonl and the Spend section of the Talk tab
                             SpriteLibrary     built-in and imported sheets, import, the Sprites tab (SpritesSettingsView)
                             Keychain, SpriteAtlas, AppSettings, SettingsView, TalkSettingsView
 Tests/                    unit tests for both

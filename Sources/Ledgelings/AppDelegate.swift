@@ -1,16 +1,19 @@
 import AppKit
+import LedgelingsCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let settings = AppSettings()
     private let history = ChatHistory()
     private let library = SpriteLibrary()
-    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library)
+    private let spend = SpendLedger()
+    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend)
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let skipItem = NSMenuItem(title: "", action: #selector(skipPhase), keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
     private static let hideChoices: [(String, Double?)] = [
@@ -20,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
-            colony = try Colony(settings: settings, history: history, library: library)
+            colony = try Colony(settings: settings, history: history, library: library, spend: spend)
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
             NSApp.terminate(nil)
@@ -46,6 +49,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         menu.addItem(withTitle: "Chat History…", action: #selector(openChats), keyEquivalent: "h").target = self
+        spendItem.target = self
+        menu.addItem(spendItem)
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Ledgelings", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -62,6 +67,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         skipItem.isHidden = settings.nightMinutes == 0
         if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
         talkStatusItem.title = "   " + String(colony.talkStatus.prefix(70))
+        let s = spend.summary
+        spendItem.title = "Spent: \(Spend.label(s.today.cost)) today, \(Spend.label(s.month.cost)) this month"
+        spendItem.isHidden = s.allTime.calls == 0
         if colony.isHiding {
             let back = Int(colony.hideout.remaining(at: colony.elapsed).rounded(.up))
             hideItem.title = back > 0 ? String(format: "Bring Them Back Now (%d:%02d left)", back / 60, back % 60) : "Coming home…"
@@ -102,4 +110,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
+    @objc private func openSpend() { settingsWindow.show(tab: .talk) }
 }

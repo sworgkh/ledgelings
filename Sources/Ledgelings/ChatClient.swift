@@ -1,4 +1,5 @@
 import Foundation
+import LedgelingsCore
 
 /// One language model behind an OpenAI-style chat endpoint. LM Studio on this
 /// Mac and OpenRouter on the internet both speak that dialect, so one client
@@ -69,7 +70,10 @@ struct ChatClient: Sendable {
     func request(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9) throws -> URLRequest {
         struct Body: Encodable {
             struct Message: Encodable { let role: String; let content: String }
+            /// OpenRouter puts the price of the call in the reply when asked.
+            struct UsageFlag: Encodable { let include: Bool }
             let model: String; let messages: [Message]; let temperature: Double; let max_tokens: Int
+            let usage: UsageFlag?
         }
         var request = authorised(URLRequest(url: baseURL.appendingPathComponent("chat/completions"), timeoutInterval: timeout))
         request.httpMethod = "POST"
@@ -77,21 +81,31 @@ struct ChatClient: Sendable {
         request.httpBody = try JSONEncoder().encode(Body(
             model: model,
             messages: [.init(role: "system", content: system), .init(role: "user", content: user)],
-            temperature: temperature, max_tokens: maxTokens
+            temperature: temperature, max_tokens: maxTokens,
+            usage: provider == .openRouter ? .init(include: true) : nil
         ))
         return request
     }
 
-    static func parseReply(_ data: Data) throws -> String {
+    /// The text of a completion and, when the server reported it, what it used.
+    struct Answer: Equatable {
+        let text: String
+        let usage: Spend.Usage?
+    }
+
+    static func parseReply(_ data: Data) throws -> Answer {
         struct Reply: Decodable {
             struct Choice: Decodable { struct Message: Decodable { let content: String? }; let message: Message }
+            struct Usage: Decodable { let prompt_tokens: Int?; let completion_tokens: Int?; let cost: Double? }
             let choices: [Choice]
+            let usage: Usage?
         }
         if let message = serverError(in: data) { throw Failure.refused(message) }
         guard let reply = try? JSONDecoder().decode(Reply.self, from: data), let text = reply.choices.first?.message.content else {
             throw Failure.badReply(String(decoding: data.prefix(160), as: UTF8.self))
         }
-        return text
+        let usage = reply.usage.map { Spend.Usage(promptTokens: $0.prompt_tokens ?? 0, completionTokens: $0.completion_tokens ?? 0, cost: $0.cost) }
+        return Answer(text: text, usage: usage)
     }
 
     static func parseModels(_ data: Data) throws -> [String] { try ModelCatalog.parse(data).map(\.id) }
@@ -145,7 +159,7 @@ struct ChatClient: Sendable {
     }
 
     /// One completion. `system` is who the speaker is; `user` is the moment.
-    func reply(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9) async throws -> String {
+    func reply(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9) async throws -> Answer {
         try Self.parseReply(try await fetch(try request(system: system, user: user, maxTokens: maxTokens, temperature: temperature)))
     }
 

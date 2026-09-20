@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.11). Where the
+Every number here is the one the macOS app ships with (v0.12). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -426,8 +426,13 @@ line, ISO-8601 time:
 {"time": "2026-09-18T14:03:11Z",
  "situation": "It is day. Dot is on the bottom edge. Blocky is on the bottom edge. They just walked into each other.",
  "provider": "LM Studio", "model": "google/gemma-3-1b",
- "lines": [{"speaker": "Dot", "text": "Move, boulder."}, {"speaker": "Blocky", "text": "Says the pebble."}]}
+ "lines": [{"speaker": "Dot", "text": "Move, boulder."}, {"speaker": "Blocky", "text": "Says the pebble."}],
+ "cost": 0.00084, "tokens": 660}
 ```
+
+`cost` (US dollars) and `tokens` (prompt + completion, both calls) are present
+when the server reported usage; `cost` is the sum of the priced calls, absent
+when none was priced. Older lines without them still read.
 
 A one-sided exchange (the reply failed or came back empty) is still written
 with its one line. Reading: list days = files named `YYYY-MM-DD.jsonl`, newest
@@ -436,6 +441,36 @@ parse is skipped. The viewer (Settings › Chats, also "Chat History…" in the
 menu) lists days on the left, naming today and yesterday, and shows each
 exchange as time, model, situation, then `**Name:** text` per line, with
 buttons that open the folder in the file manager and in a terminal.
+
+### 6.5.1 The spend file
+
+Every model call, whether or not its line was usable, appends one record to
+`<app support>/Ledgelings/spend.jsonl`:
+
+```json
+{"time": "2026-09-20T14:03:11Z", "provider": "OpenRouter", "model": "google/gemini-2.5-flash-lite",
+ "usage": {"promptTokens": 312, "completionTokens": 18, "cost": 0.00042}}
+```
+
+`cost` is what the server said the call cost (§8.1); a call to LM Studio is
+recorded with cost 0 (it is free), a call whose server gave no price with no
+`cost`. The summary, recomputed from the whole file after each record:
+
+| Total | Records counted |
+|---|---|
+| today | same local calendar day as now |
+| this month | same local calendar month as now |
+| all time | all |
+| by model | all, grouped by model id, dearest first, then most calls |
+
+A total is `calls`, `promptTokens`, `completionTokens`, `cost` (sum of the
+priced calls) and `unpriced` (how many had no price). Money is shown as
+`$0.00` for zero, `<$0.001` under a tenth of a cent, three decimals under ten
+cents, else two; a total with unpriced calls gets a `+` after it. Shown in
+Settings › Talk › Spend (three rows, up to five models, the file path, a
+button revealing the file) and as a menu line "Spent: $a today, $b this month"
+(hidden until there is a record); the Chats viewer shows each exchange's cost
+and tokens.
 
 ### 6.6 Menu and poke
 
@@ -583,8 +618,11 @@ One client speaks the OpenAI-style chat API to either provider.
 
 `POST {base}/chat/completions`, JSON
 `{model, messages: [{role: "system", content}, {role: "user", content}],
-temperature: 0.9, max_tokens: 80}`, 60 s timeout. Reply text =
-`choices[0].message.content`. Callers may pass other `max_tokens` and
+temperature: 0.9, max_tokens: 80}`, plus `usage: {include: true}` for
+OpenRouter only (it then prices the call in the reply), 60 s timeout. Reply
+text = `choices[0].message.content`; usage, when present, =
+`usage.prompt_tokens`, `usage.completion_tokens` (missing → 0) and
+`usage.cost` (US dollars, OpenRouter only; missing → unknown), see §6.5.1. Callers may pass other `max_tokens` and
 `temperature`; banter uses the defaults.
 
 Errors, in order of checking: transport failure → "the server is not

@@ -68,11 +68,22 @@ extension Colony {
         let bubbleSeconds = settings.bubbleSeconds
         let started = Date()
         var spoken: [ChatLog.Line] = []
-        /// Whatever was actually said goes to the log, even a one-sided exchange.
+        var used: [Spend.Usage] = []
+        /// Whatever was actually said goes to the log, with what it cost, even a one-sided exchange.
         func keep() {
             guard !spoken.isEmpty else { return }
+            let priced = used.compactMap(\.cost)
             history.record(ChatLog.Exchange(time: started, situation: situation, provider: service.provider.title,
-                                            model: service.model, lines: spoken))
+                                            model: service.model, lines: spoken,
+                                            cost: priced.isEmpty ? nil : priced.reduce(0, +),
+                                            tokens: used.isEmpty ? nil : used.reduce(0) { $0 + $1.promptTokens + $1.completionTokens }))
+        }
+        /// Every call goes to the spend file, even one whose line turned out empty.
+        func charge(_ answer: ChatClient.Answer) {
+            guard var usage = answer.usage else { return }
+            if service.provider == .lmStudio { usage.cost = 0 }                // a local model is free
+            used.append(usage)
+            spend.record(provider: service.provider, model: service.model, usage: usage)
         }
 
         busy.formUnion([speaker, listener])
@@ -85,10 +96,10 @@ extension Colony {
             }
             do {
                 try await service.checkModel()
-                let first = Banter.cleanLine(
-                    try await service.reply(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars)),
-                    speaker: a.name)
+                let opening = try await service.reply(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars))
                 guard let self else { return }
+                charge(opening)
+                let first = Banter.cleanLine(opening.text, speaker: a.name)
                 guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
                 say(first, from: speaker)
                 spoken.append(ChatLog.Line(speaker: a.name, text: first))
@@ -98,9 +109,9 @@ extension Colony {
                 vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                 vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                 vars["line"] = first
-                let reply = Banter.cleanLine(
-                    try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars)),
-                    speaker: b.name)
+                let answer = try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars))
+                charge(answer)
+                let reply = Banter.cleanLine(answer.text, speaker: b.name)
                 try await Task.sleep(for: .seconds(Banter.showTime(first, base: bubbleSeconds) * 0.6))
                 guard !reply.isEmpty else { return }
                 say(reply, from: listener)

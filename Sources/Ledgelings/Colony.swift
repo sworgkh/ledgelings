@@ -14,6 +14,7 @@ final class Colony: NSObject {
     let history: ChatHistory
     /// The built-in and imported creature sheets.
     let library: SpriteLibrary
+    let spend: SpendLedger
     /// The built-in sheet: every sheet shares its cell and body box, so it is the geometry for all.
     let atlas: SpriteAtlas
     let zFrames: SpriteAtlas.Frames
@@ -72,10 +73,11 @@ final class Colony: NSObject {
     var isNight: Bool { clock.isNight(at: elapsed) }
     var secondsLeftInPhase: Double { clock.remaining(at: elapsed) }
 
-    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary) throws {
+    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger) throws {
         self.settings = settings
         self.history = history
         self.library = library
+        self.spend = spend
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
         zFrames = zzz.frames()
