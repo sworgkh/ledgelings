@@ -230,7 +230,7 @@
     }
   },
   "image" : "pig.png",
-  "kind" : "a round pink pig with a big snout and little square ears",
+  "kind" : "a square pink pig with a big snout and little square ears",
   "name" : "pig",
   "palette" : {
     "body" : "#ff8a3d",

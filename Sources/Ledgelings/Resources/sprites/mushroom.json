@@ -230,7 +230,7 @@
     }
   },
   "image" : "mushroom.png",
-  "kind" : "a small red mushroom with light spots on its cap and a face on its pale stem",
+  "kind" : "a small red mushroom with light spots on its flat cap and a face on its pale stem",
   "name" : "mushroom",
   "palette" : {
     "body" : "#ff8a3d",
