@@ -229,7 +229,7 @@
     }
   },
   "image" : "triangle.png",
-  "kind" : "a pointy triangle creature, apex up, that rocks from side to side as it walks",
+  "kind" : "a stepped triangle creature, point up, that rocks from side to side as it walks",
   "name" : "triangle",
   "palette" : {
     "body" : "#ff8a3d",

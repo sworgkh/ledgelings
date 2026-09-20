@@ -230,7 +230,7 @@
     }
   },
   "image" : "snail.png",
-  "kind" : "a slow snail with a spiral shell and eyes on two stalks",
+  "kind" : "a slow snail with a square spiral shell and eyes on two stalks",
   "name" : "snail",
   "palette" : {
     "body" : "#ff8a3d",
