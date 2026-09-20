@@ -5,7 +5,7 @@ along the borders, over the corners, between monitors.
 
 Ambient, click-through, menu-bar only. Not a game, not a widget.
 
-**Status:** v0.11 — twelve creatures with their own personalities, on every monitor,
+**Status:** v0.11 — eight creatures with their own personalities, on every monitor,
 talking when they meet, giving flowers, thinking locally or through OpenRouter,
 keeping every chat, going home when asked, and wearing creatures you describe to
 any chat model.
@@ -74,12 +74,11 @@ house shrinks to nothing, and when the time is up it grows back and they walk ou
 one by one. The
 same menu item, now **Bring Them Back Now**, ends it early.
 
-**Twelve creatures, and your own.** Blocky, a frog, a cat, a ghost, a slime, a
-robot, a rabbit, a pig, a triangle, a rolling ball, a mushroom and a snail come
-built in; Settings → Sprites shows them as cards, click one to put it in the colony
-or take it out. Each species has its own cast of characters and knows what it is,
+**Eight creatures, and your own.** Blocky, a frog, a cat, a ghost, a slime, a
+robot, a triangle and a mushroom come built in; Settings → Sprites shows them as
+cards, click one to put it in the colony or take it out. Each species has its own cast of characters and knows what it is,
 so a frog talks like a frog and a robot like a robot; edit a species' cast in
-Settings → Talk. A species may also own its colour: the pig is always pink and the
+Settings → Talk. A species may also own its colour: the mushroom is always red and the
 frog always green, whatever colour slot they land in; the others wear the colour of
 their creature number. The **sprite kit** in Settings → Sprites is a prompt for
 any chat model: copy it, paste it with a description of the creature you want, and

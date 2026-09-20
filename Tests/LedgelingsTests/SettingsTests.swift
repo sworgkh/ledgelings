@@ -2,17 +2,44 @@ import Foundation
 import Testing
 @testable import Ledgelings
 
+/// Serialized: every test shares one defaults domain, wiped before each, so the
+/// suite leaves one (empty) plist behind instead of one per run.
 @MainActor
-@Suite struct SettingsTests {
-    func fresh() -> (AppSettings, UserDefaults) {
-        let name = "ledgelings-tests-\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: name)!
-        defaults.removePersistentDomain(forName: name)
-        return (AppSettings(defaults: defaults, keychain: Keychain(service: name)), defaults)
+@Suite(.serialized) struct SettingsTests {
+    /// The shared throwaway defaults domain, empty at the start of each test.
+    @MainActor final class Sandbox {
+        let name = "ledgelings-tests"
+        let defaults: UserDefaults
+        let settings: AppSettings
+        init() {
+            defaults = UserDefaults(suiteName: name)!
+            defaults.removePersistentDomain(forName: name)
+            settings = AppSettings(defaults: defaults, keychain: Keychain(service: name))
+        }
+        /// Called from a `defer` at the top of each test: by the time the test's
+        /// own references die, the writes it made may still be landing.
+        func forget() {
+            defaults.synchronize()
+            defaults.removePersistentDomain(forName: name)
+            defaults.synchronize()
+        }
+    }
+
+    func fresh() -> Sandbox { Sandbox() }
+
+    @Test func speciesThatNoLongerExistAreDroppedAndBlockyFillsAnEmptyList() {
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
+        s.species = ["cat", "rabbit", "frog"]
+        s.keepSpecies(among: ["blocky", "cat", "frog"])
+        #expect(s.species == ["cat", "frog"])
+        s.keepSpecies(among: ["blocky"])
+        #expect(s.species == ["blocky"])
     }
 
     @Test func creaturesCycleThroughTheSpeciesInUseAndBlockyIsTheFallback() {
-        let (s, defaults) = fresh()
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
         #expect(s.species == ["blocky"])
         s.species = ["pip", "blocky"]
         #expect(s.species(forCreature: 0) == "pip" && s.species(forCreature: 1) == "blocky" && s.species(forCreature: 2) == "pip")
@@ -22,7 +49,8 @@ import Testing
     }
 
     @Test func theBrainIsLMStudioUntilChosenOtherwise() {
-        let (s, _) = fresh()
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
         #expect(s.brainProvider == .lmStudio)
         #expect(s.openRouterModel == AppSettings.defaultOpenRouterModel)
         #expect(s.openRouterKey == "")
@@ -33,7 +61,8 @@ import Testing
     }
 
     @Test func choosingOpenRouterBuildsAClientWithTheKeyAndModel() {
-        let (s, defaults) = fresh()
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
         s.brainProvider = .openRouter
         s.openRouterKey = "sk-or-abc"
         s.openRouterModel = "openai/gpt-4o-mini"
@@ -48,22 +77,25 @@ import Testing
     }
 
     @Test func theKeyComesBackFromTheKeychainOnTheNextLaunch() {
-        let name = "ledgelings-tests-\(UUID().uuidString)"
+        let name = "ledgelings-tests"
         let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
         let keychain = Keychain(service: name)
-        defer { keychain.set(nil, for: "openRouterKey") }
+        defer { keychain.set(nil, for: "openRouterKey"); defaults.removePersistentDomain(forName: name) }
         AppSettings(defaults: defaults, keychain: keychain).openRouterKey = "sk-or-kept"
         #expect(AppSettings(defaults: defaults, keychain: keychain).openRouterKey == "sk-or-kept")
     }
 
     @Test func openRouterWithoutAKeyGivesNoClient() {
-        let (s, _) = fresh()
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
         s.brainProvider = .openRouter
         #expect(s.chatClient() == nil)
     }
 
     @Test func creaturesSpreadAcrossTheSizeRangeInHalfSteps() {
-        let (s, _) = fresh()
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
         s.minSize = 1; s.maxSize = 4
         #expect(s.size(forShare: 0) == 1)
         #expect(s.size(forShare: 1) == 4)
@@ -72,13 +104,15 @@ import Testing
     }
 
     @Test func equalMinAndMaxMakesEveryoneTheSameSize() {
-        let (s, _) = fresh()
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
         s.minSize = 3; s.maxSize = 3
         #expect(Set([0, 0.3, 0.9, 1].map(s.size(forShare:))) == [3])
     }
 
     @Test func draggingOneSliderPastTheOtherTakesItAlong() {
-        let (s, _) = fresh()
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
         s.minSize = 2; s.maxSize = 3
         s.minSize = 4.5
         #expect(s.maxSize == 4.5)
@@ -87,7 +121,8 @@ import Testing
     }
 
     @Test func sizesAreSavedAndASwappedPairIsRepairedOnLoad() {
-        let (s, defaults) = fresh()
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
         s.minSize = 2.5; s.maxSize = 4
         let again = AppSettings(defaults: defaults)
         #expect(again.minSize == 2.5 && again.maxSize == 4)
@@ -98,7 +133,8 @@ import Testing
     }
 
     @Test func aFlowerIsWornForTwoMinutesByDefaultAndTheTimeIsClampedOnLoad() {
-        let (s, defaults) = fresh()
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
         #expect(s.flowerMinutes == 2)
         s.flowerMinutes = 10
         #expect(AppSettings(defaults: defaults).flowerMinutes == 10)
@@ -107,7 +143,8 @@ import Testing
     }
 
     @Test func bubbleTimeDefaultsToFourteenSecondsAndIsClampedOnLoad() {
-        let (s, defaults) = fresh()
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
         #expect(s.bubbleSeconds == 14)
         s.bubbleSeconds = 30
         #expect(AppSettings(defaults: defaults).bubbleSeconds == 30)

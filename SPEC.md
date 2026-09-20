@@ -666,9 +666,8 @@ every filled pixel.
 
 ### 9.1.1 User sheets and the text format
 
-Twelve species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
-`ghost`, `slime`, `robot`, `rabbit`, `pig`, `triangle`, `ball`, `mushroom`,
-`snail`, each written in the text format below
+Eight species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
+`ghost`, `slime`, `robot`, `triangle`, `mushroom`, each written in the text format below
 (`sprites/text/<name>.txt`) and turned into a sheet at build time. Their
 names are reserved. Imported creatures live in `<app support>/Ledgelings/sprites/<name>/` as
 `<name>.png` + `<name>.json` in exactly the built-in layout (32×32 cells,
@@ -695,7 +694,7 @@ Two import routes:
   with a `colour` is always recoloured to it (§9.2), in the colony and on
   its settings card, instead of the creature's slot colour. Shipped:
   frog `#6cbf4a`, ghost `#cfd3ea`, slime `#4fd1a3`, robot `#9aa5b1`,
-  pig `#f2a2b8`, mushroom `#d9483b`, snail `#c98a4b`; the rest have none.
+  mushroom `#d9483b`; the rest have none.
 
   Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade, `k` eye
   (black, blinks), `x` black that never blinks. `-`, `_` and space also mean

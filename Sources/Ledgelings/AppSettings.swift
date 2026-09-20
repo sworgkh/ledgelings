@@ -102,6 +102,14 @@ final class AppSettings: ObservableObject {
         species.isEmpty ? "blocky" : species[index % species.count]
     }
 
+    /// Forget species that are no longer in the library (removed, or no longer
+    /// built in); blocky steps in when nothing is left.
+    func keepSpecies(among names: [String]) {
+        let kept = species.filter { names.contains($0) }
+        let wanted = kept.isEmpty ? ["blocky"] : kept
+        if wanted != species { species = wanted }
+    }
+
     /// The cast of a species: the user's edit if there is one, else `fallback` (the sheet's).
     func cast(of species: String, fallback: [Character]) -> [Character] {
         casts[species].map { $0.isEmpty ? fallback : $0 } ?? fallback
