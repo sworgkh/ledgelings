@@ -42,23 +42,22 @@
   },
   "cast" : [
     {
-      "name" : "Boo",
-      "persona" : "Tries to be scary, is adorable. Says boo a lot."
+      "name" : "Thumper",
+      "persona" : "Jumpy and easily startled. Everything is a possible fox."
     },
     {
-      "name" : "Wisp",
-      "persona" : "Wistful and poetic. Remembers monitors that are gone."
+      "name" : "Clover",
+      "persona" : "Gentle and hungry. Asks whether anything on the screen is edible."
     },
     {
-      "name" : "Sheet",
-      "persona" : "Deadpan. Points out it is technically not walking."
+      "name" : "Bramble",
+      "persona" : "Fast talker. Brags about ear length and speed, in that order."
     }
   ],
   "cell" : [
     32,
     32
   ],
-  "colour" : "#cfd3ea",
   "contentBox" : [
     5,
     5,
@@ -229,9 +228,9 @@
       "y" : 0
     }
   },
-  "image" : "ghost.png",
-  "kind" : "a little round ghost with a wavy hem, hovering just above the edge",
-  "name" : "ghost",
+  "image" : "rabbit.png",
+  "kind" : "a square rabbit with two tall ears and big front teeth",
+  "name" : "rabbit",
   "palette" : {
     "body" : "#ff8a3d",
     "light" : "#ffb27a",

@@ -1,5 +1,6 @@
 name: ghost
 kind: a little round ghost with a wavy hem, hovering just above the edge
+colour: #cfd3ea
 character: Boo: Tries to be scary, is adorable. Says boo a lot.
 character: Wisp: Wistful and poetic. Remembers monitors that are gone.
 character: Sheet: Deadpan. Points out it is technically not walking.

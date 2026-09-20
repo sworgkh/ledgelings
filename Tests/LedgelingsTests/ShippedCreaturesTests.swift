@@ -22,7 +22,7 @@ import Testing
         let image = SpriteText.pixels(sheet, palette: .blocky)
         if Self.building {
             try SpriteLibrary.writePNG(image, to: Self.resources.appendingPathComponent("\(name).png"))
-            let meta = SpriteText.atlas(name: name, kind: sheet.kind, cast: sheet.cast)
+            let meta = SpriteText.atlas(name: name, kind: sheet.kind, cast: sheet.cast, colour: sheet.colour)
             try JSONSerialization.data(withJSONObject: meta, options: [.prettyPrinted, .sortedKeys])
                 .write(to: Self.resources.appendingPathComponent("\(name).json"))
             return
@@ -31,5 +31,6 @@ import Testing
         #expect(try shipped.image() == image, "\(name).png differs from sprites/text/\(name).txt; rebuild with LEDGELINGS_BUILD_CREATURES=1")
         #expect(shipped.meta.kind == sheet.kind)
         #expect(shipped.meta.cast == sheet.cast)
+        #expect(shipped.meta.colour == sheet.colour?.hex)
     }
 }

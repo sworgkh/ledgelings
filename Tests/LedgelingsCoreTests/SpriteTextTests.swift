@@ -124,6 +124,17 @@ import Testing
         #expect((meta["cast"] as? [[String: String]])?.first?["name"] == "Hopper")
     }
 
+    @Test func aSheetMayChooseItsOwnColour() throws {
+        let text = "name: pig\ncolour: #F0A0B0\n" + Self.text(name: "pig").replacingOccurrences(of: "name: pig\n", with: "")
+        let sheet = try SpriteText.parse(text)
+        #expect(sheet.colour == SpriteText.Tint(hex: "#f0a0b0"))
+        #expect(SpriteText.atlas(name: "pig", colour: sheet.colour)["colour"] as? String == "#f0a0b0")
+        #expect(try SpriteText.parse(Self.text()).colour == nil)
+        #expect(SpriteText.atlas(name: "boxy")["colour"] == nil)
+        #expect(throws: SpriteText.ParseError.self) { try SpriteText.parse("name: pig\ncolour: pinkish\n" + Self.text(name: "pig")) }
+        #expect(SpriteText.prompt(example: []).contains("colour:"))
+    }
+
     @Test func aSheetWithoutKindOrCastStillParses() throws {
         let sheet = try SpriteText.parse(Self.text())
         #expect(sheet.kind == nil && sheet.cast.isEmpty)
