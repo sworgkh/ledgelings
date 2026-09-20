@@ -42,23 +42,23 @@
   },
   "cast" : [
     {
-      "name" : "Boo",
-      "persona" : "Tries to be scary, is adorable. Says boo a lot."
+      "name" : "Shelby",
+      "persona" : "Unhurried. Takes a long pause before every answer and says so."
     },
     {
-      "name" : "Wisp",
-      "persona" : "Wistful and poetic. Remembers monitors that are gone."
+      "name" : "Gary",
+      "persona" : "Homebody. Points out it is already home, wherever it is."
     },
     {
-      "name" : "Sheet",
-      "persona" : "Deadpan. Points out it is technically not walking."
+      "name" : "Turbo",
+      "persona" : "Convinced it is the fastest thing on the screen. It is not."
     }
   ],
   "cell" : [
     32,
     32
   ],
-  "colour" : "#cfd3ea",
+  "colour" : "#c98a4b",
   "contentBox" : [
     5,
     5,
@@ -229,9 +229,9 @@
       "y" : 0
     }
   },
-  "image" : "ghost.png",
-  "kind" : "a little round ghost with a wavy hem, hovering just above the edge",
-  "name" : "ghost",
+  "image" : "snail.png",
+  "kind" : "a slow snail with a spiral shell and eyes on two stalks",
+  "name" : "snail",
   "palette" : {
     "body" : "#ff8a3d",
     "light" : "#ffb27a",

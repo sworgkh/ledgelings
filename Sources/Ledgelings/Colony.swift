@@ -136,7 +136,8 @@ final class Colony: NSObject {
         }
 
         frames = creatures.indices.map { index in
-            let colour = settings.color(forCreature: index), name = settings.species(forCreature: index)
+            let name = settings.species(forCreature: index)
+            let colour = library.bodyColour(of: name, slot: settings.color(forCreature: index))
             let key = "\(name) \(colour.hex)"
             if let cached = frameCache[key] { return cached }
             let made = (library.atlas(named: name) ?? atlas).frames(body: colour)

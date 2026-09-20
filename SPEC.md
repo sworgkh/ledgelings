@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.10). Where the
+Every number here is the one the macOS app ships with (v0.11). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -286,7 +286,8 @@ leaves and the one it lands on. Direction after landing: random.
 - `walkSpeed` random 38 … 72 at birth, so no two walk in lockstep.
 - Spawn: a uniformly random (loop, segment) pair, fraction 0.1 … 0.9 along it,
   random facing.
-- Colour: creature `i` wears colour `i mod colours.count`. Character: `i mod
+- Colour: creature `i` wears colour `i mod colours.count`, unless its
+  species' atlas has a `colour`, which always wins (§9.1.1). Character: `i mod
   characters.count`.
 
 ### 5.2 Applying settings (any change)
@@ -665,8 +666,9 @@ every filled pixel.
 
 ### 9.1.1 User sheets and the text format
 
-Six species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
-`ghost`, `slime`, `robot`, each written in the text format below
+Twelve species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
+`ghost`, `slime`, `robot`, `rabbit`, `pig`, `triangle`, `ball`, `mushroom`,
+`snail`, each written in the text format below
 (`sprites/text/<name>.txt`) and turned into a sheet at build time. Their
 names are reserved. Imported creatures live in `<app support>/Ledgelings/sprites/<name>/` as
 `<name>.png` + `<name>.json` in exactly the built-in layout (32×32 cells,
@@ -681,14 +683,19 @@ Two import routes:
   ```
   name: pip
   kind: a fat green frog with big eyes            (optional)
+  colour: #6cbf4a                                 (optional; `color:` too; six hex digits or the sheet is rejected)
   character: Hopper: Bouncy and loud.             (optional, any number; "Name: persona")
   pose: idle
   <32 rows of 32 letters>
   pose: walk-0 … walk-3, jump, land, sleep-0, sleep-1
   ```
 
-  `kind` and `cast` go into the atlas JSON as `kind` (string) and `cast`
-  (array of `{name, persona}`).
+  `kind`, `cast` and `colour` go into the atlas JSON as `kind` (string),
+  `cast` (array of `{name, persona}`) and `colour` (hex string). A species
+  with a `colour` is always recoloured to it (§9.2), in the colony and on
+  its settings card, instead of the creature's slot colour. Shipped:
+  frog `#6cbf4a`, ghost `#cfd3ea`, slime `#4fd1a3`, robot `#9aa5b1`,
+  pig `#f2a2b8`, mushroom `#d9483b`, snail `#c98a4b`; the rest have none.
 
   Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade, `k` eye
   (black, blinks), `x` black that never blinks. `-`, `_` and space also mean
@@ -713,7 +720,8 @@ marked.
 
 ### 9.2 Recolouring
 
-Per creature colour `C`, make a copy of the sheet where every fully opaque
+Per body colour `C` (the species' own colour when it has one, else the
+creature's slot colour), make a copy of the sheet where every fully opaque
 pixel within ±2 per channel of a palette entry becomes:
 
 | Role | New colour |

@@ -97,7 +97,9 @@ struct SpritesSettingsView: View {
     }
 
     private func preview(_ atlas: SpriteAtlas) -> NSImage {
-        guard let cg = atlas.frames().frame(animation: "idle", time: 0) else { return NSImage() }
+        // In its own colour when the sheet chose one, otherwise as painted.
+        let own = atlas.meta.colour.flatMap(RGB.init(hex:))
+        guard let cg = atlas.frames(body: own).frame(animation: "idle", time: 0) else { return NSImage() }
         return NSImage(cgImage: cg, size: NSSize(width: 32, height: 32))
     }
 

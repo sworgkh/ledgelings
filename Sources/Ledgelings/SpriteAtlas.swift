@@ -17,6 +17,8 @@ struct SpriteAtlas {
         /// What the creature is, and who its creatures are, when the sheet says.
         let kind: String?
         let cast: [Character]?
+        /// The body colour this species always wears, when the sheet chose one.
+        let colour: String?
     }
 
     /// One recolouring of the sheet, already cut into frames.

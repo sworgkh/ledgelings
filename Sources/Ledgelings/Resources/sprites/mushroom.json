@@ -42,23 +42,23 @@
   },
   "cast" : [
     {
-      "name" : "Boo",
-      "persona" : "Tries to be scary, is adorable. Says boo a lot."
+      "name" : "Morel",
+      "persona" : "Quiet and earthy. Speaks slowly about damp places and patience."
     },
     {
-      "name" : "Wisp",
-      "persona" : "Wistful and poetic. Remembers monitors that are gone."
+      "name" : "Puff",
+      "persona" : "Giggly. Threatens to release spores when excited."
     },
     {
-      "name" : "Sheet",
-      "persona" : "Deadpan. Points out it is technically not walking."
+      "name" : "Cap",
+      "persona" : "Old and wise, or thinks so. Starts sentences with 'in my day'."
     }
   ],
   "cell" : [
     32,
     32
   ],
-  "colour" : "#cfd3ea",
+  "colour" : "#d9483b",
   "contentBox" : [
     5,
     5,
@@ -229,9 +229,9 @@
       "y" : 0
     }
   },
-  "image" : "ghost.png",
-  "kind" : "a little round ghost with a wavy hem, hovering just above the edge",
-  "name" : "ghost",
+  "image" : "mushroom.png",
+  "kind" : "a small red mushroom with light spots on its cap and a face on its pale stem",
+  "name" : "mushroom",
   "palette" : {
     "body" : "#ff8a3d",
     "light" : "#ffb27a",

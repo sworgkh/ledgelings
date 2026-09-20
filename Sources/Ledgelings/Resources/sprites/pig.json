@@ -42,23 +42,23 @@
   },
   "cast" : [
     {
-      "name" : "Boo",
-      "persona" : "Tries to be scary, is adorable. Says boo a lot."
+      "name" : "Truffle",
+      "persona" : "Content and greedy. Rates everything by how it would taste."
     },
     {
-      "name" : "Wisp",
-      "persona" : "Wistful and poetic. Remembers monitors that are gone."
+      "name" : "Muddy",
+      "persona" : "Loves mess. Suggests rolling in things. Cannot see the appeal of clean."
     },
     {
-      "name" : "Sheet",
-      "persona" : "Deadpan. Points out it is technically not walking."
+      "name" : "Professor Oink",
+      "persona" : "Very proud of being clever for a pig. Corrects people, kindly."
     }
   ],
   "cell" : [
     32,
     32
   ],
-  "colour" : "#cfd3ea",
+  "colour" : "#f2a2b8",
   "contentBox" : [
     5,
     5,
@@ -229,9 +229,9 @@
       "y" : 0
     }
   },
-  "image" : "ghost.png",
-  "kind" : "a little round ghost with a wavy hem, hovering just above the edge",
-  "name" : "ghost",
+  "image" : "pig.png",
+  "kind" : "a round pink pig with a big snout and little square ears",
+  "name" : "pig",
   "palette" : {
     "body" : "#ff8a3d",
     "light" : "#ffb27a",

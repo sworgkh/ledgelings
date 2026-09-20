@@ -77,6 +77,9 @@ public enum SpriteText {
         public var kind: String?
         /// Who its creatures are; creatures of this species take these in turn.
         public var cast: [Character]
+        /// The body colour this species always wears, when the sheet says; otherwise
+        /// the app paints it in each creature's own colour.
+        public var colour: Tint?
         /// pose → 32 rows of 32 inks, eyes open.
         public var poses: [String: [[Ink]]]
     }
@@ -99,9 +102,11 @@ public enum SpriteText {
         case outsideTheBox(pose: String, row: Int, column: Int)
         case notOnTheFloor(String)
         case empty(String)
+        case badColour(String)
 
         public var description: String {
             switch self {
+            case .badColour(let value): "colour must be six hex digits like #f0a0b0, not \"\(value)\""
             case .noName: "the first line should be `name: something`"
             case .missingPose(let p): "pose \(p) is missing"
             case .unknownPose(let p): "pose \(p) is not one of \(poses.joined(separator: ", "))"
@@ -122,6 +127,7 @@ public enum SpriteText {
         var name: String?
         var kind: String?
         var cast: [Character] = []
+        var colour: Tint?
         var poses: [String: [[Ink]]] = [:]
         var current: String?
         var rows: [[Ink]] = []
@@ -141,6 +147,10 @@ public enum SpriteText {
             if line.isEmpty, current == nil { continue }
             if let value = keyed(line, "name") { name = value; continue }
             if let value = keyed(line, "kind") { kind = value.isEmpty ? nil : value; continue }
+            if let value = keyed(line, "colour") ?? keyed(line, "color") {
+                guard let tint = Tint(hex: value) else { throw ParseError.badColour(value) }
+                colour = tint; continue
+            }
             if let value = keyed(line, "character") {
                 // "Name: what they are like" — the first colon splits them.
                 let parts = value.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
@@ -170,7 +180,7 @@ public enum SpriteText {
         try finish()
         guard let name, !name.isEmpty else { throw ParseError.noName }
         for pose in Self.poses where poses[pose] == nil { throw ParseError.missingPose(pose) }
-        return Sheet(name: name, kind: kind, cast: cast, poses: poses)
+        return Sheet(name: name, kind: kind, cast: cast, colour: colour, poses: poses)
     }
 
     private static func keyed(_ line: String, _ key: String) -> String? {
@@ -260,7 +270,8 @@ public enum SpriteText {
     // MARK: The atlas file
 
     /// The JSON the app loads, for a sheet laid out by `pixels`.
-    public static func atlas(name: String, palette: Palette = .blocky, kind: String? = nil, cast: [Character] = []) -> [String: Any] {
+    public static func atlas(name: String, palette: Palette = .blocky, kind: String? = nil, cast: [Character] = [],
+                             colour: Tint? = nil) -> [String: Any] {
         var frames: [String: [String: Int]] = [:]
         for (column, pose) in poses.enumerated() {
             for (row, variant) in variants.enumerated() {
@@ -278,6 +289,7 @@ public enum SpriteText {
         ]
         if let kind { meta["kind"] = kind }
         if !cast.isEmpty { meta["cast"] = cast.map { ["name": $0.name, "persona": $0.persona] } }
+        if let colour { meta["colour"] = colour.hex }
         return meta
     }
 
@@ -293,6 +305,7 @@ public enum SpriteText {
 
         name: <one lowercase word, letters and digits only>
         kind: <what it is, in a few words, e.g. "a fat green frog with big eyes">
+        colour: <its body colour as six hex digits, e.g. #6cbf4a; leave this line out to let the app pick>
         character: <a name>: <its personality in one or two sentences>
         character: <another name>: <another personality>
         character: <a third name>: <a third personality>

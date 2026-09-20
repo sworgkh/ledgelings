@@ -31,7 +31,8 @@ final class SpriteLibrary: ObservableObject {
     }
 
     /// The sheets shipped in the app, in the order the Sprites tab shows them.
-    nonisolated static let builtIn = ["blocky", "frog", "cat", "ghost", "slime", "robot"]
+    nonisolated static let builtIn = ["blocky", "frog", "cat", "ghost", "slime", "robot",
+                                     "rabbit", "pig", "triangle", "ball", "mushroom", "snail"]
 
     static var defaultDirectory: URL {
         ChatHistory.defaultDirectory.deletingLastPathComponent().appendingPathComponent("sprites", isDirectory: true)
@@ -75,6 +76,12 @@ final class SpriteLibrary: ObservableObject {
         return cast.isEmpty ? [Character(name: name.capitalized, persona: "Curious and new here.")] : cast
     }
 
+    /// What a creature of this species is painted in: the sheet's own colour when
+    /// it names one, otherwise `slot`, the colour of the creature's number.
+    func bodyColour(of name: String, slot: RGB) -> RGB {
+        atlas(named: name)?.meta.colour.flatMap(RGB.init(hex:)) ?? slot
+    }
+
     /// Import a text sheet or a painted PNG. Returns the species name.
     @discardableResult
     func importFile(_ url: URL) throws -> String {
@@ -83,6 +90,7 @@ final class SpriteLibrary: ObservableObject {
         let name: String
         var kind: String?
         var cast: [Character] = []
+        var colour: SpriteText.Tint?
         var source: (data: Data, ext: String)?
         if ext == "png" {
             sheet = try Self.keyedOut(try Self.readPNG(url))
@@ -94,6 +102,7 @@ final class SpriteLibrary: ObservableObject {
             name = parsed.name
             kind = parsed.kind
             cast = parsed.cast
+            colour = parsed.colour
             source = (Data(text.utf8), "txt")
         } else {
             throw ImportError.notASheet(url.lastPathComponent)
@@ -104,7 +113,7 @@ final class SpriteLibrary: ObservableObject {
         let folder = directory.appendingPathComponent(name, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Self.writePNG(sheet, to: folder.appendingPathComponent("\(name).png"))
-        let meta = try JSONSerialization.data(withJSONObject: SpriteText.atlas(name: name, kind: kind, cast: cast), options: [.prettyPrinted, .sortedKeys])
+        let meta = try JSONSerialization.data(withJSONObject: SpriteText.atlas(name: name, kind: kind, cast: cast, colour: colour), options: [.prettyPrinted, .sortedKeys])
         try meta.write(to: folder.appendingPathComponent("\(name).json"))
         if let source { try source.data.write(to: folder.appendingPathComponent("\(name).\(source.ext)")) }
         reload()

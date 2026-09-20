@@ -32,6 +32,18 @@ import Testing
         #expect(rebuilt == original, "letters → pixels gives back the shipped sheet exactly")
     }
 
+    @Test func aSheetThatNamesItsColourAlwaysWearsIt() throws {
+        let library = fresh()
+        defer { try? FileManager.default.removeItem(at: library.directory) }
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("hog-\(UUID().uuidString).txt")
+        try library.exampleText.replacingOccurrences(of: "name: blocky", with: "name: hog\ncolour: #f0a0b0").write(to: file, atomically: true, encoding: .utf8)
+        try library.importFile(file)
+        let slot = RGB(hex: "#3366ff")!
+        #expect(library.bodyColour(of: "hog", slot: slot) == RGB(hex: "#f0a0b0"))
+        #expect(library.bodyColour(of: "blocky", slot: slot) == slot, "a sheet with no colour line takes the creature's slot colour")
+        #expect(library.bodyColour(of: "nobody", slot: slot) == slot)
+    }
+
     @Test func aTextFileBecomesASpeciesWithAFullAtlas() throws {
         let library = fresh()
         defer { try? FileManager.default.removeItem(at: library.directory) }
