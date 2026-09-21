@@ -409,3 +409,59 @@ struct SeededRNG: RandomNumberGenerator {
         #expect(c.t < 400)
     }
 }
+
+/// The one wearing a flower trails the one who gave it.
+@Suite struct FollowingTests {
+    let world = EdgeWorld(screens: [CGRect(x: 0, y: 0, width: 1020, height: 620)], inset: 10)
+    func creature(at t: CGFloat) -> Creature { Creature(world: world, spot: .init(loop: 0, t: t)) }
+
+    @Test func aFarFollowerWalksTowardItsFriendTheShortWayRound() {
+        var rng = SeededRNG(state: 21)
+        var fan = creature(at: 100), star = creature(at: 300)
+        let followed = fan.follow(star, gap: 40)
+        #expect(followed)
+        #expect(fan.direction == 1 && fan.animation == "walk")
+        let before = fan.t
+        fan.update(dt: 0.5, cursor: nil, using: &rng)
+        #expect(fan.t > before, "closer than it was")
+
+        var behind = creature(at: 500)
+        behind.follow(star, gap: 40)
+        #expect(behind.direction == -1, "the friend is behind, so it turns round")
+    }
+
+    @Test func aCloseFollowerWaitsFacingItsFriend() {
+        var rng = SeededRNG(state: 22)
+        var fan = creature(at: 100), star = creature(at: 120)
+        fan.follow(star, gap: 40)
+        #expect(fan.animation == "idle" && fan.direction == 1)
+        let here = fan.t
+        for _ in 0..<60 { fan.follow(star, gap: 40); fan.update(dt: 1.0 / 30, cursor: nil, using: &rng) }
+        #expect(fan.t == here, "it does not wander off while the friend stays put")
+    }
+
+    @Test func nobodyFollowsAcrossLoopsOrInTheirSleepOrMidJump() {
+        var rng = SeededRNG(state: 23)
+        let two = EdgeWorld(screens: [CGRect(x: 0, y: 0, width: 1000, height: 600),
+                                      CGRect(x: 1500, y: 0, width: 1000, height: 600)], inset: 10)
+        var fan = Creature(world: two, spot: .init(loop: 0, t: 100))
+        let star = Creature(world: two, spot: .init(loop: 1, t: 100))
+        let crossed = fan.follow(star, gap: 40)
+        #expect(!crossed)
+
+        var sleeper = creature(at: 100)
+        sleeper.toggleNap(using: &rng)
+        let sleeperFollowed = sleeper.follow(creature(at: 400), gap: 40)
+        #expect(sleeper.isSleeping && !sleeperFollowed)
+
+        var jumper = creature(at: 100)
+        jumper.startle(using: &rng)
+        let jumperFollowed = jumper.follow(creature(at: 400), gap: 40)
+        #expect(jumper.isJumping && !jumperFollowed)
+
+        var held = creature(at: 100)
+        held.pickUp(evenAwake: true)
+        let heldFollowed = held.follow(creature(at: 400), gap: 40)
+        #expect(!heldFollowed)
+    }
+}

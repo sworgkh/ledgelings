@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.12). Where the
+Every number here is the one the macOS app ships with (v0.13). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -307,7 +307,8 @@ At each tick with `dt = min(now − last, 0.1)`:
    is down. Track `asleepFor[i]` (seconds it has looked asleep, for the Zs).
 3. Update click-through (§10.4).
 4. Drop expired bubbles. Land the flower in flight if its time is up; wilt hats
-   past their time (§7.3). Age the sparks (§7.4). Release the chatting pair if
+   past their time; steer every wearer after its giver if `followGiver` (§7.3).
+   Age the sparks (§7.4). Release the chatting pair if
    it is over (§7.2). Detect bumps and handle them (§7.1).
 5. Render (§9).
 6. Frame rate: 30 fps normally; 12 fps when nobody is held and every creature
@@ -539,6 +540,19 @@ bluebell, dandelion, lavender, lily, forget-me-not.
   `(11 + 8)·size` (half body plus half a flower cell).
 - On landing the receiver **wears** it for `flowerMinutes·60` s (default 2 min,
   range 0.5–30), then it vanishes.
+- A hat remembers its **giver**. While the setting `followGiver` (default
+  on) is on, every frame after the hats are updated the wearer **follows**
+  the giver: if both are on the same loop, neither is held, jumping or in a
+  chat (§7.2), and the house is not out (§7.5), and the wearer is walking or
+  idling, then with `ahead = wrap(giver.t − wearer.t)` and
+  `distance = min(ahead, loopLength − ahead)`: the wearer faces the giver
+  (`direction = ahead ≤ loopLength/2 ? +1 : −1`); if `distance > gap` it
+  walks (a walking spell of at least 1 s more, so it never idles mid-chase),
+  else it idles (at least 1 s more), standing and facing the giver. `gap =
+  (size(wearer) + size(giver)) / 2 + 16` points. The follower keeps its own
+  walking speed, so a slow one trails. Sleepers, jumpers, the held and the
+  chatting are not steered; the moment the flower wilts the wearer is left in
+  whatever mode it was in and wanders on.
 - Hats and flights referring to removed creatures are dropped.
 
 ### 7.4 Stars (sparks)
@@ -877,6 +891,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | dayMinutes | 3 | 0.5–60 |
 | nightMinutes | 5 | 0–60; 0 = never sleep |
 | talkEnabled | true | |
+| followGiver | true | the wearer of a flower trails its giver (§7.3) |
 | brainProvider | lmStudio | lmStudio, openRouter |
 | talkServer | `http://localhost:1234` | must parse as a URL with a host |
 | talkModel | `google/gemma-3-1b` | |

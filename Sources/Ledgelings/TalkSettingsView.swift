@@ -15,8 +15,9 @@ struct TalkSettingsView: View {
                 Toggle("Creatures talk when they bump into each other", isOn: $settings.talkEnabled)
                 SliderRow("Bubble stays", value: $settings.bubbleSeconds, in: AppSettings.bubbleRange, step: 1, unit: " s")
                 SliderRow("Flower lasts", value: $settings.flowerMinutes, in: AppSettings.flowerRange, step: 0.5, unit: " min")
+                Toggle("The one with the flower follows the giver while it lasts", isOn: $settings.followGiver)
             } footer: {
-                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts. \"Make Someone Talk\" in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
+                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. \"Make Someone Talk\" in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
             }
 
             Section {

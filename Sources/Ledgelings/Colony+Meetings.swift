@@ -120,4 +120,15 @@ extension Colony {
             scale: CGFloat(sizes[flight.to])
         )
     }
+
+    /// Whoever wears a flower trails the one who gave it, stopping about a body
+    /// apart. Not while either is talking, and not while they are going home.
+    func followGivers() {
+        guard !hideout.isActive else { return }
+        for (wearer, hat) in gifts.worn where creatures.indices.contains(hat.from) && hat.from != wearer {
+            guard creatures.indices.contains(wearer), !busy.contains(wearer), !busy.contains(hat.from) else { continue }
+            let gap = (sizes[wearer] + sizes[hat.from]) / 2 + 16
+            creatures[wearer].follow(creatures[hat.from], gap: gap)
+        }
+    }
 }
