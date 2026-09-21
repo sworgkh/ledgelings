@@ -54,6 +54,21 @@ public sealed partial class Colony
         if (!Settings.TalkEnabled || !Talk(giver, receiver, eventText)) EndChat(giver, receiver, 2);
     }
 
+    /// <summary>Whoever wears a flower trails the one who gave it, stopping about a body apart.
+    /// Not while either is talking, and not while they are going home.</summary>
+    private void FollowGivers()
+    {
+        if (hideout.IsActive) return;
+        foreach (var (wearer, hat) in gifts.WornFlowers)
+        {
+            var giver = hat.From;
+            if (giver == wearer || wearer >= creatures.Count || giver < 0 || giver >= creatures.Count) continue;
+            if (busy.Contains(wearer) || busy.Contains(giver)) continue;
+            var gap = (sizes[wearer] + sizes[giver]) / 2 + 16;
+            creatures[wearer].Follow(creatures[giver], gap);
+        }
+    }
+
     private List<SparkSnapshot> SparkSnapshots()
     {
         var size = 2 * (sizes.Count == 0 ? 2 : sizes.Max());

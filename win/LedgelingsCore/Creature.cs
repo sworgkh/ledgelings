@@ -301,6 +301,32 @@ public sealed class Creature
         Enter(new Mode.Walking(rng.Range(Settings.WalkSpell)));
     }
 
+    // MARK: Following a friend
+
+    /// <summary>Trail <paramref name="friend"/> along this loop: walk toward it, the short way round,
+    /// while it is farther than <paramref name="gap"/>; stand facing it when close. Called every frame
+    /// by whoever knows who follows whom. Only a creature walking or idling on the friend's own loop
+    /// follows; sleepers, jumpers, the held and the busy do not. Returns whether it did.</summary>
+    public bool Follow(Creature friend, double gap)
+    {
+        if (friend.Spot.Loop != Spot.Loop || friend.IsHeld || friend.IsJumping) return false;
+        if (CurrentMode is not (Mode.Walking or Mode.Idle)) return false;
+        var ahead = Loop.Wrap(friend.Spot.T - Spot.T);
+        var distance = Math.Min(ahead, Loop.Length - ahead);
+        Direction = ahead <= Loop.Length / 2 ? 1 : -1;
+        if (distance > gap)
+        {
+            if (CurrentMode is Mode.Walking(var remaining)) CurrentMode = new Mode.Walking(Math.Max(remaining, 1));
+            else Enter(new Mode.Walking(1));
+        }
+        else
+        {
+            if (CurrentMode is Mode.Idle(var remaining)) CurrentMode = new Mode.Idle(Math.Max(remaining, 1));
+            else Enter(new Mode.Idle(1));
+        }
+        return true;
+    }
+
     // MARK: Meeting someone
 
     /// <summary>Stop and face the other creature: <paramref name="facing"/> is +1 when it is further along

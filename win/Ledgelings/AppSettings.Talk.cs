@@ -15,6 +15,7 @@ public sealed partial class AppSettings
     public const double FlowerMin = 0.5, FlowerMax = 30;
 
     private bool talkEnabled;
+    private bool followGiver;
     private ChatClient.Provider brainProvider;
     private string talkServer = "", talkModel = "", openRouterModel = "", openRouterKey = "";
     private double bubbleSeconds, flowerMinutes;
@@ -24,6 +25,7 @@ public sealed partial class AppSettings
     private void LoadTalk()
     {
         talkEnabled = store.Get<bool?>("talkEnabled") ?? true;
+        followGiver = store.Get<bool?>("followGiver") ?? true;
         brainProvider = Enum.TryParse<Ledgelings.ChatClient.Provider>(store.Get<string>("brainProvider"), true, out var p) ? p : Ledgelings.ChatClient.Provider.LmStudio;
         talkServer = store.Get<string>("talkServer") ?? DefaultTalkServer;
         talkModel = store.Get<string>("talkModel") ?? DefaultTalkModel;
@@ -38,6 +40,9 @@ public sealed partial class AppSettings
     }
 
     public bool TalkEnabled { get => talkEnabled; set => Put(ref talkEnabled, value, "talkEnabled"); }
+
+    /// <summary>The one wearing a flower trails the one who gave it while the flower lasts.</summary>
+    public bool FollowGiver { get => followGiver; set => Put(ref followGiver, value, "followGiver"); }
 
     /// <summary>Which model answers, for banter and for anything else that wants words.</summary>
     public ChatClient.Provider BrainProvider

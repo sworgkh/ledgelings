@@ -5,7 +5,8 @@ public sealed class Gifts
 {
     public readonly record struct Flight(string Flower, int From, int To, double Started);
 
-    public readonly record struct Worn(string Flower, double Until);
+    /// <summary>A flower on a head. <c>From</c> is who gave it; the wearer follows that one while it lasts.</summary>
+    public readonly record struct Worn(string Flower, double Until, int From);
 
     /// <summary>Everything a creature can give. Each is an animation in the flowers sheet.</summary>
     public static readonly IReadOnlyList<string> Flowers = new[]
@@ -34,12 +35,15 @@ public sealed class Gifts
 
     public string? Hat(int creature) => worn.TryGetValue(creature, out var w) ? w.Flower : null;
 
+    /// <summary>Who gave the flower <paramref name="creature"/> is wearing, while it is wearing one.</summary>
+    public int? Giver(int creature) => worn.TryGetValue(creature, out var w) ? w.From : null;
+
     /// <summary>Land the flight when its time is up, and drop every hat past its time.</summary>
     public void Update(double time, double wearFor)
     {
         if (CurrentFlight is Flight f && time - f.Started >= FlightTime)
         {
-            worn[f.To] = new Worn(f.Flower, time + wearFor);
+            worn[f.To] = new Worn(f.Flower, time + wearFor, f.From);
             CurrentFlight = null;
         }
         worn = worn.Where(kv => kv.Value.Until > time).ToDictionary(kv => kv.Key, kv => kv.Value);
