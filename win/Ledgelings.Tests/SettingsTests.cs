@@ -20,6 +20,15 @@ public class SettingsTests
     private static Sandbox Fresh() => new();
 
     [Fact]
+    public void FollowingTheGiverIsOnByDefaultAndRemembered()
+    {
+        var box = Fresh();
+        Assert.True(box.Settings.FollowGiver);
+        box.Settings.FollowGiver = false;
+        Assert.False(box.Again().FollowGiver);
+    }
+
+    [Fact]
     public void SpeciesThatNoLongerExistAreDroppedAndBlockyFillsAnEmptyList()
     {
         var s = Fresh().Settings;

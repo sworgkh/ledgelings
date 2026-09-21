@@ -23,6 +23,18 @@ public class GiftsTests
     }
 
     [Fact]
+    public void AHatRemembersWhoGaveIt()
+    {
+        var gifts = new Gifts(flightTime: 0.5);
+        gifts.Give("tulip", 3, 1, 0);
+        gifts.Update(0.5, 60);
+        Assert.Equal(3, gifts.Giver(1));
+        Assert.Null(gifts.Giver(3));
+        gifts.Update(61, 60);
+        Assert.Null(gifts.Giver(1));
+    }
+
+    [Fact]
     public void OnlyOneFlowerFliesAtATime()
     {
         var gifts = new Gifts();

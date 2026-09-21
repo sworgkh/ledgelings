@@ -474,3 +474,66 @@ public class GoingHomeTests
         Assert.True(c.T < 400);
     }
 }
+
+/// <summary>The one wearing a flower trails the one who gave it.</summary>
+public class FollowingTests
+{
+    readonly EdgeWorld world = new(new[] { new Rect(0, 0, 1020, 620) }, 10);
+    Creature CreatureAt(double t) => new(world, new EdgeWorld.Spot(0, t));
+
+    [Fact]
+    public void AFarFollowerWalksTowardItsFriendTheShortWayRound()
+    {
+        var rng = new Random(21);
+        var fan = CreatureAt(100);
+        var star = CreatureAt(300);
+        Assert.True(fan.Follow(star, 40));
+        Assert.Equal(1, fan.Direction);
+        Assert.Equal("walk", fan.Animation);
+        var before = fan.T;
+        fan.Update(0.5, null, false, rng);
+        Assert.True(fan.T > before, "closer than it was");
+
+        var behind = CreatureAt(500);
+        behind.Follow(star, 40);
+        Assert.Equal(-1, behind.Direction);
+    }
+
+    [Fact]
+    public void ACloseFollowerWaitsFacingItsFriend()
+    {
+        var rng = new Random(22);
+        var fan = CreatureAt(100);
+        var star = CreatureAt(120);
+        fan.Follow(star, 40);
+        Assert.Equal("idle", fan.Animation);
+        Assert.Equal(1, fan.Direction);
+        var here = fan.T;
+        for (int i = 0; i < 60; i++) { fan.Follow(star, 40); fan.Update(1.0 / 30, null, false, rng); }
+        Assert.Equal(here, fan.T);
+    }
+
+    [Fact]
+    public void NobodyFollowsAcrossLoopsOrInTheirSleepOrMidJumpOrInTheHand()
+    {
+        var rng = new Random(23);
+        var two = new EdgeWorld(new[] { new Rect(0, 0, 1000, 600), new Rect(1500, 0, 1000, 600) }, 10);
+        var fan = new Creature(two, new EdgeWorld.Spot(0, 100));
+        var star = new Creature(two, new EdgeWorld.Spot(1, 100));
+        Assert.False(fan.Follow(star, 40));
+
+        var sleeper = CreatureAt(100);
+        sleeper.ToggleNap(rng);
+        Assert.True(sleeper.IsSleeping);
+        Assert.False(sleeper.Follow(CreatureAt(400), 40));
+
+        var jumper = CreatureAt(100);
+        jumper.Startle(rng);
+        Assert.True(jumper.IsJumping);
+        Assert.False(jumper.Follow(CreatureAt(400), 40));
+
+        var held = CreatureAt(100);
+        held.PickUp(evenAwake: true);
+        Assert.False(held.Follow(CreatureAt(400), 40));
+    }
+}

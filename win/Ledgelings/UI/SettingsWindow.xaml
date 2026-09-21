@@ -167,7 +167,8 @@
                 <TextBlock Style="{StaticResource RowValue}" Text="{Binding FlowerMinutes, StringFormat={}{0} min}"/>
                 <Slider Minimum="0.5" Maximum="30" TickFrequency="0.5" Value="{Binding FlowerMinutes, Mode=TwoWay}"/>
               </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts. &quot;Make Someone Talk&quot; in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it."/>
+              <CheckBox Content="The one with the flower follows the giver while it lasts" IsChecked="{Binding FollowGiver, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. &quot;Make Someone Talk&quot; in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it."/>
             </StackPanel>
           </GroupBox>
           <GroupBox Header="Brain">
