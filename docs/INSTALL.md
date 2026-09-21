@@ -6,7 +6,14 @@ at the end applies to both.
 ## macOS
 
 **Requirements:** macOS 26 or later on Apple Silicon, and, to build, Xcode 26 (Swift 6).
-There are no prebuilt downloads yet; you build the app and, if you like, an installer.
+
+### Download
+
+Every version is on the [releases page](https://github.com/sworgkh/ledgelings/releases):
+`Ledgelings-<version>.pkg` (double-click installer, puts the app in Applications),
+`Ledgelings-<version>.dmg` (drag the app onto Applications) and a `SHA256SUMS` file.
+The app is not notarised, so the first time you open it right-click it (or the
+`.pkg`) and choose **Open**. Or build it yourself:
 
 ### Run from source
 

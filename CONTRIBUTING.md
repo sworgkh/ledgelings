@@ -123,6 +123,22 @@ text). The sheet must stand on the floor, face right, and stay inside the body b
 - Do not commit build output (`build/`, `.build/`, `win/**/bin`, `win/**/obj`),
   secrets, or the `work/` folders the sprite tool writes.
 
+## Releasing
+
+Bump the version in `scripts/make-app.sh`, `scripts/make-installer.sh` and
+`win/Directory.Build.props` in the same PR as the last change, merge, then on
+`main` with a clean tree:
+
+```bash
+VERSION=0.14.0 scripts/make-release.sh
+```
+
+That builds the macOS `.pkg` and `.dmg`, writes their SHA-256 sums, tags
+`v0.14.0` and publishes a GitHub release with the three files and generated
+notes (`NOTES=file.md` to write your own). The Windows binary is built on a
+Windows machine with `dotnet publish` and added to the same release with
+`gh release upload v0.14.0 <file>`.
+
 ## Reporting a bug
 
 Open an issue with the platform and version, what you did, what happened, what you
