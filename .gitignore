@@ -34,3 +34,9 @@ Package.resolved
 work/
 __pycache__/
 .pytest_cache/
+
+# Windows port (.NET)
+win/**/bin/
+win/**/obj/
+win/**/*.user
+win/.vs/

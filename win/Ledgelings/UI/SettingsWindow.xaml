@@ -1,0 +1,338 @@
+<Window x:Class="Ledgelings.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Ledgelings.UI"
+        Title="Ledgelings Settings" Width="620" Height="700" MinWidth="520" MinHeight="480"
+        WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
+  <Window.Resources>
+    <ui:ZeroAsText x:Key="ZeroAsText"/>
+    <Style x:Key="Footer" TargetType="TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Foreground" Value="Gray"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+    <Style x:Key="RowLabel" TargetType="TextBlock">
+      <Setter Property="Width" Value="110"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="RowValue" TargetType="TextBlock">
+      <Setter Property="Width" Value="70"/>
+      <Setter Property="TextAlignment" Value="Right"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="DockPanel.Dock" Value="Right"/>
+    </Style>
+    <Style TargetType="GroupBox">
+      <Setter Property="Padding" Value="8"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+    <Style TargetType="Slider">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="IsSnapToTickEnabled" Value="True"/>
+    </Style>
+  </Window.Resources>
+  <TabControl x:Name="Tabs">
+    <TabItem Header="Creatures">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Creatures">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="How many" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding CreatureCount}"/>
+                <Slider Minimum="1" Maximum="24" TickFrequency="1" Value="{Binding CreatureCount, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Smallest" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding MinSize, StringFormat={}{0}×}"/>
+                <Slider Minimum="1" Maximum="5" TickFrequency="0.5" Value="{Binding MinSize, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Largest" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding MaxSize, StringFormat={}{0}×}"/>
+                <Slider Minimum="1" Maximum="5" TickFrequency="0.5" Value="{Binding MaxSize, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Every creature gets its own size between the two. Set them equal and they all match. On a high-dpi monitor the sizes scale with it, so 3× is the same size as on a Mac."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Colours">
+            <StackPanel>
+              <ItemsControl x:Name="ColourList">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Width="36" Height="36" Margin="4" Background="{Binding Brush}" Tag="{Binding Index}" ToolTip="{Binding Hex}" Click="Colour_Click" BorderBrush="Gray"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <DockPanel Margin="0,6,0,0">
+                <Button DockPanel.Dock="Right" Content="Reset" Click="ResetColours_Click"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="AddColour" Content="Add Colour" Click="AddColour_Click" Margin="0,0,8,0"/>
+                  <Button x:Name="RemoveColour" Content="Remove Last" Click="RemoveColour_Click"/>
+                </StackPanel>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out. Click a swatch to change it."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Day and night">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Day lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding DayMinutes, StringFormat={}{0} min}"/>
+                <Slider Minimum="0.5" Maximum="60" TickFrequency="0.5" Value="{Binding DayMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Night lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding NightMinutes, Converter={StaticResource ZeroAsText}, ConverterParameter=never}"/>
+                <Slider Minimum="0" Maximum="60" TickFrequency="0.5" Value="{Binding NightMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Startup">
+            <StackPanel>
+              <CheckBox x:Name="StartAtLogin" Content="Start Ledgelings when you log in" Checked="StartAtLogin_Changed" Unchecked="StartAtLogin_Changed"/>
+              <TextBlock Margin="0,4,0,0"><Run Text="Status: "/><Run x:Name="LoginStatus" Text="not checked" Foreground="Gray"/></TextBlock>
+              <TextBlock Style="{StaticResource Footer}" Text="Uses the per-user Startup list; Task Manager › Startup apps shows it too."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Sprites">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Creatures">
+            <StackPanel>
+              <ItemsControl x:Name="SpeciesList">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Margin="5" Padding="8" CornerRadius="10" BorderThickness="2" Width="118" Cursor="Hand"
+                            BorderBrush="{Binding Border}" Background="{Binding Fill}" Tag="{Binding Name}" MouseLeftButtonUp="Species_Click">
+                      <StackPanel>
+                        <Grid>
+                          <Image Source="{Binding Image}" Width="96" Height="96" RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
+                          <TextBlock Text="{Binding Check}" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="18" Foreground="{Binding Border}"/>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                          <TextBlock Text="{Binding Name}" FontWeight="{Binding Weight}"/>
+                          <Button Content="🗑" Visibility="{Binding DeleteVisibility}" Tag="{Binding Name}" Click="Species_Delete"
+                                  Margin="6,0,0,0" Padding="4,0" BorderThickness="0" Background="Transparent" ToolTip="Delete this imported creature"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <DockPanel Margin="0,8,0,0">
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Import Sheet…" Click="ImportSheet_Click" Margin="0,0,8,0"/>
+                  <Button Content="Open Folder" Click="OpenSpritesFolder_Click"/>
+                </StackPanel>
+                <TextBlock x:Name="SpriteStatus" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="Gray" TextWrapping="Wrap" FontSize="11"/>
+              </DockPanel>
+              <TextBlock x:Name="SpritesFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Sprite kit">
+            <StackPanel>
+              <TextBlock TextWrapping="Wrap" Text="Copy the prompt, paste it into any chat model, replace the placeholder with a description of the creature you want, and save the model's answer as a .txt file. Then Import Sheet…"/>
+              <StackPanel Orientation="Horizontal" Margin="0,8">
+                <Button x:Name="CopyPrompt" Content="Copy Prompt" Click="CopyPrompt_Click"/>
+                <Button Content="Save Example Sheet…" Click="SaveExample_Click" Margin="8,0,0,0"/>
+                <Button Content="Save PNG Template…" Click="SaveTemplate_Click" Margin="8,0,0,0"/>
+              </StackPanel>
+              <TextBox x:Name="PromptBox" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas" FontSize="11" Height="220" VerticalScrollBarVisibility="Auto"/>
+              <TextBlock Style="{StaticResource Footer}" Text="The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Talk">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Talking">
+            <StackPanel>
+              <CheckBox Content="Creatures talk when they bump into each other" IsChecked="{Binding TalkEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock Text="Bubble stays" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding BubbleSeconds, StringFormat={}{0} s}"/>
+                <Slider Minimum="4" Maximum="60" TickFrequency="1" Value="{Binding BubbleSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Flower lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding FlowerMinutes, StringFormat={}{0} min}"/>
+                <Slider Minimum="0.5" Maximum="30" TickFrequency="0.5" Value="{Binding FlowerMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts. &quot;Make Someone Talk&quot; in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Brain">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="BrainLm" Content="LM Studio" Checked="Brain_Checked" Margin="0,0,16,0"/>
+                <RadioButton x:Name="BrainOr" Content="OpenRouter" Checked="Brain_Checked"/>
+              </StackPanel>
+              <StackPanel x:Name="LmPanel" Margin="0,8,0,0">
+                <DockPanel>
+                  <TextBlock Text="Server" Width="70" VerticalAlignment="Center"/>
+                  <TextBox Text="{Binding TalkServer, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <DockPanel Margin="0,4">
+                  <TextBlock Text="Model" Width="70" VerticalAlignment="Center"/>
+                  <Button DockPanel.Dock="Right" Content="Check" Click="LmCheck_Click" Margin="8,0,0,0" MinWidth="60"/>
+                  <ComboBox DockPanel.Dock="Right" x:Name="LmInstalled" Width="140" Margin="8,0,0,0" Visibility="Collapsed" SelectionChanged="LmInstalled_Changed" ToolTip="Installed models"/>
+                  <TextBox Text="{Binding TalkModel, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"><Run Text="Status: "/><Run x:Name="LmStatus" Text="not checked" Foreground="Gray"/></TextBlock>
+              </StackPanel>
+              <StackPanel x:Name="OrPanel" Margin="0,8,0,0">
+                <DockPanel>
+                  <TextBlock Text="API key" Width="70" VerticalAlignment="Center"/>
+                  <PasswordBox x:Name="OrKey" PasswordChanged="OrKey_Changed"/>
+                </DockPanel>
+                <DockPanel Margin="0,4">
+                  <TextBlock Text="Model" Width="70" VerticalAlignment="Center"/>
+                  <Button DockPanel.Dock="Right" Content="Check" Click="OrCheck_Click" Margin="8,0,0,0" MinWidth="60"/>
+                  <TextBox Text="{Binding OpenRouterModel, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"><Run Text="Status: "/><Run x:Name="OrStatus" Text="not checked" Foreground="Gray"/></TextBlock>
+                <DockPanel Margin="0,8,0,4">
+                  <Button DockPanel.Dock="Right" Content="↻" Click="ReloadCatalog_Click" ToolTip="Fetch the list again" Margin="8,0,0,0" MinWidth="28"/>
+                  <TextBox x:Name="ModelSearch" TextChanged="ModelSearch_Changed" ToolTip="e.g. flash lite, gemma, free"/>
+                </DockPanel>
+                <ListBox x:Name="ModelList" Height="220" SelectionChanged="ModelList_Changed" HorizontalContentAlignment="Stretch">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate>
+                      <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding Price}" Foreground="{Binding PriceBrush}" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <StackPanel>
+                          <TextBlock Text="{Binding Id}" FontFamily="Consolas"/>
+                          <TextBlock Text="{Binding Name}" FontSize="11" Foreground="Gray" Visibility="{Binding NameVisibility}"/>
+                        </StackPanel>
+                      </DockPanel>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name="CatalogStatus" FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,0"/>
+              </StackPanel>
+              <TextBlock x:Name="BrainFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Spend">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="100"/><ColumnDefinition Width="90"/><ColumnDefinition Width="60"/><ColumnDefinition Width="80"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Cost" FontSize="11" Foreground="Gray"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Calls" FontSize="11" Foreground="Gray"/>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="Tokens" FontSize="11" Foreground="Gray"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Today"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TodayCost"/><TextBlock Grid.Row="1" Grid.Column="2" x:Name="TodayCalls"/><TextBlock Grid.Row="1" Grid.Column="3" x:Name="TodayTokens"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="This month"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MonthCost"/><TextBlock Grid.Row="2" Grid.Column="2" x:Name="MonthCalls"/><TextBlock Grid.Row="2" Grid.Column="3" x:Name="MonthTokens"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="All time"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="AllCost"/><TextBlock Grid.Row="3" Grid.Column="2" x:Name="AllCalls"/><TextBlock Grid.Row="3" Grid.Column="3" x:Name="AllTokens"/>
+              </Grid>
+              <ItemsControl x:Name="SpendModels" Margin="0,6,0,0">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Detail}" FontSize="11" Foreground="Gray"/><TextBlock Text="{Binding Model}" FontSize="11"/></DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <DockPanel Margin="0,6,0,0">
+                <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealSpend_Click"/>
+                <TextBlock x:Name="SpendPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock x:Name="SpendFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Characters">
+            <StackPanel>
+              <DockPanel>
+                <TextBlock Text="Species" Width="70" VerticalAlignment="Center"/>
+                <ComboBox x:Name="CastSpecies" SelectionChanged="CastSpecies_Changed"/>
+              </DockPanel>
+              <TextBlock x:Name="CastKind" FontSize="11" Foreground="Gray" Margin="0,4"/>
+              <ItemsControl x:Name="CastList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Margin="0,4">
+                      <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="−" Tag="{Binding Index}" Click="CastRemove_Click" Width="24" ToolTip="Remove this character"/>
+                        <TextBox Text="{Binding Name, Mode=OneWay}" FontWeight="Bold" Tag="{Binding Index}" LostFocus="CastName_Changed" Margin="0,0,4,0"/>
+                      </DockPanel>
+                      <TextBox Text="{Binding Persona, Mode=OneWay}" TextWrapping="Wrap" AcceptsReturn="True" Tag="{Binding Index}" LostFocus="CastPersona_Changed" Margin="0,2,28,0"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <DockPanel Margin="0,6,0,0">
+                <Button DockPanel.Dock="Right" Content="Reset Cast" Click="CastReset_Click"/>
+                <Button Content="Add Character" Click="CastAdd_Click" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Prompts">
+            <StackPanel>
+              <TextBlock Text="Who is speaking (system prompt)" FontWeight="SemiBold"/>
+              <TextBox Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="72" Margin="0,2,0,8"/>
+              <TextBlock Text="Opening line" FontWeight="SemiBold"/>
+              <TextBox Text="{Binding LinePrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="48" Margin="0,2,0,8"/>
+              <TextBlock Text="Reply" FontWeight="SemiBold"/>
+              <TextBox Text="{Binding ReplyPrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="60" Margin="0,2,0,8"/>
+              <Button Content="Reset Prompts" HorizontalAlignment="Right" Click="ResetPrompts_Click"/>
+              <TextBlock x:Name="PromptFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Chats">
+      <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="10">
+          <Button DockPanel.Dock="Right" Content="Open in Terminal" Click="OpenTerminal_Click" Margin="8,0,0,0"/>
+          <Button DockPanel.Dock="Right" Content="Open in Explorer" Click="OpenChats_Click"/>
+          <TextBlock x:Name="ChatsPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+        </DockPanel>
+        <ListBox DockPanel.Dock="Left" x:Name="DayList" Width="150" SelectionChanged="DayList_Changed" DisplayMemberPath="Title"/>
+        <Grid>
+          <TextBlock x:Name="ChatsEmpty" Foreground="Gray" TextWrapping="Wrap" TextAlignment="Center" Margin="24" VerticalAlignment="Center"/>
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="ExchangeList" Margin="12">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="0,0,0,14">
+                    <DockPanel>
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <TextBlock Text="{Binding Cost}" FontSize="11" Foreground="Gray" Margin="8,0,0,0"/>
+                        <TextBlock Text="{Binding Tokens}" FontSize="11" Foreground="Gray" Margin="8,0,0,0"/>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Time}" FontSize="11" Foreground="Gray"/>
+                      <TextBlock Text="{Binding Model}" FontSize="11" Foreground="Gray" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                    <TextBlock Text="{Binding Situation}" FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding Lines}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock TextWrapping="Wrap"><Run Text="{Binding Speaker, Mode=OneWay}" FontWeight="Bold"/><Run Text=": "/><Run Text="{Binding Text, Mode=OneWay}"/></TextBlock>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </DockPanel>
+    </TabItem>
+  </TabControl>
+</Window>

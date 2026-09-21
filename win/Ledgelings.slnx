@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Ledgelings.Tests/Ledgelings.Tests.csproj" />
+  <Project Path="Ledgelings/Ledgelings.csproj" />
+  <Project Path="LedgelingsCore.Tests/LedgelingsCore.Tests.csproj" />
+  <Project Path="LedgelingsCore/LedgelingsCore.csproj" />
+</Solution>

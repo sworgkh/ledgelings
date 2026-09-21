@@ -1,270 +1,104 @@
 # Ledgelings
 
-Native macOS app. Tiny creatures crawl around the **edges of your screens** —
-along the borders, over the corners, between monitors.
+Tiny pixel creatures crawl around the **edges of your screens**: along the borders,
+over the corners, from one monitor onto the next. They sleep at night, bump into
+each other and trade a line written by a language model, give each other flowers,
+and go home to a little house when you ask them to.
 
-Ambient, click-through, menu-bar only. Not a game, not a widget.
+Ambient, click-through, living in the menu bar or the tray. Not a game, not a widget.
+
+**Two native apps, one spec, one set of art:**
+
+| Platform | Stack | Where |
+|---|---|---|
+| macOS 26+ | Swift 6, AppKit overlays, SwiftUI settings | [Sources/](Sources), [Package.swift](Package.swift) |
+| Windows 10/11 | C# / .NET 10, Win32 layered overlays, WPF settings | [win/](win), [win/README.md](win/README.md) |
+
+Everything the app does is written down once, platform-neutrally, in
+[SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
 **Status:** v0.12 — eight creatures with their own personalities, on every monitor,
 talking when they meet, giving flowers, thinking locally or through OpenRouter,
-keeping every chat, going home when asked, and wearing creatures you describe to
-any chat model.
-See [BRIEF.md](BRIEF.md) for the original plan and [SPEC.md](SPEC.md) for the full,
-platform-neutral specification of everything the app does.
+keeping every chat and what it cost, going home when asked, and wearing creatures
+you describe to any chat model.
+
+## Quick start
+
+macOS, from a terminal (Xcode 26 / Swift 6 installed):
+
+```bash
+swift run Ledgelings
+```
+
+Windows, from a terminal (.NET 10 SDK installed):
+
+```bash
+dotnet run --project win/Ledgelings
+```
+
+Ctrl-C stops a terminal run; a built app quits from its menu. To install a proper
+app instead of running from source, see [docs/INSTALL.md](docs/INSTALL.md).
 
 ## What it does
 
-**Blocky** is a square sprite with two black rectangle eyes. Each one crawls the
-edges of your monitors, turns the corners, stops now and then, and blinks. Move the
-cursor within ~90 points and it jumps to a random spot on a different edge, on any
-monitor. The overlay never takes a click: a creature asks where the cursor is, it
-does not receive mouse events.
+**They walk the edges.** Each creature crawls the outline of your desktop, turns
+the corners, stops now and then, blinks. Monitors that touch are fused into one
+outline, so a creature walks from one screen onto the next along a shared floor and
+never along the seam between them. Move the cursor near one and it jumps to another
+edge, on any monitor. The overlay never takes a click that is not meant for a creature.
 
-**All monitors, one outline.** Monitors that touch are fused, and the creatures walk
-the outline of the whole desktop. They cross from one monitor to the next along a
-shared floor, climb the wall where a taller monitor begins, and never walk the
-invisible seam between two screens. Unplug a monitor and everyone on it moves to
-the nearest edge that still exists.
+**Day and night.** One clock for the colony: three minutes of day, then five of
+night, forever (both adjustable). At dusk everyone slumps and floats Zs; at dawn
+they wake a few seconds apart.
 
-**Day and night.** The colony shares one clock: 3 minutes of day, then 5 of night,
-forever. At dusk each creature wanders a few more seconds, then slumps, shuts its
-eyes and floats Zs. At dawn they wake a few seconds apart.
+**Your hand.** Hold Shift and nobody flees. Shift-click a creature and it says
+something to whoever is nearest. Shift-drag any creature, or plain-drag a sleeper,
+to carry it to another edge or monitor. Shift-right-click puts one down for a nap.
+The full list is in [docs/SETTINGS.md](docs/SETTINGS.md#what-your-hand-can-do).
 
-**Your hand.** Three rules:
+**They talk.** When two creatures walk into each other, a few pixel stars fly up,
+both stop and face each other, one says a line and the other answers. The words
+come from a model of your choice: a small one running locally in
+[LM Studio](https://lmstudio.ai), or anything on [OpenRouter](https://openrouter.ai).
+Every third meeting of the same pair, one gives the other a flower to wear.
+Every conversation is kept, and every call to the model is priced.
 
-| You do | What happens |
+**Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
+triangle and a mushroom come built in, each with its own cast of characters. The
+**sprite kit** is a prompt you paste into any chat model with a description of the
+creature you want; the model answers in a letter format the app imports as a real
+sprite sheet that blinks and takes your colours. See [docs/SPRITES.md](docs/SPRITES.md).
+
+**They can go home.** *Hide Them for a While…* in the menu brings out a house in the
+bottom-right corner of the main screen; everyone runs in, the house packs itself
+away, and when the time is up it comes back and they walk out one by one.
+
+## Documentation
+
+| Read this | For |
 |---|---|
-| Hold **Shift** | Nobody flees, so you can get the cursor onto one |
-| **Shift-click** a creature | A poke: it says something to whoever is nearest, and they stop to talk |
-| **Shift-drag** a creature | It comes along, awake or asleep, and lands the same way on the nearest edge of whichever monitor it is over |
-| **Drag** a sleeper | Same, no Shift needed: a sleeper never notices the cursor |
-| **Shift-right-click** a creature | It naps on the spot, day or night. Same again to wake it. A nap also ends at the next dawn |
-
-A sleeper never notices the cursor — that is what lets you grab it. The overlay is
-still click-through: it turns clickable only while the cursor is on a creature you
-can act on, and it never takes focus from the app you are in.
-
-**They talk.** When two creatures walk into each other on the same edge, a few pixel
-stars fly up, both stop and turn to face each other, one says a line, the other
-answers, and then each goes on its way, like two people who meet in the street. A
-pair only meets once a minute, so passing each other in between is just passing.
-**Make Someone Talk** in the menu does the same at any time. Click a speech bubble
-to close it. The lines come from a language model,
-and Settings → Talk → **Brain** picks which one:
-
-- **LM Studio** (default): a small model running on your Mac in
-  [LM Studio](https://lmstudio.ai), so nothing leaves the machine.
-- **OpenRouter**: any model on [openrouter.ai](https://openrouter.ai), for better
-  lines at a few cents a day. Paste an API key (it goes in your keychain, not in a
-  preferences file) and a model id; the default is `anthropic/claude-haiku-4.5`.
-  Give the key a spending limit when you make it. **Check** confirms the key and
-  shows what it has spent. Below it, the whole OpenRouter catalogue is fetched
-  live: search by any words in the id or name ("flash lite", "gemma", "free"),
-  cheapest first with prices per million tokens, click to pick. For one-line
-  banter, `google/gemini-2.5-flash-lite` or `google/gemma-3-12b-it` cost about a
-  tenth of Haiku and are quicker.
-
-Each creature has a character: a name and a personality that goes into the prompt.
-Six come built in; edit them, and the prompts themselves, in Settings → Talk.
-
-**They can go home for a while.** **Hide Them for a While…** in the menu asks how
-long (5 minutes to "until tomorrow morning"). A little house appears in the bottom
-right corner of the main screen, everyone runs or jumps in through its door, the
-house shrinks to nothing, and when the time is up it grows back and they walk out
-one by one. The
-same menu item, now **Bring Them Back Now**, ends it early.
-
-**Eight creatures, and your own.** Blocky, a frog, a cat, a ghost, a slime, a
-robot, a triangle and a mushroom come built in; Settings → Sprites shows them as
-cards, click one to put it in the colony or take it out. Each species has its own cast of characters and knows what it is,
-so a frog talks like a frog and a robot like a robot; edit a species' cast in
-Settings → Talk. A species may also own its colour: the mushroom is always red and the
-frog always green, whatever colour slot they land in; the others wear the colour of
-their creature number. The **sprite kit** in Settings → Sprites is a prompt for
-any chat model: copy it, paste it with a description of the creature you want, and
-the model answers with the creature as nine 32×32 grids of letters (`.` nothing,
-`o` outline, `b` body, `l` light, `s` shade, `k` eyes) plus a `kind:` line,
-an optional `colour:` line and three `character:` lines. Save that as a .txt and import it; the app turns the
-letters into a real sheet with the game's palette, so the new creature blinks and
-takes your colours like the built-in ones. Image models and paint programs are
-served too: save the PNG template, paint on magenta, import the PNG. Sheets live in
-`~/Library/Application Support/Ledgelings/sprites/`.
-
-**Every chat is kept.** Each conversation goes to
-`~/Library/Application Support/Ledgelings/chats/YYYY-MM-DD.jsonl`, one line per
-exchange with the time, the situation, the model and what each of them said.
-**Chat History…** in the menu (or Settings → Chats) shows each day's chats, with
-buttons to open the folder in Finder or Terminal.
-
-**It counts what the talking costs.** Every call to the model is written to
-`~/Library/Application Support/Ledgelings/spend.jsonl` with its tokens and, for
-OpenRouter, the price OpenRouter itself reports for that call (the request asks
-for it). LM Studio is free. Settings → Talk → Spend shows today, this month and
-all time, with the dearest models; the menu shows today's and this month's
-total; each chat in the Chats tab shows what it cost.
-
-**They give flowers.** Every third time the same two creatures bump into each other,
-one hands the other a flower, which it then wears on its head for a couple of
-minutes before it wilts away. Ten flowers, drawn
-by `sprites/flowers.yaml`: poppy, tulip, daisy, sunflower, rose, bluebell,
-dandelion, lavender, lily and forget-me-not.
-
-For LM Studio: install it, download `google/gemma-3-1b` in it, and keep its local
-server running:
-
-```bash
-lms get google/gemma-3-1b --mlx
-lms server start
-```
-
-Settings → Talk → **Check** tells you whether the app can see the server and the
-model. If the brain is off or the key is missing, the creatures simply stay quiet;
-the menu shows why.
-
-**Settings** (menu bar icon → Settings…), all saved:
-
-| Setting | Default | Notes |
-|---|---|---|
-| How many | 3 | 1 to 24 |
-| Smallest / Largest | 1.5× / 3× | 1× to 5× in half steps. Every creature gets its own size between the two; set them equal and they all match |
-| Colours | 6 | creature 1 wears colour 1, and so on, wrapping round. Eyes stay black |
-| Creatures in the colony | blocky | creature 1 wears the first one chosen, and so on, wrapping round |
-| Day lasts | 3 min | |
-| Night lasts | 5 min | 0 = they never sleep |
-| Start at login | off | the system's Login Items list; only the installed app can register |
-| Bubble stays | 14 s | 4 to 60 s; longer lines stay a little longer, never past twice this |
-| Flower lasts | 2 min | 0.5 to 30 min on the head, then it wilts |
-| Brain | LM Studio | or OpenRouter |
-| LM Studio server, model | `http://localhost:1234`, `google/gemma-3-1b` | any model LM Studio has installed |
-| OpenRouter key, model | none, `anthropic/claude-haiku-4.5` | key in the keychain; any id from openrouter.ai/models |
-| Characters | a cast per species | the first creature wearing a species is its first character, wrapping round; the species is described to the model |
-| Prompts | built in | the system prompt, the opening line and the reply, with `{placeholders}` |
-
-The menu also shows the time left until dusk or dawn, and has **Put Them to Sleep
-Now / Wake Them Up Now**, **Make Them Jump**, **Hide Them for a While…**, **Make Someone
-Talk** and **Chat History…**.
-
-Not yet: sheets with a different cell size.
-
-## Run it
-
-```bash
-swift run Ledgelings                                   # from a terminal; Ctrl-C to stop
-scripts/make-app.sh && open build/Ledgelings.app       # a real menu-bar app
-swift test                                             # geometry, brain, recolouring, prompts
-LEDGELINGS_LIVE=1 swift test --filter ChatClientLiveTests            # a real line through LM Studio
-OPENROUTER_API_KEY=sk-or-… swift test --filter ChatClientLiveTests   # and through OpenRouter
-```
-
-Everything else is under the menu-bar icon, a filled square.
-
-Inside a [dev3](https://dev3.h0x91b.com) task, `.dev3/config.json` makes
-`dev3 dev-server start` run `swift run Ledgelings` from the task's worktree, so a
-dev build walks beside the installed one.
-
-## Install it
-
-```bash
-scripts/make-installer.sh        # VERSION=0.12.0 scripts/make-installer.sh to set the version
-```
-
-| File | What it is |
-|---|---|
-| `build/Ledgelings-<version>.pkg` | Double-click installer. Puts `Ledgelings.app` in `/Applications` |
-| `build/Ledgelings-<version>.dmg` | Disk image. Open it and drag the app onto Applications |
-
-Both files, and the app, wear the creature as their icon. The icon is drawn from
-the same sprite atlas the app animates: `python -m spritetool icon sprites/blocky.yaml`.
-
-The app is ad-hoc signed, not notarised. On this Mac it just opens. On another Mac,
-Gatekeeper objects the first time: right-click the app or the `.pkg` and choose **Open**.
-
-## Sprites
-
-Art is a sprite sheet, and a sheet is described by a **recipe** — `sprites/blocky.yaml`.
-A recipe declares the layout (columns = poses, rows = how closed the eyes are),
-never the pixels. `spritetool` does the rest:
-
-```bash
-pip install -r spritetool/requirements.txt
-
-python -m spritetool template sprites/blocky.yaml   # a labelled layout PNG + a prompt, to paint into
-python -m spritetool pack sprites/blocky.yaml --from painted.png   # painted sheet -> atlas for the app
-python -m spritetool build sprites/blocky.yaml      # draw in code + pack + previews
-python -m pytest spritetool -q
-```
-
-| Command | Reads | Writes |
-|---|---|---|
-| `template` | the recipe | `work/<name>/template.png`, `work/<name>/prompt.txt` |
-| `draw` | the recipe's `painter` | `work/<name>/painted.png` |
-| `pack` | a painted sheet, at any whole-number scale | `<name>.png` + `<name>.json` in the app's resources, plus `work/<name>/contact.png` and one GIF per animation |
-| `build` | the recipe | everything `draw` and `pack` write |
-| `icon` | the packed atlas | `build/AppIcon.iconset`, ready for `iconutil -c icns` |
-
-The template is the idea borrowed from `gig-tools/spritekit`: **show the layout,
-don't describe it.** Every cell is outlined and named, with a dashed box the
-creature must stay inside and a floor line its feet must touch, all on the exact
-key colour (`#ff00ff`). Hand that image plus `prompt.txt` to an image model or an
-artist. `pack` then cuts the key colour to real 1-bit transparency itself rather
-than trusting anyone to deliver clean alpha.
-
-`sprites/zzz.yaml` is a second, one-cell recipe: the Z a sleeper floats.
-`sprites/text/*.txt` are the five other built-in creatures in the app's own letter
-format, generated by `sprites/text/make.py` (shapes plus an automatic outline, light
-and shade); `LEDGELINGS_BUILD_CREATURES=1 swift test --filter ShippedCreaturesTests`
-rebuilds their sheets, and the same test without the variable fails if a sheet drifts
-from its text. `sprites/house.yaml` is the house, drawn from shapes by
-`spritetool/painters/house.py`.
-`sprites/flowers.yaml` is the ten flowers, one cell each, drawn by
-`spritetool/painters/flowers.py` from hand-placed pixel glyphs with the outline added in code.
-
-A recipe may declare a `palette`. The painter draws with exactly those colours and
-they are written into the atlas, which is how the app recolours a creature: it
-swaps those pixels for shades of the colour you picked and touches nothing else.
-
-Two rules for any new creature: draw it **standing on a floor, facing right**, and
-keep it **centred in its cell**. The app mirrors it to walk the other way and
-rotates it about the cell centre to turn a corner.
+| [docs/INSTALL.md](docs/INSTALL.md) | Installing on macOS and Windows, setting up LM Studio or OpenRouter, where the app keeps its files, uninstalling |
+| [docs/SETTINGS.md](docs/SETTINGS.md) | Every setting, the menu, what your hand can do, the chat log and the spend ledger |
+| [docs/SPRITES.md](docs/SPRITES.md) | The sprite kit for your own creatures, and `spritetool` for the built-in art |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Building, testing and changing either app; the rules that keep the two in step |
+| [SPEC.md](SPEC.md) | The full specification: every number, formula and judgement call |
+| [BRIEF.md](BRIEF.md) | The original project brief and how its plan turned out |
+| [win/README.md](win/README.md) | How the Windows app is put together |
 
 ## Layout
 
 ```
-Sources/LedgelingsCore/   pure logic, no AppKit:
-                            EdgeWorld  fuses the monitors into walkable loops
-                            EdgeLoop   one closed loop; a position is a single number
-                            Creature   the brain: walk, idle, blink, jump, sleep, stop to chat
-                            DayNight   the colony's clock
-                            Meetings   who bumped into whom, once per touch, with a cooldown
-                            Gifts      flowers in flight and on heads
-                            Sparks     the pixel stars of a bump
-                            Hideout    the house: appear, gather, shrink, hide, grow, release
-                            Banter     characters, prompt templates, cleaning a model's line
-                            ChatLog    conversations on disk, one JSON-lines file per day
-                            SpriteText a creature as letters: parse, eye variants, pixels, the kit prompt
-Sources/Ledgelings/       the app:
-                            Colony            creatures + clock + monitors + the frame loop
-                            Colony+Meetings   the stop, the stars, the flower, letting go
-                            Colony+Talk       who says what to whom, the bubbles
-                            Colony+Hand       clicks, pokes, drags
-                            Colony+Hideout    sending everyone home and letting them out
-                            ScreenOverlay     one per monitor: sprites, bubbles, stars, flowers
-                            ChatClient        LM Studio or OpenRouter, for banter and anything else
-                            ModelCatalog      OpenRouter's model list, searched and priced
-                            ChatHistory       the log folder, and the Chats tab (ChatHistoryView)
-                            SpendLedger       spend.jsonl and the Spend section of the Talk tab
-                            SpriteLibrary     built-in and imported sheets, import, the Sprites tab (SpritesSettingsView)
-                            Keychain, SpriteAtlas, AppSettings, SettingsView, TalkSettingsView
-Tests/                    unit tests for both
+Sources/LedgelingsCore/   macOS: pure logic, no AppKit (geometry, creature brain, clock, meetings, gifts, house, banter, logs, sprite text)
+Sources/Ledgelings/       macOS: the app (colony, overlays, chat client, settings, sprite library, views)
+Tests/                    macOS: unit tests for both
+win/LedgelingsCore/       Windows: the same logic, class for class
+win/Ledgelings/           Windows: the app
+win/*.Tests/              Windows: the same tests
+sprites/                  sprite recipes and the built-in creatures as text
 spritetool/               the sprite sheet tool (Python: Pillow + PyYAML)
-sprites/                  recipes
-scripts/make-app.sh       wrap the release binary as Ledgelings.app, with its icon
-scripts/make-installer.sh the .pkg and .dmg
+scripts/                  macOS packaging: make-app.sh, make-installer.sh
+win/publish.ps1           Windows packaging
+docs/                     the guides listed above
 ```
 
-## Stack
-
-- macOS 26+, Swift 6, Swift Package Manager (no Xcode project)
-- One AppKit overlay window per monitor, plain `CALayer`s, one 30 fps display link (12 fps while all sleep)
-- SwiftUI for the settings window only
-- Apple Silicon
+Not yet: sheets with a different cell size.

@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Version>0.12.0</Version>
+    <Authors>Evgeny Alterman</Authors>
+    <Product>Ledgelings</Product>
+  </PropertyGroup>
+</Project>
