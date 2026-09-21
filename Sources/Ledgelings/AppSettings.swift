@@ -39,6 +39,8 @@ final class AppSettings: ObservableObject {
     static let flowerRange = 0.5...30.0
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
+    /// The one wearing a flower trails the one who gave it while the flower lasts.
+    @Published var followGiver: Bool { didSet { save(followGiver, "followGiver") } }
     /// Which model answers, for banter and for anything else that wants words.
     @Published var brainProvider: ChatClient.Provider { didSet { save(brainProvider.rawValue, "brainProvider") } }
     /// LM Studio's local server and the model loaded in it.
@@ -78,6 +80,7 @@ final class AppSettings: ObservableObject {
         nightMinutes = max(0, defaults.object(forKey: "nightMinutes") as? Double ?? 5)
 
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
+        followGiver = defaults.object(forKey: "followGiver") as? Bool ?? true
         brainProvider = defaults.string(forKey: "brainProvider").flatMap(ChatClient.Provider.init(rawValue:)) ?? .lmStudio
         talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
         talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel

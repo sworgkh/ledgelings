@@ -12,6 +12,8 @@ public struct Gifts: Sendable {
     public struct Worn: Equatable, Sendable {
         public var flower: String
         public var until: Double
+        /// Who gave it; the wearer follows this one while the flower lasts.
+        public var from: Int
     }
 
     /// Everything a creature can give. Each is an animation in the flowers sheet.
@@ -39,10 +41,13 @@ public struct Gifts: Sendable {
 
     public func hat(of creature: Int) -> String? { worn[creature]?.flower }
 
+    /// Who gave the flower `creature` is wearing, while it is wearing one.
+    public func giver(of creature: Int) -> Int? { worn[creature]?.from }
+
     /// Land the flight when its time is up, and drop every hat past its time.
     public mutating func update(at time: Double, wearFor: Double) {
         if let flight, time - flight.started >= flightTime {
-            worn[flight.to] = Worn(flower: flight.flower, until: time + wearFor)
+            worn[flight.to] = Worn(flower: flight.flower, until: time + wearFor, from: flight.from)
             self.flight = nil
         }
         worn = worn.filter { $0.value.until > time }

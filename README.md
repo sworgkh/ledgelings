@@ -17,7 +17,7 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.12 — eight creatures with their own personalities, on every monitor,
+**Status:** v0.13 — eight creatures with their own personalities, on every monitor,
 talking when they meet, giving flowers, thinking locally or through OpenRouter,
 keeping every chat and what it cost, going home when asked, and wearing creatures
 you describe to any chat model.
@@ -60,7 +60,8 @@ The full list is in [docs/SETTINGS.md](docs/SETTINGS.md#what-your-hand-can-do).
 both stop and face each other, one says a line and the other answers. The words
 come from a model of your choice: a small one running locally in
 [LM Studio](https://lmstudio.ai), or anything on [OpenRouter](https://openrouter.ai).
-Every third meeting of the same pair, one gives the other a flower to wear.
+Every third meeting of the same pair, one gives the other a flower to wear, and
+the wearer follows the giver around until it wilts.
 Every conversation is kept, and every call to the model is priced.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a

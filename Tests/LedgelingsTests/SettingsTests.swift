@@ -27,6 +27,14 @@ import Testing
 
     func fresh() -> Sandbox { Sandbox() }
 
+    @Test func followingTheGiverIsOnByDefaultAndRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.followGiver)
+        s.followGiver = false
+        #expect(!AppSettings(defaults: defaults).followGiver)
+    }
+
     @Test func speciesThatNoLongerExistAreDroppedAndBlockyFillsAnEmptyList() {
         let box = fresh(), s = box.settings
         defer { box.forget() }

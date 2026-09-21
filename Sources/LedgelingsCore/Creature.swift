@@ -291,6 +291,31 @@ public struct Creature: Sendable {
 
     /// Stop and face the other creature: `facing` is +1 when it is further along
     /// the loop, -1 when it is behind. Only an awake creature on the ground can.
+    /// Trail `friend` along this loop: walk toward it, the short way round, while
+    /// it is farther than `gap`; stand facing it when close. Called every frame by
+    /// whoever knows who follows whom. Only a creature walking or idling on the
+    /// friend's own loop follows; sleepers, jumpers, the held and the busy do not.
+    /// Returns whether it did.
+    @discardableResult
+    public mutating func follow(_ friend: Creature, gap: CGFloat) -> Bool {
+        guard friend.spot.loop == spot.loop, !friend.isHeld, !friend.isJumping else { return false }
+        switch mode {
+        case .walking, .idle: break
+        default: return false
+        }
+        let ahead = loop.wrap(friend.spot.t - spot.t)
+        let distance = min(ahead, loop.length - ahead)
+        direction = ahead <= loop.length / 2 ? 1 : -1
+        if distance > gap {
+            if case .walking(let remaining) = mode { mode = .walking(remaining: max(remaining, 1)) }
+            else { enter(.walking(remaining: 1)) }
+        } else {
+            if case .idle(let remaining) = mode { mode = .idle(remaining: max(remaining, 1)) }
+            else { enter(.idle(remaining: 1)) }
+        }
+        return true
+    }
+
     public mutating func meet(facing: CGFloat, for seconds: Double = 30) {
         guard !isJumping, !looksAsleep, !isHeld else { return }
         if !isChatting { courseBeforeChat = direction }

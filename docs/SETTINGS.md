@@ -77,6 +77,7 @@ The format, the rules the import checks, and what a species can declare
 | **Creatures talk when they bump into each other** | on | | Off: they still stop, face each other, throw stars and give flowers, but say nothing. *Make Someone Talk* and pokes still work |
 | **Bubble stays** | 14 s | 4 to 60 | For a line of about eight words. Longer lines stay a little longer, never past twice this. The reply appears while the first bubble is still up |
 | **Flower lasts** | 2 min | 0.5 to 30 | How long a gifted flower sits on the head before it wilts |
+| **The one with the flower follows the giver while it lasts** | on | | The wearer trails the giver around the edge, stopping about a body behind, until the flower wilts. It still sleeps, flees the cursor and stops to talk like anyone else |
 
 A pair of creatures meets at most once a minute; passing each other in between is
 just passing. Every third meeting of the same pair is a gift: one hands the other

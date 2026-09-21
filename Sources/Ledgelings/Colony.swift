@@ -218,6 +218,7 @@ final class Colony: NSObject {
 
         for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count { bubbles.removeValue(forKey: i) }
         gifts.update(at: elapsed, wearFor: settings.flowerMinutes * 60)
+        if settings.followGiver { followGivers() }
         sparks.update(dt: dt)
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }

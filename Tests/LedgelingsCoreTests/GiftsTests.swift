@@ -20,6 +20,16 @@ import Testing
         #expect(gifts.hat(of: 1) == nil)
     }
 
+    @Test func aHatRemembersWhoGaveIt() {
+        var gifts = Gifts(flightTime: 0.5)
+        gifts.give("tulip", from: 3, to: 1, at: 0)
+        gifts.update(at: 0.5, wearFor: 60)
+        #expect(gifts.giver(of: 1) == 3)
+        #expect(gifts.giver(of: 3) == nil)
+        gifts.update(at: 61, wearFor: 60)
+        #expect(gifts.giver(of: 1) == nil, "gone with the flower")
+    }
+
     @Test func onlyOneFlowerFliesAtATime() {
         var gifts = Gifts()
         let first = gifts.give("rose", from: 0, to: 1, at: 0)
