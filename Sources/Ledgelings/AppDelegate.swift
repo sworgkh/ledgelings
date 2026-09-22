@@ -57,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "square.fill", accessibilityDescription: "Ledgelings")
+        item.button?.image = StatusIcon.image()
         let menu = NSMenu()
         menu.delegate = self
         phaseItem.isEnabled = false
