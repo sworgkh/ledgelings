@@ -6,7 +6,13 @@ import Security
 ///
 /// One item per `account`, all under one `service` name so they are easy to
 /// find in Keychain Access. Setting `nil` or an empty string removes the item.
-struct Keychain: Sendable {
+/// Where a secret lives. The keychain in the app; a spy in tests.
+protocol SecretStore: Sendable {
+    func get(_ account: String) -> String?
+    func set(_ value: String?, for account: String)
+}
+
+struct Keychain: SecretStore {
     var service = "Ledgelings"
 
     func get(_ account: String) -> String? {

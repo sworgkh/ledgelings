@@ -68,6 +68,32 @@ import Testing
         #expect(client?.model == AppSettings.defaultTalkModel)
     }
 
+    /// Counts reads, so a test can prove the keychain was left alone.
+    final class SpyStore: SecretStore, @unchecked Sendable {
+        var reads = 0
+        var stored: [String: String] = [:]
+        func get(_ account: String) -> String? { reads += 1; return stored[account] }
+        func set(_ value: String?, for account: String) { stored[account] = value }
+    }
+
+    @Test func theKeychainIsNotTouchedUntilOpenRouterNeedsTheKey() {
+        let box = fresh()
+        defer { box.forget() }
+        let spy = SpyStore()
+        spy.stored["openRouterKey"] = "sk-or-kept"
+        let s = AppSettings(defaults: box.defaults, keychain: spy)
+        #expect(spy.reads == 0, "launching does not open the keychain")
+        s.brainProvider = .lmStudio
+        #expect(s.chatClient() != nil && spy.reads == 0, "LM Studio never needs it")
+        s.brainProvider = .openRouter
+        #expect(s.chatClient()?.apiKey == "sk-or-kept")
+        #expect(spy.reads == 1)
+        _ = s.chatClient()
+        #expect(spy.reads == 1, "read once, then remembered")
+        s.openRouterKey = "sk-or-new"
+        #expect(spy.stored["openRouterKey"] == "sk-or-new" && s.chatClient()?.apiKey == "sk-or-new" && spy.reads == 1)
+    }
+
     @Test func choosingOpenRouterBuildsAClientWithTheKeyAndModel() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

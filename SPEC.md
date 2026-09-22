@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.13.1). Where the
+Every number here is the one the macOS app ships with (v0.14). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -924,7 +924,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | talkServer | `http://localhost:1234` | must parse as a URL with a host |
 | talkModel | `google/gemma-3-1b` | |
 | openRouterModel | `anthropic/claude-haiku-4.5` | |
-| openRouterKey | empty | **secret store**, never the settings file; empty = removed |
+| openRouterKey | empty | **secret store**, never the settings file; empty = removed. Read lazily: the store is first opened when something asks for the key (`chatClient()` with OpenRouter chosen, or the Talk tab showing the OpenRouter fields), never at launch, so a user of the local brain never sees a keychain prompt |
 | bubbleSeconds | 14 | 4–60, clamped on load |
 | flowerMinutes | 2 | 0.5–30, clamped on load |
 | characters | the six above | ≥ 2; JSON |
