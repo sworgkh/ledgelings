@@ -103,3 +103,7 @@ docs/                     the guides listed above
 ```
 
 Not yet: sheets with a different cell size.
+
+## Licence
+
+MIT, see [LICENSE](LICENSE).
