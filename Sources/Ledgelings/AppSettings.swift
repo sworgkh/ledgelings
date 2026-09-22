@@ -72,6 +72,9 @@ final class AppSettings: ObservableObject {
             return keyCache ?? ""
         }
         set {
+            // The key field writes its text back whenever it loses focus; an
+            // unchanged value must not cost a keychain prompt.
+            guard newValue != openRouterKey else { return }
             keyCache = newValue
             keychain.set(newValue, for: Self.keychainKeyAccount)
         }

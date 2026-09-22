@@ -35,5 +35,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-codesign --force --sign - "$APP" >/dev/null
+# Ad hoc, on purpose. An "Apple Development" identity looked like a way to make
+# the keychain trust every build as one app, but macOS 26 quarantines such an
+# app as malware on launch (it is neither Developer ID nor notarised). Ad hoc
+# only ever costs a right-click > Open. SIGN_IDENTITY overrides for someone
+# with a Developer ID and a notarisation step.
+codesign --force --sign "${SIGN_IDENTITY:--}" "$APP" >/dev/null
 echo "built $APP"

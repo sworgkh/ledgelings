@@ -151,6 +151,14 @@ notes (`NOTES=file.md` to write your own). The Windows binary is built on a
 Windows machine with `dotnet publish` and added to the same release with
 `gh release upload v0.15.0 <file>`.
 
+## Signing
+
+`scripts/make-app.sh` signs the app ad hoc (`SIGN_IDENTITY` names another
+identity). Do not reach for an "Apple Development" certificate: macOS 26 treats
+such an app as malware at launch unless it is Developer ID signed and notarised.
+Ad hoc costs the user one right-click > Open, and one keychain prompt per build
+for the OpenRouter key.
+
 ## Looking at the settings window from a script
 
 ```bash

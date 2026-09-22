@@ -92,10 +92,22 @@ import Testing
 
     /// Counts reads, so a test can prove the keychain was left alone.
     final class SpyStore: SecretStore, @unchecked Sendable {
-        var reads = 0
+        var reads = 0, writes = 0
         var stored: [String: String] = [:]
         func get(_ account: String) -> String? { reads += 1; return stored[account] }
-        func set(_ value: String?, for account: String) { stored[account] = value }
+        func set(_ value: String?, for account: String) { writes += 1; stored[account] = value }
+    }
+
+    @Test func writingTheKeyItAlreadyHasDoesNotTouchTheKeychain() {
+        let box = fresh()
+        defer { box.forget() }
+        let spy = SpyStore()
+        spy.stored["openRouterKey"] = "sk-or-kept"
+        let s = AppSettings(defaults: box.defaults, keychain: spy)
+        s.openRouterKey = "sk-or-kept"            // what the key field does when it loses focus
+        #expect(spy.reads == 1 && spy.writes == 0, "read once to compare, nothing written")
+        s.openRouterKey = "sk-or-new"
+        #expect(spy.writes == 1)
     }
 
     @Test func theKeychainIsNotTouchedUntilOpenRouterNeedsTheKey() {
