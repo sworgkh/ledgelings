@@ -8,9 +8,18 @@ import AppKit
 ///
 /// A non-activating panel, not a plain window: clicking a creature must not
 /// pull focus away from the app the user is working in.
+/// One monitor as the colony sees it: its frame in global points and its pixel scale.
+struct Display: Equatable {
+    var frame: CGRect
+    var scale: CGFloat
+    init(frame: CGRect, scale: CGFloat) { self.frame = frame; self.scale = scale }
+    init(screen: NSScreen) { self.init(frame: screen.frame, scale: screen.backingScaleFactor) }
+    static var attached: [Display] { NSScreen.screens.map(Display.init) }
+}
+
 final class OverlayWindow: NSPanel {
-    init(screen: NSScreen) {
-        super.init(contentRect: screen.frame, styleMask: [.borderless, .nonactivatingPanel],
+    init(frame: CGRect) {
+        super.init(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel],
                    backing: .buffered, defer: false)
         isOpaque = false
         backgroundColor = .clear

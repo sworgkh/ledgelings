@@ -23,7 +23,7 @@ extension Colony {
     /// The house's own bottom-right corner sits on the primary screen's bottom-right
     /// corner, so growing and shrinking happen about that corner.
     var houseCorner: CGPoint {
-        let frame = (NSScreen.screens.first ?? NSScreen.main)?.frame ?? CGRect(x: 0, y: 0, width: 1000, height: 600)
+        let frame = displays.first?.frame ?? CGRect(x: 0, y: 0, width: 1000, height: 600)
         // Two sheet px of margin sit right of the wall; let them hang off the screen.
         return CGPoint(x: frame.maxX + 2 * houseScale, y: frame.minY)
     }

@@ -37,6 +37,9 @@ final class Colony: NSObject {
     var frameCache: [String: SpriteAtlas.Frames] = [:]
     var overlays: [ScreenOverlay] = []
     var rng = SystemRandomNumberGenerator()
+    /// The virtual display when rendering offscreen; nil when live on the monitors.
+    let stage: Display?
+    var displays: [Display] { stage.map { [$0] } ?? Display.attached }
 
     var link: CADisplayLink?
     var lastTick: CFTimeInterval?
@@ -73,11 +76,15 @@ final class Colony: NSObject {
     var isNight: Bool { clock.isNight(at: elapsed) }
     var secondsLeftInPhase: Double { clock.remaining(at: elapsed) }
 
-    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger) throws {
+    /// `stage`: draw for this one virtual display, offscreen, stepped by hand
+    /// (the promo). Nil means the attached monitors, live.
+    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger,
+         stage: Display? = nil) throws {
         self.settings = settings
         self.history = history
         self.library = library
         self.spend = spend
+        self.stage = stage
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
         zFrames = zzz.frames()
@@ -159,7 +166,7 @@ final class Colony: NSObject {
 
     func world(forSize size: Double) -> EdgeWorld {
         if let made = worlds[size] { return made }
-        let made = EdgeWorld(screens: NSScreen.screens.map(\.frame), inset: atlas.bodyHalfSize * CGFloat(size))
+        let made = EdgeWorld(screens: displays.map(\.frame), inset: atlas.bodyHalfSize * CGFloat(size))
         worlds[size] = made
         return made
     }
@@ -173,12 +180,13 @@ final class Colony: NSObject {
     func rebuildOverlays() {
         link?.invalidate()
         overlays.forEach { $0.close() }
-        overlays = NSScreen.screens.map(ScreenOverlay.init)
-        overlays.forEach { $0.view.onHand = { [weak self] in self?.hand($0) } }
+        let hosted = stage == nil
+        overlays = displays.map { ScreenOverlay(display: $0, hosted: hosted) }
+        overlays.forEach { $0.view?.onHand = { [weak self] in self?.hand($0) } }
         letGo()
         lastTick = nil
-        guard let first = overlays.first else { link = nil; return }
-        let link = first.view.displayLink(target: self, selector: #selector(tick(_:)))
+        guard let view = overlays.first?.view else { link = nil; return }
+        let link = view.displayLink(target: self, selector: #selector(tick(_:)))
         link.add(to: .main, forMode: .common)
         self.link = link
         setFrameRate(asleep: false)
@@ -202,13 +210,14 @@ final class Colony: NSObject {
         let now = link.timestamp
         defer { lastTick = now }
         guard let last = lastTick else { return }
-        let dt = min(now - last, Self.maxStep)
-        elapsed += dt
-
-        let night = isNight
-        let cursor = NSEvent.mouseLocation          // global, and needs no permission
         // Holding Shift calms them: nobody flees, so you can get close enough to click.
-        let shift = NSEvent.modifierFlags.contains(.shift)
+        advance(dt: min(now - last, Self.maxStep), cursor: NSEvent.mouseLocation, shift: NSEvent.modifierFlags.contains(.shift))
+    }
+
+    /// One step of the world: `dt` seconds with the cursor at `cursor` (global points).
+    func advance(dt: Double, cursor: CGPoint, shift: Bool) {
+        elapsed += dt
+        let night = isNight
         for i in creatures.indices where !hideout.isInside(i) {
             creatures[i].update(dt: dt, cursor: shift || hideout.isActive ? nil : cursor, isNight: night, using: &rng)
             asleepFor[i] = creatures[i].looksAsleep ? asleepFor[i] + dt : 0

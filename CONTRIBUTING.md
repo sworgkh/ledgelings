@@ -123,6 +123,18 @@ text). The sheet must stand on the floor, face right, and stay inside the body b
 - Do not commit build output (`build/`, `.build/`, `win/**/bin`, `win/**/obj`),
   secrets, or the `work/` folders the sprite tool writes.
 
+## The promo video
+
+`scripts/make-promo.sh` renders `build/Ledgelings-promo-<version>.mp4` (2560×1440, 30 fps,
+about 50 s): the macOS app started with `--promo` builds the colony on a
+virtual 1024×576 display with a plain gradient wallpaper, drives it through the
+script in `Sources/Ledgelings/Promo.swift` (walk, flee the cursor, meet and
+talk, flower and following, night, the house, an end card) and writes every
+frame through Core Animation's offscreen renderer, so it is the app's own
+drawing, not a screen recording, and needs no permission. The lines come from
+`scripts/promo-brain.py`, a scripted stand-in for LM Studio on port 17777, so
+no model is needed. Change the captions or the timing in `Promo.Director`.
+
 ## Releasing
 
 Bump the version in `scripts/make-app.sh`, `scripts/make-installer.sh` and

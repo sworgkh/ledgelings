@@ -57,14 +57,18 @@ final class ScreenOverlay {
     private static let zCount = 3
     private static let zCycle = 2.6        // seconds for one Z to rise and fade
 
-    let screen: NSScreen
-    let view: OverlayView
-    private let window: OverlayWindow
+    /// The monitor this overlay covers: a real one, or a stage the promo renders to.
+    let display: Display
+    /// The layer everything is drawn into: the window's view layer when hosted,
+    /// a bare layer when rendering offscreen.
+    let root: CALayer
+    let view: OverlayView?
+    private let window: OverlayWindow?
     private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer)] = []
     private lazy var flight: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
-        view.layer?.addSublayer(layer)
+        root.addSublayer(layer)
         return layer
     }()
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
@@ -74,7 +78,7 @@ final class ScreenOverlay {
         layer.isHidden = true
         layer.zPosition = -1                       // behind the creatures
         layer.anchorPoint = CGPoint(x: 1, y: 0)    // grows and shrinks about its bottom-right corner
-        view.layer?.addSublayer(layer)
+        root.addSublayer(layer)
         return layer
     }()
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
@@ -108,25 +112,43 @@ final class ScreenOverlay {
     private static let bubbleMaxWidth: CGFloat = 250
     private static let bubblePad: CGFloat = 8
 
-    init(screen: NSScreen) {
-        self.screen = screen
-        window = OverlayWindow(screen: screen)
-        view = OverlayView(frame: CGRect(origin: .zero, size: screen.frame.size))
-        view.wantsLayer = true
-        window.contentView = view
-        window.orderFrontRegardless()
+    convenience init(screen: NSScreen) { self.init(display: Display(screen: screen), hosted: true) }
+
+    /// `hosted`: put a click-through panel over the display. Otherwise the layers
+    /// live on their own and someone else renders `root`, as the promo does.
+    init(display: Display, hosted: Bool) {
+        self.display = display
+        if hosted {
+            let window = OverlayWindow(frame: display.frame)
+            let view = OverlayView(frame: CGRect(origin: .zero, size: display.frame.size))
+            view.wantsLayer = true
+            window.contentView = view
+            window.orderFrontRegardless()
+            self.window = window
+            self.view = view
+            root = view.layer!
+        } else {
+            window = nil
+            view = nil
+            let layer = CALayer()
+            layer.bounds = CGRect(origin: .zero, size: display.frame.size)
+            layer.anchorPoint = .zero
+            layer.position = .zero
+            root = layer
+        }
     }
 
-    func close() { window.close() }
+    func close() { window?.close() }
 
     /// Clickable only while there is something under the cursor worth clicking.
     func setClickable(_ clickable: Bool) {
+        guard let window else { return }
         if window.ignoresMouseEvents == clickable { window.ignoresMouseEvents = !clickable }
     }
 
     /// The creature whose speech bubble is under `point`, if any.
     func bubbleIndex(at point: CGPoint) -> Int? {
-        let origin = screen.frame.origin
+        let origin = display.frame.origin
         return bubbles.first { $0.value.plate.frame.offsetBy(dx: origin.x, dy: origin.y).contains(point) }?.key
     }
 
@@ -142,13 +164,13 @@ final class ScreenOverlay {
             removeBubble(for: creatures.count)
         }
 
-        let origin = screen.frame.origin
+        let origin = display.frame.origin
         // A creature nowhere near this monitor costs it nothing: hidden layer, no
         // commit, so the window server has no reason to recomposite this screen.
         for (index, (layers, snap)) in zip(creatures, snapshots).enumerated() {
             let scale = snap.scale, bodyHeight = cell.height * scale
             let reach = max(cell.width, cell.height) * scale * 2.5
-            let visible = screen.frame.insetBy(dx: -reach, dy: -reach)
+            let visible = display.frame.insetBy(dx: -reach, dy: -reach)
             let here = !snap.hidden && visible.contains(snap.position)
             if layers.body.isHidden == here { layers.body.isHidden = !here }
             guard here else { removeBubble(for: index); continue }
@@ -192,12 +214,12 @@ final class ScreenOverlay {
 
     /// Plain square layers, one per star; the pool grows to the biggest burst and stays.
     private func renderSparks(_ sparks: [SparkSnapshot]) {
-        let origin = screen.frame.origin
+        let origin = display.frame.origin
         while sparkLayers.count < sparks.count {
             let layer = CALayer()
             layer.actions = ["position": NSNull(), "bounds": NSNull(), "opacity": NSNull(), "hidden": NSNull(), "backgroundColor": NSNull()]
             layer.zPosition = 3
-            view.layer?.addSublayer(layer)
+            root.addSublayer(layer)
             sparkLayers.append(layer)
         }
         for (layer, spark) in zip(sparkLayers, sparks) {
@@ -215,7 +237,7 @@ final class ScreenOverlay {
             if !house.isHidden { house.isHidden = true }
             return
         }
-        let origin = screen.frame.origin
+        let origin = display.frame.origin
         house.isHidden = false
         house.contents = image
         house.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
@@ -227,7 +249,7 @@ final class ScreenOverlay {
             if !flight.isHidden { flight.isHidden = true }
             return
         }
-        let origin = screen.frame.origin
+        let origin = display.frame.origin
         flight.isHidden = false
         flight.contents = image
         flight.bounds = CGRect(x: 0, y: 0, width: flowerCell.width * inFlight.scale, height: flowerCell.height * inFlight.scale)
@@ -239,7 +261,7 @@ final class ScreenOverlay {
 
     private func renderBubble(_ snap: CreatureSnapshot, index: Int, bodyHalf: CGFloat) {
         guard let text = snap.bubble, !text.isEmpty else { removeBubble(for: index); return }
-        let origin = screen.frame.origin
+        let origin = display.frame.origin
         let entry: (plate: CALayer, text: CATextLayer, for: String)
         if let existing = bubbles[index], existing.for == text {
             entry = existing
@@ -254,7 +276,7 @@ final class ScreenOverlay {
             x: snap.position.x + snap.inward.dx * (bodyHalf + 10 + size.width / 2),
             y: snap.position.y + snap.inward.dy * (bodyHalf + 10 + size.height / 2)
         )
-        let room = screen.frame.insetBy(dx: size.width / 2 + 6, dy: size.height / 2 + 6)
+        let room = display.frame.insetBy(dx: size.width / 2 + 6, dy: size.height / 2 + 6)
         centre.x = min(max(centre.x, room.minX), room.maxX)
         centre.y = min(max(centre.y, room.minY), room.maxY)
         entry.plate.position = CGPoint(x: (centre.x - origin.x).rounded(), y: (centre.y - origin.y).rounded())
@@ -281,10 +303,11 @@ final class ScreenOverlay {
         label.actions = Self.noAnimations
         label.string = attributed
         label.isWrapped = true
-        label.contentsScale = screen.backingScaleFactor
+        label.contentsScale = display.scale
         label.frame = CGRect(x: pad, y: pad, width: textSize.width, height: textSize.height)
+        label.displayIfNeeded()               // rasterise now; an offscreen renderer would otherwise lag a frame or more
         plate.addSublayer(label)
-        view.layer?.addSublayer(plate)
+        root.addSublayer(plate)
         return (plate, label, text)
     }
 
@@ -310,7 +333,7 @@ final class ScreenOverlay {
         let hat = pixelLayer()
         hat.isHidden = true
         body.addSublayer(hat)
-        view.layer?.addSublayer(body)
+        root.addSublayer(body)
         return (body, sprite, zs, hat)
     }
 

@@ -60,6 +60,6 @@ extension Colony {
     func updateClickability(cursor: CGPoint, shift: Bool) {
         let target = held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
             || bubble(at: cursor) != nil
-        for overlay in overlays { overlay.setClickable(target && overlay.screen.frame.contains(cursor)) }
+        for overlay in overlays { overlay.setClickable(target && overlay.display.frame.contains(cursor)) }
     }
 }

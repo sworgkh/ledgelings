@@ -22,6 +22,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     ]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let at = CommandLine.arguments.firstIndex(of: "--promo") {
+            let out = CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : "build/promo.mp4"
+            Task { @MainActor in
+                do { try await Promo.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings promo: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         do {
             colony = try Colony(settings: settings, history: history, library: library, spend: spend)
         } catch {

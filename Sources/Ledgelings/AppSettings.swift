@@ -48,7 +48,20 @@ final class AppSettings: ObservableObject {
     @Published var talkModel: String { didSet { save(talkModel, "talkModel") } }
     @Published var openRouterModel: String { didSet { save(openRouterModel, "openRouterModel") } }
     /// Lives in the keychain, never in the preferences file. Empty means no key.
-    @Published var openRouterKey: String { didSet { keychain.set(openRouterKey, for: Self.keychainKeyAccount) } }
+    /// Read the first time something asks, which only happens once OpenRouter
+    /// is the chosen brain: touching the keychain at launch put up its
+    /// permission dialog for everyone, OpenRouter user or not.
+    var openRouterKey: String {
+        get {
+            if keyCache == nil { keyCache = keychain.get(Self.keychainKeyAccount) ?? "" }
+            return keyCache ?? ""
+        }
+        set {
+            keyCache = newValue
+            keychain.set(newValue, for: Self.keychainKeyAccount)
+        }
+    }
+    @Published private var keyCache: String?
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
     @Published var flowerMinutes: Double { didSet { save(flowerMinutes, "flowerMinutes") } }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
@@ -58,10 +71,10 @@ final class AppSettings: ObservableObject {
     @Published var replyPrompt: String { didSet { save(replyPrompt, "replyPrompt") } }
 
     private let defaults: UserDefaults
-    private let keychain: Keychain
+    private let keychain: any SecretStore
     private static let keychainKeyAccount = "openRouterKey"
 
-    init(defaults: UserDefaults = .standard, keychain: Keychain = Keychain()) {
+    init(defaults: UserDefaults = .standard, keychain: any SecretStore = Keychain()) {
         self.defaults = defaults
         self.keychain = keychain
         let count = defaults.object(forKey: "creatureCount") as? Int ?? 3
@@ -85,7 +98,6 @@ final class AppSettings: ObservableObject {
         talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
         talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel
         openRouterModel = defaults.string(forKey: "openRouterModel") ?? Self.defaultOpenRouterModel
-        openRouterKey = keychain.get(Self.keychainKeyAccount) ?? ""
         let bubble = defaults.object(forKey: "bubbleSeconds") as? Double ?? Banter.defaultBubbleSeconds
         bubbleSeconds = min(max(bubble, Self.bubbleRange.lowerBound), Self.bubbleRange.upperBound)
         let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2

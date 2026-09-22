@@ -92,6 +92,7 @@ lavender, lily, forget-me-not), and the conversation is about it.
 | **Server** (LM Studio) | `http://localhost:1234` | Must be a URL with a host. LM Studio's own default |
 | **Model** (LM Studio) | `google/gemma-3-1b` | Any model the server has installed. **Check** fetches the list; **Installed** appears next to the field to pick one. The app refuses a model the server does not have, because LM Studio would otherwise silently answer with whatever is loaded |
 | **API key** (OpenRouter) | empty | Kept in the keychain (macOS) or Credential Manager (Windows), never in a settings file. Empty means no brain |
+| **API key** (OpenRouter) | | | Kept in the keychain on macOS and the Credential Manager on Windows, never in the settings file. The app only reads it once OpenRouter is the chosen brain and something needs it, so picking LM Studio never touches the keychain. macOS asks once per new build whether Ledgelings may read it; **Always Allow** stops it asking for that build |
 | **Model** (OpenRouter) | `anthropic/claude-haiku-4.5` | Any id from openrouter.ai/models. The catalogue below is fetched live: type words from the id or name, cheapest first, free models in green, click a row to pick. 60 rows at a time; add a word to narrow it |
 | **Check** | | LM Studio: is the server up, is the model installed. OpenRouter: is the key valid, what it has spent and its limit, does the model exist |
 
