@@ -24,16 +24,15 @@ struct Keychain: SecretStore {
         return String(data: data, encoding: .utf8)
     }
 
+    /// Replace, never update: changing an item made by an earlier build of the
+    /// app needs the user's permission, a fresh item made by this build does not.
     func set(_ value: String?, for account: String) {
         let query = base(account)
-        guard let value, !value.isEmpty else { SecItemDelete(query as CFDictionary); return }
-        let data = Data(value.utf8)
-        let status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
-        if status == errSecItemNotFound {
-            var add = query
-            add[kSecValueData as String] = data
-            SecItemAdd(add as CFDictionary, nil)
-        }
+        SecItemDelete(query as CFDictionary)
+        guard let value, !value.isEmpty else { return }
+        var add = query
+        add[kSecValueData as String] = Data(value.utf8)
+        SecItemAdd(add as CFDictionary, nil)
     }
 
     private func base(_ account: String) -> [String: Any] {
