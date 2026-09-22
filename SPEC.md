@@ -978,7 +978,9 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | characters | the six above | ≥ 2; JSON |
 | systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores |
 
-Settings window: two tabs. **Creatures**: count, smallest/largest sliders,
+Settings window: 1100×760 points, four tabs, each laid out as two columns
+that scroll on their own so a tab fits on one screen (Chats is a day list
+beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
 bubble and flower sliders; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),

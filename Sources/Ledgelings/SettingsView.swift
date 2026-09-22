@@ -24,11 +24,11 @@ struct SettingsView: View {
             TalkSettingsView(settings: settings, library: library, spend: spend).tabItem { Text("Talk") }.tag(SettingsTab.talk)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
         }
-        .frame(width: 560, height: 600)
+        .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
     }
 
     private var creaturesTab: some View {
-        Form {
+        TwoColumns {
             Section {
                 Stepper(value: $settings.creatureCount, in: AppSettings.countRange) {
                     LabeledContent("How many", value: "\(settings.creatureCount)")
@@ -61,7 +61,7 @@ struct SettingsView: View {
             } footer: {
                 Text("Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out.")
             }
-
+        } right: {
             Section {
                 SliderRow("Day lasts", value: $settings.dayMinutes, in: 0.5...60, step: 0.5, unit: " min")
                 SliderRow("Night lasts", value: $settings.nightMinutes, in: 0...60, step: 0.5, unit: " min", zero: "never")
@@ -86,7 +86,6 @@ struct SettingsView: View {
                 Text("Uses the system's Login Items list; you can also change it in System Settings › General › Login Items.")
             }
         }
-        .formStyle(.grouped)
         .onAppear { startsAtLogin = LaunchAtLogin.isOn; loginStatus = LaunchAtLogin.status }
     }
 
@@ -107,6 +106,24 @@ struct SettingsView: View {
                 settings.colors[index] = RGB(r: byte(c.redComponent), g: byte(c.greenComponent), b: byte(c.blueComponent)).hex
             }
         )
+    }
+}
+
+/// Two grouped forms side by side, each scrolling on its own, so a whole tab
+/// fits on one screen.
+struct TwoColumns<Left: View, Right: View>: View {
+    @ViewBuilder let left: () -> Left
+    @ViewBuilder let right: () -> Right
+
+    init(@ViewBuilder left: @escaping () -> Left, @ViewBuilder right: @escaping () -> Right) {
+        self.left = left; self.right = right
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            Form { left() }.formStyle(.grouped).frame(maxWidth: .infinity)
+            Form { right() }.formStyle(.grouped).frame(maxWidth: .infinity)
+        }
     }
 }
 
@@ -143,6 +160,8 @@ struct SliderRow: View {
 
 @MainActor
 final class SettingsWindowController {
+    /// Wide enough for two columns, tall enough that a tab needs no scrolling on a laptop screen.
+    static let size = CGSize(width: 1100, height: 760)
     private var window: NSWindow?
     private let settings: AppSettings
     private let history: ChatHistory
