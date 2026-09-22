@@ -76,4 +76,102 @@ public static class Banter
         if (line.Length > maxLength) line = line[..maxLength].Trim(' ', '\t') + "\u2026";
         return line;
     }
+
+    // MARK: What the model's marks mean on screen
+
+    /// <summary>A stretch of a line with one look: <c>*sighs*</c> and <c>_really_</c> are italic,
+    /// <c>**important**</c> bold, <c>***loud***</c> both.</summary>
+    public readonly record struct StyledRun(string Text, bool Bold = false, bool Italic = false);
+
+    /// <summary>The line cut into runs. A mark only counts when it opens against a non-space, closes
+    /// after a non-space, and has its twin later in the line (<c>_</c> also needs a word boundary on
+    /// the outside), so "2 * 3" and "snake_case" stay as written. Runs of spaces collapse to one.</summary>
+    public static IReadOnlyList<StyledRun> Styled(string line)
+    {
+        var chars = line.ToCharArray();
+        var runs = new List<StyledRun>();
+        var buffer = new System.Text.StringBuilder();
+        bool bold = false, italic = false, lastWasSpace = false;
+        var open = new Stack<(char Mark, int Count)>();
+
+        void Flush()
+        {
+            if (buffer.Length > 0) { runs.Add(new StyledRun(buffer.ToString(), bold, italic)); buffer.Clear(); }
+        }
+        static bool IsWordChar(char? c) => c is char ch && char.IsLetterOrDigit(ch);
+        bool Opens(int i, int n)
+        {
+            if (i + n >= chars.Length || char.IsWhiteSpace(chars[i + n]) || chars[i + n] == chars[i]) return false;
+            return chars[i] == '*' || !IsWordChar(i > 0 ? chars[i - 1] : null);
+        }
+        bool Closes(int i, int n)
+        {
+            if (i == 0 || char.IsWhiteSpace(chars[i - 1]) || chars[i - 1] == chars[i]) return false;
+            return chars[i] == '*' || !IsWordChar(i + n < chars.Length ? chars[i + n] : null);
+        }
+        int RunLength(int i)
+        {
+            var n = 1;
+            while (i + n < chars.Length && chars[i + n] == chars[i]) n++;
+            return n;
+        }
+        bool HasCloser(char mark, int n, int start)
+        {
+            var j = start;
+            while (j < chars.Length)
+            {
+                if (chars[j] == mark)
+                {
+                    var m = RunLength(j);
+                    if (m == n && Closes(j, n)) return true;
+                    j += m;
+                }
+                else j++;
+            }
+            return false;
+        }
+        void Apply(int n, bool on)
+        {
+            switch (n)
+            {
+                case 1: italic = on; break;
+                case 2: bold = on; break;
+                default: bold = on; italic = on; break;
+            }
+        }
+
+        var i = 0;
+        while (i < chars.Length)
+        {
+            var c = chars[i];
+            if (c == '*' || c == '_')
+            {
+                var n = RunLength(i);
+                if (n <= 3 && open.Count > 0 && open.Peek().Mark == c && open.Peek().Count == n && Closes(i, n))
+                {
+                    Flush(); Apply(n, false); open.Pop(); i += n; continue;
+                }
+                if (n <= 3 && Opens(i, n) && HasCloser(c, n, i + n))
+                {
+                    Flush(); Apply(n, true); open.Push((c, n)); i += n; continue;
+                }
+                buffer.Append(c, n); lastWasSpace = false; i += n; continue;
+            }
+            if (c == ' ')
+            {
+                if (!lastWasSpace) buffer.Append(c);
+                lastWasSpace = true;
+            }
+            else
+            {
+                buffer.Append(c); lastWasSpace = false;
+            }
+            i++;
+        }
+        Flush();
+        return runs;
+    }
+
+    /// <summary>The line with the marks taken out, for anywhere that cannot show a style.</summary>
+    public static string Plain(string line) => string.Concat(Styled(line).Select(r => r.Text));
 }

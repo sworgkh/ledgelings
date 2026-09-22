@@ -21,6 +21,35 @@ import Testing
         #expect(Banter.cleanLine("   \n  ", speaker: "Blocky") == "")
     }
 
+    @Test func starsAndUnderscoresBecomeItalicAndDoubleStarsBold() {
+        typealias R = Banter.StyledRun
+        #expect(Banter.styled("Ah, the bottom edge... *sighs* ...where pride settles.") == [
+            R("Ah, the bottom edge... "), R("sighs", italic: true), R(" ...where pride settles."),
+        ])
+        #expect(Banter.styled("You almost knocked me off the *good* edge!") == [
+            R("You almost knocked me off the "), R("good", italic: true), R(" edge!"),
+        ])
+        #expect(Banter.styled("This is **important**, _really_ important.") == [
+            R("This is "), R("important", bold: true), R(", "), R("really", italic: true), R(" important."),
+        ])
+        #expect(Banter.styled("***loud***") == [R("loud", bold: true, italic: true)])
+    }
+
+    @Test func loneOrOddMarksStayAsTheyAre() {
+        typealias R = Banter.StyledRun
+        #expect(Banter.styled("2 * 3 = 6") == [R("2 * 3 = 6")])
+        #expect(Banter.styled("*sigh without an end") == [R("*sigh without an end")])
+        #expect(Banter.styled("snake_case_name here") == [R("snake_case_name here")])
+        #expect(Banter.styled("a ** b") == [R("a ** b")])
+        #expect(Banter.styled("") == [])
+    }
+
+    @Test func styledTextCollapsesTheDoubleSpacesModelsLeaveAfterAMark() {
+        typealias R = Banter.StyledRun
+        #expect(Banter.styled("*Sigh.*  The abyss, eh?") == [R("Sigh.", italic: true), R(" The abyss, eh?")])
+        #expect(Banter.plain("*Sigh.*  The **abyss**, eh?") == "Sigh. The abyss, eh?")
+    }
+
     @Test func capsRunawayLines() {
         let long = String(repeating: "ha ", count: 100)
         let out = Banter.cleanLine(long, speaker: "Pip", maxLength: 30)

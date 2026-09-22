@@ -78,7 +78,18 @@ struct ChatHistoryView: View {
     static func spoken(_ line: ChatLog.Line) -> AttributedString {
         var name = AttributedString(line.speaker + ": ")
         name.font = .body.bold()
-        return name + AttributedString(line.text)
+        var whole = name
+        for run in Banter.styled(line.text) {
+            var piece = AttributedString(run.text)
+            switch (run.bold, run.italic) {
+            case (true, true): piece.font = .body.bold().italic()
+            case (true, false): piece.font = .body.bold()
+            case (false, true): piece.font = .body.italic()
+            default: break
+            }
+            whole += piece
+        }
+        return whole
     }
 
     /// "2026-09-18" as the user would say it, with today and yesterday named.

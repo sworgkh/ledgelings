@@ -1,4 +1,5 @@
 import AppKit
+import LedgelingsCore
 import QuartzCore
 
 /// Everything needed to draw one creature for one frame, in GLOBAL coordinates.
@@ -77,6 +78,33 @@ final class ScreenOverlay {
         return layer
     }()
     private static let bubbleFont = NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
+
+    /// The bubble's face for a run: heavier for bold, slanted for italic. SF Mono has
+    /// true italics; a font without one is skewed instead.
+    static func bubbleFace(bold: Bool, italic: Bool) -> NSFont {
+        var font = NSFont.monospacedSystemFont(ofSize: 12, weight: bold ? .heavy : .semibold)
+        guard italic else { return font }
+        if let slanted = NSFont(descriptor: font.fontDescriptor.withSymbolicTraits(.italic), size: 12),
+           slanted.fontDescriptor.symbolicTraits.contains(.italic) {
+            font = slanted
+        } else if let skewed = NSFont(descriptor: font.fontDescriptor,
+                                      textTransform: AffineTransform(m11: 1, m12: 0, m21: 0.22, m22: 1, tX: 0, tY: 0)) {
+            font = skewed
+        }
+        return font
+    }
+
+    /// The line as the bubble shows it: the model's *marks* become italic and bold
+    /// runs instead of asterisks.
+    static func bubbleText(_ text: String) -> NSAttributedString {
+        let whole = NSMutableAttributedString()
+        for run in Banter.styled(text) {
+            whole.append(NSAttributedString(string: run.text, attributes: [
+                .font: bubbleFace(bold: run.bold, italic: run.italic), .foregroundColor: NSColor.white,
+            ]))
+        }
+        return whole
+    }
     private static let bubbleMaxWidth: CGFloat = 250
     private static let bubblePad: CGFloat = 8
 
@@ -234,9 +262,7 @@ final class ScreenOverlay {
 
     private func makeBubble(_ text: String) -> (plate: CALayer, text: CATextLayer, for: String) {
         let pad = Self.bubblePad
-        let attributed = NSAttributedString(string: text, attributes: [
-            .font: Self.bubbleFont, .foregroundColor: NSColor.white,
-        ])
+        let attributed = Self.bubbleText(text)
         let measured = attributed.boundingRect(
             with: CGSize(width: Self.bubbleMaxWidth, height: 400),
             options: [.usesLineFragmentOrigin, .usesFontLeading]

@@ -17,7 +17,8 @@ public sealed partial class ScreenOverlay
                            CreatureSnapshot snap, int index, double bodyHalf)
     {
         if (string.IsNullOrEmpty(snap.Bubble)) return;
-        var text = snap.Bubble;
+        // One face per DrawString, so the marks come out rather than being styled.
+        var text = Core.Banter.Plain(snap.Bubble);
         var pad = 8 * ui;
         SizeF textSize;
         if (bubbles.TryGetValue(index, out var known) && known.Text == text) textSize = known.TextSize;

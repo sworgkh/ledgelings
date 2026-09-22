@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.13). Where the
+Every number here is the one the macOS app ships with (v0.13.1). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -408,6 +408,32 @@ background:
 3. Strip a leading `"{Speaker}:"`, `"{SPEAKER}:"` or `"*{Speaker}*:"`.
 4. Repeatedly strip matching wrapping quotes: `"…"`, `“…”`, `'…'`, `*…*`.
 5. Over `maxLength` characters → cut and append `…`.
+
+The cleaned line is what is logged. Marks inside it are kept, and shown as
+styles wherever the line is drawn (§6.3.1).
+
+### 6.3.1 Marks in a line
+
+Models write `*sighs*`, `*good*`, `_really_`, `**important**` (in practice
+over 20 % of lines carry single-star spans, mostly stage directions and
+emphasis; bold is rare). `styled(line)` cuts a line into runs `{text, bold,
+italic}`:
+
+- `*x*` and `_x_` → italic; `**x**` (or `__x__`) → bold; `***x***` → both.
+  A run of four or more marks is literal.
+- A mark **opens** only when the next character is not a space and not the
+  same mark; it **closes** only when the previous character is not a space
+  and not the same mark. `_` additionally needs no letter or digit on the
+  outside (so `snake_case_name` is literal). An opener counts only if a
+  closer of the same mark and length exists later in the line; otherwise
+  the mark is literal (`2 * 3`, `*sigh without an end`, `a ** b`).
+- Marks nest by a stack; a closer must match the innermost opener.
+- Runs of two or more spaces collapse to one (models leave two after a
+  closing mark).
+
+`plain(line)` is the runs' text joined, for a surface that cannot style.
+The speech bubble (§9.5) and the chat viewer (§6.5) draw the runs; the
+Windows bubble, one face per draw call, shows `plain`.
 
 ### 6.4 Bubble time
 
@@ -815,7 +841,9 @@ scale    = 0.7 + 0.8·p
 
 ### 9.5 Speech bubble
 
-Text: monospaced, semibold, 12 pt, white, wrapped at 250 pt. Plate: text size +
+Text: monospaced, semibold, 12 pt, white, wrapped at 250 pt; the line's runs
+(§6.3.1) drawn heavy for bold and in the italic face for italic (skewed 0.22 if
+the font has none). Plate: text size +
 8 pt padding all round, background `rgba(43, 36, 64, 0.96)`, 1 pt border white
 at 35 %, corner radius 6. Centre = `position + inward · (16·size + hatHeight +
 10 + plate/2 along inward)`, then clamped so the plate stays 6 pt inside its
