@@ -33,11 +33,13 @@ extension Colony {
         sparks.burst(at: CGPoint(x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2),
                      inward: creatures[bump.a].loop.inward(ofSegment: creatures[bump.a].segment), using: &rng)
         var event = "They just walked into each other."
+        var given: String?
         if bump.gift, let flower = Gifts.flowers.randomElement(using: &rng), gifts.give(flower, from: giver, to: receiver, at: elapsed) {
             let a = character(forCreature: giver).name, b = character(forCreature: receiver).name
             event = "\(a) just walked into \(b) and gave \(b) a \(flower)."
+            given = flower
         }
-        if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event) { endChat(giver, receiver, after: 2) }
+        if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event, flower: given) { endChat(giver, receiver, after: 2) }
     }
 
     private func star(_ rgb: RGB) -> CGColor {

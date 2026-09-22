@@ -41,7 +41,7 @@ Drag `build/Ledgelings.app` to `/Applications` if you want to keep it.
 ### Build an installer
 
 ```bash
-scripts/make-installer.sh                    # version 0.14.0
+scripts/make-installer.sh                    # version 0.15.0
 VERSION=0.13.0 scripts/make-installer.sh     # any version you like
 ```
 
@@ -153,10 +153,12 @@ Credential Manager entry.
 
 ## A brain for the talking
 
-The creatures only talk if a model answers. Nothing else changes: with no brain
-they walk, sleep, meet and give flowers in silence, and the menu's status line says why.
+Out of the box the creatures talk from a hundred **built-in lines** and need
+nothing set up; Settings › Talk shows and edits them. Pick a model instead when
+you want them to improvise. With a model chosen but not reachable they walk,
+sleep, meet and give flowers in silence, and the menu's status line says why.
 
-### LM Studio (default; local, free, private)
+### LM Studio (local, free, private)
 
 Install [LM Studio](https://lmstudio.ai), then get the default model and start its
 local server:

@@ -1,4 +1,5 @@
 import Foundation
+import LedgelingsCore
 import Testing
 @testable import Ledgelings
 
@@ -56,10 +57,31 @@ import Testing
         #expect(s.species(forCreature: 0) == "blocky")
     }
 
-    @Test func theBrainIsLMStudioUntilChosenOtherwise() {
+    @Test func aFreshInstallTalksFromTheBuiltInLinesAndAnOldOneKeepsLMStudio() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.brain == .script, "no model to set up: it talks out of the box")
+        #expect(s.chatClient() == nil)
+        #expect(s.script == Script.builtInText)
+        defaults.set("google/gemma-3-4b", forKey: "talkModel")
+        #expect(AppSettings(defaults: defaults).brain == .lmStudio, "someone who set up LM Studio before the lines existed keeps it")
+        defaults.set("openRouter", forKey: "brainProvider")
+        #expect(AppSettings(defaults: defaults).brain == .openRouter)
+    }
+
+    @Test func theLinesAreRememberedAndResetBringsTheBuiltInOnesBack() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        s.script = "Hello.\nHi."
+        #expect(AppSettings(defaults: defaults).script == "Hello.\nHi.")
+        s.resetScript()
+        #expect(s.script == Script.builtInText)
+    }
+
+    @Test func theBrainIsLMStudioWhenChosen() {
         let box = fresh(), s = box.settings
         defer { box.forget() }
-        #expect(s.brainProvider == .lmStudio)
+        s.brain = .lmStudio
         #expect(s.openRouterModel == AppSettings.defaultOpenRouterModel)
         #expect(s.openRouterKey == "")
         let client = s.chatClient()
@@ -83,9 +105,9 @@ import Testing
         spy.stored["openRouterKey"] = "sk-or-kept"
         let s = AppSettings(defaults: box.defaults, keychain: spy)
         #expect(spy.reads == 0, "launching does not open the keychain")
-        s.brainProvider = .lmStudio
+        s.brain = .lmStudio
         #expect(s.chatClient() != nil && spy.reads == 0, "LM Studio never needs it")
-        s.brainProvider = .openRouter
+        s.brain = .openRouter
         #expect(s.chatClient()?.apiKey == "sk-or-kept")
         #expect(spy.reads == 1)
         _ = s.chatClient()
@@ -97,7 +119,7 @@ import Testing
     @Test func choosingOpenRouterBuildsAClientWithTheKeyAndModel() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }
-        s.brainProvider = .openRouter
+        s.brain = .openRouter
         s.openRouterKey = "sk-or-abc"
         s.openRouterModel = "openai/gpt-4o-mini"
         let client = s.chatClient()
@@ -123,7 +145,7 @@ import Testing
     @Test func openRouterWithoutAKeyGivesNoClient() {
         let box = fresh(), s = box.settings
         defer { box.forget() }
-        s.brainProvider = .openRouter
+        s.brain = .openRouter
         #expect(s.chatClient() == nil)
     }
 

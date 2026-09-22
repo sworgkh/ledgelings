@@ -66,7 +66,7 @@ enum Promo {
         s.creatureCount = 6
         s.species = ["blocky", "frog", "cat", "ghost", "mushroom", "triangle"]
         s.minSize = 2.5; s.maxSize = 2.5
-        s.brainProvider = .lmStudio
+        s.brain = .lmStudio
         s.talkServer = "http://127.0.0.1:\(port)"
         s.talkModel = "promo"
         s.talkEnabled = true

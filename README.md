@@ -17,10 +17,10 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.14 — eight creatures with their own personalities, on every monitor,
-talking when they meet, giving flowers, thinking locally or through OpenRouter,
-keeping every chat and what it cost, going home when asked, and wearing creatures
-you describe to any chat model.
+**Status:** v0.15 — eight creatures with their own personalities, on every monitor,
+talking when they meet from a hundred built-in lines or through a model of your
+choice, giving flowers, keeping every chat and what it cost, going home when asked,
+and wearing creatures you describe to any chat model.
 
 **See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (50 s, no sound) shows every feature on a clean desktop. It is rendered by the app itself, `scripts/make-promo.sh`.
 
@@ -59,8 +59,10 @@ to carry it to another edge or monitor. Shift-right-click puts one down for a na
 The full list is in [docs/SETTINGS.md](docs/SETTINGS.md#what-your-hand-can-do).
 
 **They talk.** When two creatures walk into each other, a few pixel stars fly up,
-both stop and face each other, one says a line and the other answers. The words
-come from a model of your choice: a small one running locally in
+both stop and face each other, one says a line and the other answers. Out of the
+box the words come from a hundred built-in conversations, editable in Settings;
+paste the **agent prompt** into any chat model to get more in the same format. Or
+wire up a model of your choice: a small one running locally in
 [LM Studio](https://lmstudio.ai), or anything on [OpenRouter](https://openrouter.ai).
 Every third meeting of the same pair, one gives the other a flower to wear, and
 the wearer follows the giver around until it wilts.
