@@ -12,7 +12,7 @@ struct SpritesSettingsView: View {
     @State private var copied = false
 
     var body: some View {
-        Form {
+        TwoColumns {
             Section {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 12)], spacing: 12) {
                     ForEach(library.species) { species in card(species) }
@@ -29,7 +29,7 @@ struct SpritesSettingsView: View {
             } footer: {
                 Text("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in \(library.directory.path).")
             }
-
+        } right: {
             Section {
                 Text("Copy the prompt, paste it into any chat model, replace the placeholder with a description of the creature you want, and save the model's answer as a .txt file. Then Import Sheet…")
                     .font(.callout)
@@ -45,7 +45,7 @@ struct SpritesSettingsView: View {
                 }
                 TextEditor(text: .constant(library.prompt))
                     .font(.system(.caption, design: .monospaced))
-                    .frame(minHeight: 220)
+                    .frame(height: 400)
                     .scrollContentBackground(.hidden)
                     .padding(4)
                     .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
@@ -55,7 +55,6 @@ struct SpritesSettingsView: View {
                 Text("The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import.")
             }
         }
-        .formStyle(.grouped)
     }
 
     /// One creature: its idle pose at 3×, its name, a check when it is in the colony.

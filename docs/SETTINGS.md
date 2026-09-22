@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Four tabs: **Creatures**, **Sprites**, **Talk**, **Chats**.
+Settings…*. Four tabs: **Creatures**, **Sprites**, **Talk**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 

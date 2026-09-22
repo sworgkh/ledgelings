@@ -11,7 +11,7 @@ struct TalkSettingsView: View {
     @State private var castSpecies = "blocky"
 
     var body: some View {
-        Form {
+        TwoColumns {
             Section {
                 Toggle("Creatures talk when they bump into each other", isOn: $settings.talkEnabled)
                 SliderRow("Bubble stays", value: $settings.bubbleSeconds, in: AppSettings.bubbleRange, step: 1, unit: " s")
@@ -38,7 +38,7 @@ struct TalkSettingsView: View {
             }
 
             if settings.brain != .script { SpendSection(spend: spend) }
-
+        } right: {
             Section {
                 Picker("Species", selection: $castSpecies) {
                     ForEach(library.species) { Text($0.name).tag($0.name) }
@@ -68,7 +68,6 @@ struct TalkSettingsView: View {
 
             if settings.brain != .script { promptsSection }
         }
-        .formStyle(.grouped)
     }
 
     private var promptsSection: some View {
@@ -87,7 +86,7 @@ struct TalkSettingsView: View {
     private var brainFooter: String {
         switch settings.brain {
         case .script:
-            "No model, no server, no key: the creatures say these lines. One conversation per block, a blank line between blocks; the lines alternate between the one who bumped and the one bumped into. A block may start with [flower], [night], [day] or [night, flower] and is then kept for that moment. {speaker}, {listener} and {flower} are filled in; *asterisks* show as italics. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here."
+            "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here."
         case .lmStudio:
             "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
         case .openRouter:
@@ -138,7 +137,7 @@ private struct ScriptFields: View {
     var body: some View {
         TextEditor(text: $settings.script)
             .font(.system(.body, design: .monospaced))
-            .frame(height: 300)
+            .frame(height: 210)
             .scrollContentBackground(.hidden)
             .padding(4)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
