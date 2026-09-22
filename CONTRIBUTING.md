@@ -142,14 +142,25 @@ Bump the version in `scripts/make-app.sh`, `scripts/make-installer.sh` and
 `main` with a clean tree:
 
 ```bash
-VERSION=0.14.0 scripts/make-release.sh
+VERSION=0.15.0 scripts/make-release.sh
 ```
 
 That builds the macOS `.pkg` and `.dmg`, writes their SHA-256 sums, tags
-`v0.14.0` and publishes a GitHub release with the three files and generated
+`v0.15.0` and publishes a GitHub release with the three files and generated
 notes (`NOTES=file.md` to write your own). The Windows binary is built on a
 Windows machine with `dotnet publish` and added to the same release with
-`gh release upload v0.14.0 <file>`.
+`gh release upload v0.15.0 <file>`.
+
+## Looking at the settings window from a script
+
+```bash
+build/Ledgelings.app/Contents/MacOS/Ledgelings --settings talk --snapshot /tmp/talk.png
+```
+
+opens the settings window at that tab (`creatures`, `sprites`, `talk` or
+`chats`), writes it to the file two seconds later and quits. The app draws the
+window itself, so no screen-recording permission is involved. Leave out
+`--snapshot` to just open the window at launch.
 
 ## Reporting a bug
 

@@ -1,6 +1,7 @@
 import AppKit
 import LedgelingsCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Everything about the creatures talking to each other, and which model does the talking.
 struct TalkSettingsView: View {
@@ -21,23 +22,22 @@ struct TalkSettingsView: View {
             }
 
             Section {
-                Picker("Brain", selection: $settings.brainProvider) {
-                    ForEach(ChatClient.Provider.allCases, id: \.self) { Text($0.title).tag($0) }
+                Picker("Brain", selection: $settings.brain) {
+                    ForEach(AppSettings.Brain.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                switch settings.brainProvider {
+                switch settings.brain {
+                case .script: ScriptFields(settings: settings, cast: castInUse)
                 case .lmStudio: LMStudioFields(settings: settings)
                 case .openRouter: OpenRouterFields(settings: settings)
                 }
             } header: {
                 Text("Brain")
             } footer: {
-                Text(settings.brainProvider == .lmStudio
-                     ? "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
-                     : "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models.")
+                Text(brainFooter)
             }
 
-            SpendSection(spend: spend)
+            if settings.brain != .script { SpendSection(spend: spend) }
 
             Section {
                 Picker("Species", selection: $castSpecies) {
@@ -66,6 +66,12 @@ struct TalkSettingsView: View {
                 Text("Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog.")
             }
 
+            if settings.brain != .script { promptsSection }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var promptsSection: some View {
             Section {
                 prompt("Who is speaking (system prompt)", text: $settings.systemPrompt)
                 prompt("Opening line", text: $settings.linePrompt)
@@ -76,8 +82,26 @@ struct TalkSettingsView: View {
             } footer: {
                 Text("Placeholders: " + Banter.placeholders.map { "{\($0)}" }.joined(separator: " ") + ". {situation} is written by the app: time of day and where each creature is. {line} is what was just said, for the reply.")
             }
+    }
+
+    private var brainFooter: String {
+        switch settings.brain {
+        case .script:
+            "No model, no server, no key: the creatures say these lines. One conversation per block, a blank line between blocks; the lines alternate between the one who bumped and the one bumped into. A block may start with [flower], [night], [day] or [night, flower] and is then kept for that moment. {speaker}, {listener} and {flower} are filled in; *asterisks* show as italics. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here."
+        case .lmStudio:
+            "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
+        case .openRouter:
+            "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models."
         }
-        .formStyle(.grouped)
+    }
+
+    /// Everyone who could be talking right now, for the agent prompt.
+    private var castInUse: [Character] {
+        var seen: [Character] = []
+        for species in Set(settings.species) {
+            for member in settings.cast(of: species, fallback: library.cast(of: species)) where !seen.contains(member) { seen.append(member) }
+        }
+        return seen
     }
 
     private func prompt(_ title: String, text: Binding<String>) -> some View {
@@ -103,6 +127,85 @@ struct TalkSettingsView: View {
         )
     }
 
+}
+
+/// The script itself, what is wrong with it if anything, and the ways to get more of it.
+private struct ScriptFields: View {
+    @ObservedObject var settings: AppSettings
+    let cast: [Character]
+    @State private var notice: String?
+
+    var body: some View {
+        TextEditor(text: $settings.script)
+            .font(.system(.body, design: .monospaced))
+            .frame(height: 300)
+            .scrollContentBackground(.hidden)
+            .padding(4)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
+        LabeledContent("Status") {
+            Text(notice ?? status).foregroundStyle(isBroken ? .red : .secondary).textSelection(.enabled)
+        }
+        HStack {
+            Button("Import…") { importFile() }
+            Button("Export…") { exportFile() }
+            Button("Copy Agent Prompt") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(Script.agentPrompt(cast: cast), forType: .string)
+                flash("the prompt is on the clipboard; paste it into any chat model and paste its answer here")
+            }
+            Spacer()
+            Button("Reset Lines") { settings.resetScript() }
+        }
+    }
+
+    private var parsed: Result<Script, Script.ParseError> {
+        Result { try Script.parse(settings.script) }.mapError { $0 as! Script.ParseError }
+    }
+
+    private var isBroken: Bool { if case .failure = parsed { true } else { false } }
+
+    private var status: String {
+        switch parsed {
+        case .success(let script):
+            let c = script.conversations
+            let flowers = c.filter { $0.tags.contains("flower") }.count, nights = c.filter { $0.tags.contains("night") }.count
+            return "\(c.count) conversations, \(flowers) with a flower, \(nights) at night"
+        case .failure(let problem):
+            return "\(problem); the creatures stay quiet until this is fixed"
+        }
+    }
+
+    private func flash(_ text: String) {
+        notice = text
+        Task { try? await Task.sleep(for: .seconds(6)); if notice == text { notice = nil } }
+    }
+
+    private func importFile() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.plainText, .text]
+        panel.message = "Choose a text file of conversations in the built-in format."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let text = try String(contentsOf: url, encoding: .utf8)
+            settings.script = text
+            flash("imported \(url.lastPathComponent)")
+        } catch {
+            flash("could not read \(url.lastPathComponent): \(error.localizedDescription)")
+        }
+    }
+
+    private func exportFile() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "ledgelings-lines.txt"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try settings.script.write(to: url, atomically: true, encoding: .utf8)
+            flash("saved \(url.lastPathComponent)")
+        } catch {
+            flash("could not save: \(error.localizedDescription)")
+        }
+    }
 }
 
 /// Server, model, Check. The model must be one LM Studio has installed.

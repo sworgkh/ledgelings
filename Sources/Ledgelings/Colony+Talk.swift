@@ -49,18 +49,22 @@ extension Colony {
         if !talk(from: speaker, to: listener) { endChat(speaker, listener, after: 1) }
     }
 
-    /// One creature says a line to another; the other answers. Runs in the background;
-    /// other pairs can talk at the same time. Returns false when it could not even
-    /// start, so the caller can release the pair.
+    /// One creature says a line to another; the other answers. With a model, this
+    /// runs in the background; other pairs can talk at the same time. Returns
+    /// false when it could not even start, so the caller can release the pair.
+    /// `flower`: the one just given, for a line about it.
     @discardableResult
-    func talk(from speaker: Int, to listener: Int, because event: String? = nil) -> Bool {
+    func talk(from speaker: Int, to listener: Int, because event: String? = nil, flower: String? = nil) -> Bool {
         guard creatures.indices.contains(speaker), creatures.indices.contains(listener), speaker != listener,
               !busy.contains(speaker), !busy.contains(listener) else { return false }
-        guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
         let a = character(forCreature: speaker), b = character(forCreature: listener)
-        let aKind = kind(ofCreature: speaker), bKind = kind(ofCreature: listener)
         var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
         if let event { situation += " " + event }
+        if settings.brain == .script {
+            return recite(from: speaker, to: listener, flower: flower, situation: situation)
+        }
+        guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
+        let aKind = kind(ofCreature: speaker), bKind = kind(ofCreature: listener)
         var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
                     "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
                     "situation": situation, "line": ""]
@@ -123,6 +127,64 @@ extension Colony {
             }
         }
         return true
+    }
+
+    // MARK: The built-in lines
+
+    /// A line from the script, waiting for its moment.
+    struct ScheduledLine {
+        var at: Double
+        var speaker: Int
+        var text: String
+        /// The pair to let go once this, their last line, is out.
+        var closes: (Int, Int)?
+    }
+
+    /// Say a conversation from the script: the first line now, each next one
+    /// when the one before has been up a while. Written to the log up front.
+    private func recite(from speaker: Int, to listener: Int, flower: String?, situation: String) -> Bool {
+        let script: Script
+        do { script = try Script.parse(settings.script) } catch { talkStatus = "the built-in lines: \(error)"; return false }
+        var moment: Set<String> = [isNight ? "night" : "day"]
+        if flower != nil { moment.insert("flower") }
+        guard let chosen = script.pick(for: moment, avoiding: recentLines, using: &rng) else {
+            talkStatus = "no built-in line fits right now"; return false
+        }
+        recentLines = Array((recentLines + [chosen]).suffix(max(1, script.conversations.count / 2)))
+        let a = character(forCreature: speaker), b = character(forCreature: listener)
+        let lines = script.conversations[chosen].lines.enumerated().map { i, line in
+            let mine = i.isMultiple(of: 2)
+            return (who: mine ? speaker : listener,
+                    text: Script.fill(line, speaker: mine ? a.name : b.name, listener: mine ? b.name : a.name, flower: flower))
+        }
+        busy.formUnion([speaker, listener])
+        var at = elapsed
+        for (i, line) in lines.enumerated() {
+            let last = i == lines.count - 1
+            scheduled.append(ScheduledLine(at: at, speaker: line.who, text: line.text, closes: last ? (speaker, listener) : nil))
+            at += Banter.showTime(line.text, base: settings.bubbleSeconds) * 0.6
+        }
+        sayScheduledLines()
+        history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",
+                                        lines: lines.map { ChatLog.Line(speaker: character(forCreature: $0.who).name, text: $0.text) }))
+        return true
+    }
+
+    /// Every frame: the scripted lines whose time has come.
+    func sayScheduledLines() {
+        let due = scheduled.filter { $0.at <= elapsed }
+        guard !due.isEmpty else { return }
+        scheduled.removeAll { $0.at <= elapsed }
+        for line in due {
+            if creatures.indices.contains(line.speaker) {
+                say(line.text, from: line.speaker)
+                talkStatus = "\(character(forCreature: line.speaker).name): \(line.text)"
+            }
+            if let (i, j) = line.closes {
+                busy.subtract([i, j])
+                endChat(i, j, after: 1.2)
+            }
+        }
     }
 
     func say(_ text: String, from index: Int) {

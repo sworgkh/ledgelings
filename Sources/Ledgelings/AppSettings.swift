@@ -30,6 +30,19 @@ final class AppSettings: ObservableObject {
 
     // MARK: Talk
 
+    /// Where the words come from. The built-in lines need nothing set up.
+    enum Brain: String, CaseIterable, Codable, Sendable {
+        case script, lmStudio, openRouter
+
+        var title: String {
+            switch self {
+            case .script: "Built-in lines"
+            case .lmStudio: ChatClient.Provider.lmStudio.title
+            case .openRouter: ChatClient.Provider.openRouter.title
+            }
+        }
+    }
+
     static let defaultTalkServer = "http://localhost:1234"
     static let defaultTalkModel = "google/gemma-3-1b"
     static let defaultOpenRouterModel = "anthropic/claude-haiku-4.5"
@@ -41,8 +54,10 @@ final class AppSettings: ObservableObject {
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
     /// The one wearing a flower trails the one who gave it while the flower lasts.
     @Published var followGiver: Bool { didSet { save(followGiver, "followGiver") } }
-    /// Which model answers, for banter and for anything else that wants words.
-    @Published var brainProvider: ChatClient.Provider { didSet { save(brainProvider.rawValue, "brainProvider") } }
+    /// Who answers, for banter and for anything else that wants words.
+    @Published var brain: Brain { didSet { save(brain.rawValue, "brainProvider") } }
+    /// The conversations said when the brain is the built-in lines, in `Script`'s text form.
+    @Published var script: String { didSet { save(script, "script") } }
     /// LM Studio's local server and the model loaded in it.
     @Published var talkServer: String { didSet { save(talkServer, "talkServer") } }
     @Published var talkModel: String { didSet { save(talkModel, "talkModel") } }
@@ -94,7 +109,11 @@ final class AppSettings: ObservableObject {
 
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
         followGiver = defaults.object(forKey: "followGiver") as? Bool ?? true
-        brainProvider = defaults.string(forKey: "brainProvider").flatMap(ChatClient.Provider.init(rawValue:)) ?? .lmStudio
+        // Before the built-in lines existed the brain was LM Studio; someone who
+        // set it up keeps it. Everyone else starts with lines that need no server.
+        let setUpAModel = ["talkServer", "talkModel", "openRouterModel"].contains { defaults.object(forKey: $0) != nil }
+        brain = defaults.string(forKey: "brainProvider").flatMap(Brain.init(rawValue:)) ?? (setUpAModel ? .lmStudio : .script)
+        script = defaults.string(forKey: "script") ?? Script.builtInText
         talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
         talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel
         openRouterModel = defaults.string(forKey: "openRouterModel") ?? Self.defaultOpenRouterModel
@@ -134,9 +153,11 @@ final class AppSettings: ObservableObject {
         URL(string: talkServer.trimmingCharacters(in: .whitespaces)).flatMap { $0.host == nil ? nil : $0 }
     }
 
-    /// The model any feature should ask, or nil with `brainProblem` saying what is missing.
+    /// The model any feature should ask, or nil with `brainProblem` saying what
+    /// is missing. Nil, too, with the built-in lines: there is no model to ask.
     func chatClient() -> ChatClient? {
-        switch brainProvider {
+        switch brain {
+        case .script: return nil
         case .lmStudio:
             guard let url = talkServerURL else { return nil }
             return .lmStudio(server: url, model: talkModel.trimmingCharacters(in: .whitespaces))
@@ -149,11 +170,14 @@ final class AppSettings: ObservableObject {
 
     /// Why `chatClient()` came back empty, in words for the menu and the settings window.
     var brainProblem: String {
-        switch brainProvider {
+        switch brain {
+        case .script: "the built-in lines need no model"
         case .lmStudio: "LM Studio server address is not a URL"
         case .openRouter: "no OpenRouter API key; add one in Settings › Talk"
         }
     }
+
+    func resetScript() { script = Script.builtInText }
 
     func resetPrompts() {
         systemPrompt = Banter.defaultSystemPrompt

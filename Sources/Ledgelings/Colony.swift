@@ -69,6 +69,10 @@ final class Colony: NSObject {
     /// Creatures shrinking into the doorway, and creatures growing out of it, by when they started.
     var entering: [Int: Double] = [:]
     var leaving: [Int: Double] = [:]
+    /// Lines from the built-in script still to be said, by when.
+    var scheduled: [ScheduledLine] = []
+    /// The script conversations used lately, oldest first, so the same one is not heard twice running.
+    var recentLines: [Int] = []
     /// The last thing that happened with the model, for the menu.
     var talkStatus = "not tried yet"
     var elapsed: Double = 0
@@ -229,6 +233,7 @@ final class Colony: NSObject {
         gifts.update(at: elapsed, wearFor: settings.flowerMinutes * 60)
         if settings.followGiver { followGivers() }
         sparks.update(dt: dt)
+        sayScheduledLines()
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         render()

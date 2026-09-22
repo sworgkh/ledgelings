@@ -88,7 +88,11 @@ lavender, lily, forget-me-not), and the conversation is about it.
 
 | Setting | Default | Notes |
 |---|---|---|
-| **Brain** | LM Studio | or OpenRouter. The status line in the menu says why nothing is said when the brain is not reachable |
+| **Brain** | Built-in lines | or LM Studio, or OpenRouter. The status line in the menu says why nothing is said when a model is not reachable. An install that had set up a model before v0.15 keeps LM Studio |
+| **Lines** (Built-in lines) | ~100 conversations | The script itself, editable in place. One conversation per block, a blank line between blocks; the lines alternate between the one who bumped and the one bumped into, two to four per block. A block may start with `[flower]`, `[night]`, `[day]` or `[night, flower]` and is then used only for that moment, in preference to untagged blocks; untagged blocks fit any moment. `{speaker}`, `{listener}` and `{flower}` are filled in; `*asterisks*` show as italics; `#` starts a comment. The status line counts the blocks, or names the line with a problem, and the creatures stay quiet until it is fixed. The same conversation is not repeated until half the fitting ones have been heard |
+| **Import… / Export…** | | A plain text file in the same format, whole-script in and out |
+| **Copy Agent Prompt** | | Puts a request on the clipboard: the format, the rules and the cast in use, asking for 40 more blocks. Paste it into any chat model and paste the answer into the editor |
+| **Reset Lines** | | Brings the built-in script back |
 | **Server** (LM Studio) | `http://localhost:1234` | Must be a URL with a host. LM Studio's own default |
 | **Model** (LM Studio) | `google/gemma-3-1b` | Any model the server has installed. **Check** fetches the list; **Installed** appears next to the field to pick one. The app refuses a model the server does not have, because LM Studio would otherwise silently answer with whatever is loaded |
 | **API key** (OpenRouter) | empty | Kept in the keychain (macOS) or Credential Manager (Windows), never in a settings file. Empty means no brain |
@@ -98,6 +102,7 @@ lavender, lily, forget-me-not), and the conversation is about it.
 
 ### Spend
 
+Shown for LM Studio and OpenRouter; the built-in lines cost nothing and record nothing.
 Every call to the model, whether or not its line was usable, is appended to
 `spend.jsonl` with its tokens and, for OpenRouter, the price OpenRouter itself
 reports for that call. LM Studio calls are recorded at $0. The section shows today,

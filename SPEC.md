@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.14). Where the
+Every number here is the one the macOS app ships with (v0.15). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -17,8 +17,9 @@ are pixels of a sprite sheet; a creature of *size* `s` draws one sheet pixel as
 Tiny pixel-art creatures live on the **edges of the desktop**: they walk along
 the outline of all monitors together, turn corners, cross from one monitor to
 the next along a shared edge, jump when the cursor comes near, sleep at night,
-bump into each other, stop to trade a line of dialogue written by a language
-model, and every third meeting one gives the other a flower to wear.
+bump into each other, stop to trade a line of dialogue, from a built-in script
+or written by a language model, and every third meeting one gives the other a
+flower to wear.
 
 Ambient and click-through. A tray/menu-bar app with no main window. Not a
 game, not a widget, not a desktop pet that wanders over windows: edges only.
@@ -379,9 +380,10 @@ creature's current rotation.
 
 ### 6.2 One conversation
 
-`talk(speaker, listener, event?)`. Refused (returns false) if either creature
-is already in a conversation (`busy`), an index is invalid, or no brain is
-configured (§8). Other pairs may talk at the same time; a busy creature is not
+`talk(speaker, listener, event?, flower?)`. Refused (returns false) if either
+creature is already in a conversation (`busy`), an index is invalid, or no brain
+is configured (§8). With the built-in lines as the brain, §6.7 applies instead
+of the rest of this section. Other pairs may talk at the same time; a busy creature is not
 eligible for bumps or pokes until its conversation ends. Then, in the
 background:
 
@@ -505,6 +507,50 @@ and tokens.
 busy (anyone free if none is awake); the nearest free creature listens. A Shift-poke (§11) does the same
 with the poked creature as speaker. Both first **hold** the pair (§7.2). If the
 talk could not start, release after 1 s.
+
+### 6.7 The built-in lines (no model)
+
+The default brain. A **script** is a list of conversations, kept as text in the
+settings (`script`, default: the shipped text of about a hundred blocks) and
+parsed whenever a conversation is wanted.
+
+Text form, line by line (each trimmed of surrounding spaces):
+
+| Line | Meaning |
+|---|---|
+| empty | ends the current block |
+| starts with `#` | comment, ignored |
+| `[tag, tag]` as the first line of a block | the block's tags: any of `flower`, `night`, `day`, split on commas and spaces, case-insensitive. Unknown tag → error naming it; a tag line after the block's first line → error |
+| anything else | one line of the block; the first is said by the one who bumped (`speaker`), the next by the other, alternating |
+
+A block with tags and no lines is an error; a text with no blocks is an error.
+Errors carry the 1-based line number and are shown as the talk status
+(`"the built-in lines: line N: …"`); the pair is released as if the talk had
+not started.
+
+Choosing: the **moment** is the set `{day | night}` plus `flower` when the
+meeting gave one. Candidates are the blocks whose every tag is in the moment
+(untagged blocks always qualify). Of those, keep only the ones with the most
+tags, so a `[night, flower]` block wins at night with a flower, a `[flower]`
+block wins with a flower by day, and untagged blocks are used only when no
+tagged block fits. From that pool, pick uniformly among the blocks not in
+`recent`, or from the whole pool when all are recent. `recent` keeps the last
+`max(1, blocks / 2)` chosen indices.
+
+Saying: `{speaker}` and `{listener}` are filled per line with the names of the
+one saying it and the one hearing it; `{flower}` with the flower given, or the
+word `flower`. Both creatures become busy. Line 1 shows at once; line k+1 shows
+`showTime(line k) · 0.6` seconds after line k (§6.4), on the colony's own clock
+(so it pauses with the app, unlike the model path). When the last line shows,
+the pair is freed and released 1.2 s later (§7.2). The exchange is written to
+the chat log (§6.5) when the conversation starts, provider `"Built-in lines"`,
+empty model, no cost or tokens; nothing is written to the spend file.
+
+The **agent prompt** (`Script.agentPrompt(cast, count = 40)`) is a fixed text
+asking any chat model for `count` more blocks in exactly this format, with the
+rules above, three example blocks, and the cast in use (every character of every
+species in use, name and persona) as the voices to write for, telling the
+model to use `{speaker}`/`{listener}` rather than names.
 
 ---
 
@@ -694,10 +740,11 @@ Parse `GET /models` rows: `id`, `name` (fallback id), `pricing.prompt` and
 
 ### 8.4 Settings that feed it
 
-`brainProvider` (`lmStudio` | `openRouter`), `talkServer`, `talkModel`,
-`openRouterModel`, `openRouterKey` (secret store only). `chatClient()` returns
-nil with a reason when the server address is not a URL or the OpenRouter key is
-empty; the reason is shown as the talk status.
+`brainProvider` (`script` | `lmStudio` | `openRouter`), `talkServer`,
+`talkModel`, `openRouterModel`, `openRouterKey` (secret store only).
+`chatClient()` returns nil for `script` (nothing to call, §6.7) and nil with a
+reason when the server address is not a URL or the OpenRouter key is empty; the
+reason is shown as the talk status.
 
 ---
 
@@ -920,7 +967,8 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | nightMinutes | 5 | 0–60; 0 = never sleep |
 | talkEnabled | true | |
 | followGiver | true | the wearer of a flower trails its giver (§7.3) |
-| brainProvider | lmStudio | lmStudio, openRouter |
+| brainProvider | script | script, lmStudio, openRouter. Absent on load: `lmStudio` if any of talkServer, talkModel, openRouterModel is stored (a model was set up before scripts existed), else `script` |
+| script | the shipped lines (§6.7) | free text in the script format; "Reset Lines" restores; Import/Export read and write it as a `.txt` whole |
 | talkServer | `http://localhost:1234` | must parse as a URL with a host |
 | talkModel | `google/gemma-3-1b` | |
 | openRouterModel | `anthropic/claude-haiku-4.5` | |
@@ -932,7 +980,9 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 
 Settings window: two tabs. **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
-bubble and flower sliders; Brain picker; for LM Studio: server, model,
+bubble and flower sliders; Brain picker; for Built-in lines: the script in a
+monospaced editor, a status line (block counts, or the error and its line),
+Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, model,
 "Installed" menu of ids, Check, status; for OpenRouter: masked key, model,
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
