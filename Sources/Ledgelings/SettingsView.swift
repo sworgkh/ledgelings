@@ -121,9 +121,36 @@ struct TwoColumns<Left: View, Right: View>: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
-            Form { left() }.formStyle(.grouped).frame(maxWidth: .infinity)
-            Form { right() }.formStyle(.grouped).frame(maxWidth: .infinity)
+            SettingsColumn { left() }
+            SettingsColumn { right() }
         }
+    }
+}
+
+/// One grouped form that shows when it scrolls: a shadow along the bottom
+/// while there is more below, and room under the last control so nothing sits
+/// in the shadow once scrolled to the end. (The scroll bar itself stays visible
+/// app-wide; see main.swift.)
+struct SettingsColumn<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+    @State private var moreBelow = false
+
+    var body: some View {
+        Form { content() }
+            .formStyle(.grouped)
+            .contentMargins(.bottom, 56, for: .scrollContent)
+            .onScrollGeometryChange(for: Bool.self) { g in
+                g.contentSize.height + g.contentInsets.bottom - g.contentOffset.y - g.containerSize.height > 2
+            } action: { _, more in moreBelow = more }
+            .overlay(alignment: .bottom) {
+                LinearGradient(colors: [.clear, .black.opacity(0.3)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 44)
+                    .padding(.trailing, 16)          // leave the scroll bar crisp
+                    .allowsHitTesting(false)
+                    .opacity(moreBelow ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.15), value: moreBelow)
+            }
+            .frame(maxWidth: .infinity)
     }
 }
 
@@ -184,6 +211,9 @@ final class SettingsWindowController {
             made.title = "Ledgelings Settings"
             made.styleMask = [.titled, .closable]
             made.isReleasedWhenClosed = false
+            // Size it before centring: centring the small frame the controller starts
+            // with, then growing, left half the window off the screen.
+            made.setContentSize(Self.size)
             made.center()
             window = made
         }
@@ -195,6 +225,15 @@ final class SettingsWindowController {
     /// The window's content as a PNG, drawn by the app itself: no screen-recording permission needed.
     func snapshot(to url: URL) throws {
         guard let view = window?.contentView, let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        if ProcessInfo.processInfo.environment["LEDGELINGS_SCROLL_TRACE"] != nil {
+            func walk(_ v: NSView) {
+                if let s = v as? NSScrollView {
+                    FileHandle.standardError.write(Data("scroll: \(type(of: s)) style=\(s.scrollerStyle == .legacy ? "legacy" : "overlay") doc=\(s.documentView?.frame.height ?? -1) clip=\(s.contentView.frame.size) bar=\(s.verticalScroller?.frame ?? .zero)\n".utf8))
+                }
+                v.subviews.forEach(walk)
+            }
+            walk(view)
+        }
         view.cacheDisplay(in: view.bounds, to: rep)
         guard let png = rep.representation(using: .png, properties: [:]) else { return }
         try png.write(to: url)
