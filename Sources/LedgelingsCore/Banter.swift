@@ -80,4 +80,91 @@ public enum Banter {
         }
         return line
     }
+
+    // MARK: What the model's marks mean on screen
+
+    /// A stretch of a line with one look: `*sighs*` and `_really_` are italic,
+    /// `**important**` bold, `***loud***` both.
+    public struct StyledRun: Equatable, Sendable {
+        public var text: String
+        public var bold: Bool
+        public var italic: Bool
+        public init(_ text: String, bold: Bool = false, italic: Bool = false) {
+            self.text = text; self.bold = bold; self.italic = italic
+        }
+    }
+
+    /// The line cut into runs. A mark only counts when it opens against a
+    /// non-space, closes after a non-space, and has its twin later in the line
+    /// (`_` also needs a word boundary on the outside), so "2 * 3" and
+    /// "snake_case" stay as written. Runs of spaces collapse to one.
+    public static func styled(_ line: String) -> [StyledRun] {
+        let chars = Array(line)
+        var runs: [StyledRun] = []
+        var buffer = ""
+        var bold = false, italic = false
+        var open: [(mark: Swift.Character, count: Int)] = []
+        var lastWasSpace = false
+        func flush() {
+            if !buffer.isEmpty { runs.append(StyledRun(buffer, bold: bold, italic: italic)); buffer = "" }
+        }
+        func isWordChar(_ c: Swift.Character?) -> Bool { c.map { $0.isLetter || $0.isNumber } ?? false }
+        func opens(at i: Int, _ n: Int) -> Bool {
+            guard i + n < chars.count, !chars[i + n].isWhitespace, chars[i + n] != chars[i] else { return false }
+            return chars[i] == "*" || !isWordChar(i > 0 ? chars[i - 1] : nil)
+        }
+        func closes(at i: Int, _ n: Int) -> Bool {
+            guard i > 0, !chars[i - 1].isWhitespace, chars[i - 1] != chars[i] else { return false }
+            return chars[i] == "*" || !isWordChar(i + n < chars.count ? chars[i + n] : nil)
+        }
+        func runLength(at i: Int) -> Int {
+            var n = 1
+            while i + n < chars.count, chars[i + n] == chars[i] { n += 1 }
+            return n
+        }
+        func hasCloser(_ mark: Swift.Character, _ n: Int, from start: Int) -> Bool {
+            var j = start
+            while j < chars.count {
+                if chars[j] == mark {
+                    let m = runLength(at: j)
+                    if m == n, closes(at: j, n) { return true }
+                    j += m
+                } else { j += 1 }
+            }
+            return false
+        }
+        func apply(_ mark: Swift.Character, _ n: Int, on: Bool) {
+            switch n {
+            case 1: italic = on
+            case 2: bold = on
+            default: bold = on; italic = on
+            }
+        }
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if c == "*" || c == "_" {
+                let n = runLength(at: i)
+                if n <= 3, let top = open.last, top.mark == c, top.count == n, closes(at: i, n) {
+                    flush(); apply(c, n, on: false); open.removeLast(); i += n; continue
+                }
+                if n <= 3, opens(at: i, n), hasCloser(c, n, from: i + n) {
+                    flush(); apply(c, n, on: true); open.append((c, n)); i += n; continue
+                }
+                buffer += String(repeating: c, count: n); lastWasSpace = false; i += n; continue
+            }
+            if c == " " {
+                if !lastWasSpace { buffer.append(c) }
+                lastWasSpace = true
+            } else {
+                buffer.append(c); lastWasSpace = false
+            }
+            i += 1
+        }
+        flush()
+        return runs
+    }
+
+    /// The line with the marks taken out, for anywhere that cannot show a style.
+    public static func plain(_ line: String) -> String { styled(line).map(\.text).joined() }
 }

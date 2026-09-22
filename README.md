@@ -17,7 +17,7 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.13 — eight creatures with their own personalities, on every monitor,
+**Status:** v0.13.1 — eight creatures with their own personalities, on every monitor,
 talking when they meet, giving flowers, thinking locally or through OpenRouter,
 keeping every chat and what it cost, going home when asked, and wearing creatures
 you describe to any chat model.

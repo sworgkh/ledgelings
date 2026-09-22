@@ -323,7 +323,7 @@
                     <ItemsControl ItemsSource="{Binding Lines}">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                          <TextBlock TextWrapping="Wrap"><Run Text="{Binding Speaker, Mode=OneWay}" FontWeight="Bold"/><Run Text=": "/><Run Text="{Binding Text, Mode=OneWay}"/></TextBlock>
+                          <TextBlock TextWrapping="Wrap" ui:StyledLine.Line="{Binding}"/>
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
