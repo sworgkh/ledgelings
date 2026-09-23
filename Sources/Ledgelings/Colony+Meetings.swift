@@ -17,7 +17,7 @@ extension Colony {
             let c = creatures[i]
             return Meetings.Party(loop: c.spot.loop, segment: c.segment, position: c.position,
                                   halfSize: atlas.bodyHalfSize * CGFloat(sizes[i]),
-                                  canTalk: !hideout.isActive && !busy.contains(i)
+                                  canTalk: !hideout.isActive && !busy.contains(i) && !expectsPlane(i)
                                       && !c.isJumping && !c.looksAsleep && !c.isHeld && !c.isChatting)
         }
     }
@@ -26,6 +26,7 @@ extension Colony {
     /// third time one of them brings a flower.
     func bumped(_ bump: Meetings.Bump) {
         let (giver, receiver) = Bool.random(using: &rng) ? (bump.a, bump.b) : (bump.b, bump.a)
+        post.stir(at: elapsed)
         hold(bump.a, and: bump.b)
         let pa = creatures[bump.a].position, pb = creatures[bump.b].position
         sparkPalette = [CGColor.white, CGColor(red: 1, green: 0.82, blue: 0.24, alpha: 1),

@@ -41,7 +41,7 @@ Drag `build/Ledgelings.app` to `/Applications` if you want to keep it.
 ### Build an installer
 
 ```bash
-scripts/make-installer.sh                    # version 0.15.0
+scripts/make-installer.sh                    # version 0.16.0
 VERSION=0.13.0 scripts/make-installer.sh     # any version you like
 ```
 

@@ -1,0 +1,46 @@
+{
+  "name": "plane",
+  "image": "plane.png",
+  "cell": [
+    18,
+    12
+  ],
+  "contentBox": [
+    0,
+    0,
+    18,
+    12
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "plane": {
+      "x": 0,
+      "y": 0,
+      "w": 18,
+      "h": 12
+    },
+    "letter": {
+      "x": 18,
+      "y": 0,
+      "w": 18,
+      "h": 12
+    }
+  },
+  "animations": {
+    "fly": {
+      "frames": [
+        "plane"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "letter": {
+      "frames": [
+        "letter"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}

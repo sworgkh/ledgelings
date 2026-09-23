@@ -69,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         hideItem.target = self
         menu.addItem(hideItem)
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
+        menu.addItem(withTitle: "Send a Paper Plane", action: #selector(sendPaperPlane), keyEquivalent: "p").target = self
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         menu.addItem(withTitle: "Chat History…", action: #selector(openChats), keyEquivalent: "h").target = self
@@ -131,6 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func makeThemJump() { colony?.startleEveryone() }
     @objc private func skipPhase() { colony?.skipPhase() }
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
+    @objc private func sendPaperPlane() { colony?.sendPlane() }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
     @objc private func openSpend() { settingsWindow.show(tab: .talk) }

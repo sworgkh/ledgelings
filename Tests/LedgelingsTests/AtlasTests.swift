@@ -57,6 +57,13 @@ private func colours(in image: CGImage) -> Set<RGB> {
         }
     }
 
+    @Test func thePaperPlaneAndItsLetterAreInTheirSheet() throws {
+        let plane = try SpriteAtlas(named: "plane")
+        #expect(plane.frames().frame(animation: "fly", time: 0) != nil)
+        #expect(plane.frames().frame(animation: "letter", time: 0) != nil)
+        #expect(plane.cellSize.width > plane.cellSize.height, "a plane is long, nose to tail")
+    }
+
     @Test func theHouseIsInItsSheet() throws {
         let house = try SpriteAtlas(named: "house")
         #expect(house.frames().frame(animation: "house", time: 0) != nil)
