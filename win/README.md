@@ -4,10 +4,11 @@ The same creatures, the same art, the same rules as the macOS app in the root of
 this repo, running as a Windows tray app. Everything in [SPEC.md](../SPEC.md) applies;
 this folder is its Windows implementation.
 
-**Status:** v0.12 feature parity with the macOS app: eight creatures across every
-monitor, day and night, meetings with stars and flowers, talk through LM Studio or
-OpenRouter, the chat log and spend ledger, hiding in the house, imported creatures
-from the sprite kit, the settings window with its four tabs.
+**Status:** v0.15 feature parity with the macOS app: eight creatures across every
+monitor, day and night, meetings with stars and flowers (the wearer trails the
+giver), talk from the built-in lines (the default: no model needed) or through
+LM Studio or OpenRouter, the chat log and spend ledger, hiding in the house,
+imported creatures from the sprite kit, the settings window with its four tabs.
 
 ## Stack
 
@@ -98,23 +99,31 @@ core tests are the Swift tests line for line.
   but not above an exclusive-fullscreen game; that is Windows, not a setting.
 - **One instance.** A second launch shows a message and exits.
 - Bubble text is Consolas Bold 12 pt; the Mac uses the system monospaced font.
+- **Marks in a line.** A bubble shows the plain text of `*sighs*` and `**bold**`
+  (SPEC §6.3.1): GDI+ draws one face per call.
+- **Settings layout.** Each tab is one scrolling column; the Mac lays a tab out
+  in two columns on one screen.
+- **The OpenRouter key** is read at launch: the Credential Manager never prompts,
+  so there is nothing to save the user from by reading it late.
+- **No promo video.** The Mac can render its own promo (`scripts/make-promo.sh`);
+  Windows cannot.
 
 ## Layout
 
 ```
 win/
   LedgelingsCore/        pure logic, no Win32, one class per Swift file:
-                           EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks,
+                           EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
-                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Hideout)
+                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble), FrameClock, Desktop
                            TrayIcon, App, Program
                            AppSettings (+ .Talk), SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Cast .Chats), HideDialog, ColourDialog
+                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats), HideDialog, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

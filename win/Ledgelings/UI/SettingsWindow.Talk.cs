@@ -20,23 +20,32 @@ public sealed partial class SettingsWindow
     private void RefreshBrain()
     {
         syncingBrain = true;
-        var lm = settings.BrainProvider == ChatClient.Provider.LmStudio;
-        BrainLm.IsChecked = lm;
-        BrainOr.IsChecked = !lm;
-        LmPanel.Visibility = lm ? Visibility.Visible : Visibility.Collapsed;
-        OrPanel.Visibility = lm ? Visibility.Collapsed : Visibility.Visible;
+        var brain = settings.Brain;
+        BrainScript.IsChecked = brain == BrainKind.Script;
+        BrainLm.IsChecked = brain == BrainKind.LmStudio;
+        BrainOr.IsChecked = brain == BrainKind.OpenRouter;
+        ScriptPanel.Visibility = brain == BrainKind.Script ? Visibility.Visible : Visibility.Collapsed;
+        LmPanel.Visibility = brain == BrainKind.LmStudio ? Visibility.Visible : Visibility.Collapsed;
+        OrPanel.Visibility = brain == BrainKind.OpenRouter ? Visibility.Visible : Visibility.Collapsed;
+        // The built-in lines cost nothing and use no prompt: those sections only matter with a model.
+        SpendBox.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
+        PromptsBox.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
         if (OrKey.Password != settings.OpenRouterKey) OrKey.Password = settings.OpenRouterKey;
-        BrainFooter.Text = lm
-            ? "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
-            : "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in the Windows Credential Manager. \"Check\" confirms the key and lists models.";
+        BrainFooter.Text = brain switch
+        {
+            BrainKind.Script => "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here.",
+            BrainKind.LmStudio => "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them.",
+            _ => "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in the Windows Credential Manager. \"Check\" confirms the key and lists models.",
+        };
         syncingBrain = false;
-        if (!lm && !catalogLoaded) _ = LoadCatalog();
+        RefreshScriptStatus();
+        if (brain == BrainKind.OpenRouter && !catalogLoaded) _ = LoadCatalog();
     }
 
     private void Brain_Checked(object sender, RoutedEventArgs e)
     {
         if (syncingBrain) return;
-        settings.BrainProvider = BrainOr.IsChecked == true ? ChatClient.Provider.OpenRouter : ChatClient.Provider.LmStudio;
+        settings.Brain = BrainScript.IsChecked == true ? BrainKind.Script : BrainOr.IsChecked == true ? BrainKind.OpenRouter : BrainKind.LmStudio;
     }
 
     private void OrKey_Changed(object sender, RoutedEventArgs e)

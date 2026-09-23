@@ -27,7 +27,8 @@ public sealed partial class SettingsWindow : Window
         {
             if (e.PropertyName is nameof(AppSettings.Colors)) RefreshColours();
             if (e.PropertyName is nameof(AppSettings.Species)) RefreshSpecies();
-            if (e.PropertyName is nameof(AppSettings.BrainProvider)) RefreshBrain();
+            if (e.PropertyName is nameof(AppSettings.Brain)) RefreshBrain();
+            if (e.PropertyName is nameof(AppSettings.Script)) RefreshScriptStatus();
             if (e.PropertyName is "Casts") RefreshCast();
         };
         library.Changed += RefreshSpecies;

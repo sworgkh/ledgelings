@@ -174,8 +174,20 @@
           <GroupBox Header="Brain">
             <StackPanel>
               <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="BrainScript" Content="Built-in lines" Checked="Brain_Checked" Margin="0,0,16,0"/>
                 <RadioButton x:Name="BrainLm" Content="LM Studio" Checked="Brain_Checked" Margin="0,0,16,0"/>
                 <RadioButton x:Name="BrainOr" Content="OpenRouter" Checked="Brain_Checked"/>
+              </StackPanel>
+              <StackPanel x:Name="ScriptPanel" Margin="0,8,0,0">
+                <TextBox x:Name="ScriptBox" Text="{Binding Script, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="NoWrap"
+                         FontFamily="Consolas" FontSize="12" Height="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"><Run Text="Status: "/><Run x:Name="ScriptStatus" Foreground="Gray"/></TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                  <Button Content="Import…" Click="ScriptImport_Click"/>
+                  <Button Content="Export…" Click="ScriptExport_Click" Margin="8,0,0,0"/>
+                  <Button x:Name="CopyAgentPrompt" Content="Copy Agent Prompt" Click="CopyAgentPrompt_Click" Margin="8,0,0,0"/>
+                  <Button Content="Reset Lines" Click="ScriptReset_Click" Margin="8,0,0,0"/>
+                </StackPanel>
               </StackPanel>
               <StackPanel x:Name="LmPanel" Margin="0,8,0,0">
                 <DockPanel>
@@ -223,7 +235,7 @@
               <TextBlock x:Name="BrainFooter" Style="{StaticResource Footer}"/>
             </StackPanel>
           </GroupBox>
-          <GroupBox Header="Spend">
+          <GroupBox x:Name="SpendBox" Header="Spend">
             <StackPanel>
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -281,7 +293,7 @@
               <TextBlock Style="{StaticResource Footer}" Text="Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog."/>
             </StackPanel>
           </GroupBox>
-          <GroupBox Header="Prompts">
+          <GroupBox x:Name="PromptsBox" Header="Prompts">
             <StackPanel>
               <TextBlock Text="Who is speaking (system prompt)" FontWeight="SemiBold"/>
               <TextBox Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="72" Margin="0,2,0,8"/>

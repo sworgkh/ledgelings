@@ -53,10 +53,37 @@ public class SettingsTests
     }
 
     [Fact]
-    public void TheBrainIsLMStudioUntilChosenOtherwise()
+    public void AFreshInstallTalksFromTheBuiltInLinesAndAnOldOneKeepsLMStudio()
     {
-        var s = Fresh().Settings;
-        Assert.Equal(ChatClient.Provider.LmStudio, s.BrainProvider);
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.Equal(BrainKind.Script, s.Brain);       // no model to set up: it talks out of the box
+        Assert.Null(s.ChatClient());
+        Assert.Equal(Script.BuiltInText, s.Script);
+        box.Store.Set("talkModel", "google/gemma-3-4b");
+        Assert.Equal(BrainKind.LmStudio, box.Again().Brain);   // someone who set up LM Studio before the lines existed keeps it
+        box.Store.Set("brainProvider", "openRouter");
+        Assert.Equal(BrainKind.OpenRouter, box.Again().Brain);
+    }
+
+    [Fact]
+    public void TheLinesAreRememberedAndResetBringsTheBuiltInOnesBack()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        s.Script = "Hello.\nHi.";
+        Assert.Equal("Hello.\nHi.", box.Again().Script);
+        s.ResetScript();
+        Assert.Equal(Script.BuiltInText, s.Script);
+    }
+
+    [Fact]
+    public void TheBrainIsLMStudioWhenChosen()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        s.Brain = BrainKind.LmStudio;
+        Assert.Equal("lmStudio", box.Store.Get<string>("brainProvider"));      // the same word the macOS app writes
         Assert.Equal(AppSettings.DefaultOpenRouterModel, s.OpenRouterModel);
         Assert.Equal("", s.OpenRouterKey);
         var client = s.ChatClient();
@@ -71,7 +98,7 @@ public class SettingsTests
     {
         var box = Fresh();
         var s = box.Settings;
-        s.BrainProvider = ChatClient.Provider.OpenRouter;
+        s.Brain = BrainKind.OpenRouter;
         s.OpenRouterKey = "sk-or-abc";
         s.OpenRouterModel = "openai/gpt-4o-mini";
         var client = s.ChatClient();
@@ -80,7 +107,7 @@ public class SettingsTests
         Assert.Equal("sk-or-abc", client.ApiKey);
         Assert.Equal("openai/gpt-4o-mini", client.Model);
         Assert.Equal(ChatClient.OpenRouterUrl, client.BaseUrl);
-        Assert.Equal("OpenRouter", box.Store.Get<string>("brainProvider"));
+        Assert.Equal("openRouter", box.Store.Get<string>("brainProvider"));
         Assert.False(box.Store.Has("openRouterKey"), "the key never lands in the settings file");
         s.OpenRouterKey = "";
     }
@@ -98,7 +125,7 @@ public class SettingsTests
     public void OpenRouterWithoutAKeyGivesNoClient()
     {
         var s = Fresh().Settings;
-        s.BrainProvider = ChatClient.Provider.OpenRouter;
+        s.Brain = BrainKind.OpenRouter;
         Assert.Null(s.ChatClient());
     }
 

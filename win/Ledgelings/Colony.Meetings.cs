@@ -41,6 +41,7 @@ public sealed partial class Colony
         };
         sparks.Burst(new Pt((pa.X + pb.X) / 2, (pa.Y + pb.Y) / 2), creatures[bump.A].Loop.Inward(creatures[bump.A].Segment), 8, rng);
         var eventText = "They just walked into each other.";
+        string? given = null;
         if (bump.Gift)
         {
             var flower = rng.Pick(Gifts.Flowers);
@@ -49,9 +50,10 @@ public sealed partial class Colony
                 var a = CharacterFor(giver).Name;
                 var b = CharacterFor(receiver).Name;
                 eventText = $"{a} just walked into {b} and gave {b} a {flower}.";
+                given = flower;
             }
         }
-        if (!Settings.TalkEnabled || !Talk(giver, receiver, eventText)) EndChat(giver, receiver, 2);
+        if (!Settings.TalkEnabled || !Talk(giver, receiver, eventText, given)) EndChat(giver, receiver, 2);
     }
 
     /// <summary>Whoever wears a flower trails the one who gave it, stopping about a body apart.

@@ -54,18 +54,19 @@ public sealed partial class Colony
         if (!Talk(s, listener)) EndChat(s, listener, 1);
     }
 
-    /// <summary>One creature says a line to another; the other answers. Runs in the background;
+    /// <summary>One creature says a line to another; the other answers. With a model this runs in the background;
     /// other pairs can talk at the same time. Returns false when it could not even
-    /// start, so the caller can release the pair.</summary>
-    private bool Talk(int speaker, int listener, string? because = null)
+    /// start, so the caller can release the pair. <paramref name="flower"/>: the one just given, for a line about it.</summary>
+    private bool Talk(int speaker, int listener, string? because = null, string? flower = null)
     {
         if (speaker >= creatures.Count || listener >= creatures.Count || speaker == listener || busy.Contains(speaker) || busy.Contains(listener)) return false;
+        var situation = $"It is {(IsNight ? "night" : "day")}. {Describe(speaker)}. {Describe(listener)}.";
+        if (because is not null) situation += " " + because;
+        if (Settings.Brain == BrainKind.Script) return Recite(speaker, listener, flower, situation);
         var service = Settings.ChatClient();
         if (service is null) { TalkStatus = Settings.BrainProblem; return false; }
         var a = CharacterFor(speaker);
         var b = CharacterFor(listener);
-        var situation = $"It is {(IsNight ? "night" : "day")}. {Describe(speaker)}. {Describe(listener)}.";
-        if (because is not null) situation += " " + because;
         busy.Add(speaker); busy.Add(listener);
         TalkStatus = $"asking {service.Model} via {service.ProviderTitle}\u2026";
         _ = Converse(service, speaker, listener, a, b, KindOf(speaker), KindOf(listener), situation);

@@ -133,6 +133,7 @@ public sealed partial class Colony
         foreach (var i in bubbles.Where(b => b.Value.Until <= Elapsed || b.Key >= creatures.Count).Select(b => b.Key).ToList()) bubbles.Remove(i);
         gifts.Update(Elapsed, Settings.FlowerMinutes * 60);
         if (Settings.FollowGiver) FollowGivers();
+        SayScheduledLines();
         sparks.Update(dt);
         ReleaseChatIfOver();
         foreach (var bump in meetings.Update(Parties(), Elapsed)) Bumped(bump);
