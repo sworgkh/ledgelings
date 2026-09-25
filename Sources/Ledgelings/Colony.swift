@@ -15,6 +15,12 @@ final class Colony: NSObject {
     /// The built-in and imported creature sheets.
     let library: SpriteLibrary
     let spend: SpendLedger
+    /// Who has lived beside whom, how they get on, and the story between them.
+    let bonds: BondBook
+    /// Pairs whose next plot is being written, by `Bonds.key`.
+    var plotting: Set<String> = []
+    /// Time together not yet added to the bonds; they are saved every half minute, not every frame.
+    var togetherPending = 0.0
     /// The built-in sheet: every sheet shares its cell and body box, so it is the geometry for all.
     let atlas: SpriteAtlas
     let zFrames: SpriteAtlas.Frames
@@ -123,11 +129,12 @@ final class Colony: NSObject {
     /// `stage`: draw for this one virtual display, offscreen, stepped by hand
     /// (the promo). Nil means the attached monitors, live.
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger,
-         stage: Display? = nil) throws {
+         bonds: BondBook? = nil, stage: Display? = nil) throws {
         self.settings = settings
         self.history = history
         self.library = library
         self.spend = spend
+        self.bonds = bonds ?? BondBook(directory: spend.ledger.directory)
         self.stage = stage
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
@@ -284,6 +291,7 @@ final class Colony: NSObject {
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
+        liveTogether(dt: dt)
         render()
         setFrameRate(asleep: hideout.phase == .hidden || (held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }

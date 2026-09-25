@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Six tabs: **Creatures**, **Sprites**, **Talk**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Seven tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 
@@ -94,6 +94,35 @@ personality keeps returning to; a character you wrote yourself uses a few genera
 ones. With a model, the sender writes the note in its persona while the plane is in
 the air, and the catcher's thought comes from a second call; both are priced like
 any other call.
+
+## Bonds tab
+
+Creatures who share the screen for a long time get to know each other. Every pair
+of characters on screen at the same time adds up time together, kept by name in
+`bonds.json` beside the chats. Once a pair has lived side by side long enough, the
+model writes them a **story** (a rivalry, a secret, a favour owed, a shared plan, a
+crush) and a **bond**, one line on how they get on. Both go into their prompts, a few
+dozen words, with which part of the story this conversation is, so the next
+conversations follow it and the last one wraps it up. When a story has run its
+course the next one grows from the bond, the last story and the last four lines they
+said. One short call per story (about 300 tokens), shown as *Relationship plots* on
+the Costs tab. With the built-in lines there is no model and so no stories.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Pairs who live together get a story** | on | | Off: time together is still counted, but nothing goes into the prompts and no story is written |
+| **First story after** | 1 h | 0.25 to 72 h | Time both must have been on screen together before their first story |
+| **A story lasts** | 6 conversations | 2 to 20 | Conversations with a model between the two; a paper plane uses the story but does not count |
+| **The prompt that writes a story** | the built-in one | | Placeholders `{speaker}` `{speakerKind}` `{speakerPersona}` `{listener}` `{listenerKind}` `{listenerPersona}` `{together}` `{bond}` `{lastPlot}` `{recent}` `{length}`. The answer must have a line starting `PLOT:` and may have one starting `BOND:`. **Reset Prompt** brings the built-in one back |
+
+On the right, every pair, the longest together first: time together, conversations,
+stories so far and what they cost, the bond, and the story with its part (or the last
+one). **Forget** clears one pair; **Forget All** and **Reveal in Finder** act on the
+file. A renamed character starts again as a stranger. The Chats tab shows the story
+under each conversation that played part of it.
+
+To place the story yourself in the talk prompt, write `{relationship}` in *Who is
+speaking* on the Talk tab; without it, the story is added at the end.
 
 ## Voice tab
 
@@ -250,7 +279,7 @@ Mac's own voices are free and record nothing.
 | Column | What it shows |
 |---|---|
 | **Spent** (left) | Today, this month, all time: cost, calls, tokens |
-| **By feature** (left) | Talk, Paper planes, Voice, Voice casting; calls from before v0.18 as *Earlier, unlabelled* |
+| **By feature** (left) | Talk, Paper planes, Voice, Voice casting, Relationship plots; calls from before v0.18 as *Earlier, unlabelled* |
 | **By model** (left) | The ten dearest models |
 | **Latest calls** (right) | The last 200, newest first: model, time, feature, tokens, cost (*no price* in orange) |
 | **The file** (right) | `spend.jsonl`'s path and Reveal in Finder |

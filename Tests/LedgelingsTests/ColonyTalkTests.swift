@@ -309,4 +309,29 @@ extension ColonyTalkTests {
         world.settings.voiceEnabled = false
         #expect(!c.voiceIsTaken)
     }
+
+    @Test func aPairsBondAndStoryReachTheirPromptsOnlyWhileStoriesAreOn() throws {
+        let w = try World()
+        defer { w.forget() }
+        let a = w.colony.character(forCreature: 0).name, b = w.colony.character(forCreature: 1).name
+        #expect(w.colony.relationship(of: 0, with: 1) == "", "strangers")
+        w.step(Colony.bondSaveEvery + 0.5)
+        #expect((w.colony.bonds.bond(a, b)?.together ?? 0) >= Colony.bondSaveEvery, "time on screen together is counted")
+        w.colony.bonds.change { $0.begin(a, b, Bonds.Written(bond: "Rivals.", plot: "A feud."), length: 3, at: Date()) }
+        #expect(w.colony.relationship(of: 0, with: 1).contains("You and \(b) have shared"))
+        #expect(w.colony.relationship(of: 1, with: 0).contains("(part 1 of 3): A feud."))
+        #expect(w.colony.plotLabel(0, 1) == "part 1 of 3: A feud.")
+        w.settings.plotsEnabled = false
+        #expect(w.colony.relationship(of: 0, with: 1) == "" && w.colony.plotLabel(0, 1) == nil)
+    }
+
+    @Test func theBuiltInLinesNeverAskForAStory() throws {
+        let w = try World()
+        defer { w.forget() }
+        let a = w.colony.character(forCreature: 0).name, b = w.colony.character(forCreature: 1).name
+        w.colony.bonds.change { $0.liveTogether(1e6, names: [a, b]) }
+        w.colony.talked(a, b, lines: [ChatLog.Line(speaker: a, text: "Hi.")])
+        #expect(w.colony.plotting.isEmpty, "no model, no call")
+        #expect(w.colony.bonds.bond(a, b)?.talks == 1)
+    }
 }

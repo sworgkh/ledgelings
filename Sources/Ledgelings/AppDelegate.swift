@@ -7,8 +7,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let history = ChatHistory()
     private let library = SpriteLibrary()
     private let spend = SpendLedger()
+    private let bonds = BondBook()
     private lazy var voice = Voice(settings: settings, spend: spend, history: history)
-    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend, voice: voice)
+    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend, bonds: bonds, voice: voice)
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -34,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         do {
-            colony = try Colony(settings: settings, history: history, library: library, spend: spend)
+            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds)
             colony?.voice = voice
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
@@ -56,6 +57,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 for _ in 0..<600 where !colony.busy.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
                 colony.trace?("pair let go")
                 exit(0)
+            }
+        }
+        // `--plot`: the first two creatures on screen get their next story now,
+        // however long they have lived together; bond, story and prompt text on stderr, then quit.
+        if CommandLine.arguments.contains("--plot"), let colony {
+            let start = Date()
+            colony.trace = { FileHandle.standardError.write(Data(String(format: "plot %6.2f  %@\n", Date().timeIntervalSince(start), $0).utf8)) }
+            Task { @MainActor in
+                guard colony.creatures.count >= 2 else { colony.trace?("needs two creatures"); exit(1) }
+                let a = colony.character(forCreature: 0).name, b = colony.character(forCreature: 1).name
+                colony.writePlotIfDue(a, b, now: true)
+                guard colony.plotting.contains(Bonds.key(a, b)) else { colony.trace?("not asked: \(colony.settings.brainProblem)"); exit(1) }
+                while colony.plotting.contains(Bonds.key(a, b)) { try? await Task.sleep(for: .seconds(0.1)) }
+                colony.trace?("\(a) hears: \(colony.relationship(of: 0, with: 1))")
+                colony.trace?("\(b) hears: \(colony.relationship(of: 1, with: 0))")
+                exit(colony.bonds.bond(a, b)?.plot == nil ? 1 : 0)
             }
         }
         // `--cast`: the brain model casts everyone on screen, one line each on stderr, then quit.
@@ -83,9 +100,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !started { log("not said: \(voice.status)"); exit(1) }
             Task { @MainActor in try? await Task.sleep(for: .seconds(60)); log("timed out"); exit(2) }
         }
-        // `--settings [creatures|sprites|talk|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|sprites|talk|bonds|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "bonds": .bonds, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {

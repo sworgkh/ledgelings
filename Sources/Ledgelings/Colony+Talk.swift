@@ -71,6 +71,9 @@ extension Colony {
                     "situation": situation, "line": ""]
         let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
         let bubbleSeconds = settings.bubbleSeconds
+        // How the two get on, and the story between them, from each one's side.
+        let aSide = relationship(of: speaker, with: listener), bSide = relationship(of: listener, with: speaker)
+        let plot = plotLabel(speaker, listener)
         let started = Date()
         var spoken: [ChatLog.Line] = []
         var used: [Spend.Usage] = []
@@ -81,7 +84,8 @@ extension Colony {
             history.record(ChatLog.Exchange(time: started, situation: situation, provider: service.provider.title,
                                             model: service.model, lines: spoken,
                                             cost: priced.isEmpty ? nil : priced.reduce(0, +),
-                                            tokens: used.isEmpty ? nil : used.reduce(0) { $0 + $1.promptTokens + $1.completionTokens }))
+                                            tokens: used.isEmpty ? nil : used.reduce(0) { $0 + $1.promptTokens + $1.completionTokens },
+                                            plot: plot))
         }
         /// Every call goes to the spend file, even one whose line turned out empty.
         func charge(_ answer: ChatClient.Answer) {
@@ -101,10 +105,12 @@ extension Colony {
                 self?.busy.subtract([speaker, listener])
                 self?.endChat(speaker, listener, after: 1.2)
                 keep()
+                self?.talked(a.name, b.name, lines: spoken)
             }
             do {
                 try await service.checkModel()
-                let opening = try await service.reply(system: Banter.render(system, vars), user: Banter.render(linePrompt, vars))
+                let opening = try await service.reply(system: Bonds.withRelationship(system, vars, context: aSide),
+                                                      user: Banter.render(linePrompt, vars))
                 guard let self else { return }
                 charge(opening)
                 let first = Banter.cleanLine(opening.text, speaker: a.name)
@@ -117,7 +123,8 @@ extension Colony {
                 vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                 vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                 vars["line"] = first
-                let answer = try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars))
+                let answer = try await service.reply(system: Bonds.withRelationship(system, vars, context: bSide),
+                                                     user: Banter.render(replyPrompt, vars))
                 charge(answer)
                 let reply = Banter.cleanLine(answer.text, speaker: b.name)
                 guard !reply.isEmpty else { await said(firstSaid); return }

@@ -17,10 +17,10 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.18 — eight creatures with their own personalities, on every monitor,
+**Status:** v0.19 — eight creatures with their own personalities, on every monitor,
 talking when they meet (out loud, if you like) from a hundred built-in lines or through a model of your
 choice, giving flowers, sending paper planes when it gets too quiet, keeping every
-chat and what it cost, going home when asked, and wearing creatures you describe to
+chat and what it cost, growing little stories between the ones who live together, going home when asked, and wearing creatures you describe to
 any chat model.
 
 **See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (50 s, no sound) shows every feature on a clean desktop. It is rendered by the app itself, `scripts/make-promo.sh`.
@@ -74,6 +74,12 @@ loud, each character in a voice of its own: the Mac's built-in voices (free,
 offline), or a speech model on OpenRouter (Kokoro by default, a fraction of a cent
 per hundred lines). Voice, speed, pitch and volume are in Settings › Talk.
 macOS only for now.
+
+**They get to know each other.** Creatures who share the screen for an hour (you
+choose how long) get a small story from the model: a rivalry, a secret, a favour
+owed. It colours their next few conversations and ends; the next grows from how
+they get on. Only a few dozen words reach each prompt, so a long friendship costs
+no more than a new one. Settings › Bonds shows every pair and its story.
 
 **Paper planes.** Every few minutes (you choose how often) one folds a note into a
 paper plane and throws it to another. Each plane flies in weather of its own,

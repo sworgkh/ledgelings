@@ -2,7 +2,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, sprites, talk, voice, costs, chats }
+enum SettingsTab: Hashable { case creatures, sprites, talk, bonds, voice, costs, chats }
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
@@ -15,6 +15,7 @@ struct SettingsView: View {
     @ObservedObject var history: ChatHistory
     @ObservedObject var library: SpriteLibrary
     @ObservedObject var spend: SpendLedger
+    @ObservedObject var bonds: BondBook
     @ObservedObject var voice: Voice
     @ObservedObject var navigation: SettingsNavigation
 
@@ -23,6 +24,7 @@ struct SettingsView: View {
             creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
+            BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text("Bonds") }.tag(SettingsTab.bonds)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text("Voice") }.tag(SettingsTab.voice)
             CostsSettingsView(spend: spend).tabItem { Text("Costs") }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
@@ -197,21 +199,23 @@ final class SettingsWindowController {
     private let history: ChatHistory
     private let library: SpriteLibrary
     private let spend: SpendLedger
+    private let bonds: BondBook
     private let voice: Voice
     private let navigation = SettingsNavigation()
 
-    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, voice: Voice) {
+    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook, voice: Voice) {
         self.settings = settings
         self.history = history
         self.library = library
         self.spend = spend
+        self.bonds = bonds
         self.voice = voice
     }
 
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, voice: voice, navigation: navigation))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, voice: voice, navigation: navigation))
             let made = NSWindow(contentViewController: hosting)
             made.title = "Ledgelings Settings"
             made.styleMask = [.titled, .closable]

@@ -102,6 +102,7 @@ extension Colony {
                     "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
                     "situation": "", "line": answering ?? ""]
         let system = settings.systemPrompt
+        let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
         airmail?.writing = true
         airmail?.provider = service.provider.title
         airmail?.model = service.model
@@ -119,7 +120,8 @@ extension Colony {
             var note: String?, musing: String?
             do {
                 try await service.checkModel()
-                let written = try await service.reply(system: Banter.render(system, vars), user: Banter.render(prompt, vars))
+                let written = try await service.reply(system: Bonds.withRelationship(system, vars, context: aSide),
+                                                      user: Banter.render(prompt, vars))
                 charge(written)
                 let line = Banter.cleanLine(written.text, speaker: a.name)
                 if !line.isEmpty {
@@ -128,7 +130,8 @@ extension Colony {
                     vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                     vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                     vars["line"] = line
-                    let thought = try await service.reply(system: Banter.render(system, vars), user: Banter.render(Letters.musingPrompt, vars))
+                    let thought = try await service.reply(system: Bonds.withRelationship(system, vars, context: bSide),
+                                                          user: Banter.render(Letters.musingPrompt, vars))
                     charge(thought)
                     let said = Banter.cleanLine(thought.text, speaker: b.name)
                     if !said.isEmpty { musing = said }
