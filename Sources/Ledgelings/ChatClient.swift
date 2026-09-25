@@ -116,7 +116,7 @@ struct ChatClient: Sendable {
         return (try? JSONDecoder().decode(Reply.self, from: data))?.error.message
     }
 
-    private func authorised(_ request: URLRequest) -> URLRequest {
+    func authorised(_ request: URLRequest) -> URLRequest {
         var request = request
         if let apiKey { request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
         if provider == .openRouter {

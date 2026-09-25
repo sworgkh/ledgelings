@@ -219,4 +219,26 @@ import Testing
         defaults.set(1.0, forKey: "bubbleSeconds")
         #expect(AppSettings(defaults: defaults).bubbleSeconds == AppSettings.bubbleRange.lowerBound)
     }
+
+    @Test func voiceIsOffUntilAskedAndEveryVoiceSettingIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(!s.voiceEnabled, "it must not start talking out loud unasked")
+        #expect(s.voiceEngine == .system && s.voicePerCharacter)
+        #expect(s.voiceModel == AppSettings.defaultVoiceModel && s.voiceSpeed == 1 && s.voicePitch == 1 && s.voiceVolume == 0.8)
+        s.voiceEnabled = true
+        s.voiceEngine = .openRouter
+        s.voicePerCharacter = false
+        s.systemVoice = "com.apple.voice.compact.en-US.Samantha"
+        s.voiceModel = "deepgram/flux-tts:free"
+        s.openRouterVoice = "flux-kit-en"
+        s.voiceSpeed = 1.5; s.voicePitch = 0.75; s.voiceVolume = 0.3
+        let back = AppSettings(defaults: defaults)
+        #expect(back.voiceEnabled && back.voiceEngine == .openRouter && !back.voicePerCharacter)
+        #expect(back.systemVoice == "com.apple.voice.compact.en-US.Samantha")
+        #expect(back.voiceModel == "deepgram/flux-tts:free" && back.openRouterVoice == "flux-kit-en")
+        #expect(back.voiceSpeed == 1.5 && back.voicePitch == 0.75 && back.voiceVolume == 0.3)
+        defaults.set(9.0, forKey: "voiceSpeed")
+        #expect(AppSettings(defaults: defaults).voiceSpeed == AppSettings.voiceSpeedRange.upperBound)
+    }
 }

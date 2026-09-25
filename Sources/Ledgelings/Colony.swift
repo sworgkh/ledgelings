@@ -86,6 +86,10 @@ final class Colony: NSObject {
     var replyDue: ReplyDue?
     /// Creatures holding an open letter.
     var letters: [Int: Bool] = [:]
+    /// Reads every line out loud when voice is on. Nil offscreen (the promo).
+    var voice: Voice? {
+        didSet { voice?.cast = { [weak self] in self.map { c in c.creatures.indices.map { c.character(forCreature: $0).name } } ?? [] } }
+    }
     /// The last thing that happened with the model, for the menu.
     var talkStatus = "not tried yet"
     var elapsed: Double = 0

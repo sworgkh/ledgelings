@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.17). Where the
+Every number here is the one the macOS app ships with (v0.18). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -508,6 +508,41 @@ and tokens.
 busy (anyone free if none is awake); the nearest free creature listens. A Shift-poke (§11) does the same
 with the poked creature as speaker. Both first **hold** the pair (§7.2). If the
 talk could not start, release after 1 s.
+
+### 6.6.1 Voice (macOS)
+
+Every `say` (a bubble going up, whatever its source) also hands the line to the
+voice when `voiceEnabled`. The line is first made speakable: `**bold**` keeps its
+words, `*stage directions*` go, emoji and the marks `*`, `_`, `~`, backtick and `#` go, runs of spaces
+collapse, and no space is left before `. , ! ? ; :`. Nothing left → nothing said.
+
+Lines are said one at a time, in order. Queued-or-playing lines are counted; at 4,
+a new line is dropped (the status says so). Turning voice off, or switching engine,
+stops everything at once.
+
+**Who sounds like whom.** With `voicePerCharacter`, the names of all creatures on
+screen are handed voices from a pool: names sorted, each starts at FNV-1a(name)
+mod pool size and takes the first voice not yet taken, going round; when the pool
+runs out, the start voice. The same names and pool always give the same answer.
+Built-in pool: the Mac's voices in the user's language (English if none), no
+novelty or personal voices, one per voice name (the user's region preferred),
+sorted by identifier; pitch is also multiplied by 0.9 + 0.2 × (FNV-1a(name +
+"#pitch") mod 1000) / 999. OpenRouter pool: the model's `supported_voices`, cut to
+the English ones when any name is marked English (`-en` suffix; `en_`, `gb_`,
+`en-`, `English_` prefix; Kokoro's `af_ am_ bf_ bm_`). Without it: the chosen
+voice, or the system default / the model's first.
+
+**Built-in engine:** `AVSpeechSynthesizer`, rate = default rate × `voiceSpeed`
+(clamped to the system's range), pitch × `voicePitch`, volume `voiceVolume`.
+
+**OpenRouter engine:** `POST {base}/audio/speech` with `{model, input, voice,
+response_format: "mp3", speed}` and the brain's key and headers. The reply is MP3
+bytes (a JSON reply is an error). The fetch starts at once, the play waits for the
+line before. The `X-Generation-Id` header is then looked up at `GET
+{base}/generation?id=…` after 3 s and up to three more times 5 s apart; its
+`total_cost` (or `usage`) and `tokens_prompt` go to the spend file (§6.5.1) under
+the speech model's id, without a price if it never came. Speech models: `GET
+{base}/models?output_modalities=speech` (public), cheapest input first.
 
 ### 6.7 The built-in lines (no model)
 
@@ -1080,6 +1115,14 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | flowerMinutes | 2 | 0.5–30, clamped on load |
 | characters | the six above | ≥ 2; JSON |
 | systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores |
+| voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
+| voiceEngine | system | system, openRouter |
+| voicePerCharacter | true | |
+| systemVoice | empty | a voice identifier; empty = system default |
+| voiceModel | `hexgrad/kokoro-82m` | an OpenRouter speech model |
+| openRouterVoice | empty | one of the model's voices; empty = its first |
+| voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch is built-in only |
+| voiceVolume | 0.8 | 0–1 |
 
 Settings window: 1100×760 points, four tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
@@ -1092,7 +1135,9 @@ Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, mod
 "Installed" menu of ids, Check, status; for OpenRouter: masked key, model,
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
-pick, free models tinted green, current model highlighted; characters editor;
+pick, free models tinted green, current model highlighted; Voice section
+(toggle, engine picker, voice-each toggle, voice picker or key/model/voice
+pickers, speed/pitch/volume sliders, Test, Stop, status); characters editor;
 prompt editors with a placeholder legend.
 
 ---
@@ -1113,7 +1158,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 123 such tests and 69 app-side ones.
+  the tests in §14 first; the macOS app has 129 such tests and 75 app-side ones.
 
 ---
 

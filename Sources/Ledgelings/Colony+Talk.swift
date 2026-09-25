@@ -191,6 +191,7 @@ extension Colony {
         guard creatures.indices.contains(index) else { return }
         bubbles[index] = (text, elapsed + Banter.showTime(text, base: settings.bubbleSeconds))
         render()
+        voice?.say(text, as: character(forCreature: index).name)
     }
 
     /// The creature whose speech bubble is under `point`, on any monitor.

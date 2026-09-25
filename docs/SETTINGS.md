@@ -14,6 +14,7 @@ Settings…*. Four tabs: **Creatures**, **Sprites**, **Talk**, **Chats**, each i
 | **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
 | **Make Someone Talk** | A random awake creature says something to the nearest one |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
+| **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
 | *Spent: $a today, $b this month* | Shown once there is a record; opens the Talk tab |
@@ -93,6 +94,32 @@ personality keeps returning to; a character you wrote yourself uses a few genera
 ones. With a model, the sender writes the note in its persona while the plane is in
 the air, and the catcher's thought comes from a second call; both are priced like
 any other call.
+
+### Voice
+
+macOS only for now. Every line that appears in a bubble, from a meeting, a poke, a
+paper plane or the built-in lines, is also read out loud, one line at a time in the
+order they came. When the talk runs far ahead of the voice (four lines waiting),
+new lines are skipped rather than read long after their bubble is gone. Emoji and
+`*stage directions*` are not read.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Hear them talk out loud** | off | | Also in the menu as **Hear Them Talk**. Turning it off stops the voice mid-word |
+| **Voices** | Built-in voices | | or OpenRouter. Switching stops whatever is being said |
+| **Every character gets a voice of their own** | on | | Each name gets its own voice, the same one every launch; two share only once the voices run out. Off: everyone uses the **Voice** below |
+| **Voice** (Built-in) | System default | | Every voice the Mac has in your language, novelty voices (Bells, Zarvox…) included. With a voice each, novelty voices are left out and every character also gets a slightly different pitch. More voices: System Settings › Accessibility › Spoken Content › System Voice › Manage Voices |
+| **API key** (OpenRouter) | | | The brain's key, shown here only when the brain is not OpenRouter |
+| **Model** (OpenRouter) | `hexgrad/kokoro-82m` | | Every OpenRouter speech model, with its price, fetched live. Kokoro costs about $0.00003 a line. The free models have daily limits the creatures would hit |
+| **Voice** (OpenRouter) | the model's first | | That model's voices. With a voice each, the English ones are used when the model's voice names say which they are |
+| **Speed** | 1× | 0.5 to 2 | Both engines |
+| **Pitch** | 1× | 0.5 to 2 | Built-in voices only; OpenRouter has no such knob |
+| **Volume** | 0.8 | 0 to 1 | |
+| **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
+
+Each OpenRouter line goes to the spend file under the speech model's id, priced a
+few seconds after it is said, when OpenRouter reports the cost (it sends audio,
+not a bill, with the line itself).
 
 ### Brain
 

@@ -7,13 +7,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let history = ChatHistory()
     private let library = SpriteLibrary()
     private let spend = SpendLedger()
-    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend)
+    private lazy var voice = Voice(settings: settings, spend: spend)
+    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend, voice: voice)
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let skipItem = NSMenuItem(title: "", action: #selector(skipPhase), keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
+    private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
     private static let hideChoices: [(String, Double?)] = [
@@ -33,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         do {
             colony = try Colony(settings: settings, history: history, library: library, spend: spend)
+            colony?.voice = voice
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
             NSApp.terminate(nil)
@@ -70,6 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(hideItem)
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
         menu.addItem(withTitle: "Send a Paper Plane", action: #selector(sendPaperPlane), keyEquivalent: "p").target = self
+        voiceItem.target = self
+        menu.addItem(voiceItem)
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         menu.addItem(withTitle: "Chat History…", action: #selector(openChats), keyEquivalent: "h").target = self
@@ -90,6 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         skipItem.title = colony.isNight ? "Wake Them Up Now" : "Put Them to Sleep Now"
         skipItem.isHidden = settings.nightMinutes == 0
         if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
+        voiceItem.state = settings.voiceEnabled ? .on : .off
         talkStatusItem.title = "   " + String(colony.talkStatus.prefix(70))
         let s = spend.summary
         spendItem.title = "Spent: \(Spend.label(s.today.cost)) today, \(Spend.label(s.month.cost)) this month"
@@ -133,6 +139,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func skipPhase() { colony?.skipPhase() }
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
     @objc private func sendPaperPlane() { colony?.sendPlane() }
+    @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
     @objc private func openSpend() { settingsWindow.show(tab: .talk) }
