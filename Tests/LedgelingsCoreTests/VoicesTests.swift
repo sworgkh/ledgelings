@@ -59,4 +59,21 @@ import Testing
         #expect(Voices.cartoonFirst(["Puck", "Kore"]) == ["Puck", "Kore"], "nothing says playful: keep them all")
         #expect(Voices.cartoonFirst(["am_santa", "am_adam"]) == ["am_santa", "am_adam"], "one is not enough to go round")
     }
+
+    @Test func aVoiceChosenByHandIsKeptAndTheOthersAvoidIt() {
+        let pool = ["a", "b", "c"]
+        let auto = Voices.assign(["Blocky", "Pip"], pool: pool)
+        let pipsOwn = auto["Blocky"]!                  // give Pip the voice Blocky had
+        let voices = Voices.assign(["Blocky", "Pip"], pool: pool, fixed: ["Pip": pipsOwn, "Nobody": "c"])
+        #expect(voices["Pip"] == pipsOwn)
+        #expect(voices["Blocky"] != pipsOwn)
+        #expect(voices["Nobody"] == nil, "a setting for someone not on screen changes nothing")
+        // Everything taken by hand: the rest share from the whole pool.
+        #expect(Voices.assign(["A", "B"], pool: ["x"], fixed: ["A": "x"])["B"] == "x")
+    }
+
+    @Test func aCharacterWithNothingSetIsAutomatic() {
+        #expect(CharacterVoice().isAutomatic)
+        #expect(!CharacterVoice(pitch: 1.3).isAutomatic)
+    }
 }

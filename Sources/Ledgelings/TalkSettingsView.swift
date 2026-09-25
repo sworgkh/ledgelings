@@ -43,8 +43,6 @@ struct TalkSettingsView: View {
 
             if settings.brain != .script { SpendSection(spend: spend) }
         } right: {
-            VoiceSection(settings: settings, voice: voice)
-
             Section {
                 Picker("Species", selection: $castSpecies) {
                     ForEach(library.species) { Text($0.name).tag($0.name) }

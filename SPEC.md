@@ -532,7 +532,13 @@ the English ones when any name is marked English (`-en` suffix; `en_`, `gb_`,
 `en-`, `English_` prefix; Kokoro's `af_ am_ bf_ bm_`). Without it: the chosen
 voice, or the system default / the model's first.
 
-**Pitch.** A name speaks at `voicePitch` × (with `cartoonVoices`: 1.15 + 0.45 ×
+**Per character.** `characterVoices` maps a name to `{systemVoice?, openRouterVoice?,
+speed?, pitch?}`; nil fields are automatic, an all-nil entry is removed. Speed =
+`voiceSpeed` × (own speed ?? 1). A hand-picked voice is kept; `Voices.assign` hands
+the others voices from the pool minus the hand-picked ones (the whole pool if that
+empties it). An `openRouterVoice` not among the model's voices is ignored.
+
+**Pitch.** A name speaks at `voicePitch` × (own pitch if set, else with `cartoonVoices`: 1.15 + 0.45 ×
 (FNV-1a(name + "#cartoon") mod 1000) / 999; else with `voicePerCharacter` the
 0.9–1.1 nudge; else 1). With `cartoonVoices` the built-in pool is the Eloquence
 voices and the `speech.synthesis.voice.*` ones minus the singers (Bells, Cellos,
@@ -1166,9 +1172,10 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch applies to both engines |
 | voiceVolume | 0.8 | 0–1 |
 | cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
+| characterVoices | {} | name → `{systemVoice, openRouterVoice, speed, pitch}`, JSON (§6.6.1) |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
-Settings window: 1100×760 points, four tabs, each laid out as two columns
+Settings window: 1100×760 points, five tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
@@ -1202,7 +1209,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 141 such tests and 78 app-side ones.
+  the tests in §14 first; the macOS app has 143 such tests and 79 app-side ones.
 
 ---
 

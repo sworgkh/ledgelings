@@ -131,6 +131,8 @@ final class AppSettings: ObservableObject {
     /// 1 is the voice's own pitch. Both engines: OpenRouter's clips are shifted as they play.
     @Published var voicePitch: Double { didSet { save(voicePitch, "voicePitch") } }
     @Published var voiceVolume: Double { didSet { save(voiceVolume, "voiceVolume") } }
+    /// Each character's own voice, speed and pitch, by name; absent means automatic.
+    @Published var characterVoices: [String: CharacterVoice] { didSet { saveJSON(characterVoices, "characterVoices") } }
     /// Every line a speech model says is kept as a sound file beside the chats.
     @Published var keepVoices: Bool { didSet { save(keepVoices, "keepVoices") } }
 
@@ -191,6 +193,8 @@ final class AppSettings: ObservableObject {
         voiceSpeed = clamp("voiceSpeed", 1, Self.voiceSpeedRange)
         voicePitch = clamp("voicePitch", 1, Self.voicePitchRange)
         voiceVolume = clamp("voiceVolume", 0.8, 0...1)
+        characterVoices = defaults.data(forKey: "characterVoices")
+            .flatMap { try? JSONDecoder().decode([String: CharacterVoice].self, from: $0) } ?? [:]
         keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
         cartoonVoices = defaults.object(forKey: "cartoonVoices") as? Bool ?? true
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
@@ -241,6 +245,13 @@ final class AppSettings: ObservableObject {
         case .lmStudio: "LM Studio server address is not a URL"
         case .openRouter: "no OpenRouter API key; add one in Settings › Talk"
         }
+    }
+
+    /// Change one character's voice settings; all automatic again forgets them.
+    func setVoice(of name: String, _ change: (inout CharacterVoice) -> Void) {
+        var own = characterVoices[name] ?? CharacterVoice()
+        change(&own)
+        characterVoices[name] = own.isAutomatic ? nil : own
     }
 
     func resetScript() { script = Script.builtInText }

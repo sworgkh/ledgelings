@@ -1,8 +1,41 @@
 import Foundation
 
+/// One character's own voice settings, set by hand in Settings › Voice. Every
+/// field left nil is automatic: a voice handed out by `Voices.assign`, the
+/// global speed, the cartoon lift or small nudge for pitch.
+public struct CharacterVoice: Codable, Equatable, Sendable {
+    /// A Mac voice identifier, for the built-in engine.
+    public var systemVoice: String?
+    /// One of the speech model's voices, for OpenRouter. Ignored when the
+    /// chosen model has no voice by that name.
+    public var openRouterVoice: String?
+    /// Times the global Speed.
+    public var speed: Double?
+    /// Times the global Pitch, instead of the automatic lift.
+    public var pitch: Double?
+
+    public init(systemVoice: String? = nil, openRouterVoice: String? = nil, speed: Double? = nil, pitch: Double? = nil) {
+        self.systemVoice = systemVoice; self.openRouterVoice = openRouterVoice; self.speed = speed; self.pitch = pitch
+    }
+
+    public var isAutomatic: Bool { systemVoice == nil && openRouterVoice == nil && speed == nil && pitch == nil }
+}
+
 /// Who sounds like whom, and what of a line is worth saying out loud. No audio
 /// here: the app's `Voice` does the speaking, this decides what and with which voice.
 public enum Voices {
+
+    /// `assign`, with some characters' voices chosen by hand (`fixed`, name to
+    /// voice). They keep theirs; everyone else is handed voices from what is
+    /// left of the pool, or from the whole pool when nothing is left.
+    public static func assign(_ names: [String], pool: [String], fixed: [String: String]) -> [String: String] {
+        let everyone = Set(names)
+        let chosen = fixed.filter { everyone.contains($0.key) }
+        let free = pool.filter { !chosen.values.contains($0) }
+        var result = assign(names.filter { chosen[$0] == nil }, pool: free.isEmpty ? pool : free)
+        result.merge(chosen) { _, mine in mine }
+        return result
+    }
 
     /// Every character in `names` gets a voice from `pool`, and the same name
     /// gets the same voice every launch while the pool stays the same. Two

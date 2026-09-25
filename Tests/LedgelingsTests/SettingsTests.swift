@@ -228,6 +228,11 @@ import Testing
         #expect(s.voiceModel == AppSettings.defaultVoiceModel && s.voiceSpeed == 1 && s.voicePitch == 1 && s.voiceVolume == 0.8)
         #expect(s.keepVoices, "paid-for sounds are kept unless asked not to")
         #expect(s.cartoonVoices, "desktop pets, not newsreaders")
+        #expect(s.characterVoices.isEmpty)
+        s.setVoice(of: "Pip") { $0.pitch = 1.5; $0.openRouterVoice = "am_puck" }
+        #expect(AppSettings(defaults: defaults).characterVoices["Pip"] == CharacterVoice(openRouterVoice: "am_puck", pitch: 1.5))
+        s.setVoice(of: "Pip") { $0 = CharacterVoice() }
+        #expect(s.characterVoices["Pip"] == nil, "all automatic again: nothing stored")
         s.cartoonVoices = false
         #expect(!AppSettings(defaults: defaults).cartoonVoices)
         s.keepVoices = false

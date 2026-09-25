@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Four tabs: **Creatures**, **Sprites**, **Talk**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Five tabs: **Creatures**, **Sprites**, **Talk**, **Voice**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 
@@ -95,9 +95,10 @@ ones. With a model, the sender writes the note in its persona while the plane is
 the air, and the catcher's thought comes from a second call; both are priced like
 any other call.
 
-### Voice
+## Voice tab
 
-macOS only for now. Every line that appears in a bubble, from a meeting, a poke, a
+macOS only for now. The left column is how they all sound; the right column,
+**Characters**, is one card per character on screen. Every line that appears in a bubble, from a meeting, a poke, a
 paper plane or the built-in lines, is also read out loud, one line at a time in the
 order they came. When the talk runs far ahead of the voice (four lines waiting),
 new lines are skipped rather than read long after their bubble is gone. Emoji and
@@ -126,6 +127,24 @@ shows in full at once. A bubble gives up waiting after 45 s.
 | **Pitch** | 1× | 0.5 to 2 | Both engines. An OpenRouter line is asked for that much slower and played that much faster, like a tape sped up: higher, at the usual pace, with no echo. Kokoro and Gemini honour the slower speed; Voxtral and MiniMax ignore it, so with them a raised pitch also talks faster |
 | **Volume** | 0.8 | 0 to 1 | |
 | **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
+
+### Characters
+
+Every character starts automatic: a voice handed out for it, the overall speed,
+and a pitch of its own (the cartoon lift with Cartoon voices on, else a small
+nudge). On its card:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Voice** | Automatic (shows which) | | Any Mac voice, or any of the chosen OpenRouter model's voices, depending on the engine. A voice picked by hand is that character's alone; the automatic voices are handed out around it. An OpenRouter voice the current model does not have is ignored |
+| **Speed** | 1× | 0.5 to 2 | Times the overall Speed |
+| **Pitch** | its automatic pitch | 0.5 to 2 | Times the overall Pitch, instead of the automatic lift |
+| **Test** / **Auto** | | | Test: it introduces itself. Auto: back to automatic |
+
+Settings follow the character's name, so they survive restarts and species changes,
+and apply to both engines (the voice is kept per engine).
+
+### Spend and the archive
 
 Each OpenRouter line goes to the spend file under the speech model's id, priced a
 few seconds after it is said, when OpenRouter reports the cost (it sends audio,

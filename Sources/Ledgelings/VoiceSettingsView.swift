@@ -1,5 +1,96 @@
 import AVFoundation
+import LedgelingsCore
 import SwiftUI
+
+/// Settings › Voice: how they all sound on the left, each character on the right.
+struct VoiceSettingsView: View {
+    @ObservedObject var settings: AppSettings
+    @ObservedObject var voice: Voice
+
+    var body: some View {
+        TwoColumns {
+            VoiceSection(settings: settings, voice: voice)
+        } right: {
+            CharacterVoicesSection(settings: settings, voice: voice)
+        }
+    }
+}
+
+/// One card per character on screen: its own voice, speed and pitch, and a Test.
+private struct CharacterVoicesSection: View {
+    @ObservedObject var settings: AppSettings
+    @ObservedObject var voice: Voice
+    @State private var names: [String] = []
+
+    var body: some View {
+        Section {
+            if names.isEmpty { Text("Nobody on screen right now.").foregroundStyle(.secondary) }
+            ForEach(names, id: \.self) { CharacterVoiceRow(name: $0, settings: settings, voice: voice) }
+        } header: {
+            Text("Characters")
+        } footer: {
+            Text("The characters on screen now. Each starts automatic: a voice handed out for them, the overall speed, and a pitch of their own (the cartoon lift with Cartoon voices on). A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left. \"Auto\" puts a character back to automatic. Settings follow the name, on both engines; an OpenRouter voice the chosen model does not have is ignored.")
+        }
+        .onAppear {
+            var seen: [String] = []
+            for name in voice.cast() where !seen.contains(name) { seen.append(name) }
+            names = seen
+        }
+    }
+}
+
+private struct CharacterVoiceRow: View {
+    let name: String
+    @ObservedObject var settings: AppSettings
+    @ObservedObject var voice: Voice
+
+    private var own: CharacterVoice { settings.characterVoices[name] ?? CharacterVoice() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(name).font(.headline)
+                Spacer()
+                Button("Test") { voice.introduce(name) }
+                Button("Auto") { settings.setVoice(of: name) { $0 = CharacterVoice() } }.disabled(own.isAutomatic)
+            }
+            Picker("Voice", selection: voiceChoice) {
+                Text("Automatic (\(voice.automaticVoice(for: name)))").tag("")
+                switch settings.voiceEngine {
+                case .system:
+                    ForEach(Voice.systemVoices, id: \.identifier) { v in Text("\(v.name) · \(v.language)").tag(v.identifier) }
+                case .openRouter:
+                    if let mine = own.openRouterVoice, !voice.modelVoices.contains(mine) { Text("\(mine) (not in this model)").tag(mine) }
+                    ForEach(voice.modelVoices, id: \.self) { Text($0).tag($0) }
+                }
+            }
+            SliderRow("Speed", value: speed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
+            SliderRow("Pitch", value: pitch, in: AppSettings.voicePitchRange, step: 0.05, unit: "×")
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var voiceChoice: Binding<String> {
+        Binding(
+            get: { (settings.voiceEngine == .system ? own.systemVoice : own.openRouterVoice) ?? "" },
+            set: { picked in
+                let value = picked.isEmpty ? nil : picked
+                settings.setVoice(of: name) { v in
+                    if settings.voiceEngine == .system { v.systemVoice = value } else { v.openRouterVoice = value }
+                }
+            }
+        )
+    }
+
+    private var speed: Binding<Double> {
+        Binding(get: { own.speed ?? 1 }, set: { new in settings.setVoice(of: name) { $0.speed = new } })
+    }
+
+    /// Shows the automatic pitch until moved, so the slider starts where the voice is.
+    private var pitch: Binding<Double> {
+        Binding(get: { (voice.ownPitch(for: name) * 100).rounded() / 100 }, set: { new in settings.setVoice(of: name) { $0.pitch = new } })
+    }
+}
 
 /// Voice on or off, which engine, which voice, how fast, how high, how loud,
 /// and a Test that lets the cast introduce themselves.

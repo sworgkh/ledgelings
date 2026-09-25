@@ -136,15 +136,9 @@ final class Voice: NSObject, ObservableObject {
 
     private func speakHere(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
         let utterance = AVSpeechUtterance(string: line)
-        if settings.voicePerCharacter {
-            let fun = settings.cartoonVoices ? Self.cartoonVoices : []
-            let pool = (fun.count >= 2 ? fun : Self.characterVoices).map(\.identifier)
-            utterance.voice = Voices.assign(cast + [name], pool: pool)[name].flatMap(AVSpeechSynthesisVoice.init(identifier:))
-        } else {
-            utterance.voice = settings.systemVoice.isEmpty ? nil : AVSpeechSynthesisVoice(identifier: settings.systemVoice)
-        }
+        utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:))
         utterance.pitchMultiplier = Float(min(max(pitch(for: name), 0.5), 2))
-        utterance.rate = min(max(AVSpeechUtteranceDefaultSpeechRate * Float(settings.voiceSpeed), AVSpeechUtteranceMinimumSpeechRate),
+        utterance.rate = min(max(AVSpeechUtteranceDefaultSpeechRate * Float(speed(for: name)), AVSpeechUtteranceMinimumSpeechRate),
                              AVSpeechUtteranceMaximumSpeechRate)
         utterance.volume = Float(settings.voiceVolume)
         waiting += 1
@@ -158,15 +152,13 @@ final class Voice: NSObject, ObservableObject {
         let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
         guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return false }
         let client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
-        let perCharacter = settings.voicePerCharacter, chosen = settings.openRouterVoice, speed = settings.voiceSpeed
-        let keep = settings.keepVoices, saidAt = Date(), cartoon = settings.cartoonVoices, pitch = pitch(for: name)
+        let speed = speed(for: name)
+        let keep = settings.keepVoices, saidAt = Date(), pitch = pitch(for: name)
         waiting += 1
         // Fetch now, while the line before is still playing; play in turn.
         let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
             let voices = (try? await self?.voices(of: client.model)) ?? []
-            let pool = Voices.englishFirst(voices)
-            let voice = perCharacter ? Voices.assign(cast + [name], pool: cartoon ? Voices.cartoonFirst(pool) : pool)[name]
-                                     : (chosen.isEmpty ? voices.first : chosen)
+            let voice = self?.onlineVoice(for: name, cast: cast, among: voices)
             // Asked slower by the pitch, sped back up by it as it plays: the pace stays.
             let asked = speed / pitch
             let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: asked)
@@ -214,12 +206,64 @@ final class Voice: NSObject, ObservableObject {
         return true
     }
 
-    /// How high `name` speaks: the Pitch slider, times a cartoon lift or a small
-    /// nudge of its own when every character has a voice of their own.
-    private func pitch(for name: String) -> Double {
-        let own = settings.cartoonVoices ? Voices.cartoonPitch(for: name)
+    // MARK: Who sounds how
+
+    /// How high `name` speaks: the Pitch slider, times the character's own pitch
+    /// if set by hand, else a cartoon lift, or a small nudge with a voice each.
+    func pitch(for name: String) -> Double { settings.voicePitch * ownPitch(for: name) }
+
+    /// The character's own share of `pitch`, before the global slider.
+    func ownPitch(for name: String) -> Double {
+        if let set = settings.characterVoices[name]?.pitch { return set }
+        return settings.cartoonVoices ? Voices.cartoonPitch(for: name)
             : settings.voicePerCharacter ? Voices.pitchNudge(for: name) : 1
-        return settings.voicePitch * own
+    }
+
+    /// How fast `name` speaks: the Speed slider times its own.
+    func speed(for name: String) -> Double { settings.voiceSpeed * (settings.characterVoices[name]?.speed ?? 1) }
+
+    /// The Mac voice identifier `name` speaks with; nil is the system default.
+    /// `automatic`: what it would get with no voice of its own chosen.
+    func systemVoice(for name: String, cast: [String], automatic: Bool = false) -> String? {
+        if !automatic, let own = settings.characterVoices[name]?.systemVoice { return own }
+        guard settings.voicePerCharacter else { return settings.systemVoice.isEmpty ? nil : settings.systemVoice }
+        let fun = settings.cartoonVoices ? Self.cartoonVoices : []
+        let pool = (fun.count >= 2 ? fun : Self.characterVoices).map(\.identifier)
+        var fixed = settings.characterVoices.compactMapValues(\.systemVoice)
+        if automatic { fixed[name] = nil }
+        return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
+    }
+
+    /// The model voice `name` speaks with, from the model's `voices`; nil lets the model choose.
+    func onlineVoice(for name: String, cast: [String], among voices: [String], automatic: Bool = false) -> String? {
+        let usable = { (v: String?) in v.flatMap { voices.isEmpty || voices.contains($0) ? $0 : nil } }
+        if !automatic, let own = usable(settings.characterVoices[name]?.openRouterVoice) { return own }
+        guard settings.voicePerCharacter else { return settings.openRouterVoice.isEmpty ? voices.first : settings.openRouterVoice }
+        let english = Voices.englishFirst(voices)
+        let pool = settings.cartoonVoices ? Voices.cartoonFirst(english) : english
+        var fixed = settings.characterVoices.compactMapValues { usable($0.openRouterVoice) }
+        if automatic { fixed[name] = nil }
+        return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
+    }
+
+    /// The voices of the chosen OpenRouter model, as far as the list is loaded.
+    var modelVoices: [String] { models.first { $0.id == settings.voiceModel }?.voices ?? [] }
+
+    /// What `name` would sound like with no voice of its own chosen, in words, for the Voice tab.
+    func automaticVoice(for name: String) -> String {
+        switch settings.voiceEngine {
+        case .system:
+            return systemVoice(for: name, cast: cast(), automatic: true)
+                .flatMap(AVSpeechSynthesisVoice.init(identifier:))?.name ?? "system default"
+        case .openRouter:
+            return onlineVoice(for: name, cast: cast(), among: modelVoices, automatic: true) ?? "the model's own"
+        }
+    }
+
+    /// Settings › Voice's per-character Test.
+    func introduce(_ name: String) {
+        stop()
+        speak("Hi, I'm \(name). This is how I sound.", as: name, cast: cast())
     }
 
     /// Play a clip to its end, `pitch` times faster and so that much higher.
