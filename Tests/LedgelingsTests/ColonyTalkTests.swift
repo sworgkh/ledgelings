@@ -26,6 +26,9 @@ import Testing
                                 library: SpriteLibrary(directory: dir.appendingPathComponent("sprites")),
                                 spend: SpendLedger(directory: dir.appendingPathComponent("spend")),
                                 stage: Display(frame: CGRect(x: 0, y: 0, width: 800, height: 600), scale: 1))
+            // Nobody bumps by accident: a random meeting would start a second
+            // conversation, or restart the quiet before a plane, mid-test.
+            colony.meetings = Meetings(gap: -1e6)
         }
         func step(_ seconds: Double) {
             var left = seconds
@@ -79,5 +82,137 @@ import Testing
         w.colony.releaseChat(); w.colony.busy.removeAll(); w.colony.bubbles.removeAll()
         #expect(w.colony.talk(from: 1, to: 0, because: "gift", flower: "tulip"))
         #expect(w.colony.bubbles[1]?.text == "A tulip for you.")
+    }
+}
+
+/// Paper planes in the same offscreen colony: thrown, carried, caught, read.
+/// In the same serialized suite, since they share its settings domain.
+extension ColonyTalkTests {
+    /// A world where nobody ever bumps, so nothing interrupts the post.
+    func quietWorld() throws -> World {
+        let w = try World()
+        w.colony.meetings = Meetings(gap: -1e6)
+        return w
+    }
+
+    /// Step until `done`, at most `seconds`; true when it happened.
+    func run(_ w: World, upTo seconds: Double, until done: () -> Bool) -> Bool {
+        var left = seconds
+        while left > 0 { if done() { return true }; w.step(0.05); left -= 0.05 }
+        return done()
+    }
+
+    @Test func aPlaneFliesToTheOtherOneWhoReadsItAndThinksAloud() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.sendPlane(), "\(w.colony.talkStatus)")
+        let mail = try #require(w.colony.airmail)
+        let (from, to) = (mail.plane.from, mail.plane.to)
+        #expect(from != to)
+        #expect(w.colony.planeSnapshot()?.opacity == 1)
+        #expect(!w.colony.sendPlane(), "one at a time")
+
+        #expect(run(w, upTo: 30) { w.colony.letters[to] == true }, "caught")
+        let a = w.colony.character(forCreature: from).name, b = w.colony.character(forCreature: to).name
+        let read = try #require(w.colony.bubbles[to]?.text)
+        #expect(read.hasPrefix("*reads* \"") && read.hasSuffix("— \(a)"))
+        #expect(w.colony.busy.contains(to) && w.colony.creatures[to].isChatting, "it stops to read")
+        #expect(w.colony.planeSnapshot()?.opacity == 0, "the plane is now the letter")
+
+        #expect(run(w, upTo: 40) { w.colony.bubbles[to].map { !$0.text.hasPrefix("*reads*") } ?? false }, "then thinks aloud")
+        #expect(run(w, upTo: 40) { w.colony.airmail == nil })
+        #expect(w.colony.letters.isEmpty && !w.colony.busy.contains(to))
+
+        let logged = w.history.exchanges(on: ChatLog.day(of: Date()))
+        #expect(logged.last?.situation == "\(a) sent \(b) a paper plane.")
+        #expect(logged.last?.lines.map(\.speaker) == [a, b])
+    }
+
+    @Test func aQuietSpellSendsAPlaneByItselfAndABumpPutsItOff() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.planeMinutes = 0.5
+        w.colony.post.stir(at: w.colony.elapsed)
+        w.step(20)
+        #expect(w.colony.airmail == nil)
+        w.colony.post.stir(at: w.colony.elapsed)      // as a bump would
+        w.step(20)
+        #expect(w.colony.airmail == nil, "the bump restarted the quiet spell")
+        w.step(11)
+        #expect(w.colony.airmail != nil || w.colony.isNight)
+    }
+
+    @Test func turnedOffNoPlaneEverGoes() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.planesEnabled = false
+        w.settings.planeMinutes = 0.5
+        w.step(45)
+        #expect(w.colony.airmail == nil)
+    }
+
+    @Test func aPlaneToASleeperIsDroppedAndFades() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.sendPlane())
+        let to = try #require(w.colony.airmail).plane.to
+        w.colony.creatures[to].toggleNap(using: &w.colony.rng)
+        #expect(run(w, upTo: 40) { w.colony.airmail == nil })
+        #expect(w.colony.letters.isEmpty && w.colony.bubbles[to] == nil)
+    }
+}
+
+extension ColonyTalkTests {
+    @Test func whatTheModelWroteIsReadAndThenThought() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.sendPlane())
+        let to = try #require(w.colony.airmail).plane.to
+        w.colony.airmail?.note = "Note from the model."
+        w.colony.airmail?.musing = "Thought from the model."
+        #expect(run(w, upTo: 30) { w.colony.letters[to] == true })
+        #expect(w.colony.bubbles[to]?.text.contains("Note from the model.") == true)
+        #expect(run(w, upTo: 30) { w.colony.bubbles[to]?.text == "Thought from the model." })
+    }
+}
+
+extension ColonyTalkTests {
+    /// Every bubble the overlay is actually drawing, by its text.
+    func drawnBubbles(_ w: World) -> [String] {
+        func texts(_ layer: CALayer) -> [String] {
+            let own = (layer as? CATextLayer).flatMap { ($0.string as? NSAttributedString)?.string }.map { [$0] } ?? []
+            return own + (layer.sublayers ?? []).filter { !$0.isHidden }.flatMap(texts)
+        }
+        return texts(w.colony.overlays[0].root)
+    }
+
+    @Test func theThoughtReplacesTheReadingOnScreenNotJustInTheColony() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.sendPlane())
+        let to = try #require(w.colony.airmail).plane.to
+        w.colony.airmail?.note = "Note from the model."
+        w.colony.airmail?.musing = "Thought from the model."
+        #expect(run(w, upTo: 30) { w.colony.bubbles[to]?.text == "Thought from the model." })
+        w.step(0.1)
+        #expect(drawnBubbles(w).contains("Thought from the model."), "\(drawnBubbles(w))")
+        #expect(!drawnBubbles(w).contains { $0.contains("Note from the model.") }, "\(drawnBubbles(w))")
+    }
+}
+
+extension ColonyTalkTests {
+    @Test func theOneAPlaneIsFlyingToKeepsOutOfConversations() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.sendPlane())
+        let to = try #require(w.colony.airmail).plane.to
+        #expect(w.colony.parties()[to].canTalk == false, "no bumping into talks on the way")
+        w.colony.talkNow(from: to == 0 ? 1 : 0)
+        #expect(w.colony.talkStatus.contains("nobody free") || !w.colony.busy.contains(to))
     }
 }

@@ -11,6 +11,15 @@ import Testing
         return SpriteLibrary(directory: dir)
     }
 
+    @Test func everyBuiltInCharacterHasItsOwnVoiceForLetters() {
+        let library = fresh()
+        for species in SpriteLibrary.builtIn {
+            for character in library.cast(of: species) {
+                #expect(Letters.voices[character.name] != nil, "\(species): \(character.name) writes like anyone")
+            }
+        }
+    }
+
     @Test func theBuiltInCreatureIsAlwaysThereAndCannotBeRemoved() throws {
         let library = fresh()
         #expect(library.species.map(\.name) == SpriteLibrary.builtIn)

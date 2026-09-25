@@ -50,10 +50,15 @@ final class AppSettings: ObservableObject {
     static let bubbleRange = 4.0...60.0
     /// Minutes a gifted flower stays on a head before it wilts away.
     static let flowerRange = 0.5...30.0
+    /// Minutes with no bump before someone throws a paper plane.
+    static let planeRange = 0.5...30.0
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
     /// The one wearing a flower trails the one who gave it while the flower lasts.
     @Published var followGiver: Bool { didSet { save(followGiver, "followGiver") } }
+    /// After a quiet spell, one creature throws another a paper plane with a note in it.
+    @Published var planesEnabled: Bool { didSet { save(planesEnabled, "planesEnabled") } }
+    @Published var planeMinutes: Double { didSet { save(planeMinutes, "planeMinutes") } }
     /// Who answers, for banter and for anything else that wants words.
     @Published var brain: Brain { didSet { save(brain.rawValue, "brainProvider") } }
     /// The conversations said when the brain is the built-in lines, in `Script`'s text form.
@@ -112,6 +117,9 @@ final class AppSettings: ObservableObject {
 
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
         followGiver = defaults.object(forKey: "followGiver") as? Bool ?? true
+        planesEnabled = defaults.object(forKey: "planesEnabled") as? Bool ?? true
+        let quiet = defaults.object(forKey: "planeMinutes") as? Double ?? 2
+        planeMinutes = min(max(quiet, Self.planeRange.lowerBound), Self.planeRange.upperBound)
         // Before the built-in lines existed the brain was LM Studio; someone who
         // set it up keeps it. Everyone else starts with lines that need no server.
         let setUpAModel = ["talkServer", "talkModel", "openRouterModel"].contains { defaults.object(forKey: $0) != nil }

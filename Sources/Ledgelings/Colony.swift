@@ -23,6 +23,9 @@ final class Colony: NSObject {
     let flowerCell: CGSize
     let houseFrames: SpriteAtlas.Frames
     let houseCell: CGSize
+    /// The paper plane, and the letter it opens into.
+    let planeFrames: SpriteAtlas.Frames
+    let planeCell: CGSize
 
     /// A bigger body walks further from the screen edge, so each size has its
     /// own outline. Sizes come in half steps, so this stays a handful of entries.
@@ -73,6 +76,15 @@ final class Colony: NSObject {
     var scheduled: [ScheduledLine] = []
     /// The script conversations used lately, oldest first, so the same one is not heard twice running.
     var recentLines: [Int] = []
+    /// The paper plane in the air, or being read; one at a time.
+    var airmail: Airmail?
+    /// How many planes have gone up, so a late model answer finds the right one.
+    var planeCount = 0
+    /// Counts the quiet since the last bump, to know when a plane is due.
+    var post = Post(quietFor: 0)
+    let wind = Wind()
+    /// Creatures holding an open letter.
+    var letters: [Int: Bool] = [:]
     /// The last thing that happened with the model, for the menu.
     var talkStatus = "not tried yet"
     var elapsed: Double = 0
@@ -99,6 +111,9 @@ final class Colony: NSObject {
         let house = try SpriteAtlas(named: "house")
         houseFrames = house.frames()
         houseCell = house.cellSize
+        let plane = try SpriteAtlas(named: "plane")
+        planeFrames = plane.frames()
+        planeCell = plane.cellSize
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
         super.init()
 
@@ -236,6 +251,7 @@ final class Colony: NSObject {
         sayScheduledLines()
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
+        updatePost(dt: dt)
         render()
         setFrameRate(asleep: hideout.phase == .hidden || (held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
@@ -264,14 +280,16 @@ final class Colony: NSObject {
                 bubble: bubbles[i]?.text,
                 hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) },
                 hidden: hideout.isInside(i),
-                shrink: shrink
+                shrink: shrink,
+                letter: letterImage(for: i)
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)
-        let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot()
+        let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
-                           flight: inFlight, sparks: stars, house: home, houseCell: houseCell)
+                           flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
+                           plane: plane, planeCell: planeCell)
         }
     }
 }

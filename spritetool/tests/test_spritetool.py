@@ -192,3 +192,27 @@ def test_the_house_is_blocky_with_a_creature_sized_doorway_on_the_left():
     assert cell.getpixel((bx + painter.DOOR_X + painter.DOOR_W // 2, floor - painter.DOOR_H + 1))[:3] == dark
     # Windows are eye-black, like the creature.
     assert (0, 0, 0) in {cell.getpixel((px, py))[:3] for px in range(w) for py in range(h) if cell.getpixel((px, py))[3]}
+
+
+PLANE = Path(__file__).resolve().parents[2] / "sprites" / "plane.yaml"
+
+
+def test_the_plane_sheet_has_a_plane_and_a_letter_in_blocky_rules():
+    from spritetool.painters import plane as painter
+
+    recipe = load_recipe(PLANE)
+    assert [a.name for a in recipe.animations] == ["fly", "letter"]
+    sheet = key_out(get_painter("plane")(recipe), recipe.background, recipe.tolerance)
+    for col, row, pose, _ in recipe.cells():
+        x, y, w, h = recipe.cell_rect(col, row)
+        cell = sheet.crop((x, y, x + w, y + h))
+        box = cell.getchannel("A").getbbox()
+        assert box, f"{pose} is empty"
+        # The rim is the painter's dark outline, all the way round.
+        rgb = cell.convert("RGB")
+        left, top, right, bottom = box
+        edge = [rgb.getpixel((px, py)) for px in range(left, right) for py in range(top, bottom)
+                if cell.getpixel((px, py))[3] and (px in (left, right - 1) or py in (top, bottom - 1))]
+        assert painter.RIM in edge, f"{pose} has no dark rim"
+    plane_box = painter.glyph_pixels("plane")
+    assert max(x for x, _ in plane_box) > 2 * max(y for _, y in plane_box) * 0.7, "a plane is long, nose to tail"

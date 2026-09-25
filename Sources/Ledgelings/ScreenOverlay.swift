@@ -22,6 +22,21 @@ struct CreatureSnapshot {
     var hidden = false
     /// 1 = full size; falls to 0 as it disappears into the doorway, rises from 0 as it comes out.
     var shrink: CGFloat = 1
+    /// The paper plane's note, unfolded and held out in front while it is read.
+    var letter: CGImage?
+}
+
+/// The paper plane and its dotted trail, in GLOBAL coordinates.
+struct PlaneSnapshot {
+    var image: CGImage?
+    var position: CGPoint
+    /// Where the nose points, radians. The sprite points right; heading left, it is flipped upright.
+    var heading: Double
+    var scale: CGFloat
+    /// 0 once caught (only the trail is left), fading after a miss.
+    var opacity: Float
+    var trail: [(position: CGPoint, opacity: Float)]
+    var puffSize: CGFloat
 }
 
 /// The house, at whatever size it currently is, pinned by its bottom-right corner.
@@ -64,7 +79,15 @@ final class ScreenOverlay {
     let root: CALayer
     let view: OverlayView?
     private let window: OverlayWindow?
-    private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer)] = []
+    private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer)] = []
+    private lazy var planeLayer: CALayer = {
+        let layer = makeLayers().sprite
+        layer.isHidden = true
+        layer.zPosition = 4                        // over creatures and bubbles
+        root.addSublayer(layer)
+        return layer
+    }()
+    private var puffLayers: [CALayer] = []
     private lazy var flight: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
@@ -154,8 +177,10 @@ final class ScreenOverlay {
 
     func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize,
                 flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = [],
-                house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero) {
+                house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
+                plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero) {
         renderFlight(inFlight, flowerCell: flowerCell)
+        renderPlane(plane, cell: planeCell)
         renderSparks(sparks)
         renderHouse(inHouse, cell: houseCell)
         while creatures.count < snapshots.count { creatures.append(makeLayers()) }
@@ -195,6 +220,17 @@ final class ScreenOverlay {
                 layers.hat.isHidden = true
             }
 
+            // The open letter is held out in front, on the side it faces.
+            if let letter = snap.letter {
+                let size = CGSize(width: planeCell.width * scale, height: planeCell.height * scale)
+                layers.letter.isHidden = false
+                layers.letter.contents = letter
+                layers.letter.bounds = CGRect(origin: .zero, size: size)
+                layers.letter.position = CGPoint(x: (snap.isMirrored ? -1 : 1) * cell.width * scale * 0.42, y: -bodyHeight * 0.08)
+            } else if !layers.letter.isHidden {
+                layers.letter.isHidden = true
+            }
+
             for (k, layer) in layers.zs.enumerated() {
                 guard let asleep = snap.asleepFor else { if layer.opacity != 0 { layer.opacity = 0 }; continue }
                 let clock = asleep / Self.zCycle - Double(k) / Double(Self.zCount)
@@ -230,6 +266,41 @@ final class ScreenOverlay {
             layer.opacity = spark.opacity
         }
         for layer in sparkLayers.dropFirst(sparks.count) where !layer.isHidden { layer.isHidden = true }
+    }
+
+    /// The plane over everything, and its trail as plain square puffs, pooled like the stars.
+    private func renderPlane(_ plane: PlaneSnapshot?, cell: CGSize) {
+        let origin = display.frame.origin
+        let puffs = plane?.trail ?? []
+        while puffLayers.count < puffs.count {
+            let layer = CALayer()
+            layer.actions = ["position": NSNull(), "bounds": NSNull(), "opacity": NSNull(), "hidden": NSNull(), "backgroundColor": NSNull()]
+            layer.zPosition = 3.5
+            layer.backgroundColor = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)
+            root.addSublayer(layer)
+            puffLayers.append(layer)
+        }
+        for (layer, puff) in zip(puffLayers, puffs) {
+            let size = plane?.puffSize ?? 2
+            layer.isHidden = false
+            layer.bounds = CGRect(x: 0, y: 0, width: size, height: size)
+            layer.position = CGPoint(x: (puff.position.x - origin.x).rounded(), y: (puff.position.y - origin.y).rounded())
+            layer.opacity = puff.opacity
+        }
+        for layer in puffLayers.dropFirst(puffs.count) where !layer.isHidden { layer.isHidden = true }
+
+        guard let plane, let image = plane.image, plane.opacity > 0 else {
+            if !planeLayer.isHidden { planeLayer.isHidden = true }
+            return
+        }
+        planeLayer.isHidden = false
+        planeLayer.contents = image
+        planeLayer.opacity = plane.opacity
+        planeLayer.bounds = CGRect(x: 0, y: 0, width: cell.width * plane.scale, height: cell.height * plane.scale)
+        planeLayer.position = CGPoint(x: plane.position.x - origin.x, y: plane.position.y - origin.y)
+        // Heading left, flip it over so the wing stays on top.
+        let upright: CGFloat = cos(plane.heading) < 0 ? -1 : 1
+        planeLayer.transform = CATransform3DScale(CATransform3DMakeRotation(plane.heading, 0, 0, 1), 1, upright, 1)
     }
 
     private func renderHouse(_ inHouse: HouseSnapshot?, cell: CGSize) {
@@ -315,7 +386,7 @@ final class ScreenOverlay {
         bubbles.removeValue(forKey: index)?.plate.removeFromSuperlayer()
     }
 
-    private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer) {
+    private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer) {
         func pixelLayer() -> CALayer {
             let layer = CALayer()
             layer.magnificationFilter = .nearest
@@ -333,8 +404,12 @@ final class ScreenOverlay {
         let hat = pixelLayer()
         hat.isHidden = true
         body.addSublayer(hat)
+        let letter = pixelLayer()
+        letter.isHidden = true
+        letter.zPosition = 1
+        body.addSublayer(letter)
         root.addSublayer(body)
-        return (body, sprite, zs, hat)
+        return (body, sprite, zs, hat, letter)
     }
 
     private static let noAnimations: [String: any CAAction] = [

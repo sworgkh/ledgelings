@@ -36,7 +36,7 @@ extension Colony {
     func talkNow(from chosen: Int? = nil) {
         guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
         guard !hideout.isActive else { return }
-        let free = creatures.indices.filter { !busy.contains($0) }
+        let free = creatures.indices.filter { !busy.contains($0) && !expectsPlane($0) }
         let awake = free.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
         guard let speaker = chosen ?? (awake.isEmpty ? free : awake).randomElement(using: &rng),
               creatures.indices.contains(speaker), !busy.contains(speaker) else { talkStatus = "everyone is mid-conversation"; return }
