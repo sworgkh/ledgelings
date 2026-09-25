@@ -36,7 +36,12 @@ struct SpeechClient: Sendable {
 
     var key: String
     var model: String
+    /// A local server's `/v1` root (Kokoro-FastAPI, LMS Speaks…); nil is OpenRouter.
+    /// A local server takes no key and reports no price.
+    var server: URL? = nil
     var timeout: TimeInterval = 30
+
+    private var base: URL { server ?? ChatClient.openRouterURL }
 
     static var modelsURL: URL {
         var parts = URLComponents(url: ChatClient.openRouterURL.appendingPathComponent("models"), resolvingAgainstBaseURL: false)!
@@ -54,7 +59,7 @@ struct SpeechClient: Sendable {
         struct Body: Encodable {
             let model: String; let input: String; let voice: String?; let response_format: String; let speed: Double?
         }
-        var request = chat.authorised(URLRequest(url: ChatClient.openRouterURL.appendingPathComponent("audio/speech"), timeoutInterval: timeout))
+        var request = chat.authorised(URLRequest(url: base.appendingPathComponent("audio/speech"), timeoutInterval: timeout))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(Body(model: model, input: text, voice: voice?.isEmpty == false ? voice : nil,
@@ -115,6 +120,35 @@ struct SpeechClient: Sendable {
         .sorted { ($0.inputPerMillion ?? .infinity, $0.id) < ($1.inputPerMillion ?? .infinity, $1.id) }
     }
 
+    /// A local server's voice list, `GET /audio/voices`: `{"voices": ["af_bella", …]}`,
+    /// or the same with objects carrying an `id` or `name`, or a bare array.
+    static func parseVoices(_ data: Data) throws -> [String] {
+        struct Named: Decodable { let id: String?; let name: String? }
+        enum Entry: Decodable {
+            case plain(String), named(Named)
+            init(from decoder: Decoder) throws {
+                let c = try decoder.singleValueContainer()
+                if let s = try? c.decode(String.self) { self = .plain(s) } else { self = .named(try c.decode(Named.self)) }
+            }
+            var id: String? { switch self { case .plain(let s): s; case .named(let n): n.id ?? n.name } }
+        }
+        struct Wrapped: Decodable { let voices: [Entry] }
+        if let message = ChatClient.serverError(in: data) { throw ChatClient.Failure.refused(message) }
+        let decoder = JSONDecoder()
+        guard let entries = (try? decoder.decode(Wrapped.self, from: data).voices) ?? (try? decoder.decode([Entry].self, from: data)) else {
+            throw ChatClient.Failure.badReply(String(decoding: data.prefix(120), as: UTF8.self))
+        }
+        return entries.compactMap(\.id)
+    }
+
+    /// The local server's voices.
+    func voices() async throws -> [String] {
+        let data: Data
+        do { data = try await URLSession.shared.data(for: chat.authorised(URLRequest(url: base.appendingPathComponent("audio/voices"), timeoutInterval: 10))).0 }
+        catch { throw ChatClient.Failure.serverDown(error.localizedDescription) }
+        return try Self.parseVoices(data)
+    }
+
     /// What `/generation` says one call cost; nil while OpenRouter has not filled it in yet.
     static func parseGeneration(_ data: Data) -> Spend.Usage? {
         struct Reply: Decodable {
@@ -173,5 +207,7 @@ struct SpeechClient: Sendable {
         return nil
     }
 
-    private var chat: ChatClient { .openRouter(key: key, model: model) }
+    private var chat: ChatClient {
+        server.map { ChatClient(provider: .lmStudio, baseURL: $0, apiKey: nil, model: model) } ?? .openRouter(key: key, model: model)
+    }
 }

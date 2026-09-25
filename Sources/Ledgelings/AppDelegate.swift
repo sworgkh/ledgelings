@@ -42,6 +42,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         installStatusItem()
+        // `--say "text"`: one line in the current voice settings, its cues on stderr, then quit.
+        if let at = CommandLine.arguments.firstIndex(of: "--say"), CommandLine.arguments.indices.contains(at + 1) {
+            let text = CommandLine.arguments[at + 1], name = voice.cast().first ?? "Blocky"
+            let voice = voice
+            func log(_ s: String) { FileHandle.standardError.write(Data("say: \(s)\n".utf8)) }
+            let started = voice.sayOnce(text, as: name) { cue in
+                log("\(cue) · \(voice.status)")
+                if cue == .done || cue == .dropped { exit(cue == .done ? 0 : 1) }
+            }
+            if !started { log("not said: \(voice.status)"); exit(1) }
+            Task { @MainActor in try? await Task.sleep(for: .seconds(60)); log("timed out"); exit(2) }
+        }
         // `--settings [creatures|sprites|talk|voice|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
             let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "voice": .voice, "chats": .chats]

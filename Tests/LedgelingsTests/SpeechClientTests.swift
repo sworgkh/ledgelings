@@ -39,6 +39,22 @@ import Testing
         #expect(body["speed"] == nil)
     }
 
+    @Test func aLocalServerIsAskedWithoutAKeyOrOpenRoutersHeaders() throws {
+        let local = SpeechClient(key: "", model: "kokoro", server: URL(string: "http://localhost:8880/v1")!)
+        let request = try local.request(text: "Hi", voice: "af_bella", speed: 1, format: "wav")
+        #expect(request.url?.absoluteString == "http://localhost:8880/v1/audio/speech")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(request.value(forHTTPHeaderField: "X-Title") == nil)
+        #expect(try json(request)["response_format"] as? String == "wav")
+    }
+
+    @Test func aLocalServersVoicesAreReadInAnyOfItsShapes() throws {
+        #expect(try SpeechClient.parseVoices(Data(#"{"voices":["af_bella","am_puck"]}"#.utf8)) == ["af_bella", "am_puck"])
+        #expect(try SpeechClient.parseVoices(Data(#"{"voices":[{"id":"a"},{"name":"b"}]}"#.utf8)) == ["a", "b"])
+        #expect(try SpeechClient.parseVoices(Data(#"["x","y"]"#.utf8)) == ["x", "y"])
+        #expect(throws: ChatClient.Failure.self) { try SpeechClient.parseVoices(Data("<html>".utf8)) }
+    }
+
     @Test func anEmptyVoiceIsLeftForTheModelToChoose() throws {
         let request = try SpeechClient(key: "k", model: "m").request(text: "Hi", voice: "", speed: 1)
         let body = try json(request)

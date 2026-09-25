@@ -33,6 +33,8 @@ final class Voice: NSObject, ObservableObject {
     @Published private(set) var status = "not tried yet"
     /// OpenRouter's speech models, once fetched.
     @Published private(set) var models: [SpeechClient.Model] = []
+    /// The local server's voices, once fetched.
+    @Published private(set) var localVoices: [String] = []
 
     private let synthesizer = AVSpeechSynthesizer()
     /// OpenRouter's clips play through a varispeed, the tape-machine way: faster
@@ -132,11 +134,12 @@ final class Voice: NSObject, ObservableObject {
         guard waiting < Self.mostWaiting else { status = "skipped a line: still saying the ones before it"; return false }
         switch settings.voiceEngine {
         case .system: return speakHere(line, as: name, cast: cast, cue: cue)
-        case .openRouter: return speakOnline(line, as: name, cast: cast, cue: cue)
+        case .openRouter, .local: return speakOnline(line, as: name, cast: cast, cue: cue)
         }
     }
 
     private func speakHere(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
+        if settings.speedFollowsPitch { return speakHereLikeTape(line, as: name, cast: cast, cue: cue) }
         let utterance = AVSpeechUtterance(string: line)
         utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:))
         utterance.pitchMultiplier = Float(min(max(pitch(for: name), 0.5), 2))
@@ -150,25 +153,34 @@ final class Voice: NSObject, ObservableObject {
         return true
     }
 
+    /// OpenRouter, or a speech server on this Mac: fetched, then played in turn.
+    /// A local line is free, so it is neither kept, priced nor looked up in the archive.
     private func speakOnline(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
-        let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
-        guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return false }
-        let client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
+        let local = settings.voiceEngine == .local
+        let client: SpeechClient
+        if local {
+            guard let server = settings.localVoiceURL else { status = "the local server's address is not a URL"; return false }
+            client = SpeechClient(key: "", model: settings.localVoiceModel.trimmingCharacters(in: .whitespaces), server: server)
+        } else {
+            let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
+            guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return false }
+            client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
+        }
         let speed = speed(for: name)
-        let keep = settings.keepVoices, saidAt = Date(), pitch = pitch(for: name)
+        let keep = settings.keepVoices && !local, saidAt = Date(), pitch = pitch(for: name), follow = settings.speedFollowsPitch
         waiting += 1
         // Fetch now, while the line before is still playing; play in turn.
         let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
-            let voices = (try? await self?.voices(of: client.model)) ?? []
+            let voices = local ? ((try? await self?.loadLocalVoices()) ?? []) : ((try? await self?.voices(of: client.model)) ?? [])
             let voice = self?.onlineVoice(for: name, cast: cast, among: voices)
             // Asked slower by the pitch, sped back up by it as it plays: the pace stays.
-            let asked = speed / pitch
+            let asked = Voices.askedSpeed(speed: speed, pitch: pitch, followPitch: follow)
             let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: asked)
-            if let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
+            if !local, let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
                 return (audio, nil, voice, true)
             }
             // A refusal about the format or the speed is answered once each, and remembered.
-            var format = self?.formats[client.model] ?? "pcm"
+            var format = self?.formats[client.model] ?? (local ? "wav" : "pcm")
             var sendSpeed = !(self?.noSpeed.contains(client.model) ?? false)
             var reply: (audio: Data, generation: String?)?
             for attempt in 0..<3 where reply == nil {
@@ -204,10 +216,10 @@ final class Voice: NSObject, ObservableObject {
                 guard let self, self.epoch == epoch, !Task.isCancelled else { return }
                 if said.kept {
                     self.history?.recordVoice(.init(time: saidAt, speaker: name, text: line, model: client.model, cost: 0, kept: true))
-                } else if let generation = said.generation {
+                } else if !local, let generation = said.generation {
                     self.charge(client, generation, speaker: name, text: line, at: saidAt)
                 }
-                self.status = "\(name): \(said.voice ?? "default voice") on \(client.model)" + (said.kept ? ", kept copy, free" : "")
+                self.status = "\(name): \(said.voice ?? "default voice") on \(local ? "local " : "")\(client.model)" + (said.kept ? ", kept copy, free" : "")
                 try await self.play(said.audio, pitch: pitch) { cue?(.started(duration: $0)) }
                 ending = .done
             } catch is CancellationError {
@@ -247,14 +259,18 @@ final class Voice: NSObject, ObservableObject {
         return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
     }
 
-    /// The model voice `name` speaks with, from the model's `voices`; nil lets the model choose.
+    /// The voice `name` speaks with on OpenRouter or the local server, from that
+    /// model's `voices`; nil lets the model choose.
     func onlineVoice(for name: String, cast: [String], among voices: [String], automatic: Bool = false) -> String? {
+        let local = settings.voiceEngine == .local
+        let mine = { (v: CharacterVoice) in local ? v.localVoice : v.openRouterVoice }
+        let chosen = local ? settings.localVoice : settings.openRouterVoice
         let usable = { (v: String?) in v.flatMap { voices.isEmpty || voices.contains($0) ? $0 : nil } }
-        if !automatic, let own = usable(settings.characterVoices[name]?.openRouterVoice) { return own }
-        guard settings.voicePerCharacter else { return settings.openRouterVoice.isEmpty ? voices.first : settings.openRouterVoice }
+        if !automatic, let own = usable(settings.characterVoices[name].flatMap(mine)) { return own }
+        guard settings.voicePerCharacter else { return chosen.isEmpty ? voices.first : chosen }
         let english = Voices.englishFirst(voices)
         let pool = settings.cartoonVoices ? Voices.cartoonFirst(english) : english
-        var fixed = settings.characterVoices.compactMapValues { usable($0.openRouterVoice) }
+        var fixed = settings.characterVoices.compactMapValues { usable(mine($0)) }
         if automatic { fixed[name] = nil }
         return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
     }
@@ -270,13 +286,116 @@ final class Voice: NSObject, ObservableObject {
                 .flatMap(AVSpeechSynthesisVoice.init(identifier:))?.name ?? "system default"
         case .openRouter:
             return onlineVoice(for: name, cast: cast(), among: modelVoices, automatic: true) ?? "the model's own"
+        case .local:
+            return onlineVoice(for: name, cast: cast(), among: localVoices, automatic: true) ?? "the server's own"
         }
+    }
+
+    /// The local server's voices, fetched once per session and again on `again`.
+    @discardableResult
+    func loadLocalVoices(again: Bool = false) async throws -> [String] {
+        if !again, !localVoices.isEmpty { return localVoices }
+        guard let server = settings.localVoiceURL else { throw ChatClient.Failure.serverDown("the address is not a URL") }
+        localVoices = try await SpeechClient(key: "", model: settings.localVoiceModel, server: server).voices()
+        return localVoices
+    }
+
+    /// `--say`: one line as `name`, voice on or off, for trying an engine from a script.
+    @discardableResult
+    func sayOnce(_ text: String, as name: String, cue: CueHandler?) -> Bool {
+        speak(text, as: name, cast: cast(), cue: cue)
     }
 
     /// Settings › Voice's per-character Test.
     func introduce(_ name: String) {
         stop()
         speak("Hi, I'm \(name). This is how I sound.", as: name, cast: cast())
+    }
+
+    /// A Mac voice without its own pitch shifter, which smears high voices: the
+    /// line is rendered to sound at the asked speed and natural pitch, then
+    /// played `pitch` times faster through the varispeed, like an OpenRouter clip.
+    /// The bubble types over the clip's length, as the voice cannot report
+    /// its progress once rendered.
+    private func speakHereLikeTape(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
+        let utterance = AVSpeechUtterance(string: line)
+        utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:))
+        let pitch = pitch(for: name)
+        let asked = Voices.askedSpeed(speed: speed(for: name), pitch: pitch, followPitch: true)
+        utterance.rate = min(max(AVSpeechUtteranceDefaultSpeechRate * Float(asked), AVSpeechUtteranceMinimumSpeechRate),
+                             AVSpeechUtteranceMaximumSpeechRate)
+        waiting += 1
+        let rendered = Task { await self.render(utterance) }
+        let before = chain, epoch = epoch
+        chain = Task { [weak self] in
+            await before?.value
+            var ending = Cue.dropped
+            defer {
+                cue?(ending)
+                if let self, self.epoch == epoch, self.waiting > 0 { self.waiting -= 1 }
+            }
+            let buffers = await rendered.value.buffers
+            guard let self, self.epoch == epoch, !Task.isCancelled, !buffers.isEmpty else { return }
+            self.status = "\(name): \(utterance.voice?.name ?? "system voice")"
+            do {
+                try await self.play(buffers, pitch: pitch) { cue?(.started(duration: $0)) }
+                ending = .done
+            } catch {
+                self.status = "\(error)"
+            }
+        }
+        return true
+    }
+
+    /// Separate from `synthesizer`, whose delegate drives the live voice.
+    private let renderer = AVSpeechSynthesizer()
+
+    /// The utterance as sound, not played. The synthesizer hands it over in
+    /// pieces and ends with an empty one.
+    private func render(_ utterance: AVSpeechUtterance) async -> Rendered {
+        let collected = Rendered()
+        return await withCheckedContinuation { finished in
+            renderer.write(utterance) { piece in
+                guard !collected.done else { return }
+                if let pcm = piece as? AVAudioPCMBuffer, pcm.frameLength > 0 {
+                    collected.buffers.append(pcm)
+                } else {
+                    collected.done = true
+                    finished.resume(returning: collected)
+                }
+            }
+        }
+    }
+
+    /// The pieces of one rendered line. Filled on the synthesizer's queue, read
+    /// on the main actor only once `done`; never both at once.
+    private final class Rendered: @unchecked Sendable {
+        var buffers: [AVAudioPCMBuffer] = []
+        var done = false
+    }
+
+    /// Play rendered pieces to their end, `pitch` times faster.
+    private func play(_ buffers: [AVAudioPCMBuffer], pitch: Double, started: (Double) -> Void) async throws {
+        let format = buffers[0].format
+        let frames = buffers.reduce(0) { $0 + Double($1.frameLength) }
+        let rate = try route(format, pitch: pitch)
+        for buffer in buffers { player.scheduleBuffer(buffer, completionHandler: nil) }
+        let duration = frames / format.sampleRate / rate
+        player.play()
+        started(duration)
+        try await Task.sleep(for: .seconds(duration + 0.15))
+        player.stop()
+    }
+
+    /// Player → varispeed → mixer for sound in `format`; returns the rate set.
+    private func route(_ format: AVAudioFormat, pitch: Double) throws -> Double {
+        engine.connect(player, to: shifter, format: format)
+        engine.connect(shifter, to: engine.mainMixerNode, format: format)
+        let rate = min(max(pitch, 0.25), 4)
+        shifter.rate = Float(rate)
+        player.volume = Float(settings.voiceVolume)
+        if !engine.isRunning { try engine.start() }
+        return rate
     }
 
     /// Play a clip to its end, `pitch` times faster and so that much higher.
@@ -288,12 +407,7 @@ final class Voice: NSObject, ObservableObject {
         try audio.write(to: file)
         defer { try? FileManager.default.removeItem(at: file) }
         let clip = try AVAudioFile(forReading: file)
-        engine.connect(player, to: shifter, format: clip.processingFormat)
-        engine.connect(shifter, to: engine.mainMixerNode, format: clip.processingFormat)
-        let rate = min(max(pitch, 0.25), 4)
-        shifter.rate = Float(rate)
-        player.volume = Float(settings.voiceVolume)
-        if !engine.isRunning { try engine.start() }
+        let rate = try route(clip.processingFormat, pitch: pitch)
         let duration = Double(clip.length) / clip.processingFormat.sampleRate / rate
         player.scheduleFile(clip, at: nil, completionHandler: nil)
         player.play()
@@ -347,7 +461,7 @@ final class Voice: NSObject, ObservableObject {
     }
 
     /// Mac voices that sing their lines rather than say them: fun once, not all day.
-    static let singers: Set<String> = ["Bells", "Cellos", "Organ", "Good News", "Bad News"]
+    static let singers: Set<String> = ["Bells", "Cellos", "Organ", "Good News", "Bad News", "Superstar"]
 
     /// The voices handed out with Cartoon voices on: the Mac's character voices
     /// (Grandma, Grandpa, Rocko, Shelley…) and the old talking novelty voices

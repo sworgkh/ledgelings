@@ -1,4 +1,5 @@
 import AVFoundation
+import AppKit
 import LedgelingsCore
 import SwiftUI
 
@@ -62,6 +63,9 @@ private struct CharacterVoiceRow: View {
                 case .openRouter:
                     if let mine = own.openRouterVoice, !voice.modelVoices.contains(mine) { Text("\(mine) (not in this model)").tag(mine) }
                     ForEach(voice.modelVoices, id: \.self) { Text($0).tag($0) }
+                case .local:
+                    if let mine = own.localVoice, !voice.localVoices.contains(mine) { Text("\(mine) (not on the server)").tag(mine) }
+                    ForEach(voice.localVoices, id: \.self) { Text($0).tag($0) }
                 }
             }
             SliderRow("Speed", value: speed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
@@ -72,11 +76,21 @@ private struct CharacterVoiceRow: View {
 
     private var voiceChoice: Binding<String> {
         Binding(
-            get: { (settings.voiceEngine == .system ? own.systemVoice : own.openRouterVoice) ?? "" },
+            get: {
+                switch settings.voiceEngine {
+                case .system: own.systemVoice ?? ""
+                case .openRouter: own.openRouterVoice ?? ""
+                case .local: own.localVoice ?? ""
+                }
+            },
             set: { picked in
                 let value = picked.isEmpty ? nil : picked
                 settings.setVoice(of: name) { v in
-                    if settings.voiceEngine == .system { v.systemVoice = value } else { v.openRouterVoice = value }
+                    switch settings.voiceEngine {
+                    case .system: v.systemVoice = value
+                    case .openRouter: v.openRouterVoice = value
+                    case .local: v.localVoice = value
+                    }
                 }
             }
         )
@@ -111,9 +125,11 @@ struct VoiceSection: View {
             switch settings.voiceEngine {
             case .system: systemFields
             case .openRouter: openRouterFields
+            case .local: localFields
             }
             SliderRow("Speed", value: $settings.voiceSpeed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
             SliderRow("Pitch", value: $settings.voicePitch, in: AppSettings.voicePitchRange, step: 0.05, unit: "×")
+            Toggle("Speed follows pitch: no echo, higher talks a little faster", isOn: $settings.speedFollowsPitch)
             SliderRow("Volume", value: $settings.voiceVolume, in: 0...1, step: 0.05, unit: "")
             HStack {
                 Button("Test") { voice.introduce() }
@@ -166,6 +182,45 @@ struct VoiceSection: View {
         Color.clear.frame(height: 0).task { await load() }
     }
 
+    @State private var localCheck = "not checked"
+
+    @ViewBuilder private var localFields: some View {
+        TextField("Server", text: $settings.localVoiceServer, prompt: Text(AppSettings.defaultLocalVoiceServer))
+        TextField("Model", text: $settings.localVoiceModel, prompt: Text(AppSettings.defaultLocalVoiceModel))
+        Picker("Voice", selection: $settings.localVoice) {
+            Text("The server's first").tag("")
+            if !settings.localVoice.isEmpty && !voice.localVoices.contains(settings.localVoice) {
+                Text(settings.localVoice).tag(settings.localVoice)
+            }
+            ForEach(voice.localVoices, id: \.self) { Text($0).tag($0) }
+        }
+        .disabled(settings.voicePerCharacter)
+        HStack {
+            Button("Check") { Task { await checkLocal() } }
+            Button("Copy Setup Command") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(VoiceSection.kokoroSetup, forType: .string)
+                localCheck = "copied; paste it into Terminal, wait for \"Uvicorn running\", then Check"
+            }
+            Spacer()
+        }
+        LabeledContent("Status") { Text(localCheck).foregroundStyle(.secondary).textSelection(.enabled) }
+        Color.clear.frame(height: 0).task { await checkLocal() }
+    }
+
+    /// Kokoro-FastAPI on a Mac: fetch it once, then start it (on Apple's GPU).
+    static let kokoroSetup = "git clone https://github.com/remsky/Kokoro-FastAPI.git ~/Kokoro-FastAPI; cd ~/Kokoro-FastAPI && ./start-gpu_mac.sh"
+
+    private func checkLocal() async {
+        localCheck = "checking…"
+        do {
+            let found = try await voice.loadLocalVoices(again: true)
+            localCheck = "ready: \(found.count) voices"
+        } catch {
+            localCheck = "\(error)"
+        }
+    }
+
     private var modelVoices: [String] { voice.models.first { $0.id == settings.voiceModel }?.voices ?? [] }
 
     private func load() async {
@@ -174,10 +229,12 @@ struct VoiceSection: View {
     }
 
     private var footer: String {
-        let shared = "Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off."
+        let shared = "Speed follows pitch: a higher voice also talks a little faster (by the square root of its lift: 1.18× at 1.4×), because a voice asked to talk slowly to make up for the lift smears into an echo. Off keeps the pace exact. Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off."
         switch settings.voiceEngine {
         case .system:
-            return "The Mac's own voices: free, offline, instant. More, and better ones, are in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices. With a voice each and Cartoon voices on, they are the Mac's character voices (Grandma, Rocko, Shelley…) and talking novelty ones (Zarvox, Bubbles, Junior…), never the singing ones; off, the plain voices, each at a slightly different pitch. " + shared
+            return "The Mac's own voices: free, offline, instant. More, and better ones, are in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices. With a voice each and Cartoon voices on, they are the Mac's character voices (Grandma, Rocko, Shelley…) and talking novelty ones (Zarvox, Bubbles, Junior…), never the singing ones (Bells, Organ, Superstar…); off, the plain voices, each at a slightly different pitch. " + shared
+        case .local:
+            return "Any speech server on this Mac that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is kept or priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint. " + shared
         case .openRouter:
             return "Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this Mac as the clip plays, so it costs nothing extra. " + shared
         }

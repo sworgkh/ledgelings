@@ -9,16 +9,20 @@ public struct CharacterVoice: Codable, Equatable, Sendable {
     /// One of the speech model's voices, for OpenRouter. Ignored when the
     /// chosen model has no voice by that name.
     public var openRouterVoice: String?
+    /// One of the local server's voices, for the Local server engine.
+    public var localVoice: String?
     /// Times the global Speed.
     public var speed: Double?
     /// Times the global Pitch, instead of the automatic lift.
     public var pitch: Double?
 
-    public init(systemVoice: String? = nil, openRouterVoice: String? = nil, speed: Double? = nil, pitch: Double? = nil) {
-        self.systemVoice = systemVoice; self.openRouterVoice = openRouterVoice; self.speed = speed; self.pitch = pitch
+    public init(systemVoice: String? = nil, openRouterVoice: String? = nil, localVoice: String? = nil,
+                speed: Double? = nil, pitch: Double? = nil) {
+        self.systemVoice = systemVoice; self.openRouterVoice = openRouterVoice; self.localVoice = localVoice
+        self.speed = speed; self.pitch = pitch
     }
 
-    public var isAutomatic: Bool { systemVoice == nil && openRouterVoice == nil && speed == nil && pitch == nil }
+    public var isAutomatic: Bool { systemVoice == nil && openRouterVoice == nil && localVoice == nil && speed == nil && pitch == nil }
 }
 
 /// Who sounds like whom, and what of a line is worth saying out loud. No audio
@@ -79,6 +83,20 @@ public enum Voices {
     public static func cartoonFirst(_ voices: [String]) -> [String] {
         let fun = voices.filter { v in let l = v.lowercased(); return playful.contains { l.contains($0) } }
         return fun.count >= 2 ? fun : voices
+    }
+
+    /// The speed to have a line spoken at, before it is played `pitch` times
+    /// faster (and so that much higher), like a tape.
+    ///
+    /// Asking for the full `speed / pitch` keeps the pace exactly, but a voice
+    /// asked to speak very slowly stretches its vowels into a smear that sounds
+    /// like an echo. With `followPitch`, it is asked for `speed / √pitch`, half
+    /// the slowdown in musical terms: at a 1.4× cartoon lift it speaks at 0.85×,
+    /// which every voice renders cleanly, and the line ends up 1.18× quicker, as
+    /// a higher voice naturally would.
+    public static func askedSpeed(speed: Double, pitch: Double, followPitch: Bool) -> Double {
+        let lift = max(pitch, 0.01)
+        return followPitch ? speed / lift.squareRoot() : speed / lift
     }
 
     /// FNV-1a over the UTF-8 bytes. Swift's own `hashValue` changes every launch.

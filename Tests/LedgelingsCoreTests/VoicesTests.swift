@@ -76,4 +76,14 @@ import Testing
         #expect(CharacterVoice().isAutomatic)
         #expect(!CharacterVoice(pitch: 1.3).isAutomatic)
     }
+
+    @Test func withSpeedFollowingPitchAVoiceIsNeverAskedToDrawl() {
+        // Exact pace: a 1.6× lift means asking for 0.625×, slow enough to smear.
+        #expect(abs(Voices.askedSpeed(speed: 1, pitch: 1.6, followPitch: false) - 0.625) < 1e-9)
+        // Following: half the slowdown, and the line comes out a little quicker.
+        let asked = Voices.askedSpeed(speed: 1, pitch: 1.44, followPitch: true)
+        #expect(abs(asked - 1 / 1.2) < 1e-9)
+        #expect(abs(asked * 1.44 - 1.2) < 1e-9, "played 1.44× faster: 1.2× the pace")
+        #expect(Voices.askedSpeed(speed: 1.3, pitch: 1, followPitch: true) == 1.3, "no lift, nothing changes")
+    }
 }

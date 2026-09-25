@@ -229,6 +229,15 @@ import Testing
         #expect(s.keepVoices, "paid-for sounds are kept unless asked not to")
         #expect(s.cartoonVoices, "desktop pets, not newsreaders")
         #expect(s.characterVoices.isEmpty)
+        #expect(s.speedFollowsPitch, "clean sound by default")
+        s.speedFollowsPitch = false
+        #expect(!AppSettings(defaults: defaults).speedFollowsPitch)
+        #expect(s.localVoiceURL?.absoluteString == "http://localhost:8880/v1" && s.localVoiceModel == "kokoro" && s.localVoice.isEmpty)
+        s.localVoiceServer = "not a url"
+        #expect(s.localVoiceURL == nil)
+        s.localVoiceServer = "http://127.0.0.1:9000"; s.localVoice = "am_puck"
+        #expect(AppSettings(defaults: defaults).localVoiceURL?.absoluteString == "http://127.0.0.1:9000/v1")
+        #expect(AppSettings(defaults: defaults).localVoice == "am_puck")
         s.setVoice(of: "Pip") { $0.pitch = 1.5; $0.openRouterVoice = "am_puck" }
         #expect(AppSettings(defaults: defaults).characterVoices["Pip"] == CharacterVoice(openRouterVoice: "am_puck", pitch: 1.5))
         s.setVoice(of: "Pip") { $0 = CharacterVoice() }

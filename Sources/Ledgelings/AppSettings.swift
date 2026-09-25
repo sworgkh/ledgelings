@@ -97,15 +97,21 @@ final class AppSettings: ObservableObject {
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
     enum VoiceEngine: String, CaseIterable, Sendable {
-        case system, openRouter
+        case system, openRouter, local
 
         var title: String {
             switch self {
             case .system: "Built-in voices"
             case .openRouter: ChatClient.Provider.openRouter.title
+            case .local: "Local server"
             }
         }
     }
+
+    /// Kokoro-FastAPI's own address and model name; any server speaking
+    /// OpenAI's `/v1/audio/speech` will do.
+    static let defaultLocalVoiceServer = "http://localhost:8880"
+    static let defaultLocalVoiceModel = "kokoro"
 
     /// Kokoro: dozens of English voices for about $0.00003 a line. The free
     /// speech models have daily limits the creatures would run into.
@@ -123,7 +129,11 @@ final class AppSettings: ObservableObject {
     @Published var voiceModel: String { didSet { save(voiceModel, "voiceModel") } }
     /// One of the model's voices; empty means its first.
     @Published var openRouterVoice: String { didSet { save(openRouterVoice, "openRouterVoice") } }
-    /// 1 is normal speed, for both engines.
+    /// A speech server on this Mac: its address (without `/v1`), model and voice (empty = its first).
+    @Published var localVoiceServer: String { didSet { save(localVoiceServer, "localVoiceServer") } }
+    @Published var localVoiceModel: String { didSet { save(localVoiceModel, "localVoiceModel") } }
+    @Published var localVoice: String { didSet { save(localVoice, "localVoice") } }
+    /// 1 is normal speed, for every engine.
     @Published var voiceSpeed: Double { didSet { save(voiceSpeed, "voiceSpeed") } }
     /// Squeakier and sillier: each character's pitch lifted by its own amount, and
     /// the playful voices (Grandma, Zarvox; AnimeCharacter, en_paul_excited) first.
@@ -131,6 +141,10 @@ final class AppSettings: ObservableObject {
     /// 1 is the voice's own pitch. Both engines: OpenRouter's clips are shifted as they play.
     @Published var voicePitch: Double { didSet { save(voicePitch, "voicePitch") } }
     @Published var voiceVolume: Double { didSet { save(voiceVolume, "voiceVolume") } }
+    /// Raising the pitch also quickens the talk a little (by √pitch), so no voice
+    /// is ever asked to drawl, which is what smears into an echo. Off: the pace
+    /// is kept exactly, at the cost of some smear on big lifts.
+    @Published var speedFollowsPitch: Bool { didSet { save(speedFollowsPitch, "speedFollowsPitch") } }
     /// Each character's own voice, speed and pitch, by name; absent means automatic.
     @Published var characterVoices: [String: CharacterVoice] { didSet { saveJSON(characterVoices, "characterVoices") } }
     /// Every line a speech model says is kept as a sound file beside the chats.
@@ -187,6 +201,9 @@ final class AppSettings: ObservableObject {
         systemVoice = defaults.string(forKey: "systemVoice") ?? ""
         voiceModel = defaults.string(forKey: "voiceModel") ?? Self.defaultVoiceModel
         openRouterVoice = defaults.string(forKey: "openRouterVoice") ?? ""
+        localVoiceServer = defaults.string(forKey: "localVoiceServer") ?? Self.defaultLocalVoiceServer
+        localVoiceModel = defaults.string(forKey: "localVoiceModel") ?? Self.defaultLocalVoiceModel
+        localVoice = defaults.string(forKey: "localVoice") ?? ""
         func clamp(_ key: String, _ fallback: Double, _ range: ClosedRange<Double>) -> Double {
             min(max(defaults.object(forKey: key) as? Double ?? fallback, range.lowerBound), range.upperBound)
         }
@@ -196,6 +213,7 @@ final class AppSettings: ObservableObject {
         characterVoices = defaults.data(forKey: "characterVoices")
             .flatMap { try? JSONDecoder().decode([String: CharacterVoice].self, from: $0) } ?? [:]
         keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
+        speedFollowsPitch = defaults.object(forKey: "speedFollowsPitch") as? Bool ?? true
         cartoonVoices = defaults.object(forKey: "cartoonVoices") as? Bool ?? true
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
@@ -217,6 +235,12 @@ final class AppSettings: ObservableObject {
     /// The cast of a species: the user's edit if there is one, else `fallback` (the sheet's).
     func cast(of species: String, fallback: [Character]) -> [Character] {
         casts[species].map { $0.isEmpty ? fallback : $0 } ?? fallback
+    }
+
+    /// The local speech server's `/v1` root, or nil when the address is not a URL.
+    var localVoiceURL: URL? {
+        URL(string: localVoiceServer.trimmingCharacters(in: .whitespaces))
+            .flatMap { $0.host == nil ? nil : $0.appendingPathComponent("v1") }
     }
 
     var talkServerURL: URL? {

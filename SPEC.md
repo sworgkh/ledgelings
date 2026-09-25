@@ -548,6 +548,17 @@ cheerful, happy, santa, boy, girl, radiant or kind-hearted, if at least two.
 
 **Built-in engine:** `AVSpeechSynthesizer`, rate = default rate × `voiceSpeed`
 (clamped to the system's range), pitch multiplier as above (0.5–2), volume `voiceVolume`.
+With `speedFollowsPitch` (default on) the speed asked for is `speed / √pitch`
+instead of `speed / pitch` (below), and the Mac's voices are rendered with
+`AVSpeechSynthesizer.write` at that rate and pitch 1, then played through the same
+varispeed at rate = pitch; their bubble then types over the clip's length.
+
+**Local server engine.** `{server}/v1/audio/speech` with `{model, input, voice,
+response_format: "wav", speed}`, no key, no OpenRouter headers; voices from `GET
+{server}/v1/audio/voices` (`{"voices": [...]}`, strings or objects with `id`/`name`,
+or a bare array). Not kept, not priced, not looked up in the archive. Defaults
+`http://localhost:8880`, `kokoro` (Kokoro-FastAPI).
+
 OpenRouter lines are asked for at speed `voiceSpeed / pitch` (clamped 0.25–4) and
 played through `AVAudioEngine`: player → varispeed at rate = pitch (0.25–4) →
 mixer, so they come out `pitch` times higher at the usual pace. (A time-pitch
@@ -1167,7 +1178,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | characters | the six above | ≥ 2; JSON |
 | systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores |
 | voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
-| voiceEngine | system | system, openRouter |
+| voiceEngine | system | system, openRouter, local |
 | voicePerCharacter | true | |
 | systemVoice | empty | a voice identifier; empty = system default |
 | voiceModel | `hexgrad/kokoro-82m` | an OpenRouter speech model |
@@ -1175,7 +1186,9 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch applies to both engines |
 | voiceVolume | 0.8 | 0–1 |
 | cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
-| characterVoices | {} | name → `{systemVoice, openRouterVoice, speed, pitch}`, JSON (§6.6.1) |
+| characterVoices | {} | name → `{systemVoice, openRouterVoice, localVoice, speed, pitch}`, JSON (§6.6.1) |
+| speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
+| localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
 Settings window: 1100×760 points, five tabs, each laid out as two columns
@@ -1214,7 +1227,7 @@ Stop, status; on the right a card per character on screen with voice picker
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 143 such tests and 79 app-side ones.
+  the tests in §14 first; the macOS app has 144 such tests and 82 app-side ones.
 
 ---
 
