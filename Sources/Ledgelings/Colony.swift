@@ -51,8 +51,17 @@ final class Colony: NSObject {
     var watchers: Set<AnyCancellable> = []
 
     var clock: DayNight
-    /// One line per talking creature, and when it stops showing.
-    var bubbles: [Int: (text: String, until: Double)] = [:]
+    /// One line per talking creature: what it says, when it stops showing, and
+    /// how much of it is on show while it is being said out loud.
+    struct Bubble {
+        var text: String
+        var until: Double
+        var reveal: SpeechReveal = .all
+        /// Which `say` put it up, so a late word from the voice about an older line is ignored.
+        var serial = 0
+    }
+    var bubbles: [Int: Bubble] = [:]
+    var bubbleSerial = 0
     /// Creatures in a running conversation: a bump or a poke involving them waits.
     var busy: Set<Int> = []
     /// Who has walked into whom, and how often.
@@ -275,6 +284,7 @@ final class Colony: NSObject {
             let inward = c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment)
             // Shrinking, it keeps its feet on the floor: the centre sinks as the body gets smaller.
             let sink = atlas.bodyHalfSize * CGFloat(sizes[i]) * (1 - shrink)
+            let shown = bubbles[i].map { $0.reveal.shown($0.text, at: elapsed) }
             return CreatureSnapshot(
                 position: CGPoint(x: c.position.x - inward.dx * sink, y: c.position.y - inward.dy * sink),
                 rotation: c.rotation, isMirrored: c.isMirrored,
@@ -282,7 +292,8 @@ final class Colony: NSObject {
                 scale: CGFloat(sizes[i]),
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
                 inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
-                bubble: bubbles[i]?.text,
+                bubble: shown?.text,
+                bubbleShare: shown?.share ?? 1,
                 hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) },
                 hidden: hideout.isInside(i),
                 shrink: shrink,

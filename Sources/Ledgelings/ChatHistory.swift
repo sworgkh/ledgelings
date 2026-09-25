@@ -30,6 +30,19 @@ final class ChatHistory: ObservableObject {
         }
     }
 
+    func recordVoice(_ charge: ChatLog.VoiceCharge) {
+        do {
+            try log.appendVoice(charge)
+            version += 1
+        } catch {
+            FileHandle.standardError.write(Data("Ledgelings chat log: \(error)\n".utf8))
+        }
+    }
+
+    func voiceTotals(on day: String, for exchanges: [ChatLog.Exchange]) -> [Int: ChatLog.VoiceTotal] {
+        ChatLog.voiceTotals(log.voiceCharges(on: day), for: exchanges)
+    }
+
     func days() -> [String] { (try? log.days()) ?? [] }
     func exchanges(on day: String) -> [ChatLog.Exchange] { (try? log.exchanges(on: day)) ?? [] }
 

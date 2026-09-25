@@ -546,6 +546,22 @@ line before. The `X-Generation-Id` header is then looked up at `GET
 `total_cost` (or `usage`) and `tokens_prompt` go to the spend file (§6.5.1) under
 the speech model's id, without a price if it never came.
 
+**Bubbles while speaking.** `say` returns whether the line will be said; if so
+the bubble starts as `waiting` (text `...`, showing (⌊3·t⌋ mod 3 + 1)/3 of it) with
+`until` = now + 45 s, and the voice cues it: `started(duration)` → typed evenly
+over `duration`, `until` = now + max(showTime, duration + 2); `started(nil)` (Mac
+voices) → shown as far as the last `willSpeakRange` end / line length; `done` →
+all shown, `until` = max(min(until, now + showTime), now + 2); `dropped` → all
+shown, `until` = now + showTime. A cue for a bubble since replaced is ignored (a
+serial per `say`). Hidden letters are drawn transparent in the full-size bubble;
+a cut never splits a composed character.
+
+**Voice cost per conversation.** Each OpenRouter line appends `{time (when said),
+speaker, text (as spoken), model, cost, kept}` to `chats/YYYY-MM-DD.voice.jsonl`
+once priced (kept copies at once, cost 0, kept true). The Chats tab gives each to
+the latest exchange written no later than 60 s after it that has the same speaker
+with the same `speakable` words, and sums cost, lines, unpriced and kept per exchange.
+
 **The voice archive** (`Application Support/Ledgelings/voices`). With
 `keepVoices`, every OpenRouter line is written as `<yyyy-MM-dd>/<HHmmss>-<speaker>-<key8>.wav`
 (speaker reduced to letters, digits, `-`, `_`, at most 24) and appended to
@@ -1171,7 +1187,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 132 such tests and 76 app-side ones.
+  the tests in §14 first; the macOS app has 139 such tests and 78 app-side ones.
 
 ---
 

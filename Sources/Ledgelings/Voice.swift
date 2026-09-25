@@ -24,6 +24,8 @@ final class Voice: NSObject, ObservableObject {
 
     let settings: AppSettings
     let spend: SpendLedger
+    /// Where each paid line's cost is noted beside its conversation. Nil: nowhere.
+    let history: ChatHistory?
     let archive: VoiceArchive
     /// Everything in the archive, loaded once and added to as lines are kept.
     @Published private(set) var clips: [VoiceArchive.Clip]
@@ -39,15 +41,34 @@ final class Voice: NSObject, ObservableObject {
     /// The names of the creatures on screen, in order. Voices are handed out
     /// over this whole list, so Test and the live talk agree on who sounds how.
     var cast: () -> [String] = { [] }
+    /// What happens to one line's sound, for its bubble: dots until `started`,
+    /// then the text types out, fully shown at `done`. `dropped` means it will
+    /// not be said after all (stopped, failed): show the text at once.
+    enum Cue: Equatable {
+        /// With the clip's length when it is known up front (OpenRouter); nil for
+        /// a voice that reports its progress instead (the Mac's own).
+        case started(duration: Double?)
+        /// Share of the line said so far, the Mac's voices only.
+        case progress(Double)
+        case done
+        case dropped
+    }
+    typealias CueHandler = @MainActor (Cue) -> Void
+
+    /// Bumped by `stop()`: an OpenRouter line from before it gives up instead of playing.
+    private var epoch = 0
+    /// The bubbles waiting on the Mac's voice, by utterance, with the line's length.
+    private var spoken: [ObjectIdentifier: (cue: CueHandler, length: Int)] = [:]
     /// The OpenRouter line being said; the next one waits for it.
     private var chain: Task<Void, Never>?
     private var watchers: Set<AnyCancellable> = []
 
     static var defaultArchive: URL { SpendLedger.defaultDirectory.appendingPathComponent("voices", isDirectory: true) }
 
-    init(settings: AppSettings, spend: SpendLedger, archive: URL = Voice.defaultArchive) {
+    init(settings: AppSettings, spend: SpendLedger, history: ChatHistory? = nil, archive: URL = Voice.defaultArchive) {
         self.settings = settings
         self.spend = spend
+        self.history = history
         self.archive = VoiceArchive(directory: archive)
         clips = self.archive.clips()
         super.init()
@@ -59,10 +80,13 @@ final class Voice: NSObject, ObservableObject {
 
     // MARK: Speaking
 
-    /// A creature's line, if voice is on. `name` is who says it.
-    func say(_ text: String, as name: String) {
-        guard settings.voiceEnabled else { return }
-        speak(text, as: name, cast: cast())
+    /// A creature's line, if voice is on. `name` is who says it. True when the
+    /// line will be said, and `cue` will hear how it goes (always ending in
+    /// `done` or `dropped`); false when it will not, so show the text now.
+    @discardableResult
+    func say(_ text: String, as name: String, cue: CueHandler? = nil) -> Bool {
+        guard settings.voiceEnabled else { return false }
+        return speak(text, as: name, cast: cast(), cue: cue)
     }
 
     /// The settings window's Test: the first three on screen introduce themselves, voice on or off.
@@ -78,25 +102,30 @@ final class Voice: NSObject, ObservableObject {
     }
 
     func stop() {
+        epoch += 1
+        let pending = spoken.values.map(\.cue)
+        spoken.removeAll()
         synthesizer.stopSpeaking(at: .immediate)
         chain?.cancel()
         chain = nil
         player?.stop()
         player = nil
         waiting = 0
+        pending.forEach { $0(.dropped) }
     }
 
-    private func speak(_ text: String, as name: String, cast: [String]) {
+    @discardableResult
+    private func speak(_ text: String, as name: String, cast: [String], cue: CueHandler? = nil) -> Bool {
         let line = Voices.speakable(text)
-        guard !line.isEmpty else { return }
-        guard waiting < Self.mostWaiting else { status = "skipped a line: still saying the ones before it"; return }
+        guard !line.isEmpty else { return false }
+        guard waiting < Self.mostWaiting else { status = "skipped a line: still saying the ones before it"; return false }
         switch settings.voiceEngine {
-        case .system: speakHere(line, as: name, cast: cast)
-        case .openRouter: speakOnline(line, as: name, cast: cast)
+        case .system: return speakHere(line, as: name, cast: cast, cue: cue)
+        case .openRouter: return speakOnline(line, as: name, cast: cast, cue: cue)
         }
     }
 
-    private func speakHere(_ line: String, as name: String, cast: [String]) {
+    private func speakHere(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
         let utterance = AVSpeechUtterance(string: line)
         if settings.voicePerCharacter {
             let pool = Self.characterVoices.map(\.identifier)
@@ -110,16 +139,18 @@ final class Voice: NSObject, ObservableObject {
                              AVSpeechUtteranceMaximumSpeechRate)
         utterance.volume = Float(settings.voiceVolume)
         waiting += 1
+        if let cue { spoken[ObjectIdentifier(utterance)] = (cue, (line as NSString).length) }
         synthesizer.speak(utterance)
         status = "\(name): \(utterance.voice?.name ?? "system voice")"
+        return true
     }
 
-    private func speakOnline(_ line: String, as name: String, cast: [String]) {
+    private func speakOnline(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
         let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
-        guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return }
+        guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return false }
         let client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         let perCharacter = settings.voicePerCharacter, chosen = settings.openRouterVoice, speed = settings.voiceSpeed
-        let keep = settings.keepVoices
+        let keep = settings.keepVoices, saidAt = Date()
         waiting += 1
         // Fetch now, while the line before is still playing; play in turn.
         let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
@@ -134,37 +165,52 @@ final class Voice: NSObject, ObservableObject {
             if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: speed) }
             return (audio, generation, voice, false)
         }
-        let before = chain
+        let before = chain, epoch = epoch
         chain = Task { [weak self] in
             await before?.value
-            defer { if let self, self.waiting > 0 { self.waiting -= 1 } }
+            // Every way out tells the bubble: said, or not said after all.
+            var ending = Cue.dropped
+            defer {
+                cue?(ending)
+                if let self, self.epoch == epoch, self.waiting > 0 { self.waiting -= 1 }
+            }
             do {
                 let said = try await fetch.value
-                guard let self, !Task.isCancelled else { return }
-                if let generation = said.generation { self.charge(client, generation) }
+                guard let self, self.epoch == epoch, !Task.isCancelled else { return }
+                if said.kept {
+                    self.history?.recordVoice(.init(time: saidAt, speaker: name, text: line, model: client.model, cost: 0, kept: true))
+                } else if let generation = said.generation {
+                    self.charge(client, generation, speaker: name, text: line, at: saidAt)
+                }
                 self.status = "\(name): \(said.voice ?? "default voice") on \(client.model)" + (said.kept ? ", kept copy, free" : "")
-                try await self.play(said.audio)
+                try await self.play(said.audio) { cue?(.started(duration: $0)) }
+                ending = .done
             } catch is CancellationError {
             } catch {
                 self?.status = "\(error)"
                 FileHandle.standardError.write(Data("Ledgelings voice: \(error)\n".utf8))
             }
         }
+        return true
     }
 
-    private func play(_ audio: Data) async throws {
+    /// Play a clip to its end. `started` hears its length the moment it starts.
+    private func play(_ audio: Data, started: (Double) -> Void) async throws {
         let player = try AVAudioPlayer(data: audio)
         player.volume = Float(settings.voiceVolume)
         self.player = player
         player.play()
+        started(player.duration)
         try await Task.sleep(for: .seconds(player.duration + 0.15))
     }
 
-    /// Into the spend file, priced once OpenRouter says what it cost.
-    private func charge(_ client: SpeechClient, _ generation: String) {
+    /// Into the spend file, and beside its conversation in the chat log, priced
+    /// once OpenRouter says what it cost.
+    private func charge(_ client: SpeechClient, _ generation: String, speaker: String, text: String, at time: Date) {
         Task { [weak self] in
             let usage = await client.cost(of: generation) ?? Spend.Usage(promptTokens: 0, completionTokens: 0, cost: nil)
             self?.spend.record(provider: .openRouter, model: client.model, usage: usage)
+            self?.history?.recordVoice(.init(time: time, speaker: speaker, text: text, model: client.model, cost: usage.cost))
         }
     }
 
@@ -216,11 +262,32 @@ final class Voice: NSObject, ObservableObject {
 }
 
 extension Voice: AVSpeechSynthesizerDelegate {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        let id = ObjectIdentifier(utterance)
+        Task { @MainActor in self.spoken[id]?.cue(.started(duration: nil)) }
+    }
+
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString range: NSRange,
+                                       utterance: AVSpeechUtterance) {
+        let id = ObjectIdentifier(utterance), end = range.location + range.length
+        Task { @MainActor in
+            guard let waiting = self.spoken[id], waiting.length > 0 else { return }
+            waiting.cue(.progress(Double(end) / Double(waiting.length)))
+        }
+    }
+
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        Task { @MainActor in if self.waiting > 0 { self.waiting -= 1 } }
+        let id = ObjectIdentifier(utterance)
+        Task { @MainActor in self.finished(id, .done) }
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        Task { @MainActor in if self.waiting > 0 { self.waiting -= 1 } }
+        let id = ObjectIdentifier(utterance)
+        Task { @MainActor in self.finished(id, .dropped) }
+    }
+
+    private func finished(_ id: ObjectIdentifier, _ how: Cue) {
+        if waiting > 0 { waiting -= 1 }
+        spoken.removeValue(forKey: id)?.cue(how)
     }
 }

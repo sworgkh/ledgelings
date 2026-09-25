@@ -7,7 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let history = ChatHistory()
     private let library = SpriteLibrary()
     private let spend = SpendLedger()
-    private lazy var voice = Voice(settings: settings, spend: spend)
+    private lazy var voice = Voice(settings: settings, spend: spend, history: history)
     private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend, voice: voice)
     private var statusItem: NSStatusItem?
     private var colony: Colony?

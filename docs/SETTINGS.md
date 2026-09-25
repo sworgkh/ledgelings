@@ -103,6 +103,14 @@ order they came. When the talk runs far ahead of the voice (four lines waiting),
 new lines are skipped rather than read long after their bubble is gone. Emoji and
 `*stage directions*` are not read.
 
+With voice on, a bubble first shows `...`, a dot more every third of a second, while
+its sound is on its way (an OpenRouter line can take a second or two). When the
+voice starts, the line types itself out in step with it: word by word with the
+Mac's voices, which say where they are, and evenly over the clip's length with
+OpenRouter. The bubble is sized for the whole line from the start, so it does not
+grow as the words come in. A line that cannot be said (stopped, failed, skipped)
+shows in full at once. A bubble gives up waiting after 45 s.
+
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Hear them talk out loud** | off | | Also in the menu as **Hear Them Talk**. Turning it off stops the voice mid-word |
@@ -189,7 +197,14 @@ or asterisks are stripped, and it is cut at 160 characters. Calls use temperatur
 Every conversation that produced at least one line is written when it ends, to one
 JSON-lines file per local calendar day. The tab lists the days on the left (today
 and yesterday by name) and each exchange on the right: time, model, cost and tokens
-when known, the situation, then each line. Buttons open the folder in Finder or
+when known, the situation, then each line. When the lines were said out loud by an
+OpenRouter voice, the header also shows **voice $x (n lines)**, with `+` if a
+price never came back and **n replayed free** for lines played from the voice
+archive; hover it for the speech model. Those prices are kept beside the day's
+file in `YYYY-MM-DD.voice.jsonl`, one line per spoken line (time, speaker, words,
+model, cost, kept), because OpenRouter reports them seconds after the conversation
+is written down; each goes to the latest conversation with that speaker saying
+those words. The built-in voices are free and write nothing. Buttons open the folder in Finder or
 Explorer and in a terminal. The files are plain text on purpose; one line looks like:
 
 ```json

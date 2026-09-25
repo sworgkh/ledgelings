@@ -16,6 +16,8 @@ struct CreatureSnapshot {
     var inward: CGVector = CGVector(dx: 0, dy: 1)
     /// What it is saying right now, if anything.
     var bubble: String?
+    /// How much of `bubble` is on show, 0...1: less while it is being said out loud.
+    var bubbleShare: Double = 1
     /// The flower on its head, if it was given one.
     var hat: CGImage?
     /// Inside the house: draw nothing at all.
@@ -94,7 +96,7 @@ final class ScreenOverlay {
         root.addSublayer(layer)
         return layer
     }()
-    private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String)] = [:]
+    private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String, shown: Int)] = [:]
     private var sparkLayers: [CALayer] = []
     private lazy var house: CALayer = {
         let layer = makeLayers().sprite
@@ -333,12 +335,20 @@ final class ScreenOverlay {
     private func renderBubble(_ snap: CreatureSnapshot, index: Int, bodyHalf: CGFloat) {
         guard let text = snap.bubble, !text.isEmpty else { removeBubble(for: index); return }
         let origin = display.frame.origin
-        let entry: (plate: CALayer, text: CATextLayer, for: String)
-        if let existing = bubbles[index], existing.for == text {
+        let entry: (plate: CALayer, text: CATextLayer, for: String, shown: Int)
+        if var existing = bubbles[index], existing.for == text {
+            let whole = Self.bubbleText(text)
+            let shown = Self.visibleLength(of: whole, share: snap.bubbleShare)
+            if shown != existing.shown {
+                existing.text.string = Self.partly(whole, visible: shown)
+                existing.text.displayIfNeeded()
+                existing.shown = shown
+                bubbles[index] = existing
+            }
             entry = existing
         } else {
             removeBubble(for: index)
-            entry = makeBubble(text)
+            entry = makeBubble(text, share: snap.bubbleShare)
             bubbles[index] = entry
         }
         // Float it off the creature's "head", then keep it on this screen.
@@ -353,9 +363,27 @@ final class ScreenOverlay {
         entry.plate.position = CGPoint(x: (centre.x - origin.x).rounded(), y: (centre.y - origin.y).rounded())
     }
 
-    private func makeBubble(_ text: String) -> (plate: CALayer, text: CATextLayer, for: String) {
+    /// How many UTF-16 units of `whole` a share shows, never splitting a letter.
+    static func visibleLength(of whole: NSAttributedString, share: Double) -> Int {
+        let count = whole.length
+        let cut = SpeechReveal.visible(share, of: count)
+        guard cut > 0, cut < count else { return cut }
+        return (whole.string as NSString).rangeOfComposedCharacterSequence(at: cut).location
+    }
+
+    /// The whole line, laid out as ever, with everything past `visible` drawn
+    /// invisible: the bubble keeps its size while the text types in.
+    static func partly(_ whole: NSAttributedString, visible: Int) -> NSAttributedString {
+        guard visible < whole.length else { return whole }
+        let copy = NSMutableAttributedString(attributedString: whole)
+        copy.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: visible, length: whole.length - visible))
+        return copy
+    }
+
+    private func makeBubble(_ text: String, share: Double) -> (plate: CALayer, text: CATextLayer, for: String, shown: Int) {
         let pad = Self.bubblePad
         let attributed = Self.bubbleText(text)
+        let shown = Self.visibleLength(of: attributed, share: share)
         let measured = attributed.boundingRect(
             with: CGSize(width: Self.bubbleMaxWidth, height: 400),
             options: [.usesLineFragmentOrigin, .usesFontLeading]
@@ -372,14 +400,14 @@ final class ScreenOverlay {
 
         let label = CATextLayer()
         label.actions = Self.noAnimations
-        label.string = attributed
+        label.string = Self.partly(attributed, visible: shown)
         label.isWrapped = true
         label.contentsScale = display.scale
         label.frame = CGRect(x: pad, y: pad, width: textSize.width, height: textSize.height)
         label.displayIfNeeded()               // rasterise now; an offscreen renderer would otherwise lag a frame or more
         plate.addSublayer(label)
         root.addSublayer(plate)
-        return (plate, label, text)
+        return (plate, label, text, shown)
     }
 
     private func removeBubble(for index: Int) {

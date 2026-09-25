@@ -23,4 +23,21 @@ import Testing
         let line = ChatHistoryView.spoken(ChatLog.Line(speaker: "Pip", text: "I *am* here."))
         #expect(String(line.characters) == "Pip: I am here.")
     }
+
+    @Test func aBubbleBeingSaidKeepsItsSizeAndHidesWhatIsNotSaidYet() {
+        let whole = ScreenOverlay.bubbleText("Hello there")
+        let half = ScreenOverlay.visibleLength(of: whole, share: 0.5)
+        #expect(half == 5)
+        let partly = ScreenOverlay.partly(whole, visible: half)
+        #expect(partly.string == whole.string, "the whole line is laid out, so the bubble does not grow")
+        let hidden = partly.attribute(.foregroundColor, at: 7, effectiveRange: nil) as? NSColor
+        let shown = partly.attribute(.foregroundColor, at: 2, effectiveRange: nil) as? NSColor
+        #expect(hidden == .clear && shown == .white)
+        #expect(ScreenOverlay.partly(whole, visible: whole.length) == whole)
+    }
+
+    @Test func aLetterIsNeverCutInHalf() {
+        let whole = ScreenOverlay.bubbleText("ab👍cd")        // the emoji is two UTF-16 units, at 2 and 3
+        #expect(ScreenOverlay.visibleLength(of: whole, share: 3.0 / 6) == 2)
+    }
 }
