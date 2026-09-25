@@ -30,7 +30,7 @@ private struct CharacterVoicesSection: View {
         } header: {
             Text("Characters")
         } footer: {
-            Text("The characters on screen now. Each starts automatic: a voice handed out for them, the overall speed, and a pitch of their own (the cartoon lift with Cartoon voices on). A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on both engines; an OpenRouter voice the chosen model does not have is ignored.")
+            Text("The characters on screen now. Each starts automatic: a voice handed out for them, the overall speed, and a pitch of their own (the cartoon lift with Cartoon voices on). A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends.")
         }
         .onAppear {
             var seen: [String] = []
@@ -46,6 +46,33 @@ private struct CharacterVoiceRow: View {
     @ObservedObject var voice: Voice
 
     private var own: CharacterVoice { settings.characterVoices[name] ?? CharacterVoice() }
+    /// "Custom blend…" was picked; the field shows even before anything is typed.
+    @State private var blending = false
+    static let custom = "\u{1}custom"
+
+    /// The character's local voice is not one of the server's own: a blend, or a typed name.
+    private var isBlend: Bool { own.localVoice.map { !voice.localVoices.contains($0) } ?? false }
+
+    private var blend: Binding<String> {
+        Binding(
+            get: { own.localVoice ?? "" },
+            set: { typed in
+                let clean = typed.trimmingCharacters(in: .whitespaces)
+                settings.setVoice(of: name) { $0.localVoice = clean.isEmpty ? nil : clean }
+            }
+        )
+    }
+
+    private var blendOK: Bool { own.localVoice.map { Voices.isUsable($0, among: voice.localVoices) } ?? true }
+
+    private var blendNote: String {
+        guard let typed = own.localVoice else {
+            return "Voices joined with +, each with an optional weight: af_bella(2)+am_puck(1) is two parts Bella, one part Puck."
+        }
+        let unknown = Voices.blendParts(typed).filter { !voice.localVoices.contains($0) }
+        if unknown.isEmpty || voice.localVoices.isEmpty { return "Blends \(Voices.blendParts(typed).joined(separator: ", ")). Test to hear it." }
+        return "Not on the server: \(unknown.joined(separator: ", ")). Until fixed, this character uses its automatic voice."
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -64,9 +91,14 @@ private struct CharacterVoiceRow: View {
                     if let mine = own.openRouterVoice, !voice.modelVoices.contains(mine) { Text("\(mine) (not in this model)").tag(mine) }
                     ForEach(voice.modelVoices, id: \.self) { Text($0).tag($0) }
                 case .local:
-                    if let mine = own.localVoice, !voice.localVoices.contains(mine) { Text("\(mine) (not on the server)").tag(mine) }
+                    Text("Custom blend…").tag(Self.custom)
                     ForEach(voice.localVoices, id: \.self) { Text($0).tag($0) }
                 }
+            }
+            if settings.voiceEngine == .local && (blending || isBlend) {
+                TextField("Blend", text: blend, prompt: Text("af_bella(2)+am_puck(1)"))
+                    .font(.system(.body, design: .monospaced))
+                Text(blendNote).font(.caption).foregroundStyle(blendOK ? Color.secondary : Color.red)
             }
             SliderRow("Speed", value: speed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
             SliderRow("Pitch", value: pitch, in: AppSettings.voicePitchRange, step: 0.05, unit: "×")
@@ -85,10 +117,17 @@ private struct CharacterVoiceRow: View {
                 switch settings.voiceEngine {
                 case .system: own.systemVoice ?? ""
                 case .openRouter: own.openRouterVoice ?? ""
-                case .local: own.localVoice ?? ""
+                case .local: blending || isBlend ? Self.custom : own.localVoice ?? ""
                 }
             },
             set: { picked in
+                if picked == Self.custom {
+                    blending = true
+                    // Start from the voice it has now, so the blend begins as something heard.
+                    if own.localVoice == nil { settings.setVoice(of: name) { $0.localVoice = voice.automaticVoice(for: name) } }
+                    return
+                }
+                blending = false
                 let value = picked.isEmpty ? nil : picked
                 settings.setVoice(of: name) { v in
                     switch settings.voiceEngine {

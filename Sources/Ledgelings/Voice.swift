@@ -268,7 +268,10 @@ final class Voice: NSObject, ObservableObject {
         let local = settings.voiceEngine == .local
         let mine = { (v: CharacterVoice) in local ? v.localVoice : v.openRouterVoice }
         let chosen = local ? settings.localVoice : settings.openRouterVoice
-        let usable = { (v: String?) in v.flatMap { voices.isEmpty || voices.contains($0) ? $0 : nil } }
+        // A local server (Kokoro) also takes blends of its voices; OpenRouter does not.
+        let usable = { (v: String?) in
+            v.flatMap { local ? (Voices.isUsable($0, among: voices) ? $0 : nil) : (voices.isEmpty || voices.contains($0) ? $0 : nil) }
+        }
         if !automatic, let own = usable(settings.characterVoices[name].flatMap(mine)) { return own }
         guard settings.voicePerCharacter else { return chosen.isEmpty ? voices.first : chosen }
         let english = Voices.englishFirst(voices)

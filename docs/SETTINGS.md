@@ -138,7 +138,7 @@ nudge). On its card:
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
-| **Voice** | Automatic (shows which) | | Any Mac voice, or any of the chosen OpenRouter model's voices, depending on the engine. A voice picked by hand is that character's alone; the automatic voices are handed out around it. An OpenRouter voice the current model does not have is ignored |
+| **Voice** | Automatic (shows which) | | Any Mac voice, any of the chosen OpenRouter model's voices, or any of the local server's, depending on the engine. With the Local server, **Custom blend…** opens a field for a Kokoro blend: voices joined by `+`, each with an optional weight, `af_bella(2)+am_puck(1)` being two parts Bella to one of Puck. A blend naming a voice the server lacks is flagged in red and the automatic voice is used until it is fixed. OpenRouter's Kokoro refuses blends. A voice picked by hand is that character's alone; the automatic voices are handed out around it. An OpenRouter voice the current model does not have is ignored |
 | **Speed** | 1× | 0.5 to 2 | Times the overall Speed |
 | **Pitch** | its automatic pitch | 0.5 to 2 | Times the overall Pitch, instead of the automatic lift |
 | **Speed follows pitch** | As overall | | On, Off, or as the overall checkbox. On: this character talks a little faster when higher, never smeared. Off: exact pace |

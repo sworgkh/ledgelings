@@ -536,7 +536,9 @@ voice, or the system default / the model's first.
 localVoice?, speed?, pitch?, followPitch?}` (`followPitch` nil = `speedFollowsPitch`); nil fields are automatic, an all-nil entry is removed. Speed =
 `voiceSpeed` × (own speed ?? 1). A hand-picked voice is kept; `Voices.assign` hands
 the others voices from the pool minus the hand-picked ones (the whole pool if that
-empties it). An `openRouterVoice` not among the model's voices is ignored.
+empties it). An `openRouterVoice` not among the model's voices is ignored. A `localVoice` may be a
+Kokoro blend, `name(weight)+name(weight)…` (weights optional); it is used when every
+name in it is among the server's voices (or the list is unknown), else ignored.
 
 **Pitch.** A name speaks at `voicePitch` × (own pitch if set, else with `cartoonVoices`: 1.15 + 0.45 ×
 (FNV-1a(name + "#cartoon") mod 1000) / 999; else with `voicePerCharacter` the

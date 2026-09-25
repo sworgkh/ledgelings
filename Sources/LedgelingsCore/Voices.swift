@@ -70,6 +70,22 @@ public enum Voices {
         0.9 + 0.2 * Double(stableHash(name + "#pitch") % 1000) / 999
     }
 
+    /// The voices in a Kokoro blend, weights dropped: `af_bella(2)+am_puck(1)`
+    /// gives `af_bella`, `am_puck`. A plain voice gives itself.
+    public static func blendParts(_ voice: String) -> [String] {
+        voice.split(separator: "+").map { part in
+            let name = part.split(separator: "(", maxSplits: 1).first ?? part
+            return name.trimmingCharacters(in: .whitespaces)
+        }.filter { !$0.isEmpty }
+    }
+
+    /// True when `voice` can be asked for from a server with `voices`: one of
+    /// them, or a blend of them. An empty list means it could not be checked.
+    public static func isUsable(_ voice: String, among voices: [String]) -> Bool {
+        let parts = blendParts(voice)
+        return !parts.isEmpty && (voices.isEmpty || parts.allSatisfy(voices.contains))
+    }
+
     /// A cartoon lift for a name: 1.15...1.6 times the voice's own pitch, always
     /// the same for a name, so every character squeaks at a height of its own.
     public static func cartoonPitch(for name: String) -> Double {

@@ -87,4 +87,15 @@ import Testing
         #expect(abs(asked * 1.44 - 1.2) < 1e-9, "played 1.44× faster: 1.2× the pace")
         #expect(Voices.askedSpeed(speed: 1.3, pitch: 1, followPitch: true) == 1.3, "no lift, nothing changes")
     }
+
+    @Test func aBlendIsUsableWhenEveryVoiceInItIs() {
+        #expect(Voices.blendParts("af_bella(2)+am_puck(1)") == ["af_bella", "am_puck"])
+        #expect(Voices.blendParts(" am_santa + bf_emma ") == ["am_santa", "bf_emma"])
+        #expect(Voices.blendParts("af_bella") == ["af_bella"])
+        let voices = ["af_bella", "am_puck", "bf_emma"]
+        #expect(Voices.isUsable("af_bella(2)+am_puck(1)", among: voices))
+        #expect(!Voices.isUsable("af_bella+zz_nobody", among: voices), "one unknown voice spoils the blend")
+        #expect(Voices.isUsable("anything", among: []), "no list to check against: let the server decide")
+        #expect(!Voices.isUsable(" + ", among: voices))
+    }
 }
