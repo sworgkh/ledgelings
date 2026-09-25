@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Five tabs: **Creatures**, **Sprites**, **Talk**, **Voice**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Six tabs: **Creatures**, **Sprites**, **Talk**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 
@@ -17,7 +17,7 @@ Settings…*. Five tabs: **Creatures**, **Sprites**, **Talk**, **Voice**, **Chat
 | **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
-| *Spent: $a today, $b this month* | Shown once there is a record; opens the Talk tab |
+| *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
 | **Settings…** | The settings window |
 | **Quit** | Everyone vanishes; nothing is persisted about the hide |
 
@@ -196,16 +196,7 @@ not a bill, with the line itself).
 | **Model** (OpenRouter) | `anthropic/claude-haiku-4.5` | Any id from openrouter.ai/models. The catalogue below is fetched live: type words from the id or name, cheapest first, free models in green, click a row to pick. 60 rows at a time; add a word to narrow it |
 | **Check** | | LM Studio: is the server up, is the model installed. OpenRouter: is the key valid, what it has spent and its limit, does the model exist |
 
-### Spend
-
-Shown for LM Studio and OpenRouter; the built-in lines cost nothing and record nothing.
-Every call to the model, whether or not its line was usable, is appended to
-`spend.jsonl` with its tokens and, for OpenRouter, the price OpenRouter itself
-reports for that call. LM Studio calls are recorded at $0. The section shows today,
-this month and all time (calls, tokens, cost), the five dearest models, and the
-file's path with a button to reveal it. A `+` after a total means some of its calls
-came back without a price. Money reads `$0.00`, `<$0.001`, three decimals under ten
-cents, else two.
+Costs moved to their own tab in v0.18; see [Costs tab](#costs-tab).
 
 ### Characters
 
@@ -242,6 +233,25 @@ The model's answer is cleaned before it is shown: anything before a `</think>` t
 is dropped, the first non-empty line is taken, a leading "Name:" and wrapping quotes
 or asterisks are stripped, and it is cut at 160 characters. Calls use temperature
 0.9 and at most 80 tokens.
+
+## Costs tab
+
+Every call to a model, text or voice, whether or not its answer was usable, is
+appended to `spend.jsonl` with its tokens, the feature that made it and, for
+OpenRouter, the price OpenRouter itself reports (for speech, looked up a few seconds
+after the line). LM Studio calls are recorded at $0; a local speech server and the
+Mac's own voices are free and record nothing.
+
+| Column | What it shows |
+|---|---|
+| **Spent** (left) | Today, this month, all time: cost, calls, tokens |
+| **By feature** (left) | Talk, Paper planes, Voice, Voice casting; calls from before v0.18 as *Earlier, unlabelled* |
+| **By model** (left) | The ten dearest models |
+| **Latest calls** (right) | The last 200, newest first: model, time, feature, tokens, cost (*no price* in orange) |
+| **The file** (right) | `spend.jsonl`'s path and Reveal in Finder |
+
+A `+` after a total means some of its calls came back without a price. Money reads
+`$0.00`, `<$0.001`, three decimals under ten cents, else two.
 
 ## Chats tab
 

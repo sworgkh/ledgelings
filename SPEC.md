@@ -479,8 +479,14 @@ Every model call, whether or not its line was usable, appends one record to
 
 ```json
 {"time": "2026-09-20T14:03:11Z", "provider": "OpenRouter", "model": "google/gemini-2.5-flash-lite",
- "usage": {"promptTokens": 312, "completionTokens": 18, "cost": 0.00042}}
+ "usage": {"promptTokens": 312, "completionTokens": 18, "cost": 0.00042}, "purpose": "talk"}
 ```
+
+`purpose` names the feature that made the call: `talk` (meetings and pokes),
+`planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
+model), `casting` (Cast with Model). Recording a call requires one. Records from
+before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
+from a newer build is shown as written.
 
 `cost` is what the server said the call cost (§8.1); a call to LM Studio is
 recorded with cost 0 (it is free), a call whose server gave no price with no
@@ -492,15 +498,17 @@ recorded with cost 0 (it is free), a call whose server gave no price with no
 | this month | same local calendar month as now |
 | all time | all |
 | by model | all, grouped by model id, dearest first, then most calls |
+| by feature | all, grouped by `purpose` title, dearest first, then most calls |
 
 A total is `calls`, `promptTokens`, `completionTokens`, `cost` (sum of the
 priced calls) and `unpriced` (how many had no price). Money is shown as
 `$0.00` for zero, `<$0.001` under a tenth of a cent, three decimals under ten
 cents, else two; a total with unpriced calls gets a `+` after it. Shown in
-Settings › Talk › Spend (three rows, up to five models, the file path, a
-button revealing the file) and as a menu line "Spent: $a today, $b this month"
-(hidden until there is a record); the Chats viewer shows each exchange's cost
-and tokens.
+Settings › Costs (left: the three rows, by feature, the ten dearest models;
+right: the last 200 calls newest first with time, feature, tokens and cost, the
+file path and a button revealing it), and as a menu line "Spent: $a today, $b this
+month" opening that tab (hidden until there is a record); the Chats viewer shows
+each exchange's cost and tokens, and its voice cost.
 
 ### 6.6 Menu and poke
 
@@ -1209,7 +1217,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
-Settings window: 1100×760 points, five tabs, each laid out as two columns
+Settings window: 1100×760 points, six tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
@@ -1245,7 +1253,7 @@ Stop, status; on the right a card per character on screen with voice picker
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 156 such tests and 82 app-side ones.
+  the tests in §14 first; the macOS app has 158 such tests and 82 app-side ones.
 
 ---
 

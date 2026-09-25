@@ -2,7 +2,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, sprites, talk, voice, chats }
+enum SettingsTab: Hashable { case creatures, sprites, talk, voice, costs, chats }
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
@@ -22,8 +22,9 @@ struct SettingsView: View {
         TabView(selection: $navigation.tab) {
             creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
-            TalkSettingsView(settings: settings, library: library, spend: spend, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
+            TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text("Voice") }.tag(SettingsTab.voice)
+            CostsSettingsView(spend: spend).tabItem { Text("Costs") }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
         }
         .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)

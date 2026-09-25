@@ -471,7 +471,7 @@ final class Voice: NSObject, ObservableObject {
     private func charge(_ client: SpeechClient, _ generation: String, speaker: String, text: String, at time: Date) {
         Task { [weak self] in
             let usage = await client.cost(of: generation) ?? Spend.Usage(promptTokens: 0, completionTokens: 0, cost: nil)
-            self?.spend.record(provider: .openRouter, model: client.model, usage: usage)
+            self?.spend.record(provider: .openRouter, model: client.model, usage: usage, purpose: .voice)
             self?.history?.recordVoice(.init(time: time, speaker: speaker, text: text, model: client.model, cost: usage.cost))
         }
     }
@@ -600,7 +600,7 @@ extension Voice {
                                          voices: choices.map { ($0.id, $0.hints) }, cartoon: settings.cartoonVoices)
         // Room for a thinking model to reason before it answers; the answer itself is short.
         let answer = try await client.reply(system: Casting.modelSystem, user: prompt, maxTokens: 2000, temperature: 0.3)
-        if let usage = answer.usage { spend.record(provider: client.provider, model: client.model, usage: usage) }
+        if let usage = answer.usage { spend.record(provider: client.provider, model: client.model, usage: usage, purpose: .casting) }
         guard let pick = Casting.parsePick(answer.text),
               let chosen = choices.first(where: { $0.id.caseInsensitiveCompare(pick.voice) == .orderedSame })
         else { throw ChatClient.Failure.badReply(String(answer.text.prefix(120))) }

@@ -87,7 +87,7 @@ extension Colony {
             guard var usage = answer.usage else { return }
             if service.provider == .lmStudio { usage.cost = 0 }                // a local model is free
             used.append(usage)
-            spend.record(provider: service.provider, model: service.model, usage: usage)
+            spend.record(provider: service.provider, model: service.model, usage: usage, purpose: .talk)
         }
 
         busy.formUnion([speaker, listener])

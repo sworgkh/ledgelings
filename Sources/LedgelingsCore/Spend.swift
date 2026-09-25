@@ -15,13 +15,39 @@ public enum Spend {
         }
     }
 
+    /// Which feature made a call. Every model call is recorded with one, so the
+    /// Costs tab can say what each feature costs, not just each model.
+    public enum Purpose: String, CaseIterable, Codable, Sendable {
+        case talk, planes, voice, casting
+
+        public var title: String {
+            switch self {
+            case .talk: "Talk"
+            case .planes: "Paper planes"
+            case .voice: "Voice"
+            case .casting: "Voice casting"
+            }
+        }
+
+        /// What records written before features were labelled are shown as.
+        public static let unlabelled = "Earlier, unlabelled"
+
+        /// The title for a record's stored purpose, which may be missing or from a newer app.
+        public static func title(of raw: String?) -> String {
+            raw.map { Purpose(rawValue: $0)?.title ?? $0 } ?? unlabelled
+        }
+    }
+
     public struct Record: Codable, Equatable, Sendable {
         public var time: Date
         public var provider: String
         public var model: String
         public var usage: Usage
-        public init(time: Date, provider: String, model: String, usage: Usage) {
-            self.time = time; self.provider = provider; self.model = model; self.usage = usage
+        /// A `Purpose`'s raw value; absent in records from before v0.18. A string,
+        /// not the enum, so a purpose added later does not make older builds drop the line.
+        public var purpose: String?
+        public init(time: Date, provider: String, model: String, usage: Usage, purpose: Purpose? = nil) {
+            self.time = time; self.provider = provider; self.model = model; self.usage = usage; self.purpose = purpose?.rawValue
         }
     }
 
@@ -48,18 +74,23 @@ public enum Spend {
         public var allTime = Total()
         /// Dearest first; ties by calls.
         public var byModel: [(model: String, total: Total)] = []
+        /// By feature, as `Purpose.title(of:)` names it; dearest first.
+        public var byPurpose: [(purpose: String, total: Total)] = []
         public init() {}
 
         public static func == (a: Summary, b: Summary) -> Bool {
             a.today == b.today && a.month == b.month && a.allTime == b.allTime
                 && a.byModel.map(\.model) == b.byModel.map(\.model) && a.byModel.map(\.total) == b.byModel.map(\.total)
+                && a.byPurpose.map(\.purpose) == b.byPurpose.map(\.purpose) && a.byPurpose.map(\.total) == b.byPurpose.map(\.total)
         }
     }
 
     public static func summarise(_ records: [Record], now: Date = Date(), calendar: Calendar = .current) -> Summary {
         var s = Summary()
         var models: [String: Total] = [:]
+        var purposes: [String: Total] = [:]
         for r in records {
+            purposes[Purpose.title(of: r.purpose), default: Total()].add(r.usage)
             s.allTime.add(r.usage)
             if calendar.isDate(r.time, equalTo: now, toGranularity: .month) { s.month.add(r.usage) }
             if calendar.isDate(r.time, inSameDayAs: now) { s.today.add(r.usage) }
@@ -67,6 +98,8 @@ public enum Spend {
         }
         s.byModel = models.map { (model: $0.key, total: $0.value) }
             .sorted { ($0.total.cost, $0.total.calls, $1.model) > ($1.total.cost, $1.total.calls, $0.model) }
+        s.byPurpose = purposes.map { (purpose: $0.key, total: $0.value) }
+            .sorted { ($0.total.cost, $0.total.calls, $1.purpose) > ($1.total.cost, $1.total.calls, $0.purpose) }
         return s
     }
 

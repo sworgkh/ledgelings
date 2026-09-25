@@ -49,4 +49,23 @@ import Testing
         #expect(abs(back[0].time.timeIntervalSince(record(2).time)) < 1)
         #expect(ledger.file.lastPathComponent == "spend.jsonl")
     }
+
+    @Test func costsAreSummedByFeatureAndOldRecordsAreShownAsUnlabelled() {
+        func r(_ purpose: Spend.Purpose?, _ cost: Double) -> Spend.Record {
+            Spend.Record(time: Self.noon, provider: "OpenRouter", model: "m",
+                         usage: Spend.Usage(promptTokens: 10, completionTokens: 0, cost: cost), purpose: purpose)
+        }
+        let s = Spend.summarise([r(.voice, 0.002), r(.voice, 0.001), r(.talk, 0.0005), r(.casting, 0.0001), r(nil, 0.01)], now: Self.noon)
+        #expect(s.byPurpose.map(\.purpose) == [Spend.Purpose.unlabelled, "Voice", "Talk", "Voice casting"])
+        #expect(s.byPurpose[1].total.calls == 2 && abs(s.byPurpose[1].total.cost - 0.003) < 1e-12)
+    }
+
+    @Test func aRecordFromBeforeFeaturesWereLabelledStillReads() throws {
+        let old = #"{"time":"2026-09-25T19:44:03Z","provider":"OpenRouter","usage":{"cost":0.00033,"promptTokens":4,"completionTokens":0},"model":"microsoft/mai-voice-2"}"#
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let record = try decoder.decode(Spend.Record.self, from: Data(old.utf8))
+        #expect(record.purpose == nil && Spend.Purpose.title(of: record.purpose) == Spend.Purpose.unlabelled)
+        #expect(Spend.Purpose.title(of: "dreams") == "dreams", "a purpose from a newer build keeps its name")
+    }
 }
