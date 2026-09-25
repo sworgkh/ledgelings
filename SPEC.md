@@ -544,7 +544,16 @@ played; an `audio/mpeg` reply plays as is, a JSON reply is an error. The fetch s
 line before. The `X-Generation-Id` header is then looked up at `GET
 {base}/generation?id=…` after 3 s and up to three more times 5 s apart; its
 `total_cost` (or `usage`) and `tokens_prompt` go to the spend file (§6.5.1) under
-the speech model's id, without a price if it never came. Speech models: `GET
+the speech model's id, without a price if it never came.
+
+**The voice archive** (`Application Support/Ledgelings/voices`). With
+`keepVoices`, every OpenRouter line is written as `<yyyy-MM-dd>/<HHmmss>-<speaker>-<key8>.wav`
+(speaker reduced to letters, digits, `-`, `_`, at most 24) and appended to
+`voices.jsonl` as `{time, speaker, text, model, voice, speed, file, key}`, time in
+whole seconds. `key` = FNV-1a hex of text, model, voice and speed (2 decimals),
+joined by U+001F. Before asking OpenRouter, the key is looked up (last match,
+file still present); a hit is played from disk and neither asked for nor charged.
+The built-in voices are not kept: they cost nothing to say again. Speech models: `GET
 {base}/models?output_modalities=speech` (public), cheapest input first.
 
 ### 6.7 The built-in lines (no model)
@@ -1126,6 +1135,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | openRouterVoice | empty | one of the model's voices; empty = its first |
 | voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch is built-in only |
 | voiceVolume | 0.8 | 0–1 |
+| keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
 Settings window: 1100×760 points, four tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
@@ -1161,7 +1171,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 129 such tests and 75 app-side ones.
+  the tests in §14 first; the macOS app has 132 such tests and 76 app-side ones.
 
 ---
 

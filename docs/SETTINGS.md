@@ -112,6 +112,7 @@ new lines are skipped rather than read long after their bubble is gone. Emoji an
 | **API key** (OpenRouter) | | | The brain's key, shown here only when the brain is not OpenRouter |
 | **Model** (OpenRouter) | `hexgrad/kokoro-82m` | | Every OpenRouter speech model, with its price, fetched live. Kokoro costs about $0.00003 a line. The free models have daily limits the creatures would hit |
 | **Voice** (OpenRouter) | the model's first | | That model's voices. With a voice each, the English ones are used when the model's voice names say which they are |
+| **Keep every line it says** (OpenRouter) | on | | Each line is saved as a WAV file in `~/Library/Application Support/Ledgelings/voices/<day>/<time>-<speaker>-<key>.wav`, beside the chats, and listed in `voices/voices.jsonl` (time, speaker, text, model, voice, speed, file). **Reveal in Finder** opens the folder. A line already kept in the same model, voice and speed is played from there, free, whether or not this is on |
 | **Speed** | 1× | 0.5 to 2 | Both engines |
 | **Pitch** | 1× | 0.5 to 2 | Built-in voices only; OpenRouter has no such knob |
 | **Volume** | 0.8 | 0 to 1 | |

@@ -128,6 +128,8 @@ final class AppSettings: ObservableObject {
     /// 1 is the voice's own pitch. The built-in voices only; OpenRouter has no such knob.
     @Published var voicePitch: Double { didSet { save(voicePitch, "voicePitch") } }
     @Published var voiceVolume: Double { didSet { save(voiceVolume, "voiceVolume") } }
+    /// Every line a speech model says is kept as a sound file beside the chats.
+    @Published var keepVoices: Bool { didSet { save(keepVoices, "keepVoices") } }
 
     private let defaults: UserDefaults
     private let keychain: any SecretStore
@@ -186,6 +188,7 @@ final class AppSettings: ObservableObject {
         voiceSpeed = clamp("voiceSpeed", 1, Self.voiceSpeedRange)
         voicePitch = clamp("voicePitch", 1, Self.voicePitchRange)
         voiceVolume = clamp("voiceVolume", 0.8, 0...1)
+        keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
         replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt

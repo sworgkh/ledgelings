@@ -226,6 +226,9 @@ import Testing
         #expect(!s.voiceEnabled, "it must not start talking out loud unasked")
         #expect(s.voiceEngine == .system && s.voicePerCharacter)
         #expect(s.voiceModel == AppSettings.defaultVoiceModel && s.voiceSpeed == 1 && s.voicePitch == 1 && s.voiceVolume == 0.8)
+        #expect(s.keepVoices, "paid-for sounds are kept unless asked not to")
+        s.keepVoices = false
+        #expect(!AppSettings(defaults: defaults).keepVoices)
         s.voiceEnabled = true
         s.voiceEngine = .openRouter
         s.voicePerCharacter = false

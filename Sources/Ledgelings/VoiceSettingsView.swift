@@ -65,6 +65,13 @@ struct VoiceSection: View {
             ForEach(modelVoices, id: \.self) { Text($0).tag($0) }
         }
         .disabled(settings.voicePerCharacter)
+        Toggle("Keep every line it says", isOn: $settings.keepVoices)
+        LabeledContent("Kept") {
+            HStack {
+                Text("\(voice.clips.count) lines").foregroundStyle(.secondary).monospacedDigit()
+                Button("Reveal in Finder") { voice.revealArchive() }
+            }
+        }
         if let listProblem { Text(listProblem).font(.caption).foregroundStyle(.red) }
         Color.clear.frame(height: 0).task { await load() }
     }
@@ -82,7 +89,7 @@ struct VoiceSection: View {
         case .system:
             return "The Mac's own voices: free, offline, instant. More, and better ones, are in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices. With a voice each, the novelty voices (Bells, Zarvox…) are left out, and each character also gets a slightly different pitch. " + shared
         case .openRouter:
-            return "Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. A voice each takes the model's English voices where it says which they are. " + shared
+            return "Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are. " + shared
         }
     }
 }

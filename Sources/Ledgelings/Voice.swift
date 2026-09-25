@@ -1,3 +1,4 @@
+import AppKit
 import AVFoundation
 import Combine
 import LedgelingsCore
@@ -10,6 +11,10 @@ import LedgelingsCore
 /// line, and need the same key as the brain; each line is fetched as MP3 and
 /// played in order, and its price is looked up afterwards for the spend file.
 ///
+/// Every line a speech model says is kept in the `VoiceArchive` (with Keep on),
+/// and a line already kept in the same voice and speed is played from there,
+/// free, instead of being asked for again.
+///
 /// Lines are said one at a time, in the order they came. When talk runs ahead
 /// of the voice (several pairs at once, a slow network), lines past
 /// `mostWaiting` are skipped rather than read out long after their bubble is gone.
@@ -19,6 +24,9 @@ final class Voice: NSObject, ObservableObject {
 
     let settings: AppSettings
     let spend: SpendLedger
+    let archive: VoiceArchive
+    /// Everything in the archive, loaded once and added to as lines are kept.
+    @Published private(set) var clips: [VoiceArchive.Clip]
     /// The last thing that happened, for the settings window.
     @Published private(set) var status = "not tried yet"
     /// OpenRouter's speech models, once fetched.
@@ -35,9 +43,13 @@ final class Voice: NSObject, ObservableObject {
     private var chain: Task<Void, Never>?
     private var watchers: Set<AnyCancellable> = []
 
-    init(settings: AppSettings, spend: SpendLedger) {
+    static var defaultArchive: URL { SpendLedger.defaultDirectory.appendingPathComponent("voices", isDirectory: true) }
+
+    init(settings: AppSettings, spend: SpendLedger, archive: URL = Voice.defaultArchive) {
         self.settings = settings
         self.spend = spend
+        self.archive = VoiceArchive(directory: archive)
+        clips = self.archive.clips()
         super.init()
         synthesizer.delegate = self
         // Switching voice off silences whatever is still being said.
@@ -107,14 +119,20 @@ final class Voice: NSObject, ObservableObject {
         guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return }
         let client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         let perCharacter = settings.voicePerCharacter, chosen = settings.openRouterVoice, speed = settings.voiceSpeed
+        let keep = settings.keepVoices
         waiting += 1
         // Fetch now, while the line before is still playing; play in turn.
-        let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?) in
+        let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
             let voices = (try? await self?.voices(of: client.model)) ?? []
             let voice = perCharacter ? Voices.assign(cast + [name], pool: Voices.englishFirst(voices))[name]
                                      : (chosen.isEmpty ? voices.first : chosen)
+            let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: speed)
+            if let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
+                return (audio, nil, voice, true)
+            }
             let (audio, generation) = try await client.speak(line, voice: voice, speed: speed)
-            return (audio, generation, voice)
+            if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: speed) }
+            return (audio, generation, voice, false)
         }
         let before = chain
         chain = Task { [weak self] in
@@ -124,7 +142,7 @@ final class Voice: NSObject, ObservableObject {
                 let said = try await fetch.value
                 guard let self, !Task.isCancelled else { return }
                 if let generation = said.generation { self.charge(client, generation) }
-                self.status = "\(name): \(said.voice ?? "default voice") on \(client.model)"
+                self.status = "\(name): \(said.voice ?? "default voice") on \(client.model)" + (said.kept ? ", kept copy, free" : "")
                 try await self.play(said.audio)
             } catch is CancellationError {
             } catch {
@@ -148,6 +166,16 @@ final class Voice: NSObject, ObservableObject {
             let usage = await client.cost(of: generation) ?? Spend.Usage(promptTokens: 0, completionTokens: 0, cost: nil)
             self?.spend.record(provider: .openRouter, model: client.model, usage: usage)
         }
+    }
+
+    private func keep(_ audio: Data, speaker: String, text: String, model: String, voice: String, speed: Double) {
+        do { clips.append(try archive.keep(audio, speaker: speaker, text: text, model: model, voice: voice, speed: speed)) }
+        catch { FileHandle.standardError.write(Data("Ledgelings voice archive: \(error)\n".utf8)) }
+    }
+
+    func revealArchive() {
+        try? FileManager.default.createDirectory(at: archive.directory, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(archive.directory)
     }
 
     // MARK: What there is to choose from
