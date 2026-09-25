@@ -75,6 +75,7 @@ import Testing
     @Test func aCharacterWithNothingSetIsAutomatic() {
         #expect(CharacterVoice().isAutomatic)
         #expect(!CharacterVoice(pitch: 1.3).isAutomatic)
+        #expect(!CharacterVoice(followPitch: false).isAutomatic, "even off by hand is a choice")
     }
 
     @Test func withSpeedFollowingPitchAVoiceIsNeverAskedToDrawl() {

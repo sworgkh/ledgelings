@@ -141,6 +141,7 @@ nudge). On its card:
 | **Voice** | Automatic (shows which) | | Any Mac voice, or any of the chosen OpenRouter model's voices, depending on the engine. A voice picked by hand is that character's alone; the automatic voices are handed out around it. An OpenRouter voice the current model does not have is ignored |
 | **Speed** | 1× | 0.5 to 2 | Times the overall Speed |
 | **Pitch** | its automatic pitch | 0.5 to 2 | Times the overall Pitch, instead of the automatic lift |
+| **Speed follows pitch** | As overall | | On, Off, or as the overall checkbox. On: this character talks a little faster when higher, never smeared. Off: exact pace |
 | **Test** / **Auto** | | | Test: it introduces itself. Auto: back to automatic |
 
 Settings follow the character's name, so they survive restarts and species changes,

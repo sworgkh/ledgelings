@@ -139,7 +139,7 @@ final class Voice: NSObject, ObservableObject {
     }
 
     private func speakHere(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
-        if settings.speedFollowsPitch { return speakHereLikeTape(line, as: name, cast: cast, cue: cue) }
+        if followsPitch(name) { return speakHereLikeTape(line, as: name, cast: cast, cue: cue) }
         let utterance = AVSpeechUtterance(string: line)
         utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:))
         utterance.pitchMultiplier = Float(min(max(pitch(for: name), 0.5), 2))
@@ -167,7 +167,7 @@ final class Voice: NSObject, ObservableObject {
             client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         }
         let speed = speed(for: name)
-        let keep = settings.keepVoices && !local, saidAt = Date(), pitch = pitch(for: name), follow = settings.speedFollowsPitch
+        let keep = settings.keepVoices && !local, saidAt = Date(), pitch = pitch(for: name), follow = followsPitch(name)
         waiting += 1
         // Fetch now, while the line before is still playing; play in turn.
         let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
@@ -243,6 +243,9 @@ final class Voice: NSObject, ObservableObject {
         return settings.cartoonVoices ? Voices.cartoonPitch(for: name)
             : settings.voicePerCharacter ? Voices.pitchNudge(for: name) : 1
     }
+
+    /// Whether `name`'s speed follows its pitch: its own choice, else the overall one.
+    func followsPitch(_ name: String) -> Bool { settings.characterVoices[name]?.followPitch ?? settings.speedFollowsPitch }
 
     /// How fast `name` speaks: the Speed slider times its own.
     func speed(for name: String) -> Double { settings.voiceSpeed * (settings.characterVoices[name]?.speed ?? 1) }

@@ -240,6 +240,8 @@ import Testing
         #expect(AppSettings(defaults: defaults).localVoice == "am_puck")
         s.setVoice(of: "Pip") { $0.pitch = 1.5; $0.openRouterVoice = "am_puck" }
         #expect(AppSettings(defaults: defaults).characterVoices["Pip"] == CharacterVoice(openRouterVoice: "am_puck", pitch: 1.5))
+        s.setVoice(of: "Pip") { $0.followPitch = false }
+        #expect(AppSettings(defaults: defaults).characterVoices["Pip"]?.followPitch == false)
         s.setVoice(of: "Pip") { $0 = CharacterVoice() }
         #expect(s.characterVoices["Pip"] == nil, "all automatic again: nothing stored")
         s.cartoonVoices = false

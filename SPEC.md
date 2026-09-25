@@ -533,7 +533,7 @@ the English ones when any name is marked English (`-en` suffix; `en_`, `gb_`,
 voice, or the system default / the model's first.
 
 **Per character.** `characterVoices` maps a name to `{systemVoice?, openRouterVoice?,
-speed?, pitch?}`; nil fields are automatic, an all-nil entry is removed. Speed =
+localVoice?, speed?, pitch?, followPitch?}` (`followPitch` nil = `speedFollowsPitch`); nil fields are automatic, an all-nil entry is removed. Speed =
 `voiceSpeed` × (own speed ?? 1). A hand-picked voice is kept; `Voices.assign` hands
 the others voices from the pool minus the hand-picked ones (the whole pool if that
 empties it). An `openRouterVoice` not among the model's voices is ignored.
@@ -1186,7 +1186,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch applies to both engines |
 | voiceVolume | 0.8 | 0–1 |
 | cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
-| characterVoices | {} | name → `{systemVoice, openRouterVoice, localVoice, speed, pitch}`, JSON (§6.6.1) |
+| characterVoices | {} | name → `{systemVoice, openRouterVoice, localVoice, speed, pitch, followPitch}`, JSON (§6.6.1) |
 | speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |

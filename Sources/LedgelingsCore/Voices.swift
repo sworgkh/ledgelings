@@ -15,14 +15,16 @@ public struct CharacterVoice: Codable, Equatable, Sendable {
     public var speed: Double?
     /// Times the global Pitch, instead of the automatic lift.
     public var pitch: Double?
+    /// Speed follows pitch for this character; nil follows the overall setting.
+    public var followPitch: Bool?
 
     public init(systemVoice: String? = nil, openRouterVoice: String? = nil, localVoice: String? = nil,
-                speed: Double? = nil, pitch: Double? = nil) {
+                speed: Double? = nil, pitch: Double? = nil, followPitch: Bool? = nil) {
         self.systemVoice = systemVoice; self.openRouterVoice = openRouterVoice; self.localVoice = localVoice
-        self.speed = speed; self.pitch = pitch
+        self.speed = speed; self.pitch = pitch; self.followPitch = followPitch
     }
 
-    public var isAutomatic: Bool { systemVoice == nil && openRouterVoice == nil && localVoice == nil && speed == nil && pitch == nil }
+    public var isAutomatic: Bool { systemVoice == nil && openRouterVoice == nil && localVoice == nil && speed == nil && pitch == nil && followPitch == nil }
 }
 
 /// Who sounds like whom, and what of a line is worth saying out loud. No audio

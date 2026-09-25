@@ -30,7 +30,7 @@ private struct CharacterVoicesSection: View {
         } header: {
             Text("Characters")
         } footer: {
-            Text("The characters on screen now. Each starts automatic: a voice handed out for them, the overall speed, and a pitch of their own (the cartoon lift with Cartoon voices on). A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left. \"Auto\" puts a character back to automatic. Settings follow the name, on both engines; an OpenRouter voice the chosen model does not have is ignored.")
+            Text("The characters on screen now. Each starts automatic: a voice handed out for them, the overall speed, and a pitch of their own (the cartoon lift with Cartoon voices on). A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on both engines; an OpenRouter voice the chosen model does not have is ignored.")
         }
         .onAppear {
             var seen: [String] = []
@@ -70,6 +70,11 @@ private struct CharacterVoiceRow: View {
             }
             SliderRow("Speed", value: speed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
             SliderRow("Pitch", value: pitch, in: AppSettings.voicePitchRange, step: 0.05, unit: "×")
+            Picker("Speed follows pitch", selection: follow) {
+                Text("As overall (\(settings.speedFollowsPitch ? "on" : "off"))").tag(0)
+                Text("On: no echo").tag(1)
+                Text("Off: exact pace").tag(2)
+            }
         }
         .padding(.vertical, 4)
     }
@@ -98,6 +103,14 @@ private struct CharacterVoiceRow: View {
 
     private var speed: Binding<Double> {
         Binding(get: { own.speed ?? 1 }, set: { new in settings.setVoice(of: name) { $0.speed = new } })
+    }
+
+    /// 0 follows the overall setting, 1 on, 2 off.
+    private var follow: Binding<Int> {
+        Binding(
+            get: { own.followPitch.map { $0 ? 1 : 2 } ?? 0 },
+            set: { choice in settings.setVoice(of: name) { $0.followPitch = choice == 0 ? nil : choice == 1 } }
+        )
     }
 
     /// Shows the automatic pitch until moved, so the slider starts where the voice is.
@@ -172,6 +185,7 @@ struct VoiceSection: View {
         }
         .disabled(settings.voicePerCharacter)
         Toggle("Keep every line it says", isOn: $settings.keepVoices)
+            .task { await load() }
         LabeledContent("Kept") {
             HStack {
                 Text("\(voice.clips.count) lines").foregroundStyle(.secondary).monospacedDigit()
@@ -179,7 +193,6 @@ struct VoiceSection: View {
             }
         }
         if let listProblem { Text(listProblem).font(.caption).foregroundStyle(.red) }
-        Color.clear.frame(height: 0).task { await load() }
     }
 
     @State private var localCheck = "not checked"
@@ -205,7 +218,7 @@ struct VoiceSection: View {
             Spacer()
         }
         LabeledContent("Status") { Text(localCheck).foregroundStyle(.secondary).textSelection(.enabled) }
-        Color.clear.frame(height: 0).task { await checkLocal() }
+            .task { await checkLocal() }
     }
 
     /// Kokoro-FastAPI on a Mac: fetch it once, then start it (on Apple's GPU).
