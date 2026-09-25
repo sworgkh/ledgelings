@@ -15,6 +15,8 @@ public enum Letters {
         public var notes: [String]
         /// What it mutters to itself after reading a note, from anyone.
         public var musings: [String]
+        /// What it writes back, once, to whoever sent it a plane.
+        public var replies: [String]
     }
 
     public static let anyone = Voice(
@@ -29,6 +31,11 @@ public enum Letters {
             "A letter from {sender}. I should write back. On what, though?",
             "Paper planes. Why didn't we think of this sooner?",
             "It smells of {sender}'s edge. Dusty, a bit warm.",
+        ],
+        replies: [
+            "Got your plane, {reader}. Sending this one back on the same wind.",
+            "Thanks for the letter. Nobody writes any more. Except you, apparently.",
+            "Read it twice. Folding you an answer before I forget.",
         ]
     )
 
@@ -46,6 +53,11 @@ public enum Letters {
                 "A paper plane. Flying. Off the edge. Disgraceful. ...Neatly folded, though.",
                 "{sender} wrote to ME. Obviously. Who else would they write to.",
                 "Paper beats cursor. I should fold myself a shield.",
+            ],
+            replies: [
+                "Received. Filed under 'things I did not ask for'. ...Keep them coming.",
+                "{reader}. Your plane crossed MY airspace. Next time, knock.",
+                "Fine. A reply. Short, because the cursor is watching.",
             ]),
         "Pip": Voice(
             topics: ["the ceiling", "tiny wonders", "friendship"],
@@ -59,6 +71,11 @@ public enum Letters {
                 "A letter! For me! Nobody has ever... well, {sender} has now! Best day!",
                 "*hugs the paper* I'm keeping this forever. Or until it wilts. Does paper wilt?",
                 "If I fold myself up like this, can I fly too? Worth a try. Worth ALL the tries.",
+            ],
+            replies: [
+                "I got your plane!!! I screamed! Happily! Write again!",
+                "Your letter made my whole ceiling brighter! Sending all my happy back!",
+                "Best letter ever! Well, the only one. Still best!",
             ]),
         "Mortimer": Voice(
             topics: ["made-up proverbs", "corners and time", "where windows go at night"],
@@ -72,6 +89,11 @@ public enum Letters {
                 "*sighs* Paper that flies. In my youth, words stayed where you put them.",
                 "{sender} writes like a young breeze. Short, bright, gone by lunch.",
                 "A letter is a conversation that learned to wait. Rather like me.",
+            ],
+            replies: [
+                "An old saying: a letter answered is a friend kept. I just made that up for you.",
+                "Your words arrived like a slow thought. I have been chewing on them. *sighs*",
+                "Thank you, young {reader}. I will answer properly next century.",
             ]),
         "Zed": Voice(
             topics: ["naps", "warm spots", "dreams"],
@@ -85,6 +107,11 @@ public enum Letters {
                 "Reading is just sleeping with your eyes open. *yawns*",
                 "Nice letter, {sender}. I'll reply after a nap. Or two.",
                 "Paper would make a lovely blanket. Tiny, though. I'd need forty.",
+            ],
+            replies: [
+                "Got it. Replying before I fall asl-",
+                "Nice letter. Read it lying down. Very comfy.",
+                "Writing back quick, then nap. Priorities.",
             ]),
         "Dot": Voice(
             topics: ["speed", "everyone else being slow", "records"],
@@ -98,6 +125,11 @@ public enum Letters {
                 "Took {sender}'s plane forever to get here. Like, whole seconds.",
                 "Four words in and I'd guessed the ending. Speed reading, baby.",
                 "Should've just shouted. Paper is for the slow.",
+            ],
+            replies: [
+                "Replied before your plane even landed. Keep up.",
+                "Got it. Read it. Answered it. Beat that.",
+                "Short reply, because I'm fast and you're a boulder.",
             ]),
         "Ruth": Voice(
             topics: ["counting everything", "rules against jumping", "keeping records"],
@@ -111,6 +143,11 @@ public enum Letters {
                 "Handwriting: messy. Folds: uneven. Content: noted. I'll file it.",
                 "Letters received this week: one. I'll need a bigger ledger.",
                 "Planes are just jumping with extra steps. I disapprove. Of the plane, not the letter.",
+            ],
+            replies: [
+                "Letter received at the proper time. Reply enclosed. Please file both.",
+                "Your note has been counted, stamped and logged. Response: noted.",
+                "Next time use the correct fold. This is a reply AND a reminder.",
             ]),
         // cat
         "Whiskers": Voice(
@@ -124,6 +161,11 @@ public enum Letters {
                 "Hm. I'll pretend I didn't read this. ...Then I'll read it again.",
                 "A plane? Mine now. I am going to sit on it.",
                 "{sender} wrote to me. Of course. They all do, eventually.",
+            ],
+            replies: [
+                "I read it. By accident. Anyway, what are you doing now?",
+                "Not replying because I care. Replying because I was bored.",
+                "Your letter was acceptable. You may send another.",
             ]),
         "Mittens": Voice(
             topics: ["warm corners", "sunny pixels", "purring"],
@@ -136,6 +178,11 @@ public enum Letters {
                 "Purrrr... a letter that smells of {sender}. I'll nap on it.",
                 "Paper gets warm if you lie on it long enough. Science.",
                 "Mrrrow. Nice words. Nicer if they came with a sunbeam.",
+            ],
+            replies: [
+                "Purrr, thank you. I read it in the warmest spot. Come share it.",
+                "Mrrp! Your letter was cozy. Sending a cozy one back.",
+                "I napped on your letter. That means I love it.",
             ]),
         "Sir Pounce": Voice(
             topics: ["the hunt", "worthy foes", "plans for tonight"],
@@ -148,6 +195,11 @@ public enum Letters {
                 "It came from the sky and I CAUGHT it. Mighty paws. Mightiest.",
                 "A message from {sender}. Intelligence. The hunt thickens.",
                 "*crouches* The paper wiggled. I have defeated it. Now I read it.",
+            ],
+            replies: [
+                "Message intercepted and understood. The hunt continues, ally.",
+                "Your plane was a worthy prey. I caught it. Here is its twin.",
+                "Word received! I shall pounce upon a reply. There. Pounced.",
             ]),
         // frog
         "Hopper": Voice(
@@ -161,6 +213,11 @@ public enum Letters {
                 "Nice throw, {sender}. I could throw it further. With my legs.",
                 "Flew all this way to reach me. Respect. I'd have jumped it.",
                 "Ribbit. That means 'noted' in frog.",
+            ],
+            replies: [
+                "Got your plane! I'd have jumped it back, but paper's faster. Today.",
+                "Replying with my strongest legs. Metaphorically.",
+                "Nice letter. I read it mid-hop. Nearly.",
             ]),
         "Mossy": Voice(
             topics: ["pond proverbs", "stillness", "puddles"],
@@ -173,6 +230,11 @@ public enum Letters {
                 "As the pond says: a message that flies must one day land. And it did.",
                 "Paper and water do not mix. Yet I will keep this. Away from ponds.",
                 "*slowly* A letter... from {sender}... I will reply next season.",
+            ],
+            replies: [
+                "As the pond says: every ripple returns to the stone. Here is mine.",
+                "Your note sank in slowly, like a good rain. Thank you.",
+                "*slowly* I have replied. It took all afternoon.",
             ]),
         "Croak": Voice(
             topics: ["how dry everything is", "complaints", "rain that never comes"],
@@ -185,6 +247,11 @@ public enum Letters {
                 "Paper. Dry paper. Of course it's dry. Everything here is dry.",
                 "{sender} could have thrown a raindrop. Nobody ever throws a raindrop.",
                 "Hmph. Read it twice. Still dry.",
+            ],
+            replies: [
+                "Got your letter. It was dry. Like everything. Thanks anyway.",
+                "Replying. Grudgingly. With a wet thumb.",
+                "Your plane made it. Unlike the rain.",
             ]),
         // ghost
         "Boo": Voice(
@@ -198,6 +265,11 @@ public enum Letters {
                 "A letter! I'll haunt it back. Boo, little paper.",
                 "{sender} isn't scared of me at all. I'll try harder. BOO. There.",
                 "I tried to go through the paper. It went through me instead.",
+            ],
+            replies: [
+                "BOO! That was my reply. Were you scared? Be honest.",
+                "Got your letter! Haunting you back with this one.",
+                "I wrote back in spooky ink. It's invisible. Oops.",
             ]),
         "Wisp": Voice(
             topics: ["monitors that are gone", "old screensavers", "fading"],
@@ -210,6 +282,11 @@ public enum Letters {
                 "Paper remembers the hand that folded it. So do I, {sender}.",
                 "It flew like the old screensaver birds. They never landed either.",
                 "*softly* Every letter is a tiny monitor, lit for one.",
+            ],
+            replies: [
+                "Your letter glowed, dear. I sent this one on a sigh.",
+                "I will keep your words beside the old monitors I remember.",
+                "Writing back before the pixels forget us both.",
             ]),
         "Sheet": Voice(
             topics: ["technicalities", "hovering", "being flat"],
@@ -222,6 +299,11 @@ public enum Letters {
                 "A flying sheet. Finally, someone who gets me.",
                 "Technically I didn't catch it. It flew into me.",
                 "Read it. Folded it. Same as I do with my feelings.",
+            ],
+            replies: [
+                "Reply: technically received. Technically replying. Flatly.",
+                "Got your plane. It hovered. We have that in common.",
+                "This is a reply. It is also a sheet. Like me.",
             ]),
         // slime
         "Goop": Voice(
@@ -235,6 +317,11 @@ public enum Letters {
                 "Paper! It sticks to me! Very nice!",
                 "{sender} is nice. The letter is sticky now. Also nice.",
                 "I will keep it inside me. For safe.",
+            ],
+            replies: [
+                "Got it! Nice! Sticky now! Sending back nice!",
+                "Your letter is nice. This letter is also nice.",
+                "Reply! Very nice! Bye!",
             ]),
         "Puddle": Voice(
             topics: ["evaporating", "being stepped on", "worrying"],
@@ -247,6 +334,11 @@ public enum Letters {
                 "Paper soaks up water. Paper soaks up ME. I must hold this very carefully.",
                 "What if this is the last letter? What if it isn't? Both are scary.",
                 "{sender} thought of me. That's nice. I only shrank a little from nerves.",
+            ],
+            replies: [
+                "Got it! Did I spell everything right? Please don't worry if I didn't. I will.",
+                "Thank you. I replied quickly before I dry out.",
+                "Your letter was lovely. I only shrank a little reading it.",
             ]),
         "Blorp": Voice(
             topics: ["sounds", "being pleased", "more sounds"],
@@ -259,6 +351,11 @@ public enum Letters {
                 "Bloop! Paper! Splat! *very pleased*",
                 "Blorp. Blorp blorp. Fwip! Good letter.",
                 "Schlorp. Me read. Me smart.",
+            ],
+            replies: [
+                "Blorp! Blorp blorp! (Thank you.)",
+                "Splorch! Got it! Fwoop back!",
+                "BLORP. Me write back. Me proud.",
             ]),
         // robot
         "Unit 7": Voice(
@@ -272,6 +369,11 @@ public enum Letters {
                 "Message received. Integrity 98%. One crease out of specification.",
                 "Sender: {sender}. Content: parsed. Emotional response: generating... done.",
                 "Flight path: suboptimal. Arrival: successful. Filing both.",
+            ],
+            replies: [
+                "Acknowledgement: letter received. Reply generated in 0.3 seconds.",
+                "Response to your message: positive. Friendship level: +4.",
+                "Reply transmitted. Please confirm receipt by paper plane.",
             ]),
         "Sprocket": Voice(
             topics: ["maintenance", "squeaky parts", "tiny wrenches"],
@@ -284,6 +386,11 @@ public enum Letters {
                 "The fold on this wing is loose. I should tighten it. With love.",
                 "Nice paper. Could use a rivet or two.",
                 "{sender}'s hinges need grease. I can tell from the handwriting.",
+            ],
+            replies: [
+                "Got your plane! Tightened a loose fold and sent it back better.",
+                "Reply attached. Also, your wing needs a little oil.",
+                "Thanks! Maintenance tip enclosed: stay squeak-free.",
             ]),
         "Glitch": Voice(
             topics: ["the cursor virus", "malware scans", "being watched"],
@@ -296,6 +403,11 @@ public enum Letters {
                 "Letter received. Checksum... checksum... fine. Fine.",
                 "Is this from {sender}, or from something pretending to be {sender} {sender}?",
                 "Reading reading... ok. I'll quarantine it in my heart.",
+            ],
+            replies: [
+                "Reply reply sent. Scanned it twice. Twice.",
+                "Letter received. Not a virus. Probably. Replying replying.",
+                "Got it got it. Sending this one before the cursor sees.",
             ]),
         // triangle
         "Spike": Voice(
@@ -309,6 +421,11 @@ public enum Letters {
                 "This plane has a pointy nose. Finally, a letter with a point.",
                 "{sender} took their time getting to the point. I'd have been faster.",
                 "Blunt letter. I'll sharpen my reply.",
+            ],
+            replies: [
+                "Got your point. Here's mine. Sharper.",
+                "Reply, to the point: thank you. Point made.",
+                "Your letter was blunt. Mine is pointier. You're welcome.",
             ]),
         "Wedge": Voice(
             topics: ["not budging", "winning arguments", "stability"],
@@ -321,6 +438,11 @@ public enum Letters {
                 "The wind pushed this plane all over. It should have been a wedge.",
                 "Letter received. My position on {sender}: unchanged. Fond.",
                 "I will not be moved by this letter. ...Slightly moved.",
+            ],
+            replies: [
+                "I have read your letter and my opinion has not changed. It is fond.",
+                "Replying firmly. Like everything I do.",
+                "Your plane wobbled. My reply will not.",
             ]),
         "Delta": Voice(
             topics: ["what changed", "what moved", "differences"],
@@ -333,6 +455,11 @@ public enum Letters {
                 "New since the last letter: {sender} dots their i's now.",
                 "It came in at a different angle than the wind suggested. Interesting.",
                 "The difference between this letter and silence: substantial.",
+            ],
+            replies: [
+                "Change noted: you write letters now. I approve of this change.",
+                "Reply sent. Since your letter, one thing is different: me, a bit.",
+                "Your plane took a new route. So does my reply.",
             ]),
         // mushroom
         "Morel": Voice(
@@ -346,6 +473,11 @@ public enum Letters {
                 "*slowly* This paper was a tree once. It came a long way to reach me.",
                 "Some things arrive slowly, some by air. Both arrive.",
                 "I will read it again tomorrow, in the damp.",
+            ],
+            replies: [
+                "*slowly* Your words rested with me a while. Here are mine.",
+                "Thank you. I read it in a damp, quiet corner. The best place.",
+                "Patience brought your letter. Patience sends this one back.",
             ]),
         "Puff": Voice(
             topics: ["spores", "being excited", "guessing games"],
@@ -358,6 +490,11 @@ public enum Letters {
                 "A letter! Oh no, I'm excited... *poof* ...oops, spores everywhere.",
                 "Hehe, {sender} folded it wrong. I love it.",
                 "I'll write back! In spores! Hehe.",
+            ],
+            replies: [
+                "Hehe! Got it! I sporred all over it! Sending it back sporey!",
+                "Your letter made me SO excited. Here, have a giggle back.",
+                "I wrote back! Guess what it says! No, read it! Hehe!",
             ]),
         "Cap": Voice(
             topics: ["the old days", "how things used to be", "willpower"],
@@ -370,6 +507,11 @@ public enum Letters {
                 "In my day, planes had propellers. And they didn't land on you.",
                 "Young {sender}. Nice handwriting. In my day it was nicer.",
                 "A paper plane. In my day, folding one took a whole afternoon.",
+            ],
+            replies: [
+                "In my day, we answered letters within the week. I did it in a minute. Progress.",
+                "Received, young one. In my day, planes had pilots.",
+                "A fine letter. In my day it would have been finer, but fine.",
             ]),
     ]
 
@@ -383,6 +525,11 @@ public enum Letters {
     /// What `reader` says to itself after reading a note from `sender`.
     public static func musing(by reader: String, from sender: String, using rng: inout some RandomNumberGenerator) -> String {
         fill(voice(of: reader).musings.randomElement(using: &rng)!, sender: sender, reader: reader)
+    }
+
+    /// The one answer `writer` sends back to whoever threw it a plane.
+    public static func reply(by writer: String, to reader: String, using rng: inout some RandomNumberGenerator) -> String {
+        fill(voice(of: writer).replies.randomElement(using: &rng)!, sender: writer, reader: reader)
     }
 
     /// The first bubble on catching: the note itself, read out.
@@ -402,6 +549,13 @@ public enum Letters {
     Nobody has walked into anybody for a while, so you fold a note into a paper plane and throw it across the screen to {listener}. \
     Write the note: one thing on your mind right now, in your own voice, about something only you would care about. \
     At most 18 words. Output only the note: no quotes, no greeting line, no signature.
+    """
+
+    /// The answer: `{line}` is the note being answered. Nobody answers an answer.
+    public static let replyPrompt = """
+    {listener} just threw you a paper plane. Their note said: "{line}" \
+    Write your answer to fold into a plane and throw back: one short reply, in your own voice. \
+    At most 18 words. Output only the reply: no quotes, no greeting line, no signature.
     """
 
     public static let musingPrompt = """

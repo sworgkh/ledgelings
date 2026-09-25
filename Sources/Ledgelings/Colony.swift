@@ -80,9 +80,10 @@ final class Colony: NSObject {
     var airmail: Airmail?
     /// How many planes have gone up, so a late model answer finds the right one.
     var planeCount = 0
-    /// Counts the quiet since the last bump, to know when a plane is due.
+    /// Counts the time since the last plane, to know when the next is due.
     var post = Post(quietFor: 0)
-    let wind = Wind()
+    /// An answer owed once a letter has been read.
+    var replyDue: ReplyDue?
     /// Creatures holding an open letter.
     var letters: [Int: Bool] = [:]
     /// The last thing that happened with the model, for the menu.

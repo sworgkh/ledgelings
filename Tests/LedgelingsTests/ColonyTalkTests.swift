@@ -129,16 +129,15 @@ extension ColonyTalkTests {
         #expect(logged.last?.lines.map(\.speaker) == [a, b])
     }
 
-    @Test func aQuietSpellSendsAPlaneByItselfAndABumpPutsItOff() throws {
+    @Test func aPlaneGoesByItselfEveryIntervalWhateverTheBumps() throws {
         let w = try World()
         defer { w.forget() }
         w.settings.planeMinutes = 0.5
         w.colony.post.stir(at: w.colony.elapsed)
         w.step(20)
         #expect(w.colony.airmail == nil)
-        w.colony.post.stir(at: w.colony.elapsed)      // as a bump would
-        w.step(20)
-        #expect(w.colony.airmail == nil, "the bump restarted the quiet spell")
+        w.colony.bumped(Meetings.Bump(a: 0, b: 1, count: 1, gift: false))     // a meeting does not put it off
+        w.colony.releaseChat(); w.colony.busy.removeAll()
         w.step(11)
         #expect(w.colony.airmail != nil || w.colony.isNight)
     }
@@ -214,5 +213,42 @@ extension ColonyTalkTests {
         #expect(w.colony.parties()[to].canTalk == false, "no bumping into talks on the way")
         w.colony.talkNow(from: to == 0 ? 1 : 0)
         #expect(w.colony.talkStatus.contains("nobody free") || !w.colony.busy.contains(to))
+    }
+}
+
+extension ColonyTalkTests {
+    @Test func theCatcherWritesBackOnceAndTheAnswerIsNotAnswered() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.sendPlane())
+        let first = try #require(w.colony.airmail)
+        let (a, b) = (first.plane.from, first.plane.to)
+        #expect(!first.isReply)
+        #expect(run(w, upTo: 60) { w.colony.airmail?.isReply == true }, "an answer goes up")
+        let answer = try #require(w.colony.airmail)
+        #expect(answer.plane.from == b && answer.plane.to == a, "back to the one who wrote")
+        #expect(run(w, upTo: 60) { w.colony.letters[a] == true }, "the first writer catches it")
+        #expect(w.colony.bubbles[a]?.text.hasSuffix("— \(w.colony.character(forCreature: b).name)") == true)
+        #expect(run(w, upTo: 60) { w.colony.airmail == nil })
+        w.step(3)
+        #expect(w.colony.airmail == nil && w.colony.replyDue == nil, "nobody answers an answer")
+        let logged = w.history.exchanges(on: ChatLog.day(of: Date()))
+        #expect(logged.suffix(2).map(\.situation) == [
+            "\(w.colony.character(forCreature: a).name) sent \(w.colony.character(forCreature: b).name) a paper plane.",
+            "\(w.colony.character(forCreature: b).name) wrote back to \(w.colony.character(forCreature: a).name) by paper plane.",
+        ])
+    }
+
+    @Test func aFlowerWearerNeverBumps() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.step(1)
+        #expect(w.colony.parties()[1].canTalk)
+        w.colony.gifts.give("poppy", from: 0, to: 1, at: w.colony.elapsed)
+        w.colony.gifts.update(at: w.colony.elapsed + 1, wearFor: 600)
+        #expect(w.colony.gifts.hat(of: 1) == "poppy")
+        #expect(!w.colony.parties()[1].canTalk, "wearing a flower, it walks past everyone")
+        #expect(w.colony.parties()[0].canTalk, "the giver still meets others")
     }
 }
