@@ -132,9 +132,37 @@ shows in full at once. A bubble gives up waiting after 45 s.
 
 ### Characters
 
-Every character starts automatic: a voice handed out for it, the overall speed,
-and a pitch of its own (the cartoon lift with Cartoon voices on, else a small
-nudge). On its card:
+Every character starts automatic. With **Voices fit each character's
+personality** (on by default, left column), its description and its species are
+read for words that say how it should sound, and the voice, pitch and speed follow:
+
+| Words in the description or species | Voice |
+|---|---|
+| old, ancient, wise, philosophical, "in my day", proverb | an old voice (Grandpa, Grandma, George…), lower, slower |
+| slow, sleepy, nap, lazy, calm, damp, purr | softer, slower |
+| fast, quick, speed · tiny, small, little | younger, quicker · higher |
+| cheerful, giggly, laughs, bouncy, excited, sweet, adorable | a bright voice, a little higher and quicker |
+| grumpy, stubborn, stern, proud, fat, big | a deep voice, lower |
+| anxious, worried, nervous | a little higher and quicker |
+| robot, antenna, bolts, status, glitch | a robot voice (Zarvox, Trinoids, Fred) |
+| ghost, spirit, haunt, hovering | the whisper (only for these) |
+| he, sir, grandpa… · she, lady, grandma… | a male · female voice |
+
+Voices are tagged from their names: the Mac reports each one's sex, Kokoro's start
+`af_`/`am_`, Orpheus's are known by name, MiniMax's describe themselves
+(`English_ManWithDeepVoice`). The characters with the strongest wishes choose first,
+each taking the best-fitting voice still free. Words the rules do not know leave a
+neutral voice; **Cast with Model** understands any description.
+
+Off, voices are handed out by name only, to differ, with the cartoon lift or a small nudge for pitch.
+
+**Cast with Model** (on a card) and **Cast Everyone with Model** (under the cards) ask
+the brain model (LM Studio or OpenRouter; not the built-in lines) to choose a voice
+from the engine's list and a pitch and speed, given the character's name, species and
+description. Its choice is kept as the character's own, as if picked by hand, with its
+reason shown under the card. One call per character, priced into the spend file.
+
+On its card:
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|

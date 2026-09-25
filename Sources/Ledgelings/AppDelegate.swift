@@ -42,6 +42,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         installStatusItem()
+        // `--cast`: the brain model casts everyone on screen, one line each on stderr, then quit.
+        if CommandLine.arguments.contains("--cast") {
+            let voice = voice
+            Task { @MainActor in
+                var seen: [String] = []
+                for name in voice.cast() where !seen.contains(name) {
+                    seen.append(name)
+                    do { FileHandle.standardError.write(Data("cast: \(name) → \(try await voice.castWithModel(name))\n".utf8)) }
+                    catch { FileHandle.standardError.write(Data("cast: \(name) failed: \(error)\n".utf8)) }
+                }
+                exit(0)
+            }
+        }
         // `--say "text"`: one line in the current voice settings, its cues on stderr, then quit.
         if let at = CommandLine.arguments.firstIndex(of: "--say"), CommandLine.arguments.indices.contains(at + 1) {
             let text = CommandLine.arguments[at + 1], name = voice.cast().first ?? "Blocky"

@@ -540,7 +540,22 @@ empties it). An `openRouterVoice` not among the model's voices is ignored. A `lo
 Kokoro blend, `name(weight)+name(weight)…` (weights optional); it is used when every
 name in it is among the server's voices (or the list is unknown), else ignored.
 
-**Pitch.** A name speaks at `voicePitch` × (own pitch if set, else with `cartoonVoices`: 1.15 + 0.45 ×
+**Casting** (`castByPersonality`, default on; `LedgelingsCore/Casting.swift`). A
+character's persona + species kind are scanned for word stems (short words ≤ 3
+letters match whole) in 14 rules, each adding wanted tags (female, male, old, young,
+deep, bright, soft, robot, whisper) and multiplying pitch (0.7–1.5) and speed
+(0.75–1.3). Voices are tagged from a table of known names, the Kokoro sex prefix,
+self-describing names, and the Mac's reported gender. Score = Σ wanted weight of
+tags held − wrong-sex weight − 3 for an unwanted robot − 3 for a whisper wanted
+under 2 − 0.7 for an unwanted old voice. Characters with the strongest wish choose
+first (ties by name); each takes the best-scoring free voice, ties going round the
+pool from FNV-1a(name). Automatic pitch = (1.3 with `cartoonVoices`, else 1) × traits
+pitch × a halved name nudge; automatic speed = traits speed. **Cast with model** sends
+the name, kind, persona and the engine's voices with their tags, and reads back
+`{voice, pitch, speed, why}` (after any `</think>`, 2000 tokens allowed for
+reasoning), storing it in `characterVoices`.
+
+**Pitch.** A name speaks at `voicePitch` × (own pitch if set, else with `castByPersonality` as above, else with `cartoonVoices`: 1.15 + 0.45 ×
 (FNV-1a(name + "#cartoon") mod 1000) / 999; else with `voicePerCharacter` the
 0.9–1.1 nudge; else 1). With `cartoonVoices` the built-in pool is the Eloquence
 voices and the `speech.synthesis.voice.*` ones minus the singers (Bells, Cellos,
@@ -1189,6 +1204,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | voiceVolume | 0.8 | 0–1 |
 | cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
 | characterVoices | {} | name → `{systemVoice, openRouterVoice, localVoice, speed, pitch, followPitch}`, JSON (§6.6.1) |
+| castByPersonality | true | automatic voices from description and species (§6.6.1) |
 | speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
@@ -1229,7 +1245,7 @@ Stop, status; on the right a card per character on screen with voice picker
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 144 such tests and 82 app-side ones.
+  the tests in §14 first; the macOS app has 156 such tests and 82 app-side ones.
 
 ---
 

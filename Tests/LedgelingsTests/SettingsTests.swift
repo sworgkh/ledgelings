@@ -230,6 +230,9 @@ import Testing
         #expect(s.cartoonVoices, "desktop pets, not newsreaders")
         #expect(s.characterVoices.isEmpty)
         #expect(s.speedFollowsPitch, "clean sound by default")
+        #expect(s.castByPersonality, "voices fit who they are by default")
+        s.castByPersonality = false
+        #expect(!AppSettings(defaults: defaults).castByPersonality)
         s.speedFollowsPitch = false
         #expect(!AppSettings(defaults: defaults).speedFollowsPitch)
         #expect(s.localVoiceURL?.absoluteString == "http://localhost:8880/v1" && s.localVoiceModel == "kokoro" && s.localVoice.isEmpty)

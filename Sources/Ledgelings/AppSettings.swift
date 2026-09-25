@@ -141,6 +141,10 @@ final class AppSettings: ObservableObject {
     /// 1 is the voice's own pitch. Both engines: OpenRouter's clips are shifted as they play.
     @Published var voicePitch: Double { didSet { save(voicePitch, "voicePitch") } }
     @Published var voiceVolume: Double { didSet { save(voiceVolume, "voiceVolume") } }
+    /// Automatic voices fit each character's description and species (old,
+    /// tiny, cheerful, robot, ghost…), pitch and speed included. Off: handed
+    /// out by name, only different from each other.
+    @Published var castByPersonality: Bool { didSet { save(castByPersonality, "castByPersonality") } }
     /// Raising the pitch also quickens the talk a little (by √pitch), so no voice
     /// is ever asked to drawl, which is what smears into an echo. Off: the pace
     /// is kept exactly, at the cost of some smear on big lifts.
@@ -214,6 +218,7 @@ final class AppSettings: ObservableObject {
             .flatMap { try? JSONDecoder().decode([String: CharacterVoice].self, from: $0) } ?? [:]
         keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
         speedFollowsPitch = defaults.object(forKey: "speedFollowsPitch") as? Bool ?? true
+        castByPersonality = defaults.object(forKey: "castByPersonality") as? Bool ?? true
         cartoonVoices = defaults.object(forKey: "cartoonVoices") as? Bool ?? true
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt

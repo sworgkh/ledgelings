@@ -53,6 +53,8 @@ final class Voice: NSObject, ObservableObject {
     /// The names of the creatures on screen, in order. Voices are handed out
     /// over this whole list, so Test and the live talk agree on who sounds how.
     var cast: () -> [String] = { [] }
+    /// Who a character is, by name: its description and its species' kind, for casting.
+    var describe: (String) -> (persona: String, kind: String)? = { _ in nil }
     /// What happens to one line's sound, for its bubble: dots until `started`,
     /// then the text types out, fully shown at `done`. `dropped` means it will
     /// not be said after all (stopped, failed): show the text at once.
@@ -240,26 +242,43 @@ final class Voice: NSObject, ObservableObject {
     /// The character's own share of `pitch`, before the global slider.
     func ownPitch(for name: String) -> Double {
         if let set = settings.characterVoices[name]?.pitch { return set }
+        if settings.castByPersonality {
+            // The personality sets the pitch; a cartoon sits higher overall; a small
+            // nudge keeps two alike characters apart.
+            let nudge = 1 + (Voices.pitchNudge(for: name) - 1) / 2
+            return (settings.cartoonVoices ? 1.3 : 1) * traits(for: name).pitch * nudge
+        }
         return settings.cartoonVoices ? Voices.cartoonPitch(for: name)
             : settings.voicePerCharacter ? Voices.pitchNudge(for: name) : 1
     }
+
+    /// How `name` should sound, from its description; neutral with casting off.
+    func traits(for name: String) -> Casting.Traits {
+        guard settings.castByPersonality, let who = describe(name) else { return .neutral }
+        return Casting.traits(persona: who.persona, kind: who.kind)
+    }
+
+    /// The character's own share of `speed`, before the global slider.
+    func ownSpeed(for name: String) -> Double { settings.characterVoices[name]?.speed ?? traits(for: name).speed }
 
     /// Whether `name`'s speed follows its pitch: its own choice, else the overall one.
     func followsPitch(_ name: String) -> Bool { settings.characterVoices[name]?.followPitch ?? settings.speedFollowsPitch }
 
     /// How fast `name` speaks: the Speed slider times its own.
-    func speed(for name: String) -> Double { settings.voiceSpeed * (settings.characterVoices[name]?.speed ?? 1) }
+    func speed(for name: String) -> Double { settings.voiceSpeed * ownSpeed(for: name) }
 
     /// The Mac voice identifier `name` speaks with; nil is the system default.
     /// `automatic`: what it would get with no voice of its own chosen.
     func systemVoice(for name: String, cast: [String], automatic: Bool = false) -> String? {
         if !automatic, let own = settings.characterVoices[name]?.systemVoice { return own }
         guard settings.voicePerCharacter else { return settings.systemVoice.isEmpty ? nil : settings.systemVoice }
-        let fun = settings.cartoonVoices ? Self.cartoonVoices : []
-        let pool = (fun.count >= 2 ? fun : Self.characterVoices).map(\.identifier)
+        let voices = systemPool
+        let pool = voices.map(\.identifier)
         var fixed = settings.characterVoices.compactMapValues(\.systemVoice)
         if automatic { fixed[name] = nil }
-        return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
+        guard settings.castByPersonality else { return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name] }
+        let tags = Dictionary(voices.map { ($0.identifier, Self.tags(of: $0)) }, uniquingKeysWith: { a, _ in a })
+        return Casting.assign(cast + [name], traits: castTraits(cast + [name]), pool: pool, tags: tags, fixed: fixed)[name]
     }
 
     /// The voice `name` speaks with on OpenRouter or the local server, from that
@@ -275,10 +294,35 @@ final class Voice: NSObject, ObservableObject {
         if !automatic, let own = usable(settings.characterVoices[name].flatMap(mine)) { return own }
         guard settings.voicePerCharacter else { return chosen.isEmpty ? voices.first : chosen }
         let english = Voices.englishFirst(voices)
-        let pool = settings.cartoonVoices ? Voices.cartoonFirst(english) : english
         var fixed = settings.characterVoices.compactMapValues { usable(mine($0)) }
         if automatic { fixed[name] = nil }
-        return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
+        guard settings.castByPersonality else {
+            let pool = settings.cartoonVoices ? Voices.cartoonFirst(english) : english
+            return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
+        }
+        let tags = Dictionary(english.map { ($0, Casting.tags(ofVoice: $0)) }, uniquingKeysWith: { a, _ in a })
+        return Casting.assign(cast + [name], traits: castTraits(cast + [name]), pool: english, tags: tags, fixed: fixed)[name]
+    }
+
+    private func castTraits(_ names: [String]) -> [String: Casting.Traits] {
+        Dictionary(names.map { ($0, traits(for: $0)) }, uniquingKeysWith: { a, _ in a })
+    }
+
+    /// The Mac voices handed out one per character.
+    var systemPool: [AVSpeechSynthesisVoice] {
+        let fun = settings.cartoonVoices ? Self.cartoonVoices : []
+        return fun.count >= 2 ? fun : Self.characterVoices
+    }
+
+    /// A Mac voice's tags: from its name, and the sex the system reports.
+    static func tags(of voice: AVSpeechSynthesisVoice) -> Set<Casting.Tag> {
+        var tags = Casting.tags(ofVoice: voice.identifier, name: voice.name)
+        switch voice.gender {
+        case .female: tags.insert(.female)
+        case .male: tags.insert(.male)
+        default: break
+        }
+        return tags
     }
 
     /// The voices of the chosen OpenRouter model, as far as the list is loaded.
@@ -524,5 +568,52 @@ extension Voice: AVSpeechSynthesizerDelegate {
     private func finished(_ id: ObjectIdentifier, _ how: Cue) {
         if waiting > 0 { waiting -= 1 }
         spoken.removeValue(forKey: id)?.cue(how)
+    }
+}
+
+// MARK: Casting by the brain model
+
+extension Voice {
+    /// Ask the brain model which voice, pitch and speed fit `name`, and keep its
+    /// answer as the character's own, as if picked by hand. Returns the model's
+    /// reason. Needs a model brain (LM Studio or OpenRouter); the call is priced
+    /// into the spend file like any other.
+    @discardableResult
+    func castWithModel(_ name: String) async throws -> String {
+        guard let client = settings.chatClient() else { throw ChatClient.Failure.refused(settings.brainProblem) }
+        let who = describe(name) ?? (persona: "", kind: "")
+        // Choices for the engine in use, by the id the model sees, with what is known of each.
+        var choices: [(id: String, hints: String, value: String)] = []
+        func hints(_ tags: Set<Casting.Tag>) -> String { tags.map(\.rawValue).sorted().joined(separator: ", ") }
+        switch settings.voiceEngine {
+        case .system:
+            choices = systemPool.map { ($0.name, hints(Self.tags(of: $0)), $0.identifier) }
+        case .openRouter:
+            let all = modelVoices.isEmpty ? try await voices(of: settings.voiceModel) : modelVoices
+            choices = Voices.englishFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
+        case .local:
+            let all = localVoices.isEmpty ? try await loadLocalVoices() : localVoices
+            choices = Voices.englishFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
+        }
+        guard !choices.isEmpty else { throw ChatClient.Failure.badReply("no voices to choose from") }
+        let prompt = Casting.modelPrompt(name: name, persona: who.persona, kind: who.kind,
+                                         voices: choices.map { ($0.id, $0.hints) }, cartoon: settings.cartoonVoices)
+        // Room for a thinking model to reason before it answers; the answer itself is short.
+        let answer = try await client.reply(system: Casting.modelSystem, user: prompt, maxTokens: 2000, temperature: 0.3)
+        if let usage = answer.usage { spend.record(provider: client.provider, model: client.model, usage: usage) }
+        guard let pick = Casting.parsePick(answer.text),
+              let chosen = choices.first(where: { $0.id.caseInsensitiveCompare(pick.voice) == .orderedSame })
+        else { throw ChatClient.Failure.badReply(String(answer.text.prefix(120))) }
+        let engine = settings.voiceEngine
+        settings.setVoice(of: name) { v in
+            switch engine {
+            case .system: v.systemVoice = chosen.value
+            case .openRouter: v.openRouterVoice = chosen.value
+            case .local: v.localVoice = chosen.value
+            }
+            if let p = pick.pitch { v.pitch = min(max(p, AppSettings.voicePitchRange.lowerBound), AppSettings.voicePitchRange.upperBound) }
+            if let s = pick.speed { v.speed = min(max(s, AppSettings.voiceSpeedRange.lowerBound), AppSettings.voiceSpeedRange.upperBound) }
+        }
+        return "\(chosen.id)" + (pick.why.map { ": \($0)" } ?? "")
     }
 }

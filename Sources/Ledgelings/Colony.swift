@@ -97,7 +97,13 @@ final class Colony: NSObject {
     var letters: [Int: Bool] = [:]
     /// Reads every line out loud when voice is on. Nil offscreen (the promo).
     var voice: Voice? {
-        didSet { voice?.cast = { [weak self] in self.map { c in c.creatures.indices.map { c.character(forCreature: $0).name } } ?? [] } }
+        didSet {
+            voice?.cast = { [weak self] in self.map { c in c.creatures.indices.map { c.character(forCreature: $0).name } } ?? [] }
+            voice?.describe = { [weak self] name in
+                guard let c = self, let i = c.creatures.indices.first(where: { c.character(forCreature: $0).name == name }) else { return nil }
+                return (c.character(forCreature: i).persona, c.kind(ofCreature: i))
+            }
+        }
     }
     /// The last thing that happened with the model, for the menu.
     var talkStatus = "not tried yet"

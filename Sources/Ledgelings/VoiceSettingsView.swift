@@ -22,15 +22,36 @@ private struct CharacterVoicesSection: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var voice: Voice
     @State private var names: [String] = []
+    @State private var castingAll = false
+    @State private var allNote: String?
+
+    private func castEveryone() async {
+        castingAll = true
+        defer { castingAll = false }
+        var done: [String] = []
+        for name in names {
+            allNote = "casting \(name)…"
+            do { done.append("\(name): \(try await voice.castWithModel(name))") }
+            catch { done.append("\(name): \(error)") }
+        }
+        allNote = done.joined(separator: "\n")
+    }
 
     var body: some View {
         Section {
             if names.isEmpty { Text("Nobody on screen right now.").foregroundStyle(.secondary) }
             ForEach(names, id: \.self) { CharacterVoiceRow(name: $0, settings: settings, voice: voice) }
+            HStack {
+                Button(castingAll ? "Casting…" : "Cast Everyone with Model") { Task { await castEveryone() } }
+                    .disabled(castingAll || settings.brain == .script || names.isEmpty)
+                    .help(settings.brain == .script ? "Needs a model brain: LM Studio or OpenRouter, in Settings › Talk" : "")
+                Spacer()
+            }
+            if let allNote { Text(allNote).font(.caption).foregroundStyle(.secondary) }
         } header: {
             Text("Characters")
         } footer: {
-            Text("The characters on screen now. Each starts automatic: a voice handed out for them, the overall speed, and a pitch of their own (the cartoon lift with Cartoon voices on). A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends.")
+            Text("The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends.")
         }
         .onAppear {
             var seen: [String] = []
@@ -46,6 +67,16 @@ private struct CharacterVoiceRow: View {
     @ObservedObject var voice: Voice
 
     private var own: CharacterVoice { settings.characterVoices[name] ?? CharacterVoice() }
+    @State private var casting = false
+    @State private var castNote: String?
+
+    private func cast() async {
+        casting = true
+        defer { casting = false }
+        do { castNote = "cast: " + (try await voice.castWithModel(name)) }
+        catch { castNote = "\(error)" }
+    }
+
     /// "Custom blend…" was picked; the field shows even before anything is typed.
     @State private var blending = false
     static let custom = "\u{1}custom"
@@ -80,8 +111,12 @@ private struct CharacterVoiceRow: View {
                 Text(name).font(.headline)
                 Spacer()
                 Button("Test") { voice.introduce(name) }
+                Button(casting ? "Casting…" : "Cast with Model") { Task { await cast() } }
+                    .disabled(casting || settings.brain == .script)
+                    .help(settings.brain == .script ? "Needs a model brain: LM Studio or OpenRouter, in Settings › Talk" : "")
                 Button("Auto") { settings.setVoice(of: name) { $0 = CharacterVoice() } }.disabled(own.isAutomatic)
             }
+            if let castNote { Text(castNote).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
             Picker("Voice", selection: voiceChoice) {
                 Text("Automatic (\(voice.automaticVoice(for: name)))").tag("")
                 switch settings.voiceEngine {
@@ -141,7 +176,7 @@ private struct CharacterVoiceRow: View {
     }
 
     private var speed: Binding<Double> {
-        Binding(get: { own.speed ?? 1 }, set: { new in settings.setVoice(of: name) { $0.speed = new } })
+        Binding(get: { (voice.ownSpeed(for: name) * 100).rounded() / 100 }, set: { new in settings.setVoice(of: name) { $0.speed = new } })
     }
 
     /// 0 follows the overall setting, 1 on, 2 off.
@@ -174,6 +209,7 @@ struct VoiceSection: View {
             .pickerStyle(.segmented)
             Toggle("Every character gets a voice of their own", isOn: $settings.voicePerCharacter)
             Toggle("Cartoon voices: squeakier, sillier", isOn: $settings.cartoonVoices)
+            Toggle("Voices fit each character's personality", isOn: $settings.castByPersonality)
             switch settings.voiceEngine {
             case .system: systemFields
             case .openRouter: openRouterFields
