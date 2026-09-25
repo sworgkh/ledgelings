@@ -227,6 +227,9 @@ import Testing
         #expect(s.voiceEngine == .system && s.voicePerCharacter)
         #expect(s.voiceModel == AppSettings.defaultVoiceModel && s.voiceSpeed == 1 && s.voicePitch == 1 && s.voiceVolume == 0.8)
         #expect(s.keepVoices, "paid-for sounds are kept unless asked not to")
+        #expect(s.cartoonVoices, "desktop pets, not newsreaders")
+        s.cartoonVoices = false
+        #expect(!AppSettings(defaults: defaults).cartoonVoices)
         s.keepVoices = false
         #expect(!AppSettings(defaults: defaults).keepVoices)
         s.voiceEnabled = true

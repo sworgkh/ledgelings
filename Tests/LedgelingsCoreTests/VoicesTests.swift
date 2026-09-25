@@ -44,4 +44,19 @@ import Testing
         #expect(Voices.speakable("Hello — it's 5:00 & #1!") == "Hello — it's 5:00 & 1!")
         #expect(Voices.speakable("🙂👍") == "")
     }
+
+    @Test func cartoonVoicesSqueakHigherEachAtItsOwnHeight() {
+        let heights = ["Blocky", "Pip", "Mortimer", "Zed"].map(Voices.cartoonPitch(for:))
+        #expect(heights.allSatisfy { (1.15...1.6).contains($0) })
+        #expect(Set(heights).count == 4)
+        #expect(Voices.cartoonPitch(for: "Pip") == Voices.cartoonPitch(for: "Pip"))
+    }
+
+    @Test func playfulVoicesArePickedFirstWhenThereAreEnough() {
+        let minimax = ["English_expressive_narrator", "English_AnimeCharacter", "English_Trustworth_Man", "English_PlayfulGirl"]
+        #expect(Voices.cartoonFirst(minimax) == ["English_AnimeCharacter", "English_PlayfulGirl"])
+        #expect(Voices.cartoonFirst(["en_paul_neutral", "en_paul_excited", "en_paul_cheerful"]) == ["en_paul_excited", "en_paul_cheerful"])
+        #expect(Voices.cartoonFirst(["Puck", "Kore"]) == ["Puck", "Kore"], "nothing says playful: keep them all")
+        #expect(Voices.cartoonFirst(["am_santa", "am_adam"]) == ["am_santa", "am_adam"], "one is not enough to go round")
+    }
 }

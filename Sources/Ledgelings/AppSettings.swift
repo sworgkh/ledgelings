@@ -125,7 +125,10 @@ final class AppSettings: ObservableObject {
     @Published var openRouterVoice: String { didSet { save(openRouterVoice, "openRouterVoice") } }
     /// 1 is normal speed, for both engines.
     @Published var voiceSpeed: Double { didSet { save(voiceSpeed, "voiceSpeed") } }
-    /// 1 is the voice's own pitch. The built-in voices only; OpenRouter has no such knob.
+    /// Squeakier and sillier: each character's pitch lifted by its own amount, and
+    /// the playful voices (Grandma, Zarvox; AnimeCharacter, en_paul_excited) first.
+    @Published var cartoonVoices: Bool { didSet { save(cartoonVoices, "cartoonVoices") } }
+    /// 1 is the voice's own pitch. Both engines: OpenRouter's clips are shifted as they play.
     @Published var voicePitch: Double { didSet { save(voicePitch, "voicePitch") } }
     @Published var voiceVolume: Double { didSet { save(voiceVolume, "voiceVolume") } }
     /// Every line a speech model says is kept as a sound file beside the chats.
@@ -189,6 +192,7 @@ final class AppSettings: ObservableObject {
         voicePitch = clamp("voicePitch", 1, Self.voicePitchRange)
         voiceVolume = clamp("voiceVolume", 0.8, 0...1)
         keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
+        cartoonVoices = defaults.object(forKey: "cartoonVoices") as? Bool ?? true
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
         replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt

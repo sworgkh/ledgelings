@@ -116,13 +116,14 @@ shows in full at once. A bubble gives up waiting after 45 s.
 | **Hear them talk out loud** | off | | Also in the menu as **Hear Them Talk**. Turning it off stops the voice mid-word |
 | **Voices** | Built-in voices | | or OpenRouter. Switching stops whatever is being said |
 | **Every character gets a voice of their own** | on | | Each name gets its own voice, the same one every launch; two share only once the voices run out. Off: everyone uses the **Voice** below |
+| **Cartoon voices: squeakier, sillier** | on | | Every character speaks 1.15 to 1.6 times higher (its own height, on top of **Pitch**), and the playful voices go first: on the Mac the character voices (Grandma, Grandpa, Rocko, Shelley, Eddy…) and the talking novelty ones (Zarvox, Bubbles, Junior, Trinoids, Boing…), never the singing ones (Bells, Cellos, Organ, Good News, Bad News); on OpenRouter voice names such as `English_AnimeCharacter`, `English_PlayfulGirl`, `en_paul_excited`, when a model has at least two. Off: plain voices, each nudged only slightly. Acting directions in the text ("say it squeaky") do not work: Gemini reads them out |
 | **Voice** (Built-in) | System default | | Every voice the Mac has in your language, novelty voices (Bells, Zarvox…) included. With a voice each, novelty voices are left out and every character also gets a slightly different pitch. More voices: System Settings › Accessibility › Spoken Content › System Voice › Manage Voices |
 | **API key** (OpenRouter) | | | The brain's key, shown here only when the brain is not OpenRouter |
 | **Model** (OpenRouter) | `hexgrad/kokoro-82m` | | Every OpenRouter speech model, with its price, fetched live. Kokoro costs about $0.00003 a line. The free models have daily limits the creatures would hit |
 | **Voice** (OpenRouter) | the model's first | | That model's voices. With a voice each, the English ones are used when the model's voice names say which they are |
 | **Keep every line it says** (OpenRouter) | on | | Each line is saved as a WAV file in `~/Library/Application Support/Ledgelings/voices/<day>/<time>-<speaker>-<key>.wav`, beside the chats, and listed in `voices/voices.jsonl` (time, speaker, text, model, voice, speed, file). **Reveal in Finder** opens the folder. A line already kept in the same model, voice and speed is played from there, free, whether or not this is on |
 | **Speed** | 1× | 0.5 to 2 | Both engines |
-| **Pitch** | 1× | 0.5 to 2 | Built-in voices only; OpenRouter has no such knob |
+| **Pitch** | 1× | 0.5 to 2 | Both engines. OpenRouter clips are pitch-shifted on this Mac as they play (same speed, higher or lower), so it costs nothing |
 | **Volume** | 0.8 | 0 to 1 | |
 | **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
 

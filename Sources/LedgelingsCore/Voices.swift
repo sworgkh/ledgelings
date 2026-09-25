@@ -31,6 +31,23 @@ public enum Voices {
         0.9 + 0.2 * Double(stableHash(name + "#pitch") % 1000) / 999
     }
 
+    /// A cartoon lift for a name: 1.15...1.6 times the voice's own pitch, always
+    /// the same for a name, so every character squeaks at a height of its own.
+    public static func cartoonPitch(for name: String) -> Double {
+        1.15 + 0.45 * Double(stableHash(name + "#cartoon") % 1000) / 999
+    }
+
+    /// Words in a voice's name that mean it is playful rather than a newsreader:
+    /// MiniMax's `English_AnimeCharacter`, Voxtral's `en_paul_excited`, Kokoro's `am_santa`.
+    static let playful = ["anime", "playful", "whimsical", "comedian", "jovial", "lovely", "upbeat",
+                          "excited", "cheerful", "happy", "santa", "boy", "girl", "radiant", "kind-hearted"]
+
+    /// The playful voices of a list when there are at least two, else the list as it is.
+    public static func cartoonFirst(_ voices: [String]) -> [String] {
+        let fun = voices.filter { v in let l = v.lowercased(); return playful.contains { l.contains($0) } }
+        return fun.count >= 2 ? fun : voices
+    }
+
     /// FNV-1a over the UTF-8 bytes. Swift's own `hashValue` changes every launch.
     public static func stableHash(_ text: String) -> UInt64 {
         var hash: UInt64 = 0xcbf2_9ce4_8422_2325

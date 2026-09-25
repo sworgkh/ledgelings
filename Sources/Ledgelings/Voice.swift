@@ -35,7 +35,10 @@ final class Voice: NSObject, ObservableObject {
     @Published private(set) var models: [SpeechClient.Model] = []
 
     private let synthesizer = AVSpeechSynthesizer()
-    private var player: AVAudioPlayer?
+    /// OpenRouter's clips play through a pitch shifter, so they can squeak too.
+    private let engine = AVAudioEngine()
+    private let player = AVAudioPlayerNode()
+    private let shifter = AVAudioUnitTimePitch()
     /// Lines queued or being said, both engines.
     private var waiting = 0
     /// The names of the creatures on screen, in order. Voices are handed out
@@ -73,6 +76,8 @@ final class Voice: NSObject, ObservableObject {
         clips = self.archive.clips()
         super.init()
         synthesizer.delegate = self
+        engine.attach(player)
+        engine.attach(shifter)
         // Switching voice off silences whatever is still being said.
         settings.$voiceEnabled.sink { [weak self] on in if !on { self?.stop() } }.store(in: &watchers)
         settings.$voiceEngine.dropFirst().sink { [weak self] _ in self?.stop() }.store(in: &watchers)
@@ -108,8 +113,7 @@ final class Voice: NSObject, ObservableObject {
         synthesizer.stopSpeaking(at: .immediate)
         chain?.cancel()
         chain = nil
-        player?.stop()
-        player = nil
+        player.stop()
         waiting = 0
         pending.forEach { $0(.dropped) }
     }
@@ -128,13 +132,13 @@ final class Voice: NSObject, ObservableObject {
     private func speakHere(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
         let utterance = AVSpeechUtterance(string: line)
         if settings.voicePerCharacter {
-            let pool = Self.characterVoices.map(\.identifier)
+            let fun = settings.cartoonVoices ? Self.cartoonVoices : []
+            let pool = (fun.count >= 2 ? fun : Self.characterVoices).map(\.identifier)
             utterance.voice = Voices.assign(cast + [name], pool: pool)[name].flatMap(AVSpeechSynthesisVoice.init(identifier:))
-            utterance.pitchMultiplier = Float(min(max(settings.voicePitch * Voices.pitchNudge(for: name), 0.5), 2))
         } else {
             utterance.voice = settings.systemVoice.isEmpty ? nil : AVSpeechSynthesisVoice(identifier: settings.systemVoice)
-            utterance.pitchMultiplier = Float(settings.voicePitch)
         }
+        utterance.pitchMultiplier = Float(min(max(pitch(for: name), 0.5), 2))
         utterance.rate = min(max(AVSpeechUtteranceDefaultSpeechRate * Float(settings.voiceSpeed), AVSpeechUtteranceMinimumSpeechRate),
                              AVSpeechUtteranceMaximumSpeechRate)
         utterance.volume = Float(settings.voiceVolume)
@@ -150,12 +154,13 @@ final class Voice: NSObject, ObservableObject {
         guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return false }
         let client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         let perCharacter = settings.voicePerCharacter, chosen = settings.openRouterVoice, speed = settings.voiceSpeed
-        let keep = settings.keepVoices, saidAt = Date()
+        let keep = settings.keepVoices, saidAt = Date(), cartoon = settings.cartoonVoices, pitch = pitch(for: name)
         waiting += 1
         // Fetch now, while the line before is still playing; play in turn.
         let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
             let voices = (try? await self?.voices(of: client.model)) ?? []
-            let voice = perCharacter ? Voices.assign(cast + [name], pool: Voices.englishFirst(voices))[name]
+            let pool = Voices.englishFirst(voices)
+            let voice = perCharacter ? Voices.assign(cast + [name], pool: cartoon ? Voices.cartoonFirst(pool) : pool)[name]
                                      : (chosen.isEmpty ? voices.first : chosen)
             let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: speed)
             if let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
@@ -183,7 +188,7 @@ final class Voice: NSObject, ObservableObject {
                     self.charge(client, generation, speaker: name, text: line, at: saidAt)
                 }
                 self.status = "\(name): \(said.voice ?? "default voice") on \(client.model)" + (said.kept ? ", kept copy, free" : "")
-                try await self.play(said.audio) { cue?(.started(duration: $0)) }
+                try await self.play(said.audio, pitch: pitch) { cue?(.started(duration: $0)) }
                 ending = .done
             } catch is CancellationError {
             } catch {
@@ -194,14 +199,34 @@ final class Voice: NSObject, ObservableObject {
         return true
     }
 
-    /// Play a clip to its end. `started` hears its length the moment it starts.
-    private func play(_ audio: Data, started: (Double) -> Void) async throws {
-        let player = try AVAudioPlayer(data: audio)
+    /// How high `name` speaks: the Pitch slider, times a cartoon lift or a small
+    /// nudge of its own when every character has a voice of their own.
+    private func pitch(for name: String) -> Double {
+        let own = settings.cartoonVoices ? Voices.cartoonPitch(for: name)
+            : settings.voicePerCharacter ? Voices.pitchNudge(for: name) : 1
+        return settings.voicePitch * own
+    }
+
+    /// Play a clip to its end, `pitch` times higher at the same speed.
+    /// `started` hears its length the moment it starts.
+    private func play(_ audio: Data, pitch: Double, started: (Double) -> Void) async throws {
+        // AVAudioFile reads from a file only; the name tells it WAV from MP3.
+        let isWAV = audio.prefix(4) == Data("RIFF".utf8)
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("ledgelings-\(UUID().uuidString).\(isWAV ? "wav" : "mp3")")
+        try audio.write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let clip = try AVAudioFile(forReading: file)
+        engine.connect(player, to: shifter, format: clip.processingFormat)
+        engine.connect(shifter, to: engine.mainMixerNode, format: clip.processingFormat)
+        shifter.pitch = Float(1200 * log2(min(max(pitch, 0.25), 4)))      // cents
         player.volume = Float(settings.voiceVolume)
-        self.player = player
+        if !engine.isRunning { try engine.start() }
+        let duration = Double(clip.length) / clip.processingFormat.sampleRate
+        player.scheduleFile(clip, at: nil, completionHandler: nil)
         player.play()
-        started(player.duration)
-        try await Task.sleep(for: .seconds(player.duration + 0.15))
+        started(duration)
+        try await Task.sleep(for: .seconds(duration + 0.15))
+        player.stop()
     }
 
     /// Into the spend file, and beside its conversation in the chat log, priced
@@ -246,6 +271,23 @@ final class Voice: NSObject, ObservableObject {
         let mine = all.filter { $0.language.hasPrefix(language) }
         return (mine.isEmpty ? all.filter { $0.language.hasPrefix("en") } : mine)
             .sorted { ($0.name, $0.language) < ($1.name, $1.language) }
+    }
+
+    /// Mac voices that sing their lines rather than say them: fun once, not all day.
+    static let singers: Set<String> = ["Bells", "Cellos", "Organ", "Good News", "Bad News"]
+
+    /// The voices handed out with Cartoon voices on: the Mac's character voices
+    /// (Grandma, Grandpa, Rocko, Shelley…) and the old talking novelty voices
+    /// (Zarvox, Bubbles, Junior, Trinoids…), minus the ones that sing.
+    static var cartoonVoices: [AVSpeechSynthesisVoice] {
+        let region = Locale.current.region?.identifier ?? "US"
+        var byName: [String: AVSpeechSynthesisVoice] = [:]
+        for voice in systemVoices where !singers.contains(voice.name)
+            && (voice.identifier.contains(".eloquence.") || voice.identifier.contains(".speech.synthesis.voice.")) {
+            if let kept = byName[voice.name], kept.language.hasSuffix(region) || !voice.language.hasSuffix(region) { continue }
+            byName[voice.name] = voice
+        }
+        return byName.values.sorted { $0.identifier < $1.identifier }
     }
 
     /// The voices handed out one per character: no novelty voices, and each

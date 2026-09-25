@@ -532,8 +532,18 @@ the English ones when any name is marked English (`-en` suffix; `en_`, `gb_`,
 `en-`, `English_` prefix; Kokoro's `af_ am_ bf_ bm_`). Without it: the chosen
 voice, or the system default / the model's first.
 
+**Pitch.** A name speaks at `voicePitch` × (with `cartoonVoices`: 1.15 + 0.45 ×
+(FNV-1a(name + "#cartoon") mod 1000) / 999; else with `voicePerCharacter` the
+0.9–1.1 nudge; else 1). With `cartoonVoices` the built-in pool is the Eloquence
+voices and the `speech.synthesis.voice.*` ones minus the singers (Bells, Cellos,
+Organ, Good News, Bad News), if at least two; the OpenRouter pool is cut to names
+containing anime, playful, whimsical, comedian, jovial, lovely, upbeat, excited,
+cheerful, happy, santa, boy, girl, radiant or kind-hearted, if at least two.
+
 **Built-in engine:** `AVSpeechSynthesizer`, rate = default rate × `voiceSpeed`
-(clamped to the system's range), pitch × `voicePitch`, volume `voiceVolume`.
+(clamped to the system's range), pitch multiplier as above (0.5–2), volume `voiceVolume`.
+OpenRouter clips play through `AVAudioEngine`: player → time-pitch unit set to
+1200·log2(pitch) cents (pitch clamped 0.25–4) → mixer.
 
 **OpenRouter engine:** `POST {base}/audio/speech` with `{model, input, voice,
 response_format: "pcm", speed}` and the brain's key and headers. PCM because every
@@ -1149,8 +1159,9 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | systemVoice | empty | a voice identifier; empty = system default |
 | voiceModel | `hexgrad/kokoro-82m` | an OpenRouter speech model |
 | openRouterVoice | empty | one of the model's voices; empty = its first |
-| voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch is built-in only |
+| voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch applies to both engines |
 | voiceVolume | 0.8 | 0–1 |
+| cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
 Settings window: 1100×760 points, four tabs, each laid out as two columns
@@ -1187,7 +1198,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 139 such tests and 78 app-side ones.
+  the tests in §14 first; the macOS app has 141 such tests and 78 app-side ones.
 
 ---
 
