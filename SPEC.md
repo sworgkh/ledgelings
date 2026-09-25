@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.16). Where the
+Every number here is the one the macOS app ships with (v0.17). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -311,7 +311,7 @@ At each tick with `dt = min(now − last, 0.1)`:
    past their time; steer every wearer after its giver if `followGiver` (§7.3).
    Age the sparks (§7.4). Release the chatting pair if
    it is over (§7.2). Detect bumps and handle them (§7.1). Run the post:
-   send, fly, catch and read a paper plane (§7.6).
+   send, fly, catch, read and answer a paper plane (§7.6).
 5. Render (§9).
 6. Frame rate: 30 fps normally; 12 fps when nobody is held and every creature
    is asleep.
@@ -584,6 +584,10 @@ On a bump:
 4. If talking is enabled, `talk(giver, receiver, event)`. If talking is off or
    the talk could not start, release the pair after 2 s.
 
+A creature wearing a flower (§7.3) never counts as able to talk here: it walks
+past everyone, so a wearer trailing its giver does not bump into it, or into
+the crowd around it, every few seconds.
+
 ### 7.2 Holding a pair (stop and face)
 
 `hold(i, j)`: both call `meet(facing)` where `facing` for `i` toward `j` is
@@ -690,69 +694,87 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
 
 ### 7.6 Paper planes
 
-When nobody has walked into anybody for a while, one creature folds a note
-into a paper plane and throws it to another. The wind carries it across the
-screen; the catcher stops, reads the note out, then says something to itself
-about it. macOS only for now; the Windows app does not have it yet.
+Every so often one creature folds a note into a paper plane and throws it to
+another. The plane flies in weather of its own, swirling across the screen;
+the catcher stops, reads the note out, says something to itself about it, and
+throws **one** answer back, which is read and thought about but never
+answered. macOS only for now; the Windows app does not have it yet.
 
-- **The post**: `quietFor = planeMinutes · 60` s (default 2 min, range
-  0.5–30; 0 when `planesEnabled` is off). Every bump (§7.1) and every plane
-  sent sets `lastStir = elapsed`. When `elapsed − lastStir ≥ quietFor`, no
-  plane is out, it is day and the house is not out, a plane is sent; if that
-  is not possible (night, the house, fewer than two free creatures), try again
-  in 10 s (`lastStir = elapsed − quietFor + 10`). The clock is not reset at
-  dawn, so after a night a plane goes up as soon as two are awake.
+- **The post**: `interval = planeMinutes · 60` s (default 3 min, range
+  0.5–60; 0 when `planesEnabled` is off). Every first plane sent (not an
+  answer) sets `lastStir = elapsed`. When `elapsed − lastStir ≥ interval`, no
+  plane is out and no answer is owed, it is day and the house is not out, a
+  plane is sent; if that is not possible (night, the house, fewer than two
+  free creatures), try again in 10 s (`lastStir = elapsed − interval + 10`).
+  Bumps do not touch the post. The clock runs through the night, so after a
+  night a plane goes up as soon as two are awake.
 - **Free** for mail: awake, not busy talking, not chatting, not jumping, not
   held, not in the house. **Who**: the sender is any free creature; the
   catcher is a random one of the half of the other free creatures farthest from
   it (at least one), so the plane crosses some sky. One plane at a time.
 - **The throw**: the sender stops facing the catcher for 0.9 s (a chat-mode
   stop that ends by itself). The plane starts at `head(sender)` (§7.3) with
-  velocity `(0.5·unit(head(catcher) − start) + inward_sender) · 220`.
-- **The wind**: a field over the whole desktop, in pt/s², `strength = 260`:
+  velocity `(0.5·unit(head(catcher) − start) + inward_sender) · 220 · cruise/240`.
+- **Its own weather**, drawn at the throw:
+  `cruise` = 380…580 pt/s four times in five, else 220…340 (a glide);
+  `surge` 0.1…0.3; `swirl` 250…1100 pt/s²; `swirlRate` 1.2…3.4 rad/s;
+  `phase` 0…2π; and a wind with `strength` 180…480, four `phases` 0…2π,
+  `scale` 0.6…1.6, `pace` 0.7…1.8:
   ```
-  dx = sin(y/260 + 0.35t) + 0.6·sin((x+y)/410 − 0.23t)
-  dy = cos(x/310 − 0.29t) + 0.6·cos((x−y)/470 + 0.19t)
-  wind = strength · (dx, dy) / 1.6        t = elapsed
+  x' = x/scale   y' = y/scale   t' = t·pace          t = elapsed
+  dx = sin(y'/260 + 0.35t' + φ0) + 0.6·sin((x'+y')/410 − 0.23t' + φ1)
+  dy = cos(x'/310 − 0.29t' + φ2) + 0.6·cos((x'−y')/470 + 0.19t' + φ3)
+  wind = strength · (dx, dy) / 1.6
   ```
 - **Flight**, each frame toward `target = head(catcher)` (it keeps moving):
-  `want = unit(target − p)`, `grip = min(8, 0.9 + 0.45·age) · (2.2 if
-  |target − p| < 160 else 1)`, `calm = min(1, |target − p| / 220)`;
-  `v += ((want · 240 − v) · grip + wind(p, t) · calm) · dt`; speed clamped to
-  90…460 pt/s; `p += v · dt`. Weak steering at first lets the wind swing it
-  about; steering that grows with time and closeness means it always arrives.
-- **Trail**: a puff is dropped every 9 pt of flight at the plane's position;
-  each lives 1.1 s. Puffs keep fading after the plane is caught or lost.
+  `want = unit(target − p)`; `speed = cruise·(1 + surge·sin(1.7·age + phase/2))`;
+  `grip = min(8, 0.9 + 0.45·age) · (2.2 if |target − p| < 160 else 1)`;
+  `calm = min(1, |target − p| / 220)`; `side = unit(−v.y, v.x)`;
+  `twist = swirl · sin(swirlRate·age + phase) · calm`;
+  `v += ((want·speed − v)·grip + (wind + side·twist)·calm)·dt`; speed clamped
+  to 90…760 pt/s; `p += v·dt`. The swirl swings it side to side into
+  S-curves and now and then a loop; the grip grows with time and closeness,
+  so it always arrives.
+- **Trail**: a puff every 9 pt of flight, laid back evenly along each step so a
+  fast plane leaves no gaps; each lives 1.1 s and keeps fading after the plane
+  is caught or lost.
 - **Reservation**: while a plane is flying to a creature, that creature does
   not bump into talks (its `canTalk` is false, §7.1) and is not picked as a
   listener by *Make Someone Talk*.
-- **Catch**: when `|target − p| ≤ bodyHalf(catcher) + 10`: if the catcher is
-  free it catches (below); if it is asleep the plane is **dropped**; else
-  (held, jumping, chatting) the plane keeps circling. After 30 s in the air it
-  is dropped. The house coming out, or the catcher going in, drops it too.
-  A dropped plane fades out over 0.6 s where it is.
+- **Catch**: when the plane's last step passed within `bodyHalf(catcher) + 10`
+  of the target (the segment from the previous position to this one, so a fast
+  plane cannot skip through): if the catcher is free it catches (below); if it
+  is asleep the plane is **dropped**; else (held, jumping, chatting) the plane
+  keeps circling. After 30 s in the air it is dropped. The house coming out,
+  or the catcher going in, drops it too. A dropped plane fades out over 0.6 s.
 - **Reading**: the catcher stops (a chat-mode stop, facing its own way),
-  becomes busy, and holds the open letter out. The note and the thought come
-  from the model when one was asked (below) and answered, else from the
-  built-in letters. With talk on: bubble 1 is `*reads* "<note>" — <sender>`;
-  after `showTime(bubble 1) · 0.6` the bubble becomes the thought; after
-  `showTime(thought) · 0.6 + 1` s the letter goes away, the catcher is free
-  and walks on. With talk off it just holds the letter for 3 s. The pair is
-  written to the chat log as situation `"<sender> sent <catcher> a paper
-  plane."` with two lines, sender then catcher.
+  becomes busy, and holds the open letter out. With talk on: bubble 1 is
+  `*reads* "<note>" — <sender>`; after `showTime(bubble 1) · 0.6` the bubble
+  becomes the thought; after `showTime(thought) · 0.6 + 1` s the letter goes
+  away, the catcher is free and walks on. With talk off it just holds the
+  letter for 3 s. Logged with situation `"<sender> sent <catcher> a paper
+  plane."`, or for an answer `"<sender> wrote back to <catcher> by paper
+  plane."`, two lines, sender then catcher.
+- **The answer**: when a first plane has been read, its catcher owes the
+  sender one answer. As soon as that plane's trail is gone and both are free,
+  the catcher throws it (same throw, fresh weather); if they are not both free
+  within 20 s, or night falls, or the house comes out, it is never sent. An
+  answer is read and thought about like any plane, and owes nothing.
 - **Built-in letters**: every character of every built-in cast has a *voice*:
   a few topics its persona keeps returning to, three or four notes it writes,
-  and three thoughts it has on reading any note. Blocky's are about the cursor
-  and which edge is respectable, Zed's about naps, Ruth's about counting, Unit
-  7's in numbers, and so on. A character with no voice (a user's own) uses a
-  generic one. `{sender}` and `{reader}` are filled in.
+  three thoughts it has on reading any note, and three answers it writes
+  back. Blocky's are about the cursor and which edge is respectable, Zed's
+  about naps, Ruth's about counting, Unit 7's in numbers, and so on. A
+  character with no voice (a user's own) uses a generic one. `{sender}` and
+  `{reader}` are filled in.
 - **With a model** (talk on, brain not the built-in lines): as the plane is
   thrown, two calls go out in the background with the usual system prompt
-  (§6.1): the sender writes the note (`notePrompt`), then the catcher, seats
-  swapped and `{line}` = the note, thinks aloud about it (`musingPrompt`).
-  Lines are cleaned (§6.3) and priced (§6.5.1). If the catcher has the plane
-  before both answers are in, it holds the unread letter up to 8 s, then
-  falls back to the built-in letters for whatever is missing.
+  (§6.1): the sender writes the note (`notePrompt`, or `replyPrompt` with
+  `{line}` = the note being answered), then the catcher, seats swapped and
+  `{line}` = the note, thinks aloud about it (`musingPrompt`). Lines are
+  cleaned (§6.3) and priced (§6.5.1). If the catcher has the plane before both
+  answers are in, it holds the unread letter up to 8 s, then falls back to the
+  built-in letters for whatever is missing.
 
 ## 8. The brain: chat client
 
@@ -1046,8 +1068,8 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | nightMinutes | 5 | 0–60; 0 = never sleep |
 | talkEnabled | true | |
 | followGiver | true | the wearer of a flower trails its giver (§7.3) |
-| planesEnabled | true | paper planes after a quiet spell (§7.6); the menu item works either way |
-| planeMinutes | 2 | 0.5–30, clamped on load: minutes without a bump before a plane |
+| planesEnabled | true | paper planes every `planeMinutes` (§7.6); the menu item works either way |
+| planeMinutes | 3 | 0.5–60, clamped on load: minutes from one plane to the next |
 | brainProvider | script | script, lmStudio, openRouter. Absent on load: `lmStudio` if any of talkServer, talkModel, openRouterModel is stored (a model was set up before scripts existed), else `script` |
 | script | the shipped lines (§6.7) | free text in the script format; "Reset Lines" restores; Import/Export read and write it as a `.txt` whole |
 | talkServer | `http://localhost:1234` | must parse as a URL with a host |
@@ -1064,7 +1086,7 @@ that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
 bubble and flower sliders, follow-the-giver and paper-plane toggles and the
-quiet-spell slider; Brain picker; for Built-in lines: the script in a
+plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),
 Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, model,
 "Installed" menu of ids, Check, status; for OpenRouter: masked key, model,
@@ -1091,7 +1113,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 67 such tests and 119 app-side ones.
+  the tests in §14 first; the macOS app has 123 such tests and 69 app-side ones.
 
 ---
 
@@ -1131,13 +1153,18 @@ time; removed creatures lose their flowers; ten distinct flower names.
 
 Paper planes: the wind is the same at the same place and time, bounded, and
 smooth; a plane reaches a walking catcher from anywhere within 25 s even in a
-wind of 400; the wind bends its path; the trail is dotted and fades a second
-after the plane is gone; the post is due after the quiet spell, a bump
-restarts it, a retry waits 10 s, zero means never; the catcher is from the
-farther half; every default character has a voice and every letter fills in;
-in a colony: thrown, caught, read out, thought about, logged, free again; a
-plane to a sleeper is dropped; the one a plane is flying to keeps out of talks;
-turned off, none goes by itself.
+wind of 400; every thrown plane has its own wind and about four in five are
+quick; a swirling quick plane is always caught at 30 fps; the swirl curls the
+path far more than still air; a fast plane cannot skip past its catcher
+between frames; the trail is dotted and fades a second after the plane is
+gone; the post is due every interval from the last plane, a retry waits 10 s,
+zero means never; the catcher is from the farther half; every default
+character has a voice with notes, thoughts and answers, and every line fills
+in; in a colony: thrown, caught, read out, thought about, logged, free again;
+the catcher writes back once to the sender and the answer is not answered; a
+bump does not put the next plane off; a plane to a sleeper is dropped; the one
+a plane is flying to keeps out of talks; a flower wearer never bumps; turned
+off, none goes by itself.
 
 Sparks: 8 per burst; all thrown into the screen at first; gone after about a
 second; opacity falls with age; gravity pulls back toward the edge.

@@ -78,9 +78,9 @@ The format, the rules the import checks, and what a species can declare
 | **Creatures talk when they bump into each other** | on | | Off: they still stop, face each other, throw stars and give flowers, but say nothing. *Make Someone Talk* and pokes still work |
 | **Bubble stays** | 14 s | 4 to 60 | For a line of about eight words. Longer lines stay a little longer, never past twice this. The reply appears while the first bubble is still up |
 | **Flower lasts** | 2 min | 0.5 to 30 | How long a gifted flower sits on the head before it wilts |
-| **The one with the flower follows the giver while it lasts** | on | | The wearer trails the giver around the edge, stopping about a body behind, until the flower wilts. It still sleeps, flees the cursor and stops to talk like anyone else |
-| **Paper planes when nobody has bumped for a while** | on | | After the quiet spell below with no meeting, one creature throws a paper plane to another across the screen. The catcher stops, reads the note out and thinks aloud about it; both lines go in the chat history. With talk off the catcher just reads in silence |
-| **Quiet before a plane** | 2 min | 0.5 to 30 | Minutes without a single meeting before a plane goes up. A meeting starts the count again. Nothing is sent at night or while they are hidden |
+| **The one with the flower follows the giver while it lasts** | on | | The wearer trails the giver around the edge, stopping about a body behind, until the flower wilts. It still sleeps and flees the cursor. A flower wearer never bumps into anyone, so a crowd of followers does not meet non-stop; it still answers a poke |
+| **Paper planes** | on | | Every so often one creature throws a paper plane to another across the screen, swirling in its own wind. The catcher stops, reads the note out, thinks aloud about it and throws one answer back, which is read but never answered. Everything goes in the chat history. With talk off they read in silence |
+| **A paper plane every** | 3 min | 0.5 to 60 | Minutes from one plane to the next, whatever the meetings. Nothing is sent at night or while they are hidden |
 
 A pair of creatures meets at most once a minute; passing each other in between is
 just passing. Every third meeting of the same pair is a gift: one hands the other
@@ -88,7 +88,7 @@ one of ten flowers (poppy, tulip, daisy, sunflower, rose, bluebell, dandelion,
 lavender, lily, forget-me-not), and the conversation is about it.
 
 A paper plane's words come from the brain. With the built-in lines, every character
-of every built-in cast has its own notes and thoughts, about the topics its
+of every built-in cast has its own notes, thoughts and answers, about the topics its
 personality keeps returning to; a character you wrote yourself uses a few general
 ones. With a model, the sender writes the note in its persona while the plane is in
 the air, and the catcher's thought comes from a second call; both are priced like

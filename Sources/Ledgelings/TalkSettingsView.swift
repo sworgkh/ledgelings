@@ -17,11 +17,11 @@ struct TalkSettingsView: View {
                 SliderRow("Bubble stays", value: $settings.bubbleSeconds, in: AppSettings.bubbleRange, step: 1, unit: " s")
                 SliderRow("Flower lasts", value: $settings.flowerMinutes, in: AppSettings.flowerRange, step: 0.5, unit: " min")
                 Toggle("The one with the flower follows the giver while it lasts", isOn: $settings.followGiver)
-                Toggle("Paper planes when nobody has bumped for a while", isOn: $settings.planesEnabled)
-                SliderRow("Quiet before a plane", value: $settings.planeMinutes, in: AppSettings.planeRange, step: 0.5, unit: " min")
+                Toggle("Paper planes", isOn: $settings.planesEnabled)
+                SliderRow("A paper plane every", value: $settings.planeMinutes, in: AppSettings.planeRange, step: 0.5, unit: " min")
                     .disabled(!settings.planesEnabled)
             } footer: {
-                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. When nobody has walked into anybody for the quiet spell, one folds a note into a paper plane and throws it to another; the wind carries it across the screen, and the catcher reads it out and thinks aloud about it. \"Make Someone Talk\" and \"Send a Paper Plane\" in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
+                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. A creature wearing a flower walks past everyone without bumping. Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. \"Make Someone Talk\" and \"Send a Paper Plane\" in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
             }
 
             Section {

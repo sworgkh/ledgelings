@@ -1,10 +1,11 @@
 import AppKit
 import LedgelingsCore
 
-/// Paper planes: after a long spell with no bumps, one creature folds a note
-/// and throws it to another across the screen. The wind carries it about, a
-/// dotted trail behind it; the catcher stops, reads the note out, then says
-/// something to itself about it. Words come from `Letters`, or from the model.
+/// Paper planes: every so often one creature folds a note and throws it to
+/// another across the screen. Its own wind and swirl carry it about, a dotted
+/// trail behind it; the catcher stops, reads the note out, says something to
+/// itself about it, and throws one answer back. An answer is read and thought
+/// about, never answered. Words come from `Letters`, or from the model.
 extension Colony {
     /// One plane's life, from the throw to the last puff of its trail.
     struct Airmail {
@@ -22,6 +23,8 @@ extension Colony {
         var id: Int
         var plane: PaperPlane
         var phase: Phase = .flying
+        /// An answer to an earlier plane: read, thought about, not answered again.
+        var isReply = false
         /// Written by the model while the plane flies; nil means use `Letters`.
         var note: String?
         var musing: String?
@@ -32,7 +35,19 @@ extension Colony {
         var tokens: Int?
     }
 
+    /// Someone who just read a letter owes its sender one answer.
+    struct ReplyDue {
+        var from: Int
+        var to: Int
+        /// The note being answered, for the model.
+        var note: String
+        /// Give up if the two cannot be free for it by then.
+        var until: Double
+    }
+
     static let planeFade = 0.6
+    /// How long an owed answer waits for both ends to be free.
+    static let replyPatience = 20.0
     static let planeGivesUpAfter = 30.0
     /// Longest the catcher holds an unread letter waiting for the model.
     static let modelWait = 8.0
@@ -47,14 +62,22 @@ extension Colony {
         var free: [Int: CGPoint] = [:]
         for i in creatures.indices where canHandleMail(i) { free[i] = creatures[i].position }
         guard let (from, to) = Post.pickPair(free, using: &rng) else { talkStatus = "nobody free to throw or catch a plane"; return false }
+        throwPlane(from: from, to: to, answering: nil)
+        post.stir(at: elapsed)
+        return true
+    }
 
-        creatures[from].meet(facing: facing(from, toward: to), for: 0.9)       // a short stop for the throw
+    /// The throw itself: a short stop facing the catcher, then the plane, in
+    /// weather of its own. `answering`: the note this plane answers, if any.
+    private func throwPlane(from: Int, to: Int, answering note: String?) {
+        creatures[from].meet(facing: facing(from, toward: to), for: 0.9)
         let inward = creatures[from].loop.inward(ofSegment: creatures[from].segment)
         planeCount += 1
-        airmail = Airmail(id: planeCount, plane: PaperPlane(from: from, to: to, start: head(of: from), inward: inward, target: head(of: to)))
-        post.stir(at: elapsed)
-        if settings.talkEnabled { writeWithModel(from: from, to: to, id: planeCount) }
-        return true
+        var mail = Airmail(id: planeCount, plane: .thrown(from: from, to: to, start: head(of: from), inward: inward,
+                                                           target: head(of: to), using: &rng))
+        mail.isReply = note != nil
+        airmail = mail
+        if settings.talkEnabled { writeWithModel(from: from, to: to, id: planeCount, answering: note) }
     }
 
     /// A plane is on its way to `i`: it keeps out of conversations so it is free to catch it.
@@ -71,18 +94,19 @@ extension Colony {
 
     /// With a model: the note as the sender, then the reader's thought about it,
     /// both while the plane is still in the air.
-    private func writeWithModel(from: Int, to: Int, id: Int) {
+    private func writeWithModel(from: Int, to: Int, id: Int, answering: String?) {
         guard settings.brain != .script, let service = settings.chatClient() else { return }
         let a = character(forCreature: from), b = character(forCreature: to)
         let aKind = kind(ofCreature: from), bKind = kind(ofCreature: to)
         var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
                     "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
-                    "situation": "", "line": ""]
+                    "situation": "", "line": answering ?? ""]
         let system = settings.systemPrompt
         airmail?.writing = true
         airmail?.provider = service.provider.title
         airmail?.model = service.model
-        talkStatus = "\(a.name) is writing a letter via \(service.model)…"
+        talkStatus = "\(a.name) is writing \(answering == nil ? "a letter" : "back") via \(service.model)…"
+        let prompt = answering == nil ? Letters.notePrompt : Letters.replyPrompt
         var used: [Spend.Usage] = []
         /// Every call goes to the spend file, even one whose line turned out empty.
         func charge(_ answer: ChatClient.Answer) {
@@ -95,7 +119,7 @@ extension Colony {
             var note: String?, musing: String?
             do {
                 try await service.checkModel()
-                let written = try await service.reply(system: Banter.render(system, vars), user: Banter.render(Letters.notePrompt, vars))
+                let written = try await service.reply(system: Banter.render(system, vars), user: Banter.render(prompt, vars))
                 charge(written)
                 let line = Banter.cleanLine(written.text, speaker: a.name)
                 if !line.isEmpty {
@@ -127,7 +151,16 @@ extension Colony {
 
     func updatePost(dt: Double) {
         post.quietFor = settings.planesEnabled ? settings.planeMinutes * 60 : 0
-        if airmail == nil, post.isDue(at: elapsed) {
+        if airmail == nil, let due = replyDue {
+            if elapsed > due.until || !creatures.indices.contains(due.from) || !creatures.indices.contains(due.to)
+                || hideout.isActive || isNight {
+                replyDue = nil
+            } else if canHandleMail(due.from), canHandleMail(due.to) {
+                replyDue = nil
+                throwPlane(from: due.from, to: due.to, answering: due.note)
+            }
+        }
+        if airmail == nil, replyDue == nil, post.isDue(at: elapsed) {
             if isNight || hideout.isActive || !sendPlane() { post.retry(at: elapsed, in: 10) }
         }
         guard var mail = airmail else { return }
@@ -140,9 +173,9 @@ extension Colony {
         case .flying:
             if hideout.isActive || hideout.isInside(to) { mail.phase = .dropped(since: elapsed); break }
             let target = head(of: to)
-            mail.plane.fly(dt: dt, toward: target, wind: wind, time: elapsed)
+            mail.plane.fly(dt: dt, toward: target, time: elapsed)
             let reach = atlas.bodyHalfSize * CGFloat(sizes[to]) + 10
-            if mail.plane.distance(to: target) <= reach {
+            if mail.plane.passed(within: reach, of: target) {
                 if canHandleMail(to) {
                     mail.phase = catchPlane(&mail)
                 } else if creatures[to].looksAsleep {
@@ -165,6 +198,9 @@ extension Colony {
                 busy.remove(to)
                 creatures[to].walkOn(using: &rng)
                 mail.phase = .done
+                if !mail.isReply, let note = mail.note {
+                    replyDue = ReplyDue(from: to, to: from, note: note, until: elapsed + Self.replyPatience)
+                }
             }
 
         case .dropped(let since):
@@ -192,7 +228,7 @@ extension Colony {
         let from = mail.plane.from, to = mail.plane.to
         let a = character(forCreature: from).name, b = character(forCreature: to).name
         let modelWrote = mail.note != nil
-        let note = mail.note ?? Letters.note(by: a, to: b, using: &rng)
+        let note = mail.note ?? (mail.isReply ? Letters.reply(by: a, to: b, using: &rng) : Letters.note(by: a, to: b, using: &rng))
         let musing = mail.musing ?? Letters.musing(by: b, from: a, using: &rng)
         mail.note = note
         mail.musing = musing
@@ -200,11 +236,11 @@ extension Colony {
 
         let read = Letters.reading(note, from: a)
         say(read, from: to)
-        talkStatus = "\(b) got a paper plane from \(a)"
+        talkStatus = "\(b) got \(mail.isReply ? "an answer" : "a paper plane") from \(a)"
         let musingAt = elapsed + Banter.showTime(read, base: settings.bubbleSeconds) * 0.6
         let doneAt = musingAt + Banter.showTime(musing, base: settings.bubbleSeconds) * 0.6 + 1
         history.record(ChatLog.Exchange(
-            time: Date(), situation: "\(a) sent \(b) a paper plane.",
+            time: Date(), situation: mail.isReply ? "\(a) wrote back to \(b) by paper plane." : "\(a) sent \(b) a paper plane.",
             provider: modelWrote ? mail.provider : AppSettings.Brain.script.title, model: modelWrote ? mail.model : "",
             lines: [ChatLog.Line(speaker: a, text: note), ChatLog.Line(speaker: b, text: musing)],
             cost: mail.cost, tokens: mail.tokens))
