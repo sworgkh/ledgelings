@@ -49,15 +49,16 @@ struct SpeechClient: Sendable {
     /// Speech speeds OpenRouter accepts.
     static let speedRange = 0.25...4.0
 
-    func request(text: String, voice: String?, speed: Double, format: String = "pcm") throws -> URLRequest {
+    /// `speed` nil leaves it out, for models that refuse it (Qwen).
+    func request(text: String, voice: String?, speed: Double?, format: String = "pcm") throws -> URLRequest {
         struct Body: Encodable {
-            let model: String; let input: String; let voice: String?; let response_format: String; let speed: Double
+            let model: String; let input: String; let voice: String?; let response_format: String; let speed: Double?
         }
         var request = chat.authorised(URLRequest(url: ChatClient.openRouterURL.appendingPathComponent("audio/speech"), timeoutInterval: timeout))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(Body(model: model, input: text, voice: voice?.isEmpty == false ? voice : nil,
-                                                         response_format: format, speed: min(max(speed, Self.speedRange.lowerBound), Self.speedRange.upperBound)))
+                                                         response_format: format, speed: speed.map { min(max($0, Self.speedRange.lowerBound), Self.speedRange.upperBound) }))
         return request
     }
 
@@ -142,7 +143,14 @@ struct SpeechClient: Sendable {
         return refusal.contains("response_format") && refusal.lowercased().contains("\"\(other)\"") ? other : nil
     }
 
-    func speak(_ text: String, voice: String?, speed: Double, format: String = "pcm") async throws -> (audio: Data, generation: String?) {
+    /// True when a refusal is about the speed parameter itself:
+    /// `Alibaba Qwen TTS does not support the speed parameter … omit it or set it to 1.`
+    static func refusesSpeed(_ refusal: String) -> Bool {
+        let r = refusal.lowercased()
+        return r.contains("speed") && (r.contains("not support") || r.contains("omit") || r.contains("unsupported"))
+    }
+
+    func speak(_ text: String, voice: String?, speed: Double?, format: String = "pcm") async throws -> (audio: Data, generation: String?) {
         let (data, response): (Data, URLResponse)
         do { (data, response) = try await URLSession.shared.data(for: try request(text: text, voice: voice, speed: speed, format: format)) }
         catch let failure as ChatClient.Failure { throw failure }

@@ -44,6 +44,8 @@ final class Voice: NSObject, ObservableObject {
     private let shifter = AVAudioUnitVarispeed()
     /// The audio format each speech model sends: PCM unless it refused.
     private var formats: [String: String] = [:]
+    /// Speech models that refused the speed parameter; asked without it.
+    private var noSpeed: Set<String> = []
     /// Lines queued or being said, both engines.
     private var waiting = 0
     /// The names of the creatures on screen, in order. Voices are handed out
@@ -165,15 +167,26 @@ final class Voice: NSObject, ObservableObject {
             if let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
                 return (audio, nil, voice, true)
             }
-            let format = self?.formats[client.model] ?? "pcm"
-            let audio: Data, generation: String?
-            do {
-                (audio, generation) = try await client.speak(line, voice: voice, speed: asked, format: format)
-            } catch ChatClient.Failure.refused(let message) {
-                guard let other = SpeechClient.otherFormat(after: message, tried: format) else { throw ChatClient.Failure.refused(message) }
-                self?.formats[client.model] = other
-                (audio, generation) = try await client.speak(line, voice: voice, speed: asked, format: other)
+            // A refusal about the format or the speed is answered once each, and remembered.
+            var format = self?.formats[client.model] ?? "pcm"
+            var sendSpeed = !(self?.noSpeed.contains(client.model) ?? false)
+            var reply: (audio: Data, generation: String?)?
+            for attempt in 0..<3 where reply == nil {
+                do {
+                    reply = try await client.speak(line, voice: voice, speed: sendSpeed ? asked : nil, format: format)
+                } catch ChatClient.Failure.refused(let message) where attempt < 2 {
+                    if let other = SpeechClient.otherFormat(after: message, tried: format) {
+                        format = other
+                        self?.formats[client.model] = other
+                    } else if sendSpeed, SpeechClient.refusesSpeed(message) {
+                        sendSpeed = false
+                        self?.noSpeed.insert(client.model)
+                    } else {
+                        throw ChatClient.Failure.refused(message)
+                    }
+                }
             }
+            guard let (audio, generation) = reply else { throw ChatClient.Failure.badReply("no audio") }
             if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: asked) }
             return (audio, generation, voice, false)
         }

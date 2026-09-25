@@ -31,6 +31,14 @@ import Testing
         #expect(body["speed"] as? Double == 4, "clamped to what OpenRouter takes")
     }
 
+    @Test func aModelThatRefusesSpeedIsAskedWithoutIt() throws {
+        #expect(SpeechClient.refusesSpeed(#"Alibaba Qwen TTS does not support the speed parameter. Got 0.56; omit it or set it to 1."#))
+        #expect(!SpeechClient.refusesSpeed("No such voice"))
+        #expect(!SpeechClient.refusesSpeed(#"only supports response_format="mp3""#))
+        let body = try json(try SpeechClient(key: "k", model: "qwen/qwen-audio-3.0-tts-flash").request(text: "Hi", voice: nil, speed: nil))
+        #expect(body["speed"] == nil)
+    }
+
     @Test func anEmptyVoiceIsLeftForTheModelToChoose() throws {
         let request = try SpeechClient(key: "k", model: "m").request(text: "Hi", voice: "", speed: 1)
         let body = try json(request)

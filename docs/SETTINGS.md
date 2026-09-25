@@ -124,7 +124,7 @@ shows in full at once. A bubble gives up waiting after 45 s.
 | **Voice** (OpenRouter) | the model's first | | That model's voices. With a voice each, the English ones are used when the model's voice names say which they are |
 | **Keep every line it says** (OpenRouter) | on | | Each line is saved as a WAV file in `~/Library/Application Support/Ledgelings/voices/<day>/<time>-<speaker>-<key>.wav`, beside the chats, and listed in `voices/voices.jsonl` (time, speaker, text, model, voice, speed, file). **Reveal in Finder** opens the folder. A line already kept in the same model, voice and speed is played from there, free, whether or not this is on |
 | **Speed** | 1× | 0.5 to 2 | Both engines |
-| **Pitch** | 1× | 0.5 to 2 | Both engines. An OpenRouter line is asked for that much slower and played that much faster, like a tape sped up: higher, at the usual pace, with no echo. Kokoro and Gemini honour the slower speed; Voxtral and MiniMax ignore it, so with them a raised pitch also talks faster |
+| **Pitch** | 1× | 0.5 to 2 | Both engines. An OpenRouter line is asked for that much slower and played that much faster, like a tape sped up: higher, at the usual pace, with no echo. Kokoro and Gemini honour the slower speed; Voxtral ignores it and Qwen refuses it (the app then leaves it out), so with them a raised pitch also talks faster |
 | **Volume** | 0.8 | 0 to 1 | |
 | **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
 

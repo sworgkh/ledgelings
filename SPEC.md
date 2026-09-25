@@ -554,7 +554,10 @@ mixer, so they come out `pitch` times higher at the usual pace. (A time-pitch
 unit was tried first: at 1.15–1.6× it smeared lines into an audible echo.) The
 archive key uses the asked speed. Format: `pcm` first; a refusal whose message
 names `response_format` and the other format (MiniMax wants `"mp3"`) is retried
-once in that format, remembered per model until the app quits.
+once in that format, remembered per model until the app quits. A refusal about
+the speed parameter itself (Qwen: "does not support the speed parameter … omit
+it") is retried without `speed`, also remembered; such a model then talks faster
+as well as higher when the pitch is raised.
 
 **OpenRouter engine:** `POST {base}/audio/speech` with `{model, input, voice,
 response_format, speed}` and the brain's key and headers. The reply is 16-bit
