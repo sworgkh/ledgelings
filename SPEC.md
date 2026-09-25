@@ -615,6 +615,18 @@ shown, `until` = now + showTime. A cue for a bubble since replaced is ignored (a
 serial per `say`). Hidden letters are drawn transparent in the full-size bubble;
 a cut never splits a composed character.
 
+**Taking turns out loud.** With voice on (`isVoiced`), a conversation's lines (a
+script block, a model exchange, a plane's reading and thought) are said one after
+another: each starts `voiceTurnPause` (default 0.35 s, 0–2) after the one before
+reports `done` or `dropped`; a line that cannot be voiced waits the silent
+0.6 × showTime instead. The sound of every later line is fetched as the conversation
+starts (OpenRouter and local engines), so it plays the moment its turn comes. A
+voiced line whose bubble gives up (45 s) ends its turn too. The pair is let go 1.2 s
+after the last line is said; a model exchange keeps the pair until the reply is said;
+the plane catcher walks on 1 s after its thought. Only one voiced conversation runs
+at a time: a meeting then only bumps (talk refused), and a landed plane waits in
+`.waiting` until the voice is free, at most 60 s.
+
 **Voice cost per conversation.** Each OpenRouter line appends `{time (when said),
 speaker, text (as spoken), model, cost, kept}` to `chats/YYYY-MM-DD.voice.jsonl`
 once priced (kept copies at once, cost 0, kept true). The Chats tab gives each to
@@ -1212,6 +1224,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | voiceVolume | 0.8 | 0–1 |
 | cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
 | characterVoices | {} | name → `{systemVoice, openRouterVoice, localVoice, speed, pitch, followPitch}`, JSON (§6.6.1) |
+| voiceTurnPause | 0.35 | 0–2 s, clamped on load: out loud, the beat before the next line (§6.6.1) |
 | castByPersonality | true | automatic voices from description and species (§6.6.1) |
 | speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
@@ -1253,7 +1266,7 @@ Stop, status; on the right a card per character on screen with voice picker
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 158 such tests and 82 app-side ones.
+  the tests in §14 first; the macOS app has 158 such tests and 86 app-side ones.
 
 ---
 

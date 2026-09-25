@@ -57,6 +57,7 @@ extension Colony {
     func talk(from speaker: Int, to listener: Int, because event: String? = nil, flower: String? = nil) -> Bool {
         guard creatures.indices.contains(speaker), creatures.indices.contains(listener), speaker != listener,
               !busy.contains(speaker), !busy.contains(listener) else { return false }
+        guard !voiceIsTaken else { talkStatus = "someone else is talking; out loud it is one conversation at a time"; return false }
         let a = character(forCreature: speaker), b = character(forCreature: listener)
         var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
         if let event { situation += " " + event }
@@ -92,8 +93,11 @@ extension Colony {
 
         busy.formUnion([speaker, listener])
         talkStatus = "asking \(service.model) via \(service.provider.title)…"
+        let voiced = isVoiced
+        if voiced { voicedDialogues += 1 }
         Task { [weak self] in
             defer {
+                if voiced { self?.voicedDialogues -= 1 }
                 self?.busy.subtract([speaker, listener])
                 self?.endChat(speaker, listener, after: 1.2)
                 keep()
@@ -105,7 +109,7 @@ extension Colony {
                 charge(opening)
                 let first = Banter.cleanLine(opening.text, speaker: a.name)
                 guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
-                say(first, from: speaker)
+                let firstSaid = say(first, from: speaker)
                 spoken.append(ChatLog.Line(speaker: a.name, text: first))
                 talkStatus = "\(a.name): \(first)"
 
@@ -116,11 +120,20 @@ extension Colony {
                 let answer = try await service.reply(system: Banter.render(system, vars), user: Banter.render(replyPrompt, vars))
                 charge(answer)
                 let reply = Banter.cleanLine(answer.text, speaker: b.name)
-                try await Task.sleep(for: .seconds(Banter.showTime(first, base: bubbleSeconds) * 0.6))
-                guard !reply.isEmpty else { return }
-                say(reply, from: listener)
+                guard !reply.isEmpty else { await said(firstSaid); return }
+                if isVoiced {
+                    // Out loud, the answer comes a beat after the first line ends, its
+                    // sound fetched meanwhile, not on the silent-bubble clock.
+                    voice?.prefetch(reply, as: b.name)
+                    await said(firstSaid)
+                    try await Task.sleep(for: .seconds(turnPause))
+                } else {
+                    try await Task.sleep(for: .seconds(Banter.showTime(first, base: bubbleSeconds) * 0.6))
+                }
+                let replySaid = say(reply, from: listener)
                 spoken.append(ChatLog.Line(speaker: b.name, text: reply))
                 talkStatus = "\(b.name): \(reply)"
+                await said(replySaid)          // the pair stays face to face until it is said
             } catch {
                 self?.talkStatus = "\(error)"
                 FileHandle.standardError.write(Data("Ledgelings talk: \(error)\n".utf8))
@@ -158,6 +171,15 @@ extension Colony {
                     text: Script.fill(line, speaker: mine ? a.name : b.name, listener: mine ? b.name : a.name, flower: flower))
         }
         busy.formUnion([speaker, listener])
+        history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",
+                                        lines: lines.map { ChatLog.Line(speaker: character(forCreature: $0.who).name, text: $0.text) }))
+        if isVoiced {
+            sayInTurns(lines) { [weak self] in
+                self?.busy.subtract([speaker, listener])
+                self?.endChat(speaker, listener, after: 1.2)
+            }
+            return true
+        }
         var at = elapsed
         for (i, line) in lines.enumerated() {
             let last = i == lines.count - 1
@@ -165,8 +187,6 @@ extension Colony {
             at += Banter.showTime(line.text, base: settings.bubbleSeconds) * 0.6
         }
         sayScheduledLines()
-        history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",
-                                        lines: lines.map { ChatLog.Line(speaker: character(forCreature: $0.who).name, text: $0.text) }))
         return true
     }
 
@@ -189,8 +209,10 @@ extension Colony {
 
     /// Put `text` up in creature `index`'s bubble. With voice on, the bubble
     /// shows dots until the sound is ready, then types the line out as it is said.
-    func say(_ text: String, from index: Int) {
-        guard creatures.indices.contains(index) else { return }
+    /// Returns the line's serial, for `whenSaid`.
+    @discardableResult
+    func say(_ text: String, from index: Int) -> Int {
+        guard creatures.indices.contains(index) else { return 0 }
         bubbleSerial += 1
         let serial = bubbleSerial
         bubbles[index] = Bubble(text: text, until: elapsed + Banter.showTime(text, base: settings.bubbleSeconds), serial: serial)
@@ -200,8 +222,69 @@ extension Colony {
         if voiced {
             bubbles[index]?.reveal = .waiting(since: elapsed)
             bubbles[index]?.until = elapsed + Self.longestWaitForVoice
+            voicedLines.insert(serial)
         }
         render()
+        trace?("say #\(serial) \(character(forCreature: index).name)\(voiced ? " (voiced)" : ""): \(text)")
+        return serial
+    }
+
+    /// Line `serial` is over: whatever waits for it goes on.
+    func endLine(_ serial: Int) {
+        voicedLines.remove(serial)
+        afterLine.removeValue(forKey: serial)?.forEach { $0() }
+    }
+
+    // MARK: Taking turns out loud
+
+    /// True when lines are being said out loud: the next line of a dialogue then
+    /// waits for the one before to end, instead of the silent-bubble clock.
+    var isVoiced: Bool { voice != nil && settings.voiceEnabled }
+
+    /// Out loud, someone is mid-conversation: another pair meeting now only
+    /// bumps, and a plane that lands waits to be read, rather than talking over them.
+    var voiceIsTaken: Bool { isVoiced && voicedDialogues > 0 }
+
+    /// Run `action` once line `serial` has been said (or will not be): at once for
+    /// a line that is not being voiced or has already ended.
+    func whenSaid(_ serial: Int, _ action: @escaping () -> Void) {
+        if voicedLines.contains(serial) { afterLine[serial, default: []].append(action) } else { action() }
+    }
+
+    /// Suspend until line `serial` has been said.
+    func said(_ serial: Int) async {
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in whenSaid(serial) { done.resume() } }
+    }
+
+    /// The beat between one voiced line ending and the next starting.
+    var turnPause: Double { settings.voiceTurnPause }
+
+    /// Say `lines` one after another, each starting a beat after the one before
+    /// has been said, the sound of each fetched ahead of its turn; then `done`.
+    /// A line that cannot be voiced waits the silent-bubble time instead.
+    func sayInTurns(_ lines: [(who: Int, text: String)], then done: @escaping () -> Void) {
+        for line in lines.dropFirst() where creatures.indices.contains(line.who) {
+            voice?.prefetch(line.text, as: character(forCreature: line.who).name)
+        }
+        voicedDialogues += 1
+        sayTurn(lines[...]) { [weak self] in
+            self?.voicedDialogues -= 1
+            done()
+        }
+    }
+
+    private func sayTurn(_ lines: ArraySlice<(who: Int, text: String)>, then done: @escaping () -> Void) {
+        guard let line = lines.first else { done(); return }
+        guard creatures.indices.contains(line.who) else { sayTurn(lines.dropFirst(), then: done); return }
+        let serial = say(line.text, from: line.who)
+        let voiced = voicedLines.contains(serial)
+        let wait = voiced ? turnPause : Banter.showTime(line.text, base: settings.bubbleSeconds) * 0.6
+        whenSaid(serial) { [weak self] in
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(wait))
+                self?.sayTurn(lines.dropFirst(), then: done)
+            }
+        }
     }
 
     /// A bubble waiting on its sound gives up after this, even if the voice never says why.
@@ -209,6 +292,9 @@ extension Colony {
 
     /// The voice's news about a bubble's line.
     func heard(_ cue: Voice.Cue, bubble serial: Int, of index: Int) {
+        // Whatever waits for this line goes on even if its bubble was since replaced.
+        if case .progress = cue {} else { trace?("cue #\(serial) \(cue)") }
+        if cue == .done || cue == .dropped { endLine(serial) }
         guard var bubble = bubbles[index], bubble.serial == serial else { return }
         let showTime = Banter.showTime(bubble.text, base: settings.bubbleSeconds)
         switch cue {

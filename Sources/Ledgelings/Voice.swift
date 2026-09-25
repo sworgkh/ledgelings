@@ -119,6 +119,9 @@ final class Voice: NSObject, ObservableObject {
 
     func stop() {
         epoch += 1
+        prefetched.values.forEach { $0.task.cancel() }
+        prefetched.removeAll()
+        prefetchOrder.removeAll()
         let pending = spoken.values.map(\.cue)
         spoken.removeAll()
         synthesizer.stopSpeaking(at: .immediate)
@@ -157,22 +160,51 @@ final class Voice: NSObject, ObservableObject {
 
     /// OpenRouter, or a speech server on this Mac: fetched, then played in turn.
     /// A local line is free, so it is neither kept, priced nor looked up in the archive.
-    private func speakOnline(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
+    /// One line's sound on its way: the fetch already running, and what playing it needs.
+    private struct Fetch {
+        let task: Task<(audio: Data, generation: String?, voice: String?, kept: Bool), Error>
+        let client: SpeechClient
+        let pitch: Double
+        let local: Bool
+        let keep: Bool
+        let saidAt: Date
+    }
+
+    /// Lines whose sound was asked for before their turn (`prefetch`), by speaker and words.
+    private var prefetched: [String: Fetch] = [:]
+    private var prefetchOrder: [String] = []
+    private static let mostPrefetched = 8
+
+    private static func prefetchKey(_ name: String, _ line: String) -> String { name + "\u{1F}" + line }
+
+    /// Start fetching a line's sound before its turn comes, so it plays the moment
+    /// the line before it ends instead of after a wait for the network. The Mac's
+    /// own voices need no head start.
+    func prefetch(_ text: String, as name: String) {
+        guard settings.voiceEnabled, settings.voiceEngine != .system else { return }
+        let line = Voices.speakable(text)
+        let key = Self.prefetchKey(name, line)
+        guard !line.isEmpty, prefetched[key] == nil, let fetch = startFetch(line, as: name, cast: cast()) else { return }
+        prefetched[key] = fetch
+        prefetchOrder.append(key)
+        while prefetchOrder.count > Self.mostPrefetched { prefetched.removeValue(forKey: prefetchOrder.removeFirst())?.task.cancel() }
+    }
+
+    /// The fetch for one line, started now; nil (with `status` saying why) when it cannot be.
+    private func startFetch(_ line: String, as name: String, cast: [String]) -> Fetch? {
         let local = settings.voiceEngine == .local
         let client: SpeechClient
         if local {
-            guard let server = settings.localVoiceURL else { status = "the local server's address is not a URL"; return false }
+            guard let server = settings.localVoiceURL else { status = "the local server's address is not a URL"; return nil }
             client = SpeechClient(key: "", model: settings.localVoiceModel.trimmingCharacters(in: .whitespaces), server: server)
         } else {
             let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
-            guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return false }
+            guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return nil }
             client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         }
         let speed = speed(for: name)
         let keep = settings.keepVoices && !local, saidAt = Date(), pitch = pitch(for: name), follow = followsPitch(name)
-        waiting += 1
-        // Fetch now, while the line before is still playing; play in turn.
-        let fetch = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
+        let task = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
             let voices = local ? ((try? await self?.loadLocalVoices()) ?? []) : ((try? await self?.voices(of: client.model)) ?? [])
             let voice = self?.onlineVoice(for: name, cast: cast, among: voices)
             // Asked slower by the pitch, sped back up by it as it plays: the pace stays.
@@ -204,6 +236,21 @@ final class Voice: NSObject, ObservableObject {
             if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: asked) }
             return (audio, generation, voice, false)
         }
+        return Fetch(task: task, client: client, pitch: pitch, local: local, keep: keep, saidAt: saidAt)
+    }
+
+    private func speakOnline(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
+        let key = Self.prefetchKey(name, line)
+        let fetch: Fetch
+        if let ready = prefetched.removeValue(forKey: key) {
+            fetch = ready
+            prefetchOrder.removeAll { $0 == key }
+        } else {
+            guard let started = startFetch(line, as: name, cast: cast) else { return false }
+            fetch = started
+        }
+        let client = fetch.client, pitch = fetch.pitch, local = fetch.local, saidAt = fetch.saidAt
+        waiting += 1
         let before = chain, epoch = epoch
         chain = Task { [weak self] in
             await before?.value
@@ -214,7 +261,7 @@ final class Voice: NSObject, ObservableObject {
                 if let self, self.epoch == epoch, self.waiting > 0 { self.waiting -= 1 }
             }
             do {
-                let said = try await fetch.value
+                let said = try await fetch.task.value
                 guard let self, self.epoch == epoch, !Task.isCancelled else { return }
                 if said.kept {
                     self.history?.recordVoice(.init(time: saidAt, speaker: name, text: line, model: client.model, cost: 0, kept: true))

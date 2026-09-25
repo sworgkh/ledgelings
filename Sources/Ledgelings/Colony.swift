@@ -62,6 +62,14 @@ final class Colony: NSObject {
     }
     var bubbles: [Int: Bubble] = [:]
     var bubbleSerial = 0
+    /// Lines being said out loud, by serial, and what waits for each to end.
+    var voicedLines: Set<Int> = []
+    var afterLine: [Int: [() -> Void]] = [:]
+    /// Conversations being said out loud right now. There is one voice to go
+    /// round, so out loud there is one conversation at a time.
+    var voicedDialogues = 0
+    /// `--converse`: every line and voice cue, as it happens.
+    var trace: ((String) -> Void)?
     /// Creatures in a running conversation: a bump or a poke involving them waits.
     var busy: Set<Int> = []
     /// Who has walked into whom, and how often.
@@ -264,7 +272,11 @@ final class Colony: NSObject {
         updateHideout()
         updateClickability(cursor: cursor, shift: shift)
 
-        for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count { bubbles.removeValue(forKey: i) }
+        for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count {
+            bubbles.removeValue(forKey: i)
+            // A voiced line that gave up waiting for its sound still ends its turn.
+            if voicedLines.contains(bubble.serial) { endLine(bubble.serial) }
+        }
         gifts.update(at: elapsed, wearFor: settings.flowerMinutes * 60)
         if settings.followGiver { followGivers() }
         sparks.update(dt: dt)

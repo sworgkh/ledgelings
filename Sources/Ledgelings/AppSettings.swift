@@ -141,6 +141,10 @@ final class AppSettings: ObservableObject {
     /// 1 is the voice's own pitch. Both engines: OpenRouter's clips are shifted as they play.
     @Published var voicePitch: Double { didSet { save(voicePitch, "voicePitch") } }
     @Published var voiceVolume: Double { didSet { save(voiceVolume, "voiceVolume") } }
+    /// With voice on, how long after one line ends the next begins. Replaces the
+    /// silent-bubble timing, which knows nothing of how long a line takes to say.
+    static let voiceTurnPauseRange = 0.0...2.0
+    @Published var voiceTurnPause: Double { didSet { save(voiceTurnPause, "voiceTurnPause") } }
     /// Automatic voices fit each character's description and species (old,
     /// tiny, cheerful, robot, ghost…), pitch and speed included. Off: handed
     /// out by name, only different from each other.
@@ -219,6 +223,7 @@ final class AppSettings: ObservableObject {
         keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
         speedFollowsPitch = defaults.object(forKey: "speedFollowsPitch") as? Bool ?? true
         castByPersonality = defaults.object(forKey: "castByPersonality") as? Bool ?? true
+        voiceTurnPause = clamp("voiceTurnPause", 0.35, Self.voiceTurnPauseRange)
         cartoonVoices = defaults.object(forKey: "cartoonVoices") as? Bool ?? true
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt

@@ -186,7 +186,10 @@ extension Colony {
 
         case .waiting(let since):
             mail.plane.fadeTrail(dt: dt)
-            if !mail.writing || elapsed - since > Self.modelWait { mail.phase = startReading(&mail) }
+            // Out loud, a landed plane also waits for the conversation in progress
+            // to end, up to a minute.
+            let ready = !mail.writing || elapsed - since > Self.modelWait
+            if ready, !voiceIsTaken || elapsed - since > 60 { mail.phase = startReading(&mail) }
 
         case .reading(let musingAt, let doneAt, let musingSaid):
             mail.plane.fadeTrail(dt: dt)
@@ -220,7 +223,7 @@ extension Colony {
         creatures[to].meet(facing: creatures[to].direction, for: 120)
         busy.insert(to)
         letters[to] = true
-        return mail.writing ? .waiting(since: elapsed) : startReading(&mail)
+        return mail.writing || voiceIsTaken ? .waiting(since: elapsed) : startReading(&mail)
     }
 
     /// The note is read out, the thought follows, and it all goes in the chat history.
@@ -235,15 +238,29 @@ extension Colony {
         guard settings.talkEnabled else { return .reading(musingAt: elapsed, doneAt: elapsed + 3, musingSaid: true) }
 
         let read = Letters.reading(note, from: a)
-        say(read, from: to)
         talkStatus = "\(b) got \(mail.isReply ? "an answer" : "a paper plane") from \(a)"
-        let musingAt = elapsed + Banter.showTime(read, base: settings.bubbleSeconds) * 0.6
-        let doneAt = musingAt + Banter.showTime(musing, base: settings.bubbleSeconds) * 0.6 + 1
-        history.record(ChatLog.Exchange(
+        let exchange = ChatLog.Exchange(
             time: Date(), situation: mail.isReply ? "\(a) wrote back to \(b) by paper plane." : "\(a) sent \(b) a paper plane.",
             provider: modelWrote ? mail.provider : AppSettings.Brain.script.title, model: modelWrote ? mail.model : "",
             lines: [ChatLog.Line(speaker: a, text: note), ChatLog.Line(speaker: b, text: musing)],
-            cost: mail.cost, tokens: mail.tokens))
+            cost: mail.cost, tokens: mail.tokens)
+        if isVoiced {
+            // Out loud: the thought follows a beat after the note is read, and the
+            // catcher walks on a second after the thought, whenever that is.
+            history.record(exchange)
+            let plane = planeCount
+            sayInTurns([(to, read), (to, musing)]) { [weak self] in
+                guard let self, self.planeCount == plane, var mail = self.airmail,
+                      case .reading = mail.phase else { return }
+                mail.phase = .reading(musingAt: self.elapsed, doneAt: self.elapsed + 1, musingSaid: true)
+                self.airmail = mail
+            }
+            return .reading(musingAt: .infinity, doneAt: .infinity, musingSaid: true)
+        }
+        say(read, from: to)
+        let musingAt = elapsed + Banter.showTime(read, base: settings.bubbleSeconds) * 0.6
+        let doneAt = musingAt + Banter.showTime(musing, base: settings.bubbleSeconds) * 0.6 + 1
+        history.record(exchange)
         return .reading(musingAt: musingAt, doneAt: doneAt, musingSaid: false)
     }
 

@@ -42,6 +42,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         installStatusItem()
+        // `--converse`: one conversation, every line and voice cue on stderr with
+        // the time since it started, then quit once the pair is let go.
+        if CommandLine.arguments.contains("--converse"), let colony {
+            let start = Date()
+            colony.trace = { line in
+                FileHandle.standardError.write(Data(String(format: "converse %6.2f  %@\n", Date().timeIntervalSince(start), line).utf8))
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                colony.talkNow()
+                try? await Task.sleep(for: .seconds(1))
+                for _ in 0..<600 where !colony.busy.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
+                colony.trace?("pair let go")
+                exit(0)
+            }
+        }
         // `--cast`: the brain model casts everyone on screen, one line each on stderr, then quit.
         if CommandLine.arguments.contains("--cast") {
             let voice = voice
