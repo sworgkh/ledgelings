@@ -219,4 +219,51 @@ import Testing
         defaults.set(1.0, forKey: "bubbleSeconds")
         #expect(AppSettings(defaults: defaults).bubbleSeconds == AppSettings.bubbleRange.lowerBound)
     }
+
+    @Test func voiceIsOffUntilAskedAndEveryVoiceSettingIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(!s.voiceEnabled, "it must not start talking out loud unasked")
+        #expect(s.voiceEngine == .system && s.voicePerCharacter)
+        #expect(s.voiceModel == AppSettings.defaultVoiceModel && s.voiceSpeed == 1 && s.voicePitch == 1 && s.voiceVolume == 0.8)
+        #expect(s.keepVoices, "paid-for sounds are kept unless asked not to")
+        #expect(s.cartoonVoices, "desktop pets, not newsreaders")
+        #expect(s.characterVoices.isEmpty)
+        #expect(s.speedFollowsPitch, "clean sound by default")
+        #expect(s.castByPersonality, "voices fit who they are by default")
+        s.castByPersonality = false
+        #expect(!AppSettings(defaults: defaults).castByPersonality)
+        s.speedFollowsPitch = false
+        #expect(!AppSettings(defaults: defaults).speedFollowsPitch)
+        #expect(s.localVoiceURL?.absoluteString == "http://localhost:8880/v1" && s.localVoiceModel == "kokoro" && s.localVoice.isEmpty)
+        s.localVoiceServer = "not a url"
+        #expect(s.localVoiceURL == nil)
+        s.localVoiceServer = "http://127.0.0.1:9000"; s.localVoice = "am_puck"
+        #expect(AppSettings(defaults: defaults).localVoiceURL?.absoluteString == "http://127.0.0.1:9000/v1")
+        #expect(AppSettings(defaults: defaults).localVoice == "am_puck")
+        s.setVoice(of: "Pip") { $0.pitch = 1.5; $0.openRouterVoice = "am_puck" }
+        #expect(AppSettings(defaults: defaults).characterVoices["Pip"] == CharacterVoice(openRouterVoice: "am_puck", pitch: 1.5))
+        s.setVoice(of: "Pip") { $0.followPitch = false }
+        #expect(AppSettings(defaults: defaults).characterVoices["Pip"]?.followPitch == false)
+        s.setVoice(of: "Pip") { $0 = CharacterVoice() }
+        #expect(s.characterVoices["Pip"] == nil, "all automatic again: nothing stored")
+        s.cartoonVoices = false
+        #expect(!AppSettings(defaults: defaults).cartoonVoices)
+        s.keepVoices = false
+        #expect(!AppSettings(defaults: defaults).keepVoices)
+        s.voiceEnabled = true
+        s.voiceEngine = .openRouter
+        s.voicePerCharacter = false
+        s.systemVoice = "com.apple.voice.compact.en-US.Samantha"
+        s.voiceModel = "deepgram/flux-tts:free"
+        s.openRouterVoice = "flux-kit-en"
+        s.voiceSpeed = 1.5; s.voicePitch = 0.75; s.voiceVolume = 0.3
+        let back = AppSettings(defaults: defaults)
+        #expect(back.voiceEnabled && back.voiceEngine == .openRouter && !back.voicePerCharacter)
+        #expect(back.systemVoice == "com.apple.voice.compact.en-US.Samantha")
+        #expect(back.voiceModel == "deepgram/flux-tts:free" && back.openRouterVoice == "flux-kit-en")
+        #expect(back.voiceSpeed == 1.5 && back.voicePitch == 0.75 && back.voiceVolume == 0.3)
+        defaults.set(9.0, forKey: "voiceSpeed")
+        #expect(AppSettings(defaults: defaults).voiceSpeed == AppSettings.voiceSpeedRange.upperBound)
+    }
 }

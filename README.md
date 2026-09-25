@@ -17,8 +17,8 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.17 — eight creatures with their own personalities, on every monitor,
-talking when they meet from a hundred built-in lines or through a model of your
+**Status:** v0.18 — eight creatures with their own personalities, on every monitor,
+talking when they meet (out loud, if you like) from a hundred built-in lines or through a model of your
 choice, giving flowers, sending paper planes when it gets too quiet, keeping every
 chat and what it cost, going home when asked, and wearing creatures you describe to
 any chat model.
@@ -68,6 +68,12 @@ wire up a model of your choice: a small one running locally in
 Every third meeting of the same pair, one gives the other a flower to wear, and
 the wearer follows the giver around until it wilts, walking past everyone
 without bumping.
+
+**Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
+loud, each character in a voice of its own: the Mac's built-in voices (free,
+offline), or a speech model on OpenRouter (Kokoro by default, a fraction of a cent
+per hundred lines). Voice, speed, pitch and volume are in Settings › Talk.
+macOS only for now.
 
 **Paper planes.** Every few minutes (you choose how often) one folds a note into a
 paper plane and throws it to another. Each plane flies in weather of its own,

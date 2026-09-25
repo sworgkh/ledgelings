@@ -113,7 +113,7 @@ extension Colony {
             guard var usage = answer.usage else { return }
             if service.provider == .lmStudio { usage.cost = 0 }
             used.append(usage)
-            spend.record(provider: service.provider, model: service.model, usage: usage)
+            spend.record(provider: service.provider, model: service.model, usage: usage, purpose: .planes)
         }
         Task { [weak self] in
             var note: String?, musing: String?

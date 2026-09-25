@@ -87,7 +87,7 @@ extension Colony {
             guard var usage = answer.usage else { return }
             if service.provider == .lmStudio { usage.cost = 0 }                // a local model is free
             used.append(usage)
-            spend.record(provider: service.provider, model: service.model, usage: usage)
+            spend.record(provider: service.provider, model: service.model, usage: usage, purpose: .talk)
         }
 
         busy.formUnion([speaker, listener])
@@ -187,10 +187,47 @@ extension Colony {
         }
     }
 
+    /// Put `text` up in creature `index`'s bubble. With voice on, the bubble
+    /// shows dots until the sound is ready, then types the line out as it is said.
     func say(_ text: String, from index: Int) {
         guard creatures.indices.contains(index) else { return }
-        bubbles[index] = (text, elapsed + Banter.showTime(text, base: settings.bubbleSeconds))
+        bubbleSerial += 1
+        let serial = bubbleSerial
+        bubbles[index] = Bubble(text: text, until: elapsed + Banter.showTime(text, base: settings.bubbleSeconds), serial: serial)
+        let voiced = voice?.say(text, as: character(forCreature: index).name) { [weak self] cue in
+            self?.heard(cue, bubble: serial, of: index)
+        } ?? false
+        if voiced {
+            bubbles[index]?.reveal = .waiting(since: elapsed)
+            bubbles[index]?.until = elapsed + Self.longestWaitForVoice
+        }
         render()
+    }
+
+    /// A bubble waiting on its sound gives up after this, even if the voice never says why.
+    static let longestWaitForVoice = 45.0
+
+    /// The voice's news about a bubble's line.
+    func heard(_ cue: Voice.Cue, bubble serial: Int, of index: Int) {
+        guard var bubble = bubbles[index], bubble.serial == serial else { return }
+        let showTime = Banter.showTime(bubble.text, base: settings.bubbleSeconds)
+        switch cue {
+        case .started(let duration?):
+            bubble.reveal = .timed(start: elapsed, duration: duration)
+            bubble.until = elapsed + max(showTime, duration + 2)
+        case .started(nil):
+            bubble.reveal = .spoken(0)
+            bubble.until = elapsed + Self.longestWaitForVoice
+        case .progress(let share):
+            if case .spoken(let before) = bubble.reveal { bubble.reveal = .spoken(max(before, share)) }
+        case .done:
+            bubble.reveal = .all
+            bubble.until = max(min(bubble.until, elapsed + showTime), elapsed + 2)
+        case .dropped:
+            bubble.reveal = .all
+            bubble.until = elapsed + showTime
+        }
+        bubbles[index] = bubble
     }
 
     /// The creature whose speech bubble is under `point`, on any monitor.

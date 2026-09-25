@@ -7,13 +7,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let history = ChatHistory()
     private let library = SpriteLibrary()
     private let spend = SpendLedger()
-    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend)
+    private lazy var voice = Voice(settings: settings, spend: spend, history: history)
+    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend, voice: voice)
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let skipItem = NSMenuItem(title: "", action: #selector(skipPhase), keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
+    private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
     private static let hideChoices: [(String, Double?)] = [
@@ -33,15 +35,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         do {
             colony = try Colony(settings: settings, history: history, library: library, spend: spend)
+            colony?.voice = voice
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
             NSApp.terminate(nil)
             return
         }
         installStatusItem()
-        // `--settings [creatures|sprites|talk|chats]`: open the window at launch, for looking at it from a script.
+        // `--cast`: the brain model casts everyone on screen, one line each on stderr, then quit.
+        if CommandLine.arguments.contains("--cast") {
+            let voice = voice
+            Task { @MainActor in
+                var seen: [String] = []
+                for name in voice.cast() where !seen.contains(name) {
+                    seen.append(name)
+                    do { FileHandle.standardError.write(Data("cast: \(name) → \(try await voice.castWithModel(name))\n".utf8)) }
+                    catch { FileHandle.standardError.write(Data("cast: \(name) failed: \(error)\n".utf8)) }
+                }
+                exit(0)
+            }
+        }
+        // `--say "text"`: one line in the current voice settings, its cues on stderr, then quit.
+        if let at = CommandLine.arguments.firstIndex(of: "--say"), CommandLine.arguments.indices.contains(at + 1) {
+            let text = CommandLine.arguments[at + 1], name = voice.cast().first ?? "Blocky"
+            let voice = voice
+            func log(_ s: String) { FileHandle.standardError.write(Data("say: \(s)\n".utf8)) }
+            let started = voice.sayOnce(text, as: name) { cue in
+                log("\(cue) · \(voice.status)")
+                if cue == .done || cue == .dropped { exit(cue == .done ? 0 : 1) }
+            }
+            if !started { log("not said: \(voice.status)"); exit(1) }
+            Task { @MainActor in try? await Task.sleep(for: .seconds(60)); log("timed out"); exit(2) }
+        }
+        // `--settings [creatures|sprites|talk|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
@@ -70,6 +98,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(hideItem)
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
         menu.addItem(withTitle: "Send a Paper Plane", action: #selector(sendPaperPlane), keyEquivalent: "p").target = self
+        voiceItem.target = self
+        menu.addItem(voiceItem)
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         menu.addItem(withTitle: "Chat History…", action: #selector(openChats), keyEquivalent: "h").target = self
@@ -90,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         skipItem.title = colony.isNight ? "Wake Them Up Now" : "Put Them to Sleep Now"
         skipItem.isHidden = settings.nightMinutes == 0
         if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
+        voiceItem.state = settings.voiceEnabled ? .on : .off
         talkStatusItem.title = "   " + String(colony.talkStatus.prefix(70))
         let s = spend.summary
         spendItem.title = "Spent: \(Spend.label(s.today.cost)) today, \(Spend.label(s.month.cost)) this month"
@@ -133,7 +164,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func skipPhase() { colony?.skipPhase() }
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
     @objc private func sendPaperPlane() { colony?.sendPlane() }
+    @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
-    @objc private func openSpend() { settingsWindow.show(tab: .talk) }
+    @objc private func openSpend() { settingsWindow.show(tab: .costs) }
 }

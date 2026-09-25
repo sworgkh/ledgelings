@@ -2,7 +2,7 @@
 
 A platform-neutral description of the whole product, precise enough to
 re-implement it on Linux, Windows or anywhere else without reading the Swift.
-Every number here is the one the macOS app ships with (v0.17). Where the
+Every number here is the one the macOS app ships with (v0.18). Where the
 behaviour is a formula, the formula is given. Where it is a judgement call, the
 call is stated so the port makes the same one.
 
@@ -479,8 +479,14 @@ Every model call, whether or not its line was usable, appends one record to
 
 ```json
 {"time": "2026-09-20T14:03:11Z", "provider": "OpenRouter", "model": "google/gemini-2.5-flash-lite",
- "usage": {"promptTokens": 312, "completionTokens": 18, "cost": 0.00042}}
+ "usage": {"promptTokens": 312, "completionTokens": 18, "cost": 0.00042}, "purpose": "talk"}
 ```
+
+`purpose` names the feature that made the call: `talk` (meetings and pokes),
+`planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
+model), `casting` (Cast with Model). Recording a call requires one. Records from
+before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
+from a newer build is shown as written.
 
 `cost` is what the server said the call cost (§8.1); a call to LM Studio is
 recorded with cost 0 (it is free), a call whose server gave no price with no
@@ -492,15 +498,17 @@ recorded with cost 0 (it is free), a call whose server gave no price with no
 | this month | same local calendar month as now |
 | all time | all |
 | by model | all, grouped by model id, dearest first, then most calls |
+| by feature | all, grouped by `purpose` title, dearest first, then most calls |
 
 A total is `calls`, `promptTokens`, `completionTokens`, `cost` (sum of the
 priced calls) and `unpriced` (how many had no price). Money is shown as
 `$0.00` for zero, `<$0.001` under a tenth of a cent, three decimals under ten
 cents, else two; a total with unpriced calls gets a `+` after it. Shown in
-Settings › Talk › Spend (three rows, up to five models, the file path, a
-button revealing the file) and as a menu line "Spent: $a today, $b this month"
-(hidden until there is a record); the Chats viewer shows each exchange's cost
-and tokens.
+Settings › Costs (left: the three rows, by feature, the ten dearest models;
+right: the last 200 calls newest first with time, feature, tokens and cost, the
+file path and a button revealing it), and as a menu line "Spent: $a today, $b this
+month" opening that tab (hidden until there is a record); the Chats viewer shows
+each exchange's cost and tokens, and its voice cost.
 
 ### 6.6 Menu and poke
 
@@ -508,6 +516,120 @@ and tokens.
 busy (anyone free if none is awake); the nearest free creature listens. A Shift-poke (§11) does the same
 with the poked creature as speaker. Both first **hold** the pair (§7.2). If the
 talk could not start, release after 1 s.
+
+### 6.6.1 Voice (macOS)
+
+Every `say` (a bubble going up, whatever its source) also hands the line to the
+voice when `voiceEnabled`. The line is first made speakable: `**bold**` keeps its
+words, `*stage directions*` go, emoji and the marks `*`, `_`, `~`, backtick and `#` go, runs of spaces
+collapse, and no space is left before `. , ! ? ; :`. Nothing left → nothing said.
+
+Lines are said one at a time, in order. Queued-or-playing lines are counted; at 4,
+a new line is dropped (the status says so). Turning voice off, or switching engine,
+stops everything at once.
+
+**Who sounds like whom.** With `voicePerCharacter`, the names of all creatures on
+screen are handed voices from a pool: names sorted, each starts at FNV-1a(name)
+mod pool size and takes the first voice not yet taken, going round; when the pool
+runs out, the start voice. The same names and pool always give the same answer.
+Built-in pool: the Mac's voices in the user's language (English if none), no
+novelty or personal voices, one per voice name (the user's region preferred),
+sorted by identifier; pitch is also multiplied by 0.9 + 0.2 × (FNV-1a(name +
+"#pitch") mod 1000) / 999. OpenRouter pool: the model's `supported_voices`, cut to
+the English ones when any name is marked English (`-en` suffix; `en_`, `gb_`,
+`en-`, `English_` prefix; Kokoro's `af_ am_ bf_ bm_`). Without it: the chosen
+voice, or the system default / the model's first.
+
+**Per character.** `characterVoices` maps a name to `{systemVoice?, openRouterVoice?,
+localVoice?, speed?, pitch?, followPitch?}` (`followPitch` nil = `speedFollowsPitch`); nil fields are automatic, an all-nil entry is removed. Speed =
+`voiceSpeed` × (own speed ?? 1). A hand-picked voice is kept; `Voices.assign` hands
+the others voices from the pool minus the hand-picked ones (the whole pool if that
+empties it). An `openRouterVoice` not among the model's voices is ignored. A `localVoice` may be a
+Kokoro blend, `name(weight)+name(weight)…` (weights optional); it is used when every
+name in it is among the server's voices (or the list is unknown), else ignored.
+
+**Casting** (`castByPersonality`, default on; `LedgelingsCore/Casting.swift`). A
+character's persona + species kind are scanned for word stems (short words ≤ 3
+letters match whole) in 14 rules, each adding wanted tags (female, male, old, young,
+deep, bright, soft, robot, whisper) and multiplying pitch (0.7–1.5) and speed
+(0.75–1.3). Voices are tagged from a table of known names, the Kokoro sex prefix,
+self-describing names, and the Mac's reported gender. Score = Σ wanted weight of
+tags held − wrong-sex weight − 3 for an unwanted robot − 3 for a whisper wanted
+under 2 − 0.7 for an unwanted old voice. Characters with the strongest wish choose
+first (ties by name); each takes the best-scoring free voice, ties going round the
+pool from FNV-1a(name). Automatic pitch = (1.3 with `cartoonVoices`, else 1) × traits
+pitch × a halved name nudge; automatic speed = traits speed. **Cast with model** sends
+the name, kind, persona and the engine's voices with their tags, and reads back
+`{voice, pitch, speed, why}` (after any `</think>`, 2000 tokens allowed for
+reasoning), storing it in `characterVoices`.
+
+**Pitch.** A name speaks at `voicePitch` × (own pitch if set, else with `castByPersonality` as above, else with `cartoonVoices`: 1.15 + 0.45 ×
+(FNV-1a(name + "#cartoon") mod 1000) / 999; else with `voicePerCharacter` the
+0.9–1.1 nudge; else 1). With `cartoonVoices` the built-in pool is the Eloquence
+voices and the `speech.synthesis.voice.*` ones minus the singers (Bells, Cellos,
+Organ, Good News, Bad News), if at least two; the OpenRouter pool is cut to names
+containing anime, playful, whimsical, comedian, jovial, lovely, upbeat, excited,
+cheerful, happy, santa, boy, girl, radiant or kind-hearted, if at least two.
+
+**Built-in engine:** `AVSpeechSynthesizer`, rate = default rate × `voiceSpeed`
+(clamped to the system's range), pitch multiplier as above (0.5–2), volume `voiceVolume`.
+With `speedFollowsPitch` (default on) the speed asked for is `speed / √pitch`
+instead of `speed / pitch` (below), and the Mac's voices are rendered with
+`AVSpeechSynthesizer.write` at that rate and pitch 1, then played through the same
+varispeed at rate = pitch; their bubble then types over the clip's length.
+
+**Local server engine.** `{server}/v1/audio/speech` with `{model, input, voice,
+response_format: "wav", speed}`, no key, no OpenRouter headers; voices from `GET
+{server}/v1/audio/voices` (`{"voices": [...]}`, strings or objects with `id`/`name`,
+or a bare array). Not kept, not priced, not looked up in the archive. Defaults
+`http://localhost:8880`, `kokoro` (Kokoro-FastAPI).
+
+OpenRouter lines are asked for at speed `voiceSpeed / pitch` (clamped 0.25–4) and
+played through `AVAudioEngine`: player → varispeed at rate = pitch (0.25–4) →
+mixer, so they come out `pitch` times higher at the usual pace. (A time-pitch
+unit was tried first: at 1.15–1.6× it smeared lines into an audible echo.) The
+archive key uses the asked speed. Format: `pcm` first; a refusal whose message
+names `response_format` and the other format (MiniMax wants `"mp3"`) is retried
+once in that format, remembered per model until the app quits. A refusal about
+the speed parameter itself (Qwen: "does not support the speed parameter … omit
+it") is retried without `speed`, also remembered; such a model then talks faster
+as well as higher when the pitch is raised.
+
+**OpenRouter engine:** `POST {base}/audio/speech` with `{model, input, voice,
+response_format, speed}` and the brain's key and headers. The reply is 16-bit
+little-endian samples typed `audio/pcm;rate=24000;channels=1` (rate and channels
+read from the type, 24000 and 1 if missing), given a 44-byte WAV header and
+played; an `audio/mpeg` reply plays as is, a JSON reply is an error. The fetch starts at once, the play waits for the
+line before. The `X-Generation-Id` header is then looked up at `GET
+{base}/generation?id=…` after 3 s and up to three more times 5 s apart; its
+`total_cost` (or `usage`) and `tokens_prompt` go to the spend file (§6.5.1) under
+the speech model's id, without a price if it never came.
+
+**Bubbles while speaking.** `say` returns whether the line will be said; if so
+the bubble starts as `waiting` (text `...`, showing (⌊3·t⌋ mod 3 + 1)/3 of it) with
+`until` = now + 45 s, and the voice cues it: `started(duration)` → typed evenly
+over `duration`, `until` = now + max(showTime, duration + 2); `started(nil)` (Mac
+voices) → shown as far as the last `willSpeakRange` end / line length; `done` →
+all shown, `until` = max(min(until, now + showTime), now + 2); `dropped` → all
+shown, `until` = now + showTime. A cue for a bubble since replaced is ignored (a
+serial per `say`). Hidden letters are drawn transparent in the full-size bubble;
+a cut never splits a composed character.
+
+**Voice cost per conversation.** Each OpenRouter line appends `{time (when said),
+speaker, text (as spoken), model, cost, kept}` to `chats/YYYY-MM-DD.voice.jsonl`
+once priced (kept copies at once, cost 0, kept true). The Chats tab gives each to
+the latest exchange written no later than 60 s after it that has the same speaker
+with the same `speakable` words, and sums cost, lines, unpriced and kept per exchange.
+
+**The voice archive** (`Application Support/Ledgelings/voices`). With
+`keepVoices`, every OpenRouter line is written as `<yyyy-MM-dd>/<HHmmss>-<speaker>-<key8>.wav`
+(speaker reduced to letters, digits, `-`, `_`, at most 24) and appended to
+`voices.jsonl` as `{time, speaker, text, model, voice, speed, file, key}`, time in
+whole seconds. `key` = FNV-1a hex of text, model, voice and speed (2 decimals),
+joined by U+001F. Before asking OpenRouter, the key is looked up (last match,
+file still present); a hit is played from disk and neither asked for nor charged.
+The built-in voices are not kept: they cost nothing to say again. Speech models: `GET
+{base}/models?output_modalities=speech` (public), cheapest input first.
 
 ### 6.7 The built-in lines (no model)
 
@@ -1080,8 +1202,22 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | flowerMinutes | 2 | 0.5–30, clamped on load |
 | characters | the six above | ≥ 2; JSON |
 | systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores |
+| voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
+| voiceEngine | system | system, openRouter, local |
+| voicePerCharacter | true | |
+| systemVoice | empty | a voice identifier; empty = system default |
+| voiceModel | `hexgrad/kokoro-82m` | an OpenRouter speech model |
+| openRouterVoice | empty | one of the model's voices; empty = its first |
+| voiceSpeed / voicePitch | 1 / 1 | 0.5–2, clamped on load; pitch applies to both engines |
+| voiceVolume | 0.8 | 0–1 |
+| cartoonVoices | true | pitch lift and playful voices first (§6.6.1) |
+| characterVoices | {} | name → `{systemVoice, openRouterVoice, localVoice, speed, pitch, followPitch}`, JSON (§6.6.1) |
+| castByPersonality | true | automatic voices from description and species (§6.6.1) |
+| speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
+| localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
+| keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
-Settings window: 1100×760 points, four tabs, each laid out as two columns
+Settings window: 1100×760 points, six tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
@@ -1093,7 +1229,11 @@ Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, mod
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
 pick, free models tinted green, current model highlighted; characters editor;
-prompt editors with a placeholder legend.
+prompt editors with a placeholder legend. **Voice**: on the left the toggle,
+engine picker, voice-each and cartoon toggles, voice picker or key/model/voice
+pickers and Keep with its count and Reveal, speed/pitch/volume sliders, Test,
+Stop, status; on the right a card per character on screen with voice picker
+(automatic names the voice it gets), speed and pitch sliders, Test and Auto.
 
 ---
 
@@ -1113,7 +1253,7 @@ prompt editors with a placeholder legend.
   `XShapeCombineRectangles` on the input shape to expose only the creature
   squares and bubble rectangles; recompute each frame is cheap.
 - Keep the simulation (§2–§8) in a library with no window dependency and port
-  the tests in §14 first; the macOS app has 123 such tests and 69 app-side ones.
+  the tests in §14 first; the macOS app has 158 such tests and 82 app-side ones.
 
 ---
 

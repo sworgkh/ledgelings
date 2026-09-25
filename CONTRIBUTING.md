@@ -3,6 +3,10 @@
 Ledgelings is two native apps that must stay the same app. This page is how to
 build and test each, and the few rules that keep them in step.
 
+Adding a feature? [AGENTS.md](AGENTS.md) has three rules every change keeps: every
+model call is priced with the feature that made it, every feature has its settings,
+and the characters stay themselves.
+
 ## The one rule
 
 **[SPEC.md](SPEC.md) is the product.** Every number, formula and judgement call

@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 struct TalkSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var library: SpriteLibrary
-    @ObservedObject var spend: SpendLedger
+    @ObservedObject var voice: Voice
     @State private var castSpecies = "blocky"
 
     var body: some View {
@@ -40,7 +40,6 @@ struct TalkSettingsView: View {
                 Text(brainFooter)
             }
 
-            if settings.brain != .script { SpendSection(spend: spend) }
         } right: {
             Section {
                 Picker("Species", selection: $castSpecies) {
@@ -360,57 +359,5 @@ private struct ModelMenu: View {
         let needle = typed.trimmingCharacters(in: .whitespaces).lowercased()
         let matching = needle.isEmpty || models.contains(typed) ? models : models.filter { $0.lowercased().contains(needle) }
         return Array(matching.prefix(Self.most))
-    }
-}
-
-/// What the talking has cost: today, this month, ever, and the dearest models.
-private struct SpendSection: View {
-    @ObservedObject var spend: SpendLedger
-
-    var body: some View {
-        Section {
-            let s = spend.summary
-            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
-                GridRow {
-                    Text("")
-                    Text("Cost").font(.caption).foregroundStyle(.secondary)
-                    Text("Calls").font(.caption).foregroundStyle(.secondary)
-                    Text("Tokens").font(.caption).foregroundStyle(.secondary)
-                }
-                row("Today", s.today)
-                row("This month", s.month)
-                row("All time", s.allTime)
-            }
-            ForEach(s.byModel.prefix(5), id: \.model) { m in
-                LabeledContent(m.model) {
-                    Text("\(Spend.label(m.total.cost)) · \(m.total.calls) calls").foregroundStyle(.secondary).monospacedDigit()
-                }
-                .font(.caption)
-            }
-            HStack {
-                Text(spend.file.path).font(.caption).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.middle)
-                Spacer()
-                Button("Reveal in Finder") { spend.revealInFinder() }
-            }
-        } header: {
-            Text("Spend")
-        } footer: {
-            Text(footer(spend.summary))
-        }
-    }
-
-    private func row(_ name: String, _ t: Spend.Total) -> some View {
-        GridRow {
-            Text(name)
-            Text(Spend.label(t.cost) + (t.unpriced > 0 ? "+" : "")).monospacedDigit()
-            Text("\(t.calls)").monospacedDigit()
-            Text("\(t.tokens)").monospacedDigit()
-        }
-    }
-
-    private func footer(_ s: Spend.Summary) -> String {
-        var text = "Every call to the model is written to spend.jsonl with its tokens and, for OpenRouter, the price it reported. LM Studio is free. One conversation is two calls."
-        if s.allTime.unpriced > 0 { text += " \(s.allTime.unpriced) calls had no price; a + marks a total that is missing some." }
-        return text
     }
 }

@@ -7,6 +7,7 @@ struct ChatHistoryView: View {
     @State private var days: [String] = []
     @State private var selected: String?
     @State private var exchanges: [ChatLog.Exchange] = []
+    @State private var voiceTotals: [Int: ChatLog.VoiceTotal] = [:]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,7 +24,7 @@ struct ChatHistoryView: View {
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 14) {
-                            ForEach(exchanges.indices, id: \.self) { i in exchange(exchanges[i]) }
+                            ForEach(exchanges.indices, id: \.self) { i in exchange(exchanges[i], voice: voiceTotals[i]) }
                         }
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,13 +44,18 @@ struct ChatHistoryView: View {
         }
         .onAppear(perform: reload)
         .onChange(of: history.version) { reload() }
-        .onChange(of: selected) { exchanges = selected.map(history.exchanges(on:)) ?? [] }
+        .onChange(of: selected) { load() }
     }
 
     private func reload() {
         days = history.days()
         if selected == nil || !days.contains(selected!) { selected = days.first }
+        load()
+    }
+
+    private func load() {
         exchanges = selected.map(history.exchanges(on:)) ?? []
+        voiceTotals = selected.map { history.voiceTotals(on: $0, for: exchanges) } ?? [:]
     }
 
     private func empty(_ text: String) -> some View {
@@ -57,7 +63,7 @@ struct ChatHistoryView: View {
             .padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func exchange(_ x: ChatLog.Exchange) -> some View {
+    private func exchange(_ x: ChatLog.Exchange, voice: ChatLog.VoiceTotal?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(x.time, style: .time).monospacedDigit()
@@ -65,6 +71,7 @@ struct ChatHistoryView: View {
                 Spacer()
                 if let cost = x.cost { Text(Spend.label(cost)).monospacedDigit() }
                 if let tokens = x.tokens { Text("\(tokens) tok").monospacedDigit() }
+                if let voice { Text(Self.voiceLabel(voice)).monospacedDigit().help(voice.models.joined(separator: ", ")) }
             }
             .font(.caption).foregroundStyle(.secondary)
             Text(x.situation).font(.caption).foregroundStyle(.tertiary)
@@ -72,6 +79,14 @@ struct ChatHistoryView: View {
                 Text(Self.spoken(x.lines[i])).textSelection(.enabled)
             }
         }
+    }
+
+    /// "voice $0.005 (2 lines)", "+" when a price is missing, and lines replayed free.
+    static func voiceLabel(_ v: ChatLog.VoiceTotal) -> String {
+        var parts: [String] = []
+        if v.lines > 0 { parts.append("voice \(Spend.label(v.cost))\(v.unpriced > 0 ? "+" : "") (\(v.lines) line\(v.lines == 1 ? "" : "s"))") }
+        if v.kept > 0 { parts.append("\(v.kept) replayed free") }
+        return parts.joined(separator: " · ")
     }
 
     /// "**Name:** what they said", as one selectable run of text.

@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Four tabs: **Creatures**, **Sprites**, **Talk**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Six tabs: **Creatures**, **Sprites**, **Talk**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 
@@ -14,9 +14,10 @@ Settings…*. Four tabs: **Creatures**, **Sprites**, **Talk**, **Chats**, each i
 | **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
 | **Make Someone Talk** | A random awake creature says something to the nearest one |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
+| **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
-| *Spent: $a today, $b this month* | Shown once there is a record; opens the Talk tab |
+| *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
 | **Settings…** | The settings window |
 | **Quit** | Everyone vanishes; nothing is persisted about the hide |
 
@@ -94,6 +95,92 @@ ones. With a model, the sender writes the note in its persona while the plane is
 the air, and the catcher's thought comes from a second call; both are priced like
 any other call.
 
+## Voice tab
+
+macOS only for now. The left column is how they all sound; the right column,
+**Characters**, is one card per character on screen. Every line that appears in a bubble, from a meeting, a poke, a
+paper plane or the built-in lines, is also read out loud, one line at a time in the
+order they came. When the talk runs far ahead of the voice (four lines waiting),
+new lines are skipped rather than read long after their bubble is gone. Emoji and
+`*stage directions*` are not read.
+
+With voice on, a bubble first shows `...`, a dot more every third of a second, while
+its sound is on its way (an OpenRouter line can take a second or two). When the
+voice starts, the line types itself out in step with it: word by word with the
+Mac's voices, which say where they are, and evenly over the clip's length with
+OpenRouter. The bubble is sized for the whole line from the start, so it does not
+grow as the words come in. A line that cannot be said (stopped, failed, skipped)
+shows in full at once. A bubble gives up waiting after 45 s.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Hear them talk out loud** | off | | Also in the menu as **Hear Them Talk**. Turning it off stops the voice mid-word |
+| **Voices** | Built-in voices | | or OpenRouter, or Local server. Switching stops whatever is being said |
+| **Every character gets a voice of their own** | on | | Each name gets its own voice, the same one every launch; two share only once the voices run out. Off: everyone uses the **Voice** below |
+| **Cartoon voices: squeakier, sillier** | on | | Every character speaks 1.15 to 1.6 times higher (its own height, on top of **Pitch**), and the playful voices go first: on the Mac the character voices (Grandma, Grandpa, Rocko, Shelley, Eddy…) and the talking novelty ones (Zarvox, Bubbles, Junior, Trinoids, Boing…), never the singing ones (Bells, Cellos, Organ, Good News, Bad News, Superstar); on OpenRouter voice names such as `English_AnimeCharacter`, `English_PlayfulGirl`, `en_paul_excited`, when a model has at least two. Off: plain voices, each nudged only slightly. Acting directions in the text ("say it squeaky") do not work: Gemini reads them out |
+| **Voice** (Built-in) | System default | | Every voice the Mac has in your language, novelty voices (Bells, Zarvox…) included. With a voice each, novelty voices are left out and every character also gets a slightly different pitch. More voices: System Settings › Accessibility › Spoken Content › System Voice › Manage Voices |
+| **API key** (OpenRouter) | | | The brain's key, shown here only when the brain is not OpenRouter |
+| **Model** (OpenRouter) | `hexgrad/kokoro-82m` | | Every OpenRouter speech model, with its price, fetched live. Kokoro costs about $0.00003 a line. The free models have daily limits the creatures would hit |
+| **Voice** (OpenRouter) | the model's first | | That model's voices. With a voice each, the English ones are used when the model's voice names say which they are |
+| **Keep every line it says** (OpenRouter) | on | | Each line is saved as a WAV file in `~/Library/Application Support/Ledgelings/voices/<day>/<time>-<speaker>-<key>.wav`, beside the chats, and listed in `voices/voices.jsonl` (time, speaker, text, model, voice, speed, file). **Reveal in Finder** opens the folder. A line already kept in the same model, voice and speed is played from there, free, whether or not this is on |
+| **Server** / **Model** / **Voice** (Local server) | `http://localhost:8880`, `kokoro`, the server's first | | Any speech server on this Mac that answers like OpenAI's `/v1/audio/speech` and lists voices at `/v1/audio/voices`: Kokoro-FastAPI, LMS Speaks. Free; nothing kept or priced. **Check** lists the voices; **Copy Setup Command** puts Kokoro-FastAPI's install-and-start line on the clipboard (`[ -d ~/Kokoro-FastAPI ] || git clone https://github.com/remsky/Kokoro-FastAPI.git ~/Kokoro-FastAPI; cd ~/Kokoro-FastAPI && { [ -d .venv ] || uv venv; } && HOST=127.0.0.1 ./start-gpu_mac.sh`, needs git and uv, downloads about a gigabyte once). LM Studio cannot speak itself, but it can run **Orpheus** for [Orpheus-FastAPI](https://github.com/Lex-au/Orpheus-FastAPI): load `lex-au/Orpheus-3b-FT-Q4_K_M.gguf` in LM Studio, point Orpheus-FastAPI's `ORPHEUS_API_URL` at `http://127.0.0.1:1234/v1/completions`, then use server `http://127.0.0.1:5005`, model `orpheus`. Eight English voices (tara, leah, jess, leo, dan, mia, zac, zoe; the others are other languages and are skipped for a voice each). On an Apple Silicon Mac it makes speech at about a third of real time: a 3 s line takes about 8 s |
+| **Speed** | 1× | 0.5 to 2 | Every engine |
+| **Pitch** | 1× | 0.5 to 2 | Both engines. An OpenRouter line is asked for that much slower and played that much faster, like a tape sped up: higher, at the usual pace, with no echo. Kokoro and Gemini honour the slower speed; Voxtral ignores it and Qwen refuses it (the app then leaves it out), so with them a raised pitch also talks faster |
+| **Speed follows pitch** | on | | A raised voice also talks a little faster, by the square root of its lift (1.18× at 1.4×), so no voice is ever asked to drawl, which smears into an echo. The Mac's voices are then rendered and sped up like a tape instead of using their own pitch shifter, and the bubble types over the clip's length. Off: the pace stays exact, with some smear on big lifts |
+| **Volume** | 0.8 | 0 to 1 | |
+| **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
+
+### Characters
+
+Every character starts automatic. With **Voices fit each character's
+personality** (on by default, left column), its description and its species are
+read for words that say how it should sound, and the voice, pitch and speed follow:
+
+| Words in the description or species | Voice |
+|---|---|
+| old, ancient, wise, philosophical, "in my day", proverb | an old voice (Grandpa, Grandma, George…), lower, slower |
+| slow, sleepy, nap, lazy, calm, damp, purr | softer, slower |
+| fast, quick, speed · tiny, small, little | younger, quicker · higher |
+| cheerful, giggly, laughs, bouncy, excited, sweet, adorable | a bright voice, a little higher and quicker |
+| grumpy, stubborn, stern, proud, fat, big | a deep voice, lower |
+| anxious, worried, nervous | a little higher and quicker |
+| robot, antenna, bolts, status, glitch | a robot voice (Zarvox, Trinoids, Fred) |
+| ghost, spirit, haunt, hovering | the whisper (only for these) |
+| he, sir, grandpa… · she, lady, grandma… | a male · female voice |
+
+Voices are tagged from their names: the Mac reports each one's sex, Kokoro's start
+`af_`/`am_`, Orpheus's are known by name, MiniMax's describe themselves
+(`English_ManWithDeepVoice`). The characters with the strongest wishes choose first,
+each taking the best-fitting voice still free. Words the rules do not know leave a
+neutral voice; **Cast with Model** understands any description.
+
+Off, voices are handed out by name only, to differ, with the cartoon lift or a small nudge for pitch.
+
+**Cast with Model** (on a card) and **Cast Everyone with Model** (under the cards) ask
+the brain model (LM Studio or OpenRouter; not the built-in lines) to choose a voice
+from the engine's list and a pitch and speed, given the character's name, species and
+description. Its choice is kept as the character's own, as if picked by hand, with its
+reason shown under the card. One call per character, priced into the spend file.
+
+On its card:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Voice** | Automatic (shows which) | | Any Mac voice, any of the chosen OpenRouter model's voices, or any of the local server's, depending on the engine. With the Local server, **Custom blend…** opens a field for a Kokoro blend: voices joined by `+`, each with an optional weight, `af_bella(2)+am_puck(1)` being two parts Bella to one of Puck. A blend naming a voice the server lacks is flagged in red and the automatic voice is used until it is fixed. OpenRouter's Kokoro refuses blends. A voice picked by hand is that character's alone; the automatic voices are handed out around it. An OpenRouter voice the current model does not have is ignored |
+| **Speed** | 1× | 0.5 to 2 | Times the overall Speed |
+| **Pitch** | its automatic pitch | 0.5 to 2 | Times the overall Pitch, instead of the automatic lift |
+| **Speed follows pitch** | As overall | | On, Off, or as the overall checkbox. On: this character talks a little faster when higher, never smeared. Off: exact pace |
+| **Test** / **Auto** | | | Test: it introduces itself. Auto: back to automatic |
+
+Settings follow the character's name, so they survive restarts and species changes,
+and apply to both engines (the voice is kept per engine).
+
+### Spend and the archive
+
+Each OpenRouter line goes to the spend file under the speech model's id, priced a
+few seconds after it is said, when OpenRouter reports the cost (it sends audio,
+not a bill, with the line itself).
+
 ### Brain
 
 | Setting | Default | Notes |
@@ -109,16 +196,7 @@ any other call.
 | **Model** (OpenRouter) | `anthropic/claude-haiku-4.5` | Any id from openrouter.ai/models. The catalogue below is fetched live: type words from the id or name, cheapest first, free models in green, click a row to pick. 60 rows at a time; add a word to narrow it |
 | **Check** | | LM Studio: is the server up, is the model installed. OpenRouter: is the key valid, what it has spent and its limit, does the model exist |
 
-### Spend
-
-Shown for LM Studio and OpenRouter; the built-in lines cost nothing and record nothing.
-Every call to the model, whether or not its line was usable, is appended to
-`spend.jsonl` with its tokens and, for OpenRouter, the price OpenRouter itself
-reports for that call. LM Studio calls are recorded at $0. The section shows today,
-this month and all time (calls, tokens, cost), the five dearest models, and the
-file's path with a button to reveal it. A `+` after a total means some of its calls
-came back without a price. Money reads `$0.00`, `<$0.001`, three decimals under ten
-cents, else two.
+Costs moved to their own tab in v0.18; see [Costs tab](#costs-tab).
 
 ### Characters
 
@@ -156,12 +234,38 @@ is dropped, the first non-empty line is taken, a leading "Name:" and wrapping qu
 or asterisks are stripped, and it is cut at 160 characters. Calls use temperature
 0.9 and at most 80 tokens.
 
+## Costs tab
+
+Every call to a model, text or voice, whether or not its answer was usable, is
+appended to `spend.jsonl` with its tokens, the feature that made it and, for
+OpenRouter, the price OpenRouter itself reports (for speech, looked up a few seconds
+after the line). LM Studio calls are recorded at $0; a local speech server and the
+Mac's own voices are free and record nothing.
+
+| Column | What it shows |
+|---|---|
+| **Spent** (left) | Today, this month, all time: cost, calls, tokens |
+| **By feature** (left) | Talk, Paper planes, Voice, Voice casting; calls from before v0.18 as *Earlier, unlabelled* |
+| **By model** (left) | The ten dearest models |
+| **Latest calls** (right) | The last 200, newest first: model, time, feature, tokens, cost (*no price* in orange) |
+| **The file** (right) | `spend.jsonl`'s path and Reveal in Finder |
+
+A `+` after a total means some of its calls came back without a price. Money reads
+`$0.00`, `<$0.001`, three decimals under ten cents, else two.
+
 ## Chats tab
 
 Every conversation that produced at least one line is written when it ends, to one
 JSON-lines file per local calendar day. The tab lists the days on the left (today
 and yesterday by name) and each exchange on the right: time, model, cost and tokens
-when known, the situation, then each line. Buttons open the folder in Finder or
+when known, the situation, then each line. When the lines were said out loud by an
+OpenRouter voice, the header also shows **voice $x (n lines)**, with `+` if a
+price never came back and **n replayed free** for lines played from the voice
+archive; hover it for the speech model. Those prices are kept beside the day's
+file in `YYYY-MM-DD.voice.jsonl`, one line per spoken line (time, speaker, words,
+model, cost, kept), because OpenRouter reports them seconds after the conversation
+is written down; each goes to the latest conversation with that speaker saying
+those words. The built-in voices are free and write nothing. Buttons open the folder in Finder or
 Explorer and in a terminal. The files are plain text on purpose; one line looks like:
 
 ```json
