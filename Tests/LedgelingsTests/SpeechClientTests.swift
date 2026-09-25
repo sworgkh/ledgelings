@@ -9,7 +9,7 @@ import Testing
         return try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
     }
 
-    @Test func theRequestAsksForMP3WithTheKeyVoiceAndSpeed() throws {
+    @Test func theRequestAsksForPCMWithTheKeyVoiceAndSpeed() throws {
         let request = try SpeechClient(key: "sk-or-test", model: "hexgrad/kokoro-82m").request(text: "Hello", voice: "am_puck", speed: 1.25)
         #expect(request.url?.absoluteString == "https://openrouter.ai/api/v1/audio/speech")
         #expect(request.httpMethod == "POST")
@@ -18,7 +18,7 @@ import Testing
         #expect(body["model"] as? String == "hexgrad/kokoro-82m")
         #expect(body["input"] as? String == "Hello")
         #expect(body["voice"] as? String == "am_puck")
-        #expect(body["response_format"] as? String == "mp3")
+        #expect(body["response_format"] as? String == "pcm", "Gemini refuses anything else")
         #expect(body["speed"] as? Double == 1.25)
     }
 
@@ -36,6 +36,26 @@ import Testing
         }
         #expect(throws: ChatClient.Failure.self) { try SpeechClient.audio(Data(), contentType: "audio/mpeg") }
     }
+
+    @Test func rawPCMGetsAWAVHeaderFromItsContentType() throws {
+        let samples = Data([0x01, 0x00, 0xFF, 0x7F, 0x00, 0x80, 0x09])     // three samples and a stray byte
+        let wav = try SpeechClient.audio(samples, contentType: "audio/pcm;rate=22050;channels=2")
+        #expect(wav.count == 44 + 6)
+        #expect(String(decoding: wav.prefix(4), as: UTF8.self) == "RIFF")
+        #expect(String(decoding: wav[8..<16], as: UTF8.self) == "WAVEfmt ")
+        func u32(_ at: Int) -> Int { Int(wav[at]) | Int(wav[at + 1]) << 8 | Int(wav[at + 2]) << 16 | Int(wav[at + 3]) << 24 }
+        func u16(_ at: Int) -> Int { Int(wav[at]) | Int(wav[at + 1]) << 8 }
+        #expect(u32(4) == 36 + 6)                       // RIFF size
+        #expect(u16(20) == 1 && u16(22) == 2)           // PCM, two channels
+        #expect(u32(24) == 22_050 && u32(28) == 22_050 * 4)
+        #expect(u16(32) == 4 && u16(34) == 16)          // block align, bits per sample
+        #expect(u32(40) == 6 && wav.suffix(6) == samples.prefix(6))
+        // No parameters: OpenRouter's usual 24 kHz mono.
+        let plain = try SpeechClient.audio(samples, contentType: "audio/pcm")
+        #expect(u32At(plain, 24) == 24_000 && plain[22] == 1)
+    }
+
+    func u32At(_ d: Data, _ at: Int) -> Int { Int(d[at]) | Int(d[at + 1]) << 8 | Int(d[at + 2]) << 16 | Int(d[at + 3]) << 24 }
 
     @Test func speechModelsComeWithVoicesCheapestFirst() throws {
         let models = try SpeechClient.parseModels(Data("""

@@ -2,7 +2,12 @@ import Foundation
 import LedgelingsCore
 
 /// OpenRouter's text-to-speech: `POST /audio/speech` with a model, a voice and
-/// the text, and MP3 bytes back. It uses the same key as the brain.
+/// the text, and audio back. It uses the same key as the brain.
+///
+/// It asks for raw PCM, not MP3: every speech model can send PCM, and some
+/// (Gemini) can send nothing else. The reply says its format in its type,
+/// `audio/pcm;rate=24000;channels=1`, 16-bit little-endian samples, and gets a
+/// WAV header in front so the system player can play it.
 ///
 /// The reply is audio, not JSON, so it carries no price. The price comes from
 /// `GET /generation?id=…` with the id from the `X-Generation-Id` header, which
@@ -48,18 +53,41 @@ struct SpeechClient: Sendable {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(Body(model: model, input: text, voice: voice?.isEmpty == false ? voice : nil,
-                                                         response_format: "mp3", speed: speed))
+                                                         response_format: "pcm", speed: speed))
         return request
     }
 
-    /// The audio, or the server's complaint when it sent JSON instead.
+    /// Audio the system player can play, or the server's complaint when it sent
+    /// JSON instead. Raw PCM gets a WAV header; MP3 or WAV pass as they are.
     static func audio(_ data: Data, contentType: String?) throws -> Data {
-        if contentType?.contains("json") == true || data.first == UInt8(ascii: "{") {
+        let type = (contentType ?? "").lowercased()
+        if type.contains("json") || data.first == UInt8(ascii: "{") {
             if let message = ChatClient.serverError(in: data) { throw ChatClient.Failure.refused(message) }
             throw ChatClient.Failure.badReply(String(decoding: data.prefix(160), as: UTF8.self))
         }
         guard !data.isEmpty else { throw ChatClient.Failure.badReply("no audio") }
-        return data
+        guard type.hasPrefix("audio/pcm") || type.hasPrefix("audio/l16") else { return data }
+        func parameter(_ name: String) -> Int? {
+            type.split(separator: ";").lazy.compactMap { part -> Int? in
+                let pair = part.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+                return pair.count == 2 && pair[0] == name ? Int(pair[1]) : nil
+            }.first
+        }
+        return wav(pcm: data, rate: parameter("rate") ?? 24_000, channels: parameter("channels") ?? 1)
+    }
+
+    /// A 44-byte RIFF header for 16-bit little-endian PCM, then the samples.
+    static func wav(pcm: Data, rate: Int, channels: Int) -> Data {
+        var out = Data()
+        func text(_ s: String) { out.append(contentsOf: Array(s.utf8)) }
+        func u32(_ v: Int) { withUnsafeBytes(of: UInt32(v).littleEndian) { out.append(contentsOf: $0) } }
+        func u16(_ v: Int) { withUnsafeBytes(of: UInt16(v).littleEndian) { out.append(contentsOf: $0) } }
+        let pcm = pcm.count.isMultiple(of: 2) ? pcm : pcm.dropLast()     // whole samples only
+        text("RIFF"); u32(36 + pcm.count); text("WAVE")
+        text("fmt "); u32(16); u16(1); u16(channels); u32(rate); u32(rate * channels * 2); u16(channels * 2); u16(16)
+        text("data"); u32(pcm.count)
+        out.append(pcm)
+        return out
     }
 
     static func parseModels(_ data: Data) throws -> [Model] {
@@ -102,7 +130,7 @@ struct SpeechClient: Sendable {
         return try parseModels(data)
     }
 
-    /// The line as MP3, and the id to ask its price by.
+    /// The line as playable audio, and the id to ask its price by.
     func speak(_ text: String, voice: String?, speed: Double) async throws -> (audio: Data, generation: String?) {
         let (data, response): (Data, URLResponse)
         do { (data, response) = try await URLSession.shared.data(for: try request(text: text, voice: voice, speed: speed)) }

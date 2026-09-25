@@ -536,8 +536,11 @@ voice, or the system default / the model's first.
 (clamped to the system's range), pitch × `voicePitch`, volume `voiceVolume`.
 
 **OpenRouter engine:** `POST {base}/audio/speech` with `{model, input, voice,
-response_format: "mp3", speed}` and the brain's key and headers. The reply is MP3
-bytes (a JSON reply is an error). The fetch starts at once, the play waits for the
+response_format: "pcm", speed}` and the brain's key and headers. PCM because every
+model can send it and Gemini can send nothing else. The reply is 16-bit
+little-endian samples typed `audio/pcm;rate=24000;channels=1` (rate and channels
+read from the type, 24000 and 1 if missing), given a 44-byte WAV header and
+played; an `audio/mpeg` reply plays as is, a JSON reply is an error. The fetch starts at once, the play waits for the
 line before. The `X-Generation-Id` header is then looked up at `GET
 {base}/generation?id=…` after 3 s and up to three more times 5 s apart; its
 `total_cost` (or `usage`) and `tokens_prompt` go to the spend file (§6.5.1) under
