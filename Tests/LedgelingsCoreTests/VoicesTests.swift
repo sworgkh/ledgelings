@@ -37,6 +37,8 @@ import Testing
         #expect(Voices.englishFirst(["English_Comedian", "Chinese_Man"]) == ["English_Comedian"])
         // Names that say nothing about language: keep them all.
         #expect(Voices.englishFirst(["Puck", "Kore"]) == ["Puck", "Kore"])
+        let orpheus = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe", "pierre", "amelie", "유나", "javi"]
+        #expect(Voices.englishFirst(orpheus) == ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe"])
     }
 
     @Test func stageDirectionsEmojiAndMarkdownAreNotReadOut() {

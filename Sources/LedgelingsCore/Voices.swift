@@ -129,9 +129,15 @@ public enum Voices {
     /// `flux-kit-en`, `en_paul_happy`, `gb_jane_sad`, `English_Comedian`,
     /// `en-US-Harper:MAI-Voice-2`, Kokoro's `af_bella` / `bm_george`.
     public static func englishFirst(_ voices: [String]) -> [String] {
+        // Orpheus names its voices like people, with no language mark; its
+        // English ones are these eight, the rest French, German, Korean and so on.
+        let orpheus = voices.filter(orpheusEnglish.contains)
+        if orpheus.count >= 4 { return orpheus }
         let english = voices.filter(isEnglish)
         return english.isEmpty ? voices : english
     }
+
+    static let orpheusEnglish: Set<String> = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe"]
 
     static func isEnglish(_ voice: String) -> Bool {
         let v = voice.lowercased()
