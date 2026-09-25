@@ -1186,10 +1186,12 @@ Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, mod
 "Installed" menu of ids, Check, status; for OpenRouter: masked key, model,
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
-pick, free models tinted green, current model highlighted; Voice section
-(toggle, engine picker, voice-each toggle, voice picker or key/model/voice
-pickers, speed/pitch/volume sliders, Test, Stop, status); characters editor;
-prompt editors with a placeholder legend.
+pick, free models tinted green, current model highlighted; characters editor;
+prompt editors with a placeholder legend. **Voice**: on the left the toggle,
+engine picker, voice-each and cartoon toggles, voice picker or key/model/voice
+pickers and Keep with its count and Reveal, speed/pitch/volume sliders, Test,
+Stop, status; on the right a card per character on screen with voice picker
+(automatic names the voice it gets), speed and pitch sliders, Test and Auto.
 
 ---
 
