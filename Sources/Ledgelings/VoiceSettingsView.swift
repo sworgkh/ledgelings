@@ -209,7 +209,7 @@ struct VoiceSection: View {
     }
 
     /// Kokoro-FastAPI on a Mac: fetch it once, then start it (on Apple's GPU).
-    static let kokoroSetup = "git clone https://github.com/remsky/Kokoro-FastAPI.git ~/Kokoro-FastAPI; cd ~/Kokoro-FastAPI && ./start-gpu_mac.sh"
+    static let kokoroSetup = "[ -d ~/Kokoro-FastAPI ] || git clone https://github.com/remsky/Kokoro-FastAPI.git ~/Kokoro-FastAPI; cd ~/Kokoro-FastAPI && { [ -d .venv ] || uv venv; } && HOST=127.0.0.1 ./start-gpu_mac.sh"
 
     private func checkLocal() async {
         localCheck = "checking…"
