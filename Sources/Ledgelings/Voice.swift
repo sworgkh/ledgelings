@@ -35,10 +35,15 @@ final class Voice: NSObject, ObservableObject {
     @Published private(set) var models: [SpeechClient.Model] = []
 
     private let synthesizer = AVSpeechSynthesizer()
-    /// OpenRouter's clips play through a pitch shifter, so they can squeak too.
+    /// OpenRouter's clips play through a varispeed, the tape-machine way: faster
+    /// is higher. A time-stretching pitch shifter was tried first and smeared
+    /// every line into an echo. To keep the pace, the line is asked for that
+    /// much slower (`SpeechClient.speed`), then sped back up here.
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
-    private let shifter = AVAudioUnitTimePitch()
+    private let shifter = AVAudioUnitVarispeed()
+    /// The audio format each speech model sends: PCM unless it refused.
+    private var formats: [String: String] = [:]
     /// Lines queued or being said, both engines.
     private var waiting = 0
     /// The names of the creatures on screen, in order. Voices are handed out
@@ -162,12 +167,22 @@ final class Voice: NSObject, ObservableObject {
             let pool = Voices.englishFirst(voices)
             let voice = perCharacter ? Voices.assign(cast + [name], pool: cartoon ? Voices.cartoonFirst(pool) : pool)[name]
                                      : (chosen.isEmpty ? voices.first : chosen)
-            let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: speed)
+            // Asked slower by the pitch, sped back up by it as it plays: the pace stays.
+            let asked = speed / pitch
+            let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: asked)
             if let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
                 return (audio, nil, voice, true)
             }
-            let (audio, generation) = try await client.speak(line, voice: voice, speed: speed)
-            if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: speed) }
+            let format = self?.formats[client.model] ?? "pcm"
+            let audio: Data, generation: String?
+            do {
+                (audio, generation) = try await client.speak(line, voice: voice, speed: asked, format: format)
+            } catch ChatClient.Failure.refused(let message) {
+                guard let other = SpeechClient.otherFormat(after: message, tried: format) else { throw ChatClient.Failure.refused(message) }
+                self?.formats[client.model] = other
+                (audio, generation) = try await client.speak(line, voice: voice, speed: asked, format: other)
+            }
+            if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: asked) }
             return (audio, generation, voice, false)
         }
         let before = chain, epoch = epoch
@@ -207,8 +222,8 @@ final class Voice: NSObject, ObservableObject {
         return settings.voicePitch * own
     }
 
-    /// Play a clip to its end, `pitch` times higher at the same speed.
-    /// `started` hears its length the moment it starts.
+    /// Play a clip to its end, `pitch` times faster and so that much higher.
+    /// `started` hears how long it takes the moment it starts.
     private func play(_ audio: Data, pitch: Double, started: (Double) -> Void) async throws {
         // AVAudioFile reads from a file only; the name tells it WAV from MP3.
         let isWAV = audio.prefix(4) == Data("RIFF".utf8)
@@ -218,10 +233,11 @@ final class Voice: NSObject, ObservableObject {
         let clip = try AVAudioFile(forReading: file)
         engine.connect(player, to: shifter, format: clip.processingFormat)
         engine.connect(shifter, to: engine.mainMixerNode, format: clip.processingFormat)
-        shifter.pitch = Float(1200 * log2(min(max(pitch, 0.25), 4)))      // cents
+        let rate = min(max(pitch, 0.25), 4)
+        shifter.rate = Float(rate)
         player.volume = Float(settings.voiceVolume)
         if !engine.isRunning { try engine.start() }
-        let duration = Double(clip.length) / clip.processingFormat.sampleRate
+        let duration = Double(clip.length) / clip.processingFormat.sampleRate / rate
         player.scheduleFile(clip, at: nil, completionHandler: nil)
         player.play()
         started(duration)

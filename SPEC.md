@@ -542,12 +542,16 @@ cheerful, happy, santa, boy, girl, radiant or kind-hearted, if at least two.
 
 **Built-in engine:** `AVSpeechSynthesizer`, rate = default rate × `voiceSpeed`
 (clamped to the system's range), pitch multiplier as above (0.5–2), volume `voiceVolume`.
-OpenRouter clips play through `AVAudioEngine`: player → time-pitch unit set to
-1200·log2(pitch) cents (pitch clamped 0.25–4) → mixer.
+OpenRouter lines are asked for at speed `voiceSpeed / pitch` (clamped 0.25–4) and
+played through `AVAudioEngine`: player → varispeed at rate = pitch (0.25–4) →
+mixer, so they come out `pitch` times higher at the usual pace. (A time-pitch
+unit was tried first: at 1.15–1.6× it smeared lines into an audible echo.) The
+archive key uses the asked speed. Format: `pcm` first; a refusal whose message
+names `response_format` and the other format (MiniMax wants `"mp3"`) is retried
+once in that format, remembered per model until the app quits.
 
 **OpenRouter engine:** `POST {base}/audio/speech` with `{model, input, voice,
-response_format: "pcm", speed}` and the brain's key and headers. PCM because every
-model can send it and Gemini can send nothing else. The reply is 16-bit
+response_format, speed}` and the brain's key and headers. The reply is 16-bit
 little-endian samples typed `audio/pcm;rate=24000;channels=1` (rate and channels
 read from the type, 24000 and 1 if missing), given a 44-byte WAV header and
 played; an `audio/mpeg` reply plays as is, a JSON reply is an error. The fetch starts at once, the play waits for the

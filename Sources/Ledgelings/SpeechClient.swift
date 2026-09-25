@@ -4,8 +4,9 @@ import LedgelingsCore
 /// OpenRouter's text-to-speech: `POST /audio/speech` with a model, a voice and
 /// the text, and audio back. It uses the same key as the brain.
 ///
-/// It asks for raw PCM, not MP3: every speech model can send PCM, and some
-/// (Gemini) can send nothing else. The reply says its format in its type,
+/// It asks for raw PCM first: Gemini sends nothing else. MiniMax, the other way
+/// round, sends only MP3; a refusal that names the other format is answered
+/// with `otherFormat`, and the caller remembers it per model. A PCM reply says its format in its type,
 /// `audio/pcm;rate=24000;channels=1`, 16-bit little-endian samples, and gets a
 /// WAV header in front so the system player can play it.
 ///
@@ -45,7 +46,10 @@ struct SpeechClient: Sendable {
 
     // MARK: Requests and replies, no network
 
-    func request(text: String, voice: String?, speed: Double) throws -> URLRequest {
+    /// Speech speeds OpenRouter accepts.
+    static let speedRange = 0.25...4.0
+
+    func request(text: String, voice: String?, speed: Double, format: String = "pcm") throws -> URLRequest {
         struct Body: Encodable {
             let model: String; let input: String; let voice: String?; let response_format: String; let speed: Double
         }
@@ -53,7 +57,7 @@ struct SpeechClient: Sendable {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(Body(model: model, input: text, voice: voice?.isEmpty == false ? voice : nil,
-                                                         response_format: "pcm", speed: speed))
+                                                         response_format: format, speed: min(max(speed, Self.speedRange.lowerBound), Self.speedRange.upperBound)))
         return request
     }
 
@@ -131,9 +135,16 @@ struct SpeechClient: Sendable {
     }
 
     /// The line as playable audio, and the id to ask its price by.
-    func speak(_ text: String, voice: String?, speed: Double) async throws -> (audio: Data, generation: String?) {
+    /// The format to try after a refusal of `tried`, when the refusal names it:
+    /// `MiniMax TTS only supports response_format="mp3"` after PCM gives MP3.
+    static func otherFormat(after refusal: String, tried: String) -> String? {
+        let other = tried == "pcm" ? "mp3" : "pcm"
+        return refusal.contains("response_format") && refusal.lowercased().contains("\"\(other)\"") ? other : nil
+    }
+
+    func speak(_ text: String, voice: String?, speed: Double, format: String = "pcm") async throws -> (audio: Data, generation: String?) {
         let (data, response): (Data, URLResponse)
-        do { (data, response) = try await URLSession.shared.data(for: try request(text: text, voice: voice, speed: speed)) }
+        do { (data, response) = try await URLSession.shared.data(for: try request(text: text, voice: voice, speed: speed, format: format)) }
         catch let failure as ChatClient.Failure { throw failure }
         catch { throw ChatClient.Failure.serverDown(error.localizedDescription) }
         let http = response as? HTTPURLResponse

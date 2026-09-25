@@ -22,6 +22,15 @@ import Testing
         #expect(body["speed"] as? Double == 1.25)
     }
 
+    @Test func aModelThatRefusesAFormatIsAskedForTheOneItNames() throws {
+        #expect(SpeechClient.otherFormat(after: #"MiniMax TTS only supports response_format="mp3" for streaming. Got "pcm"."#, tried: "pcm") == "mp3")
+        #expect(SpeechClient.otherFormat(after: #"Gemini TTS only supports response_format="pcm". Got "mp3"."#, tried: "mp3") == "pcm")
+        #expect(SpeechClient.otherFormat(after: "No such voice", tried: "pcm") == nil)
+        let body = try json(try SpeechClient(key: "k", model: "m").request(text: "Hi", voice: nil, speed: 9, format: "mp3"))
+        #expect(body["response_format"] as? String == "mp3")
+        #expect(body["speed"] as? Double == 4, "clamped to what OpenRouter takes")
+    }
+
     @Test func anEmptyVoiceIsLeftForTheModelToChoose() throws {
         let request = try SpeechClient(key: "k", model: "m").request(text: "Hi", voice: "", speed: 1)
         let body = try json(request)
