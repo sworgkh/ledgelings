@@ -231,6 +231,11 @@ import Testing
         #expect(s.characterVoices.isEmpty)
         #expect(s.speedFollowsPitch, "clean sound by default")
         #expect(s.castByPersonality, "voices fit who they are by default")
+        #expect(s.voiceTurnPause == 0.35, "a natural beat between one line and the answer")
+        s.voiceTurnPause = 0.8
+        #expect(AppSettings(defaults: defaults).voiceTurnPause == 0.8)
+        defaults.set(9.0, forKey: "voiceTurnPause")
+        #expect(AppSettings(defaults: defaults).voiceTurnPause == AppSettings.voiceTurnPauseRange.upperBound)
         s.castByPersonality = false
         #expect(!AppSettings(defaults: defaults).castByPersonality)
         s.speedFollowsPitch = false

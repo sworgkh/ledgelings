@@ -104,6 +104,10 @@ order they came. When the talk runs far ahead of the voice (four lines waiting),
 new lines are skipped rather than read long after their bubble is gone. Emoji and
 `*stage directions*` are not read.
 
+Out loud there is **one conversation at a time**: while a pair is talking, another
+pair that meets only bumps (stars, and the flower if one is due), and a paper plane
+that lands is held until the talk ends (a minute at most) before it is read.
+
 With voice on, a bubble first shows `...`, a dot more every third of a second, while
 its sound is on its way (an OpenRouter line can take a second or two). When the
 voice starts, the line types itself out in step with it: word by word with the
@@ -127,6 +131,7 @@ shows in full at once. A bubble gives up waiting after 45 s.
 | **Speed** | 1× | 0.5 to 2 | Every engine |
 | **Pitch** | 1× | 0.5 to 2 | Both engines. An OpenRouter line is asked for that much slower and played that much faster, like a tape sped up: higher, at the usual pace, with no echo. Kokoro and Gemini honour the slower speed; Voxtral ignores it and Qwen refuses it (the app then leaves it out), so with them a raised pitch also talks faster |
 | **Speed follows pitch** | on | | A raised voice also talks a little faster, by the square root of its lift (1.18× at 1.4×), so no voice is ever asked to drawl, which smears into an echo. The Mac's voices are then rendered and sped up like a tape instead of using their own pitch shifter, and the bubble types over the clip's length. Off: the pace stays exact, with some smear on big lifts |
+| **Pause before the answer** | 0.35 s | 0 to 2 | Out loud, each line of a conversation or a paper plane waits for the one before to be said, then follows after this pause; its sound is fetched while the other was talking, so it starts at once. The silent bubble timing is not used |
 | **Volume** | 0.8 | 0 to 1 | |
 | **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
 

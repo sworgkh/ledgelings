@@ -251,4 +251,62 @@ extension ColonyTalkTests {
         #expect(!w.colony.parties()[1].canTalk, "wearing a flower, it walks past everyone")
         #expect(w.colony.parties()[0].canTalk, "the giver still meets others")
     }
+
+    @Test func outLoudTheNextLineWaitsForTheOneBeforeToBeSaid() throws {
+        let world = try World()
+        defer { world.forget() }
+        let c = world.colony
+        c.voicedLines.insert(41)
+        var next = 0
+        c.whenSaid(41) { next += 1 }
+        c.heard(.started(duration: 1.5), bubble: 41, of: 0)
+        c.heard(.progress(0.5), bubble: 41, of: 0)
+        #expect(next == 0, "still being said")
+        c.heard(.done, bubble: 41, of: 0)
+        #expect(next == 1)
+        c.heard(.done, bubble: 41, of: 0)
+        #expect(next == 1, "once only")
+        c.whenSaid(99) { next += 1 }
+        #expect(next == 2, "a line not being voiced does not hold anyone up")
+    }
+
+    @Test func aVoicedLineThatNeverHearsBackStillEndsItsTurn() throws {
+        let world = try World()
+        defer { world.forget() }
+        let c = world.colony
+        c.bubbles[0] = Colony.Bubble(text: "Hello?", until: c.elapsed + 1, reveal: .waiting(since: c.elapsed), serial: 7)
+        c.voicedLines.insert(7)
+        var next = false
+        c.whenSaid(7) { next = true }
+        world.step(2)
+        #expect(next && c.bubbles[0] == nil)
+    }
+
+    @Test func aDroppedLineAlsoLetsTheNextOneGo() throws {
+        let world = try World()
+        defer { world.forget() }
+        let c = world.colony
+        c.voicedLines.insert(3)
+        var next = false
+        c.whenSaid(3) { next = true }
+        c.heard(.dropped, bubble: 3, of: 1)       // its bubble is long gone: still counts
+        #expect(next)
+    }
+
+    @Test func outLoudOnlyOneConversationTalksAtATime() throws {
+        let world = try World()
+        defer { world.forget() }
+        let c = world.colony
+        // No voice attached: nothing is out loud, so a second pair may talk.
+        c.voicedDialogues = 1
+        #expect(!c.voiceIsTaken)
+        c.voice = Voice(settings: world.settings, spend: SpendLedger(directory: world.dir.appendingPathComponent("s")),
+                        archive: world.dir.appendingPathComponent("voices"))
+        world.settings.voiceEnabled = true
+        #expect(c.voiceIsTaken)
+        #expect(!c.talk(from: 0, to: 1), "the second pair only bumps")
+        c.voicedDialogues = 0
+        world.settings.voiceEnabled = false
+        #expect(!c.voiceIsTaken)
+    }
 }
