@@ -106,6 +106,30 @@ final class AppSettings: ObservableObject {
     @Published var plotLength: Int { didSet { save(plotLength, "plotLength") } }
     @Published var plotPrompt: String { didSet { save(plotPrompt, "plotPrompt") } }
 
+    // MARK: Calendar
+
+    /// Days before a holiday that the creatures start mentioning it.
+    static let holidayLookAheadRange = 0...14
+    /// The creatures know the part of the day and the time on the user's clock.
+    @Published var knowsTimeOfDay: Bool { didSet { save(knowsTimeOfDay, "knowsTimeOfDay") } }
+    /// They know the weekday and the date.
+    @Published var knowsDate: Bool { didSet { save(knowsDate, "knowsDate") } }
+    /// The holidays they know of, by faith.
+    @Published var jewishHolidays: Bool { didSet { save(jewishHolidays, "jewishHolidays") } }
+    @Published var christianHolidays: Bool { didSet { save(christianHolidays, "christianHolidays") } }
+    @Published var muslimHolidays: Bool { didSet { save(muslimHolidays, "muslimHolidays") } }
+    /// 0: a holiday is only mentioned on the day itself.
+    @Published var holidayLookAhead: Int { didSet { save(holidayLookAhead, "holidayLookAhead") } }
+
+    /// Everything above, for `Almanac`.
+    var awareness: Almanac.Awareness {
+        var faiths: Set<Almanac.Faith> = []
+        if jewishHolidays { faiths.insert(.jewish) }
+        if christianHolidays { faiths.insert(.christian) }
+        if muslimHolidays { faiths.insert(.muslim) }
+        return Almanac.Awareness(timeOfDay: knowsTimeOfDay, date: knowsDate, faiths: faiths, lookAhead: holidayLookAhead)
+    }
+
     // MARK: Voice
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
@@ -247,6 +271,14 @@ final class AppSettings: ObservableObject {
         let length = defaults.object(forKey: "plotLength") as? Int ?? 6
         plotLength = min(max(length, Self.plotLengthRange.lowerBound), Self.plotLengthRange.upperBound)
         plotPrompt = defaults.string(forKey: "plotPrompt") ?? Bonds.defaultPlotPrompt
+        knowsTimeOfDay = defaults.object(forKey: "knowsTimeOfDay") as? Bool ?? true
+        knowsDate = defaults.object(forKey: "knowsDate") as? Bool ?? true
+        jewishHolidays = defaults.object(forKey: "jewishHolidays") as? Bool ?? true
+        christianHolidays = defaults.object(forKey: "christianHolidays") as? Bool ?? true
+        muslimHolidays = defaults.object(forKey: "muslimHolidays") as? Bool ?? true
+        // Three days: enough for "Hanukkah is in 3 days" without talking of it all week.
+        let ahead = defaults.object(forKey: "holidayLookAhead") as? Int ?? 3
+        holidayLookAhead = min(max(ahead, Self.holidayLookAheadRange.lowerBound), Self.holidayLookAheadRange.upperBound)
     }
 
     func species(forCreature index: Int) -> String {

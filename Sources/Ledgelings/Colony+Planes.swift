@@ -100,7 +100,7 @@ extension Colony {
         let aKind = kind(ofCreature: from), bKind = kind(ofCreature: to)
         var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
                     "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
-                    "situation": "", "line": answering ?? ""]
+                    "situation": almanac, "line": answering ?? ""]
         let system = settings.systemPrompt
         let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
         airmail?.writing = true
@@ -121,7 +121,7 @@ extension Colony {
             do {
                 try await service.checkModel()
                 let written = try await service.reply(system: Bonds.withRelationship(system, vars, context: aSide),
-                                                      user: Banter.render(prompt, vars))
+                                                      user: Banter.render(prompt, vars).trimmingCharacters(in: .whitespacesAndNewlines))
                 charge(written)
                 let line = Banter.cleanLine(written.text, speaker: a.name)
                 if !line.isEmpty {

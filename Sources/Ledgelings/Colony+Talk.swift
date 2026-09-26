@@ -24,6 +24,16 @@ extension Colony {
 
     func kind(ofCreature i: Int) -> String { library.kind(of: settings.species(forCreature: i)) }
 
+    /// The user's time, date and holidays, as far as the Calendar tab lets them know; "" when nothing is on.
+    var almanac: String { Almanac.sentence(at: now(), settings.awareness) }
+
+    /// Today's holiday for a built-in `[holiday]` block, one conversation in three,
+    /// so a holiday colours the day without being all anyone talks about.
+    func holidayForLines() -> String? {
+        guard let name = Almanac.today(now(), faiths: settings.awareness.faiths), Int.random(in: 0..<3, using: &rng) == 0 else { return nil }
+        return name
+    }
+
     func describe(_ i: Int) -> String {
         let c = creatures[i], name = character(forCreature: i).name
         if c.isHeld { return "\(name) is dangling from the user's cursor" }
@@ -59,7 +69,9 @@ extension Colony {
               !busy.contains(speaker), !busy.contains(listener) else { return false }
         guard !voiceIsTaken else { talkStatus = "someone else is talking; out loud it is one conversation at a time"; return false }
         let a = character(forCreature: speaker), b = character(forCreature: listener)
-        var situation = "It is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
+        // The colony's own day and night say who is asleep; the user's clock is the almanac's.
+        var situation = "On the edge it is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
+        if !almanac.isEmpty { situation = almanac + " " + situation }
         if let event { situation += " " + event }
         if settings.brain == .script {
             return recite(from: speaker, to: listener, flower: flower, situation: situation)
@@ -167,6 +179,8 @@ extension Colony {
         do { script = try Script.parse(settings.script) } catch { talkStatus = "the built-in lines: \(error)"; return false }
         var moment: Set<String> = [isNight ? "night" : "day"]
         if flower != nil { moment.insert("flower") }
+        let holiday = holidayForLines()
+        if holiday != nil { moment.insert("holiday") }
         guard let chosen = script.pick(for: moment, avoiding: recentLines, using: &rng) else {
             talkStatus = "no built-in line fits right now"; return false
         }
@@ -175,7 +189,8 @@ extension Colony {
         let lines = script.conversations[chosen].lines.enumerated().map { i, line in
             let mine = i.isMultiple(of: 2)
             return (who: mine ? speaker : listener,
-                    text: Script.fill(line, speaker: mine ? a.name : b.name, listener: mine ? b.name : a.name, flower: flower))
+                    text: Script.fill(line, speaker: mine ? a.name : b.name, listener: mine ? b.name : a.name,
+                                      flower: flower, holiday: holiday))
         }
         busy.formUnion([speaker, listener])
         history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",

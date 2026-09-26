@@ -289,4 +289,22 @@ import Testing
         let clamped = AppSettings(defaults: defaults)
         #expect(clamped.plotAfterHours == AppSettings.plotAfterRange.upperBound && clamped.plotLength == AppSettings.plotLengthRange.lowerBound)
     }
+
+    @Test func theyKnowTheTimeDateAndAllThreeFaithsHolidaysByDefaultAndItIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.knowsTimeOfDay && s.knowsDate && s.jewishHolidays && s.christianHolidays && s.muslimHolidays)
+        #expect(s.holidayLookAhead == 3)
+        #expect(s.awareness == Almanac.Awareness(timeOfDay: true, date: true, faiths: [.jewish, .christian, .muslim], lookAhead: 3))
+        s.knowsTimeOfDay = false
+        s.knowsDate = false
+        s.christianHolidays = false
+        s.muslimHolidays = false
+        s.holidayLookAhead = 7
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.knowsTimeOfDay && !back.knowsDate && back.jewishHolidays && !back.christianHolidays && !back.muslimHolidays)
+        #expect(back.awareness == Almanac.Awareness(timeOfDay: false, date: false, faiths: [.jewish], lookAhead: 7))
+        defaults.set(99, forKey: "holidayLookAhead")
+        #expect(AppSettings(defaults: defaults).holidayLookAhead == AppSettings.holidayLookAheadRange.upperBound)
+    }
 }

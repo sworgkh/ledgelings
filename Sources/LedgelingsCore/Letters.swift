@@ -546,6 +546,7 @@ public enum Letters {
     /// The model writes the note as the sender, then thinks out loud as the reader.
     /// Placeholders are Banter's: `{speaker}` is the one writing or thinking.
     public static let notePrompt = """
+    {situation}
     Nobody has walked into anybody for a while, so you fold a note into a paper plane and throw it across the screen to {listener}. \
     Write the note: one thing on your mind right now, in your own voice, about something only you would care about. \
     At most 18 words. Output only the note: no quotes, no greeting line, no signature.
@@ -553,6 +554,7 @@ public enum Letters {
 
     /// The answer: `{line}` is the note being answered. Nobody answers an answer.
     public static let replyPrompt = """
+    {situation}
     {listener} just threw you a paper plane. Their note said: "{line}" \
     Write your answer to fold into a plane and throw back: one short reply, in your own voice. \
     At most 18 words. Output only the reply: no quotes, no greeting line, no signature.

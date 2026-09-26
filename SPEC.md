@@ -369,15 +369,51 @@ Answer back in ONE line, in character, at most 20 words.
 ```
 
 `situation` is written by the app:
-`"It is {day|night}. {describe(speaker)}. {describe(listener)}."` plus, for a
+`"{almanac} On the edge it is {day|night}. {describe(speaker)}. {describe(listener)}."` plus, for a
 meeting, `" They just walked into each other."` or
-`" {A} just walked into {B} and gave {B} a {flower}."`.
+`" {A} just walked into {B} and gave {B} a {flower}."`. `{almanac}` is the
+user's clock, date and holidays (§6.1.1), left out with its space when empty.
 
 `describe(i)` = `"{name} is dangling from the user's cursor"` if held,
 `"{name} is mid-jump"` if jumping, else `"{name} is {asleep on|on} {edge}"`
 where edge is the nearest of: the bottom edge (rotation 0), the right edge
 (π/2), the ceiling (π), the left edge (3π/2), by shortest arc from the
 creature's current rotation.
+
+### 6.1.1 The almanac: the user's day (macOS)
+
+The creatures know the user's wall clock, as far as the Calendar tab allows
+(`knowsTimeOfDay`, `knowsDate`, one box per faith, `holidayLookAhead`). It is
+one or more sentences, pure date work in the core (`Almanac.sentence`):
+
+| On | Sentence |
+|---|---|
+| date and time | `For the person at this computer it is Saturday, 26 September 2026, late evening (22:40).` |
+| date only | `For the person at this computer it is Saturday, 26 September 2026.` |
+| time only | `For the person at this computer it is late evening (22:40).` |
+| a holiday today, one day long | `Today is Yom Kippur, a Jewish holiday.` |
+| a holiday today, several days | `Today is day 3 of Sukkot, a Jewish holiday.` |
+| a holiday tomorrow | `Tomorrow is Christmas, a Christian holiday.` |
+| tomorrow, Jewish or Muslim, from 17:00 | `Hanukkah, a Jewish holiday, begins this evening.` |
+| 2 to `holidayLookAhead` days off | `Hanukkah, a Jewish holiday, is in 3 days.` |
+
+Parts of the day by hour: 0–4 the middle of the night, 5–7 early morning, 8–11
+morning, 12–13 midday, 14–16 afternoon, 17–20 evening, 21–23 late evening. A
+holiday under way is not also listed as upcoming; nothing ticked, nothing said.
+
+Holidays are counted by civil day (the one beginning at sundown is "today" from
+the morning after):
+
+| Faith | Calendar | Holidays |
+|---|---|---|
+| Jewish | Hebrew | Rosh Hashanah 1 Tishrei (2 days), Yom Kippur 10 Tishrei, Sukkot 15 Tishrei (7), Simchat Torah 22 Tishrei, Hanukkah 25 Kislev (8), Tu BiShvat 15 Shevat, Purim 14 Adar (Adar II in a leap year), Passover 15 Nisan (7), Lag BaOmer 18 Iyar, Shavuot 6 Sivan, Tisha B'Av 9 Av (10 Av when the 9th is a Saturday) |
+| Christian | Gregorian, Easter by computus | Epiphany 6 Jan, Orthodox Christmas 7 Jan, Ash Wednesday (Easter − 46), Palm Sunday (−7), Good Friday (−2), Easter, Orthodox Easter (Julian computus, when it differs), Ascension Day (+39), Pentecost (+49), All Saints' Day 1 Nov, Christmas Eve, Christmas |
+| Muslim | Islamic Umm al-Qura | Islamic New Year 1 Muharram, Ashura 10 Muharram, the Prophet's Birthday (Mawlid) 12 Rabi' al-awwal, Isra and Mi'raj 27 Rajab, Ramadan (the whole month, "day n"), Laylat al-Qadr 27 Ramadan, Eid al-Fitr 1 Shawwal (3), the Day of Arafah 9 Dhu al-Hijjah, Eid al-Adha 10 Dhu al-Hijjah (4) |
+
+The almanac opens `situation` for every conversation, and fills `{situation}`
+at the top of a paper plane's note and reply prompts (§7.6). With the built-in
+lines, on a holiday one conversation in three adds `holiday` to the moment
+(§6.7), and `{holiday}` is the day's first holiday.
 
 ### 6.2 One conversation
 
@@ -454,7 +490,7 @@ line, ISO-8601 time:
 
 ```json
 {"time": "2026-09-18T14:03:11Z",
- "situation": "It is day. Dot is on the bottom edge. Blocky is on the bottom edge. They just walked into each other.",
+ "situation": "For the person at this computer it is Friday, 18 September 2026, afternoon (17:03). On the edge it is day. Dot is on the bottom edge. Blocky is on the bottom edge. They just walked into each other.",
  "provider": "LM Studio", "model": "google/gemma-3-1b",
  "lines": [{"speaker": "Dot", "text": "Move, boulder."}, {"speaker": "Blocky", "text": "Says the pebble."}],
  "cost": 0.00084, "tokens": 660}
@@ -704,7 +740,7 @@ Text form, line by line (each trimmed of surrounding spaces):
 |---|---|
 | empty | ends the current block |
 | starts with `#` | comment, ignored |
-| `[tag, tag]` as the first line of a block | the block's tags: any of `flower`, `night`, `day`, split on commas and spaces, case-insensitive. Unknown tag → error naming it; a tag line after the block's first line → error |
+| `[tag, tag]` as the first line of a block | the block's tags: any of `flower`, `night`, `day`, `holiday`, split on commas and spaces, case-insensitive. Unknown tag → error naming it; a tag line after the block's first line → error |
 | anything else | one line of the block; the first is said by the one who bumped (`speaker`), the next by the other, alternating |
 
 A block with tags and no lines is an error; a text with no blocks is an error.
@@ -713,7 +749,8 @@ Errors carry the 1-based line number and are shown as the talk status
 not started.
 
 Choosing: the **moment** is the set `{day | night}` plus `flower` when the
-meeting gave one. Candidates are the blocks whose every tag is in the moment
+meeting gave one, plus `holiday` one conversation in three on a holiday the
+Calendar tab knows (§6.1.1, macOS). Candidates are the blocks whose every tag is in the moment
 (untagged blocks always qualify). Of those, keep only the ones with the most
 tags, so a `[night, flower]` block wins at night with a flower, a `[flower]`
 block wins with a flower by day, and untagged blocks are used only when no
@@ -723,7 +760,7 @@ tagged block fits. From that pool, pick uniformly among the blocks not in
 
 Saying: `{speaker}` and `{listener}` are filled per line with the names of the
 one saying it and the one hearing it; `{flower}` with the flower given, or the
-word `flower`. Both creatures become busy. Line 1 shows at once; line k+1 shows
+word `flower`; `{holiday}` with the day's holiday, or the words `the holiday`. Both creatures become busy. Line 1 shows at once; line k+1 shows
 `showTime(line k) · 0.6` seconds after line k (§6.4), on the colony's own clock
 (so it pauses with the app, unlike the model path). When the last line shows,
 the pair is freed and released 1.2 s later (§7.2). The exchange is written to
@@ -953,7 +990,8 @@ answered. macOS only for now; the Windows app does not have it yet.
 - **With a model** (talk on, brain not the built-in lines): as the plane is
   thrown, two calls go out in the background with the usual system prompt
   (§6.1): the sender writes the note (`notePrompt`, or `replyPrompt` with
-  `{line}` = the note being answered), then the catcher, seats swapped and
+  `{line}` = the note being answered; both open with `{situation}`, which here is
+  the almanac alone, §6.1.1, trimmed away when empty), then the catcher, seats swapped and
   `{line}` = the note, thinks aloud about it (`musingPrompt`). Lines are
   cleaned (§6.3) and priced (§6.5.1). If the catcher has the plane before both
   answers are in, it holds the unread letter up to 8 s, then falls back to the
@@ -1282,8 +1320,12 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
+| knowsTimeOfDay | true | the part of the day and the time go into prompts (§6.1.1) |
+| knowsDate | true | the weekday and date go into prompts (§6.1.1) |
+| jewishHolidays / christianHolidays / muslimHolidays | true / true / true | whose holidays they know (§6.1.1) |
+| holidayLookAhead | 3 | 0–14 days, clamped on load; 0 = only on the day itself |
 
-Settings window: 1100×760 points, seven tabs, each laid out as two columns
+Settings window: 1100×760 points, eight tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
@@ -1299,7 +1341,10 @@ prompt editors with a placeholder legend. **Bonds**: on the left the plots toggl
 stepper and the plot prompt editor with Reset Prompt; on the right a card per pair,
 longest together first (names, time together, talks, plots, cost, the bond, the
 running plot with its part or the last plot, Forget), then the file with Reveal
-in Finder and Forget All. **Voice**: on the left the toggle,
+in Finder and Forget All. **Calendar**: on the left the time-of-day and date
+toggles, one toggle per faith and the look-ahead stepper; on the right the
+almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
+holidays in the next 60 days. **Voice**: on the left the toggle,
 engine picker, voice-each and cartoon toggles, voice picker or key/model/voice
 pickers and Keep with its count and Reveal, speed/pitch/volume sliders, Test,
 Stop, status; on the right a card per character on screen with voice picker

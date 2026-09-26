@@ -80,17 +80,27 @@ import Testing
         #expect(Script.fill("A {flower} for you.", speaker: "Pip", listener: "Zed", flower: nil) == "A flower for you.")
     }
 
+    @Test func aHolidayBlockIsTaggedAndNamesTheHoliday() throws {
+        let script = try Script.parse("[holiday]\nHappy {holiday}.\nThanks.\n\nHi.\nHo.\n")
+        #expect(script.conversations[0].tags == ["holiday"])
+        var rng = SystemRandomNumberGenerator()
+        #expect(script.pick(for: ["day"], avoiding: [], using: &rng) == 1)
+        #expect(script.pick(for: ["day", "holiday"], avoiding: [], using: &rng) == 0)
+        #expect(Script.fill("Happy {holiday}.", speaker: "a", listener: "b", flower: nil, holiday: "Purim") == "Happy Purim.")
+    }
+
     @Test func theBuiltInScriptIsBigCleanAndCoversTheMoments() throws {
         let script = try Script.parse(Script.builtInText)
         #expect(script.conversations.count >= 60)
         #expect(script.conversations.filter { $0.tags == ["flower"] }.count >= 10)
         #expect(script.conversations.filter { $0.tags == ["night"] }.count >= 6)
         #expect(script.conversations.filter { $0.tags.isEmpty }.count >= 40)
+        #expect(script.conversations.filter { $0.tags == ["holiday"] }.count >= 5)
         for c in script.conversations {
             #expect(c.lines.count >= 2 && c.lines.count <= 4, Comment(rawValue: c.lines.joined(separator: " / ")))
             for line in c.lines {
                 #expect(line.count <= 120, Comment(rawValue: line))
-                let filled = Script.fill(line, speaker: "x", listener: "y", flower: "z")
+                let filled = Script.fill(line, speaker: "x", listener: "y", flower: "z", holiday: "w")
                 #expect(!filled.contains("{"), Comment(rawValue: line))
             }
         }

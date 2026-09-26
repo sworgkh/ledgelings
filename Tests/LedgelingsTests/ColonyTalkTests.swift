@@ -43,6 +43,26 @@ import Testing
         }
     }
 
+    @Test func theSituationCarriesTheUsersClockDateAndHolidays() throws {
+        let w = try World()
+        defer { w.forget() }
+        // 26 September 2026, 22:40 on this Mac's clock: the first evening of Sukkot.
+        let sukkot = Calendar.current.date(from: DateComponents(year: 2026, month: 9, day: 26, hour: 22, minute: 40))!
+        w.colony.now = { sukkot }
+        w.settings.script = "Hi.\nHo.\n"
+        w.colony.talkNow(from: 0)
+        let said = try #require(w.history.exchanges(on: ChatLog.day(of: Date())).last)
+        #expect(said.situation.hasPrefix("For the person at this computer it is Saturday, 26 September 2026, late evening (22:40). Today is day 1 of Sukkot, a Jewish holiday."))
+        #expect(said.situation.contains("On the edge it is "))
+        #expect((0..<40).contains { _ in w.colony.holidayForLines() == "Sukkot" }, "a holiday line now and then")
+
+        w.settings.knowsTimeOfDay = false
+        w.settings.knowsDate = false
+        w.settings.jewishHolidays = false
+        #expect(w.colony.almanac.isEmpty)
+        #expect(!(0..<40).contains { _ in w.colony.holidayForLines() != nil })
+    }
+
     @Test func aScriptedConversationPlaysOutLineByLineAndIsLogged() throws {
         let w = try World()
         defer { w.forget() }
