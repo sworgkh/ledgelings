@@ -233,7 +233,7 @@ extension Colony {
     private func startReading(_ mail: inout Airmail) -> Airmail.Phase {
         let from = mail.plane.from, to = mail.plane.to
         let a = character(forCreature: from).name, b = character(forCreature: to).name
-        let modelWrote = mail.note != nil
+        let modelWrote = mail.note != nil, modelMused = mail.musing != nil
         let note = mail.note ?? (mail.isReply ? Letters.reply(by: a, to: b, using: &rng) : Letters.note(by: a, to: b, using: &rng))
         let musing = mail.musing ?? Letters.musing(by: b, from: a, using: &rng)
         mail.note = note
@@ -252,7 +252,7 @@ extension Colony {
             // catcher walks on a second after the thought, whenever that is.
             history.record(exchange)
             let plane = planeCount
-            sayInTurns([(to, read), (to, musing)]) { [weak self] in
+            sayInTurns([(to, read, !modelWrote), (to, musing, !modelMused)]) { [weak self] in
                 guard let self, self.planeCount == plane, var mail = self.airmail,
                       case .reading = mail.phase else { return }
                 mail.phase = .reading(musingAt: self.elapsed, doneAt: self.elapsed + 1, musingSaid: true)
@@ -260,7 +260,7 @@ extension Colony {
             }
             return .reading(musingAt: .infinity, doneAt: .infinity, musingSaid: true)
         }
-        say(read, from: to)
+        say(read, from: to, builtIn: !modelWrote)
         let musingAt = elapsed + Banter.showTime(read, base: settings.bubbleSeconds) * 0.6
         let doneAt = musingAt + Banter.showTime(musing, base: settings.bubbleSeconds) * 0.6 + 1
         history.record(exchange)

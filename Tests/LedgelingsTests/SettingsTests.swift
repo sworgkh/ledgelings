@@ -256,6 +256,9 @@ import Testing
         #expect(!AppSettings(defaults: defaults).cartoonVoices)
         s.keepVoices = false
         #expect(!AppSettings(defaults: defaults).keepVoices)
+        #expect(AppSettings(defaults: defaults).reuseLineVoices, "the built-in lines are made once unless asked not to")
+        s.reuseLineVoices = false
+        #expect(!AppSettings(defaults: defaults).reuseLineVoices)
         s.voiceEnabled = true
         s.voiceEngine = .openRouter
         s.voicePerCharacter = false

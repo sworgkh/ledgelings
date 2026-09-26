@@ -168,6 +168,7 @@ extension Colony {
         var at: Double
         var speaker: Int
         var text: String
+        var builtIn = true
         /// The pair to let go once this, their last line, is out.
         var closes: (Int, Int)?
     }
@@ -190,7 +191,8 @@ extension Colony {
             let mine = i.isMultiple(of: 2)
             return (who: mine ? speaker : listener,
                     text: Script.fill(line, speaker: mine ? a.name : b.name, listener: mine ? b.name : a.name,
-                                      flower: flower, holiday: holiday))
+                                      flower: flower, holiday: holiday),
+                    builtIn: true)
         }
         busy.formUnion([speaker, listener])
         history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",
@@ -219,7 +221,7 @@ extension Colony {
         scheduled.removeAll { $0.at <= elapsed }
         for line in due {
             if creatures.indices.contains(line.speaker) {
-                say(line.text, from: line.speaker)
+                say(line.text, from: line.speaker, builtIn: line.builtIn)
                 talkStatus = "\(character(forCreature: line.speaker).name): \(line.text)"
             }
             if let (i, j) = line.closes {
@@ -231,14 +233,15 @@ extension Colony {
 
     /// Put `text` up in creature `index`'s bubble. With voice on, the bubble
     /// shows dots until the sound is ready, then types the line out as it is said.
-    /// Returns the line's serial, for `whenSaid`.
+    /// Returns the line's serial, for `whenSaid`. `builtIn`: written in advance,
+    /// so its sound is kept and played again next time (`reuseLineVoices`).
     @discardableResult
-    func say(_ text: String, from index: Int) -> Int {
+    func say(_ text: String, from index: Int, builtIn: Bool = false) -> Int {
         guard creatures.indices.contains(index) else { return 0 }
         bubbleSerial += 1
         let serial = bubbleSerial
         bubbles[index] = Bubble(text: text, until: elapsed + Banter.showTime(text, base: settings.bubbleSeconds), serial: serial)
-        let voiced = voice?.say(text, as: character(forCreature: index).name) { [weak self] cue in
+        let voiced = voice?.say(text, as: character(forCreature: index).name, builtIn: builtIn) { [weak self] cue in
             self?.heard(cue, bubble: serial, of: index)
         } ?? false
         if voiced {
@@ -284,9 +287,9 @@ extension Colony {
     /// Say `lines` one after another, each starting a beat after the one before
     /// has been said, the sound of each fetched ahead of its turn; then `done`.
     /// A line that cannot be voiced waits the silent-bubble time instead.
-    func sayInTurns(_ lines: [(who: Int, text: String)], then done: @escaping () -> Void) {
+    func sayInTurns(_ lines: [(who: Int, text: String, builtIn: Bool)], then done: @escaping () -> Void) {
         for line in lines.dropFirst() where creatures.indices.contains(line.who) {
-            voice?.prefetch(line.text, as: character(forCreature: line.who).name)
+            voice?.prefetch(line.text, as: character(forCreature: line.who).name, builtIn: line.builtIn)
         }
         voicedDialogues += 1
         sayTurn(lines[...]) { [weak self] in
@@ -295,10 +298,10 @@ extension Colony {
         }
     }
 
-    private func sayTurn(_ lines: ArraySlice<(who: Int, text: String)>, then done: @escaping () -> Void) {
+    private func sayTurn(_ lines: ArraySlice<(who: Int, text: String, builtIn: Bool)>, then done: @escaping () -> Void) {
         guard let line = lines.first else { done(); return }
         guard creatures.indices.contains(line.who) else { sayTurn(lines.dropFirst(), then: done); return }
-        let serial = say(line.text, from: line.who)
+        let serial = say(line.text, from: line.who, builtIn: line.builtIn)
         let voiced = voicedLines.contains(serial)
         let wait = voiced ? turnPause : Banter.showTime(line.text, base: settings.bubbleSeconds) * 0.6
         whenSaid(serial) { [weak self] in

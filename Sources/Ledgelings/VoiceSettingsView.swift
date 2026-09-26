@@ -268,6 +268,7 @@ struct VoiceSection: View {
                 Button("Reveal in Finder") { voice.revealArchive() }
             }
         }
+        lineVoiceFields
         if let listProblem { Text(listProblem).font(.caption).foregroundStyle(.red) }
     }
 
@@ -295,6 +296,19 @@ struct VoiceSection: View {
         }
         LabeledContent("Status") { Text(localCheck).foregroundStyle(.secondary).textSelection(.enabled) }
             .task { await checkLocal() }
+        lineVoiceFields
+    }
+
+    /// The built-in lines, made once in each voice and played from disk after that.
+    @ViewBuilder private var lineVoiceFields: some View {
+        Toggle("Save the built-in lines' voices", isOn: $settings.reuseLineVoices)
+        LabeledContent("Saved") {
+            HStack {
+                Text("\(voice.lineClips.count) lines").foregroundStyle(.secondary).monospacedDigit()
+                Button("Reveal in Finder") { voice.revealLineArchive() }
+                Button("Clear") { voice.clearLineArchive() }.disabled(voice.lineClips.isEmpty)
+            }
+        }
     }
 
     /// Kokoro-FastAPI on a Mac: fetch it once, then start it (on Apple's GPU).
@@ -318,14 +332,15 @@ struct VoiceSection: View {
     }
 
     private var footer: String {
+        let lines = "The built-in lines (and the Test lines) are saved once said, in the line-voices folder beside the chats, and played from there the next time the same words come in the same voice and speed, so each is made only once: no wait on the server, nothing paid again. Clear forgets them all; each is made again when next said. "
         let shared = "Out loud, each line of a conversation waits for the one before to be said, then follows after the pause set here, its sound fetched while the other was talking; the silent bubble timing is not used. Speed follows pitch: a higher voice also talks a little faster (by the square root of its lift: 1.18× at 1.4×), because a voice asked to talk slowly to make up for the lift smears into an echo. Off keeps the pace exact. Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off."
         switch settings.voiceEngine {
         case .system:
             return "The Mac's own voices: free, offline, instant. More, and better ones, are in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices. With a voice each and Cartoon voices on, they are the Mac's character voices (Grandma, Rocko, Shelley…) and talking novelty ones (Zarvox, Bubbles, Junior…), never the singing ones (Bells, Organ, Superstar…); off, the plain voices, each at a slightly different pitch. " + shared
         case .local:
-            return "Any speech server on this Mac that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is kept or priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint. " + shared
+            return "Any speech server on this Mac that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint. " + lines + shared
         case .openRouter:
-            return "Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this Mac as the clip plays, so it costs nothing extra. " + shared
+            return "Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this Mac as the clip plays, so it costs nothing extra. " + lines + shared
         }
     }
 }

@@ -13,7 +13,10 @@ import LedgelingsCore
 ///
 /// Every line a speech model says is kept in the `VoiceArchive` (with Keep on),
 /// and a line already kept in the same voice and speed is played from there,
-/// free, instead of being asked for again.
+/// free, instead of being asked for again. The built-in lines (the script's,
+/// the ready-made notes) are kept apart in `lineArchive`, on both OpenRouter and
+/// the local server, with `reuseLineVoices`: they come round again and again, so
+/// each is made once in each voice and played from disk after that.
 ///
 /// Lines are said one at a time, in the order they came. When talk runs ahead
 /// of the voice (several pairs at once, a slow network), lines past
@@ -29,6 +32,9 @@ final class Voice: NSObject, ObservableObject {
     let archive: VoiceArchive
     /// Everything in the archive, loaded once and added to as lines are kept.
     @Published private(set) var clips: [VoiceArchive.Clip]
+    /// The built-in lines' sounds, kept beside the script rather than in the archive.
+    let lineArchive: VoiceArchive
+    @Published private(set) var lineClips: [VoiceArchive.Clip]
     /// The last thing that happened, for the settings window.
     @Published private(set) var status = "not tried yet"
     /// OpenRouter's speech models, once fetched.
@@ -78,13 +84,17 @@ final class Voice: NSObject, ObservableObject {
     private var watchers: Set<AnyCancellable> = []
 
     static var defaultArchive: URL { SpendLedger.defaultDirectory.appendingPathComponent("voices", isDirectory: true) }
+    static var defaultLineArchive: URL { SpendLedger.defaultDirectory.appendingPathComponent("line-voices", isDirectory: true) }
 
-    init(settings: AppSettings, spend: SpendLedger, history: ChatHistory? = nil, archive: URL = Voice.defaultArchive) {
+    init(settings: AppSettings, spend: SpendLedger, history: ChatHistory? = nil,
+         archive: URL = Voice.defaultArchive, lineArchive: URL = Voice.defaultLineArchive) {
         self.settings = settings
         self.spend = spend
         self.history = history
         self.archive = VoiceArchive(directory: archive)
         clips = self.archive.clips()
+        self.lineArchive = VoiceArchive(directory: lineArchive)
+        lineClips = self.lineArchive.clips()
         super.init()
         synthesizer.delegate = self
         engine.attach(player)
@@ -99,10 +109,11 @@ final class Voice: NSObject, ObservableObject {
     /// A creature's line, if voice is on. `name` is who says it. True when the
     /// line will be said, and `cue` will hear how it goes (always ending in
     /// `done` or `dropped`); false when it will not, so show the text now.
+    /// `builtIn`: a line written in advance, whose sound is worth keeping for next time.
     @discardableResult
-    func say(_ text: String, as name: String, cue: CueHandler? = nil) -> Bool {
+    func say(_ text: String, as name: String, builtIn: Bool = false, cue: CueHandler? = nil) -> Bool {
         guard settings.voiceEnabled else { return false }
-        return speak(text, as: name, cast: cast(), cue: cue)
+        return speak(text, as: name, cast: cast(), builtIn: builtIn, cue: cue)
     }
 
     /// The settings window's Test: the first three on screen introduce themselves, voice on or off.
@@ -113,7 +124,7 @@ final class Voice: NSObject, ObservableObject {
         for name in everyone where !seen.contains(name) && seen.count < 3 { seen.append(name) }
         guard !seen.isEmpty else { status = "nobody on screen to test with"; return }
         for (i, name) in seen.enumerated() {
-            speak(i == 0 ? "Hi, I'm \(name). This is how I sound." : "And I'm \(name).", as: name, cast: everyone)
+            speak(i == 0 ? "Hi, I'm \(name). This is how I sound." : "And I'm \(name).", as: name, cast: everyone, builtIn: true)
         }
     }
 
@@ -133,13 +144,13 @@ final class Voice: NSObject, ObservableObject {
     }
 
     @discardableResult
-    private func speak(_ text: String, as name: String, cast: [String], cue: CueHandler? = nil) -> Bool {
+    private func speak(_ text: String, as name: String, cast: [String], builtIn: Bool = false, cue: CueHandler? = nil) -> Bool {
         let line = Voices.speakable(text)
         guard !line.isEmpty else { return false }
         guard waiting < Self.mostWaiting else { status = "skipped a line: still saying the ones before it"; return false }
         switch settings.voiceEngine {
         case .system: return speakHere(line, as: name, cast: cast, cue: cue)
-        case .openRouter, .local: return speakOnline(line, as: name, cast: cast, cue: cue)
+        case .openRouter, .local: return speakOnline(line, as: name, cast: cast, builtIn: builtIn, cue: cue)
         }
     }
 
@@ -159,7 +170,8 @@ final class Voice: NSObject, ObservableObject {
     }
 
     /// OpenRouter, or a speech server on this Mac: fetched, then played in turn.
-    /// A local line is free, so it is neither kept, priced nor looked up in the archive.
+    /// A local line is free, so it is neither kept, priced nor looked up in the
+    /// archive; a built-in one is still kept in `lineArchive`, as making it takes time.
     /// One line's sound on its way: the fetch already running, and what playing it needs.
     private struct Fetch {
         let task: Task<(audio: Data, generation: String?, voice: String?, kept: Bool), Error>
@@ -180,18 +192,18 @@ final class Voice: NSObject, ObservableObject {
     /// Start fetching a line's sound before its turn comes, so it plays the moment
     /// the line before it ends instead of after a wait for the network. The Mac's
     /// own voices need no head start.
-    func prefetch(_ text: String, as name: String) {
+    func prefetch(_ text: String, as name: String, builtIn: Bool = false) {
         guard settings.voiceEnabled, settings.voiceEngine != .system else { return }
         let line = Voices.speakable(text)
         let key = Self.prefetchKey(name, line)
-        guard !line.isEmpty, prefetched[key] == nil, let fetch = startFetch(line, as: name, cast: cast()) else { return }
+        guard !line.isEmpty, prefetched[key] == nil, let fetch = startFetch(line, as: name, cast: cast(), builtIn: builtIn) else { return }
         prefetched[key] = fetch
         prefetchOrder.append(key)
         while prefetchOrder.count > Self.mostPrefetched { prefetched.removeValue(forKey: prefetchOrder.removeFirst())?.task.cancel() }
     }
 
     /// The fetch for one line, started now; nil (with `status` saying why) when it cannot be.
-    private func startFetch(_ line: String, as name: String, cast: [String]) -> Fetch? {
+    private func startFetch(_ line: String, as name: String, cast: [String], builtIn: Bool) -> Fetch? {
         let local = settings.voiceEngine == .local
         let client: SpeechClient
         if local {
@@ -203,13 +215,17 @@ final class Voice: NSObject, ObservableObject {
             client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         }
         let speed = speed(for: name)
-        let keep = settings.keepVoices && !local, saidAt = Date(), pitch = pitch(for: name), follow = followsPitch(name)
+        let reuse = builtIn && settings.reuseLineVoices
+        let keep = settings.keepVoices && !local && !reuse, saidAt = Date(), pitch = pitch(for: name), follow = followsPitch(name)
         let task = Task { [weak self] () async throws -> (audio: Data, generation: String?, voice: String?, kept: Bool) in
             let voices = local ? ((try? await self?.loadLocalVoices()) ?? []) : ((try? await self?.voices(of: client.model)) ?? [])
             let voice = self?.onlineVoice(for: name, cast: cast, among: voices)
             // Asked slower by the pitch, sped back up by it as it plays: the pace stays.
             let asked = Voices.askedSpeed(speed: speed, pitch: pitch, followPitch: follow)
             let key = VoiceArchive.key(text: line, model: client.model, voice: voice ?? "", speed: asked)
+            if reuse, let self, let file = lineArchive.find(key: key, in: lineClips), let audio = try? Data(contentsOf: file) {
+                return (audio, nil, voice, true)
+            }
             if !local, let self, let file = archive.find(key: key, in: clips), let audio = try? Data(contentsOf: file) {
                 return (audio, nil, voice, true)
             }
@@ -234,19 +250,28 @@ final class Voice: NSObject, ObservableObject {
             }
             guard let (audio, generation) = reply else { throw ChatClient.Failure.badReply("no audio") }
             if keep, let self { self.keep(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: asked) }
+            if reuse, let self { self.keepLine(audio, speaker: name, text: line, model: client.model, voice: voice ?? "", speed: asked) }
             return (audio, generation, voice, false)
         }
         return Fetch(task: task, client: client, pitch: pitch, local: local, keep: keep, saidAt: saidAt)
     }
 
-    private func speakOnline(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
+    /// One line's sound, fetched or found as `say` would, without playing it.
+    /// Kept: it came from disk. Nil when it could not even be asked for.
+    func sound(for text: String, as name: String, builtIn: Bool) async throws -> (audio: Data, kept: Bool)? {
+        guard let fetch = startFetch(Voices.speakable(text), as: name, cast: cast(), builtIn: builtIn) else { return nil }
+        let said = try await fetch.task.value
+        return (said.audio, said.kept)
+    }
+
+    private func speakOnline(_ line: String, as name: String, cast: [String], builtIn: Bool, cue: CueHandler?) -> Bool {
         let key = Self.prefetchKey(name, line)
         let fetch: Fetch
         if let ready = prefetched.removeValue(forKey: key) {
             fetch = ready
             prefetchOrder.removeAll { $0 == key }
         } else {
-            guard let started = startFetch(line, as: name, cast: cast) else { return false }
+            guard let started = startFetch(line, as: name, cast: cast, builtIn: builtIn) else { return false }
             fetch = started
         }
         let client = fetch.client, pitch = fetch.pitch, local = fetch.local, saidAt = fetch.saidAt
@@ -263,7 +288,7 @@ final class Voice: NSObject, ObservableObject {
             do {
                 let said = try await fetch.task.value
                 guard let self, self.epoch == epoch, !Task.isCancelled else { return }
-                if said.kept {
+                if said.kept, !local {
                     self.history?.recordVoice(.init(time: saidAt, speaker: name, text: line, model: client.model, cost: 0, kept: true))
                 } else if !local, let generation = said.generation {
                     self.charge(client, generation, speaker: name, text: line, at: saidAt)
@@ -406,7 +431,7 @@ final class Voice: NSObject, ObservableObject {
     /// Settings › Voice's per-character Test.
     func introduce(_ name: String) {
         stop()
-        speak("Hi, I'm \(name). This is how I sound.", as: name, cast: cast())
+        speak("Hi, I'm \(name). This is how I sound.", as: name, cast: cast(), builtIn: true)
     }
 
     /// A Mac voice without its own pitch shifter, which smears high voices: the
@@ -526,6 +551,22 @@ final class Voice: NSObject, ObservableObject {
     private func keep(_ audio: Data, speaker: String, text: String, model: String, voice: String, speed: Double) {
         do { clips.append(try archive.keep(audio, speaker: speaker, text: text, model: model, voice: voice, speed: speed)) }
         catch { FileHandle.standardError.write(Data("Ledgelings voice archive: \(error)\n".utf8)) }
+    }
+
+    private func keepLine(_ audio: Data, speaker: String, text: String, model: String, voice: String, speed: Double) {
+        do { lineClips.append(try lineArchive.keep(audio, speaker: speaker, text: text, model: model, voice: voice, speed: speed)) }
+        catch { FileHandle.standardError.write(Data("Ledgelings line voices: \(error)\n".utf8)) }
+    }
+
+    func revealLineArchive() {
+        try? FileManager.default.createDirectory(at: lineArchive.directory, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(lineArchive.directory)
+    }
+
+    /// Forget every built-in line's sound; each is made again the next time it is said.
+    func clearLineArchive() {
+        try? FileManager.default.removeItem(at: lineArchive.directory)
+        lineClips = []
     }
 
     func revealArchive() {
