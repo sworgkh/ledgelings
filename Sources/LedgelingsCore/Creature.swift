@@ -323,6 +323,12 @@ public struct Creature: Sendable {
         enter(.chatting(remaining: seconds))
     }
 
+    /// Still talking: the chat's safety limit is at least `seconds` away, so a long
+    /// exchange (a slow model, a line said out loud) does not walk off mid-sentence.
+    public mutating func keepChatting(for seconds: Double) {
+        if case .chatting(let remaining) = mode, remaining < seconds { mode = .chatting(remaining: seconds) }
+    }
+
     /// The conversation is over: back on the old course.
     public mutating func walkOn(using rng: inout some RandomNumberGenerator) {
         guard isChatting else { return }

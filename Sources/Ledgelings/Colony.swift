@@ -298,6 +298,7 @@ final class Colony: NSObject {
 
         for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count {
             bubbles.removeValue(forKey: i)
+            trace?("bubble #\(bubble.serial) gone")
             // A voiced line that gave up waiting for its sound still ends its turn.
             if voicedLines.contains(bubble.serial) { endLine(bubble.serial) }
         }
