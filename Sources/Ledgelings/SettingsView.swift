@@ -82,6 +82,20 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("Complain when pushed around", isOn: $settings.complainEnabled)
+                Stepper(value: $settings.complainAfter, in: AppSettings.complainAfterRange) {
+                    LabeledContent("Puts up with", value: "\(settings.complainAfter) in a row")
+                }
+                .disabled(!settings.complainEnabled)
+                SliderRow("Calms down after", value: $settings.complainCalmSeconds, in: AppSettings.complainCalmRange, step: 5, unit: " s")
+                    .disabled(!settings.complainEnabled)
+            } header: {
+                Text("Patience")
+            } footer: {
+                Text("Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again.")
+            }
+
+            Section {
                 Toggle("Start Ledgelings when you log in", isOn: $startsAtLogin)
                     .onChange(of: startsAtLogin) { _, wanted in
                         guard wanted != LaunchAtLogin.isOn else { return }

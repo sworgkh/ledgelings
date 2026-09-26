@@ -30,6 +30,7 @@ extension Colony {
             } else if creatures[i].pickUp() {
                 let p = creatures[i].position
                 held = (i, CGVector(dx: p.x - point.x, dy: p.y - point.y))
+                bothered(i)
             }
         case .dragged(let point):
             if let poke, hypot(point.x - poke.at.x, point.y - poke.at.y) >= Self.dragThreshold {
@@ -37,6 +38,7 @@ extension Colony {
                 if creatures.indices.contains(poke.index), creatures[poke.index].pickUp(evenAwake: true) {
                     let p = creatures[poke.index].position
                     held = (poke.index, CGVector(dx: p.x - poke.at.x, dy: p.y - poke.at.y))
+                    bothered(poke.index)
                 }
             }
             guard let held else { return }

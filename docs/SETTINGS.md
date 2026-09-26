@@ -51,6 +51,9 @@ by the cursor, which ends the chat.
 | **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |
 | **Day lasts** | 3 min | 0.5 to 60 | |
 | **Night lasts** | 5 min | 0 to 60 | 0 means they never sleep. At dusk each creature wanders 0.5 to 7 more seconds, then lies down; at dawn each gets up within 3 seconds |
+| **Complain when pushed around** (`complainEnabled`) | on | | macOS. Chasing a creature off its edge with the cursor, or picking it up, bothers it. Bothered more than *Puts up with* times in a row, it tells you off in a bubble, in its own voice (a model writes it when one is set up and talk is on; that call is priced under *Complaints* in Costs). The count then starts over |
+| **Puts up with** (`complainAfter`) | 4 in a row | 1 to 20 | The 5th chase in a row, by default, gets the complaint |
+| **Calms down after** (`complainCalmSeconds`) | 20 s | 5 to 120 | Leave it alone this long and its count starts again from zero |
 | **Start at login** | off | | macOS: the system's Login Items (only an installed app can register). Windows: the per-user Startup list |
 
 ## Sprites tab

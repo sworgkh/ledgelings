@@ -250,6 +250,27 @@ leaves and the one it lands on. Direction after landing: random.
   awake one lies down with `isNapping = true`, so daylight does not wake it;
   the next dawn does.
 
+### 4.7.1 Complaints (macOS)
+
+`update` returns true on the frame the cursor made it jump (§4.3). That, a
+pick-up by a plain press, and a Shift-drag carry each count as being **bothered**.
+`Annoyance` keeps a streak per creature: a bother more than
+`complainCalmSeconds` after the previous one starts it at 1, else it adds 1. Once
+the streak is past `complainAfter` (the 5th in a row by default) the creature
+complains and the streak is cleared, so the next complaint needs a fresh run.
+A creature in a conversation does not complain; its streak is kept and the next
+bother tries again.
+
+The complaint is one bubble from that creature, voiced like any line. With the
+built-in lines, or talk off, or no model set up, it is picked from
+`Complaints.lines[name]` (three per built-in character, in its voice; `anyone` for
+an invented one), `{times}` filled with the streak. With a model: the system
+prompt (persona, kind, the recent lines it avoids) and `Complaints.prompt` with
+`{situation}` (almanac, where it is, how many times) and `{times}`; recorded in the
+spend file with purpose `complaints` whatever comes back; an empty answer or an
+error falls back to a built-in line. Either way it goes to the chat log as a
+one-line exchange, with its cost when a model wrote it.
+
 ### 4.8 Meeting someone
 
 - `meet(facing, for = 30 s)`: refused while jumping, asleep-looking or held.
@@ -524,7 +545,7 @@ Every model call, whether or not its line was usable, appends one record to
 `purpose` names the feature that made the call: `talk` (meetings and pokes),
 `planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
 model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2), `reminders`
-(a reminder's note, §7.7). Recording a call requires one. Records from
+(a reminder's note, §7.7), `complaints` (a creature telling the user off, §4.7.1). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -1406,6 +1427,9 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | minSize / maxSize | 1.5 / 3 | 1–5 in 0.5 steps; setting one past the other drags the other |
 | dayMinutes | 3 | 0.5–60 |
 | nightMinutes | 5 | 0–60; 0 = never sleep |
+| complainEnabled | true | a creature bothered too often in a row complains (§4.7.1) |
+| complainAfter | 4 | 1–20, clamped on load: bothers it puts up with; the next one in a row gets a complaint |
+| complainCalmSeconds | 20 | 5–120 s, clamped on load: a gap this long starts the count over |
 | talkEnabled | true | |
 | followGiver | true | the wearer of a flower trails its giver (§7.3) |
 | planesEnabled | true | paper planes every `planeMinutes` (§7.6); the menu item works either way |
@@ -1454,7 +1478,7 @@ The reminders themselves are in `reminders.json`, not the preferences (§7.7).
 Settings window: 1100×760 points, nine tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
-colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
+colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider). **Talk**: talk toggle,
 bubble and flower sliders, follow-the-giver and paper-plane toggles and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),
