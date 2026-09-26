@@ -102,7 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--settings [creatures|sprites|talk|bonds|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "bonds": .bonds, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "bonds": .bonds, "calendar": .calendar, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {

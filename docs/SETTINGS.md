@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Seven tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Eight tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Calendar**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 
@@ -124,6 +124,29 @@ under each conversation that played part of it.
 To place the story yourself in the talk prompt, write `{relationship}` in *Who is
 speaking* on the Talk tab; without it, the story is added at the end.
 
+## Calendar tab (macOS)
+
+The creatures know your day: the time on your Mac's clock, the date, and the
+holidays of the faiths you tick. It goes into every conversation and paper plane
+as one or two sentences, for example *For the person at this computer it is
+Saturday, 26 September 2026, late evening (22:40). Today is day 1 of Sukkot, a
+Jewish holiday.* This is apart from the colony's own day and night (Creatures tab),
+which only says when they sleep.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **They know the time of day** | on | | The part of the day (early morning, morning, midday, afternoon, evening, late evening, the middle of the night) and the time |
+| **They know the day of the week and the date** | on | | "Saturday, 26 September 2026" |
+| **Jewish holidays** | on | | From the Hebrew calendar: Rosh Hashanah, Yom Kippur, Sukkot, Simchat Torah, Hanukkah, Tu BiShvat, Purim, Passover, Lag BaOmer, Shavuot, Tisha B'Av |
+| **Christian holidays** | on | | Epiphany, Orthodox Christmas, Ash Wednesday, Palm Sunday, Good Friday, Easter and Orthodox Easter, Ascension Day, Pentecost, All Saints' Day, Christmas Eve, Christmas |
+| **Muslim holidays** | on | | From the Islamic (Umm al-Qura) calendar: Islamic New Year, Ashura, the Prophet's Birthday, Isra and Mi'raj, Ramadan (every day of it), Laylat al-Qadr, Eid al-Fitr, the Day of Arafah, Eid al-Adha. Where the new moon is sighted locally, a date can fall a day apart |
+| **Mention a holiday** | 3 days ahead | 0 to 14 days | How early they start saying a holiday is coming ("Hanukkah is in 3 days"). 0: only on the day. A Jewish or Muslim holiday tomorrow "begins this evening" from 17:00 |
+
+On the right, what they know right now, word for word, and the ticked holidays in
+the next 60 days. Everything is worked out on the Mac; nothing is looked up online.
+With the built-in lines, one conversation in three on a holiday is a `[holiday]`
+block about it (`{holiday}` is its name).
+
 ## Voice tab
 
 macOS only for now. The left column is how they all sound; the right column,
@@ -220,7 +243,7 @@ not a bill, with the line itself).
 | Setting | Default | Notes |
 |---|---|---|
 | **Brain** | Built-in lines | or LM Studio, or OpenRouter. The status line in the menu says why nothing is said when a model is not reachable. An install that had set up a model before v0.15 keeps LM Studio |
-| **Lines** (Built-in lines) | ~100 conversations | The script itself, editable in place. One conversation per block, a blank line between blocks; the lines alternate between the one who bumped and the one bumped into, two to four per block. A block may start with `[flower]`, `[night]`, `[day]` or `[night, flower]` and is then used only for that moment, in preference to untagged blocks; untagged blocks fit any moment. `{speaker}`, `{listener}` and `{flower}` are filled in; `*asterisks*` show as italics; `#` starts a comment. The status line counts the blocks, or names the line with a problem, and the creatures stay quiet until it is fixed. The same conversation is not repeated until half the fitting ones have been heard |
+| **Lines** (Built-in lines) | ~100 conversations | The script itself, editable in place. One conversation per block, a blank line between blocks; the lines alternate between the one who bumped and the one bumped into, two to four per block. A block may start with `[flower]`, `[night]`, `[day]`, `[holiday]` or `[night, flower]` and is then used only for that moment, in preference to untagged blocks; untagged blocks fit any moment. `[holiday]` blocks come up one conversation in three on a holiday the Calendar tab knows. `{speaker}`, `{listener}`, `{flower}` and `{holiday}` are filled in; `*asterisks*` show as italics; `#` starts a comment. The status line counts the blocks, or names the line with a problem, and the creatures stay quiet until it is fixed. The same conversation is not repeated until half the fitting ones have been heard |
 | **Import… / Export…** | | A plain text file in the same format, whole-script in and out |
 | **Copy Agent Prompt** | | Puts a request on the clipboard: the format, the rules and the cast in use, asking for 40 more blocks. Paste it into any chat model and paste the answer into the editor |
 | **Reset Lines** | | Brings the built-in script back |
@@ -304,7 +327,7 @@ Explorer and in a terminal. The files are plain text on purpose; one line looks 
 
 ```json
 {"time": "2026-09-18T14:03:11Z",
- "situation": "It is day. Dot is on the bottom edge. Blocky is on the bottom edge. They just walked into each other.",
+ "situation": "For the person at this computer it is Friday, 18 September 2026, afternoon (17:03). On the edge it is day. Dot is on the bottom edge. Blocky is on the bottom edge. They just walked into each other.",
  "provider": "LM Studio", "model": "google/gemma-3-1b",
  "lines": [{"speaker": "Dot", "text": "Move, boulder."}, {"speaker": "Blocky", "text": "Says the pebble."}],
  "cost": 0.00084, "tokens": 660}

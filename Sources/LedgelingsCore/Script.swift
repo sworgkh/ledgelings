@@ -8,7 +8,7 @@ import Foundation
 /// was bumped into. `#` starts a comment. A block may open with tags in square
 /// brackets, `[flower]` or `[night, flower]`, and is then only used when the
 /// moment matches; an untagged block fits any moment. `{speaker}`,
-/// `{listener}` and `{flower}` are filled in when the line is said.
+/// `{listener}`, `{flower}` and `{holiday}` are filled in when the line is said.
 public struct Script: Equatable, Sendable {
     public struct Conversation: Equatable, Sendable {
         public var tags: Set<String>
@@ -24,8 +24,8 @@ public struct Script: Equatable, Sendable {
     }
 
     /// What a block may be tagged with, and what a moment can be.
-    public static let tags: Set<String> = ["flower", "night", "day"]
-    public static let placeholders = ["speaker", "listener", "flower"]
+    public static let tags: Set<String> = ["flower", "night", "day", "holiday"]
+    public static let placeholders = ["speaker", "listener", "flower", "holiday"]
 
     public var conversations: [Conversation]
 
@@ -87,8 +87,8 @@ public struct Script: Equatable, Sendable {
         return (fresh.isEmpty ? pool : fresh).randomElement(using: &rng)
     }
 
-    public static func fill(_ line: String, speaker: String, listener: String, flower: String?) -> String {
-        Banter.render(line, ["speaker": speaker, "listener": listener, "flower": flower ?? "flower"])
+    public static func fill(_ line: String, speaker: String, listener: String, flower: String?, holiday: String? = nil) -> String {
+        Banter.render(line, ["speaker": speaker, "listener": listener, "flower": flower ?? "flower", "holiday": holiday ?? "the holiday"])
     }
 
     // MARK: Getting a model to write more
@@ -106,10 +106,11 @@ public struct Script: Equatable, Sendable {
         - One conversation per block, with a blank line between blocks.
         - The lines of a block alternate: the first line is the one who bumped, the second is the one who was bumped into, and so on. Two to four lines per block, mostly two.
         - Each line is at most 20 words. No name prefixes, no quotes, no numbering.
-        - Placeholders: {speaker} is the one saying the line, {listener} is the other one, {flower} is the flower being given.
+        - Placeholders: {speaker} is the one saying the line, {listener} is the other one, {flower} is the flower being given, {holiday} is the holiday it is today.
         - Use *asterisks* for an action or emphasis, like *sighs*.
         - About a quarter of the blocks start with the tag line [flower]: the one who bumped has just given the other a {flower}, and the lines are about it.
         - A few blocks start with [night]: it is dark, and they are supposed to be asleep. A block can have both: [night, flower].
+        - A few blocks start with [holiday]: today is a holiday, named by {holiday} (it could be Christmas, Hanukkah, Eid al-Fitr or any other), so the lines must fit any of them.
         - Blocks without a tag line happen at any time.
         \(who)
         Example:

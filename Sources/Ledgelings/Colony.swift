@@ -57,6 +57,8 @@ final class Colony: NSObject {
     var watchers: Set<AnyCancellable> = []
 
     var clock: DayNight
+    /// The user's wall clock, for what the creatures know of the day (`Almanac`); tests set it.
+    var now: () -> Date = Date.init
     /// One line per talking creature: what it says, when it stops showing, and
     /// how much of it is on show while it is being said out loud.
     struct Bubble {

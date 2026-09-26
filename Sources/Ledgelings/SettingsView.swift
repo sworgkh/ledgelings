@@ -2,7 +2,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, sprites, talk, bonds, voice, costs, chats }
+enum SettingsTab: Hashable { case creatures, sprites, talk, bonds, calendar, voice, costs, chats }
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
@@ -25,6 +25,7 @@ struct SettingsView: View {
             SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text("Bonds") }.tag(SettingsTab.bonds)
+            CalendarSettingsView(settings: settings).tabItem { Text("Calendar") }.tag(SettingsTab.calendar)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text("Voice") }.tag(SettingsTab.voice)
             CostsSettingsView(spend: spend).tabItem { Text("Costs") }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)

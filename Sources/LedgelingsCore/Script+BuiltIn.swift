@@ -8,8 +8,9 @@ extension Script {
     # Lines alternate: the one who bumped, then the other.
     # A block may start with tags: [flower] when one was
     # just given, [night], [day], or both: [night, flower].
+    # [holiday] blocks are said on a holiday (Calendar tab).
     # Untagged blocks fit any moment.
-    # {speaker}, {listener} and {flower} are filled in.
+    # {speaker}, {listener}, {flower} and {holiday} are filled in.
     # *asterisks* show as italics. # starts a comment.
 
     Nice edge you've got there, {listener}.
@@ -355,5 +356,39 @@ extension Script {
     Lovely day for a walk along the bottom.
     Every day is a day for a walk along the bottom.
     That's what I said.
+
+    [holiday]
+    Happy {holiday}, {listener}.
+    Is that why the cursor's moving so slowly?
+
+    [holiday]
+    The human says it's {holiday} today.
+    Do we get the day off?
+    From what? Walking in circles?
+
+    [holiday]
+    I made you something for {holiday}.
+    It's a pixel. It was already mine.
+    It's the thought that counts.
+
+    [holiday]
+    It's {holiday}! Everyone's celebrating.
+    Everyone? I counted. It's just us two.
+
+    [holiday]
+    What do we do for {holiday}?
+    Same as always. But *festively*.
+
+    [holiday]
+    Did you get me anything for {holiday}?
+    I got out of your way. Twice.
+
+    [night, holiday]
+    *whispers* Is it still {holiday}?
+    Until morning. Go back to sleep.
+
+    [holiday, flower]
+    A {flower}, for {holiday}.
+    You remembered! I didn't.
     """
 }
