@@ -17,13 +17,27 @@ final class ChatHistory: ObservableObject {
         return support.appendingPathComponent("Ledgelings/chats", isDirectory: true)
     }
 
+    /// What each character said lately, from every exchange written, and at
+    /// launch from the last days on disk, so a relaunch does not reset it.
+    private(set) var memory = LineMemory(limit: 0)
+
     init(directory: URL = ChatHistory.defaultDirectory) { log = ChatLog(directory: directory) }
+
+    /// Remember `limit` lines per character; the first call reads them back from disk.
+    func remember(_ limit: Int) {
+        guard limit != memory.limit else { return }
+        if limit < memory.limit { memory.trim(to: limit); return }
+        memory = LineMemory(limit: limit)
+        let days = ((try? log.days()) ?? []).prefix(2).reversed()
+        for day in days { for exchange in (try? log.exchanges(on: day)) ?? [] { memory.remember(exchange) } }
+    }
 
     var directory: URL { log.directory }
 
     func record(_ exchange: ChatLog.Exchange) {
         do {
             try log.append(exchange)
+            memory.remember(exchange)
             version += 1
         } catch {
             FileHandle.standardError.write(Data("Ledgelings chat log: \(error)\n".utf8))

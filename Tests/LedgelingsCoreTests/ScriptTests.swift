@@ -70,8 +70,9 @@ import Testing
         for _ in 0..<20 {
             #expect(script.pick(for: ["day"], avoiding: [0, 1], using: &rng) == 2)
         }
-        let picks = Set((0..<40).compactMap { _ in script.pick(for: ["day"], avoiding: [0, 1, 2], using: &rng) })
-        #expect(picks == [0, 1, 2], "everyone recent: anyone will do")
+        for _ in 0..<20 {
+            #expect(script.pick(for: ["day"], avoiding: [2, 0, 1], using: &rng) == 2, "everyone recent: the one used longest ago")
+        }
     }
 
     @Test func fillsInWhoIsTalkingAndWhatWasGiven() {
