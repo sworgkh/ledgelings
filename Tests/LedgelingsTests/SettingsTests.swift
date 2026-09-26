@@ -310,4 +310,17 @@ import Testing
         defaults.set(99, forKey: "holidayLookAhead")
         #expect(AppSettings(defaults: defaults).holidayLookAhead == AppSettings.holidayLookAheadRange.upperBound)
     }
+
+    @Test func remindersArriveByPlaneTheLetterStaysAMinuteAndIsReadAloudAndItIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.remindersEnabled && s.reminderLetterSeconds == 60 && s.reminderReadAloud)
+        s.remindersEnabled = false
+        s.reminderLetterSeconds = 120
+        s.reminderReadAloud = false
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.remindersEnabled && back.reminderLetterSeconds == 120 && !back.reminderReadAloud)
+        defaults.set(1.0, forKey: "reminderLetterSeconds")
+        #expect(AppSettings(defaults: defaults).reminderLetterSeconds == AppSettings.reminderLetterRange.lowerBound)
+    }
 }

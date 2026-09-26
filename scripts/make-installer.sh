@@ -11,7 +11,7 @@
 # object the first time: right-click the app (or the .pkg) and choose Open.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export VERSION="${VERSION:-0.21.0}"
+export VERSION="${VERSION:-0.22.0}"
 
 scripts/make-app.sh
 APP=build/Ledgelings.app

@@ -68,4 +68,12 @@ import Testing
         #expect(record.purpose == nil && Spend.Purpose.title(of: record.purpose) == Spend.Purpose.unlabelled)
         #expect(Spend.Purpose.title(of: "dreams") == "dreams", "a purpose from a newer build keeps its name")
     }
+
+    @Test func reminderNotesAreTheirOwnLineInTheCosts() {
+        let usage = Spend.Usage(promptTokens: 120, completionTokens: 30, cost: 0.0001)
+        let records = [Spend.Record(time: Date(), provider: "OpenRouter", model: "m", usage: usage, purpose: .reminders)]
+        let s = Spend.summarise(records, now: Date())
+        #expect(s.byPurpose.map(\.purpose) == ["Reminders"])
+        #expect(s.byPurpose[0].total.calls == 1)
+    }
 }

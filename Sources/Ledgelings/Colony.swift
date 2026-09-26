@@ -17,6 +17,8 @@ final class Colony: NSObject {
     let spend: SpendLedger
     /// Who has lived beside whom, how they get on, and the story between them.
     let bonds: BondBook
+    /// What the user asked to be reminded of, and when.
+    let reminders: ReminderBook
     /// Pairs whose next plot is being written, by `Bonds.key`.
     var plotting: Set<String> = []
     /// Time together not yet added to the bonds; they are saved every half minute, not every frame.
@@ -111,6 +113,18 @@ final class Colony: NSObject {
     var replyDue: ReplyDue?
     /// Creatures holding an open letter.
     var letters: [Int: Bool] = [:]
+    /// The reminder on its way to the user, or open on the screen; one at a time.
+    var delivery: Delivery?
+    /// Reminders that came due while another was being delivered, oldest first.
+    var deliveryQueue: [Reminders.Reminder] = []
+    /// How many reminders have gone up, so a late model answer finds the right one.
+    var deliveryCount = 0
+    /// Reminders are looked at once a second, not every frame.
+    var nextReminderCheck = 0.0
+    /// Seconds since the user last touched the mouse or keyboard; an open letter waits for them.
+    var userIdleSeconds: () -> Double = {
+        CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
+    }
     /// Reads every line out loud when voice is on. Nil offscreen (the promo).
     var voice: Voice? {
         didSet {
@@ -131,12 +145,13 @@ final class Colony: NSObject {
     /// `stage`: draw for this one virtual display, offscreen, stepped by hand
     /// (the promo). Nil means the attached monitors, live.
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger,
-         bonds: BondBook? = nil, stage: Display? = nil) throws {
+         bonds: BondBook? = nil, reminders: ReminderBook? = nil, stage: Display? = nil) throws {
         self.settings = settings
         self.history = history
         self.library = library
         self.spend = spend
         self.bonds = bonds ?? BondBook(directory: spend.ledger.directory)
+        self.reminders = reminders ?? ReminderBook(directory: spend.ledger.directory)
         self.stage = stage
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
@@ -293,6 +308,7 @@ final class Colony: NSObject {
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
+        updateReminders(dt: dt)
         liveTogether(dt: dt)
         render()
         setFrameRate(asleep: hideout.phase == .hidden || (held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
@@ -330,10 +346,11 @@ final class Colony: NSObject {
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
+        let reminder = reminderSnapshot()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
-                           plane: plane, planeCell: planeCell)
+                           plane: plane, planeCell: planeCell, reminder: reminder)
         }
     }
 }

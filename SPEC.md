@@ -520,7 +520,8 @@ Every model call, whether or not its line was usable, appends one record to
 
 `purpose` names the feature that made the call: `talk` (meetings and pokes),
 `planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
-model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2). Recording a call requires one. Records from
+model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2), `reminders`
+(a reminder's note, §7.7). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -1006,6 +1007,70 @@ answered. macOS only for now; the Windows app does not have it yet.
   answers are in, it holds the unread letter up to 8 s, then falls back to the
   built-in letters for whatever is missing.
 
+### 7.7 Reminders (macOS)
+
+The user sets reminders (Settings › Reminders); when one comes due, a creature
+throws it at the user as a paper plane that opens into a letter in the middle of
+the screen.
+
+- **A reminder**: `id`, `text` (the user's words), `time` (its next delivery),
+  `repeats` (`once`, `daily`, `weekdays`, `weekly`), `sentAt`. Kept in
+  `reminders.json` beside the chats (`{"reminders": [...]}`, ISO-8601 dates),
+  rewritten whole on each change. Due when not finished and `time ≤ now`; a
+  `once` reminder with `sentAt` set is finished. Sending sets `sentAt = now`, and
+  a repeating one moves `time` to its first repeat after `max(now, time)` at the
+  same hour and minute (weekly: same weekday; weekdays: Monday–Friday). So a Mac
+  that was off for three mornings gets one late letter, not three.
+- **The clock**: once a second of colony time, with `remindersEnabled` on, every
+  due reminder not already queued is appended to the queue (oldest first) and
+  marked sent at once, so none is ever sent twice. Off: nothing is taken; what
+  came due is delivered, late, when it is turned back on. One delivery at a time,
+  the queue in order. Send Now, the test letter and `--remind "text"` queue a
+  reminder without touching the file.
+- **The thrower**: any creature free for mail (§7.6), not the one a plane is
+  flying to, chosen at random; after 3 s with nobody free (or at once while the
+  house is out), any creature on screen and not held, awake ones first. It stops
+  for `0.6 + 0.6` s; the plane leaves its head after 0.6 s. Nobody on screen: the
+  plane comes up from 16 pt below the bottom of the screen, ±200 pt from its
+  middle, signed "The Ledgelings".
+- **The flight**: target = the middle of the screen the cursor is on. A thrown
+  plane (§7.6) with half the swirl and cruise at least 420 pt/s, at the
+  thrower's size `s`, growing as it nears: `s · (1 + 0.8 p²)` with `p = 1 −
+  distance/startDistance`. It arrives when its last step passes within 40 pt of
+  the middle, or after 7 s of flight wherever it is.
+- **Coming at you** (0.6 s): it slides to the middle and grows with `t²` to `3.2 s`;
+  from half-way it is drawn head-on (`front`), level. If the model's note is not
+  in yet it hovers there, bobbing ±6 pt, up to 4 s more.
+- **Opening** (0.55 s): the note is decided (below), logged, and read out; then
+  `opening` for the first 30 %, `letter` growing ×1→×1.6 to 60 %, then the letter
+  spreads from 0.3 to 1.08 of its size, and settles to 1 in 0.15 s once open.
+- **Open**: until clicked (the overlay is clickable over it, §10.4), or until
+  `reminderLetterSeconds` have passed **while the user was at the computer**
+  (last mouse or key event under 30 s ago). Folding (0.3 s): it shrinks to 0.2
+  and fades, then a plane leaves the middle for above the top of the screen at
+  700 pt/s, shrinking from `3.2 s` to `s` over 1.2 s; gone once 80 pt off the
+  screen or after 3 s, when its trail has faded.
+- **The note**: with a model (talk on, brain not the built-in lines) it is
+  written as the plane is thrown with the system prompt (§6.1, the thrower as
+  `{speaker}`, `{listener}` "you") and `Reminders.notePrompt` (`{situation}` =
+  the almanac, `{reminder}`), cleaned (§6.3) and priced as `reminders`
+  (§6.5.1). Otherwise, or when the model gave nothing, one of the thrower's own
+  two built-in notes, each naming `{reminder}` in its voice (a user's own
+  character uses a generic pair). After `", "` or `"for "` the reminder's first
+  letter is lowercased unless its first word is `I` or all capitals. Logged to the
+  chat history as `"<writer> brought you a reminder by paper plane: "<text>"."`
+  with the one line. With voice on and `reminderReadAloud`, the thrower says the
+  note out loud (no bubble).
+- **The letter**: paper in blocky's rules, 3 pt per pixel, sized to the words
+  (text at most 380 pt wide, 30 pt margins, at least 260 pt of text width):
+  `REMINDER · HH:mm` (or `REMINDER · for <when>` when over 2 min late), the
+  reminder big, the note, `— <writer>` beside the thrower's idle frame at 1.5×,
+  and "click to fold it away". The paper (`Reminders.paper`): rim all round,
+  a light line top-left, a shade line bottom-right, faint creases across the
+  middle both ways, and the bottom-right corner folded down: `fold = max(4,
+  min(w, h) / 8)` pixels, cut off beyond the diagonal, with the flap drawn in deep
+  shade inside a rim. Drawn above everything, on the cursor's screen only.
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -1226,7 +1291,8 @@ coloured and faded per §7.4, z above creatures.
 ### 9.7 Paper plane
 
 The `plane` sheet: 18×12 cells, animations `fly` (the plane, nose right) and
-`letter` (the unfolded note). The plane is drawn at the catcher's size, above
+`letter` (the unfolded note), and for a reminder (§7.7) `front` (head-on, 15×6)
+and `opening` (half unfolded, 14×7). The plane is drawn at the catcher's size, above
 everything, rotated to its heading; when the heading points left
 (`cos < 0`) it is also flipped vertically so the wing stays on top. Its trail
 is a pool of plain white squares, side `max(2, round(1.5·size))` points, opacity
@@ -1275,6 +1341,8 @@ falls through to whatever is underneath.
 | Menu: Make Them Jump | every creature startles |
 | Menu: Make Someone Talk | §6.5 |
 | Menu: Send a Paper Plane | a plane goes up now if two creatures are free (§7.6) |
+| Menu: Add a Reminder… (⌘R) | the settings window on the Reminders tab (§7.7); below it, `Next: <text>, <when>` (with `(off)` when reminders are off) opens the same |
+| Click a reminder's open letter | folds it away (§7.7) |
 | Menu: Put Them to Sleep Now / Wake Them Up Now | skip to the next phase (hidden when night = 0) |
 | Menu: Hide Them for a While… / Bring Them Back Now | §7.5; while hiding the item shows the time left |
 | Menu: Chat History… | the settings window on the Chats tab (§6.5) |
@@ -1334,8 +1402,13 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | knowsDate | true | the weekday and date go into prompts (§6.1.1) |
 | jewishHolidays / christianHolidays / muslimHolidays | true / true / true | whose holidays they know (§6.1.1) |
 | holidayLookAhead | 3 | 0–14 days, clamped on load; 0 = only on the day itself |
+| remindersEnabled | true | reminders are delivered (§7.7); off, what comes due waits |
+| reminderLetterSeconds | 60 | 10–600, clamped on load: seconds the letter stays open while the user is at the computer |
+| reminderReadAloud | true | with voice on, the thrower reads its note out loud |
 
-Settings window: 1100×760 points, eight tabs, each laid out as two columns
+The reminders themselves are in `reminders.json`, not the preferences (§7.7).
+
+Settings window: 1100×760 points, nine tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
@@ -1354,7 +1427,11 @@ running plot with its part or the last plot, Forget), then the file with Reveal
 in Finder and Forget All. **Calendar**: on the left the time-of-day and date
 toggles, one toggle per faith and the look-ahead stepper; on the right the
 almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
-holidays in the next 60 days. **Voice**: on the left the toggle,
+holidays in the next 60 days. **Reminders**: on the left a new reminder (text,
+date and time, repeat, In 5 min / In 30 min / In 1 hour, Add Reminder), then
+the delivery toggle, letter slider, read-aloud toggle and Send a Test Letter; on
+the right every reminder, waiting ones by time then sent ones greyed, each with
+Send Now and Delete, then the file with Clear Sent. **Voice**: on the left the toggle,
 engine picker, voice-each and cartoon toggles, voice picker or key/model/voice
 pickers and Keep with its count and Reveal, speed/pitch/volume sliders, Test,
 Stop, status; on the right a card per character on screen with voice picker
@@ -1430,6 +1507,18 @@ the catcher writes back once to the sender and the answer is not answered; a
 bump does not put the next plane off; a plane to a sleeper is dropped; the one
 a plane is flying to keeps out of talks; a flower wearer never bumps; turned
 off, none goes by itself.
+
+Reminders: a one-off is due from its time, still due days late, finished once
+sent; a daily one sent a week late moves to tomorrow at its hour; weekdays go
+Friday to Monday; weekly keeps its weekday; the book gives due ones oldest
+first, lists waiting before sent, clears the sent, survives a relaunch; every
+default character has two notes naming the reminder; mid-sentence the reminder
+starts small unless it shouts; the paper has its rim, light, shade, creases,
+folded corner and flap. In a colony: a due one is taken, marked sent, thrown,
+opened with the thrower's signature and a note naming it, logged, and a click
+folds it away until it is gone; the letter stays open while nobody is at the
+computer and folds itself once they are back; turned off, nothing is taken,
+turned on, it is delivered late. The costs group `reminders` as "Reminders".
 
 Sparks: 8 per burst; all thrown into the screen at first; gone after about a
 second; opacity falls with age; gravity pulls back toward the edge.

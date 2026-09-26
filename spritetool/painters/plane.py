@@ -34,6 +34,25 @@ GLYPHS = {
         "...SSSSSSSss...",
         ".....SSSs......",
     ],
+    # 15 x 6, the plane head-on, coming straight at you: wings level, keel below.
+    "front": [
+        "LLLLLLL.LLLLLLL",
+        "wwwwwwwLwwwwwww",
+        ".ssssswwwsssss.",
+        "......sws......",
+        "......sws......",
+        ".......S.......",
+    ],
+    # 14 x 7, halfway open: the wings folding out into a sheet, the centre crease still in it.
+    "opening": [
+        "....LLLLLL....",
+        "..LLwwwswwLL..",
+        "LLwwwwwswwwwwL",
+        "wwwwwwwswwwwws",
+        "swwwwwwswwwwss",
+        "..sswwwswwss..",
+        "....sssSss....",
+    ],
     # 10 x 8, a note with a folded corner, bottom-right.
     "letter": [
         "LLLLLLLLLL",

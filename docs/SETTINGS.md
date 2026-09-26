@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Eight tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Calendar**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Nine tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## The menu
 
@@ -14,6 +14,7 @@ Settings…*. Eight tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Cal
 | **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
 | **Make Someone Talk** | A random awake creature says something to the nearest one |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
+| **Add a Reminder…** (⌘R) | The Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
 | **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
@@ -36,6 +37,7 @@ takes focus from the app you are in.
 | **Drag** a sleeper (no Shift) | The same; a sleeper never notices the cursor, so it can be picked up as it is |
 | **Shift-right-click** (or Shift-Control-click) a creature | A nap: it lies down on the spot, day or night. The same again wakes it; the next dawn also ends a nap |
 | Click a speech bubble | Closes it |
+| Click a reminder's letter | Folds it back into a plane, which flies away |
 
 Two creatures that are talking (stopped face to face) can still be startled away
 by the cursor, which ends the chat.
@@ -146,6 +148,43 @@ On the right, what they know right now, word for word, and the ticked holidays i
 the next 60 days. Everything is worked out on the Mac; nothing is looked up online.
 With the built-in lines, one conversation in three on a holiday is a `[holiday]`
 block about it (`{holiday}` is its name).
+
+## Reminders tab (macOS)
+
+Things you want to be reminded of. When the time comes, a free creature stops,
+folds the reminder into a paper plane and throws it at you: the plane swirls to the
+middle of the screen your cursor is on, growing as it comes, turns to face you,
+rushes at you and unfolds into a letter. On it: your reminder in big letters, a
+note from whoever threw it in its own voice ("Stop staring at the cursor. It's
+time: call mom." — Blocky), its signature and its face. With voice on, it reads the
+note out loud. Click the letter to fold it away; it flies off over the top.
+
+**New reminder** (left):
+
+| Field | Default | Notes |
+|---|---|---|
+| **Remind me to** | empty | Your words, shown as they are on the letter. Return adds it |
+| **When** | the top of the next hour | Date and time. A time already past is delivered straight away. **In 5 min**, **In 30 min**, **In 1 hour** set it from now |
+| **Repeat** | Once | **Every day**, **Every weekday** (Monday to Friday) or **Every week** (the same weekday). A repeat keeps its hour and minute; if the Mac was off or asleep through several, you get one letter, late, and the next one is on schedule |
+
+**Delivery** (left):
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Reminders arrive by paper plane** | on | | Off: nothing is delivered. Whatever comes due meanwhile arrives, late, when you turn it back on |
+| **Letter stays open** | 60 s | 10 to 600 s | Then it folds itself away. The time only counts while you are at the computer (you touched the mouse or keyboard in the last 30 s), so a letter that arrives while you are away waits for you |
+| **The thrower reads its note out loud** | on | | Only when voice is on (Voice tab) |
+| **Send a Test Letter** | | | A sample reminder, delivered now |
+
+**Your reminders** (right): waiting ones by time ("Every day, next Tomorrow 09:00"),
+then sent one-offs, greyed, until **Clear Sent**. Each has **Send Now** (deliver it
+now; its schedule does not change) and **Delete**. They are kept in `reminders.json`
+in `~/Library/Application Support/Ledgelings`, not with the other settings.
+
+With a model chosen on the Talk tab, the thrower's note is written for the moment,
+while the plane is in the air (one short call, Costs › Reminders); with the built-in
+lines every character has two notes of its own. A letter late by more than two
+minutes says so: *REMINDER · for Today 14:30*. Every letter is also in the Chats tab.
 
 ## Voice tab
 

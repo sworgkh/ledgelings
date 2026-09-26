@@ -25,6 +25,18 @@
       "y": 0,
       "w": 18,
       "h": 12
+    },
+    "front": {
+      "x": 36,
+      "y": 0,
+      "w": 18,
+      "h": 12
+    },
+    "opening": {
+      "x": 54,
+      "y": 0,
+      "w": 18,
+      "h": 12
     }
   },
   "animations": {
@@ -38,6 +50,20 @@
     "letter": {
       "frames": [
         "letter"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "front": {
+      "frames": [
+        "front"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "opening": {
+      "frames": [
+        "opening"
       ],
       "fps": 1.0,
       "loop": true

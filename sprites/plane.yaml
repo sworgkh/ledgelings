@@ -1,5 +1,6 @@
 # plane — the paper plane one Ledgeling throws to another after a long spell
-# with no bumps, and the letter it unfolds into once caught.
+# with no bumps, and the letter it unfolds into once caught. A reminder's plane
+# also turns head-on (`front`) as it comes at the user and opens (`opening`).
 # Both glyphs are drawn in blocky's rules: flat fill, 1px dark rim, a light
 # edge top-left, a shade edge bottom-right. The plane points RIGHT; the app
 # turns it to the way it flies and flips it upright when it heads left.
@@ -27,7 +28,11 @@ style: >-
 poses:
   - {name: plane,  prompt: a paper plane from the side, nose right, wing on top, keel below}
   - {name: letter, prompt: the unfolded note, a small sheet with three lines of scribble}
+  - {name: front,   prompt: the plane head-on, flying straight at the viewer, wings level, keel below}
+  - {name: opening, prompt: the plane halfway unfolded into a sheet, centre crease still showing}
 
 animations:
   fly:    {frames: [plane], fps: 1, loop: true}
   letter: {frames: [letter], fps: 1, loop: true}
+  front:   {frames: [front], fps: 1, loop: true}
+  opening: {frames: [opening], fps: 1, loop: true}

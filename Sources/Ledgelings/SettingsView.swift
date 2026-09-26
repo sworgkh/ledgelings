@@ -2,7 +2,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, sprites, talk, bonds, calendar, voice, costs, chats }
+enum SettingsTab: Hashable { case creatures, sprites, talk, bonds, calendar, reminders, voice, costs, chats }
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
@@ -16,8 +16,11 @@ struct SettingsView: View {
     @ObservedObject var library: SpriteLibrary
     @ObservedObject var spend: SpendLedger
     @ObservedObject var bonds: BondBook
+    @ObservedObject var reminders: ReminderBook
     @ObservedObject var voice: Voice
     @ObservedObject var navigation: SettingsNavigation
+    /// Deliver a reminder now.
+    let send: (Reminders.Reminder) -> Void
 
     var body: some View {
         TabView(selection: $navigation.tab) {
@@ -26,6 +29,7 @@ struct SettingsView: View {
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text("Bonds") }.tag(SettingsTab.bonds)
             CalendarSettingsView(settings: settings).tabItem { Text("Calendar") }.tag(SettingsTab.calendar)
+            RemindersSettingsView(settings: settings, reminders: reminders, send: send).tabItem { Text("Reminders") }.tag(SettingsTab.reminders)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text("Voice") }.tag(SettingsTab.voice)
             CostsSettingsView(spend: spend).tabItem { Text("Costs") }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
@@ -201,22 +205,27 @@ final class SettingsWindowController {
     private let library: SpriteLibrary
     private let spend: SpendLedger
     private let bonds: BondBook
+    private let reminders: ReminderBook
     private let voice: Voice
+    private let send: (Reminders.Reminder) -> Void
     private let navigation = SettingsNavigation()
 
-    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook, voice: Voice) {
+    init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
+         reminders: ReminderBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void) {
         self.settings = settings
         self.history = history
         self.library = library
         self.spend = spend
         self.bonds = bonds
+        self.reminders = reminders
         self.voice = voice
+        self.send = send
     }
 
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, voice: voice, navigation: navigation))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice, navigation: navigation, send: send))
             let made = NSWindow(contentViewController: hosting)
             made.title = "Ledgelings Settings"
             made.styleMask = [.titled, .closable]

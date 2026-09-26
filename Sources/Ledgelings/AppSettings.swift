@@ -130,6 +130,17 @@ final class AppSettings: ObservableObject {
         return Almanac.Awareness(timeOfDay: knowsTimeOfDay, date: knowsDate, faiths: faiths, lookAhead: holidayLookAhead)
     }
 
+    // MARK: Reminders
+
+    /// Seconds a reminder's letter stays open in the middle of the screen, unless clicked away first.
+    static let reminderLetterRange = 10.0...600.0
+    /// Reminders arrive by paper plane. Off: none is delivered; the ones that
+    /// came due meanwhile arrive, late, when it is turned back on.
+    @Published var remindersEnabled: Bool { didSet { save(remindersEnabled, "remindersEnabled") } }
+    @Published var reminderLetterSeconds: Double { didSet { save(reminderLetterSeconds, "reminderLetterSeconds") } }
+    /// With voice on, the creature who threw it reads its note out loud as the letter opens.
+    @Published var reminderReadAloud: Bool { didSet { save(reminderReadAloud, "reminderReadAloud") } }
+
     // MARK: Voice
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
@@ -283,6 +294,10 @@ final class AppSettings: ObservableObject {
         // Three days: enough for "Hanukkah is in 3 days" without talking of it all week.
         let ahead = defaults.object(forKey: "holidayLookAhead") as? Int ?? 3
         holidayLookAhead = min(max(ahead, Self.holidayLookAheadRange.lowerBound), Self.holidayLookAheadRange.upperBound)
+        remindersEnabled = defaults.object(forKey: "remindersEnabled") as? Bool ?? true
+        // A minute: long enough to read it on your way back to the desk, short enough not to sit there all afternoon.
+        reminderLetterSeconds = clamp("reminderLetterSeconds", 60, Self.reminderLetterRange)
+        reminderReadAloud = defaults.object(forKey: "reminderReadAloud") as? Bool ?? true
     }
 
     func species(forCreature index: Int) -> String {
