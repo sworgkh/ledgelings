@@ -16,10 +16,11 @@ extension Colony {
 
     /// A plain press on a sleeper picks it up. A Shift-press is a poke if it lets
     /// go where it started, a carry if it moves. Right-click naps or wakes. A press
-    /// on a speech bubble closes it.
+    /// on a speech bubble closes it. A press on a reminder's letter folds it away.
     func hand(_ event: HandEvent) {
         switch event {
         case .down(let point, let shift):
+            if letterContains(point) { closeLetter(); break }
             guard let i = creature(at: point) else {
                 if let spoken = bubble(at: point) { bubbles.removeValue(forKey: spoken) }
                 break
@@ -56,10 +57,10 @@ extension Colony {
 
     /// Make an overlay clickable only while the cursor is on something the user
     /// can act on: any sleeper, any creature at all while Shift is down, or a
-    /// speech bubble. Shift is also how you get close enough to right-click one.
+    /// speech bubble, or a reminder's open letter. Shift is also how you get close enough to right-click one.
     func updateClickability(cursor: CGPoint, shift: Bool) {
         let target = held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
-            || bubble(at: cursor) != nil
+            || bubble(at: cursor) != nil || letterContains(cursor)
         for overlay in overlays { overlay.setClickable(target && overlay.display.frame.contains(cursor)) }
     }
 }

@@ -41,6 +41,31 @@ struct PlaneSnapshot {
     var puffSize: CGFloat
 }
 
+/// A reminder on its way: its plane (or nothing, once it has opened), and the letter.
+struct ReminderSnapshot {
+    var plane: PlaneSnapshot?
+    var letter: LetterSnapshot?
+}
+
+/// The reminder's letter, open in the middle of the screen.
+struct LetterSnapshot {
+    /// Which delivery this is: a new one lays the letter out afresh.
+    var id: Int
+    var centre: CGPoint
+    /// 1 = full size; less while it spreads out or folds away.
+    var grow: CGFloat
+    var opacity: Float
+    var title: String
+    /// The reminder itself, in the user's words.
+    var text: String
+    /// The thrower's note, in its own voice.
+    var note: String
+    var signature: String
+    /// The thrower's face, beside its signature.
+    var stamp: CGImage?
+    var hint: String
+}
+
 /// The house, at whatever size it currently is, pinned by its bottom-right corner.
 /// Drawn behind the creatures; at the doorway they shrink to nothing on top of it.
 struct HouseSnapshot {
@@ -82,14 +107,12 @@ final class ScreenOverlay {
     let view: OverlayView?
     private let window: OverlayWindow?
     private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer)] = []
-    private lazy var planeLayer: CALayer = {
-        let layer = makeLayers().sprite
-        layer.isHidden = true
-        layer.zPosition = 4                        // over creatures and bubbles
-        root.addSublayer(layer)
-        return layer
-    }()
-    private var puffLayers: [CALayer] = []
+    /// The creatures' paper plane, and a reminder's: both can be in the air at once.
+    private lazy var mailPlane = PlaneSprite(root: root, z: 4, layer: makeLayers().sprite)
+    private lazy var reminderPlane = PlaneSprite(root: root, z: 6, layer: makeLayers().sprite)
+    private var letter: (key: String, layer: CALayer)?
+    /// The open letter's frame in global points, while this screen shows it.
+    private(set) var letterFrame: CGRect?
     private lazy var flight: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
@@ -180,9 +203,11 @@ final class ScreenOverlay {
     func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize,
                 flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = [],
                 house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
-                plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero) {
+                plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil) {
         renderFlight(inFlight, flowerCell: flowerCell)
-        renderPlane(plane, cell: planeCell)
+        mailPlane.render(plane, cell: planeCell, origin: display.frame.origin)
+        reminderPlane.render(reminder?.plane, cell: planeCell, origin: display.frame.origin)
+        renderLetter(reminder?.letter, cell: cell)
         renderSparks(sparks)
         renderHouse(inHouse, cell: houseCell)
         while creatures.count < snapshots.count { creatures.append(makeLayers()) }
@@ -270,39 +295,131 @@ final class ScreenOverlay {
         for layer in sparkLayers.dropFirst(sparks.count) where !layer.isHidden { layer.isHidden = true }
     }
 
-    /// The plane over everything, and its trail as plain square puffs, pooled like the stars.
-    private func renderPlane(_ plane: PlaneSnapshot?, cell: CGSize) {
-        let origin = display.frame.origin
-        let puffs = plane?.trail ?? []
-        while puffLayers.count < puffs.count {
-            let layer = CALayer()
-            layer.actions = ["position": NSNull(), "bounds": NSNull(), "opacity": NSNull(), "hidden": NSNull(), "backgroundColor": NSNull()]
-            layer.zPosition = 3.5
-            layer.backgroundColor = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)
-            root.addSublayer(layer)
-            puffLayers.append(layer)
-        }
-        for (layer, puff) in zip(puffLayers, puffs) {
-            let size = plane?.puffSize ?? 2
-            layer.isHidden = false
-            layer.bounds = CGRect(x: 0, y: 0, width: size, height: size)
-            layer.position = CGPoint(x: (puff.position.x - origin.x).rounded(), y: (puff.position.y - origin.y).rounded())
-            layer.opacity = puff.opacity
-        }
-        for layer in puffLayers.dropFirst(puffs.count) where !layer.isHidden { layer.isHidden = true }
+    // MARK: The reminder's letter
 
-        guard let plane, let image = plane.image, plane.opacity > 0 else {
-            if !planeLayer.isHidden { planeLayer.isHidden = true }
+    /// Screen points per pixel of the letter's paper.
+    private static let paperPixel: CGFloat = 3
+    private static let letterPad: CGFloat = 30
+    private static let letterTextWidth: CGFloat = 380
+    static let ink = CGColor(srgbRed: 40 / 255, green: 34 / 255, blue: 58 / 255, alpha: 1)
+    static let softInk = CGColor(srgbRed: 92 / 255, green: 86 / 255, blue: 120 / 255, alpha: 1)
+    static let faintInk = CGColor(srgbRed: 150 / 255, green: 146 / 255, blue: 170 / 255, alpha: 1)
+
+    /// Laid out once per letter, then only moved, grown and faded. Only the screen
+    /// the letter opened on draws it.
+    private func renderLetter(_ snap: LetterSnapshot?, cell: CGSize) {
+        guard let snap, display.frame.contains(snap.centre) else {
+            letter?.layer.removeFromSuperlayer(); letter = nil; letterFrame = nil
             return
         }
-        planeLayer.isHidden = false
-        planeLayer.contents = image
-        planeLayer.opacity = plane.opacity
-        planeLayer.bounds = CGRect(x: 0, y: 0, width: cell.width * plane.scale, height: cell.height * plane.scale)
-        planeLayer.position = CGPoint(x: plane.position.x - origin.x, y: plane.position.y - origin.y)
-        // Heading left, flip it over so the wing stays on top.
-        let upright: CGFloat = cos(plane.heading) < 0 ? -1 : 1
-        planeLayer.transform = CATransform3DScale(CATransform3DMakeRotation(plane.heading, 0, 0, 1), 1, upright, 1)
+        let key = "\(snap.id)|\(snap.title)|\(snap.note)"
+        if letter?.key != key {
+            // Laid out in one go: no layer of it fades or slides in on its own.
+            CATransaction.begin(); CATransaction.setDisableActions(true); defer { CATransaction.commit() }
+            letter?.layer.removeFromSuperlayer()
+            let made = makeLetter(snap, cell: cell)
+            root.addSublayer(made)
+            letter = (key, made)
+        }
+        guard let layer = letter?.layer else { return }
+        let origin = display.frame.origin
+        layer.position = CGPoint(x: (snap.centre.x - origin.x).rounded(), y: (snap.centre.y - origin.y).rounded())
+        layer.transform = CATransform3DMakeScale(snap.grow, snap.grow, 1)
+        layer.opacity = snap.opacity
+        let size = layer.bounds.size
+        letterFrame = CGRect(x: snap.centre.x - size.width / 2, y: snap.centre.y - size.height / 2, width: size.width, height: size.height)
+    }
+
+    private func textLayer(_ text: String, font: NSFont, color: CGColor, width: CGFloat, align: CATextLayerAlignmentMode = .left) -> CATextLayer {
+        let attributed = NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: NSColor(cgColor: color) ?? .black])
+        let measured = attributed.boundingRect(with: CGSize(width: width, height: 2000), options: [.usesLineFragmentOrigin, .usesFontLeading]).size
+        let layer = CATextLayer()
+        layer.actions = Self.noAnimations
+        layer.string = attributed
+        layer.isWrapped = true
+        layer.alignmentMode = align
+        layer.contentsScale = display.scale
+        layer.bounds = CGRect(x: 0, y: 0, width: align == .left ? ceil(measured.width) + 2 : width, height: ceil(measured.height) + 2)
+        return layer
+    }
+
+    /// The paper, in blocky's rules, sized to the words; the reminder big, the note
+    /// under it, the signature and the thrower's face at the bottom.
+    private func makeLetter(_ snap: LetterSnapshot, cell: CGSize) -> CALayer {
+        let px = Self.paperPixel, pad = Self.letterPad, wide = Self.letterTextWidth
+        let title = textLayer(snap.title, font: .monospacedSystemFont(ofSize: 11, weight: .bold), color: Self.faintInk, width: wide)
+        let text = textLayer(snap.text, font: .monospacedSystemFont(ofSize: 24, weight: .heavy), color: Self.ink, width: wide)
+        let note = textLayer(snap.note, font: .monospacedSystemFont(ofSize: 13, weight: .semibold), color: Self.softInk, width: wide)
+        let signature = textLayer(snap.signature, font: .monospacedSystemFont(ofSize: 13, weight: .heavy), color: Self.ink, width: wide)
+        let hint = textLayer(snap.hint, font: .monospacedSystemFont(ofSize: 10, weight: .semibold), color: Self.faintInk, width: wide)
+        let stampSize = snap.stamp == nil ? CGSize.zero : CGSize(width: cell.width * 1.5, height: cell.height * 1.5)
+
+        let inner = max(title.bounds.width, text.bounds.width, note.bounds.width, signature.bounds.width + stampSize.width + 8, 260)
+        let width = ((inner + pad * 2) / px).rounded(.up) * px
+        let footer = max(stampSize.height, signature.bounds.height)
+        let body = title.bounds.height + 10 + text.bounds.height + 14 + note.bounds.height + 14 + footer + 4 + hint.bounds.height
+        let height = ((body + pad * 2) / px).rounded(.up) * px
+
+        let container = CALayer()
+        container.actions = Self.noAnimations
+        container.bounds = CGRect(x: 0, y: 0, width: width, height: height)
+        container.zPosition = 7                    // over everything, the reminder plane included
+        let paper = CALayer()
+        paper.actions = Self.noAnimations
+        paper.magnificationFilter = .nearest
+        paper.contents = Self.paperImage(width: Int(width / px), height: Int(height / px))
+        paper.frame = container.bounds
+        container.addSublayer(paper)
+
+        // Top down, in a y-up layer.
+        var y = height - pad
+        func place(_ layer: CALayer, x: CGFloat? = nil, gap: CGFloat) {
+            y -= layer.bounds.height
+            layer.frame.origin = CGPoint(x: x ?? pad, y: y)
+            container.addSublayer(layer)
+            y -= gap
+        }
+        place(title, gap: 10)
+        place(text, gap: 14)
+        place(note, gap: 14)
+        let footerTop = y
+        if let image = snap.stamp {
+            let stamp = CALayer()
+            stamp.actions = Self.noAnimations
+            stamp.magnificationFilter = .nearest
+            stamp.contents = image
+            stamp.frame = CGRect(x: width - pad - stampSize.width + 6, y: footerTop - stampSize.height, width: stampSize.width, height: stampSize.height)
+            container.addSublayer(stamp)
+        }
+        let signatureRight = width - pad - (stampSize.width > 0 ? stampSize.width - 2 : 0)
+        signature.frame.origin = CGPoint(x: signatureRight - signature.bounds.width, y: footerTop - footer / 2 - signature.bounds.height / 2)
+        container.addSublayer(signature)
+        y = footerTop - footer - 4
+        place(hint, gap: 0)
+        return container
+    }
+
+    private static let paperInk: [Reminders.Paper: (UInt8, UInt8, UInt8)] = [
+        .rim: (40, 34, 58), .paper: (244, 241, 230), .light: (255, 255, 255),
+        .shade: (196, 192, 206), .deepShade: (150, 146, 170), .crease: (228, 224, 212),
+    ]
+
+    /// `Reminders.paper` as an image, one image pixel per paper pixel.
+    static func paperImage(width: Int, height: Int) -> CGImage? {
+        let rows = Reminders.paper(width: width, height: height)
+        let h = rows.count, w = rows.first?.count ?? 0
+        var bytes = [UInt8](repeating: 0, count: w * h * 4)
+        for (y, row) in rows.enumerated() {
+            for (x, ink) in row.enumerated() {
+                guard let ink, let c = paperInk[ink] else { continue }
+                let i = (y * w + x) * 4
+                bytes[i] = c.0; bytes[i + 1] = c.1; bytes[i + 2] = c.2; bytes[i + 3] = 255
+            }
+        }
+        guard let provider = CGDataProvider(data: Data(bytes) as CFData) else { return nil }
+        return CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: w * 4,
+                       space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                       provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
     }
 
     private func renderHouse(_ inHouse: HouseSnapshot?, cell: CGSize) {
@@ -443,4 +560,55 @@ final class ScreenOverlay {
     private static let noAnimations: [String: any CAAction] = [
         "position": NSNull(), "transform": NSNull(), "contents": NSNull(), "opacity": NSNull(), "bounds": NSNull(), "hidden": NSNull(),
     ]
+}
+
+/// One paper plane over everything, and its trail as plain square puffs, pooled like the stars.
+@MainActor
+private final class PlaneSprite {
+    let layer: CALayer
+    private var puffs: [CALayer] = []
+    private let root: CALayer
+    private let z: CGFloat
+
+    init(root: CALayer, z: CGFloat, layer: CALayer) {
+        self.root = root
+        self.z = z
+        self.layer = layer
+        layer.isHidden = true
+        layer.zPosition = z                        // over creatures and bubbles
+        root.addSublayer(layer)
+    }
+
+    func render(_ plane: PlaneSnapshot?, cell: CGSize, origin: CGPoint) {
+        let trail = plane?.trail ?? []
+        while puffs.count < trail.count {
+            let puff = CALayer()
+            puff.actions = ["position": NSNull(), "bounds": NSNull(), "opacity": NSNull(), "hidden": NSNull(), "backgroundColor": NSNull()]
+            puff.zPosition = z - 0.5
+            puff.backgroundColor = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)
+            root.addSublayer(puff)
+            puffs.append(puff)
+        }
+        for (puff, dot) in zip(puffs, trail) {
+            let size = plane?.puffSize ?? 2
+            puff.isHidden = false
+            puff.bounds = CGRect(x: 0, y: 0, width: size, height: size)
+            puff.position = CGPoint(x: (dot.position.x - origin.x).rounded(), y: (dot.position.y - origin.y).rounded())
+            puff.opacity = dot.opacity
+        }
+        for puff in puffs.dropFirst(trail.count) where !puff.isHidden { puff.isHidden = true }
+
+        guard let plane, let image = plane.image, plane.opacity > 0 else {
+            if !layer.isHidden { layer.isHidden = true }
+            return
+        }
+        layer.isHidden = false
+        layer.contents = image
+        layer.opacity = plane.opacity
+        layer.bounds = CGRect(x: 0, y: 0, width: cell.width * plane.scale, height: cell.height * plane.scale)
+        layer.position = CGPoint(x: plane.position.x - origin.x, y: plane.position.y - origin.y)
+        // Heading left, flip it over so the wing stays on top.
+        let upright: CGFloat = cos(plane.heading) < 0 ? -1 : 1
+        layer.transform = CATransform3DScale(CATransform3DMakeRotation(plane.heading, 0, 0, 1), 1, upright, 1)
+    }
 }

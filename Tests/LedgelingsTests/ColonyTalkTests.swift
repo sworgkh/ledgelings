@@ -354,4 +354,61 @@ extension ColonyTalkTests {
         #expect(w.colony.plotting.isEmpty, "no model, no call")
         #expect(w.colony.bonds.bond(a, b)?.talks == 1)
     }
+
+    // MARK: Reminders
+
+    @Test func aDueReminderIsThrownOpensAsALetterAndIsMarkedSent() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.talkEnabled = true
+        w.settings.reminderLetterSeconds = 10
+        w.colony.userIdleSeconds = { 0 }
+        let due = Date().addingTimeInterval(-5)
+        w.colony.reminders.add("Call mom", at: due, repeats: .once)
+        w.step(1.2)
+        let mail = try #require(w.colony.delivery)
+        #expect(mail.reminder.text == "Call mom")
+        #expect(w.colony.reminders.book.reminders[0].isFinished, "marked sent as soon as it is taken, so it is never sent twice")
+        #expect(run(w, upTo: 15) { if case .open = w.colony.delivery?.phase { true } else { false } })
+        let open = try #require(w.colony.delivery)
+        let writer = try #require(open.thrower.map { w.colony.character(forCreature: $0).name })
+        #expect(open.writer == writer)
+        #expect(open.note?.lowercased().contains("call mom") == true, "the note names the reminder")
+        let letter = try #require(w.colony.reminderSnapshot()?.letter)
+        #expect(letter.text == "Call mom" && letter.signature == "— \(writer)")
+        let logged = try #require(w.history.exchanges(on: ChatLog.day(of: Date())).last)
+        #expect(logged.situation.contains("\"Call mom\"") && logged.lines.map(\.speaker) == [writer])
+
+        // A click folds it away; it flies off and is gone.
+        w.colony.closeLetter()
+        let gone = run(w, upTo: 8) { w.colony.delivery == nil }
+        #expect(gone, "still \(String(describing: w.colony.delivery?.phase)) at \(String(describing: w.colony.delivery?.plane.position)) trail \(w.colony.delivery?.plane.trail.count ?? -1)")
+    }
+
+    @Test func theLetterWaitsWhileNobodyIsAtTheComputerThenFoldsItselfAway() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.reminderLetterSeconds = 10
+        var idle = 600.0
+        w.colony.userIdleSeconds = { idle }
+        w.colony.deliverNow(Reminders.Reminder(text: "Stretch", time: Date()))
+        #expect(run(w, upTo: 15) { if case .open = w.colony.delivery?.phase { true } else { false } })
+        w.step(30)
+        guard case .open = w.colony.delivery?.phase else { Issue.record("closed while nobody was there"); return }
+        idle = 0
+        w.step(10.5)
+        #expect(run(w, upTo: 8) { w.colony.delivery == nil })
+    }
+
+    @Test func remindersOffDeliverNothingUntilTurnedBackOn() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.remindersEnabled = false
+        w.colony.reminders.add("Water", at: Date().addingTimeInterval(-60), repeats: .once)
+        w.step(3)
+        #expect(w.colony.delivery == nil && !w.colony.reminders.book.reminders[0].isFinished)
+        w.settings.remindersEnabled = true
+        w.step(1.2)
+        #expect(w.colony.delivery?.reminder.text == "Water", "late, but delivered")
+    }
 }

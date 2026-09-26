@@ -8,8 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let library = SpriteLibrary()
     private let spend = SpendLedger()
     private let bonds = BondBook()
+    private let reminders = ReminderBook()
     private lazy var voice = Voice(settings: settings, spend: spend, history: history)
-    private lazy var settingsWindow = SettingsWindowController(settings: settings, history: history, library: library, spend: spend, bonds: bonds, voice: voice)
+    private lazy var settingsWindow = SettingsWindowController(
+        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice,
+        send: { [weak self] in self?.colony?.deliverNow($0) })
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -18,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
+    private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminders), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
     private static let hideChoices: [(String, Double?)] = [
         ("5 minutes", 5), ("15 minutes", 15), ("30 minutes", 30), ("1 hour", 60), ("2 hours", 120), ("4 hours", 240),
@@ -34,8 +38,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--reminder-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/reminder.mp4"
+            let text = args.indices.contains(at + 2) ? args[at + 2] : "Stretch your back and drink some water"
+            Task { @MainActor in
+                do { try await ReminderFilm.run(output: URL(fileURLWithPath: out), text: text) }
+                catch { FileHandle.standardError.write(Data("Ledgelings reminder film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         do {
-            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds)
+            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders)
             colony?.voice = voice
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
@@ -100,9 +115,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !started { log("not said: \(voice.status)"); exit(1) }
             Task { @MainActor in try? await Task.sleep(for: .seconds(60)); log("timed out"); exit(2) }
         }
-        // `--settings [creatures|sprites|talk|bonds|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--remind "text"`: a reminder delivered now, on the real screen, without saving it.
+        if let at = CommandLine.arguments.firstIndex(of: "--remind"), CommandLine.arguments.indices.contains(at + 1), let colony {
+            let text = CommandLine.arguments[at + 1]
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                colony.deliverNow(Reminders.Reminder(text: text, time: Date()))
+            }
+        }
+        // `--settings [creatures|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "bonds": .bonds, "calendar": .calendar, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
@@ -131,6 +154,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(hideItem)
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
         menu.addItem(withTitle: "Send a Paper Plane", action: #selector(sendPaperPlane), keyEquivalent: "p").target = self
+        menu.addItem(withTitle: "Add a Reminder…", action: #selector(openReminders), keyEquivalent: "r").target = self
+        nextReminderItem.target = self
+        menu.addItem(nextReminderItem)
         voiceItem.target = self
         menu.addItem(voiceItem)
         talkStatusItem.isEnabled = false
@@ -154,6 +180,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         skipItem.isHidden = settings.nightMinutes == 0
         if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
         voiceItem.state = settings.voiceEnabled ? .on : .off
+        if let next = reminders.book.upcoming {
+            nextReminderItem.title = "   Next: \(String(next.text.prefix(40))), \(Reminders.when(next.time, now: Date()))" + (settings.remindersEnabled ? "" : " (off)")
+            nextReminderItem.isHidden = false
+        } else {
+            nextReminderItem.isHidden = true
+        }
         talkStatusItem.title = "   " + String(colony.talkStatus.prefix(70))
         let s = spend.summary
         spendItem.title = "Spent: \(Spend.label(s.today.cost)) today, \(Spend.label(s.month.cost)) this month"
@@ -200,5 +232,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
+    @objc private func openReminders() { settingsWindow.show(tab: .reminders) }
     @objc private func openSpend() { settingsWindow.show(tab: .costs) }
 }

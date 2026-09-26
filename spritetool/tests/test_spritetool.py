@@ -197,11 +197,11 @@ def test_the_house_is_blocky_with_a_creature_sized_doorway_on_the_left():
 PLANE = Path(__file__).resolve().parents[2] / "sprites" / "plane.yaml"
 
 
-def test_the_plane_sheet_has_a_plane_and_a_letter_in_blocky_rules():
+def test_the_plane_sheet_has_a_plane_its_unfolding_and_a_letter_in_blocky_rules():
     from spritetool.painters import plane as painter
 
     recipe = load_recipe(PLANE)
-    assert [a.name for a in recipe.animations] == ["fly", "letter"]
+    assert [a.name for a in recipe.animations] == ["fly", "letter", "front", "opening"]
     sheet = key_out(get_painter("plane")(recipe), recipe.background, recipe.tolerance)
     for col, row, pose, _ in recipe.cells():
         x, y, w, h = recipe.cell_rect(col, row)
