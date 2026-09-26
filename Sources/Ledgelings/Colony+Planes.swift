@@ -76,8 +76,16 @@ extension Colony {
         var mail = Airmail(id: planeCount, plane: .thrown(from: from, to: to, start: head(of: from), inward: inward,
                                                            target: head(of: to), using: &rng))
         mail.isReply = note != nil
+        keepOnScreen(&mail.plane, scale: CGFloat(sizes[to]))
         airmail = mail
         if settings.talkEnabled { writeWithModel(from: from, to: to, id: planeCount, answering: note) }
+    }
+
+    /// The plane flies over the screens only, no wingtip past an outer edge,
+    /// drawn at `scale`.
+    func keepOnScreen(_ plane: inout PaperPlane, scale: CGFloat) {
+        plane.sky = displays.map(\.frame)
+        plane.margin = hypot(planeCell.width, planeCell.height) * scale / 2
     }
 
     /// A plane is on its way to `i`: it keeps out of conversations so it is free to catch it.

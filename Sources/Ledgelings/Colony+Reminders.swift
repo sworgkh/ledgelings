@@ -135,6 +135,8 @@ extension Colony {
         // A reminder is in a hurry: less swirl, quicker to the middle.
         plane.swirl *= 0.5
         plane.cruise = max(plane.cruise, 420)
+        // It grows as it nears the middle: kept in by its largest size.
+        keepOnScreen(&plane, scale: mail.baseScale * 1.8)
         mail.plane = plane
         mail.startDistance = max(1, plane.distance(to: mail.target))
         mail.shownScale = mail.baseScale

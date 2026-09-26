@@ -123,6 +123,65 @@ import Testing
         #expect(plane.passed(within: 5, of: between))
     }
 
+    /// A creature's head on one of the screen's four edges.
+    func headOnEdge(of screen: CGRect, using rng: inout Seeded) -> CGPoint {
+        let x = CGFloat.random(in: screen.minX + 30...screen.maxX - 30, using: &rng)
+        let y = CGFloat.random(in: screen.minY + 30...screen.maxY - 30, using: &rng)
+        switch Int.random(in: 0..<4, using: &rng) {
+        case 0: return CGPoint(x: x, y: screen.minY + 30)
+        case 1: return CGPoint(x: x, y: screen.maxY - 30)
+        case 2: return CGPoint(x: screen.minX + 30, y: y)
+        default: return CGPoint(x: screen.maxX - 30, y: y)
+        }
+    }
+
+    @Test func aPlaneNeverFliesPastTheScreensEdgeAndIsStillCaught() {
+        var rng = Seeded(state: 11)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 982)
+        let inner = screen.insetBy(dx: 24, dy: 24)
+        for _ in 0..<150 {
+            let start = headOnEdge(of: screen, using: &rng), target = headOnEdge(of: screen, using: &rng)
+            let inward = CGVector(dx: start.x < 100 ? 1 : start.x > 1400 ? -1 : 0, dy: start.y < 100 ? 1 : start.y > 880 ? -1 : 0)
+            var plane = PaperPlane.thrown(from: 0, to: 1, start: start, inward: inward, target: target, using: &rng)
+            plane.wind.strength = 480
+            plane.swirl = 1100
+            plane.sky = [screen]
+            plane.margin = 24
+            var time = 0.0, caught = false
+            while !caught, plane.age < 30 {
+                plane.fly(dt: 1 / 30.0, toward: target, time: time)
+                time += 1 / 30.0
+                caught = plane.passed(within: 30, of: target)
+                if plane.inSky { #expect(inner.insetBy(dx: -0.5, dy: -0.5).contains(plane.position), "out at \(plane.position)") }
+            }
+            #expect(caught && plane.age < 25, "caught after \(plane.age) s")
+        }
+    }
+
+    @Test func aPlaneThrownFromBelowTheScreenFliesInAndStaysIn() {
+        let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        var plane = PaperPlane(from: 0, to: 1, start: CGPoint(x: 700, y: -16), inward: CGVector(dx: 0, dy: 1), target: CGPoint(x: 720, y: 450))
+        plane.sky = [screen]
+        plane.margin = 30
+        #expect(!plane.inSky)
+        for k in 0..<60 { plane.fly(dt: 1 / 30.0, toward: CGPoint(x: 720, y: 450), time: Double(k) / 30) }
+        #expect(plane.inSky, "not pinned to the edge on the way in")
+    }
+
+    @Test func aPlaneGoesOnFromOneScreenToTheNext() {
+        let left = CGRect(x: 0, y: 0, width: 1440, height: 900), right = CGRect(x: 1440, y: 0, width: 1920, height: 1080)
+        var plane = PaperPlane(from: 0, to: 1, start: CGPoint(x: 200, y: 450), inward: CGVector(dx: 1, dy: 0), target: CGPoint(x: 2800, y: 450))
+        plane.sky = [left, right]
+        plane.margin = 24
+        var time = 0.0
+        while plane.distance(to: CGPoint(x: 2800, y: 450)) > 30, plane.age < 20 {
+            plane.fly(dt: 1 / 30.0, toward: CGPoint(x: 2800, y: 450), time: time)
+            time += 1 / 30.0
+            #expect(plane.position.y >= 23.5 && plane.position.y <= 1080 - 23.5)
+        }
+        #expect(plane.age < 20, "across the seam between the two screens")
+    }
+
     @Test func aPlaneIsDueEveryIntervalFromTheLastOne() {
         var post = Post(quietFor: 120)
         #expect(!post.isDue(at: 119))

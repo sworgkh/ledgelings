@@ -995,6 +995,18 @@ answered. macOS only for now; the Windows app does not have it yet.
   to 90…760 pt/s; `p += v·dt`. The swirl swings it side to side into
   S-curves and now and then a loop; the grip grows with time and closeness,
   so it always arrives.
+- **The screen's edges**: the plane flies over the attached screens only.
+  `margin = |planeCell| · scale / 2` (half the drawn plane's diagonal), so no
+  wingtip goes past an edge. At an *outer* edge (no screen beyond it; a seam
+  between two screens is not one), `d = max(0, distance to edge − margin)`;
+  within `d < 140` it is pushed back inward with
+  `3000 · (1 − d/140)² · calm` pt/s² before the move, so it swoops round.
+  After the move, if it would still be past `margin` from an outer edge it is
+  put back on that line and loses the outward part of its speed. A plane
+  thrown from outside the screens or right by an edge (a reminder's plane with
+  no thrower comes up from below) is let in first and kept in from the moment
+  it is fully inside. A reminder's plane uses its largest size (`1.8 ·
+  baseScale`) for the margin; its last flight up and away is not kept in.
 - **Trail**: a puff every 9 pt of flight, laid back evenly along each step so a
   fast plane leaves no gaps; each lives 1.1 s and keeps fading after the plane
   is caught or lost.
