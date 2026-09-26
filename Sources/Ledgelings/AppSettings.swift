@@ -28,6 +28,17 @@ final class AppSettings: ObservableObject {
     /// Zero means they never sleep.
     @Published var nightMinutes: Double { didSet { save(nightMinutes, "nightMinutes") } }
 
+    // MARK: Patience
+
+    /// Times in a row a creature can be chased by the cursor or picked up before it complains.
+    static let complainAfterRange = 1...20
+    /// Seconds of peace that start its count over.
+    static let complainCalmRange = 5.0...120.0
+    /// Pushed around by the cursor too often in a row, a creature tells the user off.
+    @Published var complainEnabled: Bool { didSet { save(complainEnabled, "complainEnabled") } }
+    @Published var complainAfter: Int { didSet { save(complainAfter, "complainAfter") } }
+    @Published var complainCalmSeconds: Double { didSet { save(complainCalmSeconds, "complainCalmSeconds") } }
+
     // MARK: Talk
 
     /// Where the words come from. The built-in lines need nothing set up.
@@ -235,6 +246,13 @@ final class AppSettings: ObservableObject {
         dayMinutes = max(0.5, defaults.object(forKey: "dayMinutes") as? Double ?? 3)
         nightMinutes = max(0, defaults.object(forKey: "nightMinutes") as? Double ?? 5)
 
+        complainEnabled = defaults.object(forKey: "complainEnabled") as? Bool ?? true
+        // Four: the owner's own number. The fifth chase in a row gets a complaint.
+        let patience = defaults.object(forKey: "complainAfter") as? Int ?? 4
+        complainAfter = min(max(patience, Self.complainAfterRange.lowerBound), Self.complainAfterRange.upperBound)
+        // Twenty seconds: chasing one creature round the screen is a streak; the same thing an hour apart is not.
+        let calm = defaults.object(forKey: "complainCalmSeconds") as? Double ?? 20
+        complainCalmSeconds = min(max(calm, Self.complainCalmRange.lowerBound), Self.complainCalmRange.upperBound)
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
         followGiver = defaults.object(forKey: "followGiver") as? Bool ?? true
         planesEnabled = defaults.object(forKey: "planesEnabled") as? Bool ?? true

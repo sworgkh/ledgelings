@@ -91,6 +91,10 @@ final class Colony: NSObject {
     static let dragThreshold: CGFloat = 4
     /// Every pair stopped face to face right now. `releaseAt` is nil while the words are still coming.
     var chats: [Conversation] = []
+    /// How often each creature has been chased or carried lately; too often and it complains.
+    var annoyance = Annoyance()
+    /// Creatures whose complaint the model is writing.
+    var complaining: Set<Int> = []
     /// Pixel stars from the last bump, and the colours they wear.
     var sparks = Sparks()
     var sparkPalette: [CGColor] = []
@@ -205,6 +209,9 @@ final class Colony: NSObject {
             creatures.removeLast(); asleepFor.removeLast(); sizeShares.removeLast(); sizes.removeLast()
         }
         gifts.forget(creaturesFrom: creatures.count)
+        annoyance.forget(creaturesFrom: creatures.count)
+        annoyance.limit = settings.complainAfter
+        annoyance.calmAfter = settings.complainCalmSeconds
         while creatures.count < settings.creatureCount {
             let share = Double.random(in: 0...1, using: &rng), size = settings.size(forShare: share)
             creatures.append(spawn(size: size)); asleepFor.append(0); sizeShares.append(share); sizes.append(size)
@@ -291,7 +298,9 @@ final class Colony: NSObject {
         elapsed += dt
         let night = isNight
         for i in creatures.indices where !hideout.isInside(i) {
-            creatures[i].update(dt: dt, cursor: shift || hideout.isActive ? nil : cursor, isNight: night, using: &rng)
+            if creatures[i].update(dt: dt, cursor: shift || hideout.isActive ? nil : cursor, isNight: night, using: &rng) {
+                bothered(i)
+            }
             asleepFor[i] = creatures[i].looksAsleep ? asleepFor[i] + dt : 0
         }
         updateHideout()

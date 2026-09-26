@@ -97,6 +97,11 @@ back. Every character writes about what its soul keeps coming back to:
 Blocky about the cursor, Zed about naps, Ruth about counting, Unit 7 in numbers.
 macOS only for now.
 
+**They have limits.** Chase one with the cursor or pick it up more than four times
+in a row and it turns round and tells you off, in its own voice: Blocky keeps a list,
+Zed just wants to sleep, Unit 7 reports its annoyance in percent. How patient they
+are is in Settings › Creatures. macOS only for now.
+
 **Reminders.** Tell them what to remind you of and when (once, every day, every
 weekday, every week). When the time comes, one of them folds it into a paper plane
 and throws it at you: it swirls to the middle of your screen, turns to face you,

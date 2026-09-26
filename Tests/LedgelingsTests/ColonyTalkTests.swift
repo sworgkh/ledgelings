@@ -470,4 +470,34 @@ extension ColonyTalkTests {
         w.step(1.2)
         #expect(w.colony.delivery?.reminder.text == "Water", "late, but delivered")
     }
+
+    @Test func pickedUpFiveTimesInARowItComplainsToTheUserInItsOwnWords() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.creatureCount = 1          // nobody else on top of it to catch the press
+        w.colony.applySettings()
+        let name = w.colony.character(forCreature: 0).name
+        func grab() {
+            // A sleeper, so a plain press picks it up; dropped, it lands asleep again.
+            if !w.colony.creatures[0].isSleeping { w.colony.creatures[0].toggleNap(using: &w.colony.rng) }
+            let at = w.colony.creatures[0].position
+            w.colony.hand(.down(at, shift: false))
+            #expect(w.colony.creatures[0].isHeld)
+            w.colony.hand(.up(at))
+            w.step(1)
+        }
+        for _ in 0..<4 { grab() }
+        #expect(w.colony.bubbles[0] == nil, "four times it puts up with")
+        grab()
+        let said = try #require(w.colony.bubbles[0]?.text)
+        #expect(Complaints.lines[name]!.contains { Banter.render($0, ["times": "5"]) == said }, "one of \(name)'s own complaints")
+        let logged = try #require(w.history.exchanges(on: ChatLog.day(of: Date())).last)
+        #expect(logged.lines.map(\.speaker) == [name] && logged.lines.first?.text == said)
+        #expect(w.colony.annoyance.streak(of: 0, at: w.colony.elapsed) == 0, "the count starts over")
+
+        w.colony.bubbles.removeAll()
+        w.settings.complainEnabled = false
+        for _ in 0..<6 { grab() }
+        #expect(w.colony.bubbles[0] == nil, "off: it takes it quietly")
+    }
 }

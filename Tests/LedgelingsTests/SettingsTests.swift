@@ -333,4 +333,20 @@ import Testing
         defaults.set(1.0, forKey: "reminderLetterSeconds")
         #expect(AppSettings(defaults: defaults).reminderLetterSeconds == AppSettings.reminderLetterRange.lowerBound)
     }
+
+    @Test func theyComplainAfterFourInARowCalmAfterTwentySecondsAndItIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.complainEnabled && s.complainAfter == 4 && s.complainCalmSeconds == 20)
+        s.complainEnabled = false
+        s.complainAfter = 7
+        s.complainCalmSeconds = 45
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.complainEnabled && back.complainAfter == 7 && back.complainCalmSeconds == 45)
+        defaults.set(99, forKey: "complainAfter")
+        defaults.set(1.0, forKey: "complainCalmSeconds")
+        let clamped = AppSettings(defaults: defaults)
+        #expect(clamped.complainAfter == AppSettings.complainAfterRange.upperBound)
+        #expect(clamped.complainCalmSeconds == AppSettings.complainCalmRange.lowerBound)
+    }
 }

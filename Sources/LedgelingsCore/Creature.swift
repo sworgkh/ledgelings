@@ -145,15 +145,19 @@ public struct Creature: Sendable {
 
     // MARK: Driving it
 
+    /// Returns true when the cursor came too close and it jumped away.
+    @discardableResult
     public mutating func update(dt: Double, cursor: CGPoint?, isNight: Bool = false,
-                                using rng: inout some RandomNumberGenerator) {
-        guard dt > 0 else { return }
+                                using rng: inout some RandomNumberGenerator) -> Bool {
+        guard dt > 0 else { return false }
+        var fled = false
         if looksAsleep { eyes = .closed; blinkElapsed = nil } else { updateBlink(dt: dt, using: &rng) }
         noticeTimeOfDay(isNight: isNight, using: &rng)
 
         // A sleeper does not notice the cursor. That is what lets you pick it up.
         if !isJumping, !looksAsleep, !isHeld, !isRunning, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
             startle(using: &rng)
+            fled = isJumping
         }
 
         animationTime += dt
@@ -245,6 +249,7 @@ public struct Creature: Sendable {
             position = world.point(at: spot)
             turn(toward: restingRotation, dt: dt)
         }
+        return fled
     }
 
     // MARK: Going home
