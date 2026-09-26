@@ -19,11 +19,13 @@ public struct ChatLog: Sendable {
         /// What the two calls cost in US dollars and tokens, when the server said.
         public var cost: Double?
         public var tokens: Int?
+        /// The story the pair was playing out, and which part of it this was (`Bonds`).
+        public var plot: String?
 
         public init(time: Date, situation: String, provider: String, model: String, lines: [Line],
-                    cost: Double? = nil, tokens: Int? = nil) {
+                    cost: Double? = nil, tokens: Int? = nil, plot: String? = nil) {
             self.time = time; self.situation = situation; self.provider = provider; self.model = model; self.lines = lines
-            self.cost = cost; self.tokens = tokens
+            self.cost = cost; self.tokens = tokens; self.plot = plot
         }
     }
 

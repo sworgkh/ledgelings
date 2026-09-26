@@ -93,6 +93,19 @@ final class AppSettings: ObservableObject {
     @Published var linePrompt: String { didSet { save(linePrompt, "linePrompt") } }
     @Published var replyPrompt: String { didSet { save(replyPrompt, "replyPrompt") } }
 
+    // MARK: Bonds
+
+    /// Hours a pair must share the screen before the model writes them a story.
+    static let plotAfterRange = 0.25...72.0
+    /// Conversations one story lasts.
+    static let plotLengthRange = 2...20
+    /// Pairs who have lived together a while get a small story, written by the
+    /// model, that colours their next few conversations.
+    @Published var plotsEnabled: Bool { didSet { save(plotsEnabled, "plotsEnabled") } }
+    @Published var plotAfterHours: Double { didSet { save(plotAfterHours, "plotAfterHours") } }
+    @Published var plotLength: Int { didSet { save(plotLength, "plotLength") } }
+    @Published var plotPrompt: String { didSet { save(plotPrompt, "plotPrompt") } }
+
     // MARK: Voice
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
@@ -228,6 +241,12 @@ final class AppSettings: ObservableObject {
         systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
         linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
         replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt
+        plotsEnabled = defaults.object(forKey: "plotsEnabled") as? Bool ?? true
+        // An hour: a colony that runs all day gets its first stories the same morning.
+        plotAfterHours = clamp("plotAfterHours", 1, Self.plotAfterRange)
+        let length = defaults.object(forKey: "plotLength") as? Int ?? 6
+        plotLength = min(max(length, Self.plotLengthRange.lowerBound), Self.plotLengthRange.upperBound)
+        plotPrompt = defaults.string(forKey: "plotPrompt") ?? Bonds.defaultPlotPrompt
     }
 
     func species(forCreature index: Int) -> String {
@@ -295,6 +314,8 @@ final class AppSettings: ObservableObject {
         linePrompt = Banter.defaultLinePrompt
         replyPrompt = Banter.defaultReplyPrompt
     }
+
+    func resetPlotPrompt() { plotPrompt = Bonds.defaultPlotPrompt }
 
     /// The size for a creature whose place in the range is `share` (0 = smallest,
     /// 1 = largest), snapped to the step.

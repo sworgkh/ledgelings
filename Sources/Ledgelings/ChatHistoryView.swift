@@ -75,6 +75,7 @@ struct ChatHistoryView: View {
             }
             .font(.caption).foregroundStyle(.secondary)
             Text(x.situation).font(.caption).foregroundStyle(.tertiary)
+            if let plot = x.plot { Text("Plot: \(plot)").font(.caption).italic().foregroundStyle(.tertiary) }
             ForEach(x.lines.indices, id: \.self) { i in
                 Text(Self.spoken(x.lines[i])).textSelection(.enabled)
             }

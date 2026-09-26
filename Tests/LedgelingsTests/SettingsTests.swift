@@ -271,4 +271,22 @@ import Testing
         defaults.set(9.0, forKey: "voiceSpeed")
         #expect(AppSettings(defaults: defaults).voiceSpeed == AppSettings.voiceSpeedRange.upperBound)
     }
+
+    @Test func storiesAreOnAfterAnHourForSixConversationsAndRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.plotsEnabled && s.plotAfterHours == 1 && s.plotLength == 6 && s.plotPrompt == Bonds.defaultPlotPrompt)
+        s.plotsEnabled = false
+        s.plotAfterHours = 24
+        s.plotLength = 10
+        s.plotPrompt = "Write {speaker} a plot."
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.plotsEnabled && back.plotAfterHours == 24 && back.plotLength == 10 && back.plotPrompt == "Write {speaker} a plot.")
+        back.resetPlotPrompt()
+        #expect(back.plotPrompt == Bonds.defaultPlotPrompt)
+        defaults.set(500.0, forKey: "plotAfterHours")
+        defaults.set(0, forKey: "plotLength")
+        let clamped = AppSettings(defaults: defaults)
+        #expect(clamped.plotAfterHours == AppSettings.plotAfterRange.upperBound && clamped.plotLength == AppSettings.plotLengthRange.lowerBound)
+    }
 }

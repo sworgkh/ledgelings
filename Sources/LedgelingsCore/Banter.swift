@@ -14,7 +14,7 @@ public struct Character: Codable, Equatable, Sendable {
 /// The words that go to the model. Pure string work, so it is testable without
 /// a server: templates with `{placeholders}`, filled from a small dictionary.
 public enum Banter {
-    public static let placeholders = ["speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona", "situation", "line"]
+    public static let placeholders = ["speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona", "situation", "line", "relationship"]
 
     /// What the built-in creature is, for the prompt.
     public static let defaultKind = "a small square creature"

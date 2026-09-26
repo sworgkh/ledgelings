@@ -467,7 +467,7 @@ when none was priced. Older lines without them still read.
 A one-sided exchange (the reply failed or came back empty) is still written
 with its one line. Reading: list days = files named `YYYY-MM-DD.jsonl`, newest
 first; a day's exchanges are its lines in file order; a line that does not
-parse is skipped. The viewer (Settings › Chats, also "Chat History…" in the
+parse is skipped. An exchange played under a plot (§6.5.2) carries `"plot"`. The viewer (Settings › Chats, also "Chat History…" in the
 menu) lists days on the left, naming today and yesterday, and shows each
 exchange as time, model, situation, then `**Name:** text` per line, with
 buttons that open the folder in the file manager and in a terminal.
@@ -484,7 +484,7 @@ Every model call, whether or not its line was usable, appends one record to
 
 `purpose` names the feature that made the call: `talk` (meetings and pokes),
 `planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
-model), `casting` (Cast with Model). Recording a call requires one. Records from
+model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -509,6 +509,55 @@ right: the last 200 calls newest first with time, feature, tokens and cost, the
 file path and a button revealing it), and as a menu line "Spent: $a today, $b this
 month" opening that tab (hidden until there is a record); the Chats viewer shows
 each exchange's cost and tokens, and its voice cost.
+
+### 6.5.2 Bonds and plots (macOS)
+
+Characters who share the screen for a long time form **bonds**, and the model
+writes each pair short **plots** that colour their next conversations. Kept in
+`<app support>/Ledgelings/bonds.json`, one object `{"bonds": {key: bond}}`,
+rewritten whole on each change; key = the two names sorted, joined by `" & "`
+(a rename is a new character). A bond:
+
+```json
+{"names": ["Blocky", "Pip"], "together": 7260, "talks": 9, "plots": 1,
+ "summary": "Grudging friends; Blocky pretends not to care.",
+ "plot": {"text": "Pip hides Blocky's favourite pixel.", "length": 6, "told": 2, "started": "…"},
+ "lastPlot": null, "recent": [{"speaker": "Pip", "text": "…"}], "lastAsked": "…", "cost": 0.0003}
+```
+
+- **Time together.** Every 30 s of the colony clock, each pair of distinct
+  character names on screen gains 30 s of `together` (saved then).
+- **Due.** After a conversation with a model that said at least one line, the
+  pair's `talks` goes up, its last 4 lines are kept in `recent`, and a running
+  plot's `told` goes up; at `told ≥ length` the plot moves to `lastPlot`. Then,
+  if `plotsEnabled`, the brain is a model, `together ≥ plotAfterHours`, no plot
+  is running, none is being written, and the last ask was over 10 min ago, one
+  call is made in the background: system `"You write tiny, playful stories for
+  small characters. Follow the answer format exactly."`, user = `plotPrompt`
+  rendered with `speaker…listenerPersona` (the pair), `together` (§ duration
+  below), `bond` (the summary, or "they have not really made their minds up
+  about each other yet"), `lastPlot` (or "none yet; this is their first"),
+  `recent` (`Name: text` lines, or "(nothing yet)"), `length` = `plotLength`;
+  at most 1000 tokens (room for a thinking model; OpenRouter is also asked for `"reasoning": {"effort": "low"}`). Recorded with purpose `plots` whatever comes back, its cost
+  added to the bond's `cost`, `lastAsked` set.
+- **Parsing.** After `</think>` if any; the first line whose text, stripped of
+  leading/trailing `*#-_` and spaces, starts with `PLOT:` (any case) is the plot,
+  likewise `BOND:` the summary; values lose wrapping `*`, spaces and quotes and are
+  cut at 240 characters. No plot → nothing changes (the bond keeps its old summary).
+- **In the prompt.** With `plotsEnabled`, the speaker's system prompt gets
+  `context` for the pair from its own side, empty when the bond has neither
+  summary nor plot: `"You and {other} have shared this screen for {duration}."`
+  + `" How you get on: {summary}"` + for a running plot `" What is going on
+  between you (part {told+1} of {length}): {plot}"` and either `" Let it colour
+  your line and move the story on a little; never explain it."` or, on the last
+  part, `" This is the last part: let your line bring it to an end."`. It
+  replaces `{relationship}` in the system prompt, or, when the template has no
+  `{relationship}`, is appended on a new line. Talk (both lines) and paper planes
+  (note and thought) use it; only talk advances the plot.
+- **Duration.** Under a minute "a moment", then whole minutes, hours, days:
+  "1 minute", "45 minutes", "5 hours", "2 days".
+- **Log.** A conversation played under a plot is written with
+  `"plot": "part 2 of 6: …"` (§6.5) and the Chats viewer shows it.
 
 ### 6.6 Menu and poke
 
@@ -1213,7 +1262,11 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | bubbleSeconds | 14 | 4–60, clamped on load |
 | flowerMinutes | 2 | 0.5–30, clamped on load |
 | characters | the six above | ≥ 2; JSON |
-| systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores |
+| systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores; `{relationship}` places the bond and plot (§6.5.2) |
+| plotsEnabled | true | bonds get plots, and both reach the prompts (§6.5.2) |
+| plotAfterHours | 1 | 0.25–72, clamped on load: time on screen together before a pair's first plot |
+| plotLength | 6 | 2–20, clamped on load: conversations one plot lasts |
+| plotPrompt | §6.5.2 | free text; "Reset Prompt" restores |
 | voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
 | voiceEngine | system | system, openRouter, local |
 | voicePerCharacter | true | |
@@ -1230,7 +1283,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
 
-Settings window: 1100×760 points, six tabs, each laid out as two columns
+Settings window: 1100×760 points, seven tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders. **Talk**: talk toggle,
@@ -1242,7 +1295,11 @@ Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, mod
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
 pick, free models tinted green, current model highlighted; characters editor;
-prompt editors with a placeholder legend. **Voice**: on the left the toggle,
+prompt editors with a placeholder legend. **Bonds**: on the left the plots toggle, the first-plot slider, the plot-length
+stepper and the plot prompt editor with Reset Prompt; on the right a card per pair,
+longest together first (names, time together, talks, plots, cost, the bond, the
+running plot with its part or the last plot, Forget), then the file with Reveal
+in Finder and Forget All. **Voice**: on the left the toggle,
 engine picker, voice-each and cartoon toggles, voice picker or key/model/voice
 pickers and Keep with its count and Reveal, speed/pitch/volume sliders, Test,
 Stop, status; on the right a card per character on screen with voice picker

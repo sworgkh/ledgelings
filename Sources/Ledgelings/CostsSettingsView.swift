@@ -35,7 +35,7 @@ struct CostsSettingsView: View {
             } header: {
                 Text("By feature")
             } footer: {
-                Text("Talk is the meetings and pokes (two calls a conversation); paper planes the notes and the catcher's thought; voice every line said by a paid speech model; voice casting each Cast with Model. Calls from before features were labelled are counted apart.")
+                Text("Talk is the meetings and pokes (two calls a conversation); paper planes the notes and the catcher's thought; voice every line said by a paid speech model; voice casting each Cast with Model; relationship plots one call per story a pair gets (Bonds tab). Calls from before features were labelled are counted apart.")
             }
 
             Section {
