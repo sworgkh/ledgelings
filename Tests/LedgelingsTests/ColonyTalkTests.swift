@@ -82,6 +82,49 @@ import Testing
         #expect(logged.first?.provider == AppSettings.Brain.script.title && logged.first?.cost == nil)
     }
 
+    @Test func aPairStaysFaceToFaceUntilTheLastBubbleIsGone() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.script = "Hi there.\nHello back to you, friend.\n"
+        w.colony.talkNow(from: 0)
+        #expect(w.colony.creatures[0].isChatting && w.colony.creatures[1].isChatting)
+        w.step(Banter.showTime("Hi there.", base: w.settings.bubbleSeconds) * 0.6 + 0.1)
+        #expect(w.colony.bubbles[1] != nil, "the answer is up")
+        w.step(2)
+        #expect(w.colony.busy.isEmpty, "the last line is out")
+        #expect(w.colony.bubbles[1] != nil, "but still on screen")
+        #expect(w.colony.creatures[0].isChatting && w.colony.creatures[1].isChatting, "so nobody walks off mid-sentence")
+        w.step(Banter.showTime("Hello back to you, friend.", base: w.settings.bubbleSeconds))
+        #expect(w.colony.bubbles.isEmpty)
+        #expect(!w.colony.creatures[0].isChatting && !w.colony.creatures[1].isChatting, "then both walk on")
+        #expect(w.colony.chats.isEmpty)
+    }
+
+    @Test func aSlowConversationOutlastsTheChatsSafetyLimit() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.colony.hold(0, and: 1)
+        w.colony.busy.formUnion([0, 1])            // a model thinking, a voice speaking: longer than 30 s
+        w.step(40)
+        #expect(w.colony.creatures[0].isChatting && w.colony.creatures[1].isChatting)
+        w.colony.busy.subtract([0, 1])
+        w.colony.endChat(0, 1, after: 1.2)
+        w.step(1.5)
+        #expect(!w.colony.creatures[0].isChatting && !w.colony.creatures[1].isChatting)
+    }
+
+    @Test func aPairThatNeverSaysItIsDoneStillWalksOnOnceQuiet() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.colony.hold(0, and: 1)
+        w.colony.busy.formUnion([0, 1])
+        w.step(40)
+        w.colony.busy.subtract([0, 1])             // nobody calls endChat
+        w.step(Colony.chatGrace + 0.5)
+        #expect(!w.colony.creatures[0].isChatting && !w.colony.creatures[1].isChatting)
+        #expect(w.colony.chats.isEmpty)
+    }
+
     @Test func aBrokenScriptSaysSoInTheStatusInsteadOfTalking() throws {
         let w = try World()
         defer { w.forget() }

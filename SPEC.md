@@ -255,6 +255,9 @@ leaves and the one it lands on. Direction after landing: random.
 - `meet(facing, for = 30 s)`: refused while jumping, asleep-looking or held.
   Remembers the current direction (once), sets `direction = facing`, enters
   chatting with the 30 s safety limit.
+- `keepChatting(for s)`: only while chatting; raises the remaining limit to at
+  least `s`. The colony calls it every frame while a pair is still talking
+  (§7.2), so a slow exchange never walks off mid-sentence.
 - `walkOn()`: only from chatting. Restores the remembered direction and enters
   walking with a fresh `walkSpell`.
 - A startle (cursor) or anything else that changes mode ends the chat.
@@ -435,8 +438,8 @@ background:
    (so the reply appears while the first bubble is still up), then show the
    reply as the listener's bubble.
 6. Any error → status = the error text, logged to stderr.
-7. Whatever happened, when the task ends release the chatting pair 1.2 s later
-   (§7.2).
+7. Whatever happened, when the task ends release the chatting pair 1.2 s later,
+   once both bubbles are gone (§7.2).
 
 ### 6.3 Cleaning a model's line
 
@@ -708,7 +711,7 @@ reports `done` or `dropped`; a line that cannot be voiced waits the silent
 0.6 × showTime instead. The sound of every later line is fetched as the conversation
 starts (OpenRouter and local engines), so it plays the moment its turn comes. A
 voiced line whose bubble gives up (45 s) ends its turn too. The pair is let go 1.2 s
-after the last line is said; a model exchange keeps the pair until the reply is said;
+after the last line is said, and not before its bubble is gone (§7.2); a model exchange keeps the pair until the reply is said;
 the plane catcher walks on 1 s after its thought. Only one voiced conversation runs
 at a time: a meeting then only bumps (talk refused), and a landed plane waits in
 `.waiting` until the voice is free, at most 60 s.
@@ -773,7 +776,7 @@ one saying it and the one hearing it; `{flower}` with the flower given, or the
 word `flower`; `{holiday}` with the day's holiday, or the words `the holiday`. Both creatures become busy. Line 1 shows at once; line k+1 shows
 `showTime(line k) · 0.6` seconds after line k (§6.4), on the colony's own clock
 (so it pauses with the app, unlike the model path). When the last line shows,
-the pair is freed and released 1.2 s later (§7.2). The exchange is written to
+the pair is freed and released 1.2 s later, once that last bubble is gone (§7.2). The exchange is written to
 the chat log (§6.5) when the conversation starts, provider `"Built-in lines"`,
 empty model, no cost or tokens; nothing is written to the spend file.
 
@@ -828,11 +831,17 @@ different loops, keep the current direction. The colony records
 `endChat(after)` sets `releaseAt = min(existing, elapsed + after)`.
 
 Each frame: if either of the pair is no longer chatting (startled, asleep,
-removed), or `releaseAt ≤ elapsed`, both `walkOn()` and the record is
-cleared.
+removed), both `walkOn()` at once and the record is cleared. Otherwise the pair
+is **still talking** while either is busy (a model thinking, a line due) or has a
+bubble on screen; then both get `keepChatting(for: chatGrace = 5 s)` and stay
+put, whatever `releaseAt` says. Once both are quiet and `releaseAt ≤ elapsed`,
+both `walkOn()`; with no `releaseAt` ever set, the 5 s limit runs out and they
+walk on anyway. So nobody walks off while its last line is still up, and a long
+voiced exchange outlasts the 30 s limit.
 
 Timeline of a normal meeting: bump → stars + squash → both stand facing →
-opening bubble → reply bubble → 1.2 s → both walk on in their old directions
+opening bubble → reply bubble → the reply's bubble goes away (at least 1.2 s
+after it was said) → both walk on in their old directions
 (so a head-on pair passes through each other once; the cooldown stops a
 re-bump).
 

@@ -98,16 +98,33 @@ extension Colony {
         return CGPoint(x: c.position.x + up.dx * lift, y: c.position.y + up.dy * lift)
     }
 
-    /// Let a pair go once its reply is out, or as soon as one of them is no longer standing there.
+    /// Let a pair go once they have finished talking: the last line said and its
+    /// bubble gone, so nobody walks off mid-sentence; or at once when one of them is
+    /// no longer standing there. While either is still talking, their chat's own
+    /// safety limit is kept topped up; once both are quiet it runs out as usual.
     func releaseChatIfOver() {
         let over = chats.filter { chat in
             let stillThere = [chat.a, chat.b].allSatisfy { creatures.indices.contains($0) && creatures[$0].isChatting }
-            return !stillThere || (chat.releaseAt.map { $0 <= elapsed } ?? false)
+            guard stillThere else { return true }
+            if isTalking(chat) { return false }
+            return chat.releaseAt.map { $0 <= elapsed } ?? false
+        }
+        for chat in chats where isTalking(chat) {
+            for i in [chat.a, chat.b] where creatures.indices.contains(i) { creatures[i].keepChatting(for: Self.chatGrace) }
         }
         guard !over.isEmpty else { return }
         for chat in over { release(chat) }
         chats.removeAll { chat in over.contains { $0.a == chat.a && $0.b == chat.b } }
     }
+
+    /// A line of theirs is still coming (a model is thinking, a scripted line is due)
+    /// or still up in a bubble.
+    private func isTalking(_ chat: Conversation) -> Bool {
+        [chat.a, chat.b].contains { busy.contains($0) || bubbles[$0] != nil }
+    }
+
+    /// How long a pair stays put, once both have gone quiet, if nothing lets them go sooner.
+    static let chatGrace = 5.0
 
     // MARK: Flowers and stars, as the overlay draws them
 

@@ -69,7 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try? await Task.sleep(for: .seconds(1))
                 colony.talkNow()
                 try? await Task.sleep(for: .seconds(1))
-                for _ in 0..<600 where !colony.busy.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
+                for _ in 0..<900 where !colony.busy.isEmpty || !colony.chats.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
                 colony.trace?("pair let go")
                 exit(0)
             }

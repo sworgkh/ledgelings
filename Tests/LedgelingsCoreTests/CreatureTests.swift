@@ -284,6 +284,21 @@ struct SeededRNG: RandomNumberGenerator {
         #expect(!c.isChatting)
     }
 
+    @Test func aChatKeptGoingOutlastsItsTimeLimitButOnlyWhileChatting() {
+        var rng = SeededRNG(state: 4)
+        var c = creature(at: 200)
+        c.meet(facing: 1, for: 2)
+        for _ in 0..<4 {
+            run(&c, seconds: 1, rng: &rng)
+            c.keepChatting(for: 2)
+        }
+        #expect(c.isChatting, "4 s in, still talking")
+        run(&c, seconds: 2.5, rng: &rng)
+        #expect(!c.isChatting, "quiet: the limit runs out as usual")
+        c.keepChatting(for: 10)
+        #expect(!c.isChatting, "it does not start a chat")
+    }
+
     @Test func theCursorStillStartlesAChatterAway() {
         var rng = SeededRNG(state: 5)
         var c = creature(at: 200)
