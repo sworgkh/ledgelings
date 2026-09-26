@@ -210,6 +210,16 @@ import Testing
         #expect(AppSettings(defaults: defaults).flowerMinutes == AppSettings.flowerRange.lowerBound)
     }
 
+    @Test func lineMemoryDefaultsToTwelveAndIsClampedOnLoad() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.lineMemory == 12)
+        s.lineMemory = 0
+        #expect(AppSettings(defaults: defaults).lineMemory == 0)
+        defaults.set(500, forKey: "lineMemory")
+        #expect(AppSettings(defaults: defaults).lineMemory == AppSettings.lineMemoryRange.upperBound)
+    }
+
     @Test func bubbleTimeDefaultsToFourteenSecondsAndIsClampedOnLoad() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

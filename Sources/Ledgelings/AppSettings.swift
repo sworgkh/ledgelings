@@ -52,6 +52,8 @@ final class AppSettings: ObservableObject {
     static let flowerRange = 0.5...30.0
     /// Minutes from one paper plane to the next.
     static let planeRange = 0.5...60.0
+    /// Lines each character remembers saying, so it does not say them again soon.
+    static let lineMemoryRange = 0...40
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
     /// The one wearing a flower trails the one who gave it while the flower lasts.
@@ -86,6 +88,8 @@ final class AppSettings: ObservableObject {
     }
     @Published private var keyCache: String?
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
+    /// How many of its own last lines a character avoids saying again; 0 lets it repeat freely.
+    @Published var lineMemory: Int { didSet { save(lineMemory, "lineMemory") } }
     @Published var flowerMinutes: Double { didSet { save(flowerMinutes, "flowerMinutes") } }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
     @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
@@ -246,6 +250,9 @@ final class AppSettings: ObservableObject {
         openRouterModel = defaults.string(forKey: "openRouterModel") ?? Self.defaultOpenRouterModel
         let bubble = defaults.object(forKey: "bubbleSeconds") as? Double ?? Banter.defaultBubbleSeconds
         bubbleSeconds = min(max(bubble, Self.bubbleRange.lowerBound), Self.bubbleRange.upperBound)
+        // Twelve: more than any one character's built-in letters, a few rounds of banter.
+        let memory = defaults.object(forKey: "lineMemory") as? Int ?? 12
+        lineMemory = min(max(memory, Self.lineMemoryRange.lowerBound), Self.lineMemoryRange.upperBound)
         let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2
         flowerMinutes = min(max(flower, Self.flowerRange.lowerBound), Self.flowerRange.upperBound)
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]

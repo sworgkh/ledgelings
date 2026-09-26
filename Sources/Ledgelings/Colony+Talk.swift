@@ -85,6 +85,8 @@ extension Colony {
         let bubbleSeconds = settings.bubbleSeconds
         // How the two get on, and the story between them, from each one's side.
         let aSide = relationship(of: speaker, with: listener), bSide = relationship(of: listener, with: speaker)
+        // What each said lately, so the model says something new.
+        let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
         let plot = plotLabel(speaker, listener)
         let started = Date()
         var spoken: [ChatLog.Line] = []
@@ -121,7 +123,7 @@ extension Colony {
             }
             do {
                 try await service.checkModel()
-                let opening = try await service.reply(system: Bonds.withRelationship(system, vars, context: aSide),
+                let opening = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
                                                       user: Banter.render(linePrompt, vars))
                 guard let self else { return }
                 charge(opening)
@@ -135,7 +137,7 @@ extension Colony {
                 vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                 vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                 vars["line"] = first
-                let answer = try await service.reply(system: Bonds.withRelationship(system, vars, context: bSide),
+                let answer = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                      user: Banter.render(replyPrompt, vars))
                 charge(answer)
                 let reply = Banter.cleanLine(answer.text, speaker: b.name)
@@ -185,7 +187,7 @@ extension Colony {
         guard let chosen = script.pick(for: moment, avoiding: recentLines, using: &rng) else {
             talkStatus = "no built-in line fits right now"; return false
         }
-        recentLines = Array((recentLines + [chosen]).suffix(max(1, script.conversations.count / 2)))
+        recentLines = Array((recentLines.filter { $0 != chosen } + [chosen]).suffix(script.conversations.count))
         let a = character(forCreature: speaker), b = character(forCreature: listener)
         let lines = script.conversations[chosen].lines.enumerated().map { i, line in
             let mine = i.isMultiple(of: 2)

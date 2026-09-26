@@ -15,13 +15,16 @@ struct TalkSettingsView: View {
             Section {
                 Toggle("Creatures talk when they bump into each other", isOn: $settings.talkEnabled)
                 SliderRow("Bubble stays", value: $settings.bubbleSeconds, in: AppSettings.bubbleRange, step: 1, unit: " s")
+                Stepper(value: $settings.lineMemory, in: AppSettings.lineMemoryRange) {
+                    LabeledContent("Not repeating their last", value: settings.lineMemory == 0 ? "off" : "\(settings.lineMemory) lines")
+                }
                 SliderRow("Flower lasts", value: $settings.flowerMinutes, in: AppSettings.flowerRange, step: 0.5, unit: " min")
                 Toggle("The one with the flower follows the giver while it lasts", isOn: $settings.followGiver)
                 Toggle("Paper planes", isOn: $settings.planesEnabled)
                 SliderRow("A paper plane every", value: $settings.planeMinutes, in: AppSettings.planeRange, step: 0.5, unit: " min")
                     .disabled(!settings.planesEnabled)
             } footer: {
-                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. A creature wearing a flower walks past everyone without bumping. Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. \"Make Someone Talk\" and \"Send a Paper Plane\" in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it.")
+                Text("Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. A creature wearing a flower walks past everyone without bumping. Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. \"Make Someone Talk\" and \"Send a Paper Plane\" in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new.")
             }
 
             Section {

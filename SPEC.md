@@ -599,6 +599,26 @@ rewritten whole on each change; key = the two names sorted, joined by `" & "`
 - **Log.** A conversation played under a plot is written with
   `"plot": "part 2 of 6: …"` (§6.5) and the Chats viewer shows it.
 
+### 6.5.3 Not repeating themselves (macOS)
+
+Each character remembers its last `lineMemory` lines (default 12, 0 = off),
+whatever made them: the model, the script, a paper plane. Lines are compared
+lower-cased with everything but letters and digits removed, so "Hi!" and "hi"
+are the same line; saying one again moves it to the end instead of keeping it twice.
+
+- **Built-in letters** (§7.6): the note, thought or reply is picked at random
+  among the character's lines it has not said lately; when it has said them all,
+  the one said longest ago. A round of a character's letters never repeats one.
+- **A model** (conversations and letters): the speaker's remembered lines are
+  added to the end of the system prompt, after the bond (§6.5.2):
+  `You said these lately. Say something new: do not repeat them, their jokes, or
+  the way they start.` and one `- line` per line, oldest first. Nothing is added
+  when the character has said nothing yet.
+- Every exchange written to the chat log is remembered (§6.5). At launch the
+  memory is read back from the log's last two days, so a relaunch does not
+  start everyone over. Lowering the setting forgets the oldest lines; raising it
+  reads the log again.
+
 ### 6.6 Menu and poke
 
 "Make Someone Talk" picks a random awake, non-jumping creature that is not
@@ -768,8 +788,9 @@ Calendar tab knows (§6.1.1, macOS). Candidates are the blocks whose every tag i
 tags, so a `[night, flower]` block wins at night with a flower, a `[flower]`
 block wins with a flower by day, and untagged blocks are used only when no
 tagged block fits. From that pool, pick uniformly among the blocks not in
-`recent`, or from the whole pool when all are recent. `recent` keeps the last
-`max(1, blocks / 2)` chosen indices.
+`recent`; when all are recent, the one chosen longest ago, never the one just
+said. `recent` keeps every chosen index once, oldest first, up to the number of
+blocks, so a small pool (the few `[night]` blocks) goes round in turn.
 
 Saying: `{speaker}` and `{listener}` are filled per line with the names of the
 one saying it and the one hearing it; `{flower}` with the flower given, or the
@@ -1385,6 +1406,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | openRouterKey | empty | **secret store**, never the settings file; empty = removed. Read lazily: the store is first opened when something asks for the key (`chatClient()` with OpenRouter chosen, or the Talk tab showing the OpenRouter fields), never at launch, so a user of the local brain never sees a keychain prompt |
 | bubbleSeconds | 14 | 4–60, clamped on load |
 | flowerMinutes | 2 | 0.5–30, clamped on load |
+| lineMemory | 12 | 0–40, clamped on load: lines per character it avoids saying again; 0 = off (§6.5.3) |
 | characters | the six above | ≥ 2; JSON |
 | systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores; `{relationship}` places the bond and plot (§6.5.2) |
 | plotsEnabled | true | bonds get plots, and both reach the prompts (§6.5.2) |

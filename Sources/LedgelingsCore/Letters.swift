@@ -517,19 +517,28 @@ public enum Letters {
 
     public static func voice(of name: String) -> Voice { voices[name] ?? anyone }
 
-    /// A note `sender` folds into a plane for `reader`.
-    public static func note(by sender: String, to reader: String, using rng: inout some RandomNumberGenerator) -> String {
-        fill(voice(of: sender).notes.randomElement(using: &rng)!, sender: sender, reader: reader)
+    /// A note `sender` folds into a plane for `reader`: one it has not written lately.
+    public static func note(by sender: String, to reader: String, memory: LineMemory = LineMemory(limit: 0),
+                            using rng: inout some RandomNumberGenerator) -> String {
+        fresh(voice(of: sender).notes, by: sender, sender: sender, reader: reader, memory: memory, using: &rng)
     }
 
     /// What `reader` says to itself after reading a note from `sender`.
-    public static func musing(by reader: String, from sender: String, using rng: inout some RandomNumberGenerator) -> String {
-        fill(voice(of: reader).musings.randomElement(using: &rng)!, sender: sender, reader: reader)
+    public static func musing(by reader: String, from sender: String, memory: LineMemory = LineMemory(limit: 0),
+                              using rng: inout some RandomNumberGenerator) -> String {
+        fresh(voice(of: reader).musings, by: reader, sender: sender, reader: reader, memory: memory, using: &rng)
     }
 
     /// The one answer `writer` sends back to whoever threw it a plane.
-    public static func reply(by writer: String, to reader: String, using rng: inout some RandomNumberGenerator) -> String {
-        fill(voice(of: writer).replies.randomElement(using: &rng)!, sender: writer, reader: reader)
+    public static func reply(by writer: String, to reader: String, memory: LineMemory = LineMemory(limit: 0),
+                             using rng: inout some RandomNumberGenerator) -> String {
+        fresh(voice(of: writer).replies, by: writer, sender: writer, reader: reader, memory: memory, using: &rng)
+    }
+
+    private static func fresh(_ texts: [String], by who: String, sender: String, reader: String, memory: LineMemory,
+                              using rng: inout some RandomNumberGenerator) -> String {
+        let filled = texts.map { fill($0, sender: sender, reader: reader) }
+        return filled[memory.pick(from: filled, by: who, using: &rng)!]
     }
 
     /// The first bubble on catching: the note itself, read out.

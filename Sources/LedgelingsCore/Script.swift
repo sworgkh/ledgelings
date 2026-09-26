@@ -77,14 +77,16 @@ public struct Script: Equatable, Sendable {
 
     /// The conversation to use now, by index: from the blocks whose every tag
     /// holds for `moment`, the most specifically tagged ones, and among those
-    /// one not in `recent` unless they all are. Nil when nothing fits.
+    /// one not in `recent` (oldest first); when they all are, the one used
+    /// longest ago, never the one just said. Nil when nothing fits.
     public func pick(for moment: Set<String>, avoiding recent: [Int],
                      using rng: inout some RandomNumberGenerator) -> Int? {
         let fitting = conversations.indices.filter { conversations[$0].tags.isSubset(of: moment) }
         guard let best = fitting.map({ conversations[$0].tags.count }).max() else { return nil }
         let pool = fitting.filter { conversations[$0].tags.count == best }
         let fresh = pool.filter { !recent.contains($0) }
-        return (fresh.isEmpty ? pool : fresh).randomElement(using: &rng)
+        if let one = fresh.randomElement(using: &rng) { return one }
+        return pool.min { recent.lastIndex(of: $0)! < recent.lastIndex(of: $1)! }
     }
 
     public static func fill(_ line: String, speaker: String, listener: String, flower: String?, holiday: String? = nil) -> String {

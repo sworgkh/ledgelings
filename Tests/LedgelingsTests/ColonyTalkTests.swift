@@ -43,6 +43,22 @@ import Testing
         }
     }
 
+    @Test func whatTheySayIsRememberedEvenAfterARelaunch() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.script = "Hi.\nHo.\n"
+        w.colony.talkNow(from: 0)
+        let first = w.colony.character(forCreature: 0).name, second = w.colony.character(forCreature: 1).name
+        #expect(w.history.memory.recent(of: first) == ["Hi."])
+        #expect(w.history.memory.recent(of: second) == ["Ho."])
+        let relaunched = ChatHistory(directory: w.history.directory)
+        relaunched.remember(w.settings.lineMemory)
+        #expect(relaunched.memory.recent(of: first) == ["Hi."], "read back from the log on disk")
+        w.settings.lineMemory = 0
+        w.colony.applySettings()
+        #expect(w.history.memory.recent(of: first).isEmpty, "off forgets")
+    }
+
     @Test func theSituationCarriesTheUsersClockDateAndHolidays() throws {
         let w = try World()
         defer { w.forget() }

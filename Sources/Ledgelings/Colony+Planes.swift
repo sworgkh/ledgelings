@@ -103,6 +103,7 @@ extension Colony {
                     "situation": almanac, "line": answering ?? ""]
         let system = settings.systemPrompt
         let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
+        let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
         airmail?.writing = true
         airmail?.provider = service.provider.title
         airmail?.model = service.model
@@ -120,7 +121,7 @@ extension Colony {
             var note: String?, musing: String?
             do {
                 try await service.checkModel()
-                let written = try await service.reply(system: Bonds.withRelationship(system, vars, context: aSide),
+                let written = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
                                                       user: Banter.render(prompt, vars).trimmingCharacters(in: .whitespacesAndNewlines))
                 charge(written)
                 let line = Banter.cleanLine(written.text, speaker: a.name)
@@ -130,7 +131,7 @@ extension Colony {
                     vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                     vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                     vars["line"] = line
-                    let thought = try await service.reply(system: Bonds.withRelationship(system, vars, context: bSide),
+                    let thought = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                           user: Banter.render(Letters.musingPrompt, vars))
                     charge(thought)
                     let said = Banter.cleanLine(thought.text, speaker: b.name)
@@ -234,8 +235,9 @@ extension Colony {
         let from = mail.plane.from, to = mail.plane.to
         let a = character(forCreature: from).name, b = character(forCreature: to).name
         let modelWrote = mail.note != nil, modelMused = mail.musing != nil
-        let note = mail.note ?? (mail.isReply ? Letters.reply(by: a, to: b, using: &rng) : Letters.note(by: a, to: b, using: &rng))
-        let musing = mail.musing ?? Letters.musing(by: b, from: a, using: &rng)
+        let note = mail.note ?? (mail.isReply ? Letters.reply(by: a, to: b, memory: history.memory, using: &rng)
+                                    : Letters.note(by: a, to: b, memory: history.memory, using: &rng))
+        let musing = mail.musing ?? Letters.musing(by: b, from: a, memory: history.memory, using: &rng)
         mail.note = note
         mail.musing = musing
         guard settings.talkEnabled else { return .reading(musingAt: elapsed, doneAt: elapsed + 3, musingSaid: true) }
