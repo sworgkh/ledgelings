@@ -725,7 +725,16 @@ with the same `speakable` words, and sums cost, lines, unpriced and kept per exc
 whole seconds. `key` = FNV-1a hex of text, model, voice and speed (2 decimals),
 joined by U+001F. Before asking OpenRouter, the key is looked up (last match,
 file still present); a hit is played from disk and neither asked for nor charged.
-The built-in voices are not kept: they cost nothing to say again. Speech models: `GET
+The built-in voices are not kept: they cost nothing to say again.
+
+**The built-in lines' voices** (`Application Support/Ledgelings/line-voices`). With
+`reuseLineVoices`, a line written in advance (a script conversation's line, a
+`Letters` note or musing used because no model wrote one, the Test lines) is
+looked up there first, by the same key, on OpenRouter and on the local server
+alike; a miss is made and written there in the archive's layout (not into
+`voices`). A hit is played free, and on OpenRouter noted in the chat log as kept.
+Model-written lines never go there: their words rarely come round again. Clear
+deletes the folder. Speech models: `GET
 {base}/models?output_modalities=speech` (public), cheapest input first.
 
 ### 6.7 The built-in lines (no model)
@@ -1320,6 +1329,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | speedFollowsPitch | true | ask for `speed / √pitch`, Mac voices rendered and sped up (§6.6.1) |
 | localVoiceServer / localVoiceModel / localVoice | `http://localhost:8880` / `kokoro` / empty | the Local server engine |
 | keepVoices | true | keep each OpenRouter line in the voice archive (§6.6.1) |
+| reuseLineVoices | true | save each built-in line's sound in `line-voices` and replay it (§6.6.1) |
 | knowsTimeOfDay | true | the part of the day and the time go into prompts (§6.1.1) |
 | knowsDate | true | the weekday and date go into prompts (§6.1.1) |
 | jewishHolidays / christianHolidays / muslimHolidays | true / true / true | whose holidays they know (§6.1.1) |

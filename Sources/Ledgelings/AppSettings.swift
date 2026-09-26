@@ -194,6 +194,9 @@ final class AppSettings: ObservableObject {
     @Published var characterVoices: [String: CharacterVoice] { didSet { saveJSON(characterVoices, "characterVoices") } }
     /// Every line a speech model says is kept as a sound file beside the chats.
     @Published var keepVoices: Bool { didSet { save(keepVoices, "keepVoices") } }
+    /// The built-in lines' sounds (OpenRouter or the local server) are kept once
+    /// made and played from disk after that, instead of being made every time.
+    @Published var reuseLineVoices: Bool { didSet { save(reuseLineVoices, "reuseLineVoices") } }
 
     private let defaults: UserDefaults
     private let keychain: any SecretStore
@@ -258,6 +261,7 @@ final class AppSettings: ObservableObject {
         characterVoices = defaults.data(forKey: "characterVoices")
             .flatMap { try? JSONDecoder().decode([String: CharacterVoice].self, from: $0) } ?? [:]
         keepVoices = defaults.object(forKey: "keepVoices") as? Bool ?? true
+        reuseLineVoices = defaults.object(forKey: "reuseLineVoices") as? Bool ?? true
         speedFollowsPitch = defaults.object(forKey: "speedFollowsPitch") as? Bool ?? true
         castByPersonality = defaults.object(forKey: "castByPersonality") as? Bool ?? true
         voiceTurnPause = clamp("voiceTurnPause", 0.35, Self.voiceTurnPauseRange)

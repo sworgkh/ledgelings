@@ -17,7 +17,7 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.20 — eight creatures with their own personalities, on every monitor,
+**Status:** v0.21 — eight creatures with their own personalities, on every monitor,
 talking when they meet (out loud, if you like) from a hundred built-in lines or through a model of your
 choice, giving flowers, sending paper planes when it gets too quiet, keeping every
 chat and what it cost, growing little stories between the ones who live together, knowing your time of day and your holidays, going home when asked, and wearing creatures you describe to
@@ -72,7 +72,9 @@ without bumping.
 **Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
 loud, each character in a voice of its own: the Mac's built-in voices (free,
 offline), or a speech model on OpenRouter (Kokoro by default, a fraction of a cent
-per hundred lines). Voice, speed, pitch and volume are in Settings › Talk.
+per hundred lines), or a speech server on your Mac. The built-in lines are voiced
+once each and saved, so they play again instantly and for free. Voice, speed,
+pitch and volume are in Settings › Voice.
 macOS only for now.
 
 **They get to know each other.** Creatures who share the screen for an hour (you
