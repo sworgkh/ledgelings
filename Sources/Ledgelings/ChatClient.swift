@@ -67,13 +67,18 @@ struct ChatClient: Sendable {
 
     // MARK: Requests and replies, no network
 
-    func request(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9) throws -> URLRequest {
+    /// `reasoning`: how hard a thinking model may think ("low", "medium", "high"),
+    /// sent to OpenRouter only; nil leaves it to the model.
+    func request(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9,
+                 reasoning: String? = nil) throws -> URLRequest {
         struct Body: Encodable {
             struct Message: Encodable { let role: String; let content: String }
             /// OpenRouter puts the price of the call in the reply when asked.
             struct UsageFlag: Encodable { let include: Bool }
             let model: String; let messages: [Message]; let temperature: Double; let max_tokens: Int
             let usage: UsageFlag?
+            struct Reasoning: Encodable { let effort: String }
+            let reasoning: Reasoning?
         }
         var request = authorised(URLRequest(url: baseURL.appendingPathComponent("chat/completions"), timeoutInterval: timeout))
         request.httpMethod = "POST"
@@ -82,7 +87,8 @@ struct ChatClient: Sendable {
             model: model,
             messages: [.init(role: "system", content: system), .init(role: "user", content: user)],
             temperature: temperature, max_tokens: maxTokens,
-            usage: provider == .openRouter ? .init(include: true) : nil
+            usage: provider == .openRouter ? .init(include: true) : nil,
+            reasoning: provider == .openRouter ? reasoning.map { .init(effort: $0) } : nil
         ))
         return request
     }
@@ -101,9 +107,12 @@ struct ChatClient: Sendable {
             let usage: Usage?
         }
         if let message = serverError(in: data) { throw Failure.refused(message) }
-        guard let reply = try? JSONDecoder().decode(Reply.self, from: data), let text = reply.choices.first?.message.content else {
+        guard let reply = try? JSONDecoder().decode(Reply.self, from: data), let choice = reply.choices.first else {
             throw Failure.badReply(String(decoding: data.prefix(160), as: UTF8.self))
         }
+        // A thinking model that spent its whole budget thinking sends no text, but
+        // the call was paid for: an empty answer, with its usage, not an error.
+        let text = choice.message.content ?? ""
         let usage = reply.usage.map { Spend.Usage(promptTokens: $0.prompt_tokens ?? 0, completionTokens: $0.completion_tokens ?? 0, cost: $0.cost) }
         return Answer(text: text, usage: usage)
     }
@@ -159,8 +168,10 @@ struct ChatClient: Sendable {
     }
 
     /// One completion. `system` is who the speaker is; `user` is the moment.
-    func reply(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9) async throws -> Answer {
-        try Self.parseReply(try await fetch(try request(system: system, user: user, maxTokens: maxTokens, temperature: temperature)))
+    func reply(system: String, user: String, maxTokens: Int = 80, temperature: Double = 0.9,
+               reasoning: String? = nil) async throws -> Answer {
+        try Self.parseReply(try await fetch(try request(system: system, user: user, maxTokens: maxTokens,
+                                                        temperature: temperature, reasoning: reasoning)))
     }
 
     private func fetch(_ request: URLRequest) async throws -> Data {

@@ -538,7 +538,7 @@ rewritten whole on each change; key = the two names sorted, joined by `" & "`
   below), `bond` (the summary, or "they have not really made their minds up
   about each other yet"), `lastPlot` (or "none yet; this is their first"),
   `recent` (`Name: text` lines, or "(nothing yet)"), `length` = `plotLength`;
-  at most 160 tokens. Recorded with purpose `plots` whatever comes back, its cost
+  at most 1000 tokens (room for a thinking model; OpenRouter is also asked for `"reasoning": {"effort": "low"}`). Recorded with purpose `plots` whatever comes back, its cost
   added to the bond's `cost`, `lastAsked` set.
 - **Parsing.** After `</think>` if any; the first line whose text, stripped of
   leading/trailing `*#-_` and spaces, starts with `PLOT:` (any case) is the plot,

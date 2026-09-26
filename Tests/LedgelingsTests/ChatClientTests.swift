@@ -47,6 +47,22 @@ import Testing
         #expect(try ChatClient.parseReply(local).usage == Spend.Usage(promptTokens: 5, completionTokens: 2, cost: nil))
     }
 
+    @Test func aThinkingModelThatRanOutOfRoomIsAnEmptyAnswerThatStillCosts() throws {
+        let data = Data(#"{"choices":[{"finish_reason":"length","message":{"content":null,"reasoning":null}}],"usage":{"prompt_tokens":200,"completion_tokens":160,"cost":0.0001}}"#.utf8)
+        let answer = try ChatClient.parseReply(data)
+        #expect(answer.text == "" && answer.usage == Spend.Usage(promptTokens: 200, completionTokens: 160, cost: 0.0001))
+    }
+
+    @Test func onlyOpenRouterIsToldHowHardToThink() throws {
+        func body(_ c: ChatClient, _ r: String?) throws -> [String: Any] {
+            try #require(try c.request(system: "s", user: "u", reasoning: r).httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })
+        }
+        let openRouter = ChatClient.openRouter(key: "k", model: "m")
+        #expect((try body(openRouter, "low")["reasoning"] as? [String: Any])?["effort"] as? String == "low")
+        #expect(try body(openRouter, nil)["reasoning"] == nil, "left to the model unless asked")
+        #expect(try body(.lmStudio(server: URL(string: "http://localhost:1234")!, model: "m"), "low")["reasoning"] == nil)
+    }
+
     @Test func openRouterIsAskedToReportTheCostAndLMStudioIsNot() throws {
         let remote = try ChatClient.openRouter(key: "k", model: "m").request(system: "s", user: "u")
         let body = try #require(remote.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })

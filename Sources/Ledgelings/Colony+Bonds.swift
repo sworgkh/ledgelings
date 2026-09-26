@@ -61,7 +61,10 @@ extension Colony {
         Task { [weak self] in
             var cost: Double?, written: Bonds.Written?
             do {
-                let answer = try await service.reply(system: Bonds.plotSystemPrompt, user: prompt, maxTokens: 160)
+                // Room for a thinking model to think a little and still answer: at 160
+                // tokens one spent them all thinking and sent nothing back.
+                let answer = try await service.reply(system: Bonds.plotSystemPrompt, user: prompt,
+                                                     maxTokens: Bonds.plotMaxTokens, reasoning: "low")
                 if var usage = answer.usage {
                     if service.provider == .lmStudio { usage.cost = 0 }
                     cost = usage.cost

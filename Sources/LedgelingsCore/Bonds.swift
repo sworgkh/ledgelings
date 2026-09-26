@@ -148,6 +148,9 @@ public enum Bonds {
     public static let placeholders = ["speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona",
                                       "together", "bond", "lastPlot", "recent", "length"]
 
+    /// The answer is about 60 tokens; the rest is room for a model that thinks first.
+    public static let plotMaxTokens = 1000
+
     /// The system side of the plot call: short, so the user prompt carries the work.
     public static let plotSystemPrompt = "You write tiny, playful stories for small characters. Follow the answer format exactly."
 
