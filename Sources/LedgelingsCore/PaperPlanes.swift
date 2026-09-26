@@ -73,6 +73,17 @@ public struct PaperPlane: Sendable {
     /// How far apart the trail's puffs are, and how long each lasts.
     public var puffSpacing: CGFloat = 9
     public var puffLife: Double = 1.1
+    /// The screens it may fly over. Near an edge with no screen beyond it the
+    /// plane is turned back, and it never crosses one. Empty: the open sky.
+    public var sky: [CGRect] = []
+    /// How far its middle keeps from such an edge: half its drawn size, so no
+    /// wingtip goes past it.
+    public var margin: CGFloat = 0
+    /// How close to an edge the turning back starts, points.
+    public static let edgeZone: CGFloat = 140
+    /// Thrown from outside the sky, or from right by its edge, it is let in
+    /// first and kept in from then on.
+    public private(set) var inSky = false
     private var sinceLastPuff: CGFloat = 0
 
     /// Thrown from `start`, up into the screen along `inward`, roughly toward
@@ -140,6 +151,9 @@ public struct PaperPlane: Sendable {
         let twist = swirl * CGFloat(sin(age * swirlRate + phase)) * calm
         velocity.dx += ((want.dx * speedNow - velocity.dx) * grip + (gust.dx + side.dx * twist) * calm) * step
         velocity.dy += ((want.dy * speedNow - velocity.dy) * grip + (gust.dy + side.dy * twist) * calm) * step
+        let push = inSky ? edgePush() : .zero
+        velocity.dx += push.dx * calm * step
+        velocity.dy += push.dy * calm * step
         let speed = hypot(velocity.dx, velocity.dy)
         let clamped = min(max(speed, speedRange.lowerBound), speedRange.upperBound)
         if speed > 0, clamped != speed {
@@ -149,6 +163,7 @@ public struct PaperPlane: Sendable {
         previous = position
         position.x += velocity.dx * step
         position.y += velocity.dy * step
+        keepInSky()
         age += dt
 
         for i in trail.indices { trail[i].age += dt }
@@ -161,6 +176,55 @@ public struct PaperPlane: Sendable {
             trail.append(Puff(position: CGPoint(x: position.x - velocity.dx * step * back,
                                                 y: position.y - velocity.dy * step * back), age: 0))
         }
+    }
+
+    // MARK: The edges of the sky
+
+    /// The screen it is over, or the nearest one.
+    func screen(at p: CGPoint) -> CGRect? {
+        sky.first { $0.contains(p) } ?? sky.min { Self.gap(p, $0) < Self.gap(p, $1) }
+    }
+
+    /// True when the screen stops at `p`: no other screen goes on past it.
+    func isOpenEdge(_ p: CGPoint) -> Bool { !sky.contains { $0.contains(p) } }
+
+    /// Air pushing it back from any edge that has no screen beyond it, harder
+    /// the closer it is: it swoops round rather than bouncing off.
+    func edgePush() -> CGVector {
+        guard let rect = screen(at: position) else { return .zero }
+        let zone = Self.edgeZone, strength: CGFloat = 3000
+        func force(_ distance: CGFloat) -> CGFloat {
+            let d = max(0, distance - margin)
+            return d >= zone ? 0 : strength * pow(1 - d / zone, 2)
+        }
+        let y = min(max(position.y, rect.minY), rect.maxY - 1), x = min(max(position.x, rect.minX), rect.maxX - 1)
+        var push = CGVector.zero
+        if isOpenEdge(CGPoint(x: rect.minX - 1, y: y)) { push.dx += force(position.x - rect.minX) }
+        if isOpenEdge(CGPoint(x: rect.maxX + 1, y: y)) { push.dx -= force(rect.maxX - position.x) }
+        if isOpenEdge(CGPoint(x: x, y: rect.minY - 1)) { push.dy += force(position.y - rect.minY) }
+        if isOpenEdge(CGPoint(x: x, y: rect.maxY + 1)) { push.dy -= force(rect.maxY - position.y) }
+        return push
+    }
+
+    /// Never past an edge: a plane that would cross one stays on it and loses
+    /// the part of its speed that was taking it out.
+    mutating func keepInSky() {
+        guard let rect = screen(at: position) else { return }
+        let inner = rect.insetBy(dx: min(margin, rect.width / 2), dy: min(margin, rect.height / 2))
+        if inner.contains(position) { inSky = true; return }
+        guard inSky else { return }
+        let beyond = CGPoint(x: position.x < inner.minX ? rect.minX - 1 : position.x > inner.maxX ? rect.maxX + 1 : position.x,
+                             y: position.y < inner.minY ? rect.minY - 1 : position.y > inner.maxY ? rect.maxY + 1 : position.y)
+        // Going on to the next screen is fine.
+        if !isOpenEdge(beyond), sky.contains(where: { $0.contains(position) }) { return }
+        if position.x < inner.minX { position.x = inner.minX; velocity.dx = max(0, velocity.dx) }
+        if position.x > inner.maxX { position.x = inner.maxX; velocity.dx = min(0, velocity.dx) }
+        if position.y < inner.minY { position.y = inner.minY; velocity.dy = max(0, velocity.dy) }
+        if position.y > inner.maxY { position.y = inner.maxY; velocity.dy = min(0, velocity.dy) }
+    }
+
+    static func gap(_ p: CGPoint, _ r: CGRect) -> CGFloat {
+        hypot(max(r.minX - p.x, 0, p.x - r.maxX), max(r.minY - p.y, 0, p.y - r.maxY))
     }
 
     /// The trail keeps fading after the plane is gone.
