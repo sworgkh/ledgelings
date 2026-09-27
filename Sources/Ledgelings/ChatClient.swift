@@ -31,6 +31,8 @@ struct ChatClient: Sendable {
         case modelMissing(String, available: [String])
         case refused(String)
         case badReply(String)
+        /// There was nothing to ask: no model chosen, or no key. Said as it is.
+        case noModel(String)
 
         var description: String {
             switch self {
@@ -39,6 +41,7 @@ struct ChatClient: Sendable {
                 "model \(model) is not available" + (available.isEmpty ? "" : " (have: \(available.prefix(8).joined(separator: ", ")))")
             case .refused(let message): "the server refused: \(message)"
             case .badReply(let what): "unexpected reply: \(what)"
+            case .noModel(let why): why
             }
         }
     }

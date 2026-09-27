@@ -211,7 +211,11 @@ final class Voice: NSObject, ObservableObject {
             client = SpeechClient(key: "", model: settings.localVoiceModel.trimmingCharacters(in: .whitespaces), server: server)
         } else {
             let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
-            guard !key.isEmpty else { status = "no OpenRouter API key; add one in Settings › Talk"; return nil }
+            // The key field is on the Voice tab unless OpenRouter is the brain too.
+            guard !key.isEmpty else {
+                status = "no OpenRouter API key; add one in Settings › \(settings.brain == .openRouter ? "Talk" : "Voice")"
+                return nil
+            }
             client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
         }
         let speed = speed(for: name)
@@ -668,7 +672,7 @@ extension Voice {
     /// into the spend file like any other.
     @discardableResult
     func castWithModel(_ name: String) async throws -> String {
-        guard let client = settings.chatClient() else { throw ChatClient.Failure.refused(settings.brainProblem) }
+        guard let client = settings.chatClient() else { throw ChatClient.Failure.noModel(settings.brainProblem) }
         let who = describe(name) ?? (persona: "", kind: "")
         // Choices for the engine in use, by the id the model sees, with what is known of each.
         var choices: [(id: String, hints: String, value: String)] = []

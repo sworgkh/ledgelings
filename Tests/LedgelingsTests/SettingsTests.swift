@@ -69,6 +69,19 @@ import Testing
         #expect(AppSettings(defaults: defaults).brain == .openRouter)
     }
 
+    @Test func withTheBuiltInLinesThereIsNoModelAndTheReasonSaysWhereToChooseOne() {
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
+        #expect(!s.hasModel, "a fresh install greys out what only a model can do")
+        #expect(s.brainProblem == AppSettings.needsModel)
+        #expect(AppSettings.needsModel.contains("Settings › Talk"))
+        #expect("\(ChatClient.Failure.noModel(s.brainProblem))" == AppSettings.needsModel, "said as it is, not as a server refusal")
+        s.brain = .lmStudio
+        #expect(s.hasModel)
+        s.brain = .openRouter
+        #expect(s.hasModel && s.chatClient() == nil, "chosen but keyless: the features show, the key is what is missing")
+    }
+
     @Test func theLinesAreRememberedAndResetBringsTheBuiltInOnesBack() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

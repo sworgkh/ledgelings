@@ -10,20 +10,23 @@ struct BondsSettingsView: View {
     var body: some View {
         TwoColumns {
             Section {
+                if !settings.hasModel { NeedsModelNote() }
                 Toggle("Pairs who live together get a story", isOn: $settings.plotsEnabled)
+                    .disabled(!settings.hasModel)
                 SliderRow("First story after", value: $settings.plotAfterHours, in: AppSettings.plotAfterRange, step: 0.25, unit: " h")
-                    .disabled(!settings.plotsEnabled)
+                    .disabled(!writesStories)
                 Stepper(value: $settings.plotLength, in: AppSettings.plotLengthRange) {
                     LabeledContent("A story lasts", value: "\(settings.plotLength) conversations")
                 }
-                .disabled(!settings.plotsEnabled)
+                .disabled(!writesStories)
             } header: {
                 Text("Stories")
             } footer: {
                 Text(footer)
             }
 
-            Section {
+            // Like the Talk tab's prompts: nothing to edit until there is a model to read it.
+            if settings.hasModel { Section {
                 TextEditor(text: $settings.plotPrompt)
                     .font(.system(.callout, design: .monospaced))
                     .frame(minHeight: 200)
@@ -35,7 +38,7 @@ struct BondsSettingsView: View {
                 Text("The prompt that writes a story")
             } footer: {
                 Text("Placeholders: \(Bonds.placeholders.map { "{\($0)}" }.joined(separator: " ")). The answer needs a PLOT: line, and may have a BOND: line. {relationship} in the Talk prompt places the story; without it, it goes at the end.")
-            }
+            } }
         } right: {
             Section {
                 let pairs = bonds.book.closest
@@ -63,8 +66,12 @@ struct BondsSettingsView: View {
 
     private var footer: String {
         var text = "Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots)."
-        if settings.brain == .script { text += " The built-in lines have no model, so no stories: choose a model on the Talk tab." }
+        if !settings.hasModel { text += " Time together is still counted meanwhile: once a model is chosen, a pair that has lived together long enough gets its first story at its next talk." }
         return text
+    }
+
+    /// Stories are on, and there is a model to write them.
+    private var writesStories: Bool { settings.plotsEnabled && settings.hasModel
     }
 
     private func pair(_ bond: Bonds.Bond) -> some View {

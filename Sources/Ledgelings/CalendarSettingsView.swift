@@ -10,8 +10,12 @@ struct CalendarSettingsView: View {
     var body: some View {
         TwoColumns {
             Section {
+                // The built-in lines are written ahead of time: they cannot say what time it is.
+                if !settings.hasModel { NeedsModelNote() }
                 Toggle("They know the time of day", isOn: $settings.knowsTimeOfDay)
+                    .disabled(!settings.hasModel)
                 Toggle("They know the day of the week and the date", isOn: $settings.knowsDate)
+                    .disabled(!settings.hasModel)
             } header: {
                 Text("The day")
             } footer: {
@@ -26,11 +30,11 @@ struct CalendarSettingsView: View {
                     LabeledContent("Mention a holiday", value: settings.holidayLookAhead == 0
                                    ? "only on the day" : "\(settings.holidayLookAhead) day\(settings.holidayLookAhead == 1 ? "" : "s") ahead")
                 }
-                .disabled(settings.awareness.faiths.isEmpty)
+                .disabled(settings.awareness.faiths.isEmpty || !settings.hasModel)
             } header: {
                 Text("Holidays")
             } footer: {
-                Text("On a holiday they know it, and which day of it (\"day 3 of Sukkot\"); before one, how far off it is. Jewish dates come from the Hebrew calendar and Muslim ones from the Islamic (Umm al-Qura) calendar, both built into macOS, so nothing is looked up online; a holiday that starts at sundown \"begins this evening\" the evening before. Where the new moon is sighted locally, a Muslim date can fall a day apart. With the built-in lines, one conversation in three on a holiday is about it.")
+                Text("On a holiday they know it, and which day of it (\"day 3 of Sukkot\"); before one, how far off it is. Jewish dates come from the Hebrew calendar and Muslim ones from the Islamic (Umm al-Qura) calendar, both built into macOS, so nothing is looked up online; a holiday that starts at sundown \"begins this evening\" the evening before. Where the new moon is sighted locally, a Muslim date can fall a day apart. With the built-in lines, one conversation in three on a holiday is about it; they only know a holiday on the day, so how far ahead to mention one needs a model.")
             }
         } right: {
             // Each section keeps its own clock: a TimelineView round both
@@ -45,7 +49,9 @@ struct CalendarSettingsView: View {
             } header: {
                 Text("What they know right now")
             } footer: {
-                Text("This goes into {situation} in the Talk prompts, and at the top of a paper plane's note.")
+                Text(settings.hasModel
+                     ? "This goes into {situation} in the Talk prompts, and at the top of a paper plane's note."
+                     : "What a model would be told. The built-in lines use only today's holiday, when there is one.")
             }
 
             Section {
