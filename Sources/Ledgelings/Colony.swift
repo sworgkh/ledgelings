@@ -34,6 +34,9 @@ final class Colony: NSObject {
     /// The paper plane, and the letter it opens into.
     let planeFrames: SpriteAtlas.Frames
     let planeCell: CGSize
+    /// The tea party's table, steaming.
+    let teaFrames: SpriteAtlas.Frames
+    let teaCell: CGSize
 
     /// A bigger body walks further from the screen edge, so each size has its
     /// own outline. Sizes come in half steps, so this stays a handful of entries.
@@ -98,6 +101,18 @@ final class Colony: NSObject {
     /// Pixel stars from the last bump, and the colours they wear.
     var sparks = Sparks()
     var sparkPalette: [CGColor] = []
+    /// The one tea party going on, if any, and the table it is laid on.
+    var teaParty: TeaParty?
+    var teaTable: (floor: CGPoint, rotation: Double, scale: CGFloat)?
+    /// What has been said at it so far, and the built-in stories already told there.
+    var teaLines: [ChatLog.Line] = []
+    var teaTold: Set<String> = []
+    /// Counts parties, so a round finishing late knows whether its party is still on.
+    var teaCount = 0
+    /// When the built-in round being said silently is over, on the colony's clock.
+    var teaRoundEnds: Double?
+    /// "Have a Tea Party" from the menu, when nobody shares an edge: the guest jumping over to the host.
+    var teaInvite: (host: Int, guest: Int, until: Double)?
     /// The house they hide in when asked to go away for a while.
     var hideout = Hideout()
     /// Creatures shrinking into the doorway, and creatures growing out of it, by when they started.
@@ -170,6 +185,9 @@ final class Colony: NSObject {
         let plane = try SpriteAtlas(named: "plane")
         planeFrames = plane.frames()
         planeCell = plane.cellSize
+        let tea = try SpriteAtlas(named: "tea")
+        teaFrames = tea.frames()
+        teaCell = tea.cellSize
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
         super.init()
 
@@ -212,6 +230,7 @@ final class Colony: NSObject {
         annoyance.forget(creaturesFrom: creatures.count)
         annoyance.limit = settings.complainAfter
         annoyance.calmAfter = settings.complainCalmSeconds
+        if !settings.teaPartiesEnabled { breakUpTea() }
         while creatures.count < settings.creatureCount {
             let share = Double.random(in: 0...1, using: &rng), size = settings.size(forShare: share)
             creatures.append(spawn(size: size)); asleepFor.append(0); sizeShares.append(share); sizes.append(size)
@@ -316,6 +335,7 @@ final class Colony: NSObject {
         if settings.followGiver { followGivers() }
         sparks.update(dt: dt)
         sayScheduledLines()
+        updateTeaParty()
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
@@ -357,11 +377,11 @@ final class Colony: NSObject {
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
-        let reminder = reminderSnapshot()
+        let reminder = reminderSnapshot(), table = teaTableSnapshot()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
-                           plane: plane, planeCell: planeCell, reminder: reminder)
+                           plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell)
         }
     }
 }

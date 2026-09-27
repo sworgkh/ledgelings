@@ -371,4 +371,23 @@ import Testing
         #expect(clamped.complainAfter == AppSettings.complainAfterRange.upperBound)
         #expect(clamped.complainCalmSeconds == AppSettings.complainCalmRange.lowerBound)
     }
+
+    @Test func teaPartiesAreOnNowAndThenAndTheirNumbersSurviveARelaunch() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.teaPartiesEnabled && s.teaPartyChance == 10 && s.teaPartyMinutes == 3 && s.teaSipSeconds == 6)
+        s.teaPartiesEnabled = false
+        s.teaPartyChance = 25
+        s.teaPartyMinutes = 5.5
+        s.teaSipSeconds = 12
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.teaPartiesEnabled && back.teaPartyChance == 25 && back.teaPartyMinutes == 5.5 && back.teaSipSeconds == 12)
+        defaults.set(500.0, forKey: "teaPartyChance")
+        defaults.set(0.1, forKey: "teaPartyMinutes")
+        defaults.set(-3.0, forKey: "teaSipSeconds")
+        let clamped = AppSettings(defaults: defaults)
+        #expect(clamped.teaPartyChance == AppSettings.teaChanceRange.upperBound)
+        #expect(clamped.teaPartyMinutes == AppSettings.teaMinutesRange.lowerBound)
+        #expect(clamped.teaSipSeconds == AppSettings.teaSipRange.lowerBound)
+    }
 }

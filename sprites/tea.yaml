@@ -1,0 +1,36 @@
+# tea — the little table two Ledgelings set up for a tea party when they bump
+# into each other: a wooden table on two legs, a teapot in the middle and a cup
+# at each end, one for each of them. Two poses, the same table with its puff of
+# steam low (`tea-0`) and risen (`tea-1`), so the pot steams while they talk.
+# Drawn STANDING ON THE FLOOR of the cell, so the app can put it on any edge
+# between the pair and grow it from its feet. Blocky's rules throughout: flat
+# blocks, a 1px outline in a dark tint of each block's colour, a light line
+# top-left, a shade line bottom-right, no curves.
+#
+#   python -m spritetool build sprites/tea.yaml
+
+version: 1
+name: tea
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [36, 28]
+  content_box: [0, 0, 36, 28]
+
+background:
+  color: "#ff00ff"
+  tolerance: 60
+
+painter: tea
+
+style: >-
+  pixel art, flat colour, 1px outline in a dark tint of each block's colour,
+  a small wooden table on two legs with a blue teapot in the middle and a
+  white cup at each end, a puff of steam from the spout
+
+poses:
+  - {name: tea-0, prompt: the tea table, steam just leaving the spout}
+  - {name: tea-1, prompt: the tea table, steam risen above the spout}
+
+animations:
+  steam: {frames: [tea-0, tea-1], fps: 2, loop: true}

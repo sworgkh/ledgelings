@@ -72,6 +72,8 @@ public struct Creature: Sendable {
     private var sleepsThroughLanding = false
     /// The way it was going before it turned to talk to someone.
     private var courseBeforeChat: CGFloat = 1
+    /// Mid-chat, stepping to a seat at a tea table: where, and which way to face once there.
+    private var seat: (t: CGFloat, facing: CGFloat)?
     /// Whether it was asleep when picked up, so it lands the same way.
     private var napsInHand = false
     /// A `leap` lands and waits instead of walking off.
@@ -110,7 +112,7 @@ public struct Creature: Sendable {
         case .landing: "land"
         case .sleeping: "sleep"
         case .held: napsInHand ? "sleep" : "idle"
-        case .chatting: animationTime < config.landDuration ? "land" : "idle"      // a squash on impact
+        case .chatting: seat != nil ? "walk" : animationTime < config.landDuration ? "land" : "idle"      // a squash on impact
         case .running: "walk"
         }
     }
@@ -119,6 +121,9 @@ public struct Creature: Sendable {
         if case .running = mode { return true }
         return false
     }
+
+    /// Chatting and not stepping anywhere: in its seat, if it was sent to one.
+    public var isSeated: Bool { isChatting && seat == nil }
 
     public var isChatting: Bool {
         if case .chatting = mode { return true }
@@ -234,6 +239,7 @@ public struct Creature: Sendable {
 
         case .chatting(let remaining):
             turn(toward: restingRotation, dt: dt)
+            if let seat { stepToSeat(seat, dt: dt) }
             if remaining - dt <= 0 { walkOn(using: &rng) } else { mode = .chatting(remaining: remaining - dt) }
 
         case .running(let target):
@@ -332,6 +338,29 @@ public struct Creature: Sendable {
     /// exchange (a slow model, a line said out loud) does not walk off mid-sentence.
     public mutating func keepChatting(for seconds: Double) {
         if case .chatting(let remaining) = mode, remaining < seconds { mode = .chatting(remaining: seconds) }
+    }
+
+    /// Only while chatting: walk to `t` on this loop, the short way round, then
+    /// turn to `facing`, still chatting. Tea parties seat their pair this way.
+    public mutating func sit(at t: CGFloat, facing: CGFloat) {
+        guard isChatting else { return }
+        seat = (loop.wrap(t), facing < 0 ? -1 : 1)
+        animationTime = 0
+    }
+
+    private mutating func stepToSeat(_ seat: (t: CGFloat, facing: CGFloat), dt: Double) {
+        let ahead = loop.wrap(seat.t - spot.t), behind = loop.wrap(spot.t - seat.t)
+        let step = config.walkSpeed * dt
+        if min(ahead, behind) <= step {
+            spot.t = seat.t
+            direction = seat.facing
+            self.seat = nil
+            animationTime = config.landDuration       // sits straight down, no second squash
+        } else {
+            direction = ahead <= behind ? 1 : -1
+            spot.t = loop.wrap(spot.t + direction * step)
+        }
+        position = world.point(at: spot)
     }
 
     /// The conversation is over: back on the old course.
@@ -440,6 +469,7 @@ public struct Creature: Sendable {
         mode = newMode
         animationTime = 0
         hasArrived = false
+        seat = nil
     }
 
     private mutating func turn(toward goal: Double, dt: Double) {

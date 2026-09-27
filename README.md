@@ -118,6 +118,11 @@ triangle and a mushroom come built in, each with its own cast of characters. The
 creature you want; the model answers in a letter format the app imports as a real
 sprite sheet that blinks and takes your colours. See [docs/SPRITES.md](docs/SPRITES.md).
 
+**They have tea.** Now and then two who bump into each other put a little table out
+between them and sit down to tea for a few minutes, taking turns to tell each other
+stories from their lives, each in its own voice (Settings › Creatures › Tea parties,
+or *Have a Tea Party* from the menu). macOS only for now.
+
 **They can go home.** *Hide Them for a While…* in the menu brings out a house in the
 bottom-right corner of the main screen; everyone runs in, the house packs itself
 away, and when the time is up it comes back and they walk out one by one.

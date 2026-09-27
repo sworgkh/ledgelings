@@ -67,6 +67,10 @@ with `scripts/make-app.sh`, installed and seen working.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
   time, then quits once the pair is let go: the way to measure dialogue timing.
+- `--tea` starts a tea party on the real screen and prints every line with its time,
+  then quits once the pair walks on; `--tea-film out.mp4` films a one-minute party
+  offscreen (built-in lines, or a local server named by `LEDGELINGS_TEA_SERVER`),
+  which works even while the display sleeps and the live display link stops.
 - `swift build` does not update `build/Ledgelings.app`; run `scripts/make-app.sh`.
 - The app's preferences are shared with the owner's running copy. Back them up
   (`defaults export com.alterman.ledgelings file.plist`) before a test changes

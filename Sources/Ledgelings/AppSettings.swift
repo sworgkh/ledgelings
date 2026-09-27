@@ -39,6 +39,20 @@ final class AppSettings: ObservableObject {
     @Published var complainAfter: Int { didSet { save(complainAfter, "complainAfter") } }
     @Published var complainCalmSeconds: Double { didSet { save(complainCalmSeconds, "complainCalmSeconds") } }
 
+    // MARK: Tea parties
+
+    /// Share of bumps, in percent, that become a tea party instead of a quick word.
+    static let teaChanceRange = 1.0...100.0
+    /// Minutes a tea party lasts.
+    static let teaMinutesRange = 1.0...10.0
+    /// Seconds of quiet sipping between one story and the next.
+    static let teaSipRange = 0.0...30.0
+    /// Two creatures who bump into each other now and then sit down to tea and tell each other their life stories.
+    @Published var teaPartiesEnabled: Bool { didSet { save(teaPartiesEnabled, "teaPartiesEnabled") } }
+    @Published var teaPartyChance: Double { didSet { save(teaPartyChance, "teaPartyChance") } }
+    @Published var teaPartyMinutes: Double { didSet { save(teaPartyMinutes, "teaPartyMinutes") } }
+    @Published var teaSipSeconds: Double { didSet { save(teaSipSeconds, "teaSipSeconds") } }
+
     // MARK: Talk
 
     /// Where the words come from. The built-in lines need nothing set up.
@@ -260,6 +274,16 @@ final class AppSettings: ObservableObject {
         // Twenty seconds: chasing one creature round the screen is a streak; the same thing an hour apart is not.
         let calm = defaults.object(forKey: "complainCalmSeconds") as? Double ?? 20
         complainCalmSeconds = min(max(calm, Self.complainCalmRange.lowerBound), Self.complainCalmRange.upperBound)
+        teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
+        // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.
+        let chance = defaults.object(forKey: "teaPartyChance") as? Double ?? 10
+        teaPartyChance = min(max(chance, Self.teaChanceRange.lowerBound), Self.teaChanceRange.upperBound)
+        // Three minutes: six or so stories, long enough to learn something about each other.
+        let tea = defaults.object(forKey: "teaPartyMinutes") as? Double ?? 3
+        teaPartyMinutes = min(max(tea, Self.teaMinutesRange.lowerBound), Self.teaMinutesRange.upperBound)
+        // Six seconds: a sip and a look round before the next story, so it reads as a chat, not a recital.
+        let sip = defaults.object(forKey: "teaSipSeconds") as? Double ?? 6
+        teaSipSeconds = min(max(sip, Self.teaSipRange.lowerBound), Self.teaSipRange.upperBound)
         talkEnabled = defaults.object(forKey: "talkEnabled") as? Bool ?? true
         followGiver = defaults.object(forKey: "followGiver") as? Bool ?? true
         planesEnabled = defaults.object(forKey: "planesEnabled") as? Bool ?? true

@@ -500,4 +500,95 @@ extension ColonyTalkTests {
         for _ in 0..<6 { grab() }
         #expect(w.colony.bubbles[0] == nil, "off: it takes it quietly")
     }
+
+    // MARK: Tea parties
+
+    /// Both on the floor, a few points apart, the same size, facing each other.
+    func neighbours(_ w: World) {
+        w.settings.minSize = 2
+        w.settings.maxSize = 2
+        w.colony.applySettings()
+        let world = w.colony.world(forSize: 2)
+        w.colony.creatures[0] = Creature(world: world, spot: .init(loop: 0, t: 300), facingForwards: true)
+        w.colony.creatures[1] = Creature(world: world, spot: .init(loop: 0, t: 350), facingForwards: false)
+    }
+
+    @Test func aBumpCanBecomeATeaPartyWithATableStoriesInTurnAndAWalkOnAfter() throws {
+        let w = try World()
+        defer { w.forget() }
+        neighbours(w)
+        w.settings.teaPartyChance = 100
+        w.settings.teaPartyMinutes = 1
+        w.settings.teaSipSeconds = 2
+        w.colony.bumped(Meetings.Bump(a: 0, b: 1, count: 1, gift: false))
+        let party = try #require(w.colony.teaParty)
+        #expect(party.phase == .seating && w.colony.busy == [0, 1])
+        w.step(2)
+        #expect(w.colony.creatures.allSatisfy { $0.isSeated })
+        let gap = abs(w.colony.creatures[1].t - w.colony.creatures[0].t)
+        #expect(gap > 100, "they stepped apart to make room for the table: \(gap)")
+        #expect(w.colony.teaTableSnapshot()?.scale == 2, "the table is out, full size")
+        let floor = try #require(w.colony.teaTableSnapshot()?.floor)
+        #expect(abs(floor.y) < 0.01 && abs(floor.x - (w.colony.creatures[0].position.x + w.colony.creatures[1].position.x) / 2) < 0.5,
+                "standing on the floor, halfway between them")
+
+        let a = w.colony.character(forCreature: 0).name, b = w.colony.character(forCreature: 1).name
+        w.step(4)
+        let story = try #require(w.colony.bubbles[0]?.text)
+        #expect(Tea.stories[a]!.contains(story), "\(a) tells one of its own stories")
+        w.step(12)
+        let answer = try #require(w.colony.bubbles[1]?.text)
+        #expect(Tea.replies[b]!.contains { Banter.render($0, ["other": a]) == answer }, "\(b) answers in its own words")
+
+        w.step(60)
+        #expect(w.colony.teaParty == nil && w.colony.teaTableSnapshot() == nil, "packed away after its minute")
+        #expect(w.colony.busy.isEmpty)
+        let logged = w.history.exchanges(on: ChatLog.day(of: Date()))
+        #expect(logged.count >= 2 && logged.allSatisfy { $0.situation.contains("sitting down to tea") })
+        #expect(logged.contains { $0.lines.first?.speaker == b }, "they took turns telling")
+        #expect(w.colony.bonds.bond(a, b)?.talks == 1, "the whole party is one conversation between them")
+        w.step(20)
+        #expect(w.colony.chats.isEmpty && w.colony.creatures.allSatisfy { !$0.isChatting }, "and they walk on")
+    }
+
+    @Test func chasedAwayFromTheTableThePartyBreaksUp() throws {
+        let w = try World()
+        defer { w.forget() }
+        neighbours(w)
+        w.settings.teaPartyChance = 100
+        w.colony.bumped(Meetings.Bump(a: 0, b: 1, count: 1, gift: false))
+        w.step(5)
+        #expect(w.colony.teaParty?.isOn == true)
+        w.colony.creatures[1].startle(using: &w.colony.rng)
+        w.step(0.1)
+        #expect(w.colony.teaParty?.isOn != true && w.colony.busy.isEmpty)
+        w.step(1)
+        #expect(w.colony.teaParty == nil && w.colony.teaTableSnapshot() == nil)
+    }
+
+    @Test func teaPartiesOffOrAFlowerBumpIsAQuickWordAsBefore() throws {
+        let w = try World()
+        defer { w.forget() }
+        neighbours(w)
+        w.settings.teaPartyChance = 100
+        w.settings.teaPartiesEnabled = false
+        w.colony.applySettings()
+        w.colony.bumped(Meetings.Bump(a: 0, b: 1, count: 1, gift: false))
+        #expect(w.colony.teaParty == nil && !w.colony.chats.isEmpty, "off: they only talk")
+        w.step(40)
+        w.settings.teaPartiesEnabled = true
+        neighbours(w)
+        w.colony.bumped(Meetings.Bump(a: 0, b: 1, count: 3, gift: true))
+        #expect(w.colony.teaParty == nil, "a flower's bump is about the flower")
+    }
+
+    @Test func theMenusTeaPartySeatsTwoWhoShareAnEdge() throws {
+        let w = try World()
+        defer { w.forget() }
+        neighbours(w)
+        w.colony.teaNow()
+        #expect(w.colony.teaParty != nil)
+        w.colony.teaNow()
+        #expect(w.colony.teaCount == 1, "one party at a time")
+    }
 }

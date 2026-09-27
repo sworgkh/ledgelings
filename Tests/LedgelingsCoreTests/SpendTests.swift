@@ -76,4 +76,13 @@ import Testing
         #expect(s.byPurpose.map(\.purpose) == ["Reminders"])
         #expect(s.byPurpose[0].total.calls == 1)
     }
+
+    @Test func teaPartiesAreTheirOwnLineInTheCosts() {
+        let usage = Spend.Usage(promptTokens: 300, completionTokens: 40, cost: 0.0002)
+        let records = [Spend.Record(time: Date(), provider: "OpenRouter", model: "m", usage: usage, purpose: .teaParties),
+                       Spend.Record(time: Date(), provider: "OpenRouter", model: "m", usage: usage, purpose: .talk)]
+        let s = Spend.summarise(records, now: Date())
+        #expect(Set(s.byPurpose.map(\.purpose)) == ["Tea parties", "Talk"])
+        #expect(s.byPurpose.first { $0.purpose == "Tea parties" }?.total.calls == 1)
+    }
 }
