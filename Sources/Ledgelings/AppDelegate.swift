@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
+    private let teaItem = NSMenuItem(title: "Have a Tea Party", action: #selector(haveATeaParty), keyEquivalent: "")
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
     private static let hideChoices: [(String, Double?)] = [
@@ -50,6 +51,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--tea-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/tea.mp4"
+            Task { @MainActor in
+                do { try await TeaFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings tea film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         do {
             colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders)
             colony?.voice = voice
@@ -72,6 +83,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try? await Task.sleep(for: .seconds(1))
                 for _ in 0..<900 where !colony.busy.isEmpty || !colony.chats.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
                 colony.trace?("pair let go")
+                exit(0)
+            }
+        }
+        // `--tea`: a tea party now, every line and voice cue on stderr with the
+        // time since it started, then quit once the pair has walked on.
+        if CommandLine.arguments.contains("--tea"), let colony {
+            let start = Date()
+            colony.trace = { line in
+                FileHandle.standardError.write(Data(String(format: "tea %7.2f  %@\n", Date().timeIntervalSince(start), line).utf8))
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                colony.teaNow()
+                try? await Task.sleep(for: .seconds(1))
+                guard colony.teaParty != nil || colony.teaInvite != nil else { colony.trace?("no party: \(colony.talkStatus)"); exit(1) }
+                while colony.teaParty != nil || colony.teaInvite != nil || !colony.chats.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
+                colony.trace?("pair walks on")
                 exit(0)
             }
         }
@@ -166,6 +194,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         hideItem.target = self
         menu.addItem(hideItem)
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
+        teaItem.target = self
+        menu.addItem(teaItem)
         menu.addItem(withTitle: "Send a Paper Plane", action: #selector(sendPaperPlane), keyEquivalent: "p").target = self
         menu.addItem(withTitle: "Add a Reminder…", action: #selector(openReminders), keyEquivalent: "r").target = self
         nextReminderItem.target = self
@@ -193,6 +223,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         skipItem.isHidden = settings.nightMinutes == 0
         if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
         voiceItem.state = settings.voiceEnabled ? .on : .off
+        teaItem.isHidden = !settings.teaPartiesEnabled
+        teaItem.title = colony.teaParty?.isOn == true ? "Tea Party On" : "Have a Tea Party"
         if let next = reminders.book.upcoming {
             nextReminderItem.title = "   Next: \(String(next.text.prefix(40))), \(Reminders.when(next.time, now: Date()))" + (settings.remindersEnabled ? "" : " (off)")
             nextReminderItem.isHidden = false
@@ -241,6 +273,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func makeThemJump() { colony?.startleEveryone() }
     @objc private func skipPhase() { colony?.skipPhase() }
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
+    @objc private func haveATeaParty() { colony?.teaNow() }
     @objc private func sendPaperPlane() { colony?.sendPlane() }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func openSettings() { settingsWindow.show() }

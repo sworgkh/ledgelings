@@ -21,6 +21,7 @@ enum ReminderFilm {
         settings.minSize = 2.5; settings.maxSize = 2.5
         settings.brain = .script
         settings.planesEnabled = false
+        settings.teaPartiesEnabled = false
         settings.dayMinutes = 30; settings.nightMinutes = 30
         settings.reminderLetterSeconds = 4
         let colony = try Colony(settings: settings, history: ChatHistory(directory: scratch.appendingPathComponent("chats")),

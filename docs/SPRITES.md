@@ -112,6 +112,7 @@ The recipes:
 | `sprites/blocky.yaml` | the square creature, 9 poses × 3 eye rows | `spritetool/painters/blocky.py` |
 | `sprites/zzz.yaml` | the Z a sleeper floats, one cell | `painters/zzz.py` |
 | `sprites/house.yaml` | the house, 68×60 | `painters/house.py` |
+| `sprites/tea.yaml` | the tea party table with its pot and two cups, 36×28, steam in two frames | `painters/tea.py`, with the house's blocks |
 | `sprites/flowers.yaml` | ten flowers, one cell each | `painters/flowers.py`, from hand-placed glyphs with the outline added in code |
 | `sprites/plane.yaml` | the paper plane and the note it opens into, 18×12 | `painters/plane.py`, same glyph-plus-outline method |
 | `sprites/text/*.txt` | frog, cat, ghost, slime, robot, triangle, mushroom, in the letter format | `sprites/text/make.py` (shapes plus an automatic outline, light and shade) |

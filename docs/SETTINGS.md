@@ -13,6 +13,7 @@ Settings…*. Nine tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Cale
 | **Make Them Jump** | Every creature startles and jumps to another edge |
 | **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
 | **Make Someone Talk** | A random awake creature says something to the nearest one |
+| **Have a Tea Party** | macOS. The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Hidden while tea parties are off |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
 | **Add a Reminder…** (⌘R) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
 | **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -54,6 +55,10 @@ by the cursor, which ends the chat.
 | **Complain when pushed around** (`complainEnabled`) | on | | macOS. Chasing a creature off its edge with the cursor, or picking it up, bothers it. Bothered more than *Puts up with* times in a row, it tells you off in a bubble, in its own voice (a model writes it when one is set up and talk is on; that call is priced under *Complaints* in Costs). The count then starts over |
 | **Puts up with** (`complainAfter`) | 4 in a row | 1 to 20 | The 5th chase in a row, by default, gets the complaint |
 | **Calms down after** (`complainCalmSeconds`) | 20 s | 5 to 120 | Leave it alone this long and its count starts again from zero |
+| **Tea parties** (`teaPartiesEnabled`) | on | | macOS. Now and then two creatures who bump into each other step apart, a little table with a teapot and two cups comes up between them, and they sit down to tea, taking turns to tell each other a story from their lives and answer it. One party at a time; the menu's *Have a Tea Party* starts one now. With talk off they just sip. A model writes the stories when one is set up (priced under *Tea parties* in Costs); otherwise every built-in character has its own. Chasing one of them off, picking one up or hiding them all ends the party |
+| **Share of bumps** (`teaPartyChance`) | 10 % | 1 to 100 | How many bumps become a tea party. A flower's bump never does, and a pair near a corner, with no room for the table, just talks |
+| **Lasts** (`teaPartyMinutes`) | 3 min | 1 to 10, in half minutes | A story being told when the time is up is let finish |
+| **Sip between stories** (`teaSipSeconds`) | 6 s | 0 to 30 | The quiet between one story and its answer being over and the next story |
 | **Start at login** | off | | macOS: the system's Login Items (only an installed app can register). Windows: the per-user Startup list |
 
 ## Sprites tab

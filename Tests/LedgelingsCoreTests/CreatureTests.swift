@@ -284,6 +284,23 @@ struct SeededRNG: RandomNumberGenerator {
         #expect(!c.isChatting)
     }
 
+    @Test func sentToASeatItWalksThereStillChattingThenFacesItsFriend() {
+        var rng = SeededRNG(state: 6)
+        var c = creature(at: 300)
+        c.sit(at: 250, facing: 1)
+        #expect(!c.isChatting && c.isSeated == false, "only a chatter takes a seat")
+        c.meet(facing: 1)
+        c.sit(at: 270, facing: 1)
+        #expect(c.isChatting && !c.isSeated)
+        run(&c, seconds: 0.2, rng: &rng)
+        #expect(c.animation == "walk" && c.isMirrored, "walks back to it, facing the way it goes")
+        run(&c, seconds: 1, rng: &rng)
+        #expect(c.isSeated && abs(c.t - 270) < 0.01)
+        #expect(!c.isMirrored && c.animation == "idle", "sat down facing its friend")
+        c.walkOn(using: &rng)
+        #expect(!c.isChatting)
+    }
+
     @Test func aChatKeptGoingOutlastsItsTimeLimitButOnlyWhileChatting() {
         var rng = SeededRNG(state: 4)
         var c = creature(at: 200)

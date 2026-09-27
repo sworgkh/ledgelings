@@ -79,6 +79,17 @@ struct HouseSnapshot {
 }
 
 /// A flower on its way from one creature to another, in GLOBAL coordinates.
+/// The tea party's table, standing on its edge between the pair, in GLOBAL coordinates.
+struct TeaTableSnapshot {
+    var image: CGImage?
+    /// The middle of its feet, on the screen edge.
+    var floor: CGPoint
+    /// The edge's turn, as a creature standing there has it.
+    var rotation: Double
+    /// Screen points per sprite pixel, already grown or shrunk: 0 while it comes up, full once it is out.
+    var scale: CGFloat
+}
+
 struct FlowerFlight {
     var image: CGImage?
     var position: CGPoint
@@ -129,6 +140,14 @@ final class ScreenOverlay {
         layer.isHidden = true
         layer.zPosition = -1                       // behind the creatures
         layer.anchorPoint = CGPoint(x: 1, y: 0)    // grows and shrinks about its bottom-right corner
+        root.addSublayer(layer)
+        return layer
+    }()
+    private lazy var teaTable: CALayer = {
+        let layer = makeLayers().sprite
+        layer.isHidden = true
+        layer.zPosition = -1                       // behind the pair, who sit tucked in at its ends
+        layer.anchorPoint = CGPoint(x: 0.5, y: 0)  // grows up out of the edge, about its feet
         root.addSublayer(layer)
         return layer
     }()
@@ -206,8 +225,10 @@ final class ScreenOverlay {
     func render(_ snapshots: [CreatureSnapshot], z: CGImage?, cell: CGSize, zCell: CGSize,
                 flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = [],
                 house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
-                plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil) {
+                plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
+                tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero) {
         renderFlight(inFlight, flowerCell: flowerCell)
+        renderTeaTable(tea, cell: teaCell)
         mailPlane.render(plane, cell: planeCell, origin: display.frame.origin)
         reminderPlane.render(reminder?.plane, cell: planeCell, origin: display.frame.origin)
         renderLetter(reminder?.letter, cell: cell)
@@ -435,6 +456,21 @@ final class ScreenOverlay {
         house.contents = image
         house.bounds = CGRect(x: 0, y: 0, width: cell.width * inHouse.scale, height: cell.height * inHouse.scale)
         house.position = CGPoint(x: inHouse.corner.x - origin.x, y: inHouse.corner.y - origin.y)
+    }
+
+    private func renderTeaTable(_ tea: TeaTableSnapshot?, cell: CGSize) {
+        let reach = max(cell.width, cell.height) * (tea?.scale ?? 0)
+        guard let tea, let image = tea.image, tea.scale > 0,
+              display.frame.insetBy(dx: -reach, dy: -reach).contains(tea.floor) else {
+            if !teaTable.isHidden { teaTable.isHidden = true }
+            return
+        }
+        let origin = display.frame.origin
+        teaTable.isHidden = false
+        if (teaTable.contents as AnyObject?) !== image { teaTable.contents = image }
+        teaTable.bounds = CGRect(x: 0, y: 0, width: cell.width * tea.scale, height: cell.height * tea.scale)
+        teaTable.position = CGPoint(x: tea.floor.x - origin.x, y: tea.floor.y - origin.y)
+        teaTable.transform = CATransform3DMakeRotation(tea.rotation, 0, 0, 1)
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {

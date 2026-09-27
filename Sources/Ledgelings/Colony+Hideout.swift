@@ -45,6 +45,7 @@ extension Colony {
     func hide(for seconds: Double) {
         guard !hideout.isActive, !creatures.isEmpty else { return }
         letGo()
+        breakUpTea()
         releaseChat()
         bubbles.removeAll()
         entering.removeAll()

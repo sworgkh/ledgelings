@@ -36,6 +36,10 @@ extension Colony {
                      inward: creatures[bump.a].loop.inward(ofSegment: creatures[bump.a].segment), using: &rng)
         var event = "They just walked into each other."
         var given: String?
+        // Now and then, instead of a word in passing, they sit down to tea. Not on a
+        // flower's bump: the flower is the moment there.
+        if !bump.gift, settings.teaPartiesEnabled, TeaParty.wanted(percent: settings.teaPartyChance, using: &rng),
+           startTea(bump.a, bump.b) { return }
         if bump.gift, let flower = Gifts.flowers.randomElement(using: &rng), gifts.give(flower, from: giver, to: receiver, at: elapsed) {
             let a = character(forCreature: giver).name, b = character(forCreature: receiver).name
             event = "\(a) just walked into \(b) and gave \(b) a \(flower)."

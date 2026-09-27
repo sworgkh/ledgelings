@@ -221,3 +221,37 @@ def test_the_plane_sheet_has_a_plane_its_unfolding_and_a_letter_in_blocky_rules(
         glyph = painter.GLYPHS[pose]
         assert (len(glyph[0]), len(glyph)) == (15, 12), pose
         assert glyph[6].endswith("LL") and glyph[6][2] in "sS", f"{pose} has its fold on row 6"
+
+
+TEA = Path(__file__).resolve().parents[2] / "sprites" / "tea.yaml"
+
+
+def test_the_tea_table_stands_on_the_floor_with_a_cup_at_each_end_and_steams():
+    from spritetool.painters import tea as painter
+
+    recipe = load_recipe(TEA)
+    assert [a.name for a in recipe.animations] == ["steam"]
+    sheet = key_out(get_painter("tea")(recipe), recipe.background, recipe.tolerance)
+    cells = []
+    for col in range(2):
+        x, y, w, h = recipe.cell_rect(col, 0)
+        cell = sheet.crop((x, y, x + w, y + h))
+        left, top, right, bottom = cell.getchannel("A").getbbox()
+        assert bottom == h, "the table does not stand on the floor"
+        assert left == 0 and right == w, "the table runs the whole cell, cup handles included"
+        cells.append(cell)
+    # A cup at each end, the same distance in: one for each of the pair.
+    cup = painter.CUP
+    row = cells[0].height - painter.TOP_H - 3
+    xs = [px for px in range(cells[0].width) if cells[0].getpixel((px, row))[:3] == cup]
+    assert xs and min(xs) < 10 and max(xs) > cells[0].width - 10
+    assert min(xs) == cells[0].width - 1 - max(xs), "the cups sit symmetrically"
+    # Blocky's rules: the table top has its light line on top and its shade line below.
+    light, shade = painter.shades(painter.WOOD)["light"], painter.shades(painter.WOOD)["shade"]
+    top = cells[0].height - painter.TOP_H
+    assert cells[0].getpixel((10, top + 1))[:3] == light
+    assert cells[0].getpixel((10, top + 3))[:3] == shade
+    # The two poses differ only in the steam.
+    diff = [(px, py) for px in range(cells[0].width) for py in range(cells[0].height)
+            if cells[0].getpixel((px, py)) != cells[1].getpixel((px, py))]
+    assert diff and all(cells[1].getpixel(p)[:3] in (painter.STEAM, (0, 0, 0)) or cells[0].getpixel(p)[:3] == painter.STEAM for p in diff)

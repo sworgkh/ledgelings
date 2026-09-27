@@ -279,6 +279,10 @@ one-line exchange, with its cost when a model wrote it.
 - `keepChatting(for s)`: only while chatting; raises the remaining limit to at
   least `s`. The colony calls it every frame while a pair is still talking
   (§7.2), so a slow exchange never walks off mid-sentence.
+- `sit(at t, facing)`: only while chatting. It walks to `t` on its loop at
+  `walkSpeed`, the short way round (drawn walking, facing the way it goes),
+  still chatting, then turns to `facing` and stands (`isSeated`). Tea parties
+  seat their pair this way (§7.8). Any mode change forgets the seat.
 - `walkOn()`: only from chatting. Restores the remembered direction and enters
   walking with a fresh `walkSpell`.
 - A startle (cursor) or anything else that changes mode ends the chat.
@@ -553,7 +557,8 @@ Every model call, whether or not its line was usable, appends one record to
 `purpose` names the feature that made the call: `talk` (meetings and pokes),
 `planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
 model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2), `reminders`
-(a reminder's note, §7.7), `complaints` (a creature telling the user off, §4.7.1). Recording a call requires one. Records from
+(a reminder's note, §7.7), `complaints` (a creature telling the user off, §4.7.1), `teaParties`
+(the stories and answers at a tea party, §7.8). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -864,7 +869,9 @@ On a bump:
    start its flight giver→receiver, and the situation event becomes
    `"{A} just walked into {B} and gave {B} a {flower}."`; otherwise
    `"They just walked into each other."`.
-4. If talking is enabled, `talk(giver, receiver, event)`. If talking is off or
+4. Not a gift: with tea parties on, `teaPartyChance` percent of bumps become a
+   tea party instead (§7.8), when there is room for the table.
+5. If talking is enabled, `talk(giver, receiver, event)`. If talking is off or
    the talk could not start, release the pair after 2 s.
 
 A creature wearing a flower (§7.3) never counts as able to talk here: it walks
@@ -977,7 +984,7 @@ time is up → growing (0.4 s) → releasing (one out every 0.6 s) → vanishing
 - **Bring Them Back Now** (the same menu item while hiding): from hidden →
   growing; from shrinking → growing from the current size; from appearing or
   gathering → releasing whoever is inside, the rest just carry on.
-- Starting a hide clears bubbles, releases any chat and drops anything held.
+- Starting a hide clears bubbles, ends a tea party (§7.8), releases any chat and drops anything held.
   A second hide while one is active is ignored. Not persisted: a restart
   brings everyone back.
 
@@ -1152,6 +1159,78 @@ the screen.
   min(w, h) / 8)` pixels, cut off beyond the diagonal, with the flap drawn in deep
   shade inside a rim. Drawn above everything, on the cursor's screen only.
 
+### 7.8 Tea parties (macOS)
+
+Now and then a bump is not a word in passing: the two sit down to tea and tell
+each other stories from their lives for a few minutes. One party at a time.
+
+**Starting.** On a bump (§7.1) that is not a gift, with `teaPartiesEnabled` on and
+no party running, `teaPartyChance` percent of bumps (a uniform draw in 0..<100
+below it) try a party, after the hold and the stars. It needs room: both on the
+same loop and segment. The table's scale is the mean of the two sizes; its half
+width `18 · scale`. The middle is the point of each one's own loop nearest the
+midpoint of the two positions; each one's seat is `offset = 18·scale + 11·size −
+2·scale` along its segment from that middle, on the side away from the one it
+faces (`TeaParty.seat`). A seat past the end of the segment (round a corner)
+means no party: the bump goes on as a normal meeting. Otherwise both `sit(at:
+seat, facing)` (§4.8), the pair is put in `busy` for the whole party, and the
+table's feet stand on the edge under the first one's middle, turned like a
+creature there.
+
+**Phases** (`TeaParty`): seating → laying → tea → packing → over.
+
+| Phase | Lasts | Then |
+|---|---|---|
+| seating | until both are seated, at most `seatingCap = 4 s` | laying |
+| laying | `appearTime = 0.4 s`, the table grows 0 → 1 from its feet | tea; the first round `pourTime = 1.5 s` later |
+| tea | until `teaPartyMinutes · 60` s after the start, and no round under way | packing |
+| packing | `packTime = 0.5 s`, the table shrinks 1 → 0 | over: the pair is let go (`endChat` after 0.5 s) |
+
+**Rounds.** In tea, with no round under way and the next one due, the party asks
+for a round; the tellers alternate, the first bump's `a` first. A round is one
+story from the teller and one answer from the listener. When it is over (the
+answer said and, silently, left up `showTime` to be read) the next is due
+`teaSipSeconds` later. With talk off a round is over at once: they only sip.
+Out loud, while another conversation holds the voice (§6.6.1), the round is
+postponed 1 s.
+
+- **Built-in lines** (brain = built-in, or no model set up): the story is one of
+  `Tea.stories[name]` (four per built-in character, in its voice; `anyoneStories`
+  for an invented one) not yet told at this party while one is left; the answer
+  one of `Tea.replies[name]` (three each; `anyoneReplies`) with `{other}` = the
+  teller. Silently the answer comes `showTime(story)·0.6` after the story, on the
+  colony's clock; out loud the two take turns (§6.6.1).
+- **With a model:** two calls, like a meeting (§6.2), with `Tea.systemPrompt`
+  (persona and kind of both, "stories from your lives", one line of at most 25
+  words), the relationship (§6.5.2) and the recent lines (§6.5.3);
+  `Tea.storyPrompt` for the teller and `Tea.replyPrompt` for the answer, both
+  with `{situation}` ("… have put a little table out on {edge} and are sitting
+  down to tea together", after the almanac) and `{party}` (the last 8 lines said
+  at this party, `Name: line`, or "(nothing yet: the tea has just been poured)").
+  Each call is recorded with purpose `teaParties`, whatever comes back. An empty
+  line is replaced by a built-in one; an error before anything was said hands the
+  round to the built-in lines.
+
+Every round goes to the chat log as an exchange (with its cost when a model
+wrote it). When the party ends, all its lines count as one conversation for the
+bonds (§6.5.2).
+
+**Breaking up.** If either stops chatting (startled by the cursor, picked up,
+rehomed) or is removed, or the house comes out (§7.5), or `teaPartiesEnabled` is
+turned off, the party ends at once: no table yet → over; else packing. A scripted
+answer still due is dropped, the pair leaves `busy`.
+
+**Menu: Have a Tea Party** (hidden while tea parties are off): the closest two
+free, awake creatures on the same segment stop and sit down now; if no two share
+a segment, the one nearer another jumps (`leap`, §4.9) to `36 · mean size` points
+in front of it along its segment and they sit down once it lands (a word instead
+if there is no room; given up after 5 s). Ignored while a party is on.
+
+Drawn (`tea` sheet, §9.1) behind the creatures, anchored at the middle of its
+feet, turned with the edge, at `scale · grown`, animating `steam`.
+
+---
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -1248,11 +1327,12 @@ Shipped sheets:
 | zzz | 10×10 | 10×10 | whole | `z` | float |
 | flowers | 160×16 | 16×16 | [1,1,14,15] | ten flowers, one frame each | one per flower |
 | house | 68×60 | 68×60 | [2,2,64,58] | `house` | house |
+| tea | 72×28 | 36×28 | whole | `tea-0`, `tea-1`: the table, its steam low and risen | steam 2 frames 2 fps loop |
 
 Art rules for any new creature sheet: drawn **standing on a floor, facing
 right**, body **centred in its cell** (rotation is about the cell centre), eyes
 pure black, the four palette colours used only for the body. Every block in
-the game (creature body, house wall, roof slabs, chimney) is drawn the same
+the game (creature body, house wall, roof slabs, chimney, tea table, pot and cups) is drawn the same
 way: flat fill, a 1 px outline of `mix(fill, black, 0.76)`, a 1 px line of
 `mix(fill, white, 0.36)` along the top and left inside the outline, a 1 px
 line of `mix(fill, black, 0.17)` along the bottom and right. Pixel art; the
@@ -1447,6 +1527,7 @@ falls through to whatever is underneath.
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
 | Menu: Make Them Jump | every creature startles |
 | Menu: Make Someone Talk | §6.5 |
+| Menu: Have a Tea Party | two sit down to tea now (§7.8); hidden while tea parties are off |
 | Menu: Send a Paper Plane | a plane goes up now if two creatures are free (§7.6) |
 | Menu: Add a Reminder… (⌘R) | the paper note (§7.7), or with `reminderPaperNote` off the settings window on the Reminders tab; below it, `Next: <text>, <when>` (with `(off)` when reminders are off) opens the same |
 | Click a reminder's open letter | folds it away (§7.7) |
@@ -1474,6 +1555,10 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | complainEnabled | true | a creature bothered too often in a row complains (§4.7.1) |
 | complainAfter | 4 | 1–20, clamped on load: bothers it puts up with; the next one in a row gets a complaint |
 | complainCalmSeconds | 20 | 5–120 s, clamped on load: a gap this long starts the count over |
+| teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
+| teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
+| teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |
+| teaSipSeconds | 6 | 0–30 s, clamped on load: quiet between one story and the next |
 | talkEnabled | true | |
 | followGiver | true | the wearer of a flower trails its giver (§7.3) |
 | planesEnabled | true | paper planes every `planeMinutes` (§7.6); the menu item works either way |
@@ -1524,7 +1609,7 @@ The reminders themselves are in `reminders.json`, not the preferences (§7.7).
 Settings window: 1100×760 points, nine tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
-colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider). **Talk**: talk toggle,
+colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Talk**: talk toggle,
 bubble and flower sliders, follow-the-giver and paper-plane toggles and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),

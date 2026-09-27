@@ -71,6 +71,20 @@ struct SettingsView: View {
             } footer: {
                 Text("Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out.")
             }
+
+            Section {
+                Toggle("Sit down to tea now and then", isOn: $settings.teaPartiesEnabled)
+                SliderRow("Share of bumps", value: $settings.teaPartyChance, in: AppSettings.teaChanceRange, step: 1, unit: "%")
+                    .disabled(!settings.teaPartiesEnabled)
+                SliderRow("Lasts", value: $settings.teaPartyMinutes, in: AppSettings.teaMinutesRange, step: 0.5, unit: " min")
+                    .disabled(!settings.teaPartiesEnabled)
+                SliderRow("Sip between stories", value: $settings.teaSipSeconds, in: AppSettings.teaSipRange, step: 1, unit: " s")
+                    .disabled(!settings.teaPartiesEnabled)
+            } header: {
+                Text("Tea parties")
+            } footer: {
+                Text("Now and then two creatures who bump into each other put a little table out between them and sit down to tea, taking turns to tell each other stories from their lives. One party at a time. With talk off they just sip.")
+            }
         } right: {
             Section {
                 SliderRow("Day lasts", value: $settings.dayMinutes, in: 0.5...60, step: 0.5, unit: " min")

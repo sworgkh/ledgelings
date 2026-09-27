@@ -71,6 +71,7 @@ enum Promo {
         s.talkModel = "promo"
         s.talkEnabled = true
         s.followGiver = true
+        s.teaPartiesEnabled = false          // the script has its own meetings; a lucky tea party would break it
         s.bubbleSeconds = 4
         s.flowerMinutes = 30
         s.dayMinutes = 30; s.nightMinutes = 30
