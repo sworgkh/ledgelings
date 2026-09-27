@@ -1545,6 +1545,13 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 
 ## 12. Settings (all persisted, applied live)
 
+With `brainProvider` = `script` (a fresh install) there is no model: every feature
+still runs on built-in words, and the settings only a model uses are greyed out (or,
+for prompts, hidden) under one note, `AppSettings.needsModel`, naming where to choose
+one: `plotsEnabled` and its numbers, `plotPrompt`, `knowsTimeOfDay`, `knowsDate`,
+`holidayLookAhead`, the system/line/reply prompts, `lineTokens`, and Cast with Model.
+An error for want of a model reads as that note, never as a server refusal.
+
 | Key | Default | Range / notes |
 |---|---|---|
 | creatureCount | 3 | 1–24 |

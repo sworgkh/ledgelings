@@ -405,10 +405,18 @@ final class AppSettings: ObservableObject {
         return client
     }
 
+    /// A model is chosen as the brain: LM Studio or OpenRouter. Off with the
+    /// built-in lines, which is how a fresh install starts; the features that
+    /// only a model can do are greyed out then, saying so (`needsModel`).
+    var hasModel: Bool { brain != .script }
+
+    /// Beside anything greyed out for want of a model, in the same words everywhere.
+    static let needsModel = "Needs a model: the built-in lines have none. Choose LM Studio or OpenRouter as the Brain in Settings › Talk."
+
     /// Why `chatClient()` came back empty, in words for the menu and the settings window.
     var brainProblem: String {
         switch brain {
-        case .script: "the built-in lines need no model"
+        case .script: Self.needsModel
         case .lmStudio: "LM Studio server address is not a URL"
         case .openRouter: "no OpenRouter API key; add one in Settings › Talk"
         }

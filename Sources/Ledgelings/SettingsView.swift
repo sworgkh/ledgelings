@@ -192,6 +192,16 @@ struct SettingsColumn<Content: View>: View {
     }
 }
 
+/// Shown above whatever a tab greys out for want of a model, so nothing is
+/// silently dead: the reason, and where to choose one.
+struct NeedsModelNote: View {
+    var body: some View {
+        Label(AppSettings.needsModel, systemImage: "info.circle")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+    }
+}
+
 /// A labelled slider with its value printed beside it: "3×", "5 min", "14 s".
 struct SliderRow: View {
     let title: String

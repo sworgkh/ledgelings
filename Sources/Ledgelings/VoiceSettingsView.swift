@@ -43,10 +43,11 @@ private struct CharacterVoicesSection: View {
             ForEach(names, id: \.self) { CharacterVoiceRow(name: $0, settings: settings, voice: voice) }
             HStack {
                 Button(castingAll ? "Casting…" : "Cast Everyone with Model") { Task { await castEveryone() } }
-                    .disabled(castingAll || settings.brain == .script || names.isEmpty)
-                    .help(settings.brain == .script ? "Needs a model brain: LM Studio or OpenRouter, in Settings › Talk" : "")
+                    .disabled(castingAll || !settings.hasModel || names.isEmpty)
                 Spacer()
             }
+            // Said once for every greyed Cast button, not hidden in a tooltip.
+            if !settings.hasModel { NeedsModelNote() }
             if let allNote { Text(allNote).font(.caption).foregroundStyle(.secondary) }
         } header: {
             Text("Characters")
@@ -112,8 +113,7 @@ private struct CharacterVoiceRow: View {
                 Spacer()
                 Button("Test") { voice.introduce(name) }
                 Button(casting ? "Casting…" : "Cast with Model") { Task { await cast() } }
-                    .disabled(casting || settings.brain == .script)
-                    .help(settings.brain == .script ? "Needs a model brain: LM Studio or OpenRouter, in Settings › Talk" : "")
+                    .disabled(casting || !settings.hasModel)
                 Button("Auto") { settings.setVoice(of: name) { $0 = CharacterVoice() } }.disabled(own.isAutomatic)
             }
             if let castNote { Text(castNote).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }

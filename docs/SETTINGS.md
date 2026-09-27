@@ -4,6 +4,25 @@ Every setting is saved as you change it and applied live; nothing needs a restar
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
 Settings…*. Nine tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
+## Without a model
+
+A fresh install talks from the **built-in lines**: no server, no key, nothing paid.
+Everything works on them (talk, flowers, paper planes, tea parties, complaints,
+reminders, the Mac's voices and a local speech server), with ready-made words in each
+character's voice. The few things only a model can do are greyed out, each under the
+same note, *Needs a model: the built-in lines have none. Choose LM Studio or
+OpenRouter as the Brain in Settings › Talk.*
+
+| Tab | Greyed out without a model | Why |
+|---|---|---|
+| Talk | *Room for each line* and the **Prompts** are hidden | Nothing reads them |
+| Bonds | **Pairs who live together get a story** and its two numbers; the story prompt is hidden | A model writes the stories. Time together is still counted, so a pair due a story gets it at its next talk once a model is chosen |
+| Calendar | **They know the time of day**, **…the day of the week and the date**, **Mention a holiday … ahead** | The built-in lines are written ahead of time; they only know today's holiday (the faith boxes still count) |
+| Voice | **Cast with Model**, **Cast Everyone with Model** | A model picks the voice; the automatic casting still fits voices to each description |
+
+An OpenRouter voice needs its key even with the built-in lines: the key field is on the
+Voice tab then, and a line said without one tells you so in the Voice tab's status.
+
 ## The menu
 
 | Item | What it does |
@@ -117,7 +136,8 @@ dozen words, with which part of the story this conversation is, so the next
 conversations follow it and the last one wraps it up. When a story has run its
 course the next one grows from the bond, the last story and the last four lines they
 said. One short call per story (about 300 tokens), shown as *Relationship plots* on
-the Costs tab. With the built-in lines there is no model and so no stories.
+the Costs tab. With the built-in lines there is no model and so no stories: the
+controls are greyed out under a *Needs a model* note, and the story prompt is hidden.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
@@ -156,7 +176,9 @@ which only says when they sleep.
 On the right, what they know right now, word for word, and the ticked holidays in
 the next 60 days. Everything is worked out on the Mac; nothing is looked up online.
 With the built-in lines, one conversation in three on a holiday is a `[holiday]`
-block about it (`{holiday}` is its name).
+block about it (`{holiday}` is its name). They know a holiday only on the day, and
+nothing of the clock or the date, so those two boxes and *Mention a holiday* are
+greyed out under a *Needs a model* note.
 
 ## Reminders tab (macOS)
 
@@ -272,7 +294,8 @@ neutral voice; **Cast with Model** understands any description.
 Off, voices are handed out by name only, to differ, with the cartoon lift or a small nudge for pitch.
 
 **Cast with Model** (on a card) and **Cast Everyone with Model** (under the cards) ask
-the brain model (LM Studio or OpenRouter; not the built-in lines) to choose a voice
+the brain model (LM Studio or OpenRouter; with the built-in lines both are greyed out
+under a *Needs a model* note) to choose a voice
 from the engine's list and a pitch and speed, given the character's name, species and
 description. Its choice is kept as the character's own, as if picked by hand, with its
 reason shown under the card. One call per character, priced into the spend file.
