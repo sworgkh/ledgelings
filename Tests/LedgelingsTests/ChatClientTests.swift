@@ -53,6 +53,23 @@ import Testing
         #expect(answer.text == "" && answer.usage == Spend.Usage(promptTokens: 200, completionTokens: 160, cost: 0.0001))
     }
 
+    @Test func aReplyThatRanOutOfRoomSaysItWasCut() throws {
+        let cut = Data(#"{"choices":[{"finish_reason":"length","message":{"content":"Collision report"}}]}"#.utf8)
+        #expect(try ChatClient.parseReply(cut) == ChatClient.Answer(text: "Collision report", usage: nil, cut: true))
+        let whole = Data(#"{"choices":[{"finish_reason":"stop","message":{"content":"Collision logged."}}]}"#.utf8)
+        #expect(try ChatClient.parseReply(whole).cut == false)
+    }
+
+    @Test func aLineHasRoomToThinkAndIsToldToThinkLittle() throws {
+        var client = ChatClient.openRouter(key: "k", model: "m")
+        client.lineTokens = 900
+        let body = try #require(try client.lineRequest(system: "s", user: "u").httpBody
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })
+        #expect(body["max_tokens"] as? Int == 900)
+        #expect((body["reasoning"] as? [String: Any])?["effort"] as? String == "low")
+        #expect(ChatClient.openRouter(key: "k", model: "m").lineTokens == 600)
+    }
+
     @Test func onlyOpenRouterIsToldHowHardToThink() throws {
         func body(_ c: ChatClient, _ r: String?) throws -> [String: Any] {
             try #require(try c.request(system: "s", user: "u", reasoning: r).httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] })

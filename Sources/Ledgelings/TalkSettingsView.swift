@@ -37,6 +37,11 @@ struct TalkSettingsView: View {
                 case .lmStudio: LMStudioFields(settings: settings)
                 case .openRouter: OpenRouterFields(settings: settings)
                 }
+                if settings.brain != .script {
+                    Stepper(value: $settings.lineTokens, in: AppSettings.lineTokensRange, step: 100) {
+                        LabeledContent("Room for each line", value: "\(settings.lineTokens) tokens")
+                    }
+                }
             } header: {
                 Text("Brain")
             } footer: {
@@ -93,9 +98,9 @@ struct TalkSettingsView: View {
         case .script:
             "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here."
         case .lmStudio:
-            "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them."
+            "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence."
         case .openRouter:
-            "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models."
+            "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence."
         }
     }
 

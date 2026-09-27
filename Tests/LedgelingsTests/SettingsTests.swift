@@ -220,6 +220,20 @@ import Testing
         #expect(AppSettings(defaults: defaults).lineMemory == AppSettings.lineMemoryRange.upperBound)
     }
 
+    @Test func roomForEachLineDefaultsToSixHundredTokensReachesTheClientAndIsClampedOnLoad() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.lineTokens == 600)
+        s.lineTokens = 1500
+        #expect(AppSettings(defaults: defaults).lineTokens == 1500)
+        s.brain = .lmStudio
+        #expect(s.chatClient()?.lineTokens == 1500)
+        defaults.set(10, forKey: "lineTokens")
+        #expect(AppSettings(defaults: defaults).lineTokens == AppSettings.lineTokensRange.lowerBound)
+        defaults.set(99_999, forKey: "lineTokens")
+        #expect(AppSettings(defaults: defaults).lineTokens == AppSettings.lineTokensRange.upperBound)
+    }
+
     @Test func bubbleTimeDefaultsToFourteenSecondsAndIsClampedOnLoad() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

@@ -51,6 +51,9 @@ struct ChatClient: Sendable {
     var apiKey: String?
     var model: String
     var timeout: TimeInterval = 60
+    /// Room a creature's line may take, thinking included (`AppSettings.lineTokens`).
+    var lineTokens = Self.defaultLineTokens
+    static let defaultLineTokens = 600
 
     static func lmStudio(server: URL, model: String) -> ChatClient {
         ChatClient(provider: .lmStudio, baseURL: server.appendingPathComponent("v1"), apiKey: nil, model: model)
@@ -97,11 +100,17 @@ struct ChatClient: Sendable {
     struct Answer: Equatable {
         let text: String
         let usage: Spend.Usage?
+        /// The model hit `max_tokens` mid-answer (`finish_reason` "length"): the text stops where the room ran out.
+        var cut = false
     }
 
     static func parseReply(_ data: Data) throws -> Answer {
         struct Reply: Decodable {
-            struct Choice: Decodable { struct Message: Decodable { let content: String? }; let message: Message }
+            struct Choice: Decodable {
+                struct Message: Decodable { let content: String? }
+                let message: Message
+                let finish_reason: String?
+            }
             struct Usage: Decodable { let prompt_tokens: Int?; let completion_tokens: Int?; let cost: Double? }
             let choices: [Choice]
             let usage: Usage?
@@ -114,7 +123,7 @@ struct ChatClient: Sendable {
         // the call was paid for: an empty answer, with its usage, not an error.
         let text = choice.message.content ?? ""
         let usage = reply.usage.map { Spend.Usage(promptTokens: $0.prompt_tokens ?? 0, completionTokens: $0.completion_tokens ?? 0, cost: $0.cost) }
-        return Answer(text: text, usage: usage)
+        return Answer(text: text, usage: usage, cut: choice.finish_reason == "length")
     }
 
     static func parseModels(_ data: Data) throws -> [String] { try ModelCatalog.parse(data).map(\.id) }
@@ -172,6 +181,17 @@ struct ChatClient: Sendable {
                reasoning: String? = nil) async throws -> Answer {
         try Self.parseReply(try await fetch(try request(system: system, user: user, maxTokens: maxTokens,
                                                         temperature: temperature, reasoning: reasoning)))
+    }
+
+    /// One line a creature says, writes or thinks: room for a thinking model to
+    /// think a little and still finish (at 80 tokens one ran out mid-sentence in
+    /// four replies of five), and told to think only a little.
+    func line(system: String, user: String) async throws -> Answer {
+        try Self.parseReply(try await fetch(try lineRequest(system: system, user: user)))
+    }
+
+    func lineRequest(system: String, user: String) throws -> URLRequest {
+        try request(system: system, user: user, maxTokens: lineTokens, reasoning: "low")
     }
 
     private func fetch(_ request: URLRequest) async throws -> Data {

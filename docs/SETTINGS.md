@@ -295,6 +295,7 @@ not a bill, with the line itself).
 | **Model** (LM Studio) | `google/gemma-3-1b` | Any model the server has installed. **Check** fetches the list; **Installed** appears next to the field to pick one. The app refuses a model the server does not have, because LM Studio would otherwise silently answer with whatever is loaded |
 | **API key** (OpenRouter) | empty | Kept in the keychain on macOS and the Credential Manager on Windows, never in the settings file. Empty means no brain. On macOS the app only reads it once OpenRouter is the chosen brain and something needs it, so picking another brain never touches the keychain; macOS asks once per new build whether Ledgelings may read it, and **Always Allow** stops it asking for that build. Writing the key never asks. The Credential Manager never prompts, so Windows reads it at launch |
 | **Model** (OpenRouter) | `anthropic/claude-haiku-4.5` | Any id from openrouter.ai/models. The catalogue below is fetched live: type words from the id or name, cheapest first, free models in green, click a row to pick. 60 rows at a time; add a word to narrow it |
+| **Room for each line** (`lineTokens`) | 600 tokens | 100 to 4000, steps of 100. Shown for LM Studio and OpenRouter. The most a model may spend on one line, its thinking included; thinking models are also asked to think only a little. Too few and a thinking model stops mid-sentence (80, the old fixed value, cut two lines in three); an unfinished line is never shown. Only the tokens used are paid for |
 | **Check** | | LM Studio: is the server up, is the model installed. OpenRouter: is the key valid, what it has spent and its limit, does the model exist |
 
 Costs moved to their own tab in v0.18; see [Costs tab](#costs-tab).
@@ -332,8 +333,10 @@ or "Pip just walked into Dot and gave Dot a poppy."
 
 The model's answer is cleaned before it is shown: anything before a `</think>` tag
 is dropped, the first non-empty line is taken, a leading "Name:" and wrapping quotes
-or asterisks are stripped, and it is cut at 160 characters. Calls use temperature
-0.9 and at most 80 tokens.
+or asterisks are stripped, and a line over 160 characters ends on its last whole
+sentence (or word, and "…"). Calls use temperature 0.9 and at most **Room for each
+line** tokens. A reply that ran out of room is kept up to its last whole sentence,
+or dropped for a built-in line: a bubble never stops mid-word.
 
 ## Costs tab
 

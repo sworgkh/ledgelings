@@ -271,7 +271,7 @@ extension Colony {
             var note: String?, cost: Double?, tokens: Int?
             do {
                 try await service.checkModel()
-                let answer = try await service.reply(system: system, user: user)
+                let answer = try await service.line(system: system, user: user)
                 // Paid for, whatever comes back.
                 if var usage = answer.usage {
                     if service.provider == .lmStudio { usage.cost = 0 }
@@ -279,7 +279,7 @@ extension Colony {
                     cost = usage.cost
                     tokens = usage.promptTokens + usage.completionTokens
                 }
-                let line = Banter.cleanLine(answer.text, speaker: me.name)
+                let line = Banter.cleanLine(answer.text, speaker: me.name, cut: answer.cut)
                 if !line.isEmpty { note = line }
             } catch {
                 self?.talkStatus = "\(error)"

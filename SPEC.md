@@ -464,13 +464,21 @@ background:
 
 ### 6.3 Cleaning a model's line
 
-`cleanLine(raw, speaker, maxLength = 160)`:
+`cleanLine(raw, speaker, maxLength = 160, cut = false)`:
 
-1. If the text contains `</think>`, keep only what follows it.
+1. If the text contains `</think>`, keep only what follows it; if it contains
+   only `<think>`, the model stopped while thinking → `""`.
 2. Take the first non-empty line, trimmed.
-3. Strip a leading `"{Speaker}:"`, `"{SPEAKER}:"` or `"*{Speaker}*:"`.
-4. Repeatedly strip matching wrapping quotes: `"…"`, `“…”`, `'…'`, `*…*`.
-5. Over `maxLength` characters → cut and append `…`.
+3. `cut` (the reply's `finish_reason` was `length`, §8.1) and that line is the
+   last one → keep it up to its last whole sentence (`wholeSentences`: a `.`,
+   `!`, `?` or `…`, with any closing quote, bracket or star, at the end or
+   before a space), or `""` when it has none. A line that stops mid-word is
+   never shown; the caller's empty-line path takes over (§6.2, §7.6).
+4. Strip a leading `"{Speaker}:"`, `"{SPEAKER}:"` or `"*{Speaker}*:"`.
+5. Repeatedly strip matching wrapping quotes: `"…"`, `“…”`, `'…'`, `*…*`; then
+   a lone opening `"` or `“` whose close was cut away.
+6. Over `maxLength` characters → its whole sentences within `maxLength` when
+   they come to at least a third of it, else the last whole word and `…`.
 
 The cleaned line is what is logged. Marks inside it are kept, and shown as
 styles wherever the line is drawn (§6.3.1).
@@ -1153,10 +1161,15 @@ One client speaks the OpenAI-style chat API to either provider.
 `{model, messages: [{role: "system", content}, {role: "user", content}],
 temperature: 0.9, max_tokens: 80}`, plus `usage: {include: true}` for
 OpenRouter only (it then prices the call in the reply), 60 s timeout. Reply
-text = `choices[0].message.content`; usage, when present, =
+text = `choices[0].message.content`; `cut` = `choices[0].finish_reason ==
+"length"`; usage, when present, =
 `usage.prompt_tokens`, `usage.completion_tokens` (missing → 0) and
 `usage.cost` (US dollars, OpenRouter only; missing → unknown), see §6.5.1. Callers may pass other `max_tokens` and
-`temperature`; banter uses the defaults.
+`temperature`. Every creature line (talk, planes, complaints, reminders) goes
+through `line(system:user:)`: `max_tokens` = `lineTokens` (§12) and
+`reasoning: {effort: "low"}` on OpenRouter. At 80 tokens a thinking model
+(`~openai/gpt-luna-latest`) spent the budget thinking and stopped mid-sentence
+in two answers of three.
 
 Errors, in order of checking: transport failure → "the server is not
 answering: …"; a body of shape `{"error": {"message": …}}` → "the server
@@ -1443,6 +1456,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | bubbleSeconds | 14 | 4–60, clamped on load |
 | flowerMinutes | 2 | 0.5–30, clamped on load |
 | lineMemory | 12 | 0–40, clamped on load: lines per character it avoids saying again; 0 = off (§6.5.3) |
+| lineTokens | 600 | 100–4000 in steps of 100, clamped on load: `max_tokens` of every creature line, thinking included (§8.1) |
 | characters | the six above | ≥ 2; JSON |
 | systemPrompt / linePrompt / replyPrompt | §6.1 | free text; "Reset Prompts" restores; `{relationship}` places the bond and plot (§6.5.2) |
 | plotsEnabled | true | bonds get plots, and both reach the prompts (§6.5.2) |
@@ -1598,12 +1612,14 @@ wakes to run and night does not stop it; a leap lands exactly on the spot and
 waits; emerging places it at the door walking the given way.
 
 Banter: placeholders render; unknown ones stay; `cleanLine` strips think tags,
-name prefixes, quotes, caps length; `showTime` gives ≈ base for 8 words, caps at
+name prefixes, quotes, caps length on a whole sentence or word; a cut line keeps
+its whole sentences or nothing (the owner's real cut lines); `showTime` gives ≈ base for 8 words, caps at
 2·base, default 14.
 
 Chat client: LM Studio request has no auth and the right URL and body;
 OpenRouter request carries the key, the app headers, custom max_tokens and
-temperature; model list URLs per provider; reply parsing; server error in its
+temperature; a line request carries `lineTokens` and low reasoning; a
+`finish_reason` of `length` marks the answer cut; model list URLs per provider; reply parsing; server error in its
 own words; garbage → "unexpected reply"; model list shape.
 
 Catalogue: prices per million; exchange cost; multi-word search; empty search
