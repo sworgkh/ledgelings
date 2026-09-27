@@ -114,12 +114,19 @@ extension Colony {
         let voiced = isVoiced
         if voiced { voicedDialogues += 1 }
         Task { [weak self] in
+            /// Nothing came of the model (LM Studio not running, the internet down,
+            /// an empty line): the pair says built-in lines instead of standing mute.
+            var fallBack = false
             defer {
                 if voiced { self?.voicedDialogues -= 1 }
                 self?.busy.subtract([speaker, listener])
-                self?.endChat(speaker, listener, after: 1.2)
                 keep()
                 self?.talked(a.name, b.name, lines: spoken)
+                let recited = fallBack && self.map {
+                    $0.creatures.indices.contains(speaker) && $0.creatures.indices.contains(listener)
+                        && $0.recite(from: speaker, to: listener, flower: flower, situation: situation)
+                } == true
+                if !recited { self?.endChat(speaker, listener, after: 1.2) }
             }
             do {
                 try await service.checkModel()
@@ -128,7 +135,7 @@ extension Colony {
                 guard let self else { return }
                 charge(opening)
                 let first = Banter.cleanLine(opening.text, speaker: a.name, cut: opening.cut)
-                guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
+                guard !first.isEmpty else { talkStatus = "the model sent an empty line"; fallBack = true; return }
                 let firstSaid = say(first, from: speaker)
                 spoken.append(ChatLog.Line(speaker: a.name, text: first))
                 talkStatus = "\(a.name): \(first)"
@@ -158,6 +165,7 @@ extension Colony {
             } catch {
                 self?.talkStatus = "\(error)"
                 FileHandle.standardError.write(Data("Ledgelings talk: \(error)\n".utf8))
+                fallBack = spoken.isEmpty
             }
         }
         return true

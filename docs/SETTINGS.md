@@ -323,7 +323,7 @@ not a bill, with the line itself).
 
 | Setting | Default | Notes |
 |---|---|---|
-| **Brain** | Built-in lines | or LM Studio, or OpenRouter. The status line in the menu says why nothing is said when a model is not reachable. An install that had set up a model before v0.15 keeps LM Studio |
+| **Brain** | Built-in lines | or LM Studio, or OpenRouter. When the model cannot be reached (LM Studio not running, the internet down), the creatures say built-in lines instead and the status line in the menu says why. An install that had set up a model before v0.15 keeps LM Studio |
 | **Lines** (Built-in lines) | ~100 conversations | The script itself, editable in place. One conversation per block, a blank line between blocks; the lines alternate between the one who bumped and the one bumped into, two to four per block. A block may start with `[flower]`, `[night]`, `[day]`, `[holiday]` or `[night, flower]` and is then used only for that moment, in preference to untagged blocks; untagged blocks fit any moment. `[holiday]` blocks come up one conversation in three on a holiday the Calendar tab knows. `{speaker}`, `{listener}`, `{flower}` and `{holiday}` are filled in; `*asterisks*` show as italics; `#` starts a comment. The status line counts the blocks, or names the line with a problem, and the creatures stay quiet until it is fixed. The same conversation is not repeated until half the fitting ones have been heard |
 | **Import… / Export…** | | A plain text file in the same format, whole-script in and out |
 | **Copy Agent Prompt** | | Puts a request on the clipboard: the format, the rules and the cast in use, asking for 40 more blocks. Paste it into any chat model and paste the answer into the editor |

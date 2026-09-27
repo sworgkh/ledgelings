@@ -463,7 +463,11 @@ background:
    (so the reply appears while the first bubble is still up), then show the
    reply as the listener's bubble.
 6. Any error → status = the error text, logged to stderr.
-7. Whatever happened, when the task ends release the chatting pair 1.2 s later,
+7. Nothing said yet (an error before the opening line, such as LM Studio not
+   running or the internet down, or an empty opening line) → the same pair
+   says a built-in conversation instead (§6.7), logged as built-in lines. Once
+   the opening line is out, an error only ends the conversation.
+8. Whatever happened, when the task ends release the chatting pair 1.2 s later,
    once both bubbles are gone (§7.2).
 
 ### 6.3 Cleaning a model's line

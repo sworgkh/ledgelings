@@ -151,6 +151,24 @@ import Testing
         #expect(w.colony.busy.isEmpty)
     }
 
+    @Test func withLMStudioNotRunningTheyTalkFromTheBuiltInLines() async throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.script = "Anyone home?\nNot the model.\n"
+        w.settings.brain = .lmStudio
+        w.settings.talkServer = "http://127.0.0.1:9"        // nothing listens there: refused at once
+        w.colony.talkNow(from: 0)
+        for _ in 0..<100 where w.colony.bubbles[0] == nil { try await Task.sleep(for: .milliseconds(50)) }
+        #expect(w.colony.bubbles[0]?.text == "Anyone home?", "\(w.colony.talkStatus)")
+        #expect(w.colony.busy == [0, 1], "the pair stays together for the rest of it")
+        w.step(Banter.showTime("Anyone home?", base: w.settings.bubbleSeconds) * 0.6 + 0.1)
+        #expect(w.colony.bubbles[1]?.text == "Not the model.")
+        w.step(2)
+        #expect(w.colony.busy.isEmpty)
+        let logged = w.history.exchanges(on: ChatLog.day(of: Date()))
+        #expect(logged.count == 1 && logged.first?.provider == AppSettings.Brain.script.title, "logged as built-in, not as LM Studio")
+    }
+
     @Test func aFlowerMeetingPicksAFlowerLine() throws {
         let w = try World()
         defer { w.forget() }
