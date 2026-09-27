@@ -123,11 +123,11 @@ extension Colony {
             }
             do {
                 try await service.checkModel()
-                let opening = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
+                let opening = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
                                                       user: Banter.render(linePrompt, vars))
                 guard let self else { return }
                 charge(opening)
-                let first = Banter.cleanLine(opening.text, speaker: a.name)
+                let first = Banter.cleanLine(opening.text, speaker: a.name, cut: opening.cut)
                 guard !first.isEmpty else { talkStatus = "the model sent an empty line"; return }
                 let firstSaid = say(first, from: speaker)
                 spoken.append(ChatLog.Line(speaker: a.name, text: first))
@@ -137,10 +137,10 @@ extension Colony {
                 vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                 vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                 vars["line"] = first
-                let answer = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
+                let answer = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                      user: Banter.render(replyPrompt, vars))
                 charge(answer)
-                let reply = Banter.cleanLine(answer.text, speaker: b.name)
+                let reply = Banter.cleanLine(answer.text, speaker: b.name, cut: answer.cut)
                 guard !reply.isEmpty else { await said(firstSaid); return }
                 if isVoiced {
                     // Out loud, the answer comes a beat after the first line ends, its

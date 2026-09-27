@@ -63,11 +63,21 @@ public enum Banter {
 
     /// One line, cleaned up the way a small model needs: first non-empty line,
     /// no wrapping quotes, no "Name:" prefix, no hidden-reasoning tags, capped.
-    public static func cleanLine(_ raw: String, speaker: String, maxLength: Int = 160) -> String {
+    ///
+    /// `cut`: the model ran out of room mid-answer. A line that runs to the end
+    /// of such an answer is kept only up to its last whole sentence, and dropped
+    /// if it has none, so no bubble ever stops mid-word; the caller's empty-line
+    /// path (a built-in line, or nothing) takes over. A cap that falls mid-line
+    /// also ends on a whole sentence when one fits, else on a whole word and "…".
+    public static func cleanLine(_ raw: String, speaker: String, maxLength: Int = 160, cut: Bool = false) -> String {
         var text = raw
         if let close = text.range(of: "</think>") { text = String(text[close.upperBound...]) }
-        var line = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
-            .first { !$0.isEmpty } ?? ""
+        else if text.contains("<think>") { return "" }       // still thinking when it stopped
+        let lines = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        var line = lines.first ?? ""
+        // Only the last line of a cut answer is the one the room ran out in.
+        if cut, lines.count == 1 { line = wholeSentences(line) }
         for prefix in ["\(speaker):", "\(speaker.uppercased()):", "*\(speaker)*:"] where line.hasPrefix(prefix) {
             line = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
         }
@@ -75,10 +85,42 @@ public enum Banter {
               ["\"", "“", "'", "*"].contains(String(first)), ["\"", "”", "'", "*"].contains(String(last)) {
             line = String(line.dropFirst().dropLast()).trimmingCharacters(in: .whitespaces)
         }
+        // A quote opened in the part a cut took away.
+        if let first = line.first, ["\"", "“"].contains(first), !line.dropFirst().contains(where: { ["\"", "”"].contains($0) }) {
+            line = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
+        }
         if line.count > maxLength {
-            line = String(line.prefix(maxLength)).trimmingCharacters(in: .whitespaces) + "…"
+            let head = String(line.prefix(maxLength))
+            let sentences = wholeSentences(head)
+            if sentences.count >= maxLength / 3 {
+                line = sentences
+            } else {
+                let words = head.lastIndex(of: " ").map { String(head[..<$0]) } ?? head
+                line = words.trimmingCharacters(in: .whitespaces.union(.punctuationCharacters)) + "…"
+            }
         }
         return line
+    }
+
+    /// `text` up to the end of its last whole sentence (". ", "! ", "? ", "…",
+    /// with any closing quote, bracket or star), or "" when no sentence ends in it.
+    public static func wholeSentences(_ text: String) -> String {
+        let enders: Set<Swift.Character> = [".", "!", "?", "…"]
+        let closers: Set<Swift.Character> = ["\"", "”", "'", "’", ")", "*", "_"]
+        let chars = Array(text)
+        var end = 0
+        var i = 0
+        while i < chars.count {
+            if enders.contains(chars[i]) {
+                var j = i + 1
+                while j < chars.count, enders.contains(chars[j]) || closers.contains(chars[j]) { j += 1 }
+                if j == chars.count || chars[j] == " " { end = j }
+                i = j
+            } else {
+                i += 1
+            }
+        }
+        return String(chars[..<end]).trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: What the model's marks mean on screen

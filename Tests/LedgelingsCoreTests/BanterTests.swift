@@ -50,10 +50,37 @@ import Testing
         #expect(Banter.plain("*Sigh.*  The **abyss**, eh?") == "Sigh. The abyss, eh?")
     }
 
-    @Test func capsRunawayLines() {
+    @Test func capsRunawayLinesOnAWholeWord() {
         let long = String(repeating: "ha ", count: 100)
         let out = Banter.cleanLine(long, speaker: "Pip", maxLength: 30)
-        #expect(out.count <= 31 && out.hasSuffix("…"))
+        #expect(out.count <= 31 && out.hasSuffix("ha…"))
+    }
+
+    @Test func aCapEndsOnAWholeSentenceWhenOneFits() {
+        let line = "Boo! I haunted the ceiling all morning. Then the cursor came along and ruined everything forever."
+        #expect(Banter.cleanLine(line, speaker: "Boo", maxLength: 60) == "Boo! I haunted the ceiling all morning.")
+    }
+
+    /// Lines the owner saw on screen, from answers that ran out of room.
+    @Test func aCutLineKeepsItsWholeSentencesOrNothing() {
+        #expect(Banter.cleanLine("Collision report", speaker: "Unit 7", cut: true) == "")
+        #expect(Banter.cleanLine("Your pixel-catching is", speaker: "Whiskers", cut: true) == "")
+        #expect(Banter.cleanLine("Big leap, tiny navigation. Happy Sukkot, Hopper—what are you doing on my", speaker: "Blocky", cut: true)
+                == "Big leap, tiny navigation.")
+        #expect(Banter.cleanLine("\"Boo! Rest those legs", speaker: "Boo", cut: true) == "Boo!")
+        #expect(Banter.cleanLine("I'm ignoring you. Completely. ...Stop", speaker: "Whiskers", cut: true) == "I'm ignoring you. Completely.")
+        #expect(Banter.cleanLine("<think>the user wants a line about", speaker: "Pip", cut: true) == "")
+    }
+
+    @Test func aCutAnswerWhoseFirstLineEndedKeepsThatLine() {
+        #expect(Banter.cleanLine("Get off my edge\nAnd another thing, the", speaker: "Blocky", cut: true) == "Get off my edge")
+        #expect(Banter.cleanLine("Get off my edge", speaker: "Blocky") == "Get off my edge", "a whole answer is left alone")
+    }
+
+    @Test func sentencesEndOnTheirMarksAndClosers() {
+        #expect(Banter.wholeSentences("Fine.* And then") == "Fine.*")
+        #expect(Banter.wholeSentences("v1.2 is out") == "")
+        #expect(Banter.wholeSentences("Wait… what?! No") == "Wait… what?!")
     }
 }
 

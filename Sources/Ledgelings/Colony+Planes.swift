@@ -129,20 +129,20 @@ extension Colony {
             var note: String?, musing: String?
             do {
                 try await service.checkModel()
-                let written = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
+                let written = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
                                                       user: Banter.render(prompt, vars).trimmingCharacters(in: .whitespacesAndNewlines))
                 charge(written)
-                let line = Banter.cleanLine(written.text, speaker: a.name)
+                let line = Banter.cleanLine(written.text, speaker: a.name, cut: written.cut)
                 if !line.isEmpty {
                     note = line
                     // Swap seats: now the reader thinks.
                     vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
                     vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
                     vars["line"] = line
-                    let thought = try await service.reply(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
+                    let thought = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                           user: Banter.render(Letters.musingPrompt, vars))
                     charge(thought)
-                    let said = Banter.cleanLine(thought.text, speaker: b.name)
+                    let said = Banter.cleanLine(thought.text, speaker: b.name, cut: thought.cut)
                     if !said.isEmpty { musing = said }
                 }
             } catch {

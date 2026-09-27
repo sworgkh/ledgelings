@@ -65,6 +65,9 @@ final class AppSettings: ObservableObject {
     static let planeRange = 0.5...60.0
     /// Lines each character remembers saying, so it does not say them again soon.
     static let lineMemoryRange = 0...40
+    /// Tokens a model may spend on one line, thinking included. 80 was too few:
+    /// a thinking model spent them thinking and stopped mid-sentence.
+    static let lineTokensRange = 100...4000
 
     @Published var talkEnabled: Bool { didSet { save(talkEnabled, "talkEnabled") } }
     /// The one wearing a flower trails the one who gave it while the flower lasts.
@@ -101,6 +104,8 @@ final class AppSettings: ObservableObject {
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
     /// How many of its own last lines a character avoids saying again; 0 lets it repeat freely.
     @Published var lineMemory: Int { didSet { save(lineMemory, "lineMemory") } }
+    /// Room for each model-written line (`ChatClient.line`); only what is used is paid for.
+    @Published var lineTokens: Int { didSet { save(lineTokens, "lineTokens") } }
     @Published var flowerMinutes: Double { didSet { save(flowerMinutes, "flowerMinutes") } }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
     @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
@@ -271,6 +276,8 @@ final class AppSettings: ObservableObject {
         // Twelve: more than any one character's built-in letters, a few rounds of banter.
         let memory = defaults.object(forKey: "lineMemory") as? Int ?? 12
         lineMemory = min(max(memory, Self.lineMemoryRange.lowerBound), Self.lineMemoryRange.upperBound)
+        let room = defaults.object(forKey: "lineTokens") as? Int ?? ChatClient.defaultLineTokens
+        lineTokens = min(max(room, Self.lineTokensRange.lowerBound), Self.lineTokensRange.upperBound)
         let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2
         flowerMinutes = min(max(flower, Self.flowerRange.lowerBound), Self.flowerRange.upperBound)
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
@@ -355,16 +362,19 @@ final class AppSettings: ObservableObject {
     /// The model any feature should ask, or nil with `brainProblem` saying what
     /// is missing. Nil, too, with the built-in lines: there is no model to ask.
     func chatClient() -> ChatClient? {
+        var client: ChatClient
         switch brain {
         case .script: return nil
         case .lmStudio:
             guard let url = talkServerURL else { return nil }
-            return .lmStudio(server: url, model: talkModel.trimmingCharacters(in: .whitespaces))
+            client = .lmStudio(server: url, model: talkModel.trimmingCharacters(in: .whitespaces))
         case .openRouter:
             let key = openRouterKey.trimmingCharacters(in: .whitespaces)
             guard !key.isEmpty else { return nil }
-            return .openRouter(key: key, model: openRouterModel.trimmingCharacters(in: .whitespaces))
+            client = .openRouter(key: key, model: openRouterModel.trimmingCharacters(in: .whitespaces))
         }
+        client.lineTokens = lineTokens
+        return client
     }
 
     /// Why `chatClient()` came back empty, in words for the menu and the settings window.
