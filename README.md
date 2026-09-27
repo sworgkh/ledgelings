@@ -108,8 +108,8 @@ weekday, every week). When the time comes, one of them folds it into a paper pla
 and throws it at you: it swirls to the middle of your screen, turns to face you,
 rushes at you and unfolds into a letter with your reminder, a note in the thrower's
 own voice and its signature. Click it to send it flying away. A letter that
-arrives while you are away waits for you. Settings › Reminders, or ⌘R from the
-menu. macOS only for now.
+arrives while you are away waits for you. ⌘R from the menu opens a sheet of the same
+pixel paper to write it on, a creature peeking over the edge; the list is in Settings › Reminders. macOS only for now.
 Every conversation is kept, and every call to the model is priced.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a

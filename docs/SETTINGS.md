@@ -14,7 +14,7 @@ Settings…*. Nine tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Cale
 | **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
 | **Make Someone Talk** | A random awake creature says something to the nearest one |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
-| **Add a Reminder…** (⌘R) | The Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
+| **Add a Reminder…** (⌘R) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
 | **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
@@ -178,7 +178,16 @@ note out loud. Click the letter to fold it away; it flies off over the top.
 | **Reminders arrive by paper plane** | on | | Off: nothing is delivered. Whatever comes due meanwhile arrives, late, when you turn it back on |
 | **Letter stays open** | 60 s | 10 to 600 s | Then it folds itself away. The time only counts while you are at the computer (you touched the mouse or keyboard in the last 30 s), so a letter that arrives while you are away waits for you |
 | **The thrower reads its note out loud** | on | | Only when voice is on (Voice tab) |
+| **Add a Reminder… opens a paper note** | on | | ⌘R in the menu opens the paper note below. Off: it opens this tab |
 | **Send a Test Letter** | | | A sample reminder, delivered now |
+
+**The paper note** (Add a Reminder…, ⌘R): a sheet of the letter's own pixel paper in
+the middle of your screen, with one of the creatures peeking over its top edge.
+**Remind me to** takes your words; **When** has a day (◀ ▶ one day) and a time
+(◀ ▶ to the next quarter hour), starting at the top of the next hour, plus **In 5 min**,
+**In 30 min**, **In 1 hour** and **Tomorrow 9:00**; **Repeat** is Once, Every day, Every
+weekday or Every week. Return or **Fold it into a plane** saves it and the sheet flies
+off; Esc or **Never mind** throws it away. Drag the paper to move it.
 
 **Your reminders** (right): waiting ones by time ("Every day, next Tomorrow 09:00"),
 then sent one-offs, greyed, until **Clear Sent**. Each has **Send Now** (deliver it

@@ -88,6 +88,13 @@ extension Colony {
         stepDelivery(dt: dt)
     }
 
+    /// Someone on screen to peek over the paper note: awake if anyone is, with its idle frame.
+    func noteKeeper() -> (name: String, face: CGImage?)? {
+        let there = creatures.indices.filter { !hideout.isInside($0) }
+        guard let i = there.filter({ !creatures[$0].looksAsleep }).randomElement(using: &rng) ?? there.randomElement(using: &rng) else { return nil }
+        return (character(forCreature: i).name, frames[i].frame(animation: "idle", time: 0))
+    }
+
     /// Deliver `reminder` now, whatever its time: the Send Now button, the test letter, `--remind`.
     func deliverNow(_ reminder: Reminders.Reminder) {
         deliveryQueue.append(reminder)
