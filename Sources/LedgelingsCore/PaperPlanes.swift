@@ -41,8 +41,10 @@ public struct Wind: Sendable, Equatable {
 /// weakly at first, so its wind and its swirl carry it about, and harder the
 /// longer it has been flying and the closer it gets, so it always arrives.
 /// The swirl pushes it sideways, back and forth, into S-curves and now and
-/// then a loop. Its speed breathes around its own cruise. Behind it, a dotted
-/// trail of puffs that fade within a second.
+/// then a loop. Its speed breathes around its own cruise. It rolls about its
+/// fold as it goes: banking into its turns, and turning over, never snapping,
+/// when it comes round to fly the other way. Behind it, a dotted trail of
+/// puffs that fade within a second.
 public struct PaperPlane: Sendable {
     public struct Puff: Sendable {
         public var position: CGPoint
@@ -86,6 +88,23 @@ public struct PaperPlane: Sendable {
     public private(set) var inSky = false
     private var sinceLastPuff: CGFloat = 0
 
+    /// How far it is rolled about its fold, radians in −π…π: 0 is upright with
+    /// the wing on top, positive turns its top toward you, ±π is upside down.
+    public private(set) var roll: Double = 0
+    /// Which way up it is heading for: wing on top flying right, and the other
+    /// way up (which looks the same, mirrored) flying left.
+    private var flyingRight = true
+    /// How fast it is turning, radians per second, smoothed over a few frames.
+    public private(set) var turnRate: Double = 0
+    /// Radians of bank for every radian per second it turns, and the most.
+    public static let bankPerTurn = 0.3
+    public static let maxBank = 1.3
+    /// Fastest roll, radians per second: turning over takes about a third of a second.
+    public static let rollRate = 9.0
+    /// It rolls over only once it is well into the other half: no flicker
+    /// while it climbs or dives straight up and down.
+    public static let turnOverAt = 0.25
+
     /// Thrown from `start`, up into the screen along `inward`, roughly toward
     /// `target`, into still weather: the plain, predictable plane.
     public init(from: Int, to: Int, start: CGPoint, inward: CGVector, target: CGPoint) {
@@ -95,6 +114,8 @@ public struct PaperPlane: Sendable {
         previous = start
         let d = Self.unit(CGVector(dx: target.x - start.x, dy: target.y - start.y))
         velocity = CGVector(dx: (d.dx * 0.5 + inward.dx) * 220, dy: (d.dy * 0.5 + inward.dy) * 220)
+        flyingRight = velocity.dx >= 0
+        roll = flyingRight ? 0 : .pi
     }
 
     /// A real throw: its own wind, its own swirl, and a speed that is quick
@@ -116,6 +137,37 @@ public struct PaperPlane: Sendable {
 
     /// Which way the nose points, in radians.
     public var heading: Double { atan2(velocity.dy, velocity.dx) }
+
+    /// The drawings of the plane at different rolls, each named after its
+    /// animation in the plane sheet. `side` is the wing on top, nose right.
+    public enum View: String, Sendable, CaseIterable {
+        case side = "fly", bank, top, tilt, belly
+    }
+
+    /// Which drawing shows a plane rolled `roll`, and whether it is flipped
+    /// upside down. Past a quarter turn a symmetric plane looks like the
+    /// mirror image of the roll short of a half turn, so the five drawings
+    /// cover a whole roll.
+    public static func view(roll: Double) -> (view: View, flipped: Bool) {
+        let r = wrap(roll)
+        let flipped = abs(r) > .pi / 2
+        let seen = flipped ? (r > 0 ? .pi - r : -.pi - r) : r
+        switch seen {
+        case ..<(-3 * .pi / 8): return (.belly, flipped)
+        case ..<(-.pi / 8): return (.tilt, flipped)
+        case ...(.pi / 8): return (.side, flipped)
+        case ...(3 * .pi / 8): return (.bank, flipped)
+        default: return (.top, flipped)
+        }
+    }
+
+    public var view: (view: View, flipped: Bool) { Self.view(roll: roll) }
+
+    /// An angle brought into −π…π.
+    public static func wrap(_ angle: Double) -> Double {
+        let a = remainder(angle, 2 * .pi)
+        return a == -.pi ? .pi : a
+    }
 
     public func distance(to point: CGPoint) -> CGFloat { hypot(point.x - position.x, point.y - position.y) }
 
@@ -139,6 +191,7 @@ public struct PaperPlane: Sendable {
 
     public mutating func fly(dt: Double, toward target: CGPoint, time: Double) {
         let step = CGFloat(dt)
+        let headingBefore = heading
         let toTarget = CGVector(dx: target.x - position.x, dy: target.y - position.y)
         let want = Self.unit(toTarget)
         let grip = grip(toward: target)
@@ -165,6 +218,7 @@ public struct PaperPlane: Sendable {
         position.y += velocity.dy * step
         keepInSky()
         age += dt
+        if dt > 0 { turn(dt: dt, by: Self.wrap(heading - headingBefore)) }
 
         for i in trail.indices { trail[i].age += dt }
         trail.removeAll { $0.age >= puffLife }
@@ -176,6 +230,19 @@ public struct PaperPlane: Sendable {
             trail.append(Puff(position: CGPoint(x: position.x - velocity.dx * step * back,
                                                 y: position.y - velocity.dy * step * back), age: 0))
         }
+    }
+
+    /// Banks into the turn, and turns over when it comes round to fly the
+    /// other way, at `rollRate` at most.
+    mutating func turn(dt: Double, by turned: Double) {
+        turnRate += (turned / dt - turnRate) * min(1, dt * 6)
+        let c = cos(heading)
+        if c < -Self.turnOverAt { flyingRight = false } else if c > Self.turnOverAt { flyingRight = true }
+        let bank = min(Self.maxBank, max(-Self.maxBank, turnRate * Self.bankPerTurn))
+        let wanted = flyingRight ? bank : .pi - bank
+        let gap = Self.wrap(wanted - roll)
+        let most = Self.rollRate * dt
+        roll = Self.wrap(roll + min(most, max(-most, gap * min(1, dt * 10))))
     }
 
     // MARK: The edges of the sky

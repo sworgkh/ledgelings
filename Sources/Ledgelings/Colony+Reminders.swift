@@ -300,22 +300,26 @@ extension Colony {
         guard let mail = delivery else { return nil }
         let puffs = mail.plane.trail.map { ($0.position, Float(max(0, 1 - $0.age / mail.plane.puffLife)) * 0.8) }
         let puffSize = max(2, (mail.baseScale * 1.5).rounded())
-        func plane(_ image: CGImage?, at p: CGPoint, heading: Double, scale: CGFloat, opacity: Float = 1) -> PlaneSnapshot {
-            PlaneSnapshot(image: image, position: p, heading: heading, scale: scale, opacity: opacity, trail: puffs, puffSize: puffSize)
+        func plane(_ image: CGImage?, at p: CGPoint, heading: Double, flipped: Bool = false, scale: CGFloat,
+                   opacity: Float = 1) -> PlaneSnapshot {
+            PlaneSnapshot(image: image, position: p, heading: heading, flipped: flipped, scale: scale, opacity: opacity,
+                          trail: puffs, puffSize: puffSize)
         }
-        let side = planeFrames.frame(animation: "fly", time: 0)
         var snap = ReminderSnapshot()
         switch mail.phase {
         case .finding, .windup:
             return nil
         case .flying, .leaving:
-            snap.plane = plane(side, at: mail.plane.position, heading: mail.plane.heading, scale: mail.shownScale)
+            let (view, flipped) = mail.plane.view
+            snap.plane = plane(planeImage(view), at: mail.plane.position, heading: mail.plane.heading, flipped: flipped,
+                               scale: mail.shownScale)
         case .arriving(let since, _, _):
-            // Half-way in it turns to face you.
+            // Half-way in it turns to face you, levelling its roll as it swings round.
             let t = (elapsed - since) / Self.reminderArrive
             let heading = t < 0.5 ? mail.plane.heading * (1 - t * 2) : 0
-            snap.plane = plane(t < 0.5 ? side : planeFrames.frame(animation: "front", time: 0),
-                               at: mail.shownAt, heading: heading, scale: mail.shownScale)
+            let (view, flipped) = PaperPlane.view(roll: mail.plane.roll * max(0, 1 - t * 2))
+            snap.plane = plane(t < 0.5 ? planeImage(view) : planeFrames.frame(animation: "front", time: 0),
+                               at: mail.shownAt, heading: heading, flipped: t < 0.5 && flipped, scale: mail.shownScale)
         case .hovering:
             snap.plane = plane(planeFrames.frame(animation: "front", time: 0), at: mail.shownAt, heading: 0, scale: mail.shownScale)
         case .opening(let since):

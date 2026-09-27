@@ -1366,11 +1366,32 @@ coloured and faded per §7.4, z above creatures.
 
 ### 9.7 Paper plane
 
-The `plane` sheet: 18×12 cells, animations `fly` (the plane, nose right) and
-`letter` (the unfolded note), and for a reminder (§7.7) `front` (head-on, 15×6)
-and `opening` (half unfolded, 14×7). The plane is drawn at the catcher's size, above
-everything, rotated to its heading; when the heading points left
-(`cos < 0`) it is also flipped vertically so the wing stays on top. Its trail
+The `plane` sheet: 18×14 cells, animations `fly` (the plane from the side, nose
+right) and `letter` (the unfolded note), for a reminder (§7.7) `front` (head-on,
+15×6) and `opening` (half unfolded, 14×7), and four more rolls of the plane:
+`bank` (top turned 45° toward you), `top` (seen from above), `tilt` (underside
+turned 45° toward you) and `belly` (seen from below). The five roll drawings are
+15×12 with the fold, the line the plane rolls about, on row 6, so it turns over
+in place. The plane is drawn at the catcher's size, above everything, rotated to
+its heading and drawn at its **roll** `r` (−π…π; 0 wing on top, + top toward you):
+
+- **Which drawing**: past a quarter roll (`|r| > π/2`) the plane is flipped
+  vertically and drawn at `s = ±π − r` (a symmetric plane rolled `π − s` looks
+  like the mirror of `s`), else at `s = r`. `|s| ≤ π/8` side, up to `3π/8`
+  `bank` (+) or `tilt` (−), beyond that `top` (+) or `belly` (−).
+- **Banking**: `turnRate` (rad/s) chases the heading's change per second at
+  `min(1, 6·dt)` a frame; `bank = clamp(0.3 · turnRate, ±1.3)`.
+- **Which way up**: flying right it wants `r = bank`, flying left `r = π − bank`
+  (wing on top, mirrored). It counts as flying left once `cos(heading) < −0.25`
+  and right again once `> 0.25`, so a climb or dive straight up does not flicker.
+- **Rolling**: `r` moves the short way to the wanted roll by `gap·min(1, 10·dt)`,
+  at most 9 rad/s, so coming round it turns over in about a third of a second,
+  through `bank`/`top` or `tilt`/`belly`, instead of snapping. It starts at 0
+  thrown rightward, π thrown leftward.
+- **A reminder's plane** levels out as it turns to face you: in the first half of
+  `arriving` its roll shrinks with its heading, `r · (1 − 2t)`.
+
+Its trail
 is a pool of plain white squares, side `max(2, round(1.5·size))` points, opacity
 `0.8 · (1 − age/1.1)`, just below the plane.
 

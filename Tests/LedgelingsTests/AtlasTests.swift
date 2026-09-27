@@ -61,6 +61,9 @@ private func colours(in image: CGImage) -> Set<RGB> {
         let plane = try SpriteAtlas(named: "plane")
         #expect(plane.frames().frame(animation: "fly", time: 0) != nil)
         #expect(plane.frames().frame(animation: "letter", time: 0) != nil)
+        for view in PaperPlane.View.allCases {
+            #expect(plane.frames().frame(animation: view.rawValue, time: 0) != nil, "the plane rolled: \(view)")
+        }
         #expect(plane.cellSize.width > plane.cellSize.height, "a plane is long, nose to tail")
     }
 

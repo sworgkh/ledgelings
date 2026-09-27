@@ -32,8 +32,11 @@ struct CreatureSnapshot {
 struct PlaneSnapshot {
     var image: CGImage?
     var position: CGPoint
-    /// Where the nose points, radians. The sprite points right; heading left, it is flipped upright.
+    /// Where the nose points, radians. The sprite points right.
     var heading: Double
+    /// Drawn upside down: past a quarter roll (`PaperPlane.view(roll:)`), which
+    /// is how a plane flying left keeps its wing on top.
+    var flipped = false
     var scale: CGFloat
     /// 0 once caught (only the trail is left), fading after a miss.
     var opacity: Float
@@ -607,8 +610,7 @@ private final class PlaneSprite {
         layer.opacity = plane.opacity
         layer.bounds = CGRect(x: 0, y: 0, width: cell.width * plane.scale, height: cell.height * plane.scale)
         layer.position = CGPoint(x: plane.position.x - origin.x, y: plane.position.y - origin.y)
-        // Heading left, flip it over so the wing stays on top.
-        let upright: CGFloat = cos(plane.heading) < 0 ? -1 : 1
+        let upright: CGFloat = plane.flipped ? -1 : 1
         layer.transform = CATransform3DScale(CATransform3DMakeRotation(plane.heading, 0, 0, 1), 1, upright, 1)
     }
 }
