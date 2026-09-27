@@ -54,6 +54,53 @@ import Testing
         #expect(furthestOffLine > 20)
     }
 
+    @Test func fiveDrawingsCoverAWholeRollAndPastAQuarterTurnItIsFlipped() {
+        #expect(PaperPlane.view(roll: 0) == (.side, false))
+        #expect(PaperPlane.view(roll: 0.6) == (.bank, false))
+        #expect(PaperPlane.view(roll: .pi / 2) == (.top, false))
+        #expect(PaperPlane.view(roll: -0.6) == (.tilt, false))
+        #expect(PaperPlane.view(roll: -.pi / 2) == (.belly, false))
+        // Upside down is the side view mirrored; just short of it, the bank mirrored.
+        #expect(PaperPlane.view(roll: .pi) == (.side, true))
+        #expect(PaperPlane.view(roll: -.pi) == (.side, true))
+        #expect(PaperPlane.view(roll: .pi - 0.6) == (.bank, true))
+        #expect(PaperPlane.view(roll: -.pi + 0.6) == (.tilt, true))
+        #expect(PaperPlane.view(roll: 2 * .pi + 0.6) == (.bank, false), "a roll goes round")
+        for view in PaperPlane.View.allCases where view != .side {
+            #expect(view.rawValue == "\(view)", "each drawing is the animation of its name")
+        }
+    }
+
+    @Test func thrownLeftItStartsTheOtherWayUpAndFlyingStraightItStaysLevel() {
+        let left = PaperPlane(from: 0, to: 1, start: CGPoint(x: 2000, y: 0), inward: CGVector(dx: 0, dy: 0), target: .zero)
+        #expect(left.view == (.side, true))
+        var right = PaperPlane(from: 0, to: 1, start: .zero, inward: CGVector(dx: 0, dy: 0), target: CGPoint(x: 5000, y: 0))
+        for k in 0..<100 { right.fly(dt: 0.02, toward: CGPoint(x: 5000, y: 0), time: Double(k) * 0.02) }
+        #expect(abs(right.roll) < 0.35, "no turning, next to no bank: \(right.roll)")
+        #expect(right.view == (.side, false))
+    }
+
+    @Test func turningItBanksAndComingRoundItRollsOverThroughTheOtherViews() {
+        // Thrown right, the catcher behind it: it has to come round to fly left.
+        var plane = PaperPlane(from: 0, to: 1, start: CGPoint(x: 1000, y: 500), inward: CGVector(dx: 1, dy: 0),
+                               target: CGPoint(x: 1600, y: 500))
+        let target = CGPoint(x: -3000, y: 500)
+        var seen: [PaperPlane.View] = [], biggestStep = 0.0, banked = 0.0
+        var last = plane.roll
+        for k in 0..<250 {
+            plane.fly(dt: 1.0 / 60, toward: target, time: Double(k) / 60)
+            biggestStep = max(biggestStep, abs(PaperPlane.wrap(plane.roll - last)))
+            banked = max(banked, min(abs(plane.roll), abs(abs(plane.roll) - .pi)))
+            last = plane.roll
+            if seen.last != plane.view.view { seen.append(plane.view.view) }
+        }
+        #expect(cos(plane.heading) < 0, "it came round")
+        #expect(plane.view.flipped, "flying left it is the other way up, wing on top")
+        #expect(biggestStep <= PaperPlane.rollRate / 60 + 1e-9, "it never snaps over")
+        #expect(banked > 0.4, "it banks into the turn: \(banked)")
+        #expect(seen.contains(.top) || seen.contains(.belly), "turning over it shows its top or its underside: \(seen)")
+    }
+
     @Test func theTrailIsDottedAndFadesAway() {
         var plane = PaperPlane(from: 0, to: 1, start: .zero, inward: CGVector(dx: 0, dy: 1), target: CGPoint(x: 3000, y: 0))
         for k in 0..<100 { plane.fly(dt: 0.02, toward: CGPoint(x: 3000, y: 0), time: Double(k) * 0.02) }

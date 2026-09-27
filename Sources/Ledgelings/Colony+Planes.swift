@@ -290,11 +290,17 @@ extension Colony {
         default: opacity = 0
         }
         let life = mail.plane.puffLife
+        let (view, flipped) = mail.plane.view
         return PlaneSnapshot(
-            image: planeFrames.frame(animation: "fly", time: 0),
-            position: mail.plane.position, heading: mail.plane.heading, scale: scale, opacity: opacity,
+            image: planeImage(view),
+            position: mail.plane.position, heading: mail.plane.heading, flipped: flipped, scale: scale, opacity: opacity,
             trail: mail.plane.trail.map { ($0.position, Float(max(0, 1 - $0.age / life)) * 0.8) },
             puffSize: max(2, (scale * 1.5).rounded()))
+    }
+
+    /// The plane drawn at one roll; the side view if the sheet has no such drawing.
+    func planeImage(_ view: PaperPlane.View) -> CGImage? {
+        planeFrames.frame(animation: view.rawValue, time: 0) ?? planeFrames.frame(animation: "fly", time: 0)
     }
 
     func letterImage(for i: Int) -> CGImage? {

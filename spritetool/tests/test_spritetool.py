@@ -201,7 +201,7 @@ def test_the_plane_sheet_has_a_plane_its_unfolding_and_a_letter_in_blocky_rules(
     from spritetool.painters import plane as painter
 
     recipe = load_recipe(PLANE)
-    assert [a.name for a in recipe.animations] == ["fly", "letter", "front", "opening"]
+    assert [a.name for a in recipe.animations] == ["fly", "letter", "front", "opening", "bank", "top", "tilt", "belly"]
     sheet = key_out(get_painter("plane")(recipe), recipe.background, recipe.tolerance)
     for col, row, pose, _ in recipe.cells():
         x, y, w, h = recipe.cell_rect(col, row)
@@ -216,3 +216,8 @@ def test_the_plane_sheet_has_a_plane_its_unfolding_and_a_letter_in_blocky_rules(
         assert painter.RIM in edge, f"{pose} has no dark rim"
     plane_box = painter.glyph_pixels("plane")
     assert max(x for x, _ in plane_box) > 2 * max(y for _, y in plane_box) * 0.7, "a plane is long, nose to tail"
+    # Every roll is drawn the same size with its fold (the row it rolls about) on row 6.
+    for pose in ("plane", "bank", "top", "tilt", "belly"):
+        glyph = painter.GLYPHS[pose]
+        assert (len(glyph[0]), len(glyph)) == (15, 12), pose
+        assert glyph[6].endswith("LL") and glyph[6][2] in "sS", f"{pose} has its fold on row 6"

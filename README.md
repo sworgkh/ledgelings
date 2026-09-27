@@ -91,7 +91,8 @@ Each is a checkbox in Settings › Calendar. macOS only for now.
 
 **Paper planes.** Every few minutes (you choose how often) one folds a note into a
 paper plane and throws it to another. Each plane flies in weather of its own,
-swirling and looping across the screen with a dotted trail, mostly fast; the
+swirling and looping across the screen with a dotted trail, mostly fast, banking
+into its turns and rolling over when it comes round; the
 catcher stops, reads the note out, thinks aloud about it, and throws one answer
 back. Every character writes about what its soul keeps coming back to:
 Blocky about the cursor, Zed about naps, Ruth about counting, Unit 7 in numbers.

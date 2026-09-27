@@ -3,7 +3,9 @@
 # also turns head-on (`front`) as it comes at the user and opens (`opening`).
 # Both glyphs are drawn in blocky's rules: flat fill, 1px dark rim, a light
 # edge top-left, a shade edge bottom-right. The plane points RIGHT; the app
-# turns it to the way it flies and flips it upright when it heads left.
+# turns it to the way it flies, and rolls it through `bank`/`top` (top toward
+# you) or `tilt`/`belly` (underside toward you) as it wobbles, and when it
+# turns round to fly the other way.
 #
 #   python -m spritetool build sprites/plane.yaml
 
@@ -12,8 +14,8 @@ name: plane
 output: Sources/Ledgelings/Resources/sprites
 
 grid:
-  cell: [18, 12]
-  content_box: [0, 0, 18, 12]
+  cell: [18, 14]
+  content_box: [0, 0, 18, 14]
 
 background:
   color: "#ff00ff"
@@ -30,9 +32,17 @@ poses:
   - {name: letter, prompt: the unfolded note, a small sheet with three lines of scribble}
   - {name: front,   prompt: the plane head-on, flying straight at the viewer, wings level, keel below}
   - {name: opening, prompt: the plane halfway unfolded into a sheet, centre crease still showing}
+  - {name: bank,  prompt: the plane from the side rolled 45 degrees toward you, both wings showing their top}
+  - {name: top,   prompt: the plane seen from above, both wings spread, nose right}
+  - {name: tilt,  prompt: the plane from the side rolled 45 degrees away, the keel hanging below a thin wing}
+  - {name: belly, prompt: the plane seen from below, wings in shade, keel down the middle}
 
 animations:
   fly:    {frames: [plane], fps: 1, loop: true}
   letter: {frames: [letter], fps: 1, loop: true}
   front:   {frames: [front], fps: 1, loop: true}
   opening: {frames: [opening], fps: 1, loop: true}
+  bank:    {frames: [bank], fps: 1, loop: true}
+  top:     {frames: [top], fps: 1, loop: true}
+  tilt:    {frames: [tilt], fps: 1, loop: true}
+  belly:   {frames: [belly], fps: 1, loop: true}

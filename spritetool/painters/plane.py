@@ -22,7 +22,9 @@ INK = {
 }
 
 GLYPHS = {
-    # 15 x 9, tail up-left, nose at the right end of the fold line.
+    # 15 x 12, seen from the side: tail up-left, nose at the right end of the
+    # fold line. Every roll view below is 15 x 12 with its fold on row 6, the
+    # line it rolls about, so the plane turns over in place instead of jumping.
     "plane": [
         "L..............",
         "wLL............",
@@ -33,6 +35,69 @@ GLYPHS = {
         "..sssssssssssLL",
         "...SSSSSSSss...",
         ".....SSSs......",
+        "...............",
+        "...............",
+        "...............",
+    ],
+    # Rolled 45 degrees toward you: the near wing comes up under the fold, the keel shrinks.
+    "bank": [
+        "...............",
+        "LL.............",
+        "wwLLL..........",
+        ".wwwwwLL.......",
+        "..wwwwwwwLL....",
+        "..wwwwwwwwwLLL.",
+        "..sssssssssssLL",
+        "..wwwwwwwwwss..",
+        ".wwwwwsss......",
+        "...SSSs........",
+        "...............",
+        "...............",
+    ],
+    # Rolled 90 degrees toward you: seen from above, both wings spread round the crease.
+    "top": [
+        "...............",
+        "...............",
+        "LL.............",
+        "wwLLL..........",
+        ".wwwwwLLL......",
+        "..wwwwwwwwLLL..",
+        "..sssssssssssLL",
+        "..wwwwwwwwwss..",
+        ".wwwwwwss......",
+        "wwwss..........",
+        "ss.............",
+        "...............",
+    ],
+    # Rolled 45 degrees away: the wing flattens to an edge, the keel hangs big below it.
+    "tilt": [
+        "...............",
+        "...............",
+        "...............",
+        "LLL............",
+        "wwwLLLLL.......",
+        ".wwwwwwwwLLLL..",
+        "..sssssssssssLL",
+        "..sSSSSSSSSss..",
+        "...sSSSSSSs....",
+        "....sSSSSs.....",
+        "......SSs......",
+        "...............",
+    ],
+    # Rolled 90 degrees away: seen from below, the wings in shade, the keel down the middle.
+    "belly": [
+        "...............",
+        "...............",
+        "LL.............",
+        "sLLL...........",
+        ".sssssLLL......",
+        "..ssssssssLLL..",
+        "..SSSSSSSSSSSLL",
+        "..sSSSSSSSsss..",
+        ".ssssssss......",
+        "sssss..........",
+        "ss.............",
+        "...............",
     ],
     # 15 x 6, the plane head-on, coming straight at you: wings level, keel below.
     "front": [
