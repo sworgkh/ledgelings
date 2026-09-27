@@ -348,6 +348,14 @@ import Testing
         #expect(AppSettings(defaults: defaults).reminderLetterSeconds == AppSettings.reminderLetterRange.lowerBound)
     }
 
+    @Test func addAReminderOpensThePaperNoteUnlessToldOtherwiseAndItIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.reminderPaperNote)
+        s.reminderPaperNote = false
+        #expect(!AppSettings(defaults: defaults).reminderPaperNote)
+    }
+
     @Test func theyComplainAfterFourInARowCalmAfterTwentySecondsAndItIsRemembered() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

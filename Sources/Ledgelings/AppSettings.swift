@@ -160,6 +160,8 @@ final class AppSettings: ObservableObject {
     @Published var reminderLetterSeconds: Double { didSet { save(reminderLetterSeconds, "reminderLetterSeconds") } }
     /// With voice on, the creature who threw it reads its note out loud as the letter opens.
     @Published var reminderReadAloud: Bool { didSet { save(reminderReadAloud, "reminderReadAloud") } }
+    /// Add a Reminder… opens a sheet of the letter's paper to write on. Off: it opens the Reminders tab.
+    @Published var reminderPaperNote: Bool { didSet { save(reminderPaperNote, "reminderPaperNote") } }
 
     // MARK: Voice
 
@@ -330,6 +332,8 @@ final class AppSettings: ObservableObject {
         // A minute: long enough to read it on your way back to the desk, short enough not to sit there all afternoon.
         reminderLetterSeconds = clamp("reminderLetterSeconds", 60, Self.reminderLetterRange)
         reminderReadAloud = defaults.object(forKey: "reminderReadAloud") as? Bool ?? true
+        // On: writing a reminder should feel like the game that delivers it.
+        reminderPaperNote = defaults.object(forKey: "reminderPaperNote") as? Bool ?? true
     }
 
     func species(forCreature index: Int) -> String {

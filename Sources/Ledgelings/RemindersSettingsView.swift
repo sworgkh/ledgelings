@@ -41,6 +41,7 @@ struct RemindersSettingsView: View {
                 Toggle("Reminders arrive by paper plane", isOn: $settings.remindersEnabled)
                 SliderRow("Letter stays open", value: $settings.reminderLetterSeconds, in: AppSettings.reminderLetterRange, step: 10, unit: " s")
                 Toggle("The thrower reads its note out loud", isOn: $settings.reminderReadAloud)
+                Toggle("Add a Reminder… opens a paper note", isOn: $settings.reminderPaperNote)
                 HStack {
                     Spacer()
                     Button("Send a Test Letter") { send(Reminders.Reminder(text: "This is what a reminder looks like", time: Date())) }
@@ -78,6 +79,7 @@ struct RemindersSettingsView: View {
     private var footer: String {
         var words = "The plane flies to the middle of the screen your cursor is on, comes at you and opens into a letter: your reminder, a note from whoever threw it, and their signature. Click the letter to fold it away; otherwise it folds itself after this long, counting only while you are at the computer. Off: nothing is delivered, and what came due meanwhile arrives when you turn it back on."
         if settings.brain != .script { words += " With a model, the note is written for the moment (Costs › Reminders)." }
+        words += " A paper note: ⌘R in the menu opens a sheet of the same paper to write a reminder on; off, ⌘R opens this tab."
         return words
     }
 

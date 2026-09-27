@@ -127,16 +127,41 @@ public enum Reminders {
 
     /// "Today 14:30", "Tomorrow 09:00", "Yesterday 18:00", else "Mon 3 Oct 18:00".
     public static func when(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
-        let clock = DateFormatter()
-        clock.calendar = calendar; clock.timeZone = calendar.timeZone
-        clock.locale = Locale(identifier: "en_GB")
-        clock.dateFormat = "HH:mm"
-        let time = clock.string(from: date)
-        if calendar.isDate(date, inSameDayAs: now) { return "Today \(time)" }
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow \(time)" }
-        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday \(time)" }
-        clock.dateFormat = "EEE d MMM HH:mm"
-        return clock.string(from: date)
+        "\(day(date, now: now, calendar: calendar)) \(clock(date, calendar: calendar))"
+    }
+
+    /// "Today", "Tomorrow", "Yesterday", else "Mon 3 Oct".
+    public static func day(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
+        if calendar.isDate(date, inSameDayAs: now) { return "Today" }
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday" }
+        return format(date, "EEE d MMM", calendar: calendar)
+    }
+
+    /// "14:30", on the 24-hour clock.
+    public static func clock(_ date: Date, calendar: Calendar = .current) -> String { format(date, "HH:mm", calendar: calendar) }
+
+    private static func format(_ date: Date, _ pattern: String, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar; formatter.timeZone = calendar.timeZone
+        formatter.locale = Locale(identifier: "en_GB")
+        formatter.dateFormat = pattern
+        return formatter.string(from: date)
+    }
+
+    // MARK: Picking a time on the paper note
+
+    /// `date` moved `minutes` on (or back, negative) to the next line of a clock
+    /// ruled every `minutes`: 14:07 + 15 is 14:15, 14:07 − 15 is 14:00, 14:15 + 15
+    /// is 14:30. Seconds are dropped. Days roll over.
+    public static func step(_ date: Date, by minutes: Int, calendar: Calendar = .current) -> Date {
+        let size = max(1, abs(minutes))
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        let now = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+        let onLine = now % size == 0 && calendar.component(.second, from: date) == 0
+        let target = minutes > 0 ? (now / size + 1) * size : (onLine ? now - size : now / size * size)
+        let whole = calendar.date(bySettingHour: parts.hour ?? 0, minute: parts.minute ?? 0, second: 0, of: date) ?? date
+        return calendar.date(byAdding: .minute, value: target - now, to: whole) ?? date
     }
 
     // MARK: The letter

@@ -1098,6 +1098,16 @@ the screen.
   came due is delivered, late, when it is turned back on. One delivery at a time,
   the queue in order. Send Now, the test letter and `--remind "text"` queue a
   reminder without touching the file.
+- **The paper note**: with `reminderPaperNote` on, Add a Reminder… (⌘R) opens a
+  borderless 564×414-point window centred on the cursor's screen: `Reminders.paper`
+  at 3 points per pixel below 54 points of headroom where a random creature on screen
+  (awake if any) shows its idle frame at 3×, feet behind the top edge. Controls are
+  drawn in blocky's rules (rim, light top-left, shade bottom-right, cut corners;
+  chosen ones in blocky's orange, pressed ones sink a pixel): the text; a day stepper
+  (±1 day, `Reminders.day`) and a time stepper (`Reminders.step`, ±15 minutes to the
+  next quarter hour); In 5 min / 30 min / 1 hour, Tomorrow 9:00; the four repeats.
+  Return adds it (empty text: nothing) and the sheet shrinks up and fades; Esc closes
+  it. Off, ⌘R opens Settings › Reminders. `--note [--snapshot file.png]` opens it.
 - **The thrower**: any creature free for mail (§7.6), not the one a plane is
   flying to, chosen at random; after 3 s with nobody free (or at once while the
   house is out), any creature on screen and not held, awake ones first. It stops
@@ -1438,7 +1448,7 @@ falls through to whatever is underneath.
 | Menu: Make Them Jump | every creature startles |
 | Menu: Make Someone Talk | §6.5 |
 | Menu: Send a Paper Plane | a plane goes up now if two creatures are free (§7.6) |
-| Menu: Add a Reminder… (⌘R) | the settings window on the Reminders tab (§7.7); below it, `Next: <text>, <when>` (with `(off)` when reminders are off) opens the same |
+| Menu: Add a Reminder… (⌘R) | the paper note (§7.7), or with `reminderPaperNote` off the settings window on the Reminders tab; below it, `Next: <text>, <when>` (with `(off)` when reminders are off) opens the same |
 | Click a reminder's open letter | folds it away (§7.7) |
 | Menu: Put Them to Sleep Now / Wake Them Up Now | skip to the next phase (hidden when night = 0) |
 | Menu: Hide Them for a While… / Bring Them Back Now | §7.5; while hiding the item shows the time left |
@@ -1507,6 +1517,7 @@ m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
 | remindersEnabled | true | reminders are delivered (§7.7); off, what comes due waits |
 | reminderLetterSeconds | 60 | 10–600, clamped on load: seconds the letter stays open while the user is at the computer |
 | reminderReadAloud | true | with voice on, the thrower reads its note out loud |
+| reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, the Reminders tab |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7).
 
@@ -1531,7 +1542,7 @@ toggles, one toggle per faith and the look-ahead stepper; on the right the
 almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
 holidays in the next 60 days. **Reminders**: on the left a new reminder (text,
 date and time, repeat, In 5 min / In 30 min / In 1 hour, Add Reminder), then
-the delivery toggle, letter slider, read-aloud toggle and Send a Test Letter; on
+the delivery toggle, letter slider, read-aloud toggle, paper-note toggle and Send a Test Letter; on
 the right every reminder, waiting ones by time then sent ones greyed, each with
 Send Now and Delete, then the file with Clear Sent. **Voice**: on the left the toggle,
 engine picker, voice-each and cartoon toggles, voice picker or key/model/voice

@@ -95,4 +95,25 @@ struct RemindersTests {
         #expect(rows.flatMap { $0 }.contains(.deepShade), "and the flap shows")
         #expect(rows[12][10] == .crease, "the creases of an unfolded plane")
     }
+
+    @Test func theNoteStepsTheClockAlongItsLines() {
+        let c = Self.calendar
+        #expect(Reminders.step(Self.at(26, 14, 7), by: 15, calendar: c) == Self.at(26, 14, 15))
+        #expect(Reminders.step(Self.at(26, 14, 7), by: -15, calendar: c) == Self.at(26, 14, 0))
+        #expect(Reminders.step(Self.at(26, 14, 15), by: 15, calendar: c) == Self.at(26, 14, 30))
+        #expect(Reminders.step(Self.at(26, 14, 15), by: -15, calendar: c) == Self.at(26, 14, 0))
+        #expect(Reminders.step(Self.at(26, 23, 50), by: 15, calendar: c) == Self.at(27, 0, 0), "past midnight: the next day")
+        #expect(Reminders.step(Self.at(26, 0, 0), by: -15, calendar: c) == Self.at(25, 23, 45))
+        #expect(Reminders.step(Self.at(26, 14, 15).addingTimeInterval(20), by: -15, calendar: c) == Self.at(26, 14, 15),
+                "seconds past a line: back to that line")
+    }
+
+    @Test func theDayAndTheClockAreNamedApart() {
+        let c = Self.calendar, now = Self.at(26, 12)
+        #expect(Reminders.day(Self.at(26, 18), now: now, calendar: c) == "Today")
+        #expect(Reminders.day(Self.at(27, 9), now: now, calendar: c) == "Tomorrow")
+        #expect(Reminders.day(Self.at(3, 9, month: 10), now: now, calendar: c) == "Sat 3 Oct")
+        #expect(Reminders.clock(Self.at(27, 9, 5), calendar: c) == "09:05")
+        #expect(Reminders.when(Self.at(27, 9, 5), now: now, calendar: c) == "Tomorrow 09:05")
+    }
 }

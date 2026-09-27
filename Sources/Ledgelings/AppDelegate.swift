@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private lazy var settingsWindow = SettingsWindowController(
         settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice,
         send: { [weak self] in self?.colony?.deliverNow($0) })
+    private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private var statusItem: NSStatusItem?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -21,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
-    private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminders), keyEquivalent: "")
+    private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
     private static let hideChoices: [(String, Double?)] = [
         ("5 minutes", 5), ("15 minutes", 15), ("30 minutes", 30), ("1 hour", 60), ("2 hours", 120), ("4 hours", 240),
@@ -121,6 +122,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 colony.deliverNow(Reminders.Reminder(text: text, time: Date()))
+            }
+        }
+        // `--note`: the paper note of Add a Reminder…; `--snapshot <file.png>` with it writes it to a file and quits.
+        if CommandLine.arguments.contains("--note") {
+            let note = note
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                note.show()
+                guard let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) else { return }
+                try? await Task.sleep(for: .seconds(1))
+                do { try note.snapshot(to: URL(fileURLWithPath: CommandLine.arguments[shot + 1])) } catch { FileHandle.standardError.write(Data("Ledgelings snapshot: \(error)\n".utf8)) }
+                exit(0)
             }
         }
         // `--settings [creatures|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
@@ -232,6 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
-    @objc private func openReminders() { settingsWindow.show(tab: .reminders) }
+    @objc private func openReminders() { settings.reminderPaperNote ? note.show() : settingsWindow.show(tab: .reminders) }
+    @objc private func openReminderList() { settingsWindow.show(tab: .reminders) }
     @objc private func openSpend() { settingsWindow.show(tab: .costs) }
 }
