@@ -1,0 +1,124 @@
+{
+  "name": "plane",
+  "image": "plane.png",
+  "cell": [
+    18,
+    14
+  ],
+  "contentBox": [
+    0,
+    0,
+    18,
+    14
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "plane": {
+      "x": 0,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "letter": {
+      "x": 18,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "front": {
+      "x": 36,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "opening": {
+      "x": 54,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "bank": {
+      "x": 72,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "top": {
+      "x": 90,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "tilt": {
+      "x": 108,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    },
+    "belly": {
+      "x": 126,
+      "y": 0,
+      "w": 18,
+      "h": 14
+    }
+  },
+  "animations": {
+    "fly": {
+      "frames": [
+        "plane"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "letter": {
+      "frames": [
+        "letter"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "front": {
+      "frames": [
+        "front"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "opening": {
+      "frames": [
+        "opening"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "bank": {
+      "frames": [
+        "bank"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "top": {
+      "frames": [
+        "top"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "tilt": {
+      "frames": [
+        "tilt"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "belly": {
+      "frames": [
+        "belly"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}

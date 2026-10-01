@@ -1,0 +1,39 @@
+{
+  "name": "ledgelings-promo",
+  "version": "1.0.0",
+  "description": "Motion infographic promo video for Ledgelings",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.526",
+    "@remotion/google-fonts": "^4.0.526",
+    "@remotion/transitions": "^4.0.526",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.526"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.526",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.39.5",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "npm run assets && remotion studio",
+    "assets": "${PYTHON:-python3} scripts/export-sprites.py && ${PYTHON:-python3} scripts/make-music.py 78.7",
+    "render": "npm run assets && remotion render Promo out/ledgelings-promo.mp4 --crf=18",
+    "lint": "eslint src && tsc"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "engines": {
+    "node": ">=24.21.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}
