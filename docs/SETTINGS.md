@@ -33,6 +33,7 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 | **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
 | **Make Someone Talk** | A random awake creature says something to the nearest one |
 | **Have a Tea Party** | macOS. The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Hidden while tea parties are off |
+| **Clear N Planted Flowers** | Pulls up every flower the creatures planted, at once. Shown only while some are planted ([Flowers tab](#flowers-tab)) |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
 | **Add a Reminder…** (⌘R) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
 | **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -138,7 +139,8 @@ any other call.
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **They plant their flowers where they like** (`plantFlowers`) | on | | After wearing it a while, a creature stops following its giver, looks for the kind of spot its character likes and plants the flower in the edge there. If nowhere suits before it would wilt, it plants it where it stands. Off: the flower is worn until it wilts |
-| **A planted flower lasts** (`gardenMinutes`) | 20 min | 1 to 240 | Then it fades away. Planted flowers are not kept when the app quits |
+| **A planted flower lasts** (`gardenMinutes`) | 60 min | 1 to 240 | Then it fades away. Planted flowers are not kept when the app quits |
+| **Clear Planted Flowers** (button) | | | Pulls up every planted flower at once and says how many went. The same is in the menu, as *Clear N Planted Flowers*, while any are planted |
 | **Flowers in the ground at most** (`gardenSize`) | 12 | 1 to 40 | Planting one more wilts the oldest |
 
 **Who plants where** (right column) lists every creature on screen with its way of

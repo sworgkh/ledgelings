@@ -21,13 +21,15 @@ struct SettingsView: View {
     @ObservedObject var navigation: SettingsNavigation
     /// Deliver a reminder now.
     let send: (Reminders.Reminder) -> Void
+    /// Pull up every planted flower; returns how many there were.
+    var clearGarden: () -> Int = { 0 }
 
     var body: some View {
         TabView(selection: $navigation.tab) {
             creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
-            FlowersSettingsView(settings: settings, library: library).tabItem { Text("Flowers") }.tag(SettingsTab.flowers)
+            FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text("Flowers") }.tag(SettingsTab.flowers)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text("Bonds") }.tag(SettingsTab.bonds)
             CalendarSettingsView(settings: settings).tabItem { Text("Calendar") }.tag(SettingsTab.calendar)
             RemindersSettingsView(settings: settings, reminders: reminders, send: send).tabItem { Text("Reminders") }.tag(SettingsTab.reminders)
@@ -247,10 +249,12 @@ final class SettingsWindowController {
     private let reminders: ReminderBook
     private let voice: Voice
     private let send: (Reminders.Reminder) -> Void
+    private let clearGarden: () -> Int
     private let navigation = SettingsNavigation()
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
-         reminders: ReminderBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void) {
+         reminders: ReminderBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void,
+         clearGarden: @escaping () -> Int = { 0 }) {
         self.settings = settings
         self.history = history
         self.library = library
@@ -259,12 +263,13 @@ final class SettingsWindowController {
         self.reminders = reminders
         self.voice = voice
         self.send = send
+        self.clearGarden = clearGarden
     }
 
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice, navigation: navigation, send: send))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice, navigation: navigation, send: send, clearGarden: clearGarden))
             let made = NSWindow(contentViewController: hosting)
             made.title = "Ledgelings Settings"
             made.styleMask = [.titled, .closable]

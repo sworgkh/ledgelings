@@ -982,13 +982,15 @@ the house, house not out). `share` = time worn / time it would be worn.
    It walks there at its own speed; the other places it meets as it wanders.
 
 **Planting**: the hat comes off, the flower goes in at the spot with the edge's
-rotation and the planter's size, for `gardenMinutes·60` s (default 20 min,
+rotation and the planter's size, for `gardenMinutes·60` s (default 60 min,
 range 1–240). It comes up out of the edge over 0.5 s (drawn squashed along the
 inward axis from 0 to full, standing on its stem's foot), fades over its last
 2 s, and is drawn behind the creatures. The planter stands still 1.2 s. With
 more than `gardenSize` (default 12, range 1–40) in the ground, the oldest
 wilts at once. When the monitors change, a flower whose foot is more than 2 pt
 from the new outline is dropped. Planted flowers are not kept across a relaunch.
+**Clear Planted Flowers** (menu, shown as "Clear N Planted Flowers" while any are
+planted; and a button on the Flowers tab) removes them all at once.
 
 ### 7.4 Stars (sparks)
 
@@ -1590,6 +1592,7 @@ falls through to whatever is underneath.
 | Menu: Make Them Jump | every creature startles |
 | Menu: Make Someone Talk | §6.5 |
 | Menu: Have a Tea Party | two sit down to tea now (§7.8); hidden while tea parties are off |
+| Menu: Clear N Planted Flowers | pulls up every planted flower (§7.3.1); hidden while none are planted |
 | Menu: Send a Paper Plane | a plane goes up now if two creatures are free (§7.6) |
 | Menu: Add a Reminder… (⌘R) | the paper note (§7.7), or with `reminderPaperNote` off the settings window on the Reminders tab; below it, `Next: <text>, <when>` (with `(off)` when reminders are off) opens the same |
 | Click a reminder's open letter | folds it away (§7.7) |
@@ -1631,7 +1634,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | talkEnabled | true | |
 | followGiver | true | the wearer of a flower trails its giver (§7.3) |
 | plantFlowers | true | a wearer plants its flower where its character likes (§7.3.1) |
-| gardenMinutes | 20 | 1–240, clamped on load: how long a planted flower stands |
+| gardenMinutes | 60 | 1–240, clamped on load: how long a planted flower stands |
 | gardenSize | 12 | 1–40, clamped on load: most flowers in the ground; one more wilts the oldest |
 | planesEnabled | true | paper planes every `planeMinutes` (§7.6); the menu item works either way |
 | planeMinutes | 3 | 0.5–60, clamped on load: minutes from one plane to the next |
@@ -1690,7 +1693,7 @@ Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, mod
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
 pick, free models tinted green, current model highlighted; characters editor;
-prompt editors with a placeholder legend. **Flowers**: flower slider and follow-the-giver toggle; the planting toggle, how long a planted flower stands, the most in the ground; on the right, each creature on screen with its temper in a sentence (`Garden.describe`: "After a little while, on the top edge or next to someone."). **Bonds**: on the left the plots toggle, the first-plot slider, the plot-length
+prompt editors with a placeholder legend. **Flowers**: flower slider and follow-the-giver toggle; the planting toggle, how long a planted flower stands, the most in the ground, a Clear Planted Flowers button that reports how many went; on the right, each creature on screen with its temper in a sentence (`Garden.describe`: "After a little while, on the top edge or next to someone."). **Bonds**: on the left the plots toggle, the first-plot slider, the plot-length
 stepper and the plot prompt editor with Reset Prompt; on the right a card per pair,
 longest together first (names, time together, talks, plots, cost, the bond, the
 running plot with its part or the last plot, Forget), then the file with Reveal

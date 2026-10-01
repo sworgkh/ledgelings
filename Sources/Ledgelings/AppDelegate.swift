@@ -12,7 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private lazy var voice = Voice(settings: settings, spend: spend, history: history)
     private lazy var settingsWindow = SettingsWindowController(
         settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice,
-        send: { [weak self] in self?.colony?.deliverNow($0) })
+        send: { [weak self] in self?.colony?.deliverNow($0) },
+        clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 })
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private var statusItem: NSStatusItem?
     private var colony: Colony?
@@ -22,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
     private let hideItem = NSMenuItem(title: "Hide Them for a While…", action: #selector(hideThem), keyEquivalent: "")
+    private let gardenItem = NSMenuItem(title: "Clear Planted Flowers", action: #selector(clearGarden), keyEquivalent: "")
     private let teaItem = NSMenuItem(title: "Have a Tea Party", action: #selector(haveATeaParty), keyEquivalent: "")
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
     /// What the dialog offers, in minutes; nil means "until tomorrow at eight".
@@ -206,6 +208,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(withTitle: "Make Someone Talk", action: #selector(makeSomeoneTalk), keyEquivalent: "t").target = self
         teaItem.target = self
         menu.addItem(teaItem)
+        gardenItem.target = self
+        menu.addItem(gardenItem)
         menu.addItem(withTitle: "Send a Paper Plane", action: #selector(sendPaperPlane), keyEquivalent: "p").target = self
         menu.addItem(withTitle: "Add a Reminder…", action: #selector(openReminders), keyEquivalent: "r").target = self
         nextReminderItem.target = self
@@ -235,6 +239,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         voiceItem.state = settings.voiceEnabled ? .on : .off
         teaItem.isHidden = !settings.teaPartiesEnabled
         teaItem.title = colony.teaParty?.isOn == true ? "Tea Party On" : "Have a Tea Party"
+        let planted = colony.garden.beds.count
+        gardenItem.title = planted == 1 ? "Clear the Planted Flower" : "Clear \(planted) Planted Flowers"
+        gardenItem.isHidden = planted == 0
         if let next = reminders.book.upcoming {
             nextReminderItem.title = "   Next: \(String(next.text.prefix(40))), \(Reminders.when(next.time, now: Date()))" + (settings.remindersEnabled ? "" : " (off)")
             nextReminderItem.isHidden = false
@@ -284,6 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func skipPhase() { colony?.skipPhase() }
     @objc private func makeSomeoneTalk() { colony?.talkNow() }
     @objc private func haveATeaParty() { colony?.teaNow() }
+    @objc private func clearGarden() { colony?.clearGarden() }
     @objc private func sendPaperPlane() { colony?.sendPlane() }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func openSettings() { settingsWindow.show() }
