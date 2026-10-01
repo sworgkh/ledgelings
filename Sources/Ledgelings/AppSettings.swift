@@ -49,6 +49,8 @@ final class AppSettings: ObservableObject {
     static let teaSipRange = 0.0...30.0
     /// Two creatures who bump into each other now and then sit down to tea and tell each other their life stories.
     @Published var teaPartiesEnabled: Bool { didSet { save(teaPartiesEnabled, "teaPartiesEnabled") } }
+    /// The Creature Actions sheet stays up after a tile is pressed, for another go. Off: it folds away.
+    @Published var actionsStayOpen: Bool { didSet { save(actionsStayOpen, "actionsStayOpen") } }
     @Published var teaPartyChance: Double { didSet { save(teaPartyChance, "teaPartyChance") } }
     @Published var teaPartyMinutes: Double { didSet { save(teaPartyMinutes, "teaPartyMinutes") } }
     @Published var teaSipSeconds: Double { didSet { save(teaSipSeconds, "teaSipSeconds") } }
@@ -283,6 +285,7 @@ final class AppSettings: ObservableObject {
         let calm = defaults.object(forKey: "complainCalmSeconds") as? Double ?? 20
         complainCalmSeconds = min(max(calm, Self.complainCalmRange.lowerBound), Self.complainCalmRange.upperBound)
         teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
+        actionsStayOpen = defaults.object(forKey: "actionsStayOpen") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.
         let chance = defaults.object(forKey: "teaPartyChance") as? Double ?? 10
         teaPartyChance = min(max(chance, Self.teaChanceRange.lowerBound), Self.teaChanceRange.upperBound)

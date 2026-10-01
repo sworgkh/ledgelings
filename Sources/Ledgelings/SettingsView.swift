@@ -113,6 +113,14 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("Keep the sheet up after an action", isOn: $settings.actionsStayOpen)
+            } header: {
+                Text("Creature Actions")
+            } footer: {
+                Text("The menu's Creature Actions… opens a sheet of pictures, one for everything you can ask of them. On, it stays up for another go until you press Done; off, it folds away after one.")
+            }
+
+            Section {
                 Toggle("Start Ledgelings when you log in", isOn: $startsAtLogin)
                     .onChange(of: startsAtLogin) { _, wanted in
                         guard wanted != LaunchAtLogin.isOn else { return }

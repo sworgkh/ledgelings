@@ -111,9 +111,9 @@ struct ReminderNoteView: View {
     var body: some View {
         let size = ReminderNoteController.size
         ZStack(alignment: .topLeading) {
-            paper(width: size.width, height: size.height - Self.headroom)
+            NotePaper(width: size.width, height: size.height - Self.headroom)
                 .offset(y: Self.headroom)
-            peeker
+            if let face { Peeker(face: face, sheetWidth: size.width, headroom: Self.headroom) }
             VStack(alignment: .leading, spacing: 0) {
                 Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
                     .padding(.bottom, 10)
@@ -133,26 +133,6 @@ struct ReminderNoteView: View {
 
     private var title: String {
         keeper.map { "A NOTE FOR THE LEDGELINGS · \($0.uppercased()) IS READING OVER THE EDGE" } ?? "A NOTE FOR THE LEDGELINGS"
-    }
-
-    /// The letter's paper, one image pixel per paper pixel, never smoothed.
-    private func paper(width: CGFloat, height: CGFloat) -> some View {
-        let image = ScreenOverlay.paperImage(width: Int(width / Self.px), height: Int(height / Self.px))
-        return Group {
-            if let image { Image(decorative: image, scale: 1).resizable().interpolation(.none) }
-        }
-        .frame(width: width, height: height)
-    }
-
-    /// The creature, its feet hidden behind the paper's top edge, eyes over it.
-    @ViewBuilder private var peeker: some View {
-        if let face {
-            let scale: CGFloat = 3, w = CGFloat(face.width) * scale, h = CGFloat(face.height) * scale
-            Image(decorative: face, scale: 1).resizable().interpolation(.none)
-                .frame(width: w, height: h)
-                .mask(alignment: .top) { Rectangle().frame(height: Self.headroom + Self.px * 2) }
-                .offset(x: ReminderNoteController.size.width - w - 60, y: Self.headroom + Self.px * 2 - min(h, Self.headroom + 6))
-        }
     }
 
     // MARK: What
@@ -256,6 +236,38 @@ struct ReminderNoteView: View {
 }
 
 // MARK: Pixel parts
+
+/// The letter's paper, one image pixel per paper pixel, never smoothed.
+struct NotePaper: View {
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        let px = ReminderNoteController.pixel
+        let image = ScreenOverlay.paperImage(width: Int(width / px), height: Int(height / px))
+        Group {
+            if let image { Image(decorative: image, scale: 1).resizable().interpolation(.none) }
+        }
+        .frame(width: width, height: height)
+    }
+}
+
+/// A creature behind a sheet, its feet hidden by the paper's top edge, eyes over it.
+struct Peeker: View {
+    let face: CGImage
+    let sheetWidth: CGFloat
+    /// Room above the paper; the paper's top edge is this far down.
+    let headroom: CGFloat
+
+    var body: some View {
+        let px = ReminderNoteController.pixel
+        let scale: CGFloat = 3, w = CGFloat(face.width) * scale, h = CGFloat(face.height) * scale
+        Image(decorative: face, scale: 1).resizable().interpolation(.none)
+            .frame(width: w, height: h)
+            .mask(alignment: .top) { Rectangle().frame(height: headroom + px * 2) }
+            .offset(x: sheetWidth - w - 60, y: headroom + px * 2 - min(h, headroom + 6))
+    }
+}
 
 /// A box in blocky's rules at the paper's pixel size: a flat fill, a dark rim,
 /// a light line top-left and a shade line bottom-right. A well (a field) is lit

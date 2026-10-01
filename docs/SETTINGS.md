@@ -27,21 +27,35 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 
 | Item | What it does |
 |---|---|
-| *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off |
-| **Put Them to Sleep Now** / **Wake Them Up Now** | Skips to the next dusk or dawn. Hidden when the night is 0 |
-| **Make Them Jump** | Every creature startles and jumps to another edge |
-| **Hide Them for a While…** | Asks how long (5, 15, 30 minutes; 1, 2, 4 hours; until 08:00 tomorrow) and sends everyone into the house. While they are away the item reads **Bring Them Back Now (m:ss left)** and ends it early |
-| **Make Someone Talk** | A random awake creature says something to the nearest one |
-| **Have a Tea Party** | The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Hidden while tea parties are off |
-| **Clear N Planted Flowers** | Pulls up every flower the creatures planted, at once. Shown only while some are planted ([Flowers tab](#flowers-tab)) |
-| **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
-| **Add a Reminder…** (⌘R; Ctrl+Alt+R from anywhere on Windows) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
+| *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
+| *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens the Reminders tab |
+| **Creature Actions…** (⌘A on macOS) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). The Windows tray still lists them one by one |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
 | *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
 | **Settings…** | The settings window |
 | **Quit** | Everyone vanishes; nothing is persisted about the hide |
+
+### Creature Actions
+
+Eight tiles, four to a row, each a picture cut from the game's own sprites. Click one,
+or press its letter while the sheet is up; Esc or **Done** puts it away. A tile with
+nothing to do is greyed, with a small line saying why. The line under the tiles says
+what the last press did (*A paper plane goes up.*, *No plane: nobody free…*).
+
+| Tile | Key | What it does |
+|---|---|---|
+| **Make Them Jump** | J | Every creature startles and jumps to another edge |
+| **Make Someone Talk** | T | A random awake creature says something to the nearest one |
+| **Have a Tea Party** | E | The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Greyed while tea parties are off or one is on |
+| **Send a Paper Plane** | P | One free creature throws a paper plane to another now, whatever the setting below says. Greyed while one is in the air |
+| **Add a Reminder** | R | Puts the sheet away and opens the paper note (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. On Windows, Ctrl+Alt+R from anywhere |
+| **Hide Them for a While** | H | A row comes up under the tiles: 5, 15, 30 minutes; 1, 2, 4 hours; till 08:00 tomorrow. Pick one and everyone goes into the house. While they are away the tile reads **Bring Them Back**, with the time left, and ends it early |
+| **Put Them to Sleep** / **Wake Them Up** | S | Skips to the next dusk or dawn; the tile shows how long until it would come anyway. Greyed when the night is 0 |
+| **Clear N Flowers** | F | Pulls up every flower the creatures planted, at once ([Flowers tab](#flowers-tab)). Greyed while none are planted |
+
+While they hide, jumping, talking, tea and planes are greyed: there is nobody outside.
 
 ## What your hand can do
 
@@ -75,7 +89,8 @@ by the cursor, which ends the chat.
 | **Complain when pushed around** (`complainEnabled`) | on | | Chasing a creature off its edge with the cursor, or picking it up, bothers it. Bothered more than *Puts up with* times in a row, it tells you off in a bubble, in its own voice (a model writes it when one is set up and talk is on; that call is priced under *Complaints* in Costs). The count then starts over |
 | **Puts up with** (`complainAfter`) | 4 in a row | 1 to 20 | The 5th chase in a row, by default, gets the complaint |
 | **Calms down after** (`complainCalmSeconds`) | 20 s | 5 to 120 | Leave it alone this long and its count starts again from zero |
-| **Tea parties** (`teaPartiesEnabled`) | on | | Now and then two creatures who bump into each other step apart, a little table with a teapot and two cups comes up between them, and they sit down to tea, taking turns to tell each other a story from their lives and answer it. One party at a time; the menu's *Have a Tea Party* starts one now. With talk off they just sip. A model writes the stories when one is set up (priced under *Tea parties* in Costs); otherwise every built-in character has its own. Chasing one of them off, picking one up or hiding them all ends the party |
+| **Keep the sheet up after an action** (`actionsStayOpen`) | on | | Creature Actions… stays up after a tile, for another go, until Done or Esc. Off: it folds away after one. Add a Reminder always puts it away |
+| **Tea parties** (`teaPartiesEnabled`) | on | | Now and then two creatures who bump into each other step apart, a little table with a teapot and two cups comes up between them, and they sit down to tea, taking turns to tell each other a story from their lives and answer it. One party at a time; *Have a Tea Party* in Creature Actions… starts one now. With talk off they just sip. A model writes the stories when one is set up (priced under *Tea parties* in Costs); otherwise every built-in character has its own. Chasing one of them off, picking one up or hiding them all ends the party |
 | **Share of bumps** (`teaPartyChance`) | 10 % | 1 to 100 | How many bumps become a tea party. A flower's bump never does, and a pair near a corner, with no room for the table, just talks |
 | **Lasts** (`teaPartyMinutes`) | 3 min | 1 to 10, in half minutes | A story being told when the time is up is let finish |
 | **Sip between stories** (`teaSipSeconds`) | 6 s | 0 to 30 | The quiet between one story and its answer being over and the next story |
@@ -140,7 +155,7 @@ any other call.
 |---|---|---|---|
 | **They plant their flowers where they like** (`plantFlowers`) | on | | After wearing it a while, a creature stops following its giver, looks for the kind of spot its character likes and plants the flower in the edge there. If nowhere suits before it would wilt, it plants it where it stands. Off: the flower is worn until it wilts |
 | **A planted flower lasts** (`gardenMinutes`) | 60 min | 1 to 240 | Then it fades away. Planted flowers are not kept when the app quits |
-| **Clear Planted Flowers** (button) | | | Pulls up every planted flower at once and says how many went. The same is in the menu, as *Clear N Planted Flowers*, while any are planted |
+| **Clear Planted Flowers** (button) | | | Pulls up every planted flower at once and says how many went. The same is a tile in Creature Actions…, *Clear N Flowers*, while any are planted |
 | **Flowers in the ground at most** (`gardenSize`) | 12 | 1 to 40 | Planting one more wilts the oldest |
 
 **Who plants where** (right column) lists every creature on screen with its way of
@@ -248,10 +263,10 @@ note out loud. Click the letter to fold it away; it flies off over the top.
 | **Reminders arrive by paper plane** | on | | Off: nothing is delivered. Whatever comes due meanwhile arrives, late, when you turn it back on |
 | **Letter stays open** | 60 s | 10 to 600 s | Then it folds itself away. The time only counts while you are at the computer (you touched the mouse or keyboard in the last 30 s), so a letter that arrives while you are away waits for you |
 | **The thrower reads its note out loud** | on | | Only when voice is on (Voice tab) |
-| **Add a Reminder… opens a paper note** | on | | ⌘R in the menu (Ctrl+Alt+R on Windows) opens the paper note below. Off: it opens this tab |
+| **Add a Reminder… opens a paper note** | on | | *Add a Reminder* in Creature Actions… (R; Ctrl+Alt+R on Windows) opens the paper note below. Off: it opens this tab |
 | **Send a Test Letter** | | | A sample reminder, delivered now |
 
-**The paper note** (Add a Reminder…, ⌘R): a sheet of the letter's own pixel paper in
+**The paper note** (Add a Reminder, R in Creature Actions…): a sheet of the letter's own pixel paper in
 the middle of your screen, with one of the creatures peeking over its top edge.
 **Remind me to** takes your words; **When** has a day (◀ ▶ one day) and a time
 (◀ ▶ to the next quarter hour), starting at the top of the next hour, plus **In 5 min**,
