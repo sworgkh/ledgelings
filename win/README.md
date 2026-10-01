@@ -10,9 +10,10 @@ giver), talk from the built-in lines (the default: no model needed) or through
 LM Studio or OpenRouter, lines they rarely repeat, room for a thinking model,
 built-in lines when LM Studio is not running, model-only settings greyed out
 without a model, bonds and their plots, the calendar (time of day, date,
-holidays), the chat log and spend ledger, hiding in the house, imported creatures
-from the sprite kit. Still Mac-only: paper planes, reminders, planting flowers,
-complaints, tea parties, voices and the Costs tab.
+holidays), paper planes, reminders delivered by plane with the paper note to
+write them on, the chat log and spend ledger, hiding in the house, imported
+creatures from the sprite kit. Still Mac-only: planting flowers, complaints, tea
+parties, voices and the Costs tab.
 
 ## Stack
 
@@ -63,6 +64,7 @@ line, **Settings…**, **Quit**. Left- or right-click the icon.
 | Chats | `%APPDATA%\Ledgelings\chats\YYYY-MM-DD.jsonl` (same format as the Mac) |
 | Spend | `%APPDATA%\Ledgelings\spend.jsonl` |
 | Bonds and plots | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac) |
+| Reminders | `%APPDATA%\Ledgelings\reminders.json` (same format as the Mac) |
 | Imported creatures | `%APPDATA%\Ledgelings\sprites\<name>\` |
 | OpenRouter key | Credential Manager › Windows Credentials › `Ledgelings/openRouterKey` |
 | Start at login | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Ledgelings` (Task Manager › Startup apps) |
@@ -74,6 +76,8 @@ line, **Settings…**, **Quit**. Left- or right-click the icon.
 | Transparent, always-on-top, click-through window per monitor | `OverlayWindow`: layered Win32 window, per-pixel alpha, topmost, non-activating |
 | Toggle click-through per frame | `WS_EX_TRANSPARENT` set or cleared in `SetClickable` |
 | Global cursor, no permission prompt | `GetCursorPos` |
+| How long the user has been away (an open letter waits) | `GetLastInputInfo` |
+| Add a Reminder… from anywhere | `RegisterHotKey` (Ctrl+Alt+R) on a hidden window of the UI thread |
 | Shift and Control polled each frame | `GetAsyncKeyState` |
 | Monitor geometry and change notice | `EnumDisplayMonitors` + `GetMonitorInfo`; `SystemEvents.DisplaySettingsChanged` |
 | A 30 fps frame timer, 12 fps asleep | `FrameClock`: a high-resolution waitable timer on its own thread, ticking the UI thread |
@@ -112,7 +116,13 @@ core tests are the Swift tests line for line.
   so there is nothing to save the user from by reading it late.
 - **Steppers are sliders** (lines not repeated, story length, holiday look-ahead);
   same ranges and steps.
-- **Reveal in Finder** is **Show in Explorer**.
+- **Reveal in Finder** is **Show in Explorer**; the Reminders tab's file box has one too.
+- **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
+  ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
+  Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
+- **The paper note** opens centred on the whole monitor under the cursor (the Mac
+  uses the screen's area below the menu bar). Its **When** is a date picker and a
+  24-hour time field. The letter's writing is Consolas Bold at the Mac's sizes.
 - **The calendar** uses .NET's `HebrewCalendar` (renumbered so the months count
   the Mac's way) and `UmAlQuraCalendar`, whose tables end in 2077: after that no
   Muslim holidays are mentioned. The footers say "your PC's clock".
@@ -133,16 +143,16 @@ win/
   LedgelingsCore/        pure logic, no Win32, one class per Swift file:
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
-                           Voices (+ Geometry: Pt, Vec, Rect)
+                           Voices, PaperPlanes, Letters, Reminders (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
-                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout .Bonds)
-                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble), FrameClock, Desktop
-                           TrayIcon, App, Program
-                           AppSettings (+ .Talk .Bonds .Calendar), SettingsStore, LaunchAtLogin
-                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook
+                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout .Bonds .Planes .Reminders)
+                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail), FrameClock, Desktop
+                           TrayIcon, App (+ .Reminders), GlobalHotkey, Program
+                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders), SettingsStore, LaunchAtLogin
+                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model), HideDialog, ColourDialog
+                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders), ReminderNote, HideDialog, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

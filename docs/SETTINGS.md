@@ -35,7 +35,7 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 | **Have a Tea Party** | macOS. The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Hidden while tea parties are off |
 | **Clear N Planted Flowers** | Pulls up every flower the creatures planted, at once. Shown only while some are planted ([Flowers tab](#flowers-tab)) |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
-| **Add a Reminder…** (⌘R) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
+| **Add a Reminder…** (⌘R; Ctrl+Alt+R from anywhere on Windows) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
 | **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
@@ -223,7 +223,7 @@ block about it (`{holiday}` is its name). They know a holiday only on the day, a
 nothing of the clock or the date, so those two boxes and *Mention a holiday* are
 greyed out under a *Needs a model* note.
 
-## Reminders tab (macOS)
+## Reminders tab
 
 Things you want to be reminded of. When the time comes, a free creature stops,
 folds the reminder into a paper plane and throws it at you: the plane swirls to the
@@ -239,7 +239,7 @@ note out loud. Click the letter to fold it away; it flies off over the top.
 |---|---|---|
 | **Remind me to** | empty | Your words, shown as they are on the letter. Return adds it |
 | **When** | the top of the next hour | Date and time. A time already past is delivered straight away. **In 5 min**, **In 30 min**, **In 1 hour** set it from now |
-| **Repeat** | Once | **Every day**, **Every weekday** (Monday to Friday) or **Every week** (the same weekday). A repeat keeps its hour and minute; if the Mac was off or asleep through several, you get one letter, late, and the next one is on schedule |
+| **Repeat** | Once | **Every day**, **Every weekday** (Monday to Friday) or **Every week** (the same weekday). A repeat keeps its hour and minute; if the computer was off or asleep through several, you get one letter, late, and the next one is on schedule |
 
 **Delivery** (left):
 
@@ -248,7 +248,7 @@ note out loud. Click the letter to fold it away; it flies off over the top.
 | **Reminders arrive by paper plane** | on | | Off: nothing is delivered. Whatever comes due meanwhile arrives, late, when you turn it back on |
 | **Letter stays open** | 60 s | 10 to 600 s | Then it folds itself away. The time only counts while you are at the computer (you touched the mouse or keyboard in the last 30 s), so a letter that arrives while you are away waits for you |
 | **The thrower reads its note out loud** | on | | Only when voice is on (Voice tab) |
-| **Add a Reminder… opens a paper note** | on | | ⌘R in the menu opens the paper note below. Off: it opens this tab |
+| **Add a Reminder… opens a paper note** | on | | ⌘R in the menu (Ctrl+Alt+R on Windows) opens the paper note below. Off: it opens this tab |
 | **Send a Test Letter** | | | A sample reminder, delivered now |
 
 **The paper note** (Add a Reminder…, ⌘R): a sheet of the letter's own pixel paper in

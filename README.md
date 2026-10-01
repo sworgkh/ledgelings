@@ -98,7 +98,6 @@ into its turns and rolling over when it comes round; the
 catcher stops, reads the note out, thinks aloud about it, and throws one answer
 back. Every character writes about what its soul keeps coming back to:
 Blocky about the cursor, Zed about naps, Ruth about counting, Unit 7 in numbers.
-macOS only for now.
 
 **They have limits.** Chase one with the cursor or pick it up more than four times
 in a row and it turns round and tells you off, in its own voice: Blocky keeps a list,
@@ -110,8 +109,9 @@ weekday, every week). When the time comes, one of them folds it into a paper pla
 and throws it at you: it swirls to the middle of your screen, turns to face you,
 rushes at you and unfolds into a letter with your reminder, a note in the thrower's
 own voice and its signature. Click it to send it flying away. A letter that
-arrives while you are away waits for you. ⌘R from the menu opens a sheet of the same
-pixel paper to write it on, a creature peeking over the edge; the list is in Settings › Reminders. macOS only for now.
+arrives while you are away waits for you. ⌘R from the menu (Ctrl+Alt+R anywhere on
+Windows) opens a sheet of the same pixel paper to write it on, a creature peeking
+over the edge; the list is in Settings › Reminders.
 Every conversation is kept, and every call to the model is priced.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
