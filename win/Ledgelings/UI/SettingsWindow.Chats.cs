@@ -9,7 +9,11 @@ namespace Ledgelings.UI;
 public sealed partial class SettingsWindow
 {
     private sealed record DayRow(string Day, string Title);
-    private sealed record ExchangeRow(string Time, string Model, string Situation, string Cost, string Tokens, List<ChatLog.Line> Lines);
+    private sealed record ExchangeRow(string Time, string Model, string Situation, string Cost, string Tokens, List<ChatLog.Line> Lines,
+                                      string? Plot = null)
+    {
+        public Visibility PlotVisibility => Plot is null ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     private void InitChats()
     {
@@ -35,7 +39,8 @@ public sealed partial class SettingsWindow
         var exchanges = day is null ? new List<ChatLog.Exchange>() : history.Exchanges(day);
         ExchangeList.ItemsSource = exchanges.Select(x => new ExchangeRow(
             x.Time.ToLocalTime().ToString("t", CultureInfo.CurrentCulture), x.Model, x.Situation,
-            x.Cost is double cost ? Spend.Label(cost) : "", x.Tokens is int tokens ? tokens + " tok" : "", x.Lines)).ToList();
+            x.Cost is double cost ? Spend.Label(cost) : "", x.Tokens is int tokens ? tokens + " tok" : "", x.Lines,
+            x.Plot is string p ? "Plot: " + p : null)).ToList();
         if (DayList.Items.Count == 0) ChatsEmpty.Text = "No chats yet. They talk when they meet on an edge, or pick \"Make Someone Talk\" in the menu.";
         else if (exchanges.Count == 0) ChatsEmpty.Text = "Nothing on this day.";
         ChatsEmpty.Visibility = exchanges.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

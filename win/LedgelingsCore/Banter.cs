@@ -9,7 +9,7 @@ public static class Banter
 {
     public static readonly IReadOnlyList<string> Placeholders = new[]
     {
-        "speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona", "situation", "line",
+        "speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona", "situation", "line", "relationship",
     };
 
     /// <summary>What the built-in creature is, for the prompt.</summary>
@@ -60,21 +60,83 @@ public static class Banter
     }
 
     /// <summary>One line, cleaned up the way a small model needs: first non-empty line,
-    /// no wrapping quotes, no "Name:" prefix, no hidden-reasoning tags, capped.</summary>
-    public static string CleanLine(string raw, string speaker, int maxLength = 160)
+    /// no wrapping quotes, no "Name:" prefix, no hidden-reasoning tags, capped.
+    ///
+    /// <paramref name="cut"/>: the model ran out of room mid-answer. A line that runs to the end
+    /// of such an answer is kept only up to its last whole sentence, and dropped
+    /// if it has none, so no bubble ever stops mid-word; the caller's empty-line
+    /// path (a built-in line, or nothing) takes over. A cap that falls mid-line
+    /// also ends on a whole sentence when one fits, else on a whole word and "…".</summary>
+    public static string CleanLine(string raw, string speaker, int maxLength = 160, bool cut = false)
     {
         var text = raw;
         var close = text.IndexOf("</think>", StringComparison.Ordinal);
         if (close >= 0) text = text[(close + "</think>".Length)..];
-        var line = text.Split('\n', '\r').Select(l => l.Trim(' ', '\t')).FirstOrDefault(l => l.Length > 0) ?? "";
+        else if (text.Contains("<think>", StringComparison.Ordinal)) return "";       // still thinking when it stopped
+        var lines = text.Split('\n', '\r').Select(l => l.Trim(' ', '\t')).Where(l => l.Length > 0).ToList();
+        var line = lines.FirstOrDefault() ?? "";
+        // Only the last line of a cut answer is the one the room ran out in.
+        if (cut && lines.Count == 1) line = WholeSentences(line);
         foreach (var prefix in new[] { speaker + ":", speaker.ToUpperInvariant() + ":", "*" + speaker + "*:" })
             if (line.StartsWith(prefix, StringComparison.Ordinal)) line = line[prefix.Length..].Trim(' ', '\t');
         var opens = new[] { '"', '\u201c', '\'', '*' };
         var closes = new[] { '"', '\u201d', '\'', '*' };
         while (line.Length > 1 && opens.Contains(line[0]) && closes.Contains(line[^1]))
             line = line[1..^1].Trim(' ', '\t');
-        if (line.Length > maxLength) line = line[..maxLength].Trim(' ', '\t') + "\u2026";
+        // A quote opened in the part a cut took away.
+        if (line.Length > 0 && line[0] is ('"' or '\u201c') && !line[1..].Any(c => c is '"' or '\u201d'))
+            line = line[1..].Trim(' ', '\t');
+        if (line.Length > maxLength)
+        {
+            var head = line[..maxLength];
+            // Swift counts characters, C# UTF-16 units: never keep half of an emoji.
+            if (char.IsHighSurrogate(head[^1])) head = head[..^1];
+            var sentences = WholeSentences(head);
+            if (sentences.Length >= maxLength / 3)
+            {
+                line = sentences;
+            }
+            else
+            {
+                var space = head.LastIndexOf(' ');
+                var words = space >= 0 ? head[..space] : head;
+                line = TrimSpaceAndPunctuation(words) + "\u2026";
+            }
+        }
         return line;
+    }
+
+    /// <summary><paramref name="text"/> up to the end of its last whole sentence (". ", "! ", "? ", "…",
+    /// with any closing quote, bracket or star), or "" when no sentence ends in it.</summary>
+    public static string WholeSentences(string text)
+    {
+        static bool Ender(char c) => c is '.' or '!' or '?' or '\u2026';
+        static bool Closer(char c) => c is '"' or '\u201d' or '\'' or '\u2019' or ')' or '*' or '_';
+        int end = 0, i = 0;
+        while (i < text.Length)
+        {
+            if (Ender(text[i]))
+            {
+                var j = i + 1;
+                while (j < text.Length && (Ender(text[j]) || Closer(text[j]))) j++;
+                if (j == text.Length || text[j] == ' ') end = j;
+                i = j;
+            }
+            else
+            {
+                i++;
+            }
+        }
+        return text[..end].Trim(' ', '\t');
+    }
+
+    private static string TrimSpaceAndPunctuation(string text)
+    {
+        static bool Strip(char c) => c is ' ' or '\t' || char.IsPunctuation(c);
+        int start = 0, end = text.Length;
+        while (start < end && Strip(text[start])) start++;
+        while (end > start && Strip(text[end - 1])) end--;
+        return text[start..end];
     }
 
     // MARK: What the model's marks mean on screen

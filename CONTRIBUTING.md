@@ -55,6 +55,11 @@ A running `Ledgelings.exe` locks its `bin` folder; quit it before a Debug rebuil
 or build with `-c Release`. The Windows app links the sprite sheets from
 `Sources/Ledgelings/Resources/sprites` at build time; do not copy them into `win/`.
 
+On a Mac or Linux machine with the .NET 10 SDK, `dotnet build win` compiles the
+whole solution, WPF included (`win/Directory.Build.props` turns on Windows
+targeting off Windows), and `dotnet test win/LedgelingsCore.Tests` runs the core
+tests. The app and its own tests only run on Windows.
+
 ### The sprite tool
 
 Python 3 with `pip install -r spritetool/requirements.txt`; `python -m pytest

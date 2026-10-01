@@ -16,6 +16,7 @@ public sealed partial class Colony
         {
             dayNight = new DayNight(Settings.DayMinutes * 60, Settings.NightMinutes * 60);
             Settings.KeepSpecies(Library.AllSpecies.Select(s => s.Name).ToList());
+            History.Remember(Settings.LineMemory);
 
             if (held is { } h && h.Index >= Settings.CreatureCount) LetGo();
             while (creatures.Count > Settings.CreatureCount)
@@ -115,31 +116,59 @@ public sealed partial class Colony
         if (lastTick is not double last) { lastTick = now; return; }
         var dt = Math.Min(now - last, MaxStep);
         lastTick = now;
-        Elapsed += dt;
-
-        var night = IsNight;
-        var cursor = Desktop.Cursor();          // global, and needs no permission
         // Holding Shift calms them: nobody flees, so you can get close enough to click.
-        var shift = Desktop.IsShiftDown;
+        Advance(dt, Desktop.Cursor(), Desktop.IsShiftDown);      // the cursor is global, and needs no permission
+    }
+
+    /// <summary>One step of the world: <paramref name="dt"/> seconds with the cursor at <paramref name="cursor"/>
+    /// (global points, y up). The same order as the Mac's <c>advance(dt:cursor:shift:)</c>; each feature's
+    /// step lives in its own partial file and is a no-op until that file implements it.</summary>
+    private void Advance(double dt, Pt cursor, bool shift)
+    {
+        Elapsed += dt;
+        var night = IsNight;
         for (int i = 0; i < creatures.Count; i++)
         {
             if (hideout.IsInside(i)) continue;
-            creatures[i].Update(dt, shift || hideout.IsActive ? null : cursor, night, rng);
+            if (creatures[i].Update(dt, shift || hideout.IsActive ? null : cursor, night, rng)) Bothered(i);
             asleepFor[i] = creatures[i].LooksAsleep ? asleepFor[i] + dt : 0;
         }
         UpdateHideout();
         UpdateClickability(cursor, shift);
 
-        foreach (var i in bubbles.Where(b => b.Value.Until <= Elapsed || b.Key >= creatures.Count).Select(b => b.Key).ToList()) bubbles.Remove(i);
+        foreach (var i in bubbles.Where(b => b.Value.Until <= Elapsed || b.Key >= creatures.Count).Select(b => b.Key).ToList())
+        {
+            BubbleGone(i);
+            bubbles.Remove(i);
+        }
         gifts.Update(Elapsed, Settings.FlowerMinutes * 60);
+        UpdateGarden();
         if (Settings.FollowGiver) FollowGivers();
-        SayScheduledLines();
         sparks.Update(dt);
+        SayScheduledLines();
+        UpdateTeaParty();
         ReleaseChatIfOver();
         foreach (var bump in meetings.Update(Parties(), Elapsed)) Bumped(bump);
+        UpdatePost(dt);
+        UpdateReminders(dt);
+        LiveTogether(dt);
         Render();
         SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
     }
+
+    // Feature steps, each implemented in its own partial file (Colony.Complaints, .Garden, .TeaParty,
+    // .Planes, .Reminders, .Bonds). Unimplemented, the compiler drops the call.
+    /// <summary>Creature <paramref name="i"/> was chased off by the cursor this frame (Complaints).</summary>
+    partial void Bothered(int i);
+    /// <summary>Creature <paramref name="i"/>'s bubble is about to be taken down (Voice: a voiced line ends its turn).</summary>
+    partial void BubbleGone(int i);
+    partial void UpdateGarden();
+    partial void UpdateTeaParty();
+    /// <summary>Paper planes: count the quiet, send one when due, fly the one in the air.</summary>
+    partial void UpdatePost(double dt);
+    partial void UpdateReminders(double dt);
+    /// <summary>Bonds: add time on screen together.</summary>
+    partial void LiveTogether(double dt);
 
     /// <summary>A sleeping colony only breathes and floats Zs: 12 fps is plenty.</summary>
     private void SetFrameRate(bool asleep)

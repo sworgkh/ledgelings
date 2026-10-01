@@ -30,11 +30,55 @@ public class BanterTests
     }
 
     [Fact]
-    public void CapsRunawayLines()
+    public void CapsRunawayLinesOnAWholeWord()
     {
         var longLine = string.Concat(Enumerable.Repeat("ha ", 100));
         var output = Banter.CleanLine(longLine, "Pip", maxLength: 30);
-        Assert.True(output.Length <= 31 && output.EndsWith("…"));
+        Assert.True(output.Length <= 31 && output.EndsWith("ha…"));
+    }
+
+    [Fact]
+    public void ACapNeverSplitsAnEmojiInHalf()
+    {
+        // "ab" then an emoji (two UTF-16 units) straddling the cap of 3, no space to end a word on.
+        var output = Banter.CleanLine("ab\U0001F338cdefgh", "Pip", maxLength: 3);
+        Assert.Equal("ab\u2026", output);
+        Assert.DoesNotContain(output, c => char.IsSurrogate(c));
+    }
+
+    [Fact]
+    public void ACapEndsOnAWholeSentenceWhenOneFits()
+    {
+        var line = "Boo! I haunted the ceiling all morning. Then the cursor came along and ruined everything forever.";
+        Assert.Equal("Boo! I haunted the ceiling all morning.", Banter.CleanLine(line, "Boo", maxLength: 60));
+    }
+
+    /// <summary>Lines the owner saw on screen, from answers that ran out of room.</summary>
+    [Fact]
+    public void ACutLineKeepsItsWholeSentencesOrNothing()
+    {
+        Assert.Equal("", Banter.CleanLine("Collision report", "Unit 7", cut: true));
+        Assert.Equal("", Banter.CleanLine("Your pixel-catching is", "Whiskers", cut: true));
+        Assert.Equal("Big leap, tiny navigation.",
+            Banter.CleanLine("Big leap, tiny navigation. Happy Sukkot, Hopper—what are you doing on my", "Blocky", cut: true));
+        Assert.Equal("Boo!", Banter.CleanLine("\"Boo! Rest those legs", "Boo", cut: true));
+        Assert.Equal("I'm ignoring you. Completely.", Banter.CleanLine("I'm ignoring you. Completely. ...Stop", "Whiskers", cut: true));
+        Assert.Equal("", Banter.CleanLine("<think>the user wants a line about", "Pip", cut: true));
+    }
+
+    [Fact]
+    public void ACutAnswerWhoseFirstLineEndedKeepsThatLine()
+    {
+        Assert.Equal("Get off my edge", Banter.CleanLine("Get off my edge\nAnd another thing, the", "Blocky", cut: true));
+        Assert.Equal("Get off my edge", Banter.CleanLine("Get off my edge", "Blocky"));      // a whole answer is left alone
+    }
+
+    [Fact]
+    public void SentencesEndOnTheirMarksAndClosers()
+    {
+        Assert.Equal("Fine.*", Banter.WholeSentences("Fine.* And then"));
+        Assert.Equal("", Banter.WholeSentences("v1.2 is out"));
+        Assert.Equal("Wait… what?!", Banter.WholeSentences("Wait… what?! No"));
     }
 }
 

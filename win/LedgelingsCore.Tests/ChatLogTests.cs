@@ -111,4 +111,89 @@ public class ChatLogTests
         Assert.Empty(log.Days());
         Assert.Empty(log.Exchanges("2026-01-01"));
     }
+    [Fact]
+    public void VoiceChargesLiveInASideFileTheDayListIgnores()
+    {
+        var log = new ChatLog(Temp());
+        try
+        {
+            var now = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.Now.ToUnixTimeSeconds());      // the file keeps whole seconds
+            log.Append(new ChatLog.Exchange { Time = now, Provider = "Built-in lines", Lines = new() { new("Blocky", "Hi.") } });
+            var charge = new ChatLog.VoiceCharge(now, "Blocky", "Hi.", "hexgrad/kokoro-82m", 0.00003);
+            log.AppendVoice(charge);
+            Assert.Equal(new[] { charge }, log.VoiceCharges(ChatLog.Day(now)));
+            Assert.True(log.Days().SequenceEqual(new[] { ChatLog.Day(now) }), "the .voice.jsonl file is not a day of its own");
+            Assert.Single(log.Exchanges(ChatLog.Day(now)));
+        }
+        finally { Remove(log.Directory); }
+    }
+
+    [Fact]
+    public void EachVoiceChargeGoesToTheLatestConversationWithThatLine()
+    {
+        var t0 = DateTimeOffset.FromUnixTimeSeconds(1_000_000);
+        ChatLog.Exchange Talk(double at, params (string Who, string Text)[] lines) =>
+            new() { Time = t0.AddSeconds(at), Lines = lines.Select(l => new ChatLog.Line(l.Who, l.Text)).ToList() };
+        var exchanges = new[]
+        {
+            Talk(0, ("Blocky", "*sighs* Nice edge."), ("Pip", "Thanks!")),
+            Talk(600, ("Blocky", "*sighs* Nice edge."), ("Pip", "Again?")),        // the script repeats itself
+        };
+        ChatLog.VoiceCharge Said(double at, string who, string text, double? cost, bool kept = false) =>
+            new(t0.AddSeconds(at), who, text, "m", cost, kept);
+        var totals = ChatLog.VoiceTotals(new[]
+        {
+            Said(1, "Blocky", "Nice edge.", 0.002),       // words as spoken: no stage direction
+            Said(5, "Pip", "Thanks!", null),
+            Said(601, "Blocky", "Nice edge.", 0, kept: true),
+            Said(605, "Pip", "Again?", 0.001),
+            Said(700, "Zed", "Nobody wrote this down.", 0.5),
+        }, exchanges);
+        Assert.True(totals[0].Lines == 2 && totals[0].Cost == 0.002 && totals[0].Unpriced == 1 && totals[0].Kept == 0);
+        Assert.True(totals[1].Lines == 1 && totals[1].Cost == 0.001 && totals[1].Kept == 1);
+        Assert.True(totals.Count == 2, "a line with no conversation is left out");
+    }
+
+    [Fact]
+    public void AModelConversationWrittenDownAfterItsLinesStillGetsThem()
+    {
+        var t0 = DateTimeOffset.FromUnixTimeSeconds(2_000_000);
+        var x = new ChatLog.Exchange { Time = t0.AddSeconds(20), Lines = new() { new("Dot", "Hm.") } };
+        var totals = ChatLog.VoiceTotals(new[] { new ChatLog.VoiceCharge(t0, "Dot", "Hm.", "m", 0.01) }, new[] { x });
+        Assert.Equal(0.01, totals[0].Cost);
+    }
+
+    [Fact]
+    public void TimesAreWrittenAndReadTheMacsWayWhateverTheUsersCulture()
+    {
+        var log = new ChatLog(Temp());
+        var before = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("th-TH");      // a Buddhist-era calendar
+            var noon = new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero);
+            log.Append(Exchange(noon));
+            var day = ChatLog.Day(noon);
+            Assert.Contains("\"time\":\"2026-09-20T12:00:00Z\"", File.ReadAllText(log.File(day)));
+            File.AppendAllText(log.File(day), "{\"time\":\"2026-09-20T13:00:00Z\",\"situation\":\"\",\"provider\":\"\",\"model\":\"\",\"lines\":[]}\n");
+            var back = log.Exchanges(day);
+            Assert.True(back.Count == 2 && back[0].Time == noon && back[1].Time == noon.AddHours(1), "a Mac-written time reads too");
+        }
+        finally { System.Globalization.CultureInfo.CurrentCulture = before; Remove(log.Directory); }
+    }
+
+    [Fact]
+    public void ALineWithADamagedTimeIsSkippedNotFatal()
+    {
+        var log = new ChatLog(Temp());
+        try
+        {
+            var noon = Local(2026, 9, 18, 12);
+            log.Append(Exchange(noon));
+            File.AppendAllText(log.File("2026-09-18"), "{\"time\":\"yesterday-ish\",\"situation\":\"\",\"provider\":\"\",\"model\":\"\",\"lines\":[]}\n");
+            log.Append(Exchange(noon.AddSeconds(60)));
+            Assert.Equal(2, log.Exchanges("2026-09-18").Count);
+        }
+        finally { Remove(log.Directory); }
+    }
 }

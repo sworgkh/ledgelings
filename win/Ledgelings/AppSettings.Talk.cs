@@ -16,6 +16,14 @@ public sealed partial class AppSettings
     public const double BubbleMin = 4, BubbleMax = 60;
     /// <summary>Minutes a gifted flower stays on a head before it wilts away.</summary>
     public const double FlowerMin = 0.5, FlowerMax = 30;
+    /// <summary>Lines each character remembers saying, so it does not say them again soon.</summary>
+    public const int LineMemoryMin = 0, LineMemoryMax = 40;
+    /// <summary>Tokens a model may spend on one line, thinking included. 80 was too few:
+    /// a thinking model spent them thinking and stopped mid-sentence.</summary>
+    public const int LineTokensMin = 100, LineTokensMax = 4000;
+
+    /// <summary>Beside anything greyed out for want of a model, in the same words everywhere.</summary>
+    public const string NeedsModel = "Needs a model: the built-in lines have none. Choose LM Studio or OpenRouter as the Brain in Settings › Talk.";
 
     private bool talkEnabled;
     private bool followGiver;
@@ -23,6 +31,7 @@ public sealed partial class AppSettings
     private string script = "";
     private string talkServer = "", talkModel = "", openRouterModel = "", openRouterKey = "";
     private double bubbleSeconds, flowerMinutes;
+    private int lineMemory, lineTokens;
     private Dictionary<string, List<Character>> casts = new();
     private string systemPrompt = "", linePrompt = "", replyPrompt = "";
 
@@ -51,6 +60,9 @@ public sealed partial class AppSettings
         openRouterKey = secrets.Get(KeyAccount) ?? "";
         bubbleSeconds = Math.Clamp(store.Get<double?>("bubbleSeconds") ?? Banter.DefaultBubbleSeconds, BubbleMin, BubbleMax);
         flowerMinutes = Math.Clamp(store.Get<double?>("flowerMinutes") ?? 2, FlowerMin, FlowerMax);
+        // Twelve: more than any one character's built-in letters, a few rounds of banter.
+        lineMemory = Math.Clamp(store.Get<int?>("lineMemory") ?? 12, LineMemoryMin, LineMemoryMax);
+        lineTokens = Math.Clamp(store.Get<int?>("lineTokens") ?? Ledgelings.ChatClient.DefaultLineTokens, LineTokensMin, LineTokensMax);
         casts = store.Get<Dictionary<string, List<Character>>>("casts") ?? new Dictionary<string, List<Character>>();
         systemPrompt = store.Get<string>("systemPrompt") ?? Banter.DefaultSystemPrompt;
         linePrompt = store.Get<string>("linePrompt") ?? Banter.DefaultLinePrompt;
@@ -104,6 +116,12 @@ public sealed partial class AppSettings
     public double BubbleSeconds { get => bubbleSeconds; set => Put(ref bubbleSeconds, Math.Clamp(value, BubbleMin, BubbleMax), "bubbleSeconds"); }
     public double FlowerMinutes { get => flowerMinutes; set => Put(ref flowerMinutes, Math.Clamp(value, FlowerMin, FlowerMax), "flowerMinutes"); }
 
+    /// <summary>How many of its own last lines a character avoids saying again; 0 lets it repeat freely.</summary>
+    public int LineMemory { get => lineMemory; set => Put(ref lineMemory, Math.Clamp(value, LineMemoryMin, LineMemoryMax), "lineMemory"); }
+
+    /// <summary>Room for each model-written line (<see cref="Ledgelings.ChatClient.Line"/>); only what is used is paid for.</summary>
+    public int LineTokens { get => lineTokens; set => Put(ref lineTokens, Math.Clamp(value, LineTokensMin, LineTokensMax), "lineTokens"); }
+
     public string SystemPrompt { get => systemPrompt; set => Put(ref systemPrompt, value, "systemPrompt"); }
     public string LinePrompt { get => linePrompt; set => Put(ref linePrompt, value, "linePrompt"); }
     public string ReplyPrompt { get => replyPrompt; set => Put(ref replyPrompt, value, "replyPrompt"); }
@@ -113,6 +131,17 @@ public sealed partial class AppSettings
         casts.TryGetValue(species, out var own) && own.Count > 0 ? own : fallback;
 
     public bool HasOwnCast(string species) => casts.ContainsKey(species);
+
+    /// <summary>Who creature <paramref name="i"/> is: the k-th creature wearing its species takes the k-th
+    /// character of that species' cast, wrapping round.</summary>
+    public Character CharacterFor(int i, SpriteLibrary library)
+    {
+        var species = SpeciesFor(i);
+        var cast = CastOf(species, library.Cast(species));
+        if (cast.Count == 0) return new Character($"Ledgeling {i + 1}", "");
+        var k = Enumerable.Range(0, i).Count(j => SpeciesFor(j) == species);
+        return cast[k % cast.Count];
+    }
 
     public void SetCast(string species, IEnumerable<Character> cast)
     {
@@ -139,22 +168,34 @@ public sealed partial class AppSettings
     /// is missing. Null, too, with the built-in lines: there is no model to ask.</summary>
     public ChatClient? ChatClient()
     {
+        ChatClient client;
         switch (brain)
         {
             case BrainKind.Script:
                 return null;
             case BrainKind.LmStudio:
-                return TalkServerUri is Uri url ? Ledgelings.ChatClient.LmStudio(url, talkModel.Trim()) : null;
+                if (TalkServerUri is not Uri url) return null;
+                client = Ledgelings.ChatClient.LmStudio(url, talkModel.Trim());
+                break;
             default:
                 var key = openRouterKey.Trim();
-                return key.Length == 0 ? null : Ledgelings.ChatClient.OpenRouter(key, openRouterModel.Trim());
+                if (key.Length == 0) return null;
+                client = Ledgelings.ChatClient.OpenRouter(key, openRouterModel.Trim());
+                break;
         }
+        client.LineTokens = lineTokens;
+        return client;
     }
+
+    /// <summary>A model is chosen as the brain: LM Studio or OpenRouter. Off with the
+    /// built-in lines, which is how a fresh install starts; the features that
+    /// only a model can do are greyed out then, saying so (<see cref="NeedsModel"/>).</summary>
+    public bool HasModel => brain != BrainKind.Script;
 
     /// <summary>Why <see cref="ChatClient"/> came back empty, in words for the menu and the settings window.</summary>
     public string BrainProblem => brain switch
     {
-        BrainKind.Script => "the built-in lines need no model",
+        BrainKind.Script => NeedsModel,
         BrainKind.LmStudio => "LM Studio server address is not a URL",
         _ => "no OpenRouter API key; add one in Settings › Talk",
     };

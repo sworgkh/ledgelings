@@ -326,6 +326,24 @@ public class MeetingBehaviourTests
     }
 
     [Fact]
+    public void AChatKeptGoingOutlastsItsTimeLimitButOnlyWhileChatting()
+    {
+        var rng = new Random(4);
+        var c = CreatureAt(200);
+        c.Meet(1, 2);
+        for (int i = 0; i < 4; i++)
+        {
+            Run(c, 1, rng);
+            c.KeepChatting(2);
+        }
+        Assert.True(c.IsChatting, "4 s in, still talking");
+        Run(c, 2.5, rng);
+        Assert.False(c.IsChatting, "quiet: the limit runs out as usual");
+        c.KeepChatting(10);
+        Assert.False(c.IsChatting, "it does not start a chat");
+    }
+
+    [Fact]
     public void TheCursorStillStartlesAChatterAway()
     {
         var rng = new Random(5);

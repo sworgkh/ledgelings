@@ -30,12 +30,13 @@ public sealed partial class SettingsWindow
         // The built-in lines cost nothing and use no prompt: those sections only matter with a model.
         SpendBox.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
         PromptsBox.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
+        LineTokensRow.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
         if (OrKey.Password != settings.OpenRouterKey) OrKey.Password = settings.OpenRouterKey;
         BrainFooter.Text = brain switch
         {
             BrainKind.Script => "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here.",
-            BrainKind.LmStudio => "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them.",
-            _ => "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in the Windows Credential Manager. \"Check\" confirms the key and lists models.",
+            BrainKind.LmStudio => "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence.",
+            _ => "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in the Windows Credential Manager. \"Check\" confirms the key and lists models. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence.",
         };
         syncingBrain = false;
         RefreshScriptStatus();
@@ -140,6 +141,9 @@ public sealed partial class SettingsWindow
         if (s.AllTime.Unpriced > 0) footer += $" {s.AllTime.Unpriced} calls had no price; a + marks a total that is missing some.";
         SpendFooter.Text = footer;
     }
+
+    private void RefreshLineMemory() =>
+        LineMemoryValue.Text = settings.LineMemory == 0 ? "off" : $"{settings.LineMemory} lines";
 
     private void RevealSpend_Click(object sender, RoutedEventArgs e) => spend.RevealInExplorer();
 

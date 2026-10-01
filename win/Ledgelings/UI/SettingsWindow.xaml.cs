@@ -42,14 +42,19 @@ public sealed partial class SettingsWindow : Window
         InitChats();
         PromptBox.Text = library.Prompt;
         SpritesFooter.Text = "Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in " + library.Directory + ".";
-        PromptFooter.Text = "Placeholders: " + string.Join(" ", Core.Banter.Placeholders.Select(p => "{" + p + "}")) + ". {situation} is written by the app: time of day and where each creature is. {line} is what was just said, for the reply.";
+        PromptFooter.Text = "Placeholders: " + string.Join(" ", Core.Banter.Placeholders.Select(p => "{" + p + "}")) + ". {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.";
+        InitTalkExtras();
+        InitBonds();
+        InitCalendar();
         Closing += (_, e) => { e.Cancel = true; Hide(); };      // the window is reused; the app lives in the tray
     }
 
     /// <summary>Bring the window up, on the given tab if asked.</summary>
     public void Show(SettingsTab? tab)
     {
-        if (tab is SettingsTab t) Tabs.SelectedIndex = (int)t;
+        // By header, not position: tabs are added feature by feature.
+        if (tab is SettingsTab t && Tabs.Items.OfType<TabItem>().FirstOrDefault(i => i.Header as string == t.ToString()) is TabItem item)
+            Tabs.SelectedItem = item;
         if (!IsVisible) Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();

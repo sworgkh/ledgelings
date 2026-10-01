@@ -126,7 +126,7 @@ public sealed class App : Application
     private void OpenSettings(SettingsTab? tab)
     {
         if (settings is null || history is null || library is null || spend is null) return;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend);
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { BondBook = colony?.Bonds };
         settingsWindow.Show(tab);
     }
 

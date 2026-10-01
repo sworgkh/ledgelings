@@ -43,6 +43,8 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         dayMinutes = Math.Max(0.5, this.store.Get<double?>("dayMinutes") ?? 3);
         nightMinutes = Math.Max(0, this.store.Get<double?>("nightMinutes") ?? 5);
         LoadTalk();
+        LoadBonds();
+        LoadCalendar();
     }
 
     public int CreatureCount

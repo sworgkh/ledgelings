@@ -5,8 +5,9 @@ namespace Ledgelings;
 /// <summary>The built-in lines: a conversation from the script, said on the colony's own clock.</summary>
 public sealed partial class Colony
 {
-    /// <summary>A line from the script, waiting for its moment. <c>Closes</c>: the pair to let go once this, their last line, is out.</summary>
-    private sealed record ScheduledLine(double At, int Speaker, string Text, (int, int)? Closes);
+    /// <summary>A line from the script, waiting for its moment. <c>BuiltIn</c>: written in advance, so its
+    /// sound may be kept. <c>Closes</c>: the pair to let go once this, their last line, is out.</summary>
+    private sealed record ScheduledLine(double At, int Speaker, string Text, (int, int)? Closes, bool BuiltIn = true);
 
     /// <summary>Lines from the built-in script still to be said, by when.</summary>
     private readonly List<ScheduledLine> scheduled = new();
@@ -22,17 +23,34 @@ public sealed partial class Colony
         catch (Script.ParseException e) { TalkStatus = "the built-in lines: " + e.Message; return false; }
         var moment = new HashSet<string> { IsNight ? "night" : "day" };
         if (flower is not null) moment.Add("flower");
+        var holiday = HolidayForLines();
+        if (holiday is not null) moment.Add("holiday");
         if (script.Pick(moment, recentLines, rng) is not int chosen) { TalkStatus = "no built-in line fits right now"; return false; }
-        recentLines = recentLines.Append(chosen).TakeLast(Math.Max(1, script.Conversations.Count / 2)).ToList();
+        recentLines = recentLines.Where(i => i != chosen).Append(chosen).TakeLast(script.Conversations.Count).ToList();
         var a = CharacterFor(speaker);
         var b = CharacterFor(listener);
         var lines = script.Conversations[chosen].Lines.Select((line, i) =>
         {
             var mine = i % 2 == 0;
             return (Who: mine ? speaker : listener,
-                    Text: Script.Fill(line, mine ? a.Name : b.Name, mine ? b.Name : a.Name, flower));
+                    Text: Script.Fill(line, mine ? a.Name : b.Name, mine ? b.Name : a.Name, flower, holiday),
+                    BuiltIn: true);
         }).ToList();
         busy.Add(speaker); busy.Add(listener);
+        History.Record(new ChatLog.Exchange
+        {
+            Time = DateTimeOffset.Now, Situation = situation, Provider = AppSettings.BrainTitle(BrainKind.Script), Model = "",
+            Lines = lines.Select(l => new ChatLog.Line(CharacterFor(l.Who).Name, l.Text)).ToList(),
+        });
+        if (IsVoiced)
+        {
+            _ = SayInTurns(lines, () =>
+            {
+                busy.Remove(speaker); busy.Remove(listener);
+                EndChat(speaker, listener, 1.2);
+            });
+            return true;
+        }
         var at = Elapsed;
         for (int i = 0; i < lines.Count; i++)
         {
@@ -41,11 +59,6 @@ public sealed partial class Colony
             at += Banter.ShowTime(lines[i].Text, Settings.BubbleSeconds) * 0.6;
         }
         SayScheduledLines();
-        History.Record(new ChatLog.Exchange
-        {
-            Time = DateTimeOffset.Now, Situation = situation, Provider = AppSettings.BrainTitle(BrainKind.Script), Model = "",
-            Lines = lines.Select(l => new ChatLog.Line(CharacterFor(l.Who).Name, l.Text)).ToList(),
-        });
         return true;
     }
 
@@ -59,7 +72,7 @@ public sealed partial class Colony
         {
             if (line.Speaker < creatures.Count)
             {
-                Say(line.Text, line.Speaker);
+                Say(line.Text, line.Speaker, line.BuiltIn);
                 TalkStatus = $"{CharacterFor(line.Speaker).Name}: {line.Text}";
             }
             if (line.Closes is (int i, int j))

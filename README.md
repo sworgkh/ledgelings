@@ -88,8 +88,8 @@ no more than a new one. Settings › Bonds shows every pair and its story.
 **They know what day it is.** Your clock, the date and the holidays you tick
 (Jewish, Christian, Muslim) go into every line and paper plane: "late evening
 (22:40)", "Today is day 1 of Sukkot", "Hanukkah is in 3 days". The dates come from
-the Hebrew and Islamic calendars built into macOS, nothing is looked up online.
-Each is a checkbox in Settings › Calendar. macOS only for now.
+the Hebrew and Islamic calendars built into macOS and Windows, nothing is looked up
+online. Each is a checkbox in Settings › Calendar.
 
 **Paper planes.** Every few minutes (you choose how often) one folds a note into a
 paper plane and throws it to another. Each plane flies in weather of its own,

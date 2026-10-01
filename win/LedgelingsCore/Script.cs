@@ -9,7 +9,7 @@ namespace Ledgelings.Core;
 /// was bumped into. <c>#</c> starts a comment. A block may open with tags in square
 /// brackets, <c>[flower]</c> or <c>[night, flower]</c>, and is then only used when the
 /// moment matches; an untagged block fits any moment. <c>{speaker}</c>,
-/// <c>{listener}</c> and <c>{flower}</c> are filled in when the line is said.
+/// <c>{listener}</c>, <c>{flower}</c> and <c>{holiday}</c> are filled in when the line is said.
 /// </summary>
 public sealed partial class Script : IEquatable<Script>
 {
@@ -40,8 +40,8 @@ public sealed partial class Script : IEquatable<Script>
     }
 
     /// <summary>What a block may be tagged with, and what a moment can be.</summary>
-    public static readonly IReadOnlySet<string> Tags = new HashSet<string> { "flower", "night", "day" };
-    public static readonly IReadOnlyList<string> Placeholders = new[] { "speaker", "listener", "flower" };
+    public static readonly IReadOnlySet<string> Tags = new HashSet<string> { "flower", "night", "day", "holiday" };
+    public static readonly IReadOnlyList<string> Placeholders = new[] { "speaker", "listener", "flower", "holiday" };
 
     public IReadOnlyList<Conversation> Conversations { get; }
 
@@ -98,7 +98,8 @@ public sealed partial class Script : IEquatable<Script>
 
     /// <summary>The conversation to use now, by index: from the blocks whose every tag
     /// holds for <paramref name="moment"/>, the most specifically tagged ones, and among those
-    /// one not in <paramref name="recent"/> unless they all are. Null when nothing fits.</summary>
+    /// one not in <paramref name="recent"/> (oldest first); when they all are, the one used
+    /// longest ago, never the one just said. Null when nothing fits.</summary>
     public int? Pick(IReadOnlySet<string> moment, IReadOnlyCollection<int> recent, Random rng)
     {
         var fitting = Enumerable.Range(0, Conversations.Count).Where(i => Conversations[i].Tags.IsSubsetOf(moment)).ToList();
@@ -106,11 +107,16 @@ public sealed partial class Script : IEquatable<Script>
         var best = fitting.Max(i => Conversations[i].Tags.Count);
         var pool = fitting.Where(i => Conversations[i].Tags.Count == best).ToList();
         var fresh = pool.Where(i => !recent.Contains(i)).ToList();
-        return rng.Pick(fresh.Count == 0 ? pool : fresh);
+        if (fresh.Count > 0) return rng.Pick(fresh);
+        var order = recent.ToList();
+        return pool.MinBy(i => order.LastIndexOf(i));
     }
 
-    public static string Fill(string line, string speaker, string listener, string? flower) =>
-        Banter.Render(line, new Dictionary<string, string> { ["speaker"] = speaker, ["listener"] = listener, ["flower"] = flower ?? "flower" });
+    public static string Fill(string line, string speaker, string listener, string? flower, string? holiday = null) =>
+        Banter.Render(line, new Dictionary<string, string>
+        {
+            ["speaker"] = speaker, ["listener"] = listener, ["flower"] = flower ?? "flower", ["holiday"] = holiday ?? "the holiday",
+        });
 
     public bool Equals(Script? other) => other is not null && Conversations.SequenceEqual(other.Conversations);
     public override bool Equals(object? obj) => Equals(obj as Script);
