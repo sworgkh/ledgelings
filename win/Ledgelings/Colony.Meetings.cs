@@ -21,8 +21,10 @@ public sealed partial class Colony
         for (int i = 0; i < creatures.Count; i++)
         {
             var c = creatures[i];
+            // A flower wearer trails its giver; letting it bump would be a
+            // meeting every few seconds. It walks past everyone instead.
             parties.Add(new Meetings.Party(c.Spot.Loop, c.Segment, c.Position, atlas.BodyHalfSize * sizes[i],
-                !hideout.IsActive && !busy.Contains(i) && !ExpectsPlane(i) && !c.IsJumping && !c.LooksAsleep && !c.IsHeld && !c.IsChatting));
+                !hideout.IsActive && !busy.Contains(i) && !ExpectsPlane(i) && gifts.Hat(i) is null && !c.IsJumping && !c.LooksAsleep && !c.IsHeld && !c.IsChatting));
         }
         return parties;
     }
@@ -65,7 +67,7 @@ public sealed partial class Colony
         {
             var giver = hat.From;
             if (giver == wearer || wearer >= creatures.Count || giver < 0 || giver >= creatures.Count) continue;
-            if (busy.Contains(wearer) || busy.Contains(giver)) continue;
+            if (busy.Contains(wearer) || busy.Contains(giver) || gardeners.Contains(wearer)) continue;
             var gap = (sizes[wearer] + sizes[giver]) / 2 + 16;
             creatures[wearer].Follow(creatures[giver], gap);
         }

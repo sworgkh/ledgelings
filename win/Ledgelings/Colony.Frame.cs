@@ -25,6 +25,7 @@ public sealed partial class Colony
                 creatures.RemoveAt(last); asleepFor.RemoveAt(last); sizeShares.RemoveAt(last); sizes.RemoveAt(last);
             }
             gifts.Forget(creatures.Count);
+            ForgetAnnoyance();
             while (creatures.Count < Settings.CreatureCount)
             {
                 var share = rng.NextDouble();
@@ -63,6 +64,7 @@ public sealed partial class Colony
         RebuildOverlays();
         worlds.Clear();
         for (int i = 0; i < creatures.Count; i++) creatures[i].Rehome(World(sizes[i]));
+        ReplantAfterScreensChanged();
         ApplySettings();      // the pixel scale may have changed with the primary monitor
     }
 
@@ -158,8 +160,10 @@ public sealed partial class Colony
 
     // Feature steps, each implemented in its own partial file (Colony.Complaints, .Garden, .TeaParty,
     // .Planes, .Reminders, .Bonds). Unimplemented, the compiler drops the call.
-    /// <summary>Creature <paramref name="i"/> was chased off by the cursor this frame (Complaints).</summary>
+    /// <summary>Creature <paramref name="i"/> was chased off by the cursor this frame, or picked up (Complaints).</summary>
     partial void Bothered(int i);
+    /// <summary>The colony changed size, or its patience did (Complaints).</summary>
+    partial void ForgetAnnoyance();
     /// <summary>Creature <paramref name="i"/>'s bubble is about to be taken down (Voice: a voiced line ends its turn).</summary>
     partial void BubbleGone(int i);
     partial void UpdateGarden();

@@ -333,6 +333,30 @@ public sealed class Creature
         return true;
     }
 
+    // MARK: Planting
+
+    /// <summary>Stand still a moment, as when planting a flower. Only while walking or idling.</summary>
+    public void Pause(double seconds)
+    {
+        if (IsAtLeisure) Enter(new Mode.Idle(seconds));
+    }
+
+    /// <summary>Walking or standing about: free to stop for something of its own.</summary>
+    public bool IsAtLeisure => CurrentMode is Mode.Walking or Mode.Idle;
+
+    /// <summary>Walk toward <paramref name="t"/> on this loop, the short way round; stops steering once within
+    /// <paramref name="near"/>. Only while walking or idling. Called every frame by whoever is looking
+    /// for somewhere (a spot to plant a flower).</summary>
+    public void HeadToward(double t, double near)
+    {
+        if (!IsAtLeisure) return;
+        var ahead = Loop.Wrap(t - Spot.T);
+        if (Math.Min(ahead, Loop.Length - ahead) <= near) return;
+        Direction = ahead <= Loop.Length / 2 ? 1 : -1;
+        if (CurrentMode is Mode.Walking(var remaining)) CurrentMode = new Mode.Walking(Math.Max(remaining, 1));
+        else Enter(new Mode.Walking(1));
+    }
+
     // MARK: Meeting someone
 
     /// <summary>Stop and face the other creature: <paramref name="facing"/> is +1 when it is further along

@@ -36,10 +36,11 @@ public sealed partial class Colony
         var inFlight = FlightSnapshot();
         var stars = SparkSnapshots();
         var home = HouseSnapshot();
+        var beds = GardenSnapshots();
         var plane = MailSnapshot();
         var reminder = DeliverySnapshot();
         foreach (var overlay in overlays)
-            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell,
+            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: beds,
                            plane: plane, planeCell: planeCell, reminder: reminder);
     }
 }

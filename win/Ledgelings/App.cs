@@ -96,6 +96,9 @@ public sealed partial class App : Application
         else hide = "Hide Them for a While\u2026";
         items.Add(new TrayIcon.Item(hide, HideThem));
         items.Add(new TrayIcon.Item("Make Someone Talk", () => colony.TalkNow()));
+        var planted = colony.Garden.Beds.Count;
+        if (planted > 0)
+            items.Add(new TrayIcon.Item(planted == 1 ? "Clear the Planted Flower" : $"Clear {planted} Planted Flowers", () => colony.ClearGarden()));
         AddMailItems(items);
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
@@ -128,7 +131,7 @@ public sealed partial class App : Application
     private void OpenSettings(SettingsTab? tab)
     {
         if (settings is null || history is null || library is null || spend is null) return;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { BondBook = colony?.Bonds };
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds };
         AttachReminders(settingsWindow);
         settingsWindow.Show(tab);
     }
