@@ -16,9 +16,18 @@ public enum Almanac {
 
         public var title: String {
             switch self {
-            case .jewish: "Jewish"
-            case .christian: "Christian"
-            case .muslim: "Muslim"
+            case .jewish: tr("Jewish")
+            case .christian: tr("Christian")
+            case .muslim: tr("Muslim")
+            }
+        }
+
+        /// "a Jewish holiday", for the sentence.
+        public var holiday: String {
+            switch self {
+            case .jewish: tr("a Jewish holiday")
+            case .christian: tr("a Christian holiday")
+            case .muslim: tr("a Muslim holiday")
             }
         }
     }
@@ -63,35 +72,35 @@ public enum Almanac {
         var parts: [String] = []
         let clock = timePhrase(at: now, calendar: calendar)
         switch (aware.date, aware.timeOfDay) {
-        case (true, true): parts.append("For the person at this computer it is \(datePhrase(at: now, calendar: calendar)), \(clock).")
-        case (true, false): parts.append("For the person at this computer it is \(datePhrase(at: now, calendar: calendar)).")
-        case (false, true): parts.append("For the person at this computer it is \(clock).")
+        case (true, true): parts.append(tr("For the person at this computer it is %@, %@.", datePhrase(at: now, calendar: calendar), clock))
+        case (true, false): parts.append(tr("For the person at this computer it is %@.", datePhrase(at: now, calendar: calendar)))
+        case (false, true): parts.append(tr("For the person at this computer it is %@.", clock))
         case (false, false): break
         }
         if !aware.faiths.isEmpty {
             let hour = calendar.component(.hour, from: now)
             for h in holidays(on: now, faiths: aware.faiths, calendar: calendar) {
-                let what = "a \(h.faith.title) holiday"
-                parts.append(h.length > 1 ? "Today is day \(h.day) of \(h.name), \(what)." : "Today is \(h.name), \(what).")
+                let what = h.faith.holiday
+                parts.append(h.length > 1 ? tr("Today is day %d of %@, %@.", h.day, h.name, what) : tr("Today is %@, %@.", h.name, what))
             }
             for u in upcoming(from: now, within: aware.lookAhead, faiths: aware.faiths, calendar: calendar) {
-                let what = "a \(u.faith.title) holiday"
+                let what = u.faith.holiday
                 if u.days == 1, u.faith != .christian, hour >= 17 {
-                    parts.append("\(u.name), \(what), begins this evening.")
+                    parts.append(tr("%@, %@, begins this evening.", u.name, what))
                 } else if u.days == 1 {
-                    parts.append("Tomorrow is \(u.name), \(what).")
+                    parts.append(tr("Tomorrow is %@, %@.", u.name, what))
                 } else {
-                    parts.append("\(u.name), \(what), is in \(u.days) days.")
+                    parts.append(tr("%@, %@, is in %@.", u.name, what, trCount(u.days, "day", "days")))
                 }
             }
         }
         return parts.joined(separator: " ")
     }
 
-    /// "Saturday, 26 September 2026".
+    /// "Saturday, 26 September 2026", "суббота, 26 сентября 2026".
     public static func datePhrase(at now: Date, calendar: Calendar = .current) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "en_GB")
+        f.locale = Locale(identifier: Language.current == .english ? "en_GB" : Language.current.code)
         f.calendar = Calendar(identifier: .gregorian)
         f.timeZone = calendar.timeZone
         f.dateFormat = "EEEE, d MMMM yyyy"
@@ -107,13 +116,13 @@ public enum Almanac {
     /// The part of the day an hour falls in, in words.
     public static func partOfDay(hour: Int) -> String {
         switch hour {
-        case 5..<8: "early morning"
-        case 8..<12: "morning"
-        case 12..<14: "midday"
-        case 14..<17: "afternoon"
-        case 17..<21: "evening"
-        case 21..<24: "late evening"
-        default: "the middle of the night"
+        case 5..<8: tr("early morning")
+        case 8..<12: tr("morning")
+        case 12..<14: tr("midday")
+        case 14..<17: tr("afternoon")
+        case 17..<21: tr("evening")
+        case 21..<24: tr("late evening")
+        default: tr("the middle of the night")
         }
     }
 
@@ -129,7 +138,7 @@ public enum Almanac {
         for feast in chosen {
             guard let ago = (0..<feast.length).first(where: { days[$0].map(feast.starts) ?? false }) else { continue }
             if ago > 0, let still = feast.stillOn, let today = days[0], !still(today) { continue }
-            found.append(Holiday(name: feast.name, faith: feast.faith, day: ago + 1, length: feast.length))
+            found.append(Holiday(name: holidayName(feast.name), faith: feast.faith, day: ago + 1, length: feast.length))
         }
         return found
     }
@@ -143,9 +152,10 @@ public enum Almanac {
         for ahead in 1...days {
             guard let later = shift(date, by: ahead, calendar) else { continue }
             let day = Day(later, calendar)
-            for feast in feasts where faiths.contains(feast.faith) && feast.starts(day)
-                && !today.contains(feast.name) && !found.contains(where: { $0.name == feast.name }) {
-                found.append(Upcoming(name: feast.name, faith: feast.faith, days: ahead))
+            for feast in feasts where faiths.contains(feast.faith) && feast.starts(day) {
+                let name = holidayName(feast.name)
+                guard !today.contains(name), !found.contains(where: { $0.name == name }) else { continue }
+                found.append(Upcoming(name: name, faith: feast.faith, days: ahead))
             }
         }
         return found
@@ -187,7 +197,15 @@ public enum Almanac {
         }
     }
 
+    /// A holiday's name in the current language; `english` is how `feasts` calls it.
+    public static func holidayName(_ english: String, in language: Language = .current) -> String {
+        holidayNames[language]?[english] ?? english
+    }
+
+    static let holidayNames: [Language: [String: String]] = [:]
+
     struct Feast: Sendable {
+        /// In English; `holidayName` gives it in the current language.
         var name: String
         var faith: Faith
         var length = 1

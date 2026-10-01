@@ -36,7 +36,7 @@ final class Voice: NSObject, ObservableObject {
     let lineArchive: VoiceArchive
     @Published private(set) var lineClips: [VoiceArchive.Clip]
     /// The last thing that happened, for the settings window.
-    @Published private(set) var status = "not tried yet"
+    @Published private(set) var status = tr("not tried yet")
     /// OpenRouter's speech models, once fetched.
     @Published private(set) var models: [SpeechClient.Model] = []
     /// The local server's voices, once fetched.
@@ -122,9 +122,9 @@ final class Voice: NSObject, ObservableObject {
         let everyone = cast()
         var seen: [String] = []
         for name in everyone where !seen.contains(name) && seen.count < 3 { seen.append(name) }
-        guard !seen.isEmpty else { status = "nobody on screen to test with"; return }
+        guard !seen.isEmpty else { status = tr("nobody on screen to test with"); return }
         for (i, name) in seen.enumerated() {
-            speak(i == 0 ? "Hi, I'm \(name). This is how I sound." : "And I'm \(name).", as: name, cast: everyone, builtIn: true)
+            speak(i == 0 ? tr("Hi, I'm %@. This is how I sound.", name) : tr("And I'm %@.", name), as: name, cast: everyone, builtIn: true)
         }
     }
 
@@ -147,7 +147,7 @@ final class Voice: NSObject, ObservableObject {
     private func speak(_ text: String, as name: String, cast: [String], builtIn: Bool = false, cue: CueHandler? = nil) -> Bool {
         let line = Voices.speakable(text)
         guard !line.isEmpty else { return false }
-        guard waiting < Self.mostWaiting else { status = "skipped a line: still saying the ones before it"; return false }
+        guard waiting < Self.mostWaiting else { status = tr("skipped a line: still saying the ones before it"); return false }
         switch settings.voiceEngine {
         case .system: return speakHere(line, as: name, cast: cast, cue: cue)
         case .openRouter, .local: return speakOnline(line, as: name, cast: cast, builtIn: builtIn, cue: cue)
@@ -165,7 +165,7 @@ final class Voice: NSObject, ObservableObject {
         waiting += 1
         if let cue { spoken[ObjectIdentifier(utterance)] = (cue, (line as NSString).length) }
         synthesizer.speak(utterance)
-        status = "\(name): \(utterance.voice?.name ?? "system voice")"
+        status = "\(name): \(utterance.voice?.name ?? tr("system voice"))"
         return true
     }
 
@@ -207,13 +207,13 @@ final class Voice: NSObject, ObservableObject {
         let local = settings.voiceEngine == .local
         let client: SpeechClient
         if local {
-            guard let server = settings.localVoiceURL else { status = "the local server's address is not a URL"; return nil }
+            guard let server = settings.localVoiceURL else { status = tr("the local server's address is not a URL"); return nil }
             client = SpeechClient(key: "", model: settings.localVoiceModel.trimmingCharacters(in: .whitespaces), server: server)
         } else {
             let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
             // The key field is on the Voice tab unless OpenRouter is the brain too.
             guard !key.isEmpty else {
-                status = "no OpenRouter API key; add one in Settings › \(settings.brain == .openRouter ? "Talk" : "Voice")"
+                status = tr("no OpenRouter API key; add one in Settings › %@", settings.brain == .openRouter ? tr("Talk") : tr("Voice"))
                 return nil
             }
             client = SpeechClient(key: key, model: settings.voiceModel.trimmingCharacters(in: .whitespaces))
@@ -297,7 +297,9 @@ final class Voice: NSObject, ObservableObject {
                 } else if !local, let generation = said.generation {
                     self.charge(client, generation, speaker: name, text: line, at: saidAt)
                 }
-                self.status = "\(name): \(said.voice ?? "default voice") on \(local ? "local " : "")\(client.model)" + (said.kept ? ", kept copy, free" : "")
+                let voice = said.voice ?? tr("default voice")
+                self.status = (local ? tr("%@: %@ on local %@", name, voice, client.model) : tr("%@: %@ on %@", name, voice, client.model))
+                    + (said.kept ? tr(", kept copy, free") : "")
                 try await self.play(said.audio, pitch: pitch) { cue?(.started(duration: $0)) }
                 ending = .done
             } catch is CancellationError {
@@ -409,11 +411,11 @@ final class Voice: NSObject, ObservableObject {
         switch settings.voiceEngine {
         case .system:
             return systemVoice(for: name, cast: cast(), automatic: true)
-                .flatMap(AVSpeechSynthesisVoice.init(identifier:))?.name ?? "system default"
+                .flatMap(AVSpeechSynthesisVoice.init(identifier:))?.name ?? tr("system default")
         case .openRouter:
-            return onlineVoice(for: name, cast: cast(), among: modelVoices, automatic: true) ?? "the model's own"
+            return onlineVoice(for: name, cast: cast(), among: modelVoices, automatic: true) ?? tr("the model's own")
         case .local:
-            return onlineVoice(for: name, cast: cast(), among: localVoices, automatic: true) ?? "the server's own"
+            return onlineVoice(for: name, cast: cast(), among: localVoices, automatic: true) ?? tr("the server's own")
         }
     }
 
@@ -421,7 +423,7 @@ final class Voice: NSObject, ObservableObject {
     @discardableResult
     func loadLocalVoices(again: Bool = false) async throws -> [String] {
         if !again, !localVoices.isEmpty { return localVoices }
-        guard let server = settings.localVoiceURL else { throw ChatClient.Failure.serverDown("the address is not a URL") }
+        guard let server = settings.localVoiceURL else { throw ChatClient.Failure.serverDown(tr("the address is not a URL")) }
         localVoices = try await SpeechClient(key: "", model: settings.localVoiceModel, server: server).voices()
         return localVoices
     }
@@ -435,7 +437,7 @@ final class Voice: NSObject, ObservableObject {
     /// Settings › Voice's per-character Test.
     func introduce(_ name: String) {
         stop()
-        speak("Hi, I'm \(name). This is how I sound.", as: name, cast: cast(), builtIn: true)
+        speak(tr("Hi, I'm %@. This is how I sound.", name), as: name, cast: cast(), builtIn: true)
     }
 
     /// A Mac voice without its own pitch shifter, which smears high voices: the
@@ -462,7 +464,7 @@ final class Voice: NSObject, ObservableObject {
             }
             let buffers = await rendered.value.buffers
             guard let self, self.epoch == epoch, !Task.isCancelled, !buffers.isEmpty else { return }
-            self.status = "\(name): \(utterance.voice?.name ?? "system voice")"
+            self.status = "\(name): \(utterance.voice?.name ?? tr("system voice"))"
             do {
                 try await self.play(buffers, pitch: pitch) { cue?(.started(duration: $0)) }
                 ending = .done
@@ -687,7 +689,8 @@ extension Voice {
             let all = localVoices.isEmpty ? try await loadLocalVoices() : localVoices
             choices = Voices.englishFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
         }
-        guard !choices.isEmpty else { throw ChatClient.Failure.badReply("no voices to choose from") }
+        guard !choices.isEmpty else { throw ChatClient.Failure.badReply(tr("no voices to choose from")) }
+
         let prompt = Casting.modelPrompt(name: name, persona: who.persona, kind: who.kind,
                                          voices: choices.map { ($0.id, $0.hints) }, cartoon: settings.cartoonVoices)
         // Room for a thinking model to reason before it answers; the answer itself is short.

@@ -22,6 +22,11 @@ public struct Gifts: Sendable {
     public static let flowers = ["poppy", "tulip", "daisy", "sunflower", "rose", "bluebell",
                                  "dandelion", "lavender", "lily", "forget-me-not"]
 
+    /// A flower's name as people read and hear it, in the current language: what
+    /// fills `{flower}` in a line. The ids above stay English, for the sprite sheet.
+    public static func name(of flower: String) -> String { names()[flower] ?? flower }
+    public static let names = Translated(english: [String: String]())
+
     public var flightTime: Double
     public private(set) var flight: Flight?
     public private(set) var worn: [Int: Worn] = [:]

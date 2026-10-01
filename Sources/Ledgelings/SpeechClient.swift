@@ -25,12 +25,12 @@ struct SpeechClient: Sendable {
         var voices: [String]
 
         var priceLabel: String {
-            guard let inputPerMillion else { return "price unknown" }
-            if inputPerMillion == 0 && (outputPerMillion ?? 0) == 0 { return "free" }
+            guard let inputPerMillion else { return tr("price unknown") }
+            if inputPerMillion == 0 && (outputPerMillion ?? 0) == 0 { return tr("free") }
             if let outputPerMillion, outputPerMillion > 0 {
-                return String(format: "$%.2f in · $%.2f out per M", inputPerMillion, outputPerMillion)
+                return tr("$%.2f in · $%.2f out per M", inputPerMillion, outputPerMillion)
             }
-            return String(format: "$%.2f per M chars", inputPerMillion)
+            return tr("$%.2f per M chars", inputPerMillion)
         }
     }
 
@@ -75,7 +75,8 @@ struct SpeechClient: Sendable {
             if let message = ChatClient.serverError(in: data) { throw ChatClient.Failure.refused(message) }
             throw ChatClient.Failure.badReply(String(decoding: data.prefix(160), as: UTF8.self))
         }
-        guard !data.isEmpty else { throw ChatClient.Failure.badReply("no audio") }
+        guard !data.isEmpty else { throw ChatClient.Failure.badReply(tr("no audio"))
+ }
         guard type.hasPrefix("audio/pcm") || type.hasPrefix("audio/l16") else { return data }
         func parameter(_ name: String) -> Int? {
             type.split(separator: ";").lazy.compactMap { part -> Int? in

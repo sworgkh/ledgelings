@@ -38,7 +38,7 @@ extension Colony {
         teaTold = []
         busy.formUnion([i, j])
         let a = character(forCreature: i).name, b = character(forCreature: j).name
-        talkStatus = "\(a) and \(b) are having tea"
+        talkStatus = tr("%@ and %@ are having tea", a, b)
         trace?("tea: \(a) and \(b) sit down")
         return true
     }
@@ -51,7 +51,7 @@ extension Colony {
             let c = creatures[i]
             return !busy.contains(i) && !expectsPlane(i) && !c.isJumping && !c.isHeld && !c.isChatting && !c.isSleeping
         }
-        guard free.count >= 2 else { talkStatus = "needs two creatures who are awake and free"; return }
+        guard free.count >= 2 else { talkStatus = tr("needs two creatures who are awake and free"); return }
         func apart(_ i: Int, _ j: Int) -> CGFloat {
             hypot(creatures[i].position.x - creatures[j].position.x, creatures[i].position.y - creatures[j].position.y)
         }
@@ -149,8 +149,8 @@ extension Colony {
 
     private func teaSituation(_ teller: Int, _ listener: Int) -> String {
         let a = character(forCreature: teller).name, b = character(forCreature: listener).name
-        var situation = "On the edge it is \(isNight ? "night" : "day"). \(a) and \(b) have put a little table out on "
-            + "\(edgeName(creatures[teller])) and are sitting down to tea together."
+        var situation = timeOfDay + " "
+            + tr("%@ and %@ have put a little table out %@ and are sitting down to tea together.", a, b, onEdge(creatures[teller]))
         if !almanac.isEmpty { situation = almanac + " " + situation }
         return situation
     }
@@ -167,8 +167,8 @@ extension Colony {
         let a = character(forCreature: teller), b = character(forCreature: listener)
         let aKind = kind(ofCreature: teller), bKind = kind(ofCreature: listener)
         let situation = teaSituation(teller, listener)
-        var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
-                    "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
+        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.spoken(a.persona),
+                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.spoken(b.persona),
                     "situation": situation, "party": Tea.transcript(teaLines), "line": ""]
         let aSide = relationship(of: teller, with: listener), bSide = relationship(of: listener, with: teller)
         let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
@@ -192,7 +192,7 @@ extension Colony {
                                             tokens: used.isEmpty ? nil : used.reduce(0) { $0 + $1.promptTokens + $1.completionTokens },
                                             plot: plot))
         }
-        talkStatus = "\(a.name) is telling \(b.name) a story via \(service.model)…"
+        talkStatus = tr("%@ is telling %@ a story via %@…", a.name, b.name, service.model)
         let voiced = isVoiced
         if voiced { voicedDialogues += 1 }
         Task { [weak self] in
@@ -220,8 +220,8 @@ extension Colony {
                 talkStatus = "\(a.name): \(first)"
 
                 // Swap seats for the answer.
-                vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
-                vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
+                vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.spoken(b.persona)
+                vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.spoken(a.persona)
                 vars["line"] = first
                 vars["party"] = Tea.transcript(teaLines)
                 let answer = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(Tea.systemPrompt, vars, context: bSide), bLately),
@@ -266,7 +266,8 @@ extension Colony {
         teaLines += spoken
         history.record(ChatLog.Exchange(time: Date(), situation: teaSituation(teller, listener),
                                         provider: AppSettings.Brain.script.title, model: "", lines: spoken))
-        talkStatus = "\(a) is telling \(b) a story"
+        talkStatus = tr("%@ is telling %@ a story", a, b)
+
         if isVoiced {
             sayInTurns(lines) { [weak self] in
                 guard let self, teaGoesOn(count) else { return }

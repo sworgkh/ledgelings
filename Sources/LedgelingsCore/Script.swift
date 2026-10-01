@@ -20,7 +20,7 @@ public struct Script: Equatable, Sendable {
         /// 1-based line of the text.
         public var line: Int
         public var message: String
-        public var description: String { line > 0 ? "line \(line): \(message)" : message }
+        public var description: String { line > 0 ? tr("line %d: %@", line, message) : message }
     }
 
     /// What a block may be tagged with, and what a moment can be.
@@ -39,7 +39,7 @@ public struct Script: Equatable, Sendable {
         var blockStart = 0
         func close() throws(ParseError) {
             guard let done = block else { return }
-            guard !done.lines.isEmpty else { throw ParseError(line: blockStart, message: "a conversation needs at least one line after its tags") }
+            guard !done.lines.isEmpty else { throw ParseError(line: blockStart, message: tr("a conversation needs at least one line after its tags")) }
             conversations.append(done)
             block = nil
         }
@@ -49,10 +49,10 @@ public struct Script: Equatable, Sendable {
             if line.isEmpty { try close(); continue }
             if line.hasPrefix("#") { continue }
             if line.hasPrefix("["), line.hasSuffix("]") {
-                guard block == nil else { throw ParseError(line: number, message: "tags go on the first line of a conversation") }
+                guard block == nil else { throw ParseError(line: number, message: tr("tags go on the first line of a conversation")) }
                 let names = line.dropFirst().dropLast().split { $0 == "," || $0 == " " }.map { $0.lowercased() }
                 if let bad = names.first(where: { !tags.contains($0) }) {
-                    throw ParseError(line: number, message: "unknown tag \"\(bad)\"; the tags are \(tags.sorted().joined(separator: ", "))")
+                    throw ParseError(line: number, message: tr("unknown tag \"%@\"; the tags are %@", bad, tags.sorted().joined(separator: ", ")))
                 }
                 block = Conversation(tags: Set(names), lines: [])
                 blockStart = number
@@ -62,7 +62,7 @@ public struct Script: Equatable, Sendable {
             block?.lines.append(line)
         }
         try close()
-        guard !conversations.isEmpty else { throw ParseError(line: 0, message: "no conversations") }
+        guard !conversations.isEmpty else { throw ParseError(line: 0, message: tr("no conversations")) }
         return Script(conversations: conversations)
     }
 
@@ -90,13 +90,21 @@ public struct Script: Equatable, Sendable {
     }
 
     public static func fill(_ line: String, speaker: String, listener: String, flower: String?, holiday: String? = nil) -> String {
-        Banter.render(line, ["speaker": speaker, "listener": listener, "flower": flower ?? "flower", "holiday": holiday ?? "the holiday"])
+        Banter.render(line, ["speaker": speaker, "listener": listener, "flower": flower.map(Gifts.name(of:)) ?? tr("flower"), "holiday": holiday ?? tr("the holiday")])
     }
 
     // MARK: Getting a model to write more
 
-    /// A prompt to paste into any chat model: the format, the rules, the cast.
+    /// A prompt to paste into any chat model: the format, the rules, the cast,
+    /// asking for lines in the current language. Tags and placeholders stay as they are.
     public static func agentPrompt(cast: [Character], count: Int = 40) -> String {
+        switch Language.current {
+        case .english: englishAgentPrompt(cast: cast, count: count)
+        case .russian: englishAgentPrompt(cast: cast, count: count)
+        }
+    }
+
+    public static func englishAgentPrompt(cast: [Character], count: Int = 40) -> String {
         let who = cast.isEmpty ? "" : "\nThe creatures who might be talking (a line must work for any of them, so never use a name; write {speaker} and {listener} instead):\n"
             + cast.map { "- \($0.name): \($0.persona)" }.joined(separator: "\n") + "\n"
         return """

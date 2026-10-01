@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import LedgelingsCore
 
 @MainActor
@@ -22,10 +23,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
-    private let voiceItem = NSMenuItem(title: "Hear Them Talk", action: #selector(toggleVoice), keyEquivalent: "v")
+    private let voiceItem = NSMenuItem(title: "", action: #selector(toggleVoice), keyEquivalent: "v")
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
 
+    private var speaking: AnyCancellable?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Before anything is drawn or said: the language everything looks its words up in.
+        Language.choose(settings.language)
+        speaking = settings.$language.sink { Language.choose($0) }
         if let at = CommandLine.arguments.firstIndex(of: "--promo") {
             let out = CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : "build/promo.mp4"
             Task { @MainActor in
@@ -197,6 +203,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    private let actionsItem = NSMenuItem(title: "", action: #selector(openActions), keyEquivalent: "a")
+    private let chatsItem = NSMenuItem(title: "", action: #selector(openChats), keyEquivalent: "h")
+    private let settingsItem = NSMenuItem(title: "", action: #selector(openSettings), keyEquivalent: ",")
+    private let languageItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = StatusIcon.image()
@@ -205,44 +217,79 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         phaseItem.isEnabled = false
         menu.addItem(phaseItem)
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Creature Actions…", action: #selector(openActions), keyEquivalent: "a").target = self
+        actionsItem.target = self
+        menu.addItem(actionsItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
         voiceItem.target = self
         menu.addItem(voiceItem)
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
-        menu.addItem(withTitle: "Chat History…", action: #selector(openChats), keyEquivalent: "h").target = self
+        chatsItem.target = self
+        menu.addItem(chatsItem)
         spendItem.target = self
         menu.addItem(spendItem)
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
+        // Each language under its own name, so whoever cannot read the current one still finds theirs.
+        let languages = NSMenu()
+        for language in Language.allCases {
+            let choice = NSMenuItem(title: language.title, action: #selector(chooseLanguage(_:)), keyEquivalent: "")
+            choice.target = self
+            choice.representedObject = language.rawValue
+            languages.addItem(choice)
+        }
+        languageItem.submenu = languages
+        menu.addItem(languageItem)
+        settingsItem.target = self
+        menu.addItem(settingsItem)
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Ledgelings", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quitItem)
         item.menu = menu
         statusItem = item
+        retitleMenu()
+    }
+
+    /// The fixed titles, in the current language.
+    private func retitleMenu() {
+        actionsItem.title = tr("Creature Actions…")
+        voiceItem.title = tr("Hear Them Talk")
+        chatsItem.title = tr("Chat History…")
+        settingsItem.title = tr("Settings…")
+        languageItem.title = tr("Language")
+        quitItem.title = tr("Quit Ledgelings")
+        for choice in languageItem.submenu?.items ?? [] {
+            choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
+        }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        retitleMenu()
         guard let colony else { return }
         let left = Int(colony.secondsLeftInPhase.rounded(.up))
         let clock = String(format: "%d:%02d", left / 60, left % 60)
-        phaseItem.title = colony.isNight ? "Night — they wake in \(clock)" : "Day — they sleep in \(clock)"
-        if settings.nightMinutes == 0 { phaseItem.title = "Always day — night is set to 0" }
+        phaseItem.title = colony.isNight ? tr("Night — they wake in %@", clock) : tr("Day — they sleep in %@", clock)
+        if settings.nightMinutes == 0 { phaseItem.title = tr("Always day — night is set to 0") }
         voiceItem.state = settings.voiceEnabled ? .on : .off
         if let next = reminders.book.upcoming {
-            nextReminderItem.title = "   Next: \(String(next.text.prefix(40))), \(Reminders.when(next.time, now: Date()))" + (settings.remindersEnabled ? "" : " (off)")
+            nextReminderItem.title = "   " + tr("Next: %@, %@", String(next.text.prefix(40)), Reminders.when(next.time, now: Date()))
+                + (settings.remindersEnabled ? "" : " " + tr("(off)"))
             nextReminderItem.isHidden = false
         } else {
             nextReminderItem.isHidden = true
         }
         talkStatusItem.title = "   " + String(colony.talkStatus.prefix(70))
         let s = spend.summary
-        spendItem.title = "Spent: \(Spend.label(s.today.cost)) today, \(Spend.label(s.month.cost)) this month"
+        spendItem.title = tr("Spent: %@ today, %@ this month", Spend.label(s.today.cost), Spend.label(s.month.cost))
         spendItem.isHidden = s.allTime.calls == 0
         if colony.isHiding {
             let back = Int(colony.hideout.remaining(at: colony.elapsed).rounded(.up))
-            phaseItem.title = back > 0 ? String(format: "Hiding in the house — out in %d:%02d", back / 60, back % 60) : "Coming home…"
+            phaseItem.title = back > 0 ? tr("Hiding in the house — out in %@", String(format: "%d:%02d", back / 60, back % 60)) : tr("Coming home…")
         }
+    }
+
+    @objc private func chooseLanguage(_ sender: NSMenuItem) {
+        guard let code = sender.representedObject as? String, let language = Language(rawValue: code) else { return }
+        settings.language = language
+        retitleMenu()
     }
 
     @objc private func openActions() { actions.show() }

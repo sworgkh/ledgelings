@@ -1,4 +1,5 @@
 import ServiceManagement
+import LedgelingsCore
 
 /// Start with the Mac, through the system's own login-items list. Only an
 /// installed .app can register; a `swift run` binary is "not found".
@@ -13,11 +14,12 @@ enum LaunchAtLogin {
 
     static func describe(_ status: SMAppService.Status) -> String {
         switch status {
-        case .enabled: "on"
-        case .notRegistered: "off"
-        case .requiresApproval: "waiting for your approval in System Settings › General › Login Items"
-        case .notFound: "not available here; use the installed Ledgelings.app"
-        @unknown default: "unknown"
+        case .enabled: tr("on")
+        case .notRegistered: tr("off")
+        case .requiresApproval: tr("waiting for your approval in System Settings › General › Login Items")
+        case .notFound: tr("not available here; use the installed Ledgelings.app")
+        @unknown default: tr("unknown")
+
         }
     }
 }

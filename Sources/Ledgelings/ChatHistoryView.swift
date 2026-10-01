@@ -18,9 +18,9 @@ struct ChatHistoryView: View {
                 .frame(width: 150)
                 Divider()
                 if days.isEmpty {
-                    empty("No chats yet. They talk when they meet on an edge, or pick \"Make Someone Talk\" in the menu.")
+                    empty(tr("No chats yet. They talk when they meet on an edge, or pick \"Make Someone Talk\" in the menu."))
                 } else if exchanges.isEmpty {
-                    empty("Nothing on this day.")
+                    empty(tr("Nothing on this day."))
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 14) {
@@ -37,8 +37,8 @@ struct ChatHistoryView: View {
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     .textSelection(.enabled)
                 Spacer()
-                Button("Open in Finder") { history.revealInFinder() }
-                Button("Open in Terminal") { history.openInTerminal() }
+                Button(tr("Open in Finder")) { history.revealInFinder() }
+                Button(tr("Open in Terminal")) { history.openInTerminal() }
             }
             .padding(10)
         }
@@ -70,12 +70,12 @@ struct ChatHistoryView: View {
                 Text(x.model).lineLimit(1)
                 Spacer()
                 if let cost = x.cost { Text(Spend.label(cost)).monospacedDigit() }
-                if let tokens = x.tokens { Text("\(tokens) tok").monospacedDigit() }
+                if let tokens = x.tokens { Text(tr("%d tok", tokens)).monospacedDigit() }
                 if let voice { Text(Self.voiceLabel(voice)).monospacedDigit().help(voice.models.joined(separator: ", ")) }
             }
             .font(.caption).foregroundStyle(.secondary)
             Text(x.situation).font(.caption).foregroundStyle(.tertiary)
-            if let plot = x.plot { Text("Plot: \(plot)").font(.caption).italic().foregroundStyle(.tertiary) }
+            if let plot = x.plot { Text(tr("Plot: %@", plot)).font(.caption).italic().foregroundStyle(.tertiary) }
             ForEach(x.lines.indices, id: \.self) { i in
                 Text(Self.spoken(x.lines[i])).textSelection(.enabled)
             }
@@ -85,8 +85,8 @@ struct ChatHistoryView: View {
     /// "voice $0.005 (2 lines)", "+" when a price is missing, and lines replayed free.
     static func voiceLabel(_ v: ChatLog.VoiceTotal) -> String {
         var parts: [String] = []
-        if v.lines > 0 { parts.append("voice \(Spend.label(v.cost))\(v.unpriced > 0 ? "+" : "") (\(v.lines) line\(v.lines == 1 ? "" : "s"))") }
-        if v.kept > 0 { parts.append("\(v.kept) replayed free") }
+        if v.lines > 0 { parts.append(tr("voice %@ (%@)", Spend.label(v.cost) + (v.unpriced > 0 ? "+" : ""), trCount(v.lines, "line", "lines"))) }
+        if v.kept > 0 { parts.append(tr("%d replayed free", v.kept)) }
         return parts.joined(separator: " · ")
     }
 
@@ -111,11 +111,11 @@ struct ChatHistoryView: View {
     /// "2026-09-18" as the user would say it, with today and yesterday named.
     static func pretty(_ day: String) -> String {
         let today = ChatLog.day(of: Date()), yesterday = ChatLog.day(of: Date().addingTimeInterval(-86_400))
-        if day == today { return "Today" }
-        if day == yesterday { return "Yesterday" }
+        if day == today { return tr("Today") }
+        if day == yesterday { return tr("Yesterday") }
         let parts = day.split(separator: "-").compactMap { Int($0) }
         guard parts.count == 3, let date = Calendar.current.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
         else { return day }
-        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(Locale(identifier: Language.current.code)))
     }
 }

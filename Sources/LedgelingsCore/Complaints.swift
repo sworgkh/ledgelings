@@ -42,14 +42,19 @@ public struct Annoyance: Sendable {
 /// it around once too often. Each built-in character complains in its own
 /// voice; `{times}` is how many times in a row it has been bothered.
 public enum Complaints {
-    /// For a character the user invented.
-    public static let anyone = [
+    /// For a character the user invented, in the current language.
+    public static var anyone: [String] { anyones() }
+    public static let anyones = Translated(english: englishAnyone)
+    public static let englishAnyone = [
         "Hey! That's {times} times in a row. Leave me alone!",
         "Stop it with the cursor. I mean it.",
         "Do you mind? Some of us live here.",
     ]
 
-    public static let lines: [String: [String]] = [
+    /// Each built-in character's complaints, in the current language.
+    public static var lines: [String: [String]] { lineSets() }
+    public static let lineSets = Translated(english: englishLines)
+    public static let englishLines: [String: [String]] = [
         // blocky's cast
         "Blocky": ["{times} times. I have written every one of them down. Back off.",
                    "THIS is why I hate the cursor. Get it off my edge.",
@@ -146,8 +151,10 @@ public enum Complaints {
         Banter.render((lines[name] ?? anyone).randomElement(using: &rng)!, ["times": "\(times)"])
     }
 
-    /// The model writes the complaint, in the creature's voice.
-    public static let prompt = """
+    /// The model writes the complaint, in the creature's voice, in the current language.
+    public static var prompt: String { prompts() }
+    public static let prompts = Translated(english: englishPrompt)
+    public static let englishPrompt = """
     {situation}
     The person whose screen you live on keeps chasing you with the mouse cursor and picking you up: \
     {times} times in a row now. You have had enough. Say ONE line to them, complaining, in your own voice. \

@@ -72,16 +72,16 @@ final class ActionsController {
         switch tile {
         case .jump:
             colony.startleEveryone()
-            said = "Everyone jumps."
+            said = tr("Everyone jumps.")
         case .talk:
             let before = colony.busy.count
             colony.talkNow()
-            said = colony.busy.count > before ? "Someone has something to say." : "Nobody talks: \(colony.talkStatus)."
+            said = colony.busy.count > before ? tr("Someone has something to say.") : tr("Nobody talks: %@.", colony.talkStatus)
         case .tea:
             colony.teaNow()
-            said = colony.teaParty != nil || colony.teaInvite != nil ? "Two of them sit down to tea." : "No tea: \(colony.talkStatus)."
+            said = colony.teaParty != nil || colony.teaInvite != nil ? tr("Two of them sit down to tea.") : tr("No tea: %@.", colony.talkStatus)
         case .plane:
-            said = colony.sendPlane() ? "A paper plane goes up." : "No plane: \(colony.talkStatus)."
+            said = colony.sendPlane() ? tr("A paper plane goes up.") : tr("No plane: %@.", colony.talkStatus)
         case .reminder:
             dismiss()
             addReminder()
@@ -89,7 +89,7 @@ final class ActionsController {
         case .hide:
             if colony.isHiding {
                 colony.bringThemBack()
-                said = "They come back out."
+                said = tr("They come back out.")
             } else {
                 model.choosingHide = true
                 return
@@ -97,10 +97,10 @@ final class ActionsController {
         case .sleep:
             let night = colony.isNight
             colony.skipPhase()
-            said = night ? "Good morning." : "Good night."
+            said = night ? tr("Good morning.") : tr("Good night.")
         case .flowers:
             let pulled = colony.clearGarden()
-            said = pulled == 1 ? "Pulled up the flower." : "Pulled up \(pulled) flowers."
+            said = pulled == 1 ? tr("Pulled up the flower.") : tr("Pulled up %@.", trCount(pulled, "flower", "flowers"))
         }
         after(said)
     }
@@ -109,7 +109,7 @@ final class ActionsController {
         guard let colony = colony() else { return }
         model.choosingHide = false
         colony.hide(for: minutes.map { $0 * 60 } ?? Self.secondsUntilTomorrowMorning())
-        after("They run home.")
+        after(tr("They run home."))
     }
 
     private func after(_ said: String) {
@@ -197,28 +197,28 @@ enum ActionsTile: CaseIterable {
 
     func title(in s: ActionsState) -> String {
         switch self {
-        case .jump: "MAKE THEM JUMP"
-        case .talk: "MAKE SOMEONE TALK"
-        case .tea: s.teaOn ? "TEA PARTY ON" : "HAVE A TEA PARTY"
-        case .plane: "SEND A PAPER PLANE"
-        case .reminder: "ADD A REMINDER"
-        case .hide: s.hiding ? "BRING THEM BACK" : "HIDE THEM FOR A WHILE"
-        case .sleep: s.isNight && !s.nightOff ? "WAKE THEM UP" : "PUT THEM TO SLEEP"
-        case .flowers: s.planted == 1 ? "CLEAR THE FLOWER" : s.planted == 0 ? "CLEAR FLOWERS" : "CLEAR \(s.planted) FLOWERS"
+        case .jump: tr("MAKE THEM JUMP")
+        case .talk: tr("MAKE SOMEONE TALK")
+        case .tea: s.teaOn ? tr("TEA PARTY ON") : tr("HAVE A TEA PARTY")
+        case .plane: tr("SEND A PAPER PLANE")
+        case .reminder: tr("ADD A REMINDER")
+        case .hide: s.hiding ? tr("BRING THEM BACK") : tr("HIDE THEM FOR A WHILE")
+        case .sleep: s.isNight && !s.nightOff ? tr("WAKE THEM UP") : tr("PUT THEM TO SLEEP")
+        case .flowers: s.planted == 1 ? tr("CLEAR THE FLOWER") : s.planted == 0 ? tr("CLEAR FLOWERS") : trCount(s.planted, "CLEAR %d FLOWER", "CLEAR %d FLOWERS")
         }
     }
 
     /// A small line under the title: why it is greyed out, or a clock.
     func detail(in s: ActionsState) -> String? {
-        let hidingNote = s.hiding ? "they are hiding" : nil
+        let hidingNote = s.hiding ? tr("they are hiding") : nil
         switch self {
         case .jump, .talk: return hidingNote
-        case .tea: return hidingNote ?? (!s.teaEnabled ? "off in settings" : s.teaOn ? "one at a time" : nil)
-        case .plane: return hidingNote ?? (s.planeInAir ? "one is in the air" : nil)
+        case .tea: return hidingNote ?? (!s.teaEnabled ? tr("off in settings") : s.teaOn ? tr("one at a time") : nil)
+        case .plane: return hidingNote ?? (s.planeInAir ? tr("one is in the air") : nil)
         case .reminder: return nil
-        case .hide: return s.hiding ? "\(Self.clock(s.hideLeft)) left" : nil
-        case .sleep: return s.nightOff ? "night is set to 0" : "\(s.isNight ? "dawn" : "dusk") in \(Self.clock(s.phaseLeft))"
-        case .flowers: return s.planted == 0 ? "none planted" : nil
+        case .hide: return s.hiding ? tr("%@ left", Self.clock(s.hideLeft)) : nil
+        case .sleep: return s.nightOff ? tr("night is set to 0") : s.isNight ? tr("dawn in %@", Self.clock(s.phaseLeft)) : tr("dusk in %@", Self.clock(s.phaseLeft))
+        case .flowers: return s.planted == 0 ? tr("none planted") : nil
         }
     }
 
@@ -357,9 +357,9 @@ struct ActionsSheetView: View {
     private static let softInk = Color(cgColor: ScreenOverlay.softInk)
     private static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
     /// What the hide row offers, in minutes; nil means "until tomorrow at eight".
-    static let hideChoices: [(String, Double?)] = [
-        ("5 MIN", 5), ("15 MIN", 15), ("30 MIN", 30), ("1 H", 60), ("2 H", 120), ("4 H", 240), ("TILL 8:00", nil),
-    ]
+    static var hideChoices: [(String, Double?)] {
+        [(tr("5 MIN"), 5), (tr("15 MIN"), 15), (tr("30 MIN"), 30), (tr("1 H"), 60), (tr("2 H"), 120), (tr("4 H"), 240), (tr("TILL 8:00"), nil)]
+    }
 
     var body: some View {
         let size = ActionsController.size
@@ -383,7 +383,7 @@ struct ActionsSheetView: View {
     }
 
     private var title: String {
-        model.keeper.map { "WHAT SHOULD THEY DO? · \($0.name.uppercased()) IS WAITING" } ?? "WHAT SHOULD THEY DO?"
+        model.keeper.map { tr("WHAT SHOULD THEY DO? · %@ IS WAITING", $0.name.uppercased()) } ?? tr("WHAT SHOULD THEY DO?")
     }
 
     private var grid: some View {
@@ -434,14 +434,14 @@ struct ActionsSheetView: View {
     @ViewBuilder private var line: some View {
         if model.choosingHide {
             HStack(spacing: 6) {
-                Text("HIDE FOR").font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+                Text(tr("HIDE FOR")).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
                     .padding(.trailing, 2)
                 ForEach(Self.hideChoices, id: \.0) { title, minutes in
                     PixelButton(title: title, small: true, chosen: minutes == 30) { model.hide(minutes) }
                 }
             }
         } else {
-            Text(model.said.isEmpty ? "click a picture, or press its letter" : model.said)
+            Text(model.said.isEmpty ? tr("click a picture, or press its letter") : model.said)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundStyle(model.said.isEmpty ? Self.faintInk : Self.softInk)
                 .lineLimit(1)
@@ -451,7 +451,7 @@ struct ActionsSheetView: View {
     private var footer: some View {
         HStack {
             Spacer()
-            PixelButton(title: "DONE", action: done)
+            PixelButton(title: tr("DONE"), action: done)
                 .keyboardShortcut(.cancelAction)
         }
         // Clear of the paper's folded-down corner.

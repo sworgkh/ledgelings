@@ -34,6 +34,7 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
 | *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
+| **Language ›** | *English*, *Русский*: each under its own name, so you can find yours whatever the app speaks. Applies at once, no relaunch. The same choice as **Language** on the Creatures tab |
 | **Settings…** | The settings window |
 | **Quit** | Everyone vanishes; nothing is persisted about the hide |
 
@@ -81,6 +82,7 @@ by the cursor, which ends the chat.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
+| **Language** (`language`) | the system's language if the app has it, else English | English, Русский | Menus, settings, statuses and everything the creatures say or write: built-in lines, letters, tea stories, complaints, reminders, and the prompts that ask a model for them. Applies at once |
 | **How many** | 3 | 1 to 24 | Creatures are added at the end and removed from the end, so the first ones keep their colours and characters |
 | **Smallest** / **Largest** | 1.5× / 3× | 1× to 5× in half steps | Screen points per sprite pixel. Every creature is born with a place between the two and keeps it, so moving the sliders resizes everyone without reshuffling who is big. Set them equal and they all match. Dragging one past the other drags the other along. On Windows the scale is multiplied by the primary monitor's dpi factor |
 | **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |

@@ -19,7 +19,7 @@ extension Colony {
         let times = annoyance.streak(of: i, at: elapsed)
         annoyance.forgive(i)
         let me = character(forCreature: i)
-        let situation = [almanac, "\(describe(i)).", "\(me.name) has been chased or picked up by the user's cursor \(times) times in a row."]
+        let situation = [almanac, "\(describe(i)).", tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.name, times)]
             .filter { !$0.isEmpty }.joined(separator: " ")
         guard settings.talkEnabled, settings.brain != .script, let service = settings.chatClient() else {
             let line = Complaints.line(by: me.name, times: times, using: &rng)
@@ -27,15 +27,15 @@ extension Colony {
             record(line, by: me.name, situation: situation)
             return
         }
-        let vars = ["speaker": me.name, "speakerKind": kind(ofCreature: i), "speakerPersona": me.persona,
-                    "listener": "you", "listenerKind": "the person at the computer",
-                    "listenerPersona": "The person whose screen you all live on.",
+        let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.spoken(me.persona),
+                    "listener": tr("you"), "listenerKind": tr("the person at the computer"),
+                    "listenerPersona": tr("The person whose screen you all live on."),
                     "situation": situation, "times": "\(times)"]
         let system = LineMemory.withRecent(Bonds.withRelationship(settings.systemPrompt, vars, context: ""),
                                            history.memory.recent(of: me.name))
         let user = Banter.render(Complaints.prompt, vars).trimmingCharacters(in: .whitespacesAndNewlines)
         complaining.insert(i)
-        talkStatus = "\(me.name) is complaining via \(service.model)…"
+        talkStatus = tr("%@ is complaining via %@…", me.name, service.model)
         Task { [weak self] in
             var line = "", cost: Double?, tokens: Int?
             do {
@@ -68,7 +68,8 @@ extension Colony {
     /// Into the Chats tab, with what it cost when a model wrote it.
     private func record(_ line: String, by name: String, situation: String,
                         provider: String? = nil, model: String = "", cost: Double? = nil, tokens: Int? = nil) {
-        talkStatus = "\(name) complained: \(line)"
+        talkStatus = tr("%@ complained: %@", name, line)
+
         history.record(ChatLog.Exchange(time: Date(), situation: situation,
                                         provider: provider ?? AppSettings.Brain.script.title, model: provider == nil ? "" : model,
                                         lines: [ChatLog.Line(speaker: name, text: line)], cost: cost, tokens: tokens))

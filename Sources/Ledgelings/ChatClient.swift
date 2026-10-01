@@ -36,11 +36,12 @@ struct ChatClient: Sendable {
 
         var description: String {
             switch self {
-            case .serverDown(let why): "the server is not answering: \(why)"
+            case .serverDown(let why): tr("the server is not answering: %@", why)
             case .modelMissing(let model, let available):
-                "model \(model) is not available" + (available.isEmpty ? "" : " (have: \(available.prefix(8).joined(separator: ", ")))")
-            case .refused(let message): "the server refused: \(message)"
-            case .badReply(let what): "unexpected reply: \(what)"
+                tr("model %@ is not available", model) + (available.isEmpty ? "" : tr(" (have: %@)", available.prefix(8).joined(separator: ", ")))
+            case .refused(let message): tr("the server refused: %@", message)
+            case .badReply(let what): tr("unexpected reply: %@", what)
+
             case .noModel(let why): why
             }
         }

@@ -19,19 +19,31 @@ public enum Banter {
     /// What the built-in creature is, for the prompt.
     public static let defaultKind = "a small square creature"
 
-    public static let defaultSystemPrompt = """
+    /// A persona or species kind as a prompt in the current language carries it:
+    /// a shipped one in that language's words, one the user wrote as written.
+    /// The English stays the data: casting and planting read that.
+    public static func spoken(_ text: String) -> String { Strings.lookup(text, in: .current) }
+
+    public static let systemPrompts = Translated(english: englishSystemPrompt)
+    public static let linePrompts = Translated(english: englishLinePrompt)
+    public static let replyPrompts = Translated(english: englishReplyPrompt)
+    public static var defaultSystemPrompt: String { systemPrompts() }
+    public static var defaultLinePrompt: String { linePrompts() }
+    public static var defaultReplyPrompt: String { replyPrompts() }
+
+    public static let englishSystemPrompt = """
     You are {speaker}, {speakerKind}, living on the edge of a computer screen. {speakerPersona}
     You are talking to {listener}, {listenerKind}, who lives on the same edge. {listenerPersona}
     Say ONE line to {listener}: a joke, a jab or a tease, at most 20 words, in your own voice.
     Output only the line. No quotes, no name prefix, no explanation.
     """
 
-    public static let defaultLinePrompt = """
+    public static let englishLinePrompt = """
     Right now: {situation}
     Say your line to {listener}.
     """
 
-    public static let defaultReplyPrompt = """
+    public static let englishReplyPrompt = """
     Right now: {situation}
     {listener} just said to you: "{line}"
     Answer back in ONE line, in character, at most 20 words.

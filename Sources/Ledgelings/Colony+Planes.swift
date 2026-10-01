@@ -57,11 +57,11 @@ extension Colony {
     /// Throw a plane now, from anyone free to anyone free. False when nobody can.
     @discardableResult
     func sendPlane() -> Bool {
-        guard airmail == nil else { talkStatus = "a paper plane is already in the air"; return false }
+        guard airmail == nil else { talkStatus = tr("a paper plane is already in the air"); return false }
         guard !hideout.isActive else { return false }
         var free: [Int: CGPoint] = [:]
         for i in creatures.indices where canHandleMail(i) { free[i] = creatures[i].position }
-        guard let (from, to) = Post.pickPair(free, using: &rng) else { talkStatus = "nobody free to throw or catch a plane"; return false }
+        guard let (from, to) = Post.pickPair(free, using: &rng) else { talkStatus = tr("nobody free to throw or catch a plane"); return false }
         throwPlane(from: from, to: to, answering: nil)
         post.stir(at: elapsed)
         return true
@@ -106,8 +106,8 @@ extension Colony {
         guard settings.brain != .script, let service = settings.chatClient() else { return }
         let a = character(forCreature: from), b = character(forCreature: to)
         let aKind = kind(ofCreature: from), bKind = kind(ofCreature: to)
-        var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
-                    "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
+        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.spoken(a.persona),
+                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.spoken(b.persona),
                     "situation": almanac, "line": answering ?? ""]
         let system = settings.systemPrompt
         let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
@@ -115,7 +115,8 @@ extension Colony {
         airmail?.writing = true
         airmail?.provider = service.provider.title
         airmail?.model = service.model
-        talkStatus = "\(a.name) is writing \(answering == nil ? "a letter" : "back") via \(service.model)…"
+        talkStatus = answering == nil ? tr("%@ is writing a letter via %@…", a.name, service.model)
+                                      : tr("%@ is writing back via %@…", a.name, service.model)
         let prompt = answering == nil ? Letters.notePrompt : Letters.replyPrompt
         var used: [Spend.Usage] = []
         /// Every call goes to the spend file, even one whose line turned out empty.
@@ -136,8 +137,8 @@ extension Colony {
                 if !line.isEmpty {
                     note = line
                     // Swap seats: now the reader thinks.
-                    vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
-                    vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
+                    vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.spoken(b.persona)
+                    vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.spoken(a.persona)
                     vars["line"] = line
                     let thought = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                           user: Banter.render(Letters.musingPrompt, vars))
@@ -251,9 +252,10 @@ extension Colony {
         guard settings.talkEnabled else { return .reading(musingAt: elapsed, doneAt: elapsed + 3, musingSaid: true) }
 
         let read = Letters.reading(note, from: a)
-        talkStatus = "\(b) got \(mail.isReply ? "an answer" : "a paper plane") from \(a)"
+        talkStatus = mail.isReply ? tr("%@ got an answer from %@", b, a) : tr("%@ got a paper plane from %@", b, a)
         let exchange = ChatLog.Exchange(
-            time: Date(), situation: mail.isReply ? "\(a) wrote back to \(b) by paper plane." : "\(a) sent \(b) a paper plane.",
+            time: Date(), situation: mail.isReply ? tr("%@ wrote back to %@ by paper plane.", a, b) : tr("%@ sent %@ a paper plane.", a, b),
+
             provider: modelWrote ? mail.provider : AppSettings.Brain.script.title, model: modelWrote ? mail.model : "",
             lines: [ChatLog.Line(speaker: a, text: note), ChatLog.Line(speaker: b, text: musing)],
             cost: mail.cost, tokens: mail.tokens)

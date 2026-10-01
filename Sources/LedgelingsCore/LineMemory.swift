@@ -58,7 +58,7 @@ public struct LineMemory: Equatable, Sendable {
 
     /// What the model is told about its own recent lines.
     public static func note(_ lines: [String]) -> String {
-        "You said these lately. Say something new: do not repeat them, their jokes, or the way they start.\n"
+        tr("You said these lately. Say something new: do not repeat them, their jokes, or the way they start.") + "\n"
             + lines.map { "- \($0)" }.joined(separator: "\n")
     }
 }

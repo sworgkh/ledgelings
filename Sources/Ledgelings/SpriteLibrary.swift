@@ -22,10 +22,11 @@ final class SpriteLibrary: ObservableObject {
         case unreadable(String), notASheet(String), wrongSize(Int, Int), badName(String)
         var description: String {
             switch self {
-            case .unreadable(let what): "cannot read \(what)"
-            case .notASheet(let what): "\(what) is neither a sprite text file (.txt, .md) nor a PNG"
-            case .wrongSize(let w, let h): "the PNG is \(w)×\(h); a sheet is 288×96, or a whole multiple of that"
-            case .badName(let n): "\"\(n)\" cannot be used: lowercase letters, digits and dashes only, and not a built-in name"
+            case .unreadable(let what): tr("cannot read %@", what)
+            case .notASheet(let what): tr("%@ is neither a sprite text file (.txt, .md) nor a PNG", what)
+            case .wrongSize(let w, let h): tr("the PNG is %d×%d; a sheet is 288×96, or a whole multiple of that", w, h)
+            case .badName(let n): tr("\"%@\" cannot be used: lowercase letters, digits and dashes only, and not a built-in name", n)
+
             }
         }
     }

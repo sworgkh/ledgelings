@@ -19,7 +19,13 @@ public enum Letters {
         public var replies: [String]
     }
 
-    public static let anyone = Voice(
+    /// Every voice in the current language: the Russian ones are in `Letters+Russian.swift`.
+    public static let anyones = Translated(english: englishAnyone)
+    public static let voiceSets = Translated(english: englishVoices)
+    public static var anyone: Voice { anyones() }
+    public static var voices: [String: Voice] { voiceSets() }
+
+    public static let englishAnyone = Voice(
         topics: ["the quiet", "the wind", "the other side of the screen"],
         notes: [
             "Haven't bumped into you in ages. The edge is too quiet without it.",
@@ -39,7 +45,7 @@ public enum Letters {
         ]
     )
 
-    public static let voices: [String: Voice] = [
+    public static let englishVoices: [String: Voice] = [
         // blocky's cast
         "Blocky": Voice(
             topics: ["the cursor conspiracy", "which edge is respectable", "pride"],
@@ -543,7 +549,7 @@ public enum Letters {
 
     /// The first bubble on catching: the note itself, read out.
     public static func reading(_ note: String, from sender: String) -> String {
-        "*reads* \"\(note)\" — \(sender)"
+        tr("*reads* \"%@\" — %@", note, sender)
     }
 
     public static func fill(_ text: String, sender: String, reader: String) -> String {
@@ -554,7 +560,14 @@ public enum Letters {
 
     /// The model writes the note as the sender, then thinks out loud as the reader.
     /// Placeholders are Banter's: `{speaker}` is the one writing or thinking.
-    public static let notePrompt = """
+    public static let notePrompts = Translated(english: englishNotePrompt)
+    public static let replyPrompts = Translated(english: englishReplyPrompt)
+    public static let musingPrompts = Translated(english: englishMusingPrompt)
+    public static var notePrompt: String { notePrompts() }
+    public static var replyPrompt: String { replyPrompts() }
+    public static var musingPrompt: String { musingPrompts() }
+
+    public static let englishNotePrompt = """
     {situation}
     Nobody has walked into anybody for a while, so you fold a note into a paper plane and throw it across the screen to {listener}. \
     Write the note: one thing on your mind right now, in your own voice, about something only you would care about. \
@@ -562,14 +575,14 @@ public enum Letters {
     """
 
     /// The answer: `{line}` is the note being answered. Nobody answers an answer.
-    public static let replyPrompt = """
+    public static let englishReplyPrompt = """
     {situation}
     {listener} just threw you a paper plane. Their note said: "{line}" \
     Write your answer to fold into a plane and throw back: one short reply, in your own voice. \
     At most 18 words. Output only the reply: no quotes, no greeting line, no signature.
     """
 
-    public static let musingPrompt = """
+    public static let englishMusingPrompt = """
     A paper plane from {listener} just flew in on the wind and you caught it. Unfolded, it says: "{line}" \
     Now say one line to yourself about it, thinking out loud in your own voice: something surprising or interesting it makes you think of. \
     At most 20 words. Output only the line.

@@ -159,7 +159,8 @@ final class Colony: NSObject {
         }
     }
     /// The last thing that happened with the model, for the menu.
-    var talkStatus = "not tried yet"
+    var talkStatus = tr("not tried yet")
+
     var elapsed: Double = 0
 
     var isNight: Bool { clock.isNight(at: elapsed) }

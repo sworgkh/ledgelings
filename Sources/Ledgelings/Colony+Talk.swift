@@ -4,13 +4,22 @@ import LedgelingsCore
 /// The creatures' words: who speaks to whom, the prompt for the moment, the bubbles.
 extension Colony {
 
-    private static let edgeNames: [(Double, String)] = [(0, "the bottom edge"), (.pi / 2, "the right edge"),
-                                                        (.pi, "the ceiling"), (3 * .pi / 2, "the left edge")]
-    func edgeName(_ c: Creature) -> String {
-        Self.edgeNames.min {
-            abs(Creature.shortestArc(from: c.rotation, to: $0.0)) < abs(Creature.shortestArc(from: c.rotation, to: $1.0))
-        }!.1
+    /// Where creature `c` stands, as "on the ceiling", in the current language.
+    func onEdge(_ c: Creature) -> String {
+        let edges: [Double] = [0, .pi / 2, .pi, 3 * .pi / 2]
+        let nearest = edges.indices.min {
+            abs(Creature.shortestArc(from: c.rotation, to: edges[$0])) < abs(Creature.shortestArc(from: c.rotation, to: edges[$1]))
+        }!
+        switch nearest {
+        case 0: return tr("on the bottom edge")
+        case 1: return tr("on the right edge")
+        case 2: return tr("on the ceiling")
+        default: return tr("on the left edge")
+        }
     }
+
+    /// "On the edge it is night.", the colony's own day or night.
+    var timeOfDay: String { isNight ? tr("On the edge it is night.") : tr("On the edge it is day.") }
 
     /// Who creature `i` is (`AppSettings.character(forCreature:library:)`).
     func character(forCreature i: Int) -> Character { settings.character(forCreature: i, library: library) }
@@ -29,25 +38,25 @@ extension Colony {
 
     func describe(_ i: Int) -> String {
         let c = creatures[i], name = character(forCreature: i).name
-        if c.isHeld { return "\(name) is dangling from the user's cursor" }
-        if c.isJumping { return "\(name) is mid-jump" }
-        return "\(name) is \(c.isSleeping ? "asleep on" : "on") \(edgeName(c))"
+        if c.isHeld { return tr("%@ is dangling from the user's cursor", name) }
+        if c.isJumping { return tr("%@ is mid-jump", name) }
+        return c.isSleeping ? tr("%@ is asleep %@", name, onEdge(c)) : tr("%@ is %@", name, onEdge(c))
     }
 
     /// "Make Someone Talk" from the menu, or a Shift-poke on `chosen`: the speaker
     /// says something to the nearest creature that is not already talking.
     func talkNow(from chosen: Int? = nil) {
-        guard creatures.count >= 2 else { talkStatus = "needs at least two creatures"; return }
+        guard creatures.count >= 2 else { talkStatus = tr("needs at least two creatures"); return }
         guard !hideout.isActive else { return }
         let free = creatures.indices.filter { !busy.contains($0) && !expectsPlane($0) }
         let awake = free.filter { !creatures[$0].isSleeping && !creatures[$0].isJumping }
         guard let speaker = chosen ?? (awake.isEmpty ? free : awake).randomElement(using: &rng),
-              creatures.indices.contains(speaker), !busy.contains(speaker) else { talkStatus = "everyone is mid-conversation"; return }
+              creatures.indices.contains(speaker), !busy.contains(speaker) else { talkStatus = tr("everyone is mid-conversation"); return }
         let me = creatures[speaker].position
         guard let listener = free.filter({ $0 != speaker }).min(by: {
             hypot(creatures[$0].position.x - me.x, creatures[$0].position.y - me.y)
                 < hypot(creatures[$1].position.x - me.x, creatures[$1].position.y - me.y)
-        }) else { talkStatus = "nobody free to listen"; return }
+        }) else { talkStatus = tr("nobody free to listen"); return }
         hold(speaker, and: listener)
         if !talk(from: speaker, to: listener) { endChat(speaker, listener, after: 1) }
     }
@@ -60,10 +69,11 @@ extension Colony {
     func talk(from speaker: Int, to listener: Int, because event: String? = nil, flower: String? = nil) -> Bool {
         guard creatures.indices.contains(speaker), creatures.indices.contains(listener), speaker != listener,
               !busy.contains(speaker), !busy.contains(listener) else { return false }
-        guard !voiceIsTaken else { talkStatus = "someone else is talking; out loud it is one conversation at a time"; return false }
+        guard !voiceIsTaken else { talkStatus = tr("someone else is talking; out loud it is one conversation at a time"); return false }
         let a = character(forCreature: speaker), b = character(forCreature: listener)
         // The colony's own day and night say who is asleep; the user's clock is the almanac's.
-        var situation = "On the edge it is \(isNight ? "night" : "day"). \(describe(speaker)). \(describe(listener))."
+        var situation = "\(timeOfDay) \(describe(speaker)). \(describe(listener))."
+
         if !almanac.isEmpty { situation = almanac + " " + situation }
         if let event { situation += " " + event }
         if settings.brain == .script {
@@ -71,8 +81,8 @@ extension Colony {
         }
         guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
         let aKind = kind(ofCreature: speaker), bKind = kind(ofCreature: listener)
-        var vars = ["speaker": a.name, "speakerKind": aKind, "speakerPersona": a.persona,
-                    "listener": b.name, "listenerKind": bKind, "listenerPersona": b.persona,
+        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.spoken(a.persona),
+                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.spoken(b.persona),
                     "situation": situation, "line": ""]
         let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
         let bubbleSeconds = settings.bubbleSeconds
@@ -103,7 +113,7 @@ extension Colony {
         }
 
         busy.formUnion([speaker, listener])
-        talkStatus = "asking \(service.model) via \(service.provider.title)…"
+        talkStatus = tr("asking %@ via %@…", service.model, service.provider.title)
         let voiced = isVoiced
         if voiced { voicedDialogues += 1 }
         Task { [weak self] in
@@ -128,14 +138,14 @@ extension Colony {
                 guard let self else { return }
                 charge(opening)
                 let first = Banter.cleanLine(opening.text, speaker: a.name, cut: opening.cut)
-                guard !first.isEmpty else { talkStatus = "the model sent an empty line"; fallBack = true; return }
+                guard !first.isEmpty else { talkStatus = tr("the model sent an empty line"); fallBack = true; return }
                 let firstSaid = say(first, from: speaker)
                 spoken.append(ChatLog.Line(speaker: a.name, text: first))
                 talkStatus = "\(a.name): \(first)"
 
                 // Swap seats for the answer.
-                vars["speaker"] = b.name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.persona
-                vars["listener"] = a.name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.persona
+                vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.spoken(b.persona)
+                vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.spoken(a.persona)
                 vars["line"] = first
                 let answer = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                      user: Banter.render(replyPrompt, vars))
@@ -180,13 +190,14 @@ extension Colony {
     /// when the one before has been up a while. Written to the log up front.
     private func recite(from speaker: Int, to listener: Int, flower: String?, situation: String) -> Bool {
         let script: Script
-        do { script = try Script.parse(settings.script) } catch { talkStatus = "the built-in lines: \(error)"; return false }
+        do { script = try Script.parse(settings.script) } catch { talkStatus = tr("the built-in lines: %@", "\(error)"); return false }
         var moment: Set<String> = [isNight ? "night" : "day"]
         if flower != nil { moment.insert("flower") }
         let holiday = holidayForLines()
         if holiday != nil { moment.insert("holiday") }
         guard let chosen = script.pick(for: moment, avoiding: recentLines, using: &rng) else {
-            talkStatus = "no built-in line fits right now"; return false
+            talkStatus = tr("no built-in line fits right now")
+; return false
         }
         recentLines = Array((recentLines.filter { $0 != chosen } + [chosen]).suffix(script.conversations.count))
         let a = character(forCreature: speaker), b = character(forCreature: listener)

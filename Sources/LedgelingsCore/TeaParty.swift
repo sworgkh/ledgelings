@@ -163,21 +163,31 @@ public struct TeaParty: Equatable, Sendable {
 /// What they say over tea: stories from their lives, and what the other says back.
 /// Each built-in character has its own, in its own voice; `anyone` is for a
 /// character the user invented. `{other}` is the one across the table.
+/// The Russian is in `TeaParty+Russian.swift`.
 public enum Tea {
-    public static let anyoneStories = [
+    public static var anyoneStories: [String] { anyoneStoryBooks() }
+    public static var anyoneReplies: [String] { anyoneReplyBooks() }
+    public static var stories: [String: [String]] { storyBooks() }
+    public static var replies: [String: [String]] { replyBooks() }
+    public static let anyoneStoryBooks = Translated(english: englishAnyoneStories)
+    public static let anyoneReplyBooks = Translated(english: englishAnyoneReplies)
+    public static let storyBooks = Translated(english: englishStories)
+    public static let replyBooks = Translated(english: englishReplies)
+
+    public static let englishAnyoneStories = [
         "I wasn't always on this edge, you know. I started out in a corner nobody visits.",
         "When I was small, I thought the screen went on forever. Then I found the first edge.",
         "Once I walked the whole way round without stopping. Nobody noticed. I still think about it.",
         "My secret? Every night I pick a pixel and make a wish on it.",
     ]
-    public static let anyoneReplies = [
+    public static let englishAnyoneReplies = [
         "Really? I never knew that about you, {other}.",
         "That's lovely. More tea?",
         "Funny, something like that happened to me once.",
     ]
 
     /// Four stories each: more than one character tells in a party of the default length.
-    public static let stories: [String: [String]] = [
+    public static let englishStories: [String: [String]] = [
         // blocky's cast
         "Blocky": ["I was the first one here. Before the colours, before the cursor. Those were good days.",
                    "The cursor chased me into a corner once. I stared it down. It blinked first.",
@@ -297,7 +307,7 @@ public enum Tea {
     ]
 
     /// Three answers each, for when the other has told a story.
-    public static let replies: [String: [String]] = [
+    public static let englishReplies: [String: [String]] = [
         "Blocky": ["Hmph. Not bad, {other}. Better than most stories on this screen.",
                    "That's nothing. I once waited a whole day for the cursor to leave.",
                    "Sip your tea, {other}. We've all had it hard."],
@@ -395,8 +405,15 @@ public enum Tea {
     public static let placeholders = ["speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona",
                                       "situation", "party", "line", "relationship"]
 
+    public static let systemPrompts = Translated(english: englishSystemPrompt)
+    public static let storyPrompts = Translated(english: englishStoryPrompt)
+    public static let replyPrompts = Translated(english: englishReplyPrompt)
+    public static var systemPrompt: String { systemPrompts() }
+    public static var storyPrompt: String { storyPrompts() }
+    public static var replyPrompt: String { replyPrompts() }
+
     /// Who they are, and that this is tea, not banter: stories, not jabs.
-    public static let systemPrompt = """
+    public static let englishSystemPrompt = """
     You are {speaker}, {speakerKind}, living on the edge of a computer screen. {speakerPersona}
     You are having a tea party with {listener}, {listenerKind}, at a tiny table on the edge. {listenerPersona}
     Over tea the two of you share stories from your lives. Speak in your own voice, true to who you are.
@@ -404,7 +421,7 @@ public enum Tea {
     """
 
     /// The teller's turn.
-    public static let storyPrompt = """
+    public static let englishStoryPrompt = """
     Right now: {situation}
     Said at this tea party so far:
     {party}
@@ -413,7 +430,7 @@ public enum Tea {
     """
 
     /// The listener's answer to it.
-    public static let replyPrompt = """
+    public static let englishReplyPrompt = """
     Right now: {situation}
     Said at this tea party so far:
     {party}
@@ -423,7 +440,7 @@ public enum Tea {
 
     /// The party so far, for `{party}`: the last `keep` lines, "Name: line".
     public static func transcript(_ lines: [ChatLog.Line], keep: Int = 8) -> String {
-        lines.isEmpty ? "(nothing yet: the tea has just been poured)"
+        lines.isEmpty ? tr("(nothing yet: the tea has just been poured)")
             : lines.suffix(keep).map { "\($0.speaker): \($0.text)" }.joined(separator: "\n")
     }
 }
