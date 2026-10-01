@@ -20,8 +20,8 @@ public enum Letters {
     }
 
     /// Every voice in the current language: the Russian ones are in `Letters+Russian.swift`.
-    public static let anyones = Translated(english: englishAnyone)
-    public static let voiceSets = Translated(english: englishVoices)
+    public static let anyones = Translated(english: englishAnyone, [.russian: russianAnyone])
+    public static let voiceSets = Translated(english: englishVoices, [.russian: russianVoices])
     public static var anyone: Voice { anyones() }
     public static var voices: [String: Voice] { voiceSets() }
 

@@ -211,14 +211,14 @@ public enum Reminders {
     /// voice. `{reminder}` is what you asked to be reminded of. A character the
     /// user invented uses `anyone`.
     public static var anyone: [String] { anyones() }
-    public static let anyones = Translated(english: englishAnyone)
+    public static let anyones = Translated(english: englishAnyone, [.russian: russianAnyone])
     public static let englishAnyone = [
         "It's time: {reminder}. You asked me to tell you, so I'm telling you.",
         "Knock knock. {reminder}. That's the whole joke. Go on.",
     ]
 
     public static var notes: [String: [String]] { noteSets() }
-    public static let noteSets = Translated(english: englishNotes)
+    public static let noteSets = Translated(english: englishNotes, [.russian: russianNotes])
     public static let englishNotes: [String: [String]] = [
         // blocky's cast
         "Blocky": ["Stop staring at the cursor. It's time: {reminder}. I have a list, and you're on it.",

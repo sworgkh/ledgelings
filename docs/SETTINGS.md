@@ -78,11 +78,30 @@ takes focus from the app you are in.
 Two creatures that are talking (stopped face to face) can still be startled away
 by the cursor, which ends the chat.
 
+## Languages
+
+The app speaks English or Russian (more can be added: CONTRIBUTING.md › *Adding a language*).
+Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a relaunch.
+
+| What | In Russian |
+|---|---|
+| Menu, settings window, statuses, notes | Russian |
+| Built-in lines (Talk tab), letters, tea stories, complaints, reminder notes, flower and holiday names | Written anew in Russian, per character, in its own voice |
+| Prompts sent to a model | Russian prompts that ask for Russian answers: talk, plots, planes, tea parties, complaints, reminders |
+| Prompts and lines you edited | **Kept as you wrote them.** Only text still exactly as shipped switches language; **Reset Prompts** / **Reset Lines** give you the current language's |
+| Character names | Kept as they are (Blocky, Pip, Unit 7): they are names, and voice and bond settings are filed under them |
+| Personas and species descriptions | Stay English in the Sprites tab (they are the data; voice casting reads them). A Russian prompt carries their Russian version; a persona you wrote yourself goes as written, in any language. Casting reads Russian words too (старый, медленный, крошечный, он/она…) |
+| Mac voices | Only voices of the app's language are handed out (on most Macs that is **Milena**; more in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices). A character's own chosen voice of another language is skipped while it cannot speak the line. No Russian voice installed: English voices, as before |
+| OpenRouter voices | Most speech models speak Russian with any voice; voices whose names mark a language (`ru_…`, `en_…`) are filtered to Russian when there are any |
+| Local speech server | Depends on the server. Kokoro has no Russian voices: it reads Russian badly or not at all; use the Mac's voices or OpenRouter for Russian |
+| Saved line voices | Filed by the line's text, so a Russian line never plays an English recording |
+| Chat history, bonds' stories already written | Stay in the language they were written in |
+
 ## Creatures tab
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
-| **Language** (`language`) | the system's language if the app has it, else English | English, Русский | Menus, settings, statuses and everything the creatures say or write: built-in lines, letters, tea stories, complaints, reminders, and the prompts that ask a model for them. Applies at once |
+| **Language** (`language`) | the system's language if the app has it, else English | English, Русский | Menus, settings, statuses and everything the creatures say or write: built-in lines, letters, tea stories, complaints, reminders, and the prompts that ask a model for them. Applies at once. See *Languages* below |
 | **How many** | 3 | 1 to 24 | Creatures are added at the end and removed from the end, so the first ones keep their colours and characters |
 | **Smallest** / **Largest** | 1.5× / 3× | 1× to 5× in half steps | Screen points per sprite pixel. Every creature is born with a place between the two and keeps it, so moving the sliders resizes everyone without reshuffling who is big. Set them equal and they all match. Dragging one past the other drags the other along. On Windows the scale is multiplied by the primary monitor's dpi factor |
 | **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |

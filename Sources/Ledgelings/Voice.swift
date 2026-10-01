@@ -157,7 +157,7 @@ final class Voice: NSObject, ObservableObject {
     private func speakHere(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
         if followsPitch(name) { return speakHereLikeTape(line, as: name, cast: cast, cue: cue) }
         let utterance = AVSpeechUtterance(string: line)
-        utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:))
+        utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:)) ?? Self.defaultVoice
         utterance.pitchMultiplier = Float(min(max(pitch(for: name), 0.5), 2))
         utterance.rate = min(max(AVSpeechUtteranceDefaultSpeechRate * Float(speed(for: name)), AVSpeechUtteranceMinimumSpeechRate),
                              AVSpeechUtteranceMaximumSpeechRate)
@@ -348,11 +348,13 @@ final class Voice: NSObject, ObservableObject {
     /// The Mac voice identifier `name` speaks with; nil is the system default.
     /// `automatic`: what it would get with no voice of its own chosen.
     func systemVoice(for name: String, cast: [String], automatic: Bool = false) -> String? {
-        if !automatic, let own = settings.characterVoices[name]?.systemVoice { return own }
-        guard settings.voicePerCharacter else { return settings.systemVoice.isEmpty ? nil : settings.systemVoice }
+        // A voice chosen by hand that does not speak the app's language is passed over: Samantha cannot read Russian.
+        let language = Self.voiceLanguage
+        if !automatic, let own = settings.characterVoices[name]?.systemVoice, Self.speaks(own, language) { return own }
+        guard settings.voicePerCharacter else { return Self.speaks(settings.systemVoice, language) ? settings.systemVoice : nil }
         let voices = systemPool
         let pool = voices.map(\.identifier)
-        var fixed = settings.characterVoices.compactMapValues(\.systemVoice)
+        var fixed = settings.characterVoices.compactMapValues(\.systemVoice).filter { Self.speaks($0.value, language) }
         if automatic { fixed[name] = nil }
         guard settings.castByPersonality else { return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name] }
         let tags = Dictionary(voices.map { ($0.identifier, Self.tags(of: $0)) }, uniquingKeysWith: { a, _ in a })
@@ -369,17 +371,19 @@ final class Voice: NSObject, ObservableObject {
         let usable = { (v: String?) in
             v.flatMap { local ? (Voices.isUsable($0, among: voices) ? $0 : nil) : (voices.isEmpty || voices.contains($0) ? $0 : nil) }
         }
-        if !automatic, let own = usable(settings.characterVoices[name].flatMap(mine)) { return own }
-        guard settings.voicePerCharacter else { return chosen.isEmpty ? voices.first : chosen }
-        let english = Voices.englishFirst(voices)
-        var fixed = settings.characterVoices.compactMapValues { usable(mine($0)) }
+        // One that speaks the app's language, when the voices' names say which do.
+        let speaks = { (v: String?) in v.flatMap { Voices.speaks($0, .current, among: voices) ? $0 : nil } }
+        if !automatic, let own = speaks(usable(settings.characterVoices[name].flatMap(mine))) { return own }
+        let inLanguage = Voices.languageFirst(voices)
+        guard settings.voicePerCharacter else { return speaks(chosen.isEmpty ? nil : chosen) ?? inLanguage.first }
+        var fixed = settings.characterVoices.compactMapValues { speaks(usable(mine($0))) }
         if automatic { fixed[name] = nil }
         guard settings.castByPersonality else {
-            let pool = settings.cartoonVoices ? Voices.cartoonFirst(english) : english
+            let pool = settings.cartoonVoices ? Voices.cartoonFirst(inLanguage) : inLanguage
             return Voices.assign(cast + [name], pool: pool, fixed: fixed)[name]
         }
-        let tags = Dictionary(english.map { ($0, Casting.tags(ofVoice: $0)) }, uniquingKeysWith: { a, _ in a })
-        return Casting.assign(cast + [name], traits: castTraits(cast + [name]), pool: english, tags: tags, fixed: fixed)[name]
+        let tags = Dictionary(inLanguage.map { ($0, Casting.tags(ofVoice: $0)) }, uniquingKeysWith: { a, _ in a })
+        return Casting.assign(cast + [name], traits: castTraits(cast + [name]), pool: inLanguage, tags: tags, fixed: fixed)[name]
     }
 
     private func castTraits(_ names: [String]) -> [String: Casting.Traits] {
@@ -447,7 +451,7 @@ final class Voice: NSObject, ObservableObject {
     /// its progress once rendered.
     private func speakHereLikeTape(_ line: String, as name: String, cast: [String], cue: CueHandler?) -> Bool {
         let utterance = AVSpeechUtterance(string: line)
-        utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:))
+        utterance.voice = systemVoice(for: name, cast: cast).flatMap(AVSpeechSynthesisVoice.init(identifier:)) ?? Self.defaultVoice
         let pitch = pitch(for: name)
         let asked = Voices.askedSpeed(speed: speed(for: name), pitch: pitch, followPitch: true)
         utterance.rate = min(max(AVSpeechUtteranceDefaultSpeechRate * Float(asked), AVSpeechUtteranceMinimumSpeechRate),
@@ -594,14 +598,42 @@ final class Voice: NSObject, ObservableObject {
         try await loadModels().first { $0.id == model }?.voices ?? []
     }
 
-    /// The Mac's voices in the user's language (English when there are none),
+    /// The Mac's voices in the app's language (English when there are none),
     /// novelty voices such as Bells and Zarvox included, for choosing one.
     static var systemVoices: [AVSpeechSynthesisVoice] {
-        let language = Locale.current.language.languageCode?.identifier ?? "en"
-        let all = AVSpeechSynthesisVoice.speechVoices()
-        let mine = all.filter { $0.language.hasPrefix(language) }
-        return (mine.isEmpty ? all.filter { $0.language.hasPrefix("en") } : mine)
+        let language = voiceLanguage
+        return AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix(language) }
             .sorted { ($0.name, $0.language) < ($1.name, $1.language) }
+    }
+
+    /// The language code the Mac's voices are taken in: the app's, when this Mac
+    /// has a voice for it (only Milena, often, for Russian), else English.
+    static var voiceLanguage: String {
+        let code = Language.current.code
+        return AVSpeechSynthesisVoice.speechVoices().contains { $0.language.hasPrefix(code) } ? code : "en"
+    }
+
+    /// The region whose voice wins when two share a name (Eddy in en-US over
+    /// Eddy in en-GB): the user's own for English, the language's home otherwise.
+    static var voiceRegion: String {
+        let language = voiceLanguage
+        if language == "en" { return Locale.current.region?.identifier ?? "US" }
+        return Locale.current.language.languageCode?.identifier == language
+            ? Locale.current.region?.identifier ?? language.uppercased() : language.uppercased()
+    }
+
+    /// True for a Mac voice identifier in `language` (a `voiceLanguage`); false for an empty or unknown one.
+    static func speaks(_ identifier: String, _ language: String) -> Bool {
+        AVSpeechSynthesisVoice(identifier: identifier)?.language.hasPrefix(language) ?? false
+    }
+
+
+    /// The voice for a line with none chosen: nil, the system's own, when that
+    /// speaks the app's language; else the Mac's voice for the language.
+    static var defaultVoice: AVSpeechSynthesisVoice? {
+        let language = voiceLanguage
+        guard !AVSpeechSynthesisVoice.currentLanguageCode().hasPrefix(language) else { return nil }
+        return characterVoices.first { $0.language.hasSuffix(voiceRegion) } ?? characterVoices.first ?? systemVoices.first
     }
 
     /// Mac voices that sing their lines rather than say them: fun once, not all day.
@@ -611,7 +643,7 @@ final class Voice: NSObject, ObservableObject {
     /// (Grandma, Grandpa, Rocko, Shelley…) and the old talking novelty voices
     /// (Zarvox, Bubbles, Junior, Trinoids…), minus the ones that sing.
     static var cartoonVoices: [AVSpeechSynthesisVoice] {
-        let region = Locale.current.region?.identifier ?? "US"
+        let region = voiceRegion
         var byName: [String: AVSpeechSynthesisVoice] = [:]
         for voice in systemVoices where !singers.contains(voice.name)
             && (voice.identifier.contains(".eloquence.") || voice.identifier.contains(".speech.synthesis.voice.")) {
@@ -624,7 +656,7 @@ final class Voice: NSObject, ObservableObject {
     /// The voices handed out one per character: no novelty voices, and each
     /// name once, the user's own region first (Eddy in en-US over Eddy in en-GB).
     static var characterVoices: [AVSpeechSynthesisVoice] {
-        let region = Locale.current.region?.identifier ?? "US"
+        let region = voiceRegion
         var byName: [String: AVSpeechSynthesisVoice] = [:]
         for voice in systemVoices where !voice.voiceTraits.contains(.isNoveltyVoice) && !voice.voiceTraits.contains(.isPersonalVoice) {
             if let kept = byName[voice.name], kept.language.hasSuffix(region) || !voice.language.hasSuffix(region) { continue }
@@ -684,10 +716,10 @@ extension Voice {
             choices = systemPool.map { ($0.name, hints(Self.tags(of: $0)), $0.identifier) }
         case .openRouter:
             let all = modelVoices.isEmpty ? try await voices(of: settings.voiceModel) : modelVoices
-            choices = Voices.englishFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
+            choices = Voices.languageFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
         case .local:
             let all = localVoices.isEmpty ? try await loadLocalVoices() : localVoices
-            choices = Voices.englishFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
+            choices = Voices.languageFirst(all).map { ($0, hints(Casting.tags(ofVoice: $0)), $0) }
         }
         guard !choices.isEmpty else { throw ChatClient.Failure.badReply(tr("no voices to choose from")) }
 

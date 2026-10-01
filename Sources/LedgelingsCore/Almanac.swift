@@ -202,7 +202,7 @@ public enum Almanac {
         holidayNames[language]?[english] ?? english
     }
 
-    static let holidayNames: [Language: [String: String]] = [:]
+    static let holidayNames: [Language: [String: String]] = [.russian: russianHolidayNames]
 
     struct Feast: Sendable {
         /// In English; `holidayName` gives it in the current language.

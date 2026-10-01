@@ -129,6 +129,11 @@ between them and sit down to tea for a few minutes, taking turns to tell each ot
 stories from their lives, each in its own voice (Settings › Creatures › Tea parties,
 or *Have a Tea Party* in the menu's Creature Actions…).
 
+**In English or Russian.** Menu › Language switches the whole app at once: menus,
+settings, and what the creatures say, write and ask a model for, each character in its
+own voice in either language. Prompts you edited stay as you wrote them. More languages
+can be added (CONTRIBUTING.md › Adding a language; the Windows app is English for now).
+
 **They can go home.** *Hide Them for a While* in Creature Actions… brings out a house in the
 bottom-right corner of the main screen; everyone runs in, the house packs itself
 away, and when the time is up it comes back and they walk out one by one.

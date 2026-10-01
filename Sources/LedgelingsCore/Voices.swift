@@ -139,6 +139,38 @@ public enum Voices {
 
     static let orpheusEnglish: Set<String> = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe"]
 
+    /// The voices of a speech model's list that speak `language`, when their
+    /// names say so; otherwise the whole list, as voices that carry no language
+    /// mark (OpenAI's `alloy`, Gemini's `Puck`) speak every language.
+    /// English is `englishFirst`; Russian voices are marked `ru_`, `ru-RU-`,
+    /// `russian_` or `-ru`.
+    public static func inLanguage(_ voices: [String], _ language: Language) -> [String] {
+        switch language {
+        case .english: return englishFirst(voices)
+        case .russian:
+            let russian = voices.filter(isRussian)
+            return russian.isEmpty ? voices : russian
+        }
+    }
+
+    /// `inLanguage` for the language the app speaks now.
+    public static func languageFirst(_ voices: [String]) -> [String] { inLanguage(voices, .current) }
+
+    /// True when `voice` (or every voice of a Kokoro blend) is among the ones
+    /// `inLanguage` keeps from `voices`: a voice of another language is not.
+    public static func speaks(_ voice: String, _ language: Language, among voices: [String]) -> Bool {
+        let kept = inLanguage(voices, language)
+        if kept.count == voices.count { return true }
+        let parts = blendParts(voice)
+        return !parts.isEmpty && parts.allSatisfy(kept.contains)
+    }
+
+    static func isRussian(_ voice: String) -> Bool {
+        let v = voice.lowercased()
+        return v.hasPrefix("ru_") || v.hasPrefix("ru-") || v.hasPrefix("russian_") || v.hasSuffix("-ru") || v.hasSuffix("_ru")
+    }
+
+
     static func isEnglish(_ voice: String) -> Bool {
         let v = voice.lowercased()
         if v.hasSuffix("-en") || v.hasPrefix("en_") || v.hasPrefix("gb_") || v.hasPrefix("en-") || v.hasPrefix("english_") { return true }
