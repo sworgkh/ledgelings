@@ -123,7 +123,7 @@ sprite sheet that blinks and takes your colours. See [docs/SPRITES.md](docs/SPRI
 **They have tea.** Now and then two who bump into each other put a little table out
 between them and sit down to tea for a few minutes, taking turns to tell each other
 stories from their lives, each in its own voice (Settings › Creatures › Tea parties,
-or *Have a Tea Party* from the menu). macOS only for now.
+or *Have a Tea Party* from the menu).
 
 **They can go home.** *Hide Them for a While…* in the menu brings out a house in the
 bottom-right corner of the main screen; everyone runs in, the house packs itself

@@ -13,7 +13,7 @@ without a model, bonds and their plots, the calendar (time of day, date,
 holidays), paper planes, reminders delivered by plane with the paper note to
 write them on, the chat log and spend ledger, hiding in the house, imported
 creatures from the sprite kit, planting flowers where each character likes (the
-Flowers tab), complaints when pushed around. Still Mac-only: tea parties, voices
+Flowers tab), complaints when pushed around, tea parties. Still Mac-only: voices
 and the Costs tab.
 
 ## Stack
@@ -145,13 +145,14 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders,
-                           Garden, Complaints (+ Geometry: Pt, Vec, Rect)
+                           Garden, Complaints, TeaParty (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
-                                     .Bonds .Planes .Reminders .Garden .Complaints)
-                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden), FrameClock, Desktop
+                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty)
+                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea), FrameClock, Desktop
                            TrayIcon, App (+ .Reminders), GlobalHotkey, Program
-                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience), SettingsStore, LaunchAtLogin
+                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties),
+                           SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
