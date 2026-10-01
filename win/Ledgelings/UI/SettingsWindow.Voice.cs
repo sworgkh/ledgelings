@@ -52,7 +52,7 @@ public sealed partial class SettingsWindow
         voice.Changed += () => Dispatcher.InvokeAsync(RefreshVoiceStatus);
         Tabs.SelectionChanged += (_, e) =>
         {
-            if (e.Source != Tabs || (Tabs.SelectedItem as TabItem)?.Header as string != "Voice") return;
+            if (e.Source != Tabs || (Tabs.SelectedItem is not TabItem tab || Tr.GetHeader(tab) != "Voice")) return;
             RefreshVoice();
             RefreshCharacterVoices();
             LoadForEngine();
@@ -90,7 +90,7 @@ public sealed partial class SettingsWindow
         LocalVoicePanel.Visibility = engine == VoiceEngine.Local ? Visibility.Visible : Visibility.Collapsed;
         LineVoicePanel.Visibility = engine == VoiceEngine.System ? Visibility.Collapsed : Visibility.Visible;
 
-        Fill(SystemVoiceBox, new[] { Choice("System default", "") }
+        Fill(SystemVoiceBox, new[] { Choice(L10n.Tr("System default"), "") }
             .Concat(Voice.SystemVoices.Select(v => Choice($"{v.Name} · {v.Culture}", v.Name))), settings.SystemVoice);
         SystemVoiceBox.IsEnabled = !settings.VoicePerCharacter;
 
@@ -102,13 +102,13 @@ public sealed partial class SettingsWindow
         models.AddRange(voice.Models.Select(m => Choice($"{m.Id} · {m.PriceLabel}", m.Id)));
         Fill(VoiceModelBox, models, settings.VoiceModel);
         var modelVoices = voice.ModelVoices;
-        var orVoices = new List<ComboBoxItem> { Choice("The model's first", "") };
+        var orVoices = new List<ComboBoxItem> { Choice(L10n.Tr("The model's first"), "") };
         if (settings.OpenRouterVoice.Length > 0 && !modelVoices.Contains(settings.OpenRouterVoice)) orVoices.Add(Choice(settings.OpenRouterVoice, settings.OpenRouterVoice));
         orVoices.AddRange(modelVoices.Select(v => Choice(v, v)));
         Fill(OrVoiceBox, orVoices, settings.OpenRouterVoice);
         OrVoiceBox.IsEnabled = !settings.VoicePerCharacter;
 
-        var localVoices = new List<ComboBoxItem> { Choice("The server's first", "") };
+        var localVoices = new List<ComboBoxItem> { Choice(L10n.Tr("The server's first"), "") };
         if (settings.LocalVoice.Length > 0 && !voice.LocalVoices.Contains(settings.LocalVoice)) localVoices.Add(Choice(settings.LocalVoice, settings.LocalVoice));
         localVoices.AddRange(voice.LocalVoices.Select(v => Choice(v, v)));
         Fill(LocalVoiceBox, localVoices, settings.LocalVoice);
@@ -124,8 +124,8 @@ public sealed partial class SettingsWindow
     {
         if (voice is null) return;
         VoiceStatus.Text = voice.Status;
-        KeptCount.Text = $"{voice.Clips.Count} lines";
-        SavedCount.Text = $"{voice.LineClips.Count} lines";
+        KeptCount.Text = L10n.TrCount(voice.Clips.Count, "line", "lines");
+        SavedCount.Text = L10n.TrCount(voice.LineClips.Count, "line", "lines");
         ClearLineVoices.IsEnabled = voice.LineClips.Count > 0;
     }
 
@@ -173,8 +173,8 @@ public sealed partial class SettingsWindow
     private void CopySetup_Click(object sender, RoutedEventArgs e)
     {
         try { Clipboard.SetText(KokoroSetup); }
-        catch (System.Runtime.InteropServices.ExternalException) { LocalCheckStatus.Text = "the clipboard is busy; try again"; return; }
-        LocalCheckStatus.Text = "copied; paste it into PowerShell, wait for \"Uvicorn running\", then Check";
+        catch (System.Runtime.InteropServices.ExternalException) { LocalCheckStatus.Text = L10n.Tr("the clipboard is busy; try again"); return; }
+        LocalCheckStatus.Text = L10n.Tr("copied; paste it into PowerShell, wait for \"Uvicorn running\", then Check");
     }
 
     private void LocalCheck_Click(object sender, RoutedEventArgs e) => _ = CheckLocal();
@@ -182,11 +182,11 @@ public sealed partial class SettingsWindow
     private async Task CheckLocal()
     {
         if (voice is null) return;
-        LocalCheckStatus.Text = "checking…";
+        LocalCheckStatus.Text = L10n.Tr("checking…");
         try
         {
             var found = await voice.LoadLocalVoices(again: true);
-            LocalCheckStatus.Text = $"ready: {found.Count} voices";
+            LocalCheckStatus.Text = L10n.Tr("ready: %@", L10n.TrCount(found.Count, "voice", "voices"));
         }
         catch (Exception ex) { LocalCheckStatus.Text = ex.Message; }
         RefreshVoice();
@@ -203,7 +203,7 @@ public sealed partial class SettingsWindow
         }
         catch (Exception ex)
         {
-            VoiceListProblem.Text = "could not load OpenRouter's speech models: " + ex.Message;
+            VoiceListProblem.Text = L10n.Tr("could not load OpenRouter's speech models: %@", ex.Message);
             VoiceListProblem.Visibility = Visibility.Visible;
         }
         RefreshVoice();
@@ -212,13 +212,13 @@ public sealed partial class SettingsWindow
 
     private string VoiceFooterText()
     {
-        const string lines = "The built-in lines (and the Test lines) are saved once said, in the line-voices folder beside the chats, and played from there the next time the same words come in the same voice and speed, so each is made only once: no wait on the server, nothing paid again. Clear forgets them all; each is made again when next said. ";
-        const string shared = "Out loud, each line of a conversation waits for the one before to be said, then follows after the pause set here, its sound fetched while the other was talking; the silent bubble timing is not used. Speed follows pitch: a higher voice also talks a little faster (by the square root of its lift: 1.18× at 1.4×), because a voice asked to talk slowly to make up for the lift smears into an echo. Off keeps the pace exact. Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off.";
+        var lines = L10n.Tr("The built-in lines (and the Test lines) are saved once said, in the line-voices folder beside the chats, and played from there the next time the same words come in the same voice and speed, so each is made only once: no wait on the server, nothing paid again. Clear forgets them all; each is made again when next said.") + " ";
+        var shared = L10n.Tr("Out loud, each line of a conversation waits for the one before to be said, then follows after the pause set here, its sound fetched while the other was talking; the silent bubble timing is not used. Speed follows pitch: a higher voice also talks a little faster (by the square root of its lift: 1.18× at 1.4×), because a voice asked to talk slowly to make up for the lift smears into an echo. Off keeps the pace exact. Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off.");
         return settings.VoiceEngine switch
         {
-            VoiceEngine.System => "Windows' own voices: free, offline, instant. More are added in Windows Settings › Time & language › Speech; the ones Windows offers to desktop programs are listed here. Windows has no character or novelty voices, so Cartoon voices lifts the pitch instead; with a voice each, the voices go round the cast, each at a slightly different pitch. " + shared,
-            VoiceEngine.Local => "Any speech server on this PC that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard, for PowerShell; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint. " + lines + shared,
-            _ => "Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this PC as the clip plays, so it costs nothing extra. " + lines + shared,
+            VoiceEngine.System => L10n.Tr("Windows' own voices: free, offline, instant. More are added in Windows Settings › Time & language › Speech; the ones Windows offers to desktop programs are listed here. Windows has no character or novelty voices, so Cartoon voices lifts the pitch instead; with a voice each, the voices go round the cast, each at a slightly different pitch.") + " " + shared,
+            VoiceEngine.Local => L10n.Tr("Any speech server on this PC that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard, for PowerShell; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint.") + " " + lines + shared,
+            _ => L10n.Tr("Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this PC as the clip plays, so it costs nothing extra.") + " " + lines + shared,
         };
     }
 
@@ -254,21 +254,21 @@ public sealed partial class SettingsWindow
         var head = new DockPanel();
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
         DockPanel.SetDock(buttons, Dock.Right);
-        var test = new Button { Content = "Test", MinWidth = 50 };
+        var test = new Button { Content = L10n.Tr("Test"), MinWidth = 50 };
         test.Click += (_, _) => v.Introduce(name);
         var casting = castingNames.Contains(name);
-        var cast = new Button { Content = casting ? "Casting…" : "Cast with Model", Margin = new Thickness(6, 0, 0, 0), IsEnabled = settings.HasModel && !casting };
+        var cast = new Button { Content = casting ? L10n.Tr("Casting…") : L10n.Tr("Cast with Model"), Margin = new Thickness(6, 0, 0, 0), IsEnabled = settings.HasModel && !casting };
         cast.Click += async (_, _) =>
         {
             if (!castingNames.Add(name)) return;
             cast.IsEnabled = false;
-            cast.Content = "Casting…";
-            try { castNotes[name] = "cast: " + await v.CastWithModel(name); }
+            cast.Content = L10n.Tr("Casting…");
+            try { castNotes[name] = L10n.Tr("cast: %@", await v.CastWithModel(name)); }
             catch (Exception ex) { castNotes[name] = ex.Message; }
             finally { castingNames.Remove(name); }
             RefreshCharacterVoices();
         };
-        var auto = new Button { Content = "Auto", Margin = new Thickness(6, 0, 0, 0), IsEnabled = !own.IsAutomatic };
+        var auto = new Button { Content = L10n.Tr("Auto"), Margin = new Thickness(6, 0, 0, 0), IsEnabled = !own.IsAutomatic };
         auto.Click += (_, _) =>
         {
             blending.Remove(name);
@@ -287,7 +287,7 @@ public sealed partial class SettingsWindow
         // The voice: automatic, or one of the engine's own.
         var engine = settings.VoiceEngine;
         var isBlend = own.LocalVoice is string lv && !v.LocalVoices.Contains(lv);
-        var choices = new List<ComboBoxItem> { Choice($"Automatic ({v.AutomaticVoice(name)})", "") };
+        var choices = new List<ComboBoxItem> { Choice(L10n.Tr("Automatic (%@)", v.AutomaticVoice(name)), "") };
         string selected;
         switch (engine)
         {
@@ -296,12 +296,12 @@ public sealed partial class SettingsWindow
                 selected = own.SystemVoice ?? "";
                 break;
             case VoiceEngine.OpenRouter:
-                if (own.OpenRouterVoice is string mine && !v.ModelVoices.Contains(mine)) choices.Add(Choice($"{mine} (not in this model)", mine));
+                if (own.OpenRouterVoice is string mine && !v.ModelVoices.Contains(mine)) choices.Add(Choice(L10n.Tr("%@ (not in this model)", mine), mine));
                 choices.AddRange(v.ModelVoices.Select(s => Choice(s, s)));
                 selected = own.OpenRouterVoice ?? "";
                 break;
             default:
-                choices.Add(Choice("Custom blend…", CustomBlend));
+                choices.Add(Choice(L10n.Tr("Custom blend…"), CustomBlend));
                 choices.AddRange(v.LocalVoices.Select(s => Choice(s, s)));
                 selected = blending.Contains(name) || isBlend ? CustomBlend : own.LocalVoice ?? "";
                 break;
@@ -332,7 +332,7 @@ public sealed partial class SettingsWindow
             });
             RebuildCharacterVoicesSoon();
         };
-        card.Children.Add(Labelled("Voice", box));
+        card.Children.Add(Labelled(L10n.Tr("Voice"), box));
 
         if (engine == VoiceEngine.Local && (blending.Contains(name) || isBlend))
         {
@@ -343,12 +343,12 @@ public sealed partial class SettingsWindow
                 var typed = settings.VoiceOf(name).LocalVoice;
                 var ok = typed is null || Core.Voices.IsUsable(typed, v.LocalVoices);
                 blendNote.Foreground = ok ? Brushes.Gray : Brushes.Red;
-                if (typed is null) { blendNote.Text = "Voices joined with +, each with an optional weight: af_bella(2)+am_puck(1) is two parts Bella, one part Puck."; return; }
+                if (typed is null) { blendNote.Text = L10n.Tr("Voices joined with +, each with an optional weight: af_bella(2)+am_puck(1) is two parts Bella, one part Puck."); return; }
                 var parts = Core.Voices.BlendParts(typed);
                 var unknown = parts.Where(p => !v.LocalVoices.Contains(p)).ToList();
                 blendNote.Text = unknown.Count == 0 || v.LocalVoices.Count == 0
-                    ? $"Blends {string.Join(", ", parts)}. Test to hear it."
-                    : $"Not on the server: {string.Join(", ", unknown)}. Until fixed, this character uses its automatic voice.";
+                    ? L10n.Tr("Blends %@. Test to hear it.", string.Join(", ", parts))
+                    : L10n.Tr("Not on the server: %@. Until fixed, this character uses its automatic voice.", string.Join(", ", unknown));
             }
             field.TextChanged += (_, _) =>
             {
@@ -357,20 +357,20 @@ public sealed partial class SettingsWindow
                 ShowNote();
             };
             ShowNote();
-            card.Children.Add(Labelled("Blend", field));
+            card.Children.Add(Labelled(L10n.Tr("Blend"), field));
             card.Children.Add(blendNote);
         }
 
-        card.Children.Add(VoiceSlider("Speed", Math.Round(v.OwnSpeed(name) * 100) / 100, value => settings.SetVoice(name, c => c.Speed = value)));
+        card.Children.Add(VoiceSlider(L10n.Tr("Speed"), Math.Round(v.OwnSpeed(name) * 100) / 100, value => settings.SetVoice(name, c => c.Speed = value)));
         // Shows the automatic pitch until moved, so the slider starts where the voice is.
-        card.Children.Add(VoiceSlider("Pitch", Math.Round(v.OwnPitch(name) * 100) / 100, value => settings.SetVoice(name, c => c.Pitch = value)));
+        card.Children.Add(VoiceSlider(L10n.Tr("Pitch"), Math.Round(v.OwnPitch(name) * 100) / 100, value => settings.SetVoice(name, c => c.Pitch = value)));
 
         var follow = new ComboBox();
         Fill(follow, new[]
         {
-            Choice($"As overall ({(settings.SpeedFollowsPitch ? "on" : "off")})", "0"),
-            Choice("On: no echo", "1"),
-            Choice("Off: exact pace", "2"),
+            Choice(L10n.Tr("As overall (%@)", settings.SpeedFollowsPitch ? L10n.Tr("on") : L10n.Tr("off")), "0"),
+            Choice(L10n.Tr("On: no echo"), "1"),
+            Choice(L10n.Tr("Off: exact pace"), "2"),
         }, own.FollowPitch is bool f ? (f ? "1" : "2") : "0");
         follow.SelectionChanged += (_, _) =>
         {
@@ -378,14 +378,14 @@ public sealed partial class SettingsWindow
             settings.SetVoice(name, c => c.FollowPitch = choice == "0" ? null : choice == "1");
             RebuildCharacterVoicesSoon();
         };
-        card.Children.Add(Labelled("Speed follows pitch", follow, 130));
+        card.Children.Add(Labelled(L10n.Tr("Speed follows pitch"), follow, 130));
         return card;
     }
 
     private static DockPanel Labelled(string label, UIElement control, double width = 70)
     {
         var row = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
-        row.Children.Add(new TextBlock { Text = label, Width = width, VerticalAlignment = VerticalAlignment.Center });
+        row.Children.Add(new TextBlock { Text = label, Width = width, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap });
         row.Children.Add(control);
         return row;
     }
@@ -399,11 +399,11 @@ public sealed partial class SettingsWindow
         DockPanel.SetDock(value, Dock.Right);
         row.Children.Add(value);
         var slider = new Slider { Minimum = AppSettings.VoiceSpeedMin, Maximum = AppSettings.VoiceSpeedMax, TickFrequency = 0.05, Value = start };
-        value.Text = start.ToString("0.00", CultureInfo.CurrentCulture) + "×";
+        value.Text = Tr.Number(start, "0.00") + "×";
         slider.ValueChanged += (_, e) =>
         {
             var v = Math.Round(e.NewValue * 100) / 100;
-            value.Text = v.ToString("0.00", CultureInfo.CurrentCulture) + "×";
+            value.Text = Tr.Number(v, "0.00") + "×";
             changed(v);
         };
         row.Children.Add(slider);
@@ -415,14 +415,14 @@ public sealed partial class SettingsWindow
         if (voice is null || castingAll) return;
         castingAll = true;
         CastEveryone.IsEnabled = false;
-        CastEveryone.Content = "Casting…";
+        CastEveryone.Content = L10n.Tr("Casting…");
         CastAllNote.Visibility = Visibility.Visible;
         var done = new List<string>();
         try
         {
             foreach (var name in VoiceNames())
             {
-                CastAllNote.Text = $"casting {name}…";
+                CastAllNote.Text = L10n.Tr("casting %@…", name);
                 try { done.Add($"{name}: {await voice.CastWithModel(name)}"); }
                 catch (Exception ex) { done.Add($"{name}: {ex.Message}"); }
             }
@@ -431,7 +431,7 @@ public sealed partial class SettingsWindow
         finally
         {
             castingAll = false;
-            CastEveryone.Content = "Cast Everyone with Model";
+            CastEveryone.Content = L10n.Tr("Cast Everyone with Model");
             RefreshCharacterVoices();
         }
     }

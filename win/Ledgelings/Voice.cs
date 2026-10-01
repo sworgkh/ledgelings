@@ -44,7 +44,7 @@ public sealed partial class Voice
     /// <summary>Something the settings window shows has changed: the status, the lists, the kept lines.</summary>
     public event Action? Changed;
 
-    private string status = "not tried yet";
+    private string status = L10n.Tr("not tried yet");
     /// <summary>The last thing that happened, for the settings window.</summary>
     public string Status { get => status; private set { status = value; Changed?.Invoke(); } }
     /// <summary>OpenRouter's speech models, once fetched.</summary>
@@ -131,16 +131,16 @@ public sealed partial class Voice
         var everyone = Cast();
         var seen = new List<string>();
         foreach (var name in everyone) if (!seen.Contains(name) && seen.Count < 3) seen.Add(name);
-        if (seen.Count == 0) { Status = "nobody on screen to test with"; return; }
+        if (seen.Count == 0) { Status = L10n.Tr("nobody on screen to test with"); return; }
         for (int i = 0; i < seen.Count; i++)
-            Speak(i == 0 ? $"Hi, I'm {seen[i]}. This is how I sound." : $"And I'm {seen[i]}.", seen[i], everyone, builtIn: true);
+            Speak(i == 0 ? L10n.Tr("Hi, I'm %@. This is how I sound.", seen[i]) : L10n.Tr("And I'm %@.", seen[i]), seen[i], everyone, builtIn: true);
     }
 
     /// <summary>Settings › Voice's per-character Test.</summary>
     public void Introduce(string name)
     {
         Stop();
-        Speak($"Hi, I'm {name}. This is how I sound.", name, Cast(), builtIn: true);
+        Speak(L10n.Tr("Hi, I'm %@. This is how I sound.", name), name, Cast(), builtIn: true);
     }
 
     public void Stop()
@@ -160,7 +160,7 @@ public sealed partial class Voice
     {
         var line = Voices.Speakable(text);
         if (line.Length == 0) return false;
-        if (waiting >= MostWaiting) { Status = "skipped a line: still saying the ones before it"; return false; }
+        if (waiting >= MostWaiting) { Status = L10n.Tr("skipped a line: still saying the ones before it"); return false; }
         return settings.VoiceEngine == VoiceEngine.System
             ? SpeakHere(line, name, cast, cue)
             : SpeakOnline(line, name, cast, builtIn, cue);
@@ -252,7 +252,7 @@ public sealed partial class Voice
         SpeechClient client;
         if (local)
         {
-            if (settings.LocalVoiceUrl is not string server) { Status = "the local server's address is not a URL"; return null; }
+            if (settings.LocalVoiceUrl is not string server) { Status = L10n.Tr("the local server's address is not a URL"); return null; }
             client = new SpeechClient("", settings.LocalVoiceModel.Trim(), server);
         }
         else
@@ -261,7 +261,7 @@ public sealed partial class Voice
             // The key field is on the Voice tab unless OpenRouter is the brain too.
             if (key.Length == 0)
             {
-                Status = $"no OpenRouter API key; add one in Settings › {(settings.Brain == BrainKind.OpenRouter ? "Talk" : "Voice")}";
+                Status = L10n.Tr("no OpenRouter API key; add one in Settings › %@", settings.Brain == BrainKind.OpenRouter ? L10n.Tr("Talk") : L10n.Tr("Voice"));
                 return null;
             }
             client = new SpeechClient(key, settings.VoiceModel.Trim());
@@ -321,7 +321,7 @@ public sealed partial class Voice
                     else throw;
                 }
             }
-            if (reply is not { } answer) throw ChatClient.Failure.BadReply("no audio");
+            if (reply is not { } answer) throw ChatClient.Failure.BadReply(L10n.Tr("no audio"));
             var (sound, generation) = answer;
             // Paid the moment it came back, said or not: priced into the spend file now.
             var price = local ? null : Charge(client, generation);
@@ -366,7 +366,9 @@ public sealed partial class Voice
                 history?.RecordVoice(new ChatLog.VoiceCharge(fetch.SaidAt, name, line, client.Model, 0, kept: true));
             else if (said.Price is Task<Spend.Usage> price)
                 NoteBeside(price, client.Model, name, line, fetch.SaidAt);
-            Status = $"{name}: {said.Voice ?? "default voice"} on {(fetch.Local ? "local " : "")}{client.Model}" + (said.Kept ? ", kept copy, free" : "");
+            var voice = said.Voice ?? L10n.Tr("default voice");
+            Status = (fetch.Local ? L10n.Tr("%@: %@ on local %@", name, voice, client.Model) : L10n.Tr("%@: %@ on %@", name, voice, client.Model))
+                + (said.Kept ? L10n.Tr(", kept copy, free") : "");
             await Play(said.Audio, fetch.Pitch, Estimate(line, Speed(name)), duration => Tell(cue, new Cue.Started(duration)), cancel);
             return true;
         }, cue);
@@ -450,7 +452,7 @@ public sealed partial class Voice
     public async Task<IReadOnlyList<string>> LoadLocalVoices(bool again = false)
     {
         if (!again && LocalVoices.Count > 0) return LocalVoices;
-        if (settings.LocalVoiceUrl is not string server) throw ChatClient.Failure.ServerDown("the address is not a URL");
+        if (settings.LocalVoiceUrl is not string server) throw ChatClient.Failure.ServerDown(L10n.Tr("the address is not a URL"));
         LocalVoices = await new SpeechClient("", settings.LocalVoiceModel, server).Voices();
         Changed?.Invoke();
         return LocalVoices;

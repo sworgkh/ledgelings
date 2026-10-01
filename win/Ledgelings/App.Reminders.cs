@@ -34,7 +34,8 @@ public sealed partial class App
         if (reminders?.Book.Upcoming is { } next)
         {
             var text = next.Text.Length > 40 ? next.Text[..40] : next.Text;
-            items.Add(new TrayIcon.Item($"   Next: {text}, {Reminders.When(next.Time, DateTimeOffset.Now)}" + (settings.RemindersEnabled ? "" : " (off)"),
+            items.Add(new TrayIcon.Item("   " + L10n.Tr("Next: %@, %@", text, Reminders.When(next.Time, DateTimeOffset.Now))
+                + (settings.RemindersEnabled ? "" : " " + L10n.Tr("(off)")),
                 () => OpenSettings(SettingsTab.Reminders)));
         }
     }

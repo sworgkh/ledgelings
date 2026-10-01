@@ -5,4 +5,8 @@
     <RootNamespace>Ledgelings.Core</RootNamespace>
     <AssemblyName>LedgelingsCore</AssemblyName>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- The Mac app's Russian, exported by its SharedTextTests: one source for both apps' words. -->
+    <EmbeddedResource Include="..\..\Sources\LedgelingsCore\l10n\*.json" LogicalName="l10n.%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

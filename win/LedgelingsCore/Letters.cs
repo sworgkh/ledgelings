@@ -17,7 +17,31 @@ public static class Letters
     /// <param name="Replies">What it writes back, once, to whoever sent it a plane.</param>
     public sealed record Voice(IReadOnlyList<string> Topics, IReadOnlyList<string> Notes, IReadOnlyList<string> Musings, IReadOnlyList<string> Replies);
 
-    public static readonly Voice Anyone = new(
+    /// <summary>For a character the user invented, in the current language.</summary>
+    public static Voice Anyone => InLanguage(Languages.Current).Anyone;
+
+    /// <summary>Each built-in character's voice, in the current language.</summary>
+    public static IReadOnlyDictionary<string, Voice> Voices => InLanguage(Languages.Current).Voices;
+
+    private static readonly Dictionary<Language, (Voice Anyone, IReadOnlyDictionary<string, Voice> Voices)> built = new();
+
+    /// <summary>The voices in <paramref name="language"/>: its own where the shared text has them, else the English.</summary>
+    private static (Voice Anyone, IReadOnlyDictionary<string, Voice> Voices) InLanguage(Language language)
+    {
+        if (Shared.In(language) is not { } shared) return (EnglishAnyone, EnglishVoices);
+        lock (built)
+        {
+            if (built.TryGetValue(language, out var found)) return found;
+            Voice Of(Shared.LetterVoice v, Voice english) => new(
+                Translated.List(v.Topics, english.Topics), Translated.List(v.Notes, english.Notes),
+                Translated.List(v.Musings, english.Musings), Translated.List(v.Replies, english.Replies));
+            var voices = EnglishVoices.ToDictionary(kv => kv.Key,
+                kv => shared.LetterVoices.TryGetValue(kv.Key, out var v) ? Of(v, kv.Value) : kv.Value);
+            return built[language] = (Of(shared.LettersAnyone, EnglishAnyone), voices);
+        }
+    }
+
+    public static readonly Voice EnglishAnyone = new(
         new[] { "the quiet", "the wind", "the other side of the screen" },
         new[]
         {
@@ -39,7 +63,7 @@ public static class Letters
             "Read it twice. Folding you an answer before I forget.",
         });
 
-    public static readonly IReadOnlyDictionary<string, Voice> Voices = new Dictionary<string, Voice>
+    public static readonly IReadOnlyDictionary<string, Voice> EnglishVoices = new Dictionary<string, Voice>
     {
         // blocky's cast
         ["Blocky"] = new Voice(
@@ -596,7 +620,11 @@ public static class Letters
                 "A fine letter. In my day it would have been finer, but fine.",
             }),    };
 
-    public static Voice VoiceOf(string name) => Voices.TryGetValue(name, out var voice) ? voice : Anyone;
+    public static Voice VoiceOf(string name)
+    {
+        var (anyone, voices) = InLanguage(Languages.Current);
+        return voices.TryGetValue(name, out var voice) ? voice : anyone;
+    }
 
     /// <summary>A note <paramref name="sender"/> folds into a plane for <paramref name="reader"/>: one it has not written lately.</summary>
     public static string Note(string sender, string reader, Random rng, LineMemory? memory = null) =>
@@ -617,7 +645,7 @@ public static class Letters
     }
 
     /// <summary>The first bubble on catching: the note itself, read out.</summary>
-    public static string Reading(string note, string sender) => $"*reads* \"{note}\" — {sender}";
+    public static string Reading(string note, string sender) => L10n.Tr("*reads* \"%@\" — %@", note, sender);
 
     public static string Fill(string text, string sender, string reader) =>
         Banter.Render(text, new Dictionary<string, string> { ["sender"] = sender, ["reader"] = reader });
@@ -626,20 +654,24 @@ public static class Letters
 
     /// <summary>The model writes the note as the sender, then thinks out loud as the reader.
     /// Placeholders are Banter's: <c>{speaker}</c> is the one writing or thinking.</summary>
-    public const string NotePrompt =
+    public static string NotePrompt => Shared.Prompt("planeNote", EnglishNotePrompt);
+    public static string ReplyPrompt => Shared.Prompt("planeReply", EnglishReplyPrompt);
+    public static string MusingPrompt => Shared.Prompt("planeMusing", EnglishMusingPrompt);
+
+    public const string EnglishNotePrompt =
         "{situation}\n" +
         "Nobody has walked into anybody for a while, so you fold a note into a paper plane and throw it across the screen to {listener}. " +
         "Write the note: one thing on your mind right now, in your own voice, about something only you would care about. " +
         "At most 18 words. Output only the note: no quotes, no greeting line, no signature.";
 
     /// <summary>The answer: <c>{line}</c> is the note being answered. Nobody answers an answer.</summary>
-    public const string ReplyPrompt =
+    public const string EnglishReplyPrompt =
         "{situation}\n" +
         "{listener} just threw you a paper plane. Their note said: \"{line}\" " +
         "Write your answer to fold into a plane and throw back: one short reply, in your own voice. " +
         "At most 18 words. Output only the reply: no quotes, no greeting line, no signature.";
 
-    public const string MusingPrompt =
+    public const string EnglishMusingPrompt =
         "A paper plane from {listener} just flew in on the wind and you caught it. Unfolded, it says: \"{line}\" " +
         "Now say one line to yourself about it, thinking out loud in your own voice: something surprising or interesting it makes you think of. " +
         "At most 20 words. Output only the line.";

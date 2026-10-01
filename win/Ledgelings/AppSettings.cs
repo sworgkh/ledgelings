@@ -32,6 +32,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     {
         this.store = store ?? new JsonSettingsStore(AppFolders.SettingsFile);
         this.secrets = secrets ?? new CredentialStore();
+        LoadLanguage();
         creatureCount = Math.Clamp(this.store.Get<int?>("creatureCount") ?? 3, CountMin, CountMax);
         species = this.store.Get<List<string>>("species") ?? new List<string> { "blocky" };
         var saved = (this.store.Get<List<string>>("colors") ?? new List<string>()).Where(c => RGB.FromHex(c) is not null).ToList();
@@ -52,6 +53,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadPlanes();
         LoadReminders();
         LoadVoice();
+        FollowLanguage();
     }
 
     public int CreatureCount
@@ -141,8 +143,13 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
         store.Set(key, value);
+        Raise(property);
+        return true;
+    }
+
+    private void Raise(string? property)
+    {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
         Changed?.Invoke();
-        return true;
     }
 }

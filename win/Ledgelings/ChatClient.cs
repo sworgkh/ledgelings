@@ -26,13 +26,13 @@ public sealed partial class ChatClient
     public sealed class Failure : Exception
     {
         public Failure(string message) : base(message) { }
-        public static Failure ServerDown(string why) => new("the server is not answering: " + why);
+        public static Failure ServerDown(string why) => new(L10n.Tr("the server is not answering: %@", why));
         public static Failure ModelMissing(string model, IReadOnlyList<string> available) =>
-            new($"model {model} is not available" + (available.Count == 0 ? "" : " (have: " + string.Join(", ", available.Take(8)) + ")"));
+            new(L10n.Tr("model %@ is not available", model) + (available.Count == 0 ? "" : L10n.Tr(" (have: %@)", string.Join(", ", available.Take(8)))));
         /// <summary>The server's own words when it refused, for a caller that answers a refusal (the speech client).</summary>
         public string? Refusal { get; private init; }
-        public static Failure Refused(string message) => new("the server refused: " + message) { Refusal = message };
-        public static Failure BadReply(string what) => new("unexpected reply: " + what);
+        public static Failure Refused(string message) => new(L10n.Tr("the server refused: %@", message)) { Refusal = message };
+        public static Failure BadReply(string what) => new(L10n.Tr("unexpected reply: %@", what));
         /// <summary>There was nothing to ask: no model chosen, or no key. Said as it is.</summary>
         public static Failure NoModel(string why) => new(why);
     }

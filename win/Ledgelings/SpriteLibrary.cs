@@ -96,7 +96,7 @@ public sealed partial class SpriteLibrary
         {
             SpriteText.Image raw;
             try { raw = PngIO.Read(path); }
-            catch (Exception e) when (e is ArgumentException or IOException or OutOfMemoryException) { throw new ImportException("cannot read " + Path.GetFileName(path) + ": " + e.Message); }
+            catch (Exception e) when (e is ArgumentException or IOException or OutOfMemoryException) { throw new ImportException(L10n.Tr("cannot read %@", Path.GetFileName(path) + ": " + e.Message)); }
             sheet = KeyedOut(raw);
             name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
         }
@@ -104,7 +104,7 @@ public sealed partial class SpriteLibrary
         {
             string text;
             try { text = File.ReadAllText(path); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { throw new ImportException("cannot read " + Path.GetFileName(path) + ": " + e.Message); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { throw new ImportException(L10n.Tr("cannot read %@", Path.GetFileName(path) + ": " + e.Message)); }
             SpriteText.Sheet parsed;
             try { parsed = SpriteText.Parse(text); }
             catch (SpriteText.ParseException e) { throw new ImportException(e.Message); }
@@ -115,10 +115,10 @@ public sealed partial class SpriteLibrary
             colour = parsed.Colour;
             sourceText = text;
         }
-        else throw new ImportException(Path.GetFileName(path) + " is neither a sprite text file (.txt, .md) nor a PNG");
+        else throw new ImportException(L10n.Tr("%@ is neither a sprite text file (.txt, .md) nor a PNG", Path.GetFileName(path)));
 
         if (!Regex.IsMatch(name, "^[a-z0-9][a-z0-9-]*$") || BuiltIn.Contains(name))
-            throw new ImportException($"\"{name}\" cannot be used: lowercase letters, digits and dashes only, and not a built-in name");
+            throw new ImportException(L10n.Tr("\"%@\" cannot be used: lowercase letters, digits and dashes only, and not a built-in name", name));
         var folder = Path.Combine(Directory, name);
         System.IO.Directory.CreateDirectory(folder);
         PngIO.Write(sheet, Path.Combine(folder, name + ".png"));

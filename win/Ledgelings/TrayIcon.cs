@@ -8,7 +8,8 @@ namespace Ledgelings;
 /// so the clock lines and the talk status are current.</summary>
 public sealed class TrayIcon : IDisposable
 {
-    public sealed record Item(string Text, Action? Action = null, bool Enabled = true, bool IsSeparator = false, bool Checked = false)
+    public sealed record Item(string Text, Action? Action = null, bool Enabled = true, bool IsSeparator = false, bool Checked = false,
+                              IReadOnlyList<Item>? Children = null)
     {
         public static readonly Item Separator = new("", null, false, true);
     }
@@ -79,14 +80,26 @@ public sealed class TrayIcon : IDisposable
         if (menuOpen) return;
         var items = MenuBuilder?.Invoke() ?? Array.Empty<Item>();
         if (items.Count == 0) return;
-        var menu = Win32.CreatePopupMenu();
-        for (int i = 0; i < items.Count; i++)
+        // Every item that can be chosen gets a command id, submenus' items included.
+        var commands = new List<Item>();
+        IntPtr Build(IReadOnlyList<Item> list)
         {
-            var item = items[i];
-            if (item.IsSeparator) { Win32.AppendMenuW(menu, Win32.MF_SEPARATOR, UIntPtr.Zero, null); continue; }
-            var flags = Win32.MF_STRING | (item.Enabled ? 0 : Win32.MF_GRAYED) | (item.Checked ? Win32.MF_CHECKED : 0);
-            Win32.AppendMenuW(menu, flags, (UIntPtr)(i + 1), item.Text.Replace("&", "&&"));
+            var popup = Win32.CreatePopupMenu();
+            foreach (var item in list)
+            {
+                if (item.IsSeparator) { Win32.AppendMenuW(popup, Win32.MF_SEPARATOR, UIntPtr.Zero, null); continue; }
+                var flags = Win32.MF_STRING | (item.Enabled ? 0 : Win32.MF_GRAYED) | (item.Checked ? Win32.MF_CHECKED : 0);
+                if (item.Children is { Count: > 0 } children)
+                {
+                    Win32.AppendMenuW(popup, flags | Win32.MF_POPUP, (UIntPtr)(ulong)Build(children), item.Text.Replace("&", "&&"));
+                    continue;
+                }
+                commands.Add(item);
+                Win32.AppendMenuW(popup, flags, (UIntPtr)commands.Count, item.Text.Replace("&", "&&"));
+            }
+            return popup;
         }
+        var menu = Build(items);
         menuOpen = true;
         try
         {
@@ -95,7 +108,7 @@ public sealed class TrayIcon : IDisposable
             Win32.GetCursorPos(out var at);
             var chosen = Win32.TrackPopupMenuEx(menu, Win32.TPM_RETURNCMD | Win32.TPM_RIGHTBUTTON | Win32.TPM_BOTTOMALIGN, at.X, at.Y, hwnd, IntPtr.Zero);
             Win32.PostMessageW(hwnd, 0, IntPtr.Zero, IntPtr.Zero);
-            if (chosen > 0 && chosen <= items.Count) items[chosen - 1].Action?.Invoke();
+            if (chosen > 0 && chosen <= commands.Count) commands[(int)chosen - 1].Action?.Invoke();
         }
         finally
         {

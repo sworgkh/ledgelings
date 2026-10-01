@@ -179,10 +179,14 @@ public static class Bonds
     public const int PlotMaxTokens = 1000;
 
     /// <summary>The system side of the plot call: short, so the user prompt carries the work.</summary>
-    public const string PlotSystemPrompt = "You write tiny, playful stories for small characters. Follow the answer format exactly.";
+    public static string PlotSystemPrompt => Shared.PromptIn(Languages.Current, "plotSystem", EnglishPlotSystemPrompt);
+    public static string PlotPromptIn(Language l) => Shared.PromptIn(l, "plot", EnglishPlotPrompt);
+    public static string DefaultPlotPrompt => PlotPromptIn(Languages.Current);
+
+    public const string EnglishPlotSystemPrompt = "You write tiny, playful stories for small characters. Follow the answer format exactly.";
 
     /// <summary>One call, one small answer: the story for a pair's next few conversations.</summary>
-    public const string DefaultPlotPrompt =
+    public const string EnglishPlotPrompt =
         "Do not write their conversations. Write only the two lines described at the end.\n" +
         "\n" +
         "Two small creatures live on the edges of a computer screen and have shared it for {together}.\n" +
@@ -204,12 +208,12 @@ public static class Bonds
     public static Dictionary<string, string> PlotValues(Bond bond, (string Name, string Kind, string Persona) a,
                                                         (string Name, string Kind, string Persona) b, int length) => new()
     {
-        ["speaker"] = a.Name, ["speakerKind"] = a.Kind, ["speakerPersona"] = a.Persona,
-        ["listener"] = b.Name, ["listenerKind"] = b.Kind, ["listenerPersona"] = b.Persona,
+        ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(a.Kind), ["speakerPersona"] = Banter.Spoken(a.Persona),
+        ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(b.Kind), ["listenerPersona"] = Banter.Spoken(b.Persona),
         ["together"] = Duration(bond.Together),
-        ["bond"] = bond.Summary ?? "they have not really made their minds up about each other yet",
-        ["lastPlot"] = bond.LastPlot ?? "none yet; this is their first",
-        ["recent"] = bond.Recent.Count == 0 ? "(nothing yet)" : string.Join("\n", bond.Recent.Select(l => $"{l.Speaker}: {l.Text}")),
+        ["bond"] = bond.Summary ?? L10n.Tr("they have not really made their minds up about each other yet"),
+        ["lastPlot"] = bond.LastPlot ?? L10n.Tr("none yet; this is their first"),
+        ["recent"] = bond.Recent.Count == 0 ? L10n.Tr("(nothing yet)") : string.Join("\n", bond.Recent.Select(l => $"{l.Speaker}: {l.Text}")),
         ["length"] = length.ToString(System.Globalization.CultureInfo.InvariantCulture),
     };
 
@@ -251,15 +255,15 @@ public static class Bonds
     public static string Context(Bond? bond, string speaker, string other)
     {
         if (bond is null || (bond.Summary is null && bond.Plot is null)) return "";
-        var parts = new List<string> { $"You and {other} have shared this screen for {Duration(bond.Together)}." };
-        if (bond.Summary is string summary) parts.Add("How you get on: " + summary);
+        var parts = new List<string> { L10n.Tr("You and %@ have shared this screen for %@.", other, Duration(bond.Together)) };
+        if (bond.Summary is string summary) parts.Add(L10n.Tr("How you get on: %@", summary));
         if (bond.Plot is Plot plot)
         {
             var part = Math.Min(plot.Told + 1, plot.Length);
-            parts.Add($"What is going on between you (part {part} of {plot.Length}): {plot.Text}");
+            parts.Add(L10n.Tr("What is going on between you (part %d of %d): %@", part, plot.Length, plot.Text));
             parts.Add(part == plot.Length
-                ? "This is the last part: let your line bring it to an end."
-                : "Let it colour your line and move the story on a little; never explain it.");
+                ? L10n.Tr("This is the last part: let your line bring it to an end.")
+                : L10n.Tr("Let it colour your line and move the story on a little; never explain it."));
         }
         return string.Join(" ", parts);
     }
@@ -282,12 +286,11 @@ public static class Bonds
     public static string Duration(double seconds)
     {
         var minutes = (int)(seconds / 60);
-        static string Plural(int n, string unit) => $"{n} {unit}{(n == 1 ? "" : "s")}";
-        if (minutes < 1) return "a moment";
-        if (minutes < 60) return Plural(minutes, "minute");
+        if (minutes < 1) return L10n.Tr("a moment");
+        if (minutes < 60) return L10n.TrCount(minutes, "minute", "minutes");
         var hours = minutes / 60;
-        if (hours < 24) return Plural(hours, "hour");
-        return Plural(hours / 24, "day");
+        if (hours < 24) return L10n.TrCount(hours, "hour", "hours");
+        return L10n.TrCount(hours / 24, "day", "days");
     }
 
     /// <summary>The book on disk: <c>bonds.json</c> in a folder, rewritten whole on each save,

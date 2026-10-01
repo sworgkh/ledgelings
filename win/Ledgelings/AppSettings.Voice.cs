@@ -30,9 +30,9 @@ public sealed partial class AppSettings
 
     public static string VoiceEngineTitle(VoiceEngine engine) => engine switch
     {
-        VoiceEngine.System => "Built-in voices",
+        VoiceEngine.System => L10n.Tr("Built-in voices"),
         VoiceEngine.OpenRouter => Ledgelings.ChatClient.Title(Ledgelings.ChatClient.Provider.OpenRouter),
-        _ => "Local server",
+        _ => L10n.Tr("Local server"),
     };
 
     /// <summary>How the engine is written in the settings file: the macOS app's words.</summary>

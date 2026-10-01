@@ -42,7 +42,7 @@ public sealed partial class Colony
             Color.White, Color.FromArgb(255, 209, 61), Settings.ColorFor(bump.A).ToColor(), Settings.ColorFor(bump.B).ToColor(),
         };
         sparks.Burst(new Pt((pa.X + pb.X) / 2, (pa.Y + pb.Y) / 2), creatures[bump.A].Loop.Inward(creatures[bump.A].Segment), 8, rng);
-        var eventText = "They just walked into each other.";
+        var eventText = L10n.Tr("They just walked into each other.");
         string? given = null;
         // Now and then, instead of a word in passing, they sit down to tea. Not on a
         // flower's bump: the flower is the moment there.
@@ -54,7 +54,7 @@ public sealed partial class Colony
             {
                 var a = CharacterFor(giver).Name;
                 var b = CharacterFor(receiver).Name;
-                eventText = $"{a} just walked into {b} and gave {b} a {flower}.";
+                eventText = L10n.Tr("%1$@ just walked into %2$@ and gave %2$@ a %3$@.", a, b, Gifts.Name(flower));
                 given = flower;
             }
         }

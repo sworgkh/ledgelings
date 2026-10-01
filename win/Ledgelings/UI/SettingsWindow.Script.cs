@@ -18,12 +18,12 @@ public sealed partial class SettingsWindow
         try
         {
             var c = Script.Parse(settings.Script).Conversations;
-            ScriptStatus.Text = $"{c.Count} conversations, {c.Count(x => x.Tags.Contains("flower"))} with a flower, {c.Count(x => x.Tags.Contains("night"))} at night";
+            ScriptStatus.Text = L10n.Tr("%d conversations, %d with a flower, %d at night", c.Count, c.Count(x => x.Tags.Contains("flower")), c.Count(x => x.Tags.Contains("night")));
             ScriptStatus.Foreground = Brushes.Gray;
         }
         catch (Script.ParseException e)
         {
-            ScriptStatus.Text = e.Message + "; the creatures stay quiet until this is fixed";
+            ScriptStatus.Text = L10n.Tr("%@; the creatures stay quiet until this is fixed", e.Message);
             ScriptStatus.Foreground = Brushes.Firebrick;
         }
     }
@@ -49,41 +49,41 @@ public sealed partial class SettingsWindow
 
     private void ScriptImport_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Title = "Lines to use, in the built-in format", Filter = "Text (*.txt)|*.txt|All files|*.*" };
+        var dialog = new OpenFileDialog { Title = L10n.Tr("Choose a text file of conversations in the built-in format."), Filter = L10n.Tr("Text") + " (*.txt)|*.txt|" + L10n.Tr("All files") + "|*.*" };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
             settings.Script = File.ReadAllText(dialog.FileName);
-            Flash("imported " + Path.GetFileName(dialog.FileName));
+            Flash(L10n.Tr("imported %@", Path.GetFileName(dialog.FileName)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Flash($"could not read {Path.GetFileName(dialog.FileName)}: {ex.Message}");
+            Flash(L10n.Tr("could not read %@: %@", Path.GetFileName(dialog.FileName), ex.Message));
         }
     }
 
     private void ScriptExport_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new SaveFileDialog { FileName = "ledgelings-lines.txt", Filter = "Text (*.txt)|*.txt" };
+        var dialog = new SaveFileDialog { FileName = "ledgelings-lines.txt", Filter = L10n.Tr("Text") + " (*.txt)|*.txt" };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
             File.WriteAllText(dialog.FileName, settings.Script);
-            Flash("saved " + Path.GetFileName(dialog.FileName));
+            Flash(L10n.Tr("saved %@", Path.GetFileName(dialog.FileName)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Flash("could not save: " + ex.Message);
+            Flash(L10n.Tr("could not save: %@", ex.Message));
         }
     }
 
     private async void CopyAgentPrompt_Click(object sender, RoutedEventArgs e)
     {
         try { Clipboard.SetText(Script.AgentPrompt(CastInUse())); }
-        catch (System.Runtime.InteropServices.COMException) { Flash("the clipboard is busy; try again"); return; }
-        CopyAgentPrompt.Content = "Copied";
+        catch (System.Runtime.InteropServices.COMException) { Flash(L10n.Tr("the clipboard is busy; try again")); return; }
+        CopyAgentPrompt.Content = L10n.Tr("Copied");
         await Task.Delay(2000);
-        CopyAgentPrompt.Content = "Copy Agent Prompt";
+        CopyAgentPrompt.Content = L10n.Tr("Copy Agent Prompt");
     }
 
     private void ScriptReset_Click(object sender, RoutedEventArgs e) => settings.ResetScript();

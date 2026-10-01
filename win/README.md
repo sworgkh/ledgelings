@@ -104,6 +104,13 @@ core tests are the Swift tests line for line.
 
 ## Differences from the Mac, on purpose
 
+- **Languages** (SPEC §1.2). Tray › Language and the Creatures tab switch English and
+  Русский live. The words are the Mac's: `Sources/LedgelingsCore/l10n/ru.json`, exported
+  by the Mac's `SharedTextTests`, is embedded into LedgelingsCore and looked up by the
+  same English (`L10n.Tr`). Only Windows-only wording lives in
+  `LedgelingsCore/Russian/WindowsStrings*.cs`. Russian speech needs the Russian speech pack
+  (Microsoft Irina Desktop); the voices Narrator uses are not open to System.Speech.
+
 - **Pixels and dpi.** The app is per-monitor-DPI aware, so a "point" is a real
   pixel. To keep "3×" the size it is on a Mac, creature scale is multiplied by the
   primary monitor's scale factor snapped to a half step (1.5 at 150 %, 2 at 200 %);

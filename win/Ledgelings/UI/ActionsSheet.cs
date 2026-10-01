@@ -37,29 +37,29 @@ public static class ActionsTiles
 
     public static string Title(this ActionsTile tile, ActionsState s) => tile switch
     {
-        ActionsTile.Jump => "MAKE THEM JUMP",
-        ActionsTile.Talk => "MAKE SOMEONE TALK",
-        ActionsTile.Tea => s.TeaOn ? "TEA PARTY ON" : "HAVE A TEA PARTY",
-        ActionsTile.Plane => "SEND A PAPER PLANE",
-        ActionsTile.Reminder => "ADD A REMINDER",
-        ActionsTile.Hide => s.Hiding ? "BRING THEM BACK" : "HIDE THEM FOR A WHILE",
-        ActionsTile.Sleep => s.IsNight && !s.NightOff ? "WAKE THEM UP" : "PUT THEM TO SLEEP",
-        _ => s.Planted switch { 0 => "CLEAR FLOWERS", 1 => "CLEAR THE FLOWER", var n => $"CLEAR {n} FLOWERS" },
+        ActionsTile.Jump => L10n.Tr("MAKE THEM JUMP"),
+        ActionsTile.Talk => L10n.Tr("MAKE SOMEONE TALK"),
+        ActionsTile.Tea => s.TeaOn ? L10n.Tr("TEA PARTY ON") : L10n.Tr("HAVE A TEA PARTY"),
+        ActionsTile.Plane => L10n.Tr("SEND A PAPER PLANE"),
+        ActionsTile.Reminder => L10n.Tr("ADD A REMINDER"),
+        ActionsTile.Hide => s.Hiding ? L10n.Tr("BRING THEM BACK") : L10n.Tr("HIDE THEM FOR A WHILE"),
+        ActionsTile.Sleep => s.IsNight && !s.NightOff ? L10n.Tr("WAKE THEM UP") : L10n.Tr("PUT THEM TO SLEEP"),
+        _ => s.Planted switch { 0 => L10n.Tr("CLEAR FLOWERS"), 1 => L10n.Tr("CLEAR THE FLOWER"), var n => L10n.TrCount(n, "CLEAR %d FLOWER", "CLEAR %d FLOWERS") },
     };
 
     /// <summary>A small line under the title: why it is greyed out, or a clock.</summary>
     public static string? Detail(this ActionsTile tile, ActionsState s)
     {
-        var hiding = s.Hiding ? "they are hiding" : null;
+        var hiding = s.Hiding ? L10n.Tr("they are hiding") : null;
         return tile switch
         {
             ActionsTile.Jump or ActionsTile.Talk => hiding,
-            ActionsTile.Tea => hiding ?? (!s.TeaEnabled ? "off in settings" : s.TeaOn ? "one at a time" : null),
-            ActionsTile.Plane => hiding ?? (s.PlaneInAir ? "one is in the air" : null),
+            ActionsTile.Tea => hiding ?? (!s.TeaEnabled ? L10n.Tr("off in settings") : s.TeaOn ? L10n.Tr("one at a time") : null),
+            ActionsTile.Plane => hiding ?? (s.PlaneInAir ? L10n.Tr("one is in the air") : null),
             ActionsTile.Reminder => null,
-            ActionsTile.Hide => s.Hiding ? $"{Clock(s.HideLeft)} left" : null,
-            ActionsTile.Sleep => s.NightOff ? "night is set to 0" : $"{(s.IsNight ? "dawn" : "dusk")} in {Clock(s.PhaseLeft)}",
-            _ => s.Planted == 0 ? "none planted" : null,
+            ActionsTile.Hide => s.Hiding ? L10n.Tr("%@ left", Clock(s.HideLeft)) : null,
+            ActionsTile.Sleep => s.NightOff ? L10n.Tr("night is set to 0") : s.IsNight ? L10n.Tr("dawn in %@", Clock(s.PhaseLeft)) : L10n.Tr("dusk in %@", Clock(s.PhaseLeft)),
+            _ => s.Planted == 0 ? L10n.Tr("none planted") : null,
         };
     }
 
@@ -91,10 +91,10 @@ public sealed class ActionsSheet : Window
     public const double SheetWidth = 564, SheetHeight = 506;
     private const double Headroom = 54, TileWidth = 114, TileHeight = 126, Gap = 10;
 
-    /// <summary>What the hide row offers, in minutes; null means "until tomorrow at eight".</summary>
-    public static readonly IReadOnlyList<(string Title, double? Minutes)> HideChoices = new (string, double?)[]
+    /// <summary>What the hide row offers, in minutes; null means "until tomorrow at eight". In the current language.</summary>
+    public static IReadOnlyList<(string Title, double? Minutes)> HideChoices => new (string, double?)[]
     {
-        ("5 MIN", 5), ("15 MIN", 15), ("30 MIN", 30), ("1 H", 60), ("2 H", 120), ("4 H", 240), ("TILL 8:00", null),
+        (L10n.Tr("5 MIN"), 5), (L10n.Tr("15 MIN"), 15), (L10n.Tr("30 MIN"), 30), (L10n.Tr("1 H"), 60), (L10n.Tr("2 H"), 120), (L10n.Tr("4 H"), 240), (L10n.Tr("TILL 8:00"), null),
     };
 
     private static readonly Brush softInk = Frozen(92, 86, 120), faintInk = Frozen(150, 146, 170);
@@ -132,7 +132,7 @@ public sealed class ActionsSheet : Window
         this.colony = colony;
         this.addReminder = addReminder;
         var keeper = colony.NoteKeeper();
-        Title = "Creature Actions";
+        Title = L10n.Tr("Creature Actions");
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -167,7 +167,7 @@ public sealed class ActionsSheet : Window
         }
         hideRow.Children.Insert(0, new TextBlock
         {
-            Text = "HIDE FOR", FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = softInk,
+            Text = L10n.Tr("HIDE FOR"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = softInk,
             VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0),
         });
 
@@ -200,7 +200,7 @@ public sealed class ActionsSheet : Window
         };
         sheet.Children.Add(new TextBlock
         {
-            Text = keeper is string name ? $"WHAT SHOULD THEY DO? · {name.ToUpperInvariant()} IS WAITING" : "WHAT SHOULD THEY DO?",
+            Text = keeper is string name ? L10n.Tr("WHAT SHOULD THEY DO? · %@ IS WAITING", name.ToUpperInvariant()) : L10n.Tr("WHAT SHOULD THEY DO?"),
             FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 14),
         });
         var grid = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
@@ -213,7 +213,7 @@ public sealed class ActionsSheet : Window
         }
         sheet.Children.Add(grid);
         sheet.Children.Add(line);
-        var done = new PixelButton { Content = "DONE", HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0) };
+        var done = new PixelButton { Content = L10n.Tr("DONE"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0) };
         done.Click += (_, _) => Close();
         sheet.Children.Add(done);
         return sheet;
@@ -283,7 +283,7 @@ public sealed class ActionsSheet : Window
         if (choosingHide) line.Content = hideRow;
         else
         {
-            said.Text = message.Length == 0 ? "click a picture, or press its letter" : message;
+            said.Text = message.Length == 0 ? L10n.Tr("click a picture, or press its letter") : message;
             said.Foreground = message.Length == 0 ? faintInk : softInk;
             line.Content = said;
         }
@@ -298,19 +298,19 @@ public sealed class ActionsSheet : Window
         {
             case ActionsTile.Jump:
                 colony.StartleEveryone();
-                words = "Everyone jumps.";
+                words = L10n.Tr("Everyone jumps.");
                 break;
             case ActionsTile.Talk:
                 var before = colony.BusyCount;
                 colony.TalkNow();
-                words = colony.BusyCount > before ? "Someone has something to say." : $"Nobody talks: {colony.TalkStatus}.";
+                words = colony.BusyCount > before ? L10n.Tr("Someone has something to say.") : L10n.Tr("Nobody talks: %@.", colony.TalkStatus);
                 break;
             case ActionsTile.Tea:
                 colony.TeaNow();
-                words = colony.IsTeaOn ? "Two of them sit down to tea." : $"No tea: {colony.TalkStatus}.";
+                words = colony.IsTeaOn ? L10n.Tr("Two of them sit down to tea.") : L10n.Tr("No tea: %@.", colony.TalkStatus);
                 break;
             case ActionsTile.Plane:
-                words = colony.SendPlane() ? "A paper plane goes up." : $"No plane: {colony.TalkStatus}.";
+                words = colony.SendPlane() ? L10n.Tr("A paper plane goes up.") : L10n.Tr("No plane: %@.", colony.TalkStatus);
                 break;
             case ActionsTile.Reminder:
                 Close();
@@ -319,16 +319,16 @@ public sealed class ActionsSheet : Window
             case ActionsTile.Hide:
                 if (!colony.IsHiding) { choosingHide = true; Refresh(); return; }
                 colony.BringThemBack();
-                words = "They come back out.";
+                words = L10n.Tr("They come back out.");
                 break;
             case ActionsTile.Sleep:
                 var night = colony.IsNight;
                 colony.SkipPhase();
-                words = night ? "Good morning." : "Good night.";
+                words = night ? L10n.Tr("Good morning.") : L10n.Tr("Good night.");
                 break;
             default:
                 var pulled = colony.ClearGarden();
-                words = pulled == 1 ? "Pulled up the flower." : $"Pulled up {pulled} flowers.";
+                words = pulled == 1 ? L10n.Tr("Pulled up the flower.") : L10n.Tr("Pulled up %@.", L10n.TrCount(pulled, "flower", "flowers"));
                 break;
         }
         After(words);
@@ -338,7 +338,7 @@ public sealed class ActionsSheet : Window
     {
         choosingHide = false;
         colony.Hide(minutes is double m ? m * 60 : App.SecondsUntilTomorrowMorning());
-        After("They run home.");
+        After(L10n.Tr("They run home."));
     }
 
     private void After(string words)

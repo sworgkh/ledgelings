@@ -23,7 +23,7 @@ public sealed partial class AppSettings
     public const int LineTokensMin = 100, LineTokensMax = 4000;
 
     /// <summary>Beside anything greyed out for want of a model, in the same words everywhere.</summary>
-    public const string NeedsModel = "Needs a model: the built-in lines have none. Choose LM Studio or OpenRouter as the Brain in Settings › Talk.";
+    public static string NeedsModel => L10n.Tr("Needs a model: the built-in lines have none. Choose LM Studio or OpenRouter as the Brain in Settings › Talk.");
 
     private bool talkEnabled;
     private bool followGiver;
@@ -37,7 +37,7 @@ public sealed partial class AppSettings
 
     public static string BrainTitle(BrainKind kind) => kind switch
     {
-        BrainKind.Script => "Built-in lines",
+        BrainKind.Script => L10n.Tr("Built-in lines"),
         BrainKind.LmStudio => Ledgelings.ChatClient.Title(Ledgelings.ChatClient.Provider.LmStudio),
         _ => Ledgelings.ChatClient.Title(Ledgelings.ChatClient.Provider.OpenRouter),
     };
@@ -53,7 +53,7 @@ public sealed partial class AppSettings
         // set up a model keeps it. Everyone else starts with lines that need no server.
         var setUpAModel = new[] { "talkServer", "talkModel", "openRouterModel" }.Any(k => store.Get<string>(k) is not null);
         brain = Enum.TryParse<BrainKind>(store.Get<string>("brainProvider"), true, out var b) ? b : setUpAModel ? BrainKind.LmStudio : BrainKind.Script;
-        script = store.Get<string>("script") ?? Core.Script.BuiltInText;
+        script = store.Get<string>("script") ?? Core.Script.BuiltInTextIn(language);
         talkServer = store.Get<string>("talkServer") ?? DefaultTalkServer;
         talkModel = store.Get<string>("talkModel") ?? DefaultTalkModel;
         openRouterModel = store.Get<string>("openRouterModel") ?? DefaultOpenRouterModel;
@@ -64,9 +64,9 @@ public sealed partial class AppSettings
         lineMemory = Math.Clamp(store.Get<int?>("lineMemory") ?? 12, LineMemoryMin, LineMemoryMax);
         lineTokens = Math.Clamp(store.Get<int?>("lineTokens") ?? Ledgelings.ChatClient.DefaultLineTokens, LineTokensMin, LineTokensMax);
         casts = store.Get<Dictionary<string, List<Character>>>("casts") ?? new Dictionary<string, List<Character>>();
-        systemPrompt = store.Get<string>("systemPrompt") ?? Banter.DefaultSystemPrompt;
-        linePrompt = store.Get<string>("linePrompt") ?? Banter.DefaultLinePrompt;
-        replyPrompt = store.Get<string>("replyPrompt") ?? Banter.DefaultReplyPrompt;
+        systemPrompt = store.Get<string>("systemPrompt") ?? Banter.SystemPromptIn(language);
+        linePrompt = store.Get<string>("linePrompt") ?? Banter.LinePromptIn(language);
+        replyPrompt = store.Get<string>("replyPrompt") ?? Banter.ReplyPromptIn(language);
     }
 
     public bool TalkEnabled { get => talkEnabled; set => Put(ref talkEnabled, value, "talkEnabled"); }
@@ -91,7 +91,7 @@ public sealed partial class AppSettings
     /// <summary>The conversations said when the brain is the built-in lines, in <see cref="Script"/>'s text form.</summary>
     public string Script { get => script; set => Put(ref script, value, "script"); }
 
-    public void ResetScript() => Script = Core.Script.BuiltInText;
+    public void ResetScript() => Script = Core.Script.BuiltInTextIn(language);
 
     /// <summary>LM Studio's local server and the model loaded in it.</summary>
     public string TalkServer { get => talkServer; set => Put(ref talkServer, value, "talkServer"); }
@@ -196,14 +196,14 @@ public sealed partial class AppSettings
     public string BrainProblem => brain switch
     {
         BrainKind.Script => NeedsModel,
-        BrainKind.LmStudio => "LM Studio server address is not a URL",
-        _ => "no OpenRouter API key; add one in Settings › Talk",
+        BrainKind.LmStudio => L10n.Tr("LM Studio server address is not a URL"),
+        _ => L10n.Tr("no OpenRouter API key; add one in Settings › Talk"),
     };
 
     public void ResetPrompts()
     {
-        SystemPrompt = Banter.DefaultSystemPrompt;
-        LinePrompt = Banter.DefaultLinePrompt;
-        ReplyPrompt = Banter.DefaultReplyPrompt;
+        SystemPrompt = Banter.SystemPromptIn(language);
+        LinePrompt = Banter.LinePromptIn(language);
+        ReplyPrompt = Banter.ReplyPromptIn(language);
     }
 }

@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
+using Ledgelings.Core;
 
 namespace Ledgelings;
 
@@ -57,7 +58,7 @@ public sealed partial class ChatClient
             return await response.Content.ReadAsStringAsync(cts.Token);
         }
         catch (HttpRequestException e) { throw Failure.ServerDown(e.Message); }
-        catch (TaskCanceledException) { throw Failure.ServerDown("timed out"); }
+        catch (TaskCanceledException) { throw Failure.ServerDown(L10n.Tr("timed out")); }
         // Anything else (a bad header, a broken stream) is still the server not answering usefully:
         // a Failure, so every caller's one catch covers it, as the Mac's catch-all does.
         catch (Exception e) when (e is not Failure) { throw Failure.ServerDown(e.Message); }

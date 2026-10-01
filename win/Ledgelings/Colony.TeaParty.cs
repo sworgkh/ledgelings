@@ -63,7 +63,7 @@ public sealed partial class Colony
         teaLines = new();
         teaTold = new();
         busy.Add(i); busy.Add(j);
-        TalkStatus = $"{CharacterFor(i).Name} and {CharacterFor(j).Name} are having tea";
+        TalkStatus = L10n.Tr("%@ and %@ are having tea", CharacterFor(i).Name, CharacterFor(j).Name);
         return true;
     }
 
@@ -77,7 +77,7 @@ public sealed partial class Colony
             var c = creatures[i];
             return !busy.Contains(i) && !ExpectsPlane(i) && !c.IsJumping && !c.IsHeld && !c.IsChatting && !c.IsSleeping;
         }).ToList();
-        if (free.Count < 2) { TalkStatus = "needs two creatures who are awake and free"; return; }
+        if (free.Count < 2) { TalkStatus = L10n.Tr("needs two creatures who are awake and free"); return; }
         double Apart(int i, int j) => creatures[i].Position.DistanceTo(creatures[j].Position);
         var pairs = new List<(int I, int J)>();
         foreach (var i in free) foreach (var j in free) if (j > i) pairs.Add((i, j));
@@ -179,8 +179,8 @@ public sealed partial class Colony
     {
         var a = CharacterFor(teller).Name;
         var b = CharacterFor(listener).Name;
-        var situation = $"On the edge it is {(IsNight ? "night" : "day")}. {a} and {b} have put a little table out on "
-            + $"{EdgeName(creatures[teller])} and are sitting down to tea together.";
+        var situation = TimeOfDay + " "
+            + L10n.Tr("%@ and %@ have put a little table out %@ and are sitting down to tea together.", a, b, OnEdge(creatures[teller]));
         var almanac = AlmanacSentence;
         if (almanac.Length > 0) situation = almanac + " " + situation;
         return situation;
@@ -207,8 +207,8 @@ public sealed partial class Colony
         var situation = TeaSituation(teller, listener);
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = a.Name, ["speakerKind"] = aKind, ["speakerPersona"] = a.Persona,
-            ["listener"] = b.Name, ["listenerKind"] = bKind, ["listenerPersona"] = b.Persona,
+            ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(aKind), ["speakerPersona"] = Banter.Spoken(a.Persona),
+            ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(bKind), ["listenerPersona"] = Banter.Spoken(b.Persona),
             ["situation"] = situation, ["party"] = Tea.Transcript(teaLines), ["line"] = "",
         };
         string aSide = Relationship(teller, listener), bSide = Relationship(listener, teller);
@@ -237,7 +237,7 @@ public sealed partial class Colony
                 Plot = plot,
             });
         }
-        TalkStatus = $"{a.Name} is telling {b.Name} a story via {service.Model}…";
+        TalkStatus = L10n.Tr("%@ is telling %@ a story via %@…", a.Name, b.Name, service.Model);
         var voiced = IsVoiced;
         if (voiced) voicedDialogues += 1;
         var fallBack = false;
@@ -257,8 +257,8 @@ public sealed partial class Colony
             TalkStatus = $"{a.Name}: {first}";
 
             // Swap seats for the answer.
-            vars["speaker"] = b.Name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.Persona;
-            vars["listener"] = a.Name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.Persona;
+            vars["speaker"] = b.Name; vars["speakerKind"] = Banter.Spoken(bKind); vars["speakerPersona"] = Banter.Spoken(b.Persona);
+            vars["listener"] = a.Name; vars["listenerKind"] = Banter.Spoken(aKind); vars["listenerPersona"] = Banter.Spoken(a.Persona);
             vars["line"] = first;
             vars["party"] = Tea.Transcript(teaLines);
             var answer = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(Tea.SystemPrompt, vars, bSide), bLately),
@@ -321,7 +321,7 @@ public sealed partial class Colony
             Time = DateTimeOffset.Now, Situation = TeaSituation(teller, listener),
             Provider = AppSettings.BrainTitle(BrainKind.Script), Model = "", Lines = spoken,
         });
-        TalkStatus = $"{a} is telling {b} a story";
+        TalkStatus = L10n.Tr("%@ is telling %@ a story", a, b);
         if (IsVoiced)
         {
             _ = SayInTurns(lines, () =>

@@ -57,6 +57,10 @@ Changing it applies at once: menu, settings window, the next line said.
 - **Short text** (labels, statuses, sentences of a prompt) is written in English and looked
   up in the language's table, keyed by the English; a missing entry falls back to the English.
   Counted nouns have the language's plural forms (Russian: one 1, 21; few 2–4, 22–24; many 5–20, 0, 11–14).
+- **One source of words.** The Mac's tables and long texts are exported, per language, to
+  `Sources/LedgelingsCore/l10n/<code>.json` (kept current by a test); the Windows app embeds
+  that file and looks its text up the same way, by the same English. Only text the Windows app
+  alone shows has a table of its own there.
 - **Long text** (built-in script, letters, tea stories, complaints, reminder notes, every prompt)
   is written in full per language, per character, in that character's voice.
 - **Prompts in a language** ask for the answer in it. Placeholders, the plot answer labels

@@ -37,25 +37,25 @@ public sealed partial class SettingsWindow
         KnowsDateToggle.IsEnabled = hasModel;
         LookAheadRow.IsEnabled = aware.Faiths.Count > 0 && hasModel;
         var ahead = settings.HolidayLookAhead;
-        LookAheadValue.Text = ahead == 0 ? "only on the day" : $"{ahead} day{(ahead == 1 ? "" : "s")} ahead";
+        LookAheadValue.Text = ahead == 0 ? L10n.Tr("only on the day") : L10n.TrCount(ahead, "day ahead", "days ahead");
 
         var now = DateTimeOffset.Now;
         var sentence = Almanac.Sentence(now, aware);
-        CalendarNow.Text = sentence.Length == 0 ? "Nothing: every box is off." : sentence;
+        CalendarNow.Text = sentence.Length == 0 ? L10n.Tr("Nothing: every box is off.") : sentence;
         CalendarNowFooter.Text = hasModel
-            ? "This goes into {situation} in the Talk prompts, and at the top of a paper plane's note."
-            : "What a model would be told. The built-in lines use only today's holiday, when there is one.";
+            ? L10n.Tr("This goes into {situation} in the Talk prompts, and at the top of a paper plane's note.")
+            : L10n.Tr("What a model would be told. The built-in lines use only today's holiday, when there is one.");
 
         var upcoming = Almanac.UpcomingHolidays(now, 60, aware.Faiths);
-        CalendarAheadEmpty.Text = aware.Faiths.Count == 0 ? "No holidays ticked." : upcoming.Count == 0 ? "Nothing in the next 60 days." : "";
+        CalendarAheadEmpty.Text = aware.Faiths.Count == 0 ? L10n.Tr("No holidays ticked.") : upcoming.Count == 0 ? L10n.Tr("Nothing in the next 60 days.") : "";
         CalendarAheadEmpty.Visibility = CalendarAheadEmpty.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         CalendarAhead.ItemsSource = upcoming.Select(u => new UpcomingRow(u.Name, $"{u.Faith.Title()}, {When(u.Days, now)}")).ToList();
     }
 
-    /// <summary>"tomorrow", "in 12 days · Sat 3 Oct".</summary>
+    /// <summary>"tomorrow", "in 12 days · Sat 3 Oct", in the current language.</summary>
     private static string When(int days, DateTimeOffset now)
     {
-        if (days <= 1) return "tomorrow";
-        return $"in {days} days · " + now.AddDays(days).ToString("ddd d MMM", CultureInfo.CurrentCulture);
+        if (days <= 1) return L10n.Tr("tomorrow");
+        return L10n.Tr("in %@", L10n.TrCount(days, "day", "days")) + " · " + now.AddDays(days).ToString("ddd d MMM", Languages.Current.Culture());
     }
 }

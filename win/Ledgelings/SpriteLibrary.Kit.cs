@@ -69,7 +69,7 @@ public sealed partial class SpriteLibrary
     {
         int w = SpriteText.Poses.Count * SpriteText.Cell, h = SpriteText.Variants.Count * SpriteText.Cell;
         if (image.Width % w != 0 || image.Height % h != 0 || image.Width / w != image.Height / h || image.Width < w)
-            throw new ImportException($"the PNG is {image.Width}×{image.Height}; a sheet is 288×96, or a whole multiple of that");
+            throw new ImportException(L10n.Tr("the PNG is %d×%d; a sheet is 288×96, or a whole multiple of that", image.Width, image.Height));
         var k = image.Width / w;
         var output = new byte[w * h * 4];
         var key = KeyColour;

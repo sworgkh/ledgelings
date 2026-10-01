@@ -15,8 +15,8 @@ public sealed partial class Colony
         string aKind = KindOf(speaker), bKind = KindOf(listener);
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = a.Name, ["speakerKind"] = aKind, ["speakerPersona"] = a.Persona,
-            ["listener"] = b.Name, ["listenerKind"] = bKind, ["listenerPersona"] = b.Persona,
+            ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(aKind), ["speakerPersona"] = Banter.Spoken(a.Persona),
+            ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(bKind), ["listenerPersona"] = Banter.Spoken(b.Persona),
             ["situation"] = situation, ["line"] = "",
         };
         string system = Settings.SystemPrompt, linePrompt = Settings.LinePrompt, replyPrompt = Settings.ReplyPrompt;
@@ -61,14 +61,14 @@ public sealed partial class Colony
                                              Banter.Render(linePrompt, vars));
             Charge(opening);
             var first = Banter.CleanLine(opening.Text, a.Name, cut: opening.Cut);
-            if (first.Length == 0) { TalkStatus = "the model sent an empty line"; fallBack = true; return; }
+            if (first.Length == 0) { TalkStatus = L10n.Tr("the model sent an empty line"); fallBack = true; return; }
             var firstSaid = Say(first, speaker);
             spoken.Add(new ChatLog.Line(a.Name, first));
             TalkStatus = $"{a.Name}: {first}";
 
             // Swap seats for the answer.
-            vars["speaker"] = b.Name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.Persona;
-            vars["listener"] = a.Name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.Persona;
+            vars["speaker"] = b.Name; vars["speakerKind"] = Banter.Spoken(bKind); vars["speakerPersona"] = Banter.Spoken(b.Persona);
+            vars["listener"] = a.Name; vars["listenerKind"] = Banter.Spoken(aKind); vars["listenerPersona"] = Banter.Spoken(a.Persona);
             vars["line"] = first;
             var answer = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, bSide), bLately),
                                             Banter.Render(replyPrompt, vars));

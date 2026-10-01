@@ -31,8 +31,8 @@ public sealed partial class SettingsWindow
     private void InitBonds()
     {
         NeedsModelNote(BondsNeedsModel);
-        PlotPromptFooter.Text = "Placeholders: " + string.Join(" ", Bonds.Placeholders.Select(p => "{" + p + "}"))
-            + ". The answer needs a PLOT: line, and may have a BOND: line. {relationship} in the Talk prompt places the story; without it, it goes at the end.";
+        PlotPromptFooter.Text = L10n.Tr("Placeholders: %@. The answer needs a PLOT: line, and may have a BOND: line. {relationship} in the Talk prompt places the story; without it, it goes at the end.",
+            string.Join(" ", Bonds.Placeholders.Select(p => "{" + p + "}")));
         settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(AppSettings.Brain) or nameof(AppSettings.PlotsEnabled)) RefreshBonds();
@@ -50,8 +50,8 @@ public sealed partial class SettingsWindow
         PlotAfterRow.IsEnabled = writes;
         PlotLengthRow.IsEnabled = writes;
         PlotPromptBox.Visibility = hasModel ? Visibility.Visible : Visibility.Collapsed;
-        var footer = "Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots).";
-        if (!hasModel) footer += " Time together is still counted meanwhile: once a model is chosen, a pair that has lived together long enough gets its first story at its next talk.";
+        var footer = L10n.Tr("Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots).");
+        if (!hasModel) footer += " " + L10n.Tr("Time together is still counted meanwhile: once a model is chosen, a pair that has lived together long enough gets its first story at its next talk.");
         BondsFooter.Text = footer;
     }
 
@@ -67,12 +67,12 @@ public sealed partial class SettingsWindow
             Brush brush = Brushes.Black;
             if (bond.Plot is Bonds.Plot plot)
             {
-                story = $"Part {Math.Min(plot.Told + 1, plot.Length)} of {plot.Length}: {plot.Text}";
+                story = L10n.Tr("Part %d of %d: %@", Math.Min(plot.Told + 1, plot.Length), plot.Length, plot.Text);
                 italic = FontStyles.Italic;
             }
             else if (bond.LastPlot is string last)
             {
-                story = "Last story: " + last;
+                story = L10n.Tr("Last story: %@", last);
                 brush = Brushes.Gray;
             }
             return new BondRow(Bonds.Key(bond.Names[0], bond.Names[^1]), string.Join(" & ", bond.Names), Details(bond),
@@ -83,8 +83,8 @@ public sealed partial class SettingsWindow
 
     private static string Details(Bonds.Bond bond)
     {
-        var parts = new List<string> { "together " + Bonds.Duration(bond.Together), $"{bond.Talks} talk{(bond.Talks == 1 ? "" : "s")}" };
-        if (bond.Plots > 0) parts.Add($"{bond.Plots} stor{(bond.Plots == 1 ? "y" : "ies")}");
+        var parts = new List<string> { L10n.Tr("together %@", Bonds.Duration(bond.Together)), L10n.TrCount(bond.Talks, "talk", "talks") };
+        if (bond.Plots > 0) parts.Add(L10n.TrCount(bond.Plots, "story", "stories"));
         if (bond.Cost is double cost) parts.Add(Spend.Label(cost));
         return string.Join(" · ", parts);
     }

@@ -30,11 +30,16 @@ public sealed partial class App : Application
         single = new Mutex(true, "Ledgelings.SingleInstance", out var first);
         if (!first)
         {
-            MessageBox.Show("Ledgelings is already running. Look for the square in the notification area.", "Ledgelings");
+            // Said in the running copy's language, read from its settings without writing them.
+            Languages.Choose(Languages.FromCode(new JsonSettingsStore(AppFolders.SettingsFile).Get<string>("language")) ?? Languages.System);
+            MessageBox.Show(L10n.Tr("Ledgelings is already running. Look for the square in the notification area."), "Ledgelings");
             Shutdown();
             return;
         }
         settings = new AppSettings();
+        // Before anything is drawn or said: the language everything looks its words up in.
+        Languages.Choose(settings.Language);
+        settings.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(AppSettings.Language)) Languages.Choose(settings.Language); };
         history = new ChatHistory();
         library = new SpriteLibrary();
         spend = new SpendLedger();
@@ -46,7 +51,7 @@ public sealed partial class App : Application
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException)
         {
-            MessageBox.Show("Ledgelings could not start: " + ex.Message, "Ledgelings");
+            MessageBox.Show(L10n.Tr("Ledgelings could not start: %@", ex.Message), "Ledgelings");
             Shutdown(1);
             return;
         }
@@ -77,27 +82,30 @@ public sealed partial class App : Application
         if (colony is null || settings is null || spend is null) return items;
         var left = (int)Math.Ceiling(colony.SecondsLeftInPhase);
         var clock = $"{left / 60}:{left % 60:00}";
-        var phase = settings.NightMinutes == 0 ? "Always day \u2014 night is set to 0"
-            : colony.IsNight ? $"Night \u2014 they wake in {clock}" : $"Day \u2014 they sleep in {clock}";
+        var phase = settings.NightMinutes == 0 ? L10n.Tr("Always day \u2014 night is set to 0")
+            : colony.IsNight ? L10n.Tr("Night \u2014 they wake in %@", clock) : L10n.Tr("Day \u2014 they sleep in %@", clock);
         if (colony.IsHiding)
         {
             var back = (int)Math.Ceiling(colony.Hideout.Remaining(colony.Elapsed));
-            phase = back > 0 ? $"Hiding in the house \u2014 out in {back / 60}:{back % 60:00}" : "Coming home\u2026";
+            phase = back > 0 ? L10n.Tr("Hiding in the house \u2014 out in %@", $"{back / 60}:{back % 60:00}") : L10n.Tr("Coming home\u2026");
         }
         items.Add(new TrayIcon.Item(phase, Enabled: false));
         items.Add(TrayIcon.Item.Separator);
-        items.Add(new TrayIcon.Item("Creature Actions\u2026", OpenActions));
+        items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026"), OpenActions));
         AddNextReminder(items);
-        items.Add(new TrayIcon.Item("Hear Them Talk", () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
+        items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
-        items.Add(new TrayIcon.Item("Chat History\u2026", () => OpenSettings(SettingsTab.Chats)));
+        items.Add(new TrayIcon.Item(L10n.Tr("Chat History\u2026"), () => OpenSettings(SettingsTab.Chats)));
         var s = spend.Summary;
         if (s.AllTime.Calls > 0)
-            items.Add(new TrayIcon.Item($"Spent: {Spend.Label(s.Today.Cost)} today, {Spend.Label(s.Month.Cost)} this month", () => OpenSettings(SettingsTab.Costs)));
-        items.Add(new TrayIcon.Item("Settings\u2026", () => OpenSettings(null)));
+            items.Add(new TrayIcon.Item(L10n.Tr("Spent: %@ today, %@ this month", Spend.Label(s.Today.Cost), Spend.Label(s.Month.Cost)), () => OpenSettings(SettingsTab.Costs)));
+        // Each language under its own name, so whoever cannot read the current one still finds theirs.
+        items.Add(new TrayIcon.Item(L10n.Tr("Language"), Children: Languages.All
+            .Select(l => new TrayIcon.Item(l.Title(), () => settings.Language = l, Checked: settings.Language == l)).ToList()));
+        items.Add(new TrayIcon.Item(L10n.Tr("Settings\u2026"), () => OpenSettings(null)));
         items.Add(TrayIcon.Item.Separator);
-        items.Add(new TrayIcon.Item("Quit Ledgelings", Shutdown));
+        items.Add(new TrayIcon.Item(L10n.Tr("Quit Ledgelings"), Shutdown));
         return items;
     }
 

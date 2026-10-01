@@ -44,11 +44,13 @@ public sealed partial class Voice
     /// <paramref name="automatic"/>: what it would get with no voice of its own chosen.</summary>
     public string? SystemVoiceFor(string name, IReadOnlyList<string> cast, bool automatic = false)
     {
-        if (!automatic && settings.VoiceOf(name).SystemVoice is string own) return own;
-        if (!settings.VoicePerCharacter) return settings.SystemVoice.Length == 0 ? null : settings.SystemVoice;
+        // A voice chosen by hand that does not speak the app's language is passed over: David cannot read Russian.
+        var language = VoiceLanguage;
+        if (!automatic && settings.VoiceOf(name).SystemVoice is string own && Speaks(own, language)) return own;
+        if (!settings.VoicePerCharacter) return Speaks(settings.SystemVoice, language) ? settings.SystemVoice : null;
         var voices = SystemPool;
         var pool = voices.Select(v => v.Name).ToList();
-        var fixedVoices = Fixed(v => v.SystemVoice);
+        var fixedVoices = Fixed(v => Speaks(v.SystemVoice, language) ? v.SystemVoice : null);
         if (automatic) fixedVoices.Remove(name);
         var everyone = cast.Append(name).ToList();
         if (!settings.CastByPersonality) return Voices.Assign(everyone, pool, fixedVoices).GetValueOrDefault(name);
@@ -68,20 +70,22 @@ public sealed partial class Voice
         string? Usable(string? v) => v is null ? null
             : local ? (Voices.IsUsable(v, voices) ? v : null)
             : (voices.Count == 0 || voices.Contains(v) ? v : null);
-        if (!automatic && Usable(Mine(settings.VoiceOf(name))) is string own) return own;
-        if (!settings.VoicePerCharacter) return chosen.Length == 0 ? voices.FirstOrDefault() : chosen;
-        var english = Voices.EnglishFirst(voices);
-        var fixedVoices = Fixed(v => Usable(Mine(v)));
+        // One that speaks the app's language, when the voices' names say which do.
+        string? Speaking(string? v) => v is not null && Voices.Speaks(v, Languages.Current, voices) ? v : null;
+        if (!automatic && Speaking(Usable(Mine(settings.VoiceOf(name)))) is string own) return own;
+        var inLanguage = Voices.LanguageFirst(voices);
+        if (!settings.VoicePerCharacter) return Speaking(chosen.Length == 0 ? null : chosen) ?? inLanguage.FirstOrDefault();
+        var fixedVoices = Fixed(v => Speaking(Usable(Mine(v))));
         if (automatic) fixedVoices.Remove(name);
         var everyone = cast.Append(name).ToList();
         if (!settings.CastByPersonality)
         {
-            var pool = settings.CartoonVoices ? Voices.CartoonFirst(english) : english;
+            var pool = settings.CartoonVoices ? Voices.CartoonFirst(inLanguage) : inLanguage;
             return Voices.Assign(everyone, pool, fixedVoices).GetValueOrDefault(name);
         }
         var tags = new Dictionary<string, HashSet<Casting.Tag>>();
-        foreach (var v in english) tags.TryAdd(v, Casting.TagsOfVoice(v));
-        return Casting.Assign(everyone, CastTraits(everyone), english, tags, fixedVoices).GetValueOrDefault(name);
+        foreach (var v in inLanguage) tags.TryAdd(v, Casting.TagsOfVoice(v));
+        return Casting.Assign(everyone, CastTraits(everyone), inLanguage, tags, fixedVoices).GetValueOrDefault(name);
     }
 
     /// <summary>The hand-picked voices of every character with one, as <paramref name="pick"/> reads them.</summary>
@@ -102,9 +106,9 @@ public sealed partial class Voice
     /// <summary>What <paramref name="name"/> would sound like with no voice of its own chosen, in words, for the Voice tab.</summary>
     public string AutomaticVoice(string name) => settings.VoiceEngine switch
     {
-        VoiceEngine.System => SystemVoiceFor(name, Cast(), automatic: true) ?? "system default",
-        VoiceEngine.OpenRouter => OnlineVoice(name, Cast(), ModelVoices, automatic: true) ?? "the model's own",
-        _ => OnlineVoice(name, Cast(), LocalVoices, automatic: true) ?? "the server's own",
+        VoiceEngine.System => SystemVoiceFor(name, Cast(), automatic: true) ?? DefaultVoice ?? L10n.Tr("system default"),
+        VoiceEngine.OpenRouter => OnlineVoice(name, Cast(), ModelVoices, automatic: true) ?? L10n.Tr("the model's own"),
+        _ => OnlineVoice(name, Cast(), LocalVoices, automatic: true) ?? L10n.Tr("the server's own"),
     };
 
     // MARK: Casting by the brain model
@@ -128,17 +132,17 @@ public sealed partial class Voice
             case VoiceEngine.OpenRouter:
             {
                 var all = ModelVoices.Count == 0 ? await VoicesOf(settings.VoiceModel) : ModelVoices;
-                choices = Voices.EnglishFirst(all).Select(v => (v, Hints(Casting.TagsOfVoice(v)), v)).ToList();
+                choices = Voices.LanguageFirst(all).Select(v => (v, Hints(Casting.TagsOfVoice(v)), v)).ToList();
                 break;
             }
             default:
             {
                 var all = LocalVoices.Count == 0 ? await LoadLocalVoices() : LocalVoices;
-                choices = Voices.EnglishFirst(all).Select(v => (v, Hints(Casting.TagsOfVoice(v)), v)).ToList();
+                choices = Voices.LanguageFirst(all).Select(v => (v, Hints(Casting.TagsOfVoice(v)), v)).ToList();
                 break;
             }
         }
-        if (choices.Count == 0) throw ChatClient.Failure.BadReply("no voices to choose from");
+        if (choices.Count == 0) throw ChatClient.Failure.BadReply(L10n.Tr("no voices to choose from"));
         var prompt = Casting.ModelPrompt(name, who.Persona, who.Kind, choices.Select(c => (c.Id, c.Hints)), settings.CartoonVoices);
         // Room for a thinking model to reason before it answers; the answer itself is short.
         var answer = await client.Reply(Casting.ModelSystem, prompt, maxTokens: 2000, temperature: 0.3);

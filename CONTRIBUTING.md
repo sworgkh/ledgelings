@@ -139,7 +139,14 @@ Text is written in English at the call site and looked up per language (SPEC §1
 4. **Personas and kinds** of the shipped species — a table part like `Russian+Personas.swift`.
    Casting words for the language go in `Casting.rules`.
 
-What catches a gap: `swift test --filter LanguageTests`.
+5. **Export it for Windows** — `LEDGELINGS_WRITE_L10N=1 swift test --filter SharedTextTests`
+   writes `Sources/LedgelingsCore/l10n/<code>.json`, which the Windows build embeds; add the
+   language to `win/LedgelingsCore/Language.cs` (code, title, plurals) and give it a part in
+   `win/LedgelingsCore/Russian/WindowsStrings*.cs`'s pattern for the few Windows-only words.
+
+What catches a gap: `swift test --filter LanguageTests` on the Mac, `dotnet test win/LedgelingsCore.Tests
+--filter LanguageTests` for Windows (`EveryKeyIsTranslated` lists every `L10n.Tr` key with no entry in
+the shared export or the Windows part), and `SharedTextTests` when the export is stale.
 
 | Test | Fails when |
 |---|---|

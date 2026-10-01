@@ -25,8 +25,7 @@ public sealed partial class SettingsWindow
     {
         reminderBook = book;
         sendReminder = send;
-        ReminderRepeat.ItemsSource = Reminders.AllRepeats.Select(r => new RepeatChoice(r, r.Title())).ToList();
-        ReminderRepeat.SelectedIndex = 0;
+        RefreshRepeatChoices();
         RemindersPath.Text = book.File;
         ShowReminderTime();
         book.Changed += RefreshReminders;
@@ -35,6 +34,15 @@ public sealed partial class SettingsWindow
         IsVisibleChanged += (_, _) => { if (IsVisible) RefreshReminders(); };
         RefreshReminders();
         RefreshReminderFooter();
+    }
+
+    /// <summary>The repeat menu, in the current language, keeping what was picked.</summary>
+    private void RefreshRepeatChoices()
+    {
+        var picked = (ReminderRepeat.SelectedItem as RepeatChoice)?.Repeat ?? Reminders.Repeat.Once;
+        var choices = Reminders.AllRepeats.Select(r => new RepeatChoice(r, r.Title())).ToList();
+        ReminderRepeat.ItemsSource = choices;
+        ReminderRepeat.SelectedItem = choices.FirstOrDefault(c => c.Repeat == picked) ?? choices.FirstOrDefault();
     }
 
     /// <summary>The top of the next hour: a sensible first guess for "when".</summary>
@@ -50,16 +58,16 @@ public sealed partial class SettingsWindow
         var now = DateTimeOffset.Now;
         var all = reminderBook.Book.Sorted;
         ReminderList.ItemsSource = all.Select(r => new ReminderRow(r.Id, r.Text,
-            r.IsFinished ? "Sent " + Reminders.When(r.SentAt ?? r.Time, now) : r.Describe(now), r.IsFinished ? 0.5 : 1)).ToList();
+            r.IsFinished ? L10n.Tr("Sent %@", Reminders.When(r.SentAt ?? r.Time, now)) : r.Describe(now), r.IsFinished ? 0.5 : 1)).ToList();
         NoReminders.Visibility = all.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ClearSent.IsEnabled = reminderBook.Book.Reminders.Any(r => r.IsFinished);
     }
 
     private void RefreshReminderFooter()
     {
-        var words = "The plane flies to the middle of the screen your cursor is on, comes at you and opens into a letter: your reminder, a note from whoever threw it, and their signature. Click the letter to fold it away; otherwise it folds itself after this long, counting only while you are at the computer. Off: nothing is delivered, and what came due meanwhile arrives when you turn it back on.";
-        if (settings.Brain != BrainKind.Script) words += " With a model, the note is written for the moment (Costs › Reminders).";
-        words += $" A paper note: Add a Reminder… ({App.ReminderHotkeyTitle} anywhere, or the tray menu) opens a sheet of the same paper to write a reminder on; off, it opens this tab.";
+        var words = L10n.Tr("The plane flies to the middle of the screen your cursor is on, comes at you and opens into a letter: your reminder, a note from whoever threw it, and their signature. Click the letter to fold it away; otherwise it folds itself after this long, counting only while you are at the computer. Off: nothing is delivered, and what came due meanwhile arrives when you turn it back on.");
+        if (settings.Brain != BrainKind.Script) words += " " + L10n.Tr("With a model, the note is written for the moment (Costs › Reminders).");
+        words += " " + L10n.Tr("A paper note: Add a Reminder… (%@ anywhere, or the tray menu) opens a sheet of the same paper to write a reminder on; off, it opens this tab.", App.ReminderHotkeyTitle);
         ReminderFooter.Text = words;
     }
 
@@ -145,7 +153,7 @@ public sealed partial class SettingsWindow
     }
 
     private void TestLetter_Click(object sender, RoutedEventArgs e) =>
-        sendReminder?.Invoke(new Reminders.Reminder("This is what a reminder looks like", DateTimeOffset.Now));
+        sendReminder?.Invoke(new Reminders.Reminder(L10n.Tr("This is what a reminder looks like"), DateTimeOffset.Now));
 
     private void ClearSent_Click(object sender, RoutedEventArgs e) => reminderBook?.ClearFinished();
 

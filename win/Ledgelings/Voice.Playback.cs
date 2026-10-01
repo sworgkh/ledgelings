@@ -1,4 +1,5 @@
 using System.Text;
+using Ledgelings.Core;
 using System.Windows.Media;
 
 namespace Ledgelings;
@@ -43,7 +44,7 @@ public sealed partial class Voice
         var opened = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var ended = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         void Opened(object? s, EventArgs e) => opened.TrySetResult(true);
-        void Failed(object? s, ExceptionEventArgs e) => opened.TrySetException(new IOException("the clip would not play: " + e.ErrorException?.Message));
+        void Failed(object? s, ExceptionEventArgs e) => opened.TrySetException(new IOException(L10n.Tr("the clip would not play: %@", e.ErrorException?.Message ?? "")));
         void Ended(object? s, EventArgs e) => ended.TrySetResult(true);
         var playing = player;
         playing.MediaOpened += Opened;
@@ -55,7 +56,7 @@ public sealed partial class Voice
             if (await Task.WhenAny(opened.Task, Task.Delay(TimeSpan.FromSeconds(10), cancel)) != opened.Task)
             {
                 cancel.ThrowIfCancellationRequested();
-                throw new IOException("the clip would not open");
+                throw new IOException(L10n.Tr("the clip would not open"));
             }
             await opened.Task;
             playing.Volume = settings.VoiceVolume;

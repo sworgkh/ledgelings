@@ -25,10 +25,10 @@ public static partial class Reminders
 
     public static string Title(this Repeat repeat) => repeat switch
     {
-        Repeat.Once => "Once",
-        Repeat.Daily => "Every day",
-        Repeat.Weekdays => "Every weekday",
-        _ => "Every week",
+        Repeat.Once => L10n.Tr("Once"),
+        Repeat.Daily => L10n.Tr("Every day"),
+        Repeat.Weekdays => L10n.Tr("Every weekday"),
+        _ => L10n.Tr("Every week"),
     };
 
     /// <summary>How a repeat is written in <c>reminders.json</c>: the Mac's raw values.</summary>
@@ -92,7 +92,7 @@ public static partial class Reminders
         public string Describe(DateTimeOffset now, TimeZoneInfo? calendar = null)
         {
             var when = When(Time, now, calendar);
-            return Repeats == Repeat.Once ? when : $"{Repeats.Title()}, next {when}";
+            return Repeats == Repeat.Once ? when : L10n.Tr("%@, next %@", Repeats.Title(), when);
         }
     }
 
@@ -175,7 +175,8 @@ public static partial class Reminders
         }
     }
 
-    private static readonly CultureInfo british = CultureInfo.GetCultureInfo("en-GB");
+    /// <summary>Dates follow the app's language, not the system's: British in English.</summary>
+    private static CultureInfo Culture => Languages.Current.Culture();
 
     /// <summary>"Today 14:30", "Tomorrow 09:00", "Yesterday 18:00", else "Mon 3 Oct 18:00".</summary>
     public static string When(DateTimeOffset date, DateTimeOffset now, TimeZoneInfo? calendar = null) =>
@@ -187,15 +188,15 @@ public static partial class Reminders
         var zone = calendar ?? TimeZoneInfo.Local;
         var day = TimeZoneInfo.ConvertTime(date, zone).Date;
         var today = TimeZoneInfo.ConvertTime(now, zone).Date;
-        if (day == today) return "Today";
-        if (day == today.AddDays(1)) return "Tomorrow";
-        if (day == today.AddDays(-1)) return "Yesterday";
-        return TimeZoneInfo.ConvertTime(date, zone).ToString("ddd d MMM", british);
+        if (day == today) return L10n.Tr("Today");
+        if (day == today.AddDays(1)) return L10n.Tr("Tomorrow");
+        if (day == today.AddDays(-1)) return L10n.Tr("Yesterday");
+        return TimeZoneInfo.ConvertTime(date, zone).ToString("ddd d MMM", Culture);
     }
 
     /// <summary>"14:30", on the 24-hour clock.</summary>
     public static string Clock(DateTimeOffset date, TimeZoneInfo? calendar = null) =>
-        TimeZoneInfo.ConvertTime(date, calendar ?? TimeZoneInfo.Local).ToString("HH:mm", british);
+        TimeZoneInfo.ConvertTime(date, calendar ?? TimeZoneInfo.Local).ToString("HH:mm", Culture);
 
     // MARK: Picking a time on the paper note
 
@@ -265,14 +266,19 @@ public static partial class Reminders
 
     /// <summary>What each built-in character writes above your reminder, in its own
     /// voice. <c>{reminder}</c> is what you asked to be reminded of. A character the
-    /// user invented uses <see cref="Anyone"/>.</summary>
-    public static readonly IReadOnlyList<string> Anyone = new[]
+    /// user invented uses <see cref="Anyone"/>. Both in the current language.</summary>
+    public static IReadOnlyList<string> Anyone => Translated.List(Shared.Current?.RemindersAnyone, EnglishAnyone);
+
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> Notes =>
+        Translated.Lists<IReadOnlyList<string>>(Shared.Current?.ReminderNotes, EnglishNotes, l => l);
+
+    public static readonly IReadOnlyList<string> EnglishAnyone = new[]
     {
         "It's time: {reminder}. You asked me to tell you, so I'm telling you.",
         "Knock knock. {reminder}. That's the whole joke. Go on.",
     };
 
-    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Notes = new Dictionary<string, IReadOnlyList<string>>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EnglishNotes = new Dictionary<string, IReadOnlyList<string>>
     {
         // blocky's cast
         ["Blocky"] = new[]
@@ -436,8 +442,10 @@ public static partial class Reminders
         return Banter.Render(line, new Dictionary<string, string> { ["reminder"] = shown });
     }
 
-    /// <summary>The model writes the note as the creature throwing the plane.</summary>
-    public const string NotePrompt =
+    /// <summary>The model writes the note as the creature throwing the plane, in the current language.</summary>
+    public static string NotePrompt => Shared.Prompt("reminder", EnglishNotePrompt);
+
+    public const string EnglishNotePrompt =
         "{situation}\n" +
         "The person whose screen you live on asked to be reminded, right now, of: \"{reminder}\". " +
         "You fold it into a paper plane and throw it to them. Write the note that goes with it: " +

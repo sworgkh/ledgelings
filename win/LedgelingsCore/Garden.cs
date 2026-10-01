@@ -44,15 +44,15 @@ public sealed class Garden
     /// <summary>Where, in words: "on the bottom edge".</summary>
     public static string Phrase(Place place) => place switch
     {
-        Place.Floor => "on the bottom edge",
-        Place.Ceiling => "on the top edge",
-        Place.Wall => "on a side edge",
-        Place.Corner => "in a corner",
-        Place.Alone => "where nobody is",
-        Place.Company => "next to someone",
-        Place.Row => "beside the flowers already planted",
-        Place.Night => "after dark",
-        _ => "in daylight",
+        Place.Floor => L10n.Tr("on the bottom edge"),
+        Place.Ceiling => L10n.Tr("on the top edge"),
+        Place.Wall => L10n.Tr("on a side edge"),
+        Place.Corner => L10n.Tr("in a corner"),
+        Place.Alone => L10n.Tr("where nobody is"),
+        Place.Company => L10n.Tr("next to someone"),
+        Place.Row => L10n.Tr("beside the flowers already planted"),
+        Place.Night => L10n.Tr("after dark"),
+        _ => L10n.Tr("in daylight"),
     };
 
     /// <summary>How one character goes about it: how much of the flower's time it wears
@@ -164,12 +164,12 @@ public sealed class Garden
     /// <summary>The temper in a sentence, for the settings window: "After a good while, on the bottom edge or where nobody is."</summary>
     public static string Describe(Temper temper)
     {
-        var when = temper.Keep < 0.1 ? "At once" : temper.Keep < 0.3 ? "After a little while"
-            : temper.Keep < 0.5 ? "After a good while" : "After showing it off for most of its time";
+        var when = temper.Keep < 0.1 ? L10n.Tr("At once") : temper.Keep < 0.3 ? L10n.Tr("After a little while")
+            : temper.Keep < 0.5 ? L10n.Tr("After a good while") : L10n.Tr("After showing it off for most of its time");
         var places = temper.Likes.Select(Phrase).ToList();
-        if (places.Count == 0) return when + ", wherever it is.";
+        if (places.Count == 0) return L10n.Tr("%@, wherever it is.", when);
         var listed = places.Count == 1 ? places[0]
-            : string.Join(", ", places.Take(places.Count - 1)) + " or " + places[^1];
+            : L10n.Tr("%@ or %@", string.Join(", ", places.Take(places.Count - 1)), places[^1]);
         return when + ", " + listed + ".";
     }
 
