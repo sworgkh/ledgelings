@@ -89,6 +89,10 @@ final class Colony: NSObject {
     var meetings = Meetings()
     /// Flowers in the air and on heads.
     var gifts = Gifts()
+    /// Flowers planted in the edge.
+    var garden = Garden()
+    /// Flower wearers done wearing theirs and looking for a place to plant it; they no longer trail their giver.
+    var gardeners: Set<Int> = []
     /// A Shift-press on a creature that has not moved yet: a poke if it lets go, a carry if it drags.
     var poke: (index: Int, at: CGPoint)?
     static let dragThreshold: CGFloat = 4
@@ -259,6 +263,7 @@ final class Colony: NSObject {
         rebuildOverlays()
         worlds.removeAll()
         for i in creatures.indices { creatures[i].rehome(to: world(forSize: sizes[i])) }
+        replantAfterScreensChanged()
         render()
     }
 
@@ -332,6 +337,7 @@ final class Colony: NSObject {
             if voicedLines.contains(bubble.serial) { endLine(bubble.serial) }
         }
         gifts.update(at: elapsed, wearFor: settings.flowerMinutes * 60)
+        updateGarden()
         if settings.followGiver { followGivers() }
         sparks.update(dt: dt)
         sayScheduledLines()
@@ -377,11 +383,12 @@ final class Colony: NSObject {
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
-        let reminder = reminderSnapshot(), table = teaTableSnapshot()
+        let reminder = reminderSnapshot(), table = teaTableSnapshot(), beds = gardenSnapshots()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
-                           plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell)
+                           plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,
+                           garden: beds)
         }
     }
 }

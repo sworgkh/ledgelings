@@ -932,6 +932,64 @@ bluebell, dandelion, lavender, lily, forget-me-not.
   whatever mode it was in and wanders on.
 - Hats and flights referring to removed creatures are dropped.
 
+#### 7.3.1 Planting
+
+With `plantFlowers` on (default), a wearer does not wear its flower till it
+wilts: it plants it in the edge, when and where its **character** likes.
+
+**Temper**, read from the persona and the species' kind by word starts, as
+`Casting` reads them for voices (§6.6.1); `Garden.temper(persona, kind)`:
+
+| Place | Persona words naming it outright (strong) | Temperament words (weak) | Fits when |
+|---|---|---|---|
+| floor | bottom, floor, ground | damp, pond, earth, moss, puddle, dirt, mud | `inward.y > 0.5` |
+| ceiling | ceiling, top, sky, high | hover, float, fly, cloud, ghost | `inward.y < −0.5` |
+| wall | wall, climb, cling, sideways | | `abs(inward.x) > 0.5` |
+| corner | corner, nook | stable, stubborn, precise, literal, anxi, worr, scared, afraid, stepped, sharp, point | ≤ 60 pt along the edge to its turn |
+| alone | | aloof, quiet, shy, deadpan, grump, gruff, lonel, wistful, hates, suspect | nearest other creature ≥ 320 pt |
+| company | | cheer, friend, social, gigg, laugh, playful, sweet, simple, pleased, loud | nearest other creature ≤ 160 pt |
+| row | garden, row, neat, tidy | count, organis, organiz, boss, maintenance, bolt, differen, change, notice | nearest planted flower ≤ 90 pt |
+| night | night, dark, moon | sleep, nap, drows, yawn, bed, scary, spook, haunt | it is night |
+| day | sun, warm, light, daylight | | it is day |
+
+Liked places are ranked: a strong word in the persona, then a weak word in the
+persona, then a strong and then a weak word in the kind; within a rank, the one
+the text says first. At most three are kept. **Keep** (the share of the flower's
+time worn before planting): 0.05 if the persona has a hasty word (fast, quick,
+hyper, rush, speed, bounc, excit, enthus, impatien), else 0.6 for a fond one
+(sweet, ador, wistful, poet, dream, sentiment, romantic, proud), else 0.45 for a
+slow one (slow, patien, calm, old, wise, philosoph, sleep), else 0.25. So Blocky
+plants on the floor or where nobody is, Pip on the ceiling or next to someone,
+Ruth beside the others, Dot at once anywhere, Zed after dark.
+
+**Deciding**, every frame, for each wearer at leisure (walking or idling: not
+busy talking, not expecting or holding a plane's letter, not asleep, not inside
+the house, house not out). `share` = time worn / time it would be worn.
+
+1. `share < keep`: it is still wearing it.
+2. The spot: on its own segment, half a body plus 6 sheet pixels in front of it
+   (behind, if the edge turns in front), on the screen edge (centre − inward ·
+   halfBody). No spot on a segment too short for either: try next frame.
+3. It plants if `share ≥ 0.9` (the last chance), or it likes nowhere, or a
+   place it accepts fits: until halfway from `keep` to 0.9 only its favourite,
+   after that any it likes. The spot must also be at least `12·size` points from
+   every planted flower; otherwise it walks on and tries again.
+4. Otherwise it is a **gardener**: it stops following its giver, and when its
+   favourite is a floor, ceiling or wall, it heads the short way round its loop to
+   the middle of the nearest segment of that kind (longer than four half-bodies);
+   for a corner, to `30 + halfBody` points inside the nearer end of its segment;
+   for a row, to the nearest planted flower within 1.5 half-bodies of its loop.
+   It walks there at its own speed; the other places it meets as it wanders.
+
+**Planting**: the hat comes off, the flower goes in at the spot with the edge's
+rotation and the planter's size, for `gardenMinutes·60` s (default 20 min,
+range 1–240). It comes up out of the edge over 0.5 s (drawn squashed along the
+inward axis from 0 to full, standing on its stem's foot), fades over its last
+2 s, and is drawn behind the creatures. The planter stands still 1.2 s. With
+more than `gardenSize` (default 12, range 1–40) in the ground, the oldest
+wilts at once. When the monitors change, a flower whose foot is more than 2 pt
+from the new outline is dropped. Planted flowers are not kept across a relaunch.
+
 ### 7.4 Stars (sparks)
 
 A burst is 8 stars from one point. Each: angle = inward's angle ± up to 60°
@@ -1572,6 +1630,9 @@ An error for want of a model reads as that note, never as a server refusal.
 | teaSipSeconds | 6 | 0–30 s, clamped on load: quiet between one story and the next |
 | talkEnabled | true | |
 | followGiver | true | the wearer of a flower trails its giver (§7.3) |
+| plantFlowers | true | a wearer plants its flower where its character likes (§7.3.1) |
+| gardenMinutes | 20 | 1–240, clamped on load: how long a planted flower stands |
+| gardenSize | 12 | 1–40, clamped on load: most flowers in the ground; one more wilts the oldest |
 | planesEnabled | true | paper planes every `planeMinutes` (§7.6); the menu item works either way |
 | planeMinutes | 3 | 0.5–60, clamped on load: minutes from one plane to the next |
 | brainProvider | script | script, lmStudio, openRouter. Absent on load: `lmStudio` if any of talkServer, talkModel, openRouterModel is stored (a model was set up before scripts existed), else `script` |
@@ -1617,11 +1678,11 @@ An error for want of a model reads as that note, never as a server refusal.
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7).
 
-Settings window: 1100×760 points, nine tabs, each laid out as two columns
+Settings window: 1100×760 points, ten tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Talk**: talk toggle,
-bubble and flower sliders, follow-the-giver and paper-plane toggles and the
+bubble slider, paper-plane toggle and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),
 Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, model,
@@ -1629,7 +1690,7 @@ Import…, Export…, Copy Agent Prompt, Reset Lines; for LM Studio: server, mod
 Check (validates the key, shows label and spend), then a search box and a
 scrolling list of the whole catalogue (§8.3), 60 rows at a time, click to
 pick, free models tinted green, current model highlighted; characters editor;
-prompt editors with a placeholder legend. **Bonds**: on the left the plots toggle, the first-plot slider, the plot-length
+prompt editors with a placeholder legend. **Flowers**: flower slider and follow-the-giver toggle; the planting toggle, how long a planted flower stands, the most in the ground; on the right, each creature on screen with its temper in a sentence (`Garden.describe`: "After a little while, on the top edge or next to someone."). **Bonds**: on the left the plots toggle, the first-plot slider, the plot-length
 stepper and the plot prompt editor with Reset Prompt; on the right a card per pair,
 longest together first (names, time together, talks, plots, cost, the bond, the
 running plot with its part or the last plot, Forget), then the file with Reveal
@@ -1701,6 +1762,14 @@ two adjacent pairs.
 
 Gifts: fly, land after `flightTime`, wilt after the wear time; one flight at a
 time; removed creatures lose their flowers; ten distinct flower names.
+
+Garden: the built-in cast's tempers (Blocky floor then alone, Pip ceiling then
+company, Ruth row, Zed night, Dot at once anywhere); a kind speaks when the
+persona does not, and the persona outranks it; nothing planted before `keep`;
+only the favourite at first, any liked place later, anywhere at 0.9; each place's
+test; the oldest wilts past the most, each at its time; room between flowers;
+growing in 0.5 s; in a colony: planted on the screen edge before it wilts, not
+at all when turned off, and a planted flower fades and goes.
 
 Paper planes: the wind is the same at the same place and time, bounded, and
 smooth; a plane reaches a walking catcher from anywhere within 25 s even in a

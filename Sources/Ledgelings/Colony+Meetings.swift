@@ -151,7 +151,8 @@ extension Colony {
     func followGivers() {
         guard !hideout.isActive else { return }
         for (wearer, hat) in gifts.worn where creatures.indices.contains(hat.from) && hat.from != wearer {
-            guard creatures.indices.contains(wearer), !busy.contains(wearer), !busy.contains(hat.from) else { continue }
+            guard creatures.indices.contains(wearer), !busy.contains(wearer), !busy.contains(hat.from),
+                  !gardeners.contains(wearer) else { continue }
             let gap = (sizes[wearer] + sizes[hat.from]) / 2 + 16
             creatures[wearer].follow(creatures[hat.from], gap: gap)
         }

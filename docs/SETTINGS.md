@@ -108,15 +108,14 @@ The format, the rules the import checks, and what a species can declare
 | **Creatures talk when they bump into each other** | on | | Off: they still stop, face each other, throw stars and give flowers, but say nothing. *Make Someone Talk* and pokes still work |
 | **Bubble stays** | 14 s | 4 to 60 | For a line of about eight words. Longer lines stay a little longer, never past twice this. The reply appears while the first bubble is still up |
 | **Not repeating their last** (`lineMemory`) | 12 lines | 0 to 40 | Each creature remembers its last lines and says something else until it has run through the rest, so a line comes back once in a while, not every round. Built-in letters pick one it has not said lately; a model is shown them and asked for something new (a few more words in each call). Remembered across relaunches from the chat log. 0: off |
-| **Flower lasts** | 2 min | 0.5 to 30 | How long a gifted flower sits on the head before it wilts |
-| **The one with the flower follows the giver while it lasts** | on | | The wearer trails the giver around the edge, stopping about a body behind, until the flower wilts. It still sleeps and flees the cursor. A flower wearer never bumps into anyone, so a crowd of followers does not meet non-stop; it still answers a poke |
 | **Paper planes** | on | | Every so often one creature throws a paper plane to another across the screen, swirling in its own wind. The catcher stops, reads the note out, thinks aloud about it and throws one answer back, which is read but never answered. Everything goes in the chat history. With talk off they read in silence |
 | **A paper plane every** | 3 min | 0.5 to 60 | Minutes from one plane to the next, whatever the meetings. Nothing is sent at night or while they are hidden |
 
 A pair of creatures meets at most once a minute; passing each other in between is
 just passing. Every third meeting of the same pair is a gift: one hands the other
 one of ten flowers (poppy, tulip, daisy, sunflower, rose, bluebell, dandelion,
-lavender, lily, forget-me-not), and the conversation is about it.
+lavender, lily, forget-me-not), and the conversation is about it
+(the [Flowers tab](#flowers-tab)).
 
 A paper plane's words come from the brain. With the built-in lines, every character
 of every built-in cast has its own notes, thoughts and answers, about the topics its
@@ -124,6 +123,48 @@ personality keeps returning to; a character you wrote yourself uses a few genera
 ones. With a model, the sender writes the note in its persona while the plane is in
 the air, and the catcher's thought comes from a second call; both are priced like
 any other call.
+
+## Flowers tab
+
+### Wearing
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Flower lasts** | 2 min | 0.5 to 30 | How long a gifted flower sits on the head before it wilts |
+| **The one with the flower follows the giver while it lasts** | on | | The wearer trails the giver around the edge, stopping about a body behind, until the flower wilts or it goes off to plant it. It still sleeps and flees the cursor. A flower wearer never bumps into anyone, so a crowd of followers does not meet non-stop; it still answers a poke |
+
+### Planting
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **They plant their flowers where they like** (`plantFlowers`) | on | | After wearing it a while, a creature stops following its giver, looks for the kind of spot its character likes and plants the flower in the edge there. If nowhere suits before it would wilt, it plants it where it stands. Off: the flower is worn until it wilts |
+| **A planted flower lasts** (`gardenMinutes`) | 20 min | 1 to 240 | Then it fades away. Planted flowers are not kept when the app quits |
+| **Flowers in the ground at most** (`gardenSize`) | 12 | 1 to 40 | Planting one more wilts the oldest |
+
+**Who plants where** (right column) lists every creature on screen with its way of
+planting in a sentence. It is read from the character's description and its
+species' kind on the Talk tab, by words, the way voices are cast:
+
+| Words in the description | Plants |
+|---|---|
+| bottom, floor, ground; damp, pond, earth, moss, mud | on the bottom edge |
+| ceiling, top, sky, high; hover, float, fly, ghost | on the top edge |
+| wall, climb, cling, sideways | on a side edge |
+| corner, nook; stable, stubborn, precise, literal, anxious, worried, scared, stepped on, sharp, point | in a corner |
+| aloof, quiet, shy, deadpan, grumpy, gruff, lonely, wistful, hates, suspects | where nobody is |
+| cheerful, friend, social, giggly, laughs, playful, sweet, simple, pleased, loud | next to someone |
+| garden, row, neat, tidy; counts, organised, bossy, maintenance, bolts, differences, changes, notices | beside the flowers already planted |
+| night, dark, moon; sleepy, naps, drowsy, yawns, bed, scary, spooky, haunts | after dark |
+| sun, warm, light, daylight | in daylight |
+
+Words that name a place outright (the first group in each row) beat temperament,
+the description beats the species, and otherwise what is said first comes first.
+How long it wears the flower before planting: at once if it is fast, quick, hyper,
+bouncy, excited, enthusiastic or impatient; most of the flower's time if it is
+sweet, adorable, wistful, poetic, dreamy, sentimental, romantic or proud; a good
+while if it is slow, patient, calm, old, wise, philosophical or sleepy; otherwise a
+little while. While wearing it, it walks toward the edge or corner it wants;
+company, being alone and the time of day it comes across as it wanders.
 
 ## Bonds tab
 

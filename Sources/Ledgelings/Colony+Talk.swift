@@ -12,15 +12,8 @@ extension Colony {
         }!.1
     }
 
-    /// Who creature `i` is: the k-th creature wearing its species takes the k-th
-    /// character of that species' cast, wrapping round.
-    func character(forCreature i: Int) -> Character {
-        let species = settings.species(forCreature: i)
-        let cast = settings.cast(of: species, fallback: library.cast(of: species))
-        guard !cast.isEmpty else { return Character(name: "Ledgeling \(i + 1)", persona: "") }
-        let k = (0..<i).filter { settings.species(forCreature: $0) == species }.count
-        return cast[k % cast.count]
-    }
+    /// Who creature `i` is (`AppSettings.character(forCreature:library:)`).
+    func character(forCreature i: Int) -> Character { settings.character(forCreature: i, library: library) }
 
     func kind(ofCreature i: Int) -> String { library.kind(of: settings.species(forCreature: i)) }
 

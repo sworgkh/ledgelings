@@ -298,6 +298,36 @@ public struct Creature: Sendable {
         enter(.walking(remaining: .random(in: config.walkSpell, using: &rng)))
     }
 
+    // MARK: Planting
+
+    /// Stand still a moment, as when planting a flower. Only while walking or idling.
+    public mutating func pause(for seconds: Double) {
+        switch mode {
+        case .walking, .idle: enter(.idle(remaining: seconds))
+        default: break
+        }
+    }
+
+    /// Walking or standing about: free to stop for something of its own.
+    public var isAtLeisure: Bool {
+        switch mode {
+        case .walking, .idle: true
+        default: false
+        }
+    }
+
+    /// Walk toward `t` on this loop, the short way round; stops steering once within
+    /// `near`. Only while walking or idling. Called every frame by whoever is looking
+    /// for somewhere (a spot to plant a flower).
+    public mutating func head(toward t: CGFloat, near: CGFloat) {
+        guard isAtLeisure else { return }
+        let ahead = loop.wrap(t - spot.t)
+        guard min(ahead, loop.length - ahead) > near else { return }
+        direction = ahead <= loop.length / 2 ? 1 : -1
+        if case .walking(let remaining) = mode { mode = .walking(remaining: max(remaining, 1)) }
+        else { enter(.walking(remaining: 1)) }
+    }
+
     // MARK: Meeting someone
 
     /// Stop and face the other creature: `facing` is +1 when it is further along

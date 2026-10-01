@@ -90,6 +90,19 @@ struct TeaTableSnapshot {
     var scale: CGFloat
 }
 
+/// A flower planted in the edge, in GLOBAL coordinates.
+struct PlantedSnapshot {
+    var image: CGImage?
+    /// The foot of its stem, on the screen edge.
+    var floor: CGPoint
+    /// The edge's turn, as a creature standing there has it.
+    var rotation: Double
+    var scale: CGFloat
+    /// 0 as it goes in, 1 once it is fully up: it comes up out of the edge.
+    var grown: CGFloat
+    var opacity: Float
+}
+
 struct FlowerFlight {
     var image: CGImage?
     var position: CGPoint
@@ -133,6 +146,7 @@ final class ScreenOverlay {
         root.addSublayer(layer)
         return layer
     }()
+    private var beds: [CALayer] = []
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String, shown: Int)] = [:]
     private var sparkLayers: [CALayer] = []
     private lazy var house: CALayer = {
@@ -226,8 +240,9 @@ final class ScreenOverlay {
                 flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = [],
                 house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
                 plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
-                tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero) {
+                tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = []) {
         renderFlight(inFlight, flowerCell: flowerCell)
+        renderGarden(garden, cell: flowerCell)
         renderTeaTable(tea, cell: teaCell)
         mailPlane.render(plane, cell: planeCell, origin: display.frame.origin)
         reminderPlane.render(reminder?.plane, cell: planeCell, origin: display.frame.origin)
@@ -471,6 +486,33 @@ final class ScreenOverlay {
         teaTable.bounds = CGRect(x: 0, y: 0, width: cell.width * tea.scale, height: cell.height * tea.scale)
         teaTable.position = CGPoint(x: tea.floor.x - origin.x, y: tea.floor.y - origin.y)
         teaTable.transform = CATransform3DMakeRotation(tea.rotation, 0, 0, 1)
+    }
+
+    private func renderGarden(_ planted: [PlantedSnapshot], cell: CGSize) {
+        let origin = display.frame.origin
+        while beds.count < planted.count {
+            let layer = makeLayers().sprite
+            layer.zPosition = -1                       // behind the creatures, who walk past in front
+            layer.anchorPoint = CGPoint(x: 0.5, y: 0)  // stands on the foot of its stem
+            root.addSublayer(layer)
+            beds.append(layer)
+        }
+        for (k, layer) in beds.enumerated() {
+            guard k < planted.count, let image = planted[k].image else {
+                if !layer.isHidden { layer.isHidden = true }
+                continue
+            }
+            let bed = planted[k]
+            let reach = max(cell.width, cell.height) * bed.scale
+            let here = display.frame.insetBy(dx: -reach, dy: -reach).contains(bed.floor)
+            if layer.isHidden == here { layer.isHidden = !here }
+            guard here else { continue }
+            if (layer.contents as AnyObject?) !== image { layer.contents = image }
+            layer.bounds = CGRect(x: 0, y: 0, width: cell.width * bed.scale, height: cell.height * bed.scale)
+            layer.position = CGPoint(x: bed.floor.x - origin.x, y: bed.floor.y - origin.y)
+            layer.transform = CATransform3DScale(CATransform3DMakeRotation(bed.rotation, 0, 0, 1), 1, max(bed.grown, 0.001), 1)
+            layer.opacity = bed.opacity
+        }
     }
 
     private func renderFlight(_ inFlight: FlowerFlight?, flowerCell: CGSize) {
