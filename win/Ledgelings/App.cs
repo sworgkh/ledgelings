@@ -7,7 +7,7 @@ using Ledgelings.UI;
 namespace Ledgelings;
 
 /// <summary>A tray-only application: no main window, quits only from the menu.</summary>
-public sealed class App : Application
+public sealed partial class App : Application
 {
     private AppSettings? settings;
     private ChatHistory? history;
@@ -54,6 +54,7 @@ public sealed class App : Application
             Shutdown(1);
             return;
         }
+        StartReminders();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
 
@@ -95,6 +96,7 @@ public sealed class App : Application
         else hide = "Hide Them for a While\u2026";
         items.Add(new TrayIcon.Item(hide, HideThem));
         items.Add(new TrayIcon.Item("Make Someone Talk", () => colony.TalkNow()));
+        AddMailItems(items);
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
         items.Add(new TrayIcon.Item("Chat History\u2026", () => OpenSettings(SettingsTab.Chats)));
@@ -127,12 +129,14 @@ public sealed class App : Application
     {
         if (settings is null || history is null || library is null || spend is null) return;
         settingsWindow ??= new SettingsWindow(settings, history, library, spend) { BondBook = colony?.Bonds };
+        AttachReminders(settingsWindow);
         settingsWindow.Show(tab);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         tray?.Dispose();
+        StopReminders();
         colony?.Dispose();
         single?.Dispose();
         base.OnExit(e);

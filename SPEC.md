@@ -1058,7 +1058,7 @@ Every so often one creature folds a note into a paper plane and throws it to
 another. The plane flies in weather of its own, swirling across the screen;
 the catcher stops, reads the note out, says something to itself about it, and
 throws **one** answer back, which is read and thought about but never
-answered. macOS only for now; the Windows app does not have it yet.
+answered.
 
 - **The post**: `interval = planeMinutes · 60` s (default 3 min, range
   0.5–60; 0 when `planesEnabled` is off). Every first plane sent (not an
@@ -1149,7 +1149,7 @@ answered. macOS only for now; the Windows app does not have it yet.
   answers are in, it holds the unread letter up to 8 s, then falls back to the
   built-in letters for whatever is missing.
 
-### 7.7 Reminders (macOS)
+### 7.7 Reminders
 
 The user sets reminders (Settings › Reminders); when one comes due, a creature
 throws it at the user as a paper plane that opens into a letter in the middle of
@@ -1169,7 +1169,7 @@ the screen.
   came due is delivered, late, when it is turned back on. One delivery at a time,
   the queue in order. Send Now, the test letter and `--remind "text"` queue a
   reminder without touching the file.
-- **The paper note**: with `reminderPaperNote` on, Add a Reminder… (⌘R) opens a
+- **The paper note**: with `reminderPaperNote` on, Add a Reminder… (⌘R; Ctrl+Alt+R system-wide on Windows) opens a
   borderless 564×414-point window centred on the cursor's screen: `Reminders.paper`
   at 3 points per pixel below 54 points of headroom where a random creature on screen
   (awake if any) shows its idle frame at 3×, feet behind the top edge. Controls are

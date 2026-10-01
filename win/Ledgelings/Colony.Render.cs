@@ -29,13 +29,17 @@ public sealed partial class Colony
                 Hat = gifts.Hat(i) is string flower ? flowerFrames.Frame(flower, 0) : null,
                 Hidden = hideout.IsInside(i),
                 Shrink = shrink,
+                Letter = LetterImage(i),
             });
         }
         var z = zFrames.Frame("float", 0);
         var inFlight = FlightSnapshot();
         var stars = SparkSnapshots();
         var home = HouseSnapshot();
+        var plane = MailSnapshot();
+        var reminder = DeliverySnapshot();
         foreach (var overlay in overlays)
-            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell);
+            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell,
+                           plane: plane, planeCell: planeCell, reminder: reminder);
     }
 }

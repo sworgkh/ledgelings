@@ -68,7 +68,7 @@ public sealed partial class Colony
     {
         if (creatures.Count < 2) { TalkStatus = "needs at least two creatures"; return; }
         if (hideout.IsActive) return;
-        var free = Enumerable.Range(0, creatures.Count).Where(i => !busy.Contains(i)).ToList();
+        var free = Enumerable.Range(0, creatures.Count).Where(i => !busy.Contains(i) && !ExpectsPlane(i)).ToList();
         var awake = free.Where(i => !creatures[i].IsSleeping && !creatures[i].IsJumping).ToList();
         var pool = awake.Count == 0 ? free : awake;
         int? speaker = chosen ?? (pool.Count == 0 ? null : rng.Pick(pool));
@@ -158,6 +158,8 @@ public sealed partial class Colony
     /// <summary>Out loud, someone is mid-conversation: another pair meeting now only
     /// bumps, and a plane that lands waits to be read, rather than talking over them.</summary>
     private bool VoiceIsTakenNow => IsVoiced && voicedDialogues > 0;
+
+    partial void VoiceIsTaken(ref bool taken) => taken = VoiceIsTakenNow;
 
     /// <summary>Run <paramref name="action"/> once line <paramref name="serial"/> has been said (or will not be): at once for
     /// a line that is not being voiced or has already ended.</summary>

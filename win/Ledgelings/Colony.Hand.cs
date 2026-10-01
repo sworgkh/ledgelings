@@ -26,6 +26,7 @@ public sealed partial class Colony
         switch (e)
         {
             case HandEvent.Down(var point, var shift):
+                if (LetterContains(point)) { CloseLetter(); break; }      // a press on a reminder's letter folds it away
                 if (CreatureAt(point) is not int i)
                 {
                     if (BubbleAt(point) is int spoken) bubbles.Remove(spoken);
@@ -74,7 +75,8 @@ public sealed partial class Colony
     private void UpdateClickability(Pt cursor, bool shift)
     {
         var under = CreatureAt(cursor);
-        var target = held is not null || (under is int i && (shift || creatures[i].IsSleeping)) || BubbleAt(cursor) is not null;
+        var target = held is not null || (under is int i && (shift || creatures[i].IsSleeping)) || BubbleAt(cursor) is not null
+                     || LetterContains(cursor);
         foreach (var overlay in overlays) overlay.SetClickable(target && overlay.Monitor.Frame.Contains(cursor));
     }
 }
