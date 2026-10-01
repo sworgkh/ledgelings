@@ -23,7 +23,7 @@ choice, giving flowers, sending paper planes when it gets too quiet, keeping eve
 chat and what it cost, growing little stories between the ones who live together, knowing your time of day and your holidays, rarely saying the same thing twice, going home when asked, and wearing creatures you describe to
 any chat model.
 
-**See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (50 s, no sound) shows every feature on a clean desktop. It is rendered by the app itself, `scripts/make-promo.sh`.
+**See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (50 s, no sound) shows every feature on a clean desktop. It is rendered by the app itself, `scripts/make-promo.sh`. A 78-second motion infographic of the features, with music, is made from [promo-video/](promo-video).
 
 ## Quick start
 

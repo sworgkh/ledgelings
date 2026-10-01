@@ -1,0 +1,40 @@
+{
+  "name": "tea",
+  "image": "tea.png",
+  "cell": [
+    36,
+    28
+  ],
+  "contentBox": [
+    0,
+    0,
+    36,
+    28
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "tea-0": {
+      "x": 0,
+      "y": 0,
+      "w": 36,
+      "h": 28
+    },
+    "tea-1": {
+      "x": 36,
+      "y": 0,
+      "w": 36,
+      "h": 28
+    }
+  },
+  "animations": {
+    "steam": {
+      "frames": [
+        "tea-0",
+        "tea-1"
+      ],
+      "fps": 2.0,
+      "loop": true
+    }
+  }
+}

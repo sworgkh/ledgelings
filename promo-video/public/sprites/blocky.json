@@ -1,0 +1,230 @@
+{
+  "name": "blocky",
+  "image": "blocky.png",
+  "cell": [
+    32,
+    32
+  ],
+  "contentBox": [
+    5,
+    5,
+    22,
+    22
+  ],
+  "variants": [
+    "open",
+    "half",
+    "closed"
+  ],
+  "palette": {
+    "body": "#ff8a3d",
+    "light": "#ffb27a",
+    "shade": "#d66220",
+    "outline": "#3b1f0f"
+  },
+  "frames": {
+    "idle_open": {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "walk-0_open": {
+      "x": 32,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "walk-1_open": {
+      "x": 64,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "walk-2_open": {
+      "x": 96,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "walk-3_open": {
+      "x": 128,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "jump_open": {
+      "x": 160,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "land_open": {
+      "x": 192,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "sleep-0_open": {
+      "x": 224,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "sleep-1_open": {
+      "x": 256,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "idle_half": {
+      "x": 0,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "walk-0_half": {
+      "x": 32,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "walk-1_half": {
+      "x": 64,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "walk-2_half": {
+      "x": 96,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "walk-3_half": {
+      "x": 128,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "jump_half": {
+      "x": 160,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "land_half": {
+      "x": 192,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "sleep-0_half": {
+      "x": 224,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "sleep-1_half": {
+      "x": 256,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "idle_closed": {
+      "x": 0,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "walk-0_closed": {
+      "x": 32,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "walk-1_closed": {
+      "x": 64,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "walk-2_closed": {
+      "x": 96,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "walk-3_closed": {
+      "x": 128,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "jump_closed": {
+      "x": 160,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "land_closed": {
+      "x": 192,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "sleep-0_closed": {
+      "x": 224,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    "sleep-1_closed": {
+      "x": 256,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    }
+  },
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "walk": {
+      "frames": [
+        "walk-0",
+        "walk-1",
+        "walk-2",
+        "walk-3"
+      ],
+      "fps": 8.0,
+      "loop": true
+    },
+    "jump": {
+      "frames": [
+        "jump"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "land": {
+      "frames": [
+        "land"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "sleep": {
+      "frames": [
+        "sleep-0",
+        "sleep-1"
+      ],
+      "fps": 0.8,
+      "loop": true
+    }
+  }
+}

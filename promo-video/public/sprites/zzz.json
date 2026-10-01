@@ -1,0 +1,33 @@
+{
+  "name": "zzz",
+  "image": "zzz.png",
+  "cell": [
+    10,
+    10
+  ],
+  "contentBox": [
+    0,
+    0,
+    10,
+    10
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "z": {
+      "x": 0,
+      "y": 0,
+      "w": 10,
+      "h": 10
+    }
+  },
+  "animations": {
+    "float": {
+      "frames": [
+        "z"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}
