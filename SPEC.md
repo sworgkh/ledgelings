@@ -990,8 +990,8 @@ inward axis from 0 to full, standing on its stem's foot), fades over its last
 more than `gardenSize` (default 12, range 1–40) in the ground, the oldest
 wilts at once. When the monitors change, a flower whose foot is more than 2 pt
 from the new outline is dropped. Planted flowers are not kept across a relaunch.
-**Clear Planted Flowers** (menu, shown as "Clear N Planted Flowers" while any are
-planted; and a button on the Flowers tab) removes them all at once.
+**Clear Planted Flowers** (a Creature Actions tile, §11, "Clear N Flowers", greyed
+while none are planted; and a button on the Flowers tab) removes them all at once.
 
 ### 7.4 Stars (sparks)
 
@@ -1006,7 +1006,7 @@ velocity += gravity·dt, position += velocity·dt, age += dt; dead when
 
 ### 7.5 Hiding in the house
 
-"Hide Them for a While…" asks for a duration (5, 15, 30 minutes, 1, 2, 4
+"Hide Them for a While" (§11) asks for a duration (5, 15, 30 minutes, 1, 2, 4
 hours, or until 08:00 tomorrow) and starts the `Hideout` state machine with
 `count` = number of creatures:
 
@@ -1170,7 +1170,7 @@ the screen.
   came due is delivered, late, when it is turned back on. One delivery at a time,
   the queue in order. Send Now, the test letter and `--remind "text"` queue a
   reminder without touching the file.
-- **The paper note**: with `reminderPaperNote` on, Add a Reminder… (⌘R; Ctrl+Alt+R system-wide on Windows) opens a
+- **The paper note**: with `reminderPaperNote` on, Add a Reminder (§11; Ctrl+Alt+R system-wide on Windows) opens a
   borderless 564×414-point window centred on the cursor's screen: `Reminders.paper`
   at 3 points per pixel below 54 points of headroom where a random creature on screen
   (awake if any) shows its idle frame at 3×, feet behind the top edge. Controls are
@@ -1285,7 +1285,7 @@ rehomed) or is removed, or the house comes out (§7.5), or `teaPartiesEnabled` i
 turned off, the party ends at once: no table yet → over; else packing. A scripted
 answer still due is dropped, the pair leaves `busy`.
 
-**Menu: Have a Tea Party** (hidden while tea parties are off): the closest two
+**Have a Tea Party** (§11; greyed while tea parties are off): the closest two
 free, awake creatures on the same segment stop and sit down now; if no two share
 a segment, the one nearer another jumps (`leap`, §4.9) to `36 · mean size` points
 in front of it along its segment and they sit down once it lands (a word instead
@@ -1590,22 +1590,38 @@ falls through to whatever is underneath.
 | Shift-press and release within 4 pt | **poke**: it speaks to the nearest creature; both stop to talk |
 | Shift-press and move ≥ 4 pt | **carry** any creature; awake ones ride with eyes open and land awake |
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
-| Menu: Make Them Jump | every creature startles |
-| Menu: Make Someone Talk | §6.5 |
-| Menu: Have a Tea Party | two sit down to tea now (§7.8); hidden while tea parties are off |
-| Menu: Clear N Planted Flowers | pulls up every planted flower (§7.3.1); hidden while none are planted |
-| Menu: Send a Paper Plane | a plane goes up now if two creatures are free (§7.6) |
-| Menu: Add a Reminder… (⌘R) | the paper note (§7.7), or with `reminderPaperNote` off the settings window on the Reminders tab; below it, `Next: <text>, <when>` (with `(off)` when reminders are off) opens the same |
+| Menu: Creature Actions… (⌘A on macOS) | the actions sheet, below; on Windows the tray menu still lists each action as its own item |
+| Sheet: Make Them Jump (J) | every creature startles |
+| Sheet: Make Someone Talk (T) | §6.5 |
+| Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
+| Sheet: Clear N Flowers (F) | pulls up every planted flower (§7.3.1); greyed while none are planted |
+| Sheet: Send a Paper Plane (P) | a plane goes up now if two creatures are free (§7.6); greyed while one is in the air |
+| Sheet: Add a Reminder (R) | puts the sheet away; the paper note (§7.7), or with `reminderPaperNote` off the settings window on the Reminders tab |
+| Menu: `Next: <text>, <when>` | shown while a reminder waits (with `(off)` when reminders are off); the Reminders tab |
 | Click a reminder's open letter | folds it away (§7.7) |
-| Menu: Put Them to Sleep Now / Wake Them Up Now | skip to the next phase (hidden when night = 0) |
-| Menu: Hide Them for a While… / Bring Them Back Now | §7.5; while hiding the item shows the time left |
+| Sheet: Put Them to Sleep / Wake Them Up (S) | skip to the next phase; shows `dusk in m:ss` / `dawn in m:ss`; greyed when night = 0 |
+| Sheet: Hide Them for a While / Bring Them Back (H) | a row of durations comes up under the tiles (§7.5); while hiding the tile shows `m:ss left` and ends it early |
 | Menu: Chat History… | the settings window on the Chats tab (§6.5) |
 | Menu: Settings… | the settings window |
 | Settings › Startup: Start at login | registers the app in the system's login items (macOS `SMAppService`); only an installed .app can |
 
 The menu also shows `"Day — they sleep in m:ss"` / `"Night — they wake in
-m:ss"` (or `"Always day — night is set to 0"`), the last talk status line
-(first 70 characters), and Quit.
+m:ss"` (or `"Always day — night is set to 0"`, and while hiding `"Hiding in the
+house — out in m:ss"`), the last talk status line (first 70 characters), and Quit.
+
+**The actions sheet** (macOS): a borderless 564×506-point window centred on the
+cursor's screen, the letter's paper (`Reminders.paper`, 3 points per pixel) below 54
+points of headroom with a creature peeking over the top, as the paper note (§7.7).
+Eight tiles, four to a row, in the order of the table above: each a raised pixel box
+with its picture (a frame of the game's sprites, cut to its painted pixels and drawn at
+the largest whole scale that fits 76×62: Blocky's `jump`, a three-dot speech bubble in
+Blocky's rules, the tea table, the plane, the letter, the house, Blocky's `sleep` with a
+Z, a poppy), its title, a small detail line, and its key in the top-right corner. A tile
+with nothing to do is drawn at 45 % and ignores presses; while the creatures hide,
+Jump, Talk, Tea and Plane are greyed. Under the tiles, one line: the hide durations
+while choosing, else what the last press did for 5 s, else `click a picture, or press
+its letter`. Done or Esc closes it; with `actionsStayOpen` off a press also folds it
+away (shrinks up and fades, 0.28 s). It reads the colony twice a second while open.
 
 ---
 
@@ -1628,6 +1644,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | complainEnabled | true | a creature bothered too often in a row complains (§4.7.1) |
 | complainAfter | 4 | 1–20, clamped on load: bothers it puts up with; the next one in a row gets a complaint |
 | complainCalmSeconds | 20 | 5–120 s, clamped on load: a gap this long starts the count over |
+| actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
 | teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |

@@ -71,6 +71,11 @@ bumping, then goes off to plant it in the edge wherever its character likes:
 Blocky on the bottom edge, Pip on the ceiling, Ruth in a neat row beside the
 others, Dot straight away, Zed once it gets dark.
 
+**Play with them.** *Creature Actions…* in the menu opens a sheet of the same pixel
+paper as the letters, a creature peeking over the top: one picture for everything you
+can ask of them (jump, talk, tea, a plane, a reminder, hide, sleep or wake, clear the
+flowers), each with a letter key.
+
 **Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
 loud, each character in a voice of its own: the computer's own voices (free,
 offline), or a speech model on OpenRouter (Kokoro by default, a fraction of a cent
@@ -108,7 +113,7 @@ weekday, every week). When the time comes, one of them folds it into a paper pla
 and throws it at you: it swirls to the middle of your screen, turns to face you,
 rushes at you and unfolds into a letter with your reminder, a note in the thrower's
 own voice and its signature. Click it to send it flying away. A letter that
-arrives while you are away waits for you. ⌘R from the menu (Ctrl+Alt+R anywhere on
+arrives while you are away waits for you. *Add a Reminder* in Creature Actions… (Ctrl+Alt+R anywhere on
 Windows) opens a sheet of the same pixel paper to write it on, a creature peeking
 over the edge; the list is in Settings › Reminders.
 Every conversation is kept, and every call to the model is priced.
@@ -122,9 +127,9 @@ sprite sheet that blinks and takes your colours. See [docs/SPRITES.md](docs/SPRI
 **They have tea.** Now and then two who bump into each other put a little table out
 between them and sit down to tea for a few minutes, taking turns to tell each other
 stories from their lives, each in its own voice (Settings › Creatures › Tea parties,
-or *Have a Tea Party* from the menu).
+or *Have a Tea Party* in the menu's Creature Actions…).
 
-**They can go home.** *Hide Them for a While…* in the menu brings out a house in the
+**They can go home.** *Hide Them for a While* in Creature Actions… brings out a house in the
 bottom-right corner of the main screen; everyone runs in, the house packs itself
 away, and when the time is up it comes back and they walk out one by one.
 

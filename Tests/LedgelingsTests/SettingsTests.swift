@@ -374,6 +374,14 @@ import Testing
         #expect(AppSettings(defaults: defaults).reminderLetterSeconds == AppSettings.reminderLetterRange.lowerBound)
     }
 
+    @Test func theActionsSheetStaysOpenAfterATileUnlessToldOtherwiseAndItIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.actionsStayOpen)
+        s.actionsStayOpen = false
+        #expect(!AppSettings(defaults: defaults).actionsStayOpen)
+    }
+
     @Test func addAReminderOpensThePaperNoteUnlessToldOtherwiseAndItIsRemembered() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }
