@@ -297,7 +297,7 @@ public enum Reminders {
 
     /// The model writes the note as the creature throwing the plane, in the current language.
     public static var notePrompt: String { notePrompts() }
-    public static let notePrompts = Translated(english: englishNotePrompt)
+    public static let notePrompts = Translated(english: englishNotePrompt, [.russian: russianNotePrompt])
     public static let englishNotePrompt = """
     {situation}
     The person whose screen you live on asked to be reminded, right now, of: "{reminder}". \

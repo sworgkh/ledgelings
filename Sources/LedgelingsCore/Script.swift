@@ -100,7 +100,7 @@ public struct Script: Equatable, Sendable {
     public static func agentPrompt(cast: [Character], count: Int = 40) -> String {
         switch Language.current {
         case .english: englishAgentPrompt(cast: cast, count: count)
-        case .russian: englishAgentPrompt(cast: cast, count: count)
+        case .russian: russianAgentPrompt(cast: cast, count: count)
         }
     }
 

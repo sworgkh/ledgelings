@@ -302,7 +302,7 @@ public enum SpriteText {
     public static func prompt(example: [String]) -> String {
         switch Language.current {
         case .english: englishPrompt(example: example)
-        case .russian: englishPrompt(example: example)
+        case .russian: russianPrompt(example: example)
         }
     }
 

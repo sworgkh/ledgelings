@@ -107,6 +107,14 @@ import Testing
         #expect(bad.isEmpty, "a key with \\( never matches its table entry: use %@ and arguments: \(bad)")
     }
 
+    @Test func everyKeyIsTranslated() {
+        for language in Language.allCases where language != .english {
+            let table = Strings.tables[language] ?? [:]
+            let missing = Set(Self.keys().filter { table[$0.key] == nil }.map { "\($0.file): \($0.key)" }).sorted()
+            #expect(missing.isEmpty, "\(language.englishName) is missing \(missing.count):\n\(missing.joined(separator: "\n"))")
+        }
+    }
+
     /// `%@` in the English is `%@` (or `%1$@`…) in the translation, as many of each kind.
     @Test func formatsMatch() {
         let spec = try! Regex("%(?:\\d+\\$)?[@dif]|%\\.\\d+f|%(?:\\d+\\$)?ld")

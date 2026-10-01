@@ -24,9 +24,9 @@ public enum Banter {
     /// The English stays the data: casting and planting read that.
     public static func spoken(_ text: String) -> String { Strings.lookup(text, in: .current) }
 
-    public static let systemPrompts = Translated(english: englishSystemPrompt)
-    public static let linePrompts = Translated(english: englishLinePrompt)
-    public static let replyPrompts = Translated(english: englishReplyPrompt)
+    public static let systemPrompts = Translated(english: englishSystemPrompt, [.russian: russianSystemPrompt])
+    public static let linePrompts = Translated(english: englishLinePrompt, [.russian: russianLinePrompt])
+    public static let replyPrompts = Translated(english: englishReplyPrompt, [.russian: russianReplyPrompt])
     public static var defaultSystemPrompt: String { systemPrompts() }
     public static var defaultLinePrompt: String { linePrompts() }
     public static var defaultReplyPrompt: String { replyPrompts() }

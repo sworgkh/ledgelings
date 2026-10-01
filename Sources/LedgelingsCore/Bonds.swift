@@ -152,12 +152,12 @@ public enum Bonds {
     public static let plotMaxTokens = 1000
 
     /// The system side of the plot call: short, so the user prompt carries the work.
-    public static let plotSystemPrompts = Translated(english: englishPlotSystemPrompt)
+    public static let plotSystemPrompts = Translated(english: englishPlotSystemPrompt, [.russian: russianPlotSystemPrompt])
     public static var plotSystemPrompt: String { plotSystemPrompts() }
     public static let englishPlotSystemPrompt = "You write tiny, playful stories for small characters. Follow the answer format exactly."
 
     /// One call, one small answer: the story for a pair's next few conversations.
-    public static let plotPrompts = Translated(english: englishPlotPrompt)
+    public static let plotPrompts = Translated(english: englishPlotPrompt, [.russian: russianPlotPrompt])
     public static var defaultPlotPrompt: String { plotPrompts() }
 
     public static let englishPlotPrompt = """
