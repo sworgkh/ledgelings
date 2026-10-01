@@ -277,4 +277,45 @@ public class SettingsTests
         box.Store.Set("bubbleSeconds", 1.0);
         Assert.Equal(AppSettings.BubbleMin, box.Again().BubbleSeconds);
     }
+
+    [Fact]
+    public void PaperPlanesAreOnEveryThreeMinutesByDefaultAndItIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.PlanesEnabled);
+        Assert.Equal(3, s.PlaneMinutes);
+        s.PlanesEnabled = false;
+        s.PlaneMinutes = 10;
+        var back = box.Again();
+        Assert.True(!back.PlanesEnabled && back.PlaneMinutes == 10);
+        box.Store.Set("planeMinutes", 0.0);
+        Assert.Equal(AppSettings.PlaneMin, box.Again().PlaneMinutes);
+        box.Store.Set("planeMinutes", 500.0);
+        Assert.Equal(AppSettings.PlaneMax, box.Again().PlaneMinutes);
+    }
+
+    [Fact]
+    public void RemindersArriveByPlaneTheLetterStaysAMinuteAndIsReadAloudAndItIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.RemindersEnabled && s.ReminderLetterSeconds == 60 && s.ReminderReadAloud);
+        s.RemindersEnabled = false;
+        s.ReminderLetterSeconds = 120;
+        s.ReminderReadAloud = false;
+        var back = box.Again();
+        Assert.True(!back.RemindersEnabled && back.ReminderLetterSeconds == 120 && !back.ReminderReadAloud);
+        box.Store.Set("reminderLetterSeconds", 1.0);
+        Assert.Equal(AppSettings.ReminderLetterMin, box.Again().ReminderLetterSeconds);
+    }
+
+    [Fact]
+    public void AddAReminderOpensThePaperNoteUnlessToldOtherwiseAndItIsRemembered()
+    {
+        var box = Fresh();
+        Assert.True(box.Settings.ReminderPaperNote);
+        box.Settings.ReminderPaperNote = false;
+        Assert.False(box.Again().ReminderPaperNote);
+    }
 }

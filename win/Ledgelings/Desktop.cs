@@ -62,6 +62,14 @@ public static class Desktop
     public static bool IsShiftDown => (Win32.GetAsyncKeyState(Win32.VK_SHIFT) & 0x8000) != 0;
     public static bool IsControlDown => (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0;
 
+    /// <summary>Seconds since the user last touched the mouse or keyboard, in this session.</summary>
+    public static double IdleSeconds()
+    {
+        var info = new Win32.LASTINPUTINFO { cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Win32.LASTINPUTINFO>() };
+        if (!Win32.GetLastInputInfo(ref info)) return 0;
+        return unchecked(Win32.GetTickCount() - info.dwTime) / 1000.0;      // both wrap every 49 days; the difference does not
+    }
+
     /// <summary>Pixels per point on the primary monitor, in half steps, so that "3×" on a
     /// 150 % display draws each sheet pixel as 4.5 screen pixels and a creature is the
     /// size it is on a Mac. 1 on a plain 96 dpi monitor.</summary>

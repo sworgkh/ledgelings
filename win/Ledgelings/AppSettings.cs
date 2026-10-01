@@ -45,6 +45,8 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadTalk();
         LoadBonds();
         LoadCalendar();
+        LoadPlanes();
+        LoadReminders();
     }
 
     public int CreatureCount

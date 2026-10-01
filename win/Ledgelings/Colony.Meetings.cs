@@ -22,7 +22,7 @@ public sealed partial class Colony
         {
             var c = creatures[i];
             parties.Add(new Meetings.Party(c.Spot.Loop, c.Segment, c.Position, atlas.BodyHalfSize * sizes[i],
-                !hideout.IsActive && !busy.Contains(i) && !c.IsJumping && !c.LooksAsleep && !c.IsHeld && !c.IsChatting));
+                !hideout.IsActive && !busy.Contains(i) && !ExpectsPlane(i) && !c.IsJumping && !c.LooksAsleep && !c.IsHeld && !c.IsChatting));
         }
         return parties;
     }

@@ -173,7 +173,13 @@
                 <Slider Minimum="0.5" Maximum="30" TickFrequency="0.5" Value="{Binding FlowerMinutes, Mode=TwoWay}"/>
               </DockPanel>
               <CheckBox Content="The one with the flower follows the giver while it lasts" IsChecked="{Binding FollowGiver, Mode=TwoWay}"/>
-              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. &quot;Make Someone Talk&quot; in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new."/>
+              <CheckBox Content="Paper planes" IsChecked="{Binding PlanesEnabled, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding PlanesEnabled}">
+                <TextBlock Text="A paper plane every" Style="{StaticResource RowLabel}" Width="130"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding PlaneMinutes, StringFormat={}{0} min}"/>
+                <Slider Minimum="0.5" Maximum="60" TickFrequency="0.5" Value="{Binding PlaneMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. &quot;Make Someone Talk&quot; and &quot;Send a Paper Plane&quot; in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new."/>
             </StackPanel>
           </GroupBox>
           <GroupBox Header="Brain">
@@ -420,6 +426,84 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Reminders">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="New reminder">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Remind me to" Style="{StaticResource RowLabel}"/>
+                <Grid>
+                  <TextBox x:Name="ReminderText" KeyDown="ReminderText_KeyDown" TextChanged="ReminderText_Changed"/>
+                  <TextBlock x:Name="ReminderHint" Text="Stretch, call mom, stand-up…" Foreground="Gray" IsHitTestVisible="False" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </Grid>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="When" Style="{StaticResource RowLabel}"/>
+                <TextBox x:Name="ReminderClock" DockPanel.Dock="Right" Width="60" Margin="8,0,0,0" LostFocus="ReminderClock_LostFocus" ToolTip="Time, 24-hour: 14:30"/>
+                <DatePicker x:Name="ReminderDay" SelectedDateChanged="ReminderDay_Changed"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Repeat" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReminderRepeat" DisplayMemberPath="Title"/>
+              </DockPanel>
+              <DockPanel Margin="0,6,0,0">
+                <Button x:Name="AddReminder" DockPanel.Dock="Right" Content="Add Reminder" Click="AddReminder_Click" IsEnabled="False"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="In 5 min" Tag="5" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
+                  <Button Content="In 30 min" Tag="30" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
+                  <Button Content="In 1 hour" Tag="60" Click="ReminderSoon_Click"/>
+                </StackPanel>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Delivery">
+            <StackPanel>
+              <CheckBox Content="Reminders arrive by paper plane" IsChecked="{Binding RemindersEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock Text="Letter stays open" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding ReminderLetterSeconds, StringFormat={}{0} s}"/>
+                <Slider Minimum="10" Maximum="600" TickFrequency="10" Value="{Binding ReminderLetterSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <CheckBox Content="The thrower reads its note out loud" IsChecked="{Binding ReminderReadAloud, Mode=TwoWay}"/>
+              <CheckBox Content="Add a Reminder… opens a paper note" IsChecked="{Binding ReminderPaperNote, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <Button Content="Send a Test Letter" Click="TestLetter_Click" HorizontalAlignment="Right" Margin="0,6,0,0"/>
+              <TextBlock x:Name="ReminderFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Your reminders">
+            <StackPanel>
+              <TextBlock x:Name="NoReminders" Text="No reminders yet." Foreground="Gray"/>
+              <ItemsControl x:Name="ReminderList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel Margin="0,4">
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderSend_Click">Send Now</Hyperlink></TextBlock>
+                        <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderDelete_Click">Delete</Hyperlink></TextBlock>
+                      </StackPanel>
+                      <StackPanel Opacity="{Binding Opacity}">
+                        <TextBlock Text="{Binding Text}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding When}" FontSize="11" Foreground="Gray"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" Text="Sent one-off reminders stay here, greyed, until you clear them."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="The file">
+            <DockPanel>
+              <Button x:Name="ClearSent" DockPanel.Dock="Right" Content="Clear Sent" Click="ClearSent_Click" Margin="8,0,0,0"/>
+              <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealReminders_Click" Margin="8,0,0,0"/>
+              <TextBox x:Name="RemindersPath" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+            </DockPanel>
           </GroupBox>
         </StackPanel>
       </ScrollViewer>

@@ -65,6 +65,15 @@ public sealed partial class ScreenOverlay
                 g.Transform = body;
             }
 
+            // The open letter is held out in front, on the side it faces.
+            if (snap.Letter is Bitmap letter)
+            {
+                g.TranslateTransform((snap.IsMirrored ? -1 : 1) * cell.Width * scale * 0.42f, bodyHeight * 0.08f);
+                g.ScaleTransform(scale, scale);
+                DrawImageCentred(g, letter);
+                g.Transform = body;
+            }
+
             if (snap.AsleepFor is double asleep && z is not null)
             {
                 for (int k = 0; k < ZCount; k++)

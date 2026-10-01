@@ -25,6 +25,8 @@ public sealed class CreatureSnapshot
     public bool Hidden;
     /// <summary>1 = full size; falls to 0 as it disappears into the doorway, rises from 0 as it comes out.</summary>
     public double Shrink = 1;
+    /// <summary>The paper plane's note, unfolded and held out in front while it is read.</summary>
+    public Bitmap? Letter;
 }
 
 /// <summary>The house, at whatever size it currently is, pinned by its bottom-right corner.
@@ -82,7 +84,8 @@ public sealed partial class ScreenOverlay : IDisposable
     private PointF ToWindow(Pt p) => new((float)(p.X - Monitor.Left), (float)(-p.Y - Monitor.Top));
 
     public void Render(IReadOnlyList<CreatureSnapshot> snapshots, Bitmap? z, Size cell, Size zCell, Size flowerCell,
-                       FlowerFlight? flight, IReadOnlyList<SparkSnapshot> sparks, HouseSnapshot? house, Size houseCell)
+                       FlowerFlight? flight, IReadOnlyList<SparkSnapshot> sparks, HouseSnapshot? house, Size houseCell,
+                       PlaneSnapshot? plane = null, Size planeCell = default, ReminderSnapshot? reminder = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
         AddHouse(ops, house, houseCell);
@@ -101,6 +104,7 @@ public sealed partial class ScreenOverlay : IDisposable
         }
         AddFlight(ops, flight, flowerCell);
         AddSparks(ops, sparks);
+        AddMail(ops, plane, planeCell, reminder);      // over everything, the letter on top
         bubbles = newBubbles;
 
         var current = ops.Select(o => o.Bounds).ToList();
