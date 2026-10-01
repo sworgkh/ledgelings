@@ -315,8 +315,8 @@ final class AppSettings: ObservableObject {
         let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2
         flowerMinutes = min(max(flower, Self.flowerRange.lowerBound), Self.flowerRange.upperBound)
         plantFlowers = defaults.object(forKey: "plantFlowers") as? Bool ?? true
-        // Twenty minutes: long enough to come back to a row of them, short enough to keep changing.
-        let planted = defaults.object(forKey: "gardenMinutes") as? Double ?? 20
+        // An hour: long enough to come back to a row of them; Clear Planted Flowers takes them up sooner.
+        let planted = defaults.object(forKey: "gardenMinutes") as? Double ?? 60
         gardenMinutes = min(max(planted, Self.gardenMinutesRange.lowerBound), Self.gardenMinutesRange.upperBound)
         let beds = defaults.object(forKey: "gardenSize") as? Int ?? 12
         gardenSize = min(max(beds, Self.gardenSizeRange.lowerBound), Self.gardenSizeRange.upperBound)

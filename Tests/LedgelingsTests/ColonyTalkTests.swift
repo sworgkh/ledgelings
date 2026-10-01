@@ -385,6 +385,18 @@ extension ColonyTalkTests {
         #expect(w.colony.gifts.hat(of: 0) == nil && w.colony.garden.beds.isEmpty)
     }
 
+    @Test func clearingPullsUpEveryPlantedFlower() throws {
+        let w = try World()
+        defer { w.forget() }
+        for i in 0..<3 {
+            w.colony.garden.plant("poppy", at: CGPoint(x: Double(i) * 100, y: 0), rotation: 0, scale: 2, by: "Blocky",
+                                  at: w.colony.elapsed, lasts: 3_600, most: 12)
+        }
+        #expect(w.colony.clearGarden() == 3)
+        #expect(w.colony.garden.beds.isEmpty && w.colony.gardenSnapshots().isEmpty)
+        #expect(w.colony.clearGarden() == 0, "nothing left")
+    }
+
     @Test func plantedFlowersWiltInTime() throws {
         let w = try World()
         defer { w.forget() }

@@ -109,6 +109,16 @@ extension Colony {
         trace?("plant \(name) \(worn.flower) \(place?.rawValue ?? "anywhere")")
     }
 
+    /// Pull up every planted flower at once (the menu, the Flowers tab). Returns how many went.
+    @discardableResult
+    func clearGarden() -> Int {
+        let count = garden.beds.count
+        garden.clear()
+        render()
+        trace?("garden cleared \(count)")
+        return count
+    }
+
     /// The monitors changed: a flower no longer standing on an edge goes.
     func replantAfterScreensChanged() {
         let outline = EdgeWorld(screens: displays.map(\.frame), inset: 0)

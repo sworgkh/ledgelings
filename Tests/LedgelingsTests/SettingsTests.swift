@@ -226,7 +226,7 @@ import Testing
     @Test func flowersArePlantedByDefaultAndTheGardenSurvivesARelaunch() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }
-        #expect(s.plantFlowers && s.gardenMinutes == 20 && s.gardenSize == 12)
+        #expect(s.plantFlowers && s.gardenMinutes == 60 && s.gardenSize == 12)
         s.plantFlowers = false; s.gardenMinutes = 90; s.gardenSize = 3
         let again = AppSettings(defaults: defaults)
         #expect(!again.plantFlowers && again.gardenMinutes == 90 && again.gardenSize == 3)

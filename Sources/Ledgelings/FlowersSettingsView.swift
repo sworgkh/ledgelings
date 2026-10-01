@@ -6,6 +6,9 @@ import SwiftUI
 struct FlowersSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var library: SpriteLibrary
+    /// Pull up every planted flower; returns how many there were.
+    var clearGarden: () -> Int = { 0 }
+    @State private var cleared: String?
 
     var body: some View {
         TwoColumns {
@@ -26,10 +29,18 @@ struct FlowersSettingsView: View {
                     LabeledContent("Flowers in the ground at most", value: "\(settings.gardenSize)")
                 }
                 .disabled(!settings.plantFlowers)
+                HStack {
+                    Button("Clear Planted Flowers") {
+                        let n = clearGarden()
+                        cleared = n == 0 ? "Nothing was planted." : n == 1 ? "1 flower pulled up." : "\(n) flowers pulled up."
+                    }
+                    Spacer()
+                    if let cleared { Text(cleared).foregroundStyle(.secondary) }
+                }
             } header: {
                 Text("Planting")
             } footer: {
-                Text("After wearing it a while, each one stops following its giver, goes looking for the kind of spot its character likes and plants the flower in the edge there. What it likes comes from who it is: Blocky wants the bottom edge, Pip the ceiling, Ruth a neat row beside the others, Dot plants at once, Zed waits for dark. If nowhere suits before the flower would wilt, it plants it where it stands. Planting one more than the most wilts the oldest. Planted flowers are not kept when the app quits.")
+                Text("After wearing it a while, each one stops following its giver, goes looking for the kind of spot its character likes and plants the flower in the edge there. What it likes comes from who it is: Blocky wants the bottom edge, Pip the ceiling, Ruth a neat row beside the others, Dot plants at once, Zed waits for dark. If nowhere suits before the flower would wilt, it plants it where it stands. Planting one more than the most wilts the oldest. Clear Planted Flowers, here or in the menu, pulls them all up at once. Planted flowers are not kept when the app quits.")
             }
         } right: {
             Section {
