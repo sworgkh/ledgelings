@@ -408,7 +408,7 @@ where edge is the nearest of: the bottom edge (rotation 0), the right edge
 (π/2), the ceiling (π), the left edge (3π/2), by shortest arc from the
 creature's current rotation.
 
-### 6.1.1 The almanac: the user's day (macOS)
+### 6.1.1 The almanac: the user's day
 
 The creatures know the user's wall clock, as far as the Calendar tab allows
 (`knowsTimeOfDay`, `knowsDate`, one box per faith, `holidayLookAhead`). It is
@@ -588,7 +588,7 @@ file path and a button revealing it), and as a menu line "Spent: $a today, $b th
 month" opening that tab (hidden until there is a record); the Chats viewer shows
 each exchange's cost and tokens, and its voice cost.
 
-### 6.5.2 Bonds and plots (macOS)
+### 6.5.2 Bonds and plots
 
 Characters who share the screen for a long time form **bonds**, and the model
 writes each pair short **plots** that colour their next conversations. Kept in
@@ -637,7 +637,7 @@ rewritten whole on each change; key = the two names sorted, joined by `" & "`
 - **Log.** A conversation played under a plot is written with
   `"plot": "part 2 of 6: …"` (§6.5) and the Chats viewer shows it.
 
-### 6.5.3 Not repeating themselves (macOS)
+### 6.5.3 Not repeating themselves
 
 Each character remembers its last `lineMemory` lines (default 12, 0 = off),
 whatever made them: the model, the script, a paper plane. Lines are compared
@@ -821,7 +821,7 @@ not started.
 
 Choosing: the **moment** is the set `{day | night}` plus `flower` when the
 meeting gave one, plus `holiday` one conversation in three on a holiday the
-Calendar tab knows (§6.1.1, macOS). Candidates are the blocks whose every tag is in the moment
+Calendar tab knows (§6.1.1). Candidates are the blocks whose every tag is in the moment
 (untagged blocks always qualify). Of those, keep only the ones with the most
 tags, so a `[night, flower]` block wins at night with a flower, a `[flower]`
 block wins with a flower by day, and untagged blocks are used only when no

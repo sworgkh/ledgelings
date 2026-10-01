@@ -4,11 +4,15 @@ The same creatures, the same art, the same rules as the macOS app in the root of
 this repo, running as a Windows tray app. Everything in [SPEC.md](../SPEC.md) applies;
 this folder is its Windows implementation.
 
-**Status:** v0.15 feature parity with the macOS app: eight creatures across every
+**Status:** catching up with the macOS app (v0.29). In: eight creatures across every
 monitor, day and night, meetings with stars and flowers (the wearer trails the
 giver), talk from the built-in lines (the default: no model needed) or through
-LM Studio or OpenRouter, the chat log and spend ledger, hiding in the house,
-imported creatures from the sprite kit, the settings window with its four tabs.
+LM Studio or OpenRouter, lines they rarely repeat, room for a thinking model,
+built-in lines when LM Studio is not running, model-only settings greyed out
+without a model, bonds and their plots, the calendar (time of day, date,
+holidays), the chat log and spend ledger, hiding in the house, imported creatures
+from the sprite kit. Still Mac-only: paper planes, reminders, planting flowers,
+complaints, tea parties, voices and the Costs tab.
 
 ## Stack
 
@@ -20,7 +24,7 @@ imported creatures from the sprite kit, the settings window with its four tabs.
   hit-test their own alpha, so a click on empty glass falls through by itself; the
   colony clears `WS_EX_TRANSPARENT` only while the cursor is on a creature you can
   act on (§10.4 of the spec).
-- **Settings window**: WPF, four tabs, plain bindings.
+- **Settings window**: WPF, one tab per area as on the Mac, plain bindings.
 - **Tray icon and menu**: `Shell_NotifyIcon` + `TrackPopupMenu`, rebuilt each time it opens.
 - **Secrets**: the OpenRouter key lives in the Windows Credential Manager as
   `Ledgelings/openRouterKey`, never in the settings file.
@@ -58,6 +62,7 @@ line, **Settings…**, **Quit**. Left- or right-click the icon.
 | Settings | `%APPDATA%\Ledgelings\settings.json` |
 | Chats | `%APPDATA%\Ledgelings\chats\YYYY-MM-DD.jsonl` (same format as the Mac) |
 | Spend | `%APPDATA%\Ledgelings\spend.jsonl` |
+| Bonds and plots | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac) |
 | Imported creatures | `%APPDATA%\Ledgelings\sprites\<name>\` |
 | OpenRouter key | Credential Manager › Windows Credentials › `Ledgelings/openRouterKey` |
 | Start at login | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Ledgelings` (Task Manager › Startup apps) |
@@ -105,8 +110,21 @@ core tests are the Swift tests line for line.
   in two columns on one screen.
 - **The OpenRouter key** is read at launch: the Credential Manager never prompts,
   so there is nothing to save the user from by reading it late.
-- **No promo video.** The Mac can render its own promo (`scripts/make-promo.sh`);
-  Windows cannot.
+- **Steppers are sliders** (lines not repeated, story length, holiday look-ahead);
+  same ranges and steps.
+- **Reveal in Finder** is **Show in Explorer**.
+- **The calendar** uses .NET's `HebrewCalendar` (renumbered so the months count
+  the Mac's way) and `UmAlQuraCalendar`, whose tables end in 2077: after that no
+  Muslim holidays are mentioned. The footers say "your PC's clock".
+
+## Not on Windows
+
+- **The films and the promo video** (`--garden-film`, `--tea-film`, the reminder
+  film, `scripts/make-promo.sh`): they render offscreen with the Mac's video APIs.
+- **The command-line checks** (`--settings … --snapshot`, `--say`, `--cast`,
+  `--converse`, `--tea`, `--plot`, `--remind`, `--note`). A Windows colony always
+  opens real overlay windows, so the Mac's colony-level tests (`ColonyTalkTests`)
+  are not ported either; the core tests are.
 
 ## Layout
 
@@ -114,16 +132,17 @@ core tests are the Swift tests line for line.
 win/
   LedgelingsCore/        pure logic, no Win32, one class per Swift file:
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
-                           Hideout, Banter, ChatLog, Spend, SpriteText (+ Geometry: Pt, Vec, Rect)
+                           Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
+                           Voices (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
-                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout)
+                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout .Bonds)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble), FrameClock, Desktop
                            TrayIcon, App, Program
-                           AppSettings (+ .Talk), SettingsStore, LaunchAtLogin
-                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger
+                           AppSettings (+ .Talk .Bonds .Calendar), SettingsStore, LaunchAtLogin
+                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats), HideDialog, ColourDialog
+                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model), HideDialog, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

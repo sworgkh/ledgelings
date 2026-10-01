@@ -198,7 +198,7 @@ under each conversation that played part of it.
 To place the story yourself in the talk prompt, write `{relationship}` in *Who is
 speaking* on the Talk tab; without it, the story is added at the end.
 
-## Calendar tab (macOS)
+## Calendar tab
 
 The creatures know your day: the time on your Mac's clock, the date, and the
 holidays of the faiths you tick. It goes into every conversation and paper plane
@@ -217,7 +217,7 @@ which only says when they sleep.
 | **Mention a holiday** | 3 days ahead | 0 to 14 days | How early they start saying a holiday is coming ("Hanukkah is in 3 days"). 0: only on the day. A Jewish or Muslim holiday tomorrow "begins this evening" from 17:00 |
 
 On the right, what they know right now, word for word, and the ticked holidays in
-the next 60 days. Everything is worked out on the Mac; nothing is looked up online.
+the next 60 days. Everything is worked out on your computer; nothing is looked up online.
 With the built-in lines, one conversation in three on a holiday is a `[holiday]`
 block about it (`{holiday}` is its name). They know a holiday only on the day, and
 nothing of the clock or the date, so those two boxes and *Mention a holiday* are
