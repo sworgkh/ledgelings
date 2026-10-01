@@ -250,7 +250,7 @@ leaves and the one it lands on. Direction after landing: random.
   awake one lies down with `isNapping = true`, so daylight does not wake it;
   the next dawn does.
 
-### 4.7.1 Complaints (macOS)
+### 4.7.1 Complaints
 
 `update` returns true on the frame the cursor made it jump (§4.3). That, a
 pick-up by a plain press, and a Shift-drag carry each count as being **bothered**.

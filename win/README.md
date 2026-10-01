@@ -12,8 +12,9 @@ built-in lines when LM Studio is not running, model-only settings greyed out
 without a model, bonds and their plots, the calendar (time of day, date,
 holidays), paper planes, reminders delivered by plane with the paper note to
 write them on, the chat log and spend ledger, hiding in the house, imported
-creatures from the sprite kit. Still Mac-only: planting flowers, complaints, tea
-parties, voices and the Costs tab.
+creatures from the sprite kit, planting flowers where each character likes (the
+Flowers tab), complaints when pushed around. Still Mac-only: tea parties, voices
+and the Costs tab.
 
 ## Stack
 
@@ -143,16 +144,18 @@ win/
   LedgelingsCore/        pure logic, no Win32, one class per Swift file:
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
-                           Voices, PaperPlanes, Letters, Reminders (+ Geometry: Pt, Vec, Rect)
+                           Voices, PaperPlanes, Letters, Reminders,
+                           Garden, Complaints (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
-                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout .Bonds .Planes .Reminders)
-                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail), FrameClock, Desktop
+                           Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
+                                     .Bonds .Planes .Reminders .Garden .Complaints)
+                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden), FrameClock, Desktop
                            TrayIcon, App (+ .Reminders), GlobalHotkey, Program
-                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders), SettingsStore, LaunchAtLogin
+                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience), SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders), ReminderNote, HideDialog, ColourDialog
+                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers), ReminderNote, HideDialog, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build
