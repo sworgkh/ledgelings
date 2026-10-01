@@ -31,7 +31,8 @@ public enum SpriteText {
         "land": (["land"], 1, true),
         "sleep": (["sleep-0", "sleep-1"], 0.8, true),
     ]
-    public static let describePlaceholder = "<describe your creature here>"
+    /// Where the person writes what they want, in the prompt; in the current language.
+    public static var describePlaceholder: String { tr("<describe your creature here>") }
 
     public enum Ink: String, CaseIterable, Sendable {
         case clear = ".", outline = "o", body = "b", light = "l", shade = "s", eye = "k", black = "x"
@@ -106,17 +107,18 @@ public enum SpriteText {
 
         public var description: String {
             switch self {
-            case .badColour(let value): "colour must be six hex digits like #f0a0b0, not \"\(value)\""
-            case .noName: "the first line should be `name: something`"
-            case .missingPose(let p): "pose \(p) is missing"
-            case .unknownPose(let p): "pose \(p) is not one of \(poses.joined(separator: ", "))"
-            case .wrongRowCount(let p, let n): "pose \(p) has \(n) rows, not \(cell)"
-            case .wrongRowLength(let p, let r, let n): "pose \(p), row \(r + 1) has \(n) letters, not \(cell)"
-            case .strangeLetter(let p, let r, let c): "pose \(p), row \(r + 1): `\(c)` is not one of . o b l s k x"
+            case .badColour(let value): tr("colour must be six hex digits like #f0a0b0, not \"%@\"", value)
+            case .noName: tr("the first line should be `name: something`")
+            case .missingPose(let p): tr("pose %@ is missing", p)
+            case .unknownPose(let p): tr("pose %@ is not one of %@", p, poses.joined(separator: ", "))
+            case .wrongRowCount(let p, let n): tr("pose %@ has %d rows, not %d", p, n, cell)
+            case .wrongRowLength(let p, let r, let n): tr("pose %@, row %d has %d letters, not %d", p, r + 1, n, cell)
+            case .strangeLetter(let p, let r, let c): tr("pose %@, row %d: `%@` is not one of . o b l s k x", p, r + 1, String(c))
             case .outsideTheBox(let p, let r, let c):
-                "pose \(p) has ink at row \(r + 1), column \(c + 1), outside columns \(box.x + 1)–\(box.x + box.w) and rows \(box.y + 1)–\(box.y + box.h)"
-            case .notOnTheFloor(let p): "pose \(p) does not stand on the floor: row \(floor) is empty"
-            case .empty(let p): "pose \(p) is empty"
+                tr("pose %@ has ink at row %d, column %d, outside columns %d–%d and rows %d–%d",
+                   p, r + 1, c + 1, box.x + 1, box.x + box.w, box.y + 1, box.y + box.h)
+            case .notOnTheFloor(let p): tr("pose %@ does not stand on the floor: row %d is empty", p, floor)
+            case .empty(let p): tr("pose %@ is empty", p)
             }
         }
     }
@@ -295,8 +297,16 @@ public enum SpriteText {
 
     // MARK: The prompt
 
-    /// What to paste into a chat model, with the built-in creature's idle pose as the worked example.
+    /// What to paste into a chat model, with the built-in creature's idle pose as the
+    /// worked example, in the current language. The format's keys and letters stay as they are.
     public static func prompt(example: [String]) -> String {
+        switch Language.current {
+        case .english: englishPrompt(example: example)
+        case .russian: englishPrompt(example: example)
+        }
+    }
+
+    public static func englishPrompt(example: [String]) -> String {
         """
         I need a tiny pixel-art creature for a desktop toy, written as text so I can paste it back.
         The creature: \(describePlaceholder)

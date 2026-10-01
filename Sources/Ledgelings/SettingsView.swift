@@ -1,3 +1,4 @@
+import Combine
 import AppKit
 import LedgelingsCore
 import SwiftUI
@@ -26,120 +27,127 @@ struct SettingsView: View {
 
     var body: some View {
         TabView(selection: $navigation.tab) {
-            creaturesTab.tabItem { Text("Creatures") }.tag(SettingsTab.creatures)
-            SpritesSettingsView(settings: settings, library: library).tabItem { Text("Sprites") }.tag(SettingsTab.sprites)
-            TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text("Talk") }.tag(SettingsTab.talk)
-            FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text("Flowers") }.tag(SettingsTab.flowers)
-            BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text("Bonds") }.tag(SettingsTab.bonds)
-            CalendarSettingsView(settings: settings).tabItem { Text("Calendar") }.tag(SettingsTab.calendar)
-            RemindersSettingsView(settings: settings, reminders: reminders, send: send).tabItem { Text("Reminders") }.tag(SettingsTab.reminders)
-            VoiceSettingsView(settings: settings, voice: voice).tabItem { Text("Voice") }.tag(SettingsTab.voice)
-            CostsSettingsView(spend: spend).tabItem { Text("Costs") }.tag(SettingsTab.costs)
-            ChatHistoryView(history: history).tabItem { Text("Chats") }.tag(SettingsTab.chats)
+            creaturesTab.tabItem { Text(tr("Creatures")) }.tag(SettingsTab.creatures)
+            SpritesSettingsView(settings: settings, library: library).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
+            TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
+            FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
+            BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)
+            CalendarSettingsView(settings: settings).tabItem { Text(tr("Calendar")) }.tag(SettingsTab.calendar)
+            RemindersSettingsView(settings: settings, reminders: reminders, send: send).tabItem { Text(tr("Reminders")) }.tag(SettingsTab.reminders)
+            VoiceSettingsView(settings: settings, voice: voice).tabItem { Text(tr("Voice")) }.tag(SettingsTab.voice)
+            CostsSettingsView(spend: spend).tabItem { Text(tr("Costs")) }.tag(SettingsTab.costs)
+            ChatHistoryView(history: history).tabItem { Text(tr("Chats")) }.tag(SettingsTab.chats)
         }
         .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
+        // Every title is looked up as it is drawn: a new language draws the window anew.
+        .id(settings.language)
+        // Dates and numbers too, whatever the system speaks.
+        .environment(\.locale, Locale(identifier: settings.language.code))
     }
 
     private var creaturesTab: some View {
         TwoColumns {
             Section {
                 Stepper(value: $settings.creatureCount, in: AppSettings.countRange) {
-                    LabeledContent("How many", value: "\(settings.creatureCount)")
+                    LabeledContent(tr("How many"), value: "\(settings.creatureCount)")
                 }
-                SliderRow("Smallest", value: $settings.minSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
-                SliderRow("Largest", value: $settings.maxSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
+                SliderRow(tr("Smallest"), value: $settings.minSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
+                SliderRow(tr("Largest"), value: $settings.maxSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
             } header: {
-                Text("Creatures")
+                Text(tr("Creatures"))
             } footer: {
-                Text("Every creature gets its own size between the two. Set them equal and they all match.")
+                Text(tr("Every creature gets its own size between the two. Set them equal and they all match."))
             }
 
             Section {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 10)], alignment: .leading, spacing: 10) {
                     ForEach(settings.colors.indices, id: \.self) { index in
-                        ColorPicker("Colour \(index + 1)", selection: colorBinding(index), supportsOpacity: false)
+                        ColorPicker(tr("Colour %d", index + 1), selection: colorBinding(index), supportsOpacity: false)
                             .labelsHidden()
                     }
                 }
                 HStack {
-                    Button("Add Colour") { settings.colors.append(AppSettings.defaultColors[settings.colors.count % AppSettings.defaultColors.count]) }
+                    Button(tr("Add Colour")) { settings.colors.append(AppSettings.defaultColors[settings.colors.count % AppSettings.defaultColors.count]) }
                         .disabled(settings.colors.count >= 12)
-                    Button("Remove Last") { settings.colors.removeLast() }
+                    Button(tr("Remove Last")) { settings.colors.removeLast() }
                         .disabled(settings.colors.count <= 1)
                     Spacer()
-                    Button("Reset") { settings.colors = AppSettings.defaultColors }
+                    Button(tr("Reset")) { settings.colors = AppSettings.defaultColors }
                 }
             } header: {
-                Text("Colours")
+                Text(tr("Colours"))
             } footer: {
-                Text("Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out.")
+                Text(tr("Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out."))
             }
 
             Section {
-                Toggle("Sit down to tea now and then", isOn: $settings.teaPartiesEnabled)
-                SliderRow("Share of bumps", value: $settings.teaPartyChance, in: AppSettings.teaChanceRange, step: 1, unit: "%")
+                Toggle(tr("Sit down to tea now and then"), isOn: $settings.teaPartiesEnabled)
+                SliderRow(tr("Share of bumps"), value: $settings.teaPartyChance, in: AppSettings.teaChanceRange, step: 1, unit: "%")
                     .disabled(!settings.teaPartiesEnabled)
-                SliderRow("Lasts", value: $settings.teaPartyMinutes, in: AppSettings.teaMinutesRange, step: 0.5, unit: " min")
+                SliderRow(tr("Lasts"), value: $settings.teaPartyMinutes, in: AppSettings.teaMinutesRange, step: 0.5, unit: tr(" min"))
                     .disabled(!settings.teaPartiesEnabled)
-                SliderRow("Sip between stories", value: $settings.teaSipSeconds, in: AppSettings.teaSipRange, step: 1, unit: " s")
+                SliderRow(tr("Sip between stories"), value: $settings.teaSipSeconds, in: AppSettings.teaSipRange, step: 1, unit: tr(" s"))
                     .disabled(!settings.teaPartiesEnabled)
             } header: {
-                Text("Tea parties")
+                Text(tr("Tea parties"))
             } footer: {
-                Text("Now and then two creatures who bump into each other put a little table out between them and sit down to tea, taking turns to tell each other stories from their lives. One party at a time. With talk off they just sip.")
+                Text(tr("Now and then two creatures who bump into each other put a little table out between them and sit down to tea, taking turns to tell each other stories from their lives. One party at a time. With talk off they just sip."))
             }
         } right: {
             Section {
-                SliderRow("Day lasts", value: $settings.dayMinutes, in: 0.5...60, step: 0.5, unit: " min")
-                SliderRow("Night lasts", value: $settings.nightMinutes, in: 0...60, step: 0.5, unit: " min", zero: "never")
+                SliderRow(tr("Day lasts"), value: $settings.dayMinutes, in: 0.5...60, step: 0.5, unit: tr(" min"))
+                SliderRow(tr("Night lasts"), value: $settings.nightMinutes, in: 0...60, step: 0.5, unit: tr(" min"), zero: tr("never"))
             } header: {
-                Text("Day and night")
+                Text(tr("Day and night"))
             } footer: {
-                Text("They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake.")
+                Text(tr("They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake."))
             }
 
             Section {
-                Toggle("Complain when pushed around", isOn: $settings.complainEnabled)
+                Toggle(tr("Complain when pushed around"), isOn: $settings.complainEnabled)
                 Stepper(value: $settings.complainAfter, in: AppSettings.complainAfterRange) {
-                    LabeledContent("Puts up with", value: "\(settings.complainAfter) in a row")
+                    LabeledContent(tr("Puts up with"), value: tr("%d in a row", settings.complainAfter))
                 }
                 .disabled(!settings.complainEnabled)
-                SliderRow("Calms down after", value: $settings.complainCalmSeconds, in: AppSettings.complainCalmRange, step: 5, unit: " s")
+                SliderRow(tr("Calms down after"), value: $settings.complainCalmSeconds, in: AppSettings.complainCalmRange, step: 5, unit: tr(" s"))
                     .disabled(!settings.complainEnabled)
             } header: {
-                Text("Patience")
+                Text(tr("Patience"))
             } footer: {
-                Text("Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again.")
+                Text(tr("Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again."))
             }
 
             Section {
-                Toggle("Keep the sheet up after an action", isOn: $settings.actionsStayOpen)
+                Toggle(tr("Keep the sheet up after an action"), isOn: $settings.actionsStayOpen)
             } header: {
-                Text("Creature Actions")
+                Text(tr("Creature Actions"))
             } footer: {
-                Text("The menu's Creature Actions… opens a sheet of pictures, one for everything you can ask of them. On, it stays up for another go until you press Done; off, it folds away after one.")
+                Text(tr("On, the Creature Actions sheet stays up until you press Done; off, it folds away after one action."))
             }
 
             Section {
-                Toggle("Start Ledgelings when you log in", isOn: $startsAtLogin)
+                Picker(tr("Language"), selection: $settings.language) {
+                    ForEach(Language.allCases, id: \.self) { Text(verbatim: $0.title).tag($0) }
+                }
+                Toggle(tr("Start Ledgelings when you log in"), isOn: $startsAtLogin)
                     .onChange(of: startsAtLogin) { _, wanted in
                         guard wanted != LaunchAtLogin.isOn else { return }
                         do { try LaunchAtLogin.set(wanted) } catch { loginStatus = "\(error.localizedDescription)" ; return }
                         loginStatus = LaunchAtLogin.status
                         startsAtLogin = LaunchAtLogin.isOn
                     }
-                LabeledContent("Status") { Text(loginStatus).foregroundStyle(.secondary) }
+                LabeledContent(tr("Status")) { Text(loginStatus).foregroundStyle(.secondary) }
             } header: {
-                Text("Startup")
+                Text(tr("Language and startup"))
             } footer: {
-                Text("Uses the system's Login Items list; you can also change it in System Settings › General › Login Items.")
+                Text(tr("Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the system's Login Items."))
             }
         }
         .onAppear { startsAtLogin = LaunchAtLogin.isOn; loginStatus = LaunchAtLogin.status }
     }
 
     @State private var startsAtLogin = false
-    @State private var loginStatus = "not checked"
+    @State private var loginStatus = tr("not checked")
 
     private func colorBinding(_ index: Int) -> Binding<Color> {
         Binding(
@@ -259,6 +267,7 @@ final class SettingsWindowController {
     private let send: (Reminders.Reminder) -> Void
     private let clearGarden: () -> Int
     private let navigation = SettingsNavigation()
+    private var retitle: AnyCancellable?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
          reminders: ReminderBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void,
@@ -279,7 +288,8 @@ final class SettingsWindowController {
         if window == nil {
             let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice, navigation: navigation, send: send, clearGarden: clearGarden))
             let made = NSWindow(contentViewController: hosting)
-            made.title = "Ledgelings Settings"
+            made.title = tr("Ledgelings Settings")
+            retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }
             made.styleMask = [.titled, .closable]
             made.isReleasedWhenClosed = false
             // Size it before centring: centring the small frame the controller starts

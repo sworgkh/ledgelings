@@ -30,7 +30,7 @@ extension Colony {
     func plotLabel(_ i: Int, _ j: Int) -> String? {
         guard settings.plotsEnabled,
               let plot = bonds.bond(character(forCreature: i).name, character(forCreature: j).name)?.plot else { return nil }
-        return "part \(min(plot.told + 1, plot.length)) of \(plot.length): \(plot.text)"
+        return tr("part %d of %d: %@", min(plot.told + 1, plot.length), plot.length, plot.text)
     }
 
     /// A conversation between `a` and `b` (names) ended: count it, and ask for
@@ -83,7 +83,8 @@ extension Colony {
                 if let written { book.begin(a, b, written, length: length, at: now) }
             }
             if let written {
-                talkStatus = "\(a) and \(b): \(written.plot)"
+                talkStatus = tr("%@ and %@: %@", a, b, written.plot)
+
                 trace?("plot: \(key) · bond: \(written.bond ?? "-") · plot: \(written.plot)")
             }
         }

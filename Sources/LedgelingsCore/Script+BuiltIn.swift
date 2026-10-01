@@ -1,7 +1,11 @@
 extension Script {
     /// What ships in the box. The first creature of each block is the one who
     /// bumped; a `[flower]` block is said by the giver.
-    public static let builtInText = """
+    /// In every language; `builtInText` is the current one.
+    public static let builtInTexts = Translated(english: englishBuiltInText)
+    public static var builtInText: String { builtInTexts() }
+
+    public static let englishBuiltInText = """
     # Ledgelings: the built-in lines.
     #
     # One conversation per block, a blank line between.

@@ -48,6 +48,31 @@ mirrored, which is the only thing that changes.
 
 ---
 
+### 1.2 Languages
+
+Everything a person reads and everything sent to a model follows one setting, `language`
+(`en`, `ru`; default: the first of the system's preferred languages the app has, else `en`).
+Changing it applies at once: menu, settings window, the next line said.
+
+- **Short text** (labels, statuses, sentences of a prompt) is written in English and looked
+  up in the language's table, keyed by the English; a missing entry falls back to the English.
+  Counted nouns have the language's plural forms (Russian: one 1, 21; few 2–4, 22–24; many 5–20, 0, 11–14).
+- **Long text** (built-in script, letters, tea stories, complaints, reminder notes, every prompt)
+  is written in full per language, per character, in that character's voice.
+- **Prompts in a language** ask for the answer in it. Placeholders, the plot answer labels
+  `BOND:` / `PLOT:`, script tags, and the plot prompt's opener ("Do not write their
+  conversations…", in the language) stay.
+- **Edited text is the user's.** The script and the system, line, reply and plot prompts switch
+  language only while they equal a shipped version (of any language); edited ones never change.
+  On load, a stored shipped version in another language becomes the current one's.
+- **Personas and kinds** stay English data; a prompt in another language carries the table's
+  version of a shipped persona or kind, and a user's own as written. Casting (§6.6.1) reads
+  English and Russian words.
+- **Names** are not translated.
+- **Voices**: Mac voices are drawn from those of the language (English when it has none);
+  a character's own Mac voice of another language is skipped. Speech models' voices whose
+  names mark a language are filtered to it when any are; unmarked lists are kept whole.
+
 ## 2. Geometry: the edge world
 
 ### 2.1 Loops
@@ -1636,6 +1661,7 @@ An error for want of a model reads as that note, never as a server refusal.
 
 | Key | Default | Range / notes |
 |---|---|---|
+| language | the system's preferred language when the app has it, else `en` | `en`, `ru`; applied live (§1.2) |
 | creatureCount | 3 | 1–24 |
 | colors | `#ff8a3d #3dc7b5 #ff6fa3 #ffd23d #9b7bff #7bd65a` | 1–12 hex colours; invalid ones dropped on load |
 | minSize / maxSize | 1.5 / 3 | 1–5 in 0.5 steps; setting one past the other drags the other |

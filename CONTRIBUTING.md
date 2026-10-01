@@ -122,6 +122,38 @@ and to the sheet list in the spec; rebuild the sheet with
 without the variable, on both platforms, then guards that the sheet matches the
 text). The sheet must stand on the floor, face right, and stay inside the body box.
 
+## Adding a language
+
+Text is written in English at the call site and looked up per language (SPEC §1.2).
+
+1. **The language** — a case in `Language` (`Sources/LedgelingsCore/Language.swift`) with its
+   `code`, its own name (`title`, what the menu shows), `englishName`, and its plural rule
+   (`pluralForms`, `pluralIndex`).
+2. **Short text** — a table like `Sources/LedgelingsCore/Russian/`: one `[English: translation]`
+   dictionary per area, merged, registered in `Strings.tables`. Counted nouns are keyed
+   `"one|other"` and hold the language's forms joined by `|`.
+3. **Long text** — every `Translated(english:, [...])` gets the language beside Russian: the
+   built-in script, letters, tea stories, complaints, reminder notes, flower and holiday names,
+   every prompt (files named `…+Russian.swift`, `…+RussianPrompts.swift` show what there is).
+   Write per character, in its voice; keep placeholders, tags and `BOND:` / `PLOT:` exact.
+4. **Personas and kinds** of the shipped species — a table part like `Russian+Personas.swift`.
+   Casting words for the language go in `Casting.rules`.
+
+What catches a gap: `swift test --filter LanguageTests`.
+
+| Test | Fails when |
+|---|---|
+| `everyKeyIsTranslated` | a `tr("…")` / `trCount` key in the sources has no entry in a language's table (lists them all) |
+| `noBareLiteralsInViews` | a SwiftUI title is a bare literal, which would stay English |
+| `formatsMatch`, `pluralEntriesHaveEveryForm` | a translation lost a `%@` / `%d`, or a plural lacks a form |
+| `noKeyIsInterpolated`, `noKeyIsInTwoParts` | a key can never match, or is in two table parts |
+
+The `…RussianTests` suites check the long text: every character has its lines, placeholders and
+tags match the English, prompts keep their labels. A new language copies them.
+
+In code: `tr("Add Colour")`, `tr("Spent: %@ today", label)`, `trCount(n, "minute", "minutes")`;
+never `\(x)` inside the key. SwiftUI: `Text(tr("…"))`, `Toggle(tr("…"), isOn:)`.
+
 ## Pull requests
 
 - One change per pull request, with a title that says what changed in plain words

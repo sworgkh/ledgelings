@@ -13,10 +13,10 @@ public enum Reminders {
 
         public var title: String {
             switch self {
-            case .once: "Once"
-            case .daily: "Every day"
-            case .weekdays: "Every weekday"
-            case .weekly: "Every week"
+            case .once: tr("Once")
+            case .daily: tr("Every day")
+            case .weekdays: tr("Every weekday")
+            case .weekly: tr("Every week")
             }
         }
     }
@@ -70,7 +70,7 @@ public enum Reminders {
         /// "Today 14:30", "Tomorrow 09:00", "Mon 3 Oct 18:00", plus the repeat.
         public func describe(now: Date, calendar: Calendar = .current) -> String {
             let when = Reminders.when(time, now: now, calendar: calendar)
-            return repeats == .once ? when : "\(repeats.title), next \(when)"
+            return repeats == .once ? when : tr("%@, next %@", repeats.title, when)
         }
     }
 
@@ -132,9 +132,9 @@ public enum Reminders {
 
     /// "Today", "Tomorrow", "Yesterday", else "Mon 3 Oct".
     public static func day(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
-        if calendar.isDate(date, inSameDayAs: now) { return "Today" }
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
-        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday" }
+        if calendar.isDate(date, inSameDayAs: now) { return tr("Today") }
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) { return tr("Tomorrow") }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return tr("Yesterday") }
         return format(date, "EEE d MMM", calendar: calendar)
     }
 
@@ -144,7 +144,7 @@ public enum Reminders {
     private static func format(_ date: Date, _ pattern: String, calendar: Calendar) -> String {
         let formatter = DateFormatter()
         formatter.calendar = calendar; formatter.timeZone = calendar.timeZone
-        formatter.locale = Locale(identifier: "en_GB")
+        formatter.locale = Locale(identifier: Language.current == .english ? "en_GB" : Language.current.code)
         formatter.dateFormat = pattern
         return formatter.string(from: date)
     }
@@ -210,12 +210,16 @@ public enum Reminders {
     /// What each built-in character writes above your reminder, in its own
     /// voice. `{reminder}` is what you asked to be reminded of. A character the
     /// user invented uses `anyone`.
-    public static let anyone = [
+    public static var anyone: [String] { anyones() }
+    public static let anyones = Translated(english: englishAnyone)
+    public static let englishAnyone = [
         "It's time: {reminder}. You asked me to tell you, so I'm telling you.",
         "Knock knock. {reminder}. That's the whole joke. Go on.",
     ]
 
-    public static let notes: [String: [String]] = [
+    public static var notes: [String: [String]] { noteSets() }
+    public static let noteSets = Translated(english: englishNotes)
+    public static let englishNotes: [String: [String]] = [
         // blocky's cast
         "Blocky": ["Stop staring at the cursor. It's time: {reminder}. I have a list, and you're on it.",
                    "Official notice from the bottom edge: {reminder}. Now. Don't make me jump."],
@@ -291,8 +295,10 @@ public enum Reminders {
         return Banter.render(line, ["reminder": shown])
     }
 
-    /// The model writes the note as the creature throwing the plane.
-    public static let notePrompt = """
+    /// The model writes the note as the creature throwing the plane, in the current language.
+    public static var notePrompt: String { notePrompts() }
+    public static let notePrompts = Translated(english: englishNotePrompt)
+    public static let englishNotePrompt = """
     {situation}
     The person whose screen you live on asked to be reminded, right now, of: "{reminder}". \
     You fold it into a paper plane and throw it to them. Write the note that goes with it: \

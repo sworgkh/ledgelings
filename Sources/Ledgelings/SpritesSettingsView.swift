@@ -19,29 +19,29 @@ struct SpritesSettingsView: View {
                 }
                 .padding(.vertical, 4)
                 HStack {
-                    Button("Import Sheet…") { importSheet() }
-                    Button("Open Folder") { library.openFolder() }
+                    Button(tr("Import Sheet…")) { importSheet() }
+                    Button(tr("Open Folder")) { library.openFolder() }
                     Spacer()
                     Text(status).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                 }
             } header: {
-                Text("Creatures")
+                Text(tr("Creatures"))
             } footer: {
-                Text("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in \(library.directory.path).")
+                Text(tr("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in %@.", library.directory.path))
             }
         } right: {
             Section {
-                Text("Copy the prompt, paste it into any chat model, replace the placeholder with a description of the creature you want, and save the model's answer as a .txt file. Then Import Sheet…")
+                Text(tr("Copy the prompt, paste it into any chat model, replace the placeholder with a description of the creature you want, and save the model's answer as a .txt file. Then Import Sheet…"))
                     .font(.callout)
                 HStack {
-                    Button(copied ? "Copied" : "Copy Prompt") {
+                    Button(copied ? tr("Copied") : tr("Copy Prompt")) {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(library.prompt, forType: .string)
                         copied = true
                         Task { try? await Task.sleep(for: .seconds(2)); copied = false }
                     }
-                    Button("Save Example Sheet…") { saveText(library.exampleText, as: "blocky.txt") }
-                    Button("Save PNG Template…") { savePNG(library.templateImage(), as: "ledgelings-template.png") }
+                    Button(tr("Save Example Sheet…")) { saveText(library.exampleText, as: "blocky.txt") }
+                    Button(tr("Save PNG Template…")) { savePNG(library.templateImage(), as: "ledgelings-template.png") }
                 }
                 TextEditor(text: .constant(library.prompt))
                     .font(.system(.caption, design: .monospaced))
@@ -50,9 +50,9 @@ struct SpritesSettingsView: View {
                     .padding(4)
                     .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
             } header: {
-                Text("Sprite kit")
+                Text(tr("Sprite kit"))
             } footer: {
-                Text("The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import.")
+                Text(tr("The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import."))
             }
         }
     }
@@ -78,7 +78,7 @@ struct SpritesSettingsView: View {
                         Button { library.remove(species.name); settings.species.removeAll { $0 == species.name } } label: {
                             Image(systemName: "trash").font(.caption)
                         }
-                        .buttonStyle(.borderless).help("Delete this imported creature")
+                        .buttonStyle(.borderless).help(tr("Delete this imported creature"))
                     }
                 }
             }
@@ -105,13 +105,13 @@ struct SpritesSettingsView: View {
     private func importSheet() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.plainText, .png, UTType(filenameExtension: "md") ?? .plainText]
-        panel.message = "A sprite text file from the kit, or a 288×96 PNG on magenta."
+        panel.message = tr("A sprite text file from the kit, or a 288×96 PNG on magenta.")
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             let name = try library.importFile(url)
             if !settings.species.contains(name) { settings.species.append(name) }
-            status = "imported \(name)"
+            status = tr("imported %@", name)
         } catch {
             status = "\(error)"
         }
@@ -122,7 +122,7 @@ struct SpritesSettingsView: View {
         panel.nameFieldStringValue = name
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try text.write(to: url, atomically: true, encoding: .utf8); status = "saved \(url.lastPathComponent)" } catch { status = "\(error)" }
+        do { try text.write(to: url, atomically: true, encoding: .utf8); status = tr("saved %@", url.lastPathComponent) } catch { status = "\(error)" }
     }
 
     private func savePNG(_ image: SpriteText.Image, as name: String) {
@@ -130,6 +130,6 @@ struct SpritesSettingsView: View {
         panel.nameFieldStringValue = name
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try SpriteLibrary.writePNG(image, to: url); status = "saved \(url.lastPathComponent)" } catch { status = "\(error)" }
+        do { try SpriteLibrary.writePNG(image, to: url); status = tr("saved %@", url.lastPathComponent) } catch { status = "\(error)" }
     }
 }

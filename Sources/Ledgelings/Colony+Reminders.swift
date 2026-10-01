@@ -111,7 +111,7 @@ extension Colony {
         let screen = targetScreen()
         let target = CGPoint(x: screen.midX, y: screen.midY)
         deliveryCount += 1
-        delivery = Delivery(id: deliveryCount, reminder: reminder, thrower: nil, writer: "The Ledgelings",
+        delivery = Delivery(id: deliveryCount, reminder: reminder, thrower: nil, writer: tr("The Ledgelings"),
                             plane: PaperPlane(from: -1, to: -1, start: target, inward: CGVector(dx: 0, dy: 1), target: target),
                             target: target, screen: screen, baseScale: 2.5, phase: .finding(since: elapsed))
     }
@@ -240,10 +240,10 @@ extension Colony {
         let late = now().timeIntervalSince(mail.reminder.time) > 120
         let clock = DateFormatter()
         clock.dateFormat = "HH:mm"
-        mail.title = late ? "REMINDER · for \(Reminders.when(mail.reminder.time, now: now()))" : "REMINDER · \(clock.string(from: mail.reminder.time))"
-        talkStatus = "\(mail.writer) delivered a reminder: \(mail.reminder.text)"
+        mail.title = late ? tr("REMINDER · for %@", Reminders.when(mail.reminder.time, now: now())) : tr("REMINDER · %@", clock.string(from: mail.reminder.time))
+        talkStatus = tr("%@ delivered a reminder: %@", mail.writer, mail.reminder.text)
         history.record(ChatLog.Exchange(
-            time: Date(), situation: "\(mail.writer) brought you a reminder by paper plane: \"\(mail.reminder.text)\".",
+            time: Date(), situation: tr("%@ brought you a reminder by paper plane: \"%@\".", mail.writer, mail.reminder.text),
             provider: modelWrote ? mail.provider : AppSettings.Brain.script.title, model: modelWrote ? mail.model : "",
             lines: [ChatLog.Line(speaker: mail.writer, text: note)], cost: mail.cost, tokens: mail.tokens))
         if settings.reminderReadAloud, isVoiced, mail.thrower != nil {
@@ -263,9 +263,9 @@ extension Colony {
     private func writeReminderNote(_ mail: inout Delivery) {
         guard settings.brain != .script, let service = settings.chatClient(), let i = mail.thrower else { return }
         let me = character(forCreature: i)
-        let vars = ["speaker": me.name, "speakerKind": kind(ofCreature: i), "speakerPersona": me.persona,
-                    "listener": "you", "listenerKind": "the person at the computer",
-                    "listenerPersona": "The person whose screen you all live on.",
+        let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.spoken(me.persona),
+                    "listener": tr("you"), "listenerKind": tr("the person at the computer"),
+                    "listenerPersona": tr("The person whose screen you all live on."),
                     "situation": almanac, "reminder": mail.reminder.text]
         let system = Bonds.withRelationship(settings.systemPrompt, vars, context: "")
         let user = Banter.render(Reminders.notePrompt, vars).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -273,7 +273,7 @@ extension Colony {
         mail.writing = true
         mail.provider = service.provider.title
         mail.model = service.model
-        talkStatus = "\(me.name) is writing a reminder via \(service.model)…"
+        talkStatus = tr("%@ is writing a reminder via %@…", me.name, service.model)
         Task { [weak self] in
             var note: String?, cost: Double?, tokens: Int?
             do {
@@ -357,7 +357,8 @@ extension Colony {
     private func letter(_ mail: Delivery, grow: CGFloat, opacity: Float) -> LetterSnapshot {
         LetterSnapshot(id: mail.id, centre: mail.target, grow: grow, opacity: opacity, title: mail.title,
                               text: mail.reminder.text, note: mail.note ?? "", signature: "— \(mail.writer)",
-                              stamp: mail.stamp, hint: "click to fold it away")
+                              stamp: mail.stamp, hint: tr("click to fold it away"))
+
     }
 
     /// The open letter is under `point`.

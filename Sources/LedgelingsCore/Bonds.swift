@@ -152,10 +152,15 @@ public enum Bonds {
     public static let plotMaxTokens = 1000
 
     /// The system side of the plot call: short, so the user prompt carries the work.
-    public static let plotSystemPrompt = "You write tiny, playful stories for small characters. Follow the answer format exactly."
+    public static let plotSystemPrompts = Translated(english: englishPlotSystemPrompt)
+    public static var plotSystemPrompt: String { plotSystemPrompts() }
+    public static let englishPlotSystemPrompt = "You write tiny, playful stories for small characters. Follow the answer format exactly."
 
     /// One call, one small answer: the story for a pair's next few conversations.
-    public static let defaultPlotPrompt = """
+    public static let plotPrompts = Translated(english: englishPlotPrompt)
+    public static var defaultPlotPrompt: String { plotPrompts() }
+
+    public static let englishPlotPrompt = """
     Do not write their conversations. Write only the two lines described at the end.
 
     Two small creatures live on the edges of a computer screen and have shared it for {together}.
@@ -177,12 +182,12 @@ public enum Bonds {
     /// The values for the plot prompt. `a` and `b` are (name, kind, persona).
     public static func plotValues(_ bond: Bond, a: (name: String, kind: String, persona: String),
                                   b: (name: String, kind: String, persona: String), length: Int) -> [String: String] {
-        ["speaker": a.name, "speakerKind": a.kind, "speakerPersona": a.persona,
-         "listener": b.name, "listenerKind": b.kind, "listenerPersona": b.persona,
+        ["speaker": a.name, "speakerKind": Banter.spoken(a.kind), "speakerPersona": Banter.spoken(a.persona),
+         "listener": b.name, "listenerKind": Banter.spoken(b.kind), "listenerPersona": Banter.spoken(b.persona),
          "together": duration(bond.together),
-         "bond": bond.summary ?? "they have not really made their minds up about each other yet",
-         "lastPlot": bond.lastPlot ?? "none yet; this is their first",
-         "recent": bond.recent.isEmpty ? "(nothing yet)" : bond.recent.map { "\($0.speaker): \($0.text)" }.joined(separator: "\n"),
+         "bond": bond.summary ?? tr("they have not really made their minds up about each other yet"),
+         "lastPlot": bond.lastPlot ?? tr("none yet; this is their first"),
+         "recent": bond.recent.isEmpty ? tr("(nothing yet)") : bond.recent.map { "\($0.speaker): \($0.text)" }.joined(separator: "\n"),
          "length": "\(length)"]
     }
 
@@ -219,14 +224,14 @@ public enum Bonds {
     /// running, the plot and which part of it this is. Empty for strangers.
     public static func context(_ bond: Bond?, speaker: String, other: String) -> String {
         guard let bond, bond.summary != nil || bond.plot != nil else { return "" }
-        var parts = ["You and \(other) have shared this screen for \(duration(bond.together))."]
-        if let summary = bond.summary { parts.append("How you get on: \(summary)") }
+        var parts = [tr("You and %@ have shared this screen for %@.", other, duration(bond.together))]
+        if let summary = bond.summary { parts.append(tr("How you get on: %@", summary)) }
         if let plot = bond.plot {
             let part = min(plot.told + 1, plot.length)
-            parts.append("What is going on between you (part \(part) of \(plot.length)): \(plot.text)")
+            parts.append(tr("What is going on between you (part %d of %d): %@", part, plot.length, plot.text))
             parts.append(part == plot.length
-                ? "This is the last part: let your line bring it to an end."
-                : "Let it colour your line and move the story on a little; never explain it.")
+                ? tr("This is the last part: let your line bring it to an end.")
+                : tr("Let it colour your line and move the story on a little; never explain it."))
         }
         return parts.joined(separator: " ")
     }
@@ -244,12 +249,11 @@ public enum Bonds {
     /// "40 minutes", "3 hours", "2 days", for people and for prompts.
     public static func duration(_ seconds: Double) -> String {
         let minutes = Int(seconds / 60)
-        func plural(_ n: Int, _ unit: String) -> String { "\(n) \(unit)\(n == 1 ? "" : "s")" }
-        if minutes < 1 { return "a moment" }
-        if minutes < 60 { return plural(minutes, "minute") }
+        if minutes < 1 { return tr("a moment") }
+        if minutes < 60 { return trCount(minutes, "minute", "minutes") }
         let hours = minutes / 60
-        if hours < 24 { return plural(hours, "hour") }
-        return plural(hours / 24, "day")
+        if hours < 24 { return trCount(hours, "hour", "hours") }
+        return trCount(hours / 24, "day", "days")
     }
 
     /// The book on disk: `bonds.json` in a folder, rewritten whole on each save.

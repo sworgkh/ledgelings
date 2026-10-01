@@ -22,19 +22,20 @@ public enum Spend {
 
         public var title: String {
             switch self {
-            case .talk: "Talk"
-            case .planes: "Paper planes"
-            case .voice: "Voice"
-            case .casting: "Voice casting"
-            case .plots: "Relationship plots"
-            case .reminders: "Reminders"
-            case .complaints: "Complaints"
-            case .teaParties: "Tea parties"
+            case .talk: tr("Talk")
+            case .planes: tr("Paper planes")
+            case .voice: tr("Voice")
+            case .casting: tr("Voice casting")
+            case .plots: tr("Relationship plots")
+            case .reminders: tr("Reminders")
+            case .complaints: tr("Complaints")
+            case .teaParties: tr("Tea parties")
             }
         }
 
         /// What records written before features were labelled are shown as.
-        public static let unlabelled = "Earlier, unlabelled"
+        public static var unlabelled: String { tr("Earlier, unlabelled") }
+
 
         /// The title for a record's stored purpose, which may be missing or from a newer app.
         public static func title(of raw: String?) -> String {

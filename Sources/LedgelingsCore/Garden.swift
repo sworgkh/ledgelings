@@ -37,15 +37,15 @@ public struct Garden: Sendable {
         /// Where, in words: "on the bottom edge".
         public var phrase: String {
             switch self {
-            case .floor: "on the bottom edge"
-            case .ceiling: "on the top edge"
-            case .wall: "on a side edge"
-            case .corner: "in a corner"
-            case .alone: "where nobody is"
-            case .company: "next to someone"
-            case .row: "beside the flowers already planted"
-            case .night: "after dark"
-            case .day: "in daylight"
+            case .floor: tr("on the bottom edge")
+            case .ceiling: tr("on the top edge")
+            case .wall: tr("on a side edge")
+            case .corner: tr("in a corner")
+            case .alone: tr("where nobody is")
+            case .company: tr("next to someone")
+            case .row: tr("beside the flowers already planted")
+            case .night: tr("after dark")
+            case .day: tr("in daylight")
             }
         }
     }
@@ -176,12 +176,12 @@ public struct Garden: Sendable {
 
     /// The temper in a sentence, for the settings window: "After a good while, on the bottom edge or where nobody is."
     public static func describe(_ temper: Temper) -> String {
-        let when = temper.keep < 0.1 ? "At once" : temper.keep < 0.3 ? "After a little while"
-            : temper.keep < 0.5 ? "After a good while" : "After showing it off for most of its time"
+        let when = temper.keep < 0.1 ? tr("At once") : temper.keep < 0.3 ? tr("After a little while")
+            : temper.keep < 0.5 ? tr("After a good while") : tr("After showing it off for most of its time")
         let places = temper.likes.map(\.phrase)
-        guard !places.isEmpty else { return when + ", wherever it is." }
+        guard !places.isEmpty else { return tr("%@, wherever it is.", when) }
         let listed = places.count == 1 ? places[0]
-            : places.dropLast().joined(separator: ", ") + " or " + places.last!
+            : tr("%@ or %@", places.dropLast().joined(separator: ", "), places.last!)
         return when + ", " + listed + "."
     }
 

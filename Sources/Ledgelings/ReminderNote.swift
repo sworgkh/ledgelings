@@ -132,15 +132,15 @@ struct ReminderNoteView: View {
     }
 
     private var title: String {
-        keeper.map { "A NOTE FOR THE LEDGELINGS · \($0.uppercased()) IS READING OVER THE EDGE" } ?? "A NOTE FOR THE LEDGELINGS"
+        keeper.map { tr("A NOTE FOR THE LEDGELINGS · %@ IS READING OVER THE EDGE", $0.uppercased()) } ?? tr("A NOTE FOR THE LEDGELINGS")
     }
 
     // MARK: What
 
     private var field: some View {
         VStack(alignment: .leading, spacing: 6) {
-            label("REMIND ME TO")
-            TextField("", text: $text, prompt: Text("stretch, call mom, stand-up…").foregroundStyle(Self.faintInk))
+            label(tr("REMIND ME TO"))
+            TextField("", text: $text, prompt: Text(tr("stretch, call mom, stand-up…")).foregroundStyle(Self.faintInk))
                 .textFieldStyle(.plain)
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
                 .foregroundStyle(Self.ink)
@@ -157,20 +157,20 @@ struct ReminderNoteView: View {
     private var when: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                label("WHEN").frame(width: 62, alignment: .leading)
+                label(tr("WHEN")).frame(width: 62, alignment: .leading)
                 stepper(Reminders.day(time, now: Date()), width: 150, back: { shift(days: -1) }, on: { shift(days: 1) })
                 stepper(Reminders.clock(time), width: 128, back: { time = Reminders.step(time, by: -15) }, on: { time = Reminders.step(time, by: 15) })
                 if time <= Date() {
-                    Text("past: it comes\nstraight away").font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    Text(tr("past: it comes\nstraight away")).font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Self.faintInk)
                 }
             }
             HStack(spacing: 8) {
                 Spacer().frame(width: 62)
-                ForEach([("IN 5 MIN", 5.0), ("IN 30 MIN", 30.0), ("IN 1 HOUR", 60.0)], id: \.0) { title, minutes in
+                ForEach([(tr("IN 5 MIN"), 5.0), (tr("IN 30 MIN"), 30.0), (tr("IN 1 HOUR"), 60.0)], id: \.0) { title, minutes in
                     PixelButton(title: title, small: true) { time = Date().addingTimeInterval(minutes * 60) }
                 }
-                PixelButton(title: "TOMORROW 9:00", small: true) { time = Self.tomorrowMorning() }
+                PixelButton(title: tr("TOMORROW 9:00"), small: true) { time = Self.tomorrowMorning() }
             }
         }
     }
@@ -200,7 +200,7 @@ struct ReminderNoteView: View {
 
     private var repeatRow: some View {
         HStack(spacing: 8) {
-            label("REPEAT").frame(width: 62, alignment: .leading)
+            label(tr("REPEAT")).frame(width: 62, alignment: .leading)
             ForEach(Reminders.Repeat.allCases, id: \.self) { choice in
                 PixelButton(title: choice.title.uppercased(), small: true, chosen: repeats == choice) { repeats = choice }
             }
@@ -211,12 +211,12 @@ struct ReminderNoteView: View {
 
     private var buttons: some View {
         HStack(alignment: .bottom) {
-            Text(words.isEmpty ? "write something first" : "\(Reminders.when(time, now: Date()))" + (repeats == .once ? "" : ", \(repeats.title.lowercased())"))
+            Text(words.isEmpty ? tr("write something first") : "\(Reminders.when(time, now: Date()))" + (repeats == .once ? "" : ", \(repeats.title.lowercased())"))
                 .font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Self.softInk)
             Spacer()
-            PixelButton(title: "NEVER MIND", action: cancel)
+            PixelButton(title: tr("NEVER MIND"), action: cancel)
                 .keyboardShortcut(.cancelAction)
-            PixelButton(title: "FOLD IT INTO A PLANE", chosen: true, action: send)
+            PixelButton(title: tr("FOLD IT INTO A PLANE"), chosen: true, action: send)
                 .keyboardShortcut(.defaultAction)
                 .disabled(words.isEmpty)
                 .opacity(words.isEmpty ? 0.5 : 1)

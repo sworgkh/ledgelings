@@ -1,4 +1,5 @@
 import Foundation
+import LedgelingsCore
 
 /// The models a provider offers, with what OpenRouter says about each, and a
 /// search over them for the settings window. LM Studio's list has ids only.
@@ -20,9 +21,10 @@ struct ModelCatalog: Sendable {
         }
 
         var priceLabel: String {
-            guard let promptPerMillion, let completionPerMillion else { return "price unknown" }
-            if isFree { return "free" }
-            return String(format: "$%.2f in · $%.2f out per M", promptPerMillion, completionPerMillion)
+            guard let promptPerMillion, let completionPerMillion else { return tr("price unknown") }
+            if isFree { return tr("free") }
+            return tr("$%.2f in · $%.2f out per M", promptPerMillion, completionPerMillion)
+
         }
     }
 

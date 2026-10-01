@@ -11,6 +11,14 @@ final class AppSettings: ObservableObject {
     static let sizeStep = 0.5
     static let defaultColors = ["#ff8a3d", "#3dc7b5", "#ff6fa3", "#ffd23d", "#9b7bff", "#7bd65a"]
 
+    /// What the app and the creatures speak; the app hands it to `Language.choose`. Prompts and built-in lines the user
+    /// never edited follow it; edited ones stay as they were written.
+    @Published var language: Language {
+        didSet {
+            save(language.rawValue, "language")
+            followLanguage()
+        }
+    }
     @Published var creatureCount: Int { didSet { save(creatureCount, "creatureCount") } }
     /// Names of the sprite sheets in use; creature i wears species i, wrapping round.
     @Published var species: [String] { didSet { save(species, "species") } }
@@ -63,7 +71,7 @@ final class AppSettings: ObservableObject {
 
         var title: String {
             switch self {
-            case .script: "Built-in lines"
+            case .script: tr("Built-in lines")
             case .lmStudio: ChatClient.Provider.lmStudio.title
             case .openRouter: ChatClient.Provider.openRouter.title
             }
@@ -195,9 +203,9 @@ final class AppSettings: ObservableObject {
 
         var title: String {
             switch self {
-            case .system: "Built-in voices"
+            case .system: tr("Built-in voices")
             case .openRouter: ChatClient.Provider.openRouter.title
-            case .local: "Local server"
+            case .local: tr("Local server")
             }
         }
     }
@@ -263,6 +271,9 @@ final class AppSettings: ObservableObject {
         self.defaults = defaults
         self.keychain = keychain
         let count = defaults.object(forKey: "creatureCount") as? Int ?? 3
+        // The system's language when the app speaks it, English otherwise; saved once chosen in the menu.
+        let language = defaults.string(forKey: "language").flatMap(Language.init(rawValue:)) ?? Language.preferred()
+        self.language = language
         creatureCount = min(max(count, Self.countRange.lowerBound), Self.countRange.upperBound)
         species = defaults.stringArray(forKey: "species") ?? ["blocky"]
         let saved = (defaults.stringArray(forKey: "colors") ?? []).filter { RGB(hex: $0) != nil }
@@ -304,7 +315,7 @@ final class AppSettings: ObservableObject {
         // set it up keeps it. Everyone else starts with lines that need no server.
         let setUpAModel = ["talkServer", "talkModel", "openRouterModel"].contains { defaults.object(forKey: $0) != nil }
         brain = defaults.string(forKey: "brainProvider").flatMap(Brain.init(rawValue:)) ?? (setUpAModel ? .lmStudio : .script)
-        script = defaults.string(forKey: "script") ?? Script.builtInText
+        script = defaults.string(forKey: "script") ?? Script.builtInTexts(language)
         talkServer = defaults.string(forKey: "talkServer") ?? Self.defaultTalkServer
         talkModel = defaults.string(forKey: "talkModel") ?? Self.defaultTalkModel
         openRouterModel = defaults.string(forKey: "openRouterModel") ?? Self.defaultOpenRouterModel
@@ -352,15 +363,15 @@ final class AppSettings: ObservableObject {
         castByPersonality = defaults.object(forKey: "castByPersonality") as? Bool ?? true
         voiceTurnPause = clamp("voiceTurnPause", 0.35, Self.voiceTurnPauseRange)
         cartoonVoices = defaults.object(forKey: "cartoonVoices") as? Bool ?? true
-        systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.defaultSystemPrompt
-        linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.defaultLinePrompt
-        replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.defaultReplyPrompt
+        systemPrompt = defaults.string(forKey: "systemPrompt") ?? Banter.systemPrompts(language)
+        linePrompt = defaults.string(forKey: "linePrompt") ?? Banter.linePrompts(language)
+        replyPrompt = defaults.string(forKey: "replyPrompt") ?? Banter.replyPrompts(language)
         plotsEnabled = defaults.object(forKey: "plotsEnabled") as? Bool ?? true
         // An hour: a colony that runs all day gets its first stories the same morning.
         plotAfterHours = clamp("plotAfterHours", 1, Self.plotAfterRange)
         let length = defaults.object(forKey: "plotLength") as? Int ?? 6
         plotLength = min(max(length, Self.plotLengthRange.lowerBound), Self.plotLengthRange.upperBound)
-        plotPrompt = defaults.string(forKey: "plotPrompt") ?? Bonds.defaultPlotPrompt
+        plotPrompt = defaults.string(forKey: "plotPrompt") ?? Bonds.plotPrompts(language)
         knowsTimeOfDay = defaults.object(forKey: "knowsTimeOfDay") as? Bool ?? true
         knowsDate = defaults.object(forKey: "knowsDate") as? Bool ?? true
         jewishHolidays = defaults.object(forKey: "jewishHolidays") as? Bool ?? true
@@ -375,6 +386,7 @@ final class AppSettings: ObservableObject {
         reminderReadAloud = defaults.object(forKey: "reminderReadAloud") as? Bool ?? true
         // On: writing a reminder should feel like the game that delivers it.
         reminderPaperNote = defaults.object(forKey: "reminderPaperNote") as? Bool ?? true
+        followLanguage()
     }
 
     func species(forCreature index: Int) -> String {
@@ -438,14 +450,15 @@ final class AppSettings: ObservableObject {
     var hasModel: Bool { brain != .script }
 
     /// Beside anything greyed out for want of a model, in the same words everywhere.
-    static let needsModel = "Needs a model: the built-in lines have none. Choose LM Studio or OpenRouter as the Brain in Settings › Talk."
+    static var needsModel: String { tr("Needs a model: the built-in lines have none. Choose LM Studio or OpenRouter as the Brain in Settings › Talk.") }
 
     /// Why `chatClient()` came back empty, in words for the menu and the settings window.
     var brainProblem: String {
         switch brain {
         case .script: Self.needsModel
-        case .lmStudio: "LM Studio server address is not a URL"
-        case .openRouter: "no OpenRouter API key; add one in Settings › Talk"
+        case .lmStudio: tr("LM Studio server address is not a URL")
+        case .openRouter: tr("no OpenRouter API key; add one in Settings › Talk")
+
         }
     }
 
@@ -456,15 +469,33 @@ final class AppSettings: ObservableObject {
         characterVoices[name] = own.isAutomatic ? nil : own
     }
 
-    func resetScript() { script = Script.builtInText }
+    func resetScript() { script = Script.builtInTexts(language) }
 
-    func resetPrompts() {
-        systemPrompt = Banter.defaultSystemPrompt
-        linePrompt = Banter.defaultLinePrompt
-        replyPrompt = Banter.defaultReplyPrompt
+    /// The built-in lines and the prompts, when they are one of the shipped
+    /// versions (not edited), become the current language's.
+    func followLanguage() {
+        func follow(_ value: String, _ shipped: Translated<String>) -> String {
+            shipped.all.contains(value) ? shipped(language) : value
+        }
+        let lines = follow(script, Script.builtInTexts)
+        if lines != script { script = lines }
+        let system = follow(systemPrompt, Banter.systemPrompts)
+        if system != systemPrompt { systemPrompt = system }
+        let line = follow(linePrompt, Banter.linePrompts)
+        if line != linePrompt { linePrompt = line }
+        let reply = follow(replyPrompt, Banter.replyPrompts)
+        if reply != replyPrompt { replyPrompt = reply }
+        let plot = follow(plotPrompt, Bonds.plotPrompts)
+        if plot != plotPrompt { plotPrompt = plot }
     }
 
-    func resetPlotPrompt() { plotPrompt = Bonds.defaultPlotPrompt }
+    func resetPrompts() {
+        systemPrompt = Banter.systemPrompts(language)
+        linePrompt = Banter.linePrompts(language)
+        replyPrompt = Banter.replyPrompts(language)
+    }
+
+    func resetPlotPrompt() { plotPrompt = Bonds.plotPrompts(language) }
 
     /// The size for a creature whose place in the range is `share` (0 = smallest,
     /// 1 = largest), snapped to the step.

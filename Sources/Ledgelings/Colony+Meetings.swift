@@ -34,7 +34,7 @@ extension Colony {
                         star(settings.color(forCreature: bump.a)), star(settings.color(forCreature: bump.b))]
         sparks.burst(at: CGPoint(x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2),
                      inward: creatures[bump.a].loop.inward(ofSegment: creatures[bump.a].segment), using: &rng)
-        var event = "They just walked into each other."
+        var event = tr("They just walked into each other.")
         var given: String?
         // Now and then, instead of a word in passing, they sit down to tea. Not on a
         // flower's bump: the flower is the moment there.
@@ -42,7 +42,8 @@ extension Colony {
            startTea(bump.a, bump.b) { return }
         if bump.gift, let flower = Gifts.flowers.randomElement(using: &rng), gifts.give(flower, from: giver, to: receiver, at: elapsed) {
             let a = character(forCreature: giver).name, b = character(forCreature: receiver).name
-            event = "\(a) just walked into \(b) and gave \(b) a \(flower)."
+            event = tr("%1$@ just walked into %2$@ and gave %2$@ a %3$@.", a, b, Gifts.name(of: flower))
+
             given = flower
         }
         if !settings.talkEnabled || !talk(from: giver, to: receiver, because: event, flower: given) { endChat(giver, receiver, after: 2) }
