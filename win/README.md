@@ -4,7 +4,8 @@ The same creatures, the same art, the same rules as the macOS app in the root of
 this repo, running as a Windows tray app. Everything in [SPEC.md](../SPEC.md) applies;
 this folder is its Windows implementation.
 
-**Status:** catching up with the macOS app (v0.29). In: eight creatures across every
+**Status:** feature parity with the macOS app v0.29, except what is listed under
+*Not on Windows* below: eight creatures across every
 monitor, day and night, meetings with stars and flowers (the wearer trails the
 giver), talk from the built-in lines (the default: no model needed) or through
 LM Studio or OpenRouter, lines they rarely repeat, room for a thinking model,
@@ -13,8 +14,8 @@ without a model, bonds and their plots, the calendar (time of day, date,
 holidays), paper planes, reminders delivered by plane with the paper note to
 write them on, the chat log and spend ledger, hiding in the house, imported
 creatures from the sprite kit, planting flowers where each character likes (the
-Flowers tab), complaints when pushed around, tea parties. Still Mac-only: voices
-and the Costs tab.
+Flowers tab), complaints when pushed around, tea parties, voices (Windows' own,
+OpenRouter or a local speech server) and the Costs tab.
 
 ## Stack
 
@@ -66,6 +67,8 @@ line, **Settings…**, **Quit**. Left- or right-click the icon.
 | Spend | `%APPDATA%\Ledgelings\spend.jsonl` |
 | Bonds and plots | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac) |
 | Reminders | `%APPDATA%\Ledgelings\reminders.json` (same format as the Mac) |
+| Kept OpenRouter voices | `%APPDATA%\Ledgelings\voices\` |
+| Saved built-in line voices | `%APPDATA%\Ledgelings\line-voices\` |
 | Imported creatures | `%APPDATA%\Ledgelings\sprites\<name>\` |
 | OpenRouter key | Credential Manager › Windows Credentials › `Ledgelings/openRouterKey` |
 | Start at login | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Ledgelings` (Task Manager › Startup apps) |
@@ -87,6 +90,8 @@ line, **Settings…**, **Quit**. Left- or right-click the icon.
 | Key-value settings store | `JsonSettingsStore` |
 | Secret store | `CredentialStore` |
 | HTTPS client | `HttpClient` |
+| The computer's own voices | SAPI through `System.Speech`, rendered to a WAV |
+| Playing a clip | WPF `MediaPlayer` from a temp file (`%TEMP%\ledgelings-*`, cleaned up) |
 | Nearest-neighbour scaling, rotation, mirror, opacity | GDI+ `Graphics` with `InterpolationMode.NearestNeighbor`, a transform per sprite, `ColorMatrix` for opacity |
 
 The simulation is the spec's coordinate space unchanged: global points, origin
@@ -128,6 +133,24 @@ core tests are the Swift tests line for line.
   the Mac's way) and `UmAlQuraCalendar`, whose tables end in 2077: after that no
   Muslim holidays are mentioned. The footers say "your PC's clock".
 
+- **Voices.** Windows' own voices are SAPI's (`System.Speech`): only the voices
+  Windows offers desktop programs are listed, so the newer "natural" voices may
+  be missing. Windows has no novelty voices (the Mac's Grandpa, Zarvox…), so
+  *Cartoon voices* only lifts the pitch. A SAPI line is rendered to a WAV first,
+  so its bubble types out evenly over the clip rather than word by word. SAPI's
+  rate is `10·log₃(speed)`; with *speed follows pitch* off, pitch is asked of SAPI
+  as an SSML percentage, which not every voice honours. A WAV is lifted like a
+  tape by resampling (`WaveTape`); an MP3 (MiniMax only) plays at
+  `SpeedRatio = pitch`, which keeps its pace but probably not the lift.
+- **Every paid voice line is priced**, played or not: it goes into the spend file
+  the moment its audio comes back (AGENTS.md rule 1). The Mac records a line only
+  when it plays. The Chats tab notes a line's cost only once it is played, as on
+  the Mac.
+- **Hear Them Talk** has no shortcut (⌘V on the Mac); a tray menu has no key
+  equivalents.
+- **Copy Setup Command** (local speech server) copies a PowerShell line that
+  clones Kokoro-FastAPI and runs `start-cpu.ps1`.
+
 ## Not on Windows
 
 - **The films and the promo video** (`--garden-film`, `--tea-film`, the reminder
@@ -145,18 +168,20 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders,
-                           Garden, Complaints, TeaParty (+ Geometry: Pt, Vec, Rect)
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
-                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty)
+                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea), FrameClock, Desktop
                            TrayIcon, App (+ .Reminders), GlobalHotkey, Program
-                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties),
+                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook
+                           Voice (+ .Casting .System .Playback), SpeechClient, WaveTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers), ReminderNote, HideDialog, ColourDialog
+                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers .Voice .Costs),
+                           ReminderNote, HideDialog, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

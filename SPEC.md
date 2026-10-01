@@ -664,7 +664,7 @@ busy (anyone free if none is awake); the nearest free creature listens. A Shift-
 with the poked creature as speaker. Both first **hold** the pair (§7.2). If the
 talk could not start, release after 1 s.
 
-### 6.6.1 Voice (macOS)
+### 6.6.1 Voice
 
 Every `say` (a bubble going up, whatever its source) also hands the line to the
 voice when `voiceEnabled`. The line is first made speakable: `**bold**` keeps its
@@ -679,8 +679,9 @@ stops everything at once.
 screen are handed voices from a pool: names sorted, each starts at FNV-1a(name)
 mod pool size and takes the first voice not yet taken, going round; when the pool
 runs out, the start voice. The same names and pool always give the same answer.
-Built-in pool: the Mac's voices in the user's language (English if none), no
-novelty or personal voices, one per voice name (the user's region preferred),
+Built-in pool: the system's voices in the user's language (English if none; on
+Windows the SAPI voices, which have no novelty ones, so the cartoon pool is the
+plain one), no novelty or personal voices, one per voice name (the user's region preferred),
 sorted by identifier; pitch is also multiplied by 0.9 + 0.2 × (FNV-1a(name +
 "#pitch") mod 1000) / 999. OpenRouter pool: the model's `supported_voices`, cut to
 the English ones when any name is marked English (`-en` suffix; `en_`, `gb_`,
