@@ -405,9 +405,9 @@ public enum Tea {
     public static let placeholders = ["speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona",
                                       "situation", "party", "line", "relationship"]
 
-    public static let systemPrompts = Translated(english: englishSystemPrompt)
-    public static let storyPrompts = Translated(english: englishStoryPrompt)
-    public static let replyPrompts = Translated(english: englishReplyPrompt)
+    public static let systemPrompts = Translated(english: englishSystemPrompt, [.russian: russianSystemPrompt])
+    public static let storyPrompts = Translated(english: englishStoryPrompt, [.russian: russianStoryPrompt])
+    public static let replyPrompts = Translated(english: englishReplyPrompt, [.russian: russianReplyPrompt])
     public static var systemPrompt: String { systemPrompts() }
     public static var storyPrompt: String { storyPrompts() }
     public static var replyPrompt: String { replyPrompts() }

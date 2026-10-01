@@ -560,9 +560,9 @@ public enum Letters {
 
     /// The model writes the note as the sender, then thinks out loud as the reader.
     /// Placeholders are Banter's: `{speaker}` is the one writing or thinking.
-    public static let notePrompts = Translated(english: englishNotePrompt)
-    public static let replyPrompts = Translated(english: englishReplyPrompt)
-    public static let musingPrompts = Translated(english: englishMusingPrompt)
+    public static let notePrompts = Translated(english: englishNotePrompt, [.russian: russianNotePrompt])
+    public static let replyPrompts = Translated(english: englishReplyPrompt, [.russian: russianReplyPrompt])
+    public static let musingPrompts = Translated(english: englishMusingPrompt, [.russian: russianMusingPrompt])
     public static var notePrompt: String { notePrompts() }
     public static var replyPrompt: String { replyPrompts() }
     public static var musingPrompt: String { musingPrompts() }

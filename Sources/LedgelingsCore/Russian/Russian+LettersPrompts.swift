@@ -1,3 +1,5 @@
 extension Strings {
-    static let ruLettersPrompts: [String: String] = [:]
+    static let ruLettersPrompts: [String: String] = [
+        :
+    ]
 }

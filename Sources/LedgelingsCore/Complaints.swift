@@ -153,7 +153,7 @@ public enum Complaints {
 
     /// The model writes the complaint, in the creature's voice, in the current language.
     public static var prompt: String { prompts() }
-    public static let prompts = Translated(english: englishPrompt)
+    public static let prompts = Translated(english: englishPrompt, [.russian: russianPrompt])
     public static let englishPrompt = """
     {situation}
     The person whose screen you live on keeps chasing you with the mouse cursor and picking you up: \
