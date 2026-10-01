@@ -3,7 +3,7 @@ using System.Globalization;
 namespace Ledgelings.Core;
 
 /// <summary>What the talking costs. One record per model call, kept as JSON lines in
-/// one file, summed by day, month, all time and model.</summary>
+/// one file, summed by day, month, all time, model and feature.</summary>
 public static class Spend
 {
     /// <summary>What a server reported for one call. <c>Cost</c> is in US dollars and only
@@ -15,17 +15,35 @@ public static class Spend
         public double? Cost { get; set; } = Cost;
     }
 
+    /// <summary>Which feature made a call. Every model call is recorded with one, so the
+    /// Costs tab can say what each feature costs, not just each model.</summary>
+    public enum Purpose { Talk, Planes, Voice, Casting, Plots, Reminders, Complaints, TeaParties }
+
+    /// <summary>What records written before features were labelled are shown as.</summary>
+    public const string UnlabelledPurpose = "Earlier, unlabelled";
+
+    /// <summary>The title for a record's stored purpose, which may be missing or from a newer app.</summary>
+    public static string PurposeTitle(string? raw)
+    {
+        if (raw is null) return UnlabelledPurpose;
+        foreach (var p in Enum.GetValues<Purpose>()) if (p.Raw() == raw) return p.Title();
+        return raw;
+    }
+
     public sealed class Record
     {
         public DateTimeOffset Time { get; set; }
         public string Provider { get; set; } = "";
         public string Model { get; set; } = "";
         public Usage Usage { get; set; } = new(0, 0, null);
+        /// <summary>A <see cref="Spend.Purpose"/>'s raw value; absent in records from before v0.18. A string,
+        /// not the enum, so a purpose added later does not make older builds drop the line.</summary>
+        public string? Purpose { get; set; }
 
         public Record() { }
-        public Record(DateTimeOffset time, string provider, string model, Usage usage)
+        public Record(DateTimeOffset time, string provider, string model, Usage usage, Purpose? purpose = null)
         {
-            Time = time; Provider = provider; Model = model; Usage = usage;
+            Time = time; Provider = provider; Model = model; Usage = usage; Purpose = purpose?.Raw();
         }
     }
 
@@ -54,6 +72,8 @@ public static class Spend
         public Total AllTime { get; set; } = new();
         /// <summary>Dearest first; ties by calls.</summary>
         public List<(string Model, Total Total)> ByModel { get; set; } = new();
+        /// <summary>By feature, as <see cref="PurposeTitle"/> names it; dearest first.</summary>
+        public List<(string Purpose, Total Total)> ByPurpose { get; set; } = new();
     }
 
     public static Summary Summarise(IEnumerable<Record> records, DateTimeOffset? now = null)
@@ -61,8 +81,12 @@ public static class Spend
         var at = (now ?? DateTimeOffset.Now).ToLocalTime();
         var s = new Summary();
         var models = new Dictionary<string, Total>();
+        var purposes = new Dictionary<string, Total>();
         foreach (var r in records)
         {
+            var title = PurposeTitle(r.Purpose);
+            if (!purposes.TryGetValue(title, out var forPurpose)) purposes[title] = forPurpose = new Total();
+            forPurpose.Add(r.Usage);
             var local = r.Time.ToLocalTime();
             s.AllTime.Add(r.Usage);
             if (local.Year == at.Year && local.Month == at.Month) s.Month.Add(r.Usage);
@@ -72,6 +96,9 @@ public static class Spend
         }
         s.ByModel = models.Select(kv => (kv.Key, kv.Value))
             .OrderByDescending(m => m.Value.Cost).ThenByDescending(m => m.Value.Calls).ThenBy(m => m.Key, StringComparer.Ordinal)
+            .ToList();
+        s.ByPurpose = purposes.Select(kv => (kv.Key, kv.Value))
+            .OrderByDescending(p => p.Value.Cost).ThenByDescending(p => p.Value.Calls).ThenBy(p => p.Key, StringComparer.Ordinal)
             .ToList();
         return s;
     }
@@ -96,5 +123,28 @@ public static class Spend
 
         /// <summary>Every record in the order it was written. A damaged line is skipped.</summary>
         public List<Record> Records() => JsonLines.Read<Record>(File);
+    }
+}
+
+/// <summary>A purpose's words: the title the Costs tab shows, and the raw value the file keeps (the Mac's).</summary>
+public static class SpendPurposeExtensions
+{
+    public static string Title(this Spend.Purpose purpose) => purpose switch
+    {
+        Spend.Purpose.Talk => "Talk",
+        Spend.Purpose.Planes => "Paper planes",
+        Spend.Purpose.Voice => "Voice",
+        Spend.Purpose.Casting => "Voice casting",
+        Spend.Purpose.Plots => "Relationship plots",
+        Spend.Purpose.Reminders => "Reminders",
+        Spend.Purpose.Complaints => "Complaints",
+        _ => "Tea parties",
+    };
+
+    /// <summary>"talk", "teaParties": the enum's name in camelCase, as the macOS app writes it.</summary>
+    public static string Raw(this Spend.Purpose purpose)
+    {
+        var name = purpose.ToString();
+        return char.ToLowerInvariant(name[0]) + name[1..];
     }
 }

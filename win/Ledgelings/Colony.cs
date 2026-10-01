@@ -50,8 +50,8 @@ public sealed partial class Colony : IDisposable
     private (int Index, Vec Grab)? held;
 
     private DayNight dayNight;
-    /// <summary>One line per talking creature, and when it stops showing.</summary>
-    private readonly Dictionary<int, (string Text, double Until)> bubbles = new();
+    /// <summary>One line per talking creature (<see cref="Bubble"/>, in Colony.Talk).</summary>
+    private readonly Dictionary<int, Bubble> bubbles = new();
     /// <summary>Creatures in a running conversation: a bump or a poke involving them waits.</summary>
     private readonly HashSet<int> busy = new();
     /// <summary>Who has walked into whom, and how often.</summary>

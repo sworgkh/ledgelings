@@ -82,8 +82,8 @@ public class ScriptTests
         var script = Script.Parse("One.\n\nTwo.\n\nThree.");
         var rng = new Random();
         for (int i = 0; i < 20; i++) Assert.Equal(2, script.Pick(Moment("day"), new[] { 0, 1 }, rng));
-        var picks = Enumerable.Range(0, 40).Select(_ => script.Pick(Moment("day"), new[] { 0, 1, 2 }, rng)).ToHashSet();
-        Assert.True(picks.SetEquals(new int?[] { 0, 1, 2 }), "everyone recent: anyone will do");
+        for (int i = 0; i < 20; i++)
+            Assert.True(script.Pick(Moment("day"), new[] { 2, 0, 1 }, rng) == 2, "everyone recent: the one used longest ago");
     }
 
     [Fact]
@@ -94,6 +94,17 @@ public class ScriptTests
     }
 
     [Fact]
+    public void AHolidayBlockIsTaggedAndNamesTheHoliday()
+    {
+        var script = Script.Parse("[holiday]\nHappy {holiday}.\nThanks.\n\nHi.\nHo.\n");
+        Assert.True(script.Conversations[0].Tags.SetEquals(new[] { "holiday" }));
+        var rng = new Random();
+        Assert.Equal(1, script.Pick(Moment("day"), Array.Empty<int>(), rng));
+        Assert.Equal(0, script.Pick(Moment("day", "holiday"), Array.Empty<int>(), rng));
+        Assert.Equal("Happy Purim.", Script.Fill("Happy {holiday}.", "a", "b", null, holiday: "Purim"));
+    }
+
+    [Fact]
     public void TheBuiltInScriptIsBigCleanAndCoversTheMoments()
     {
         var script = Script.Parse(Script.BuiltInText);
@@ -101,13 +112,14 @@ public class ScriptTests
         Assert.True(script.Conversations.Count(c => c.Tags.SetEquals(new[] { "flower" })) >= 10);
         Assert.True(script.Conversations.Count(c => c.Tags.SetEquals(new[] { "night" })) >= 6);
         Assert.True(script.Conversations.Count(c => c.Tags.Count == 0) >= 40);
+        Assert.True(script.Conversations.Count(c => c.Tags.SetEquals(new[] { "holiday" })) >= 5);
         foreach (var c in script.Conversations)
         {
             Assert.True(c.Lines.Count is >= 2 and <= 4, string.Join(" / ", c.Lines));
             foreach (var line in c.Lines)
             {
                 Assert.True(line.Length <= 120, line);
-                Assert.DoesNotContain("{", Script.Fill(line, "x", "y", "z"));
+                Assert.DoesNotContain("{", Script.Fill(line, "x", "y", "z", "w"));
             }
         }
     }

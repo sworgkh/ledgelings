@@ -8,10 +8,16 @@ namespace Ledgelings.Core;
 public sealed class IsoTimeConverter : JsonConverter<DateTimeOffset>
 {
     public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        => DateTimeOffset.Parse(reader.GetString() ?? throw new JsonException("time"), null, System.Globalization.DateTimeStyles.RoundtripKind);
+    {
+        // Invariant: on a Thai or Persian Windows the user's culture counts years in another calendar.
+        // A date that does not read is a damaged line, which JsonLines.Read skips.
+        var text = reader.GetString() ?? throw new JsonException("time");
+        return DateTimeOffset.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var time)
+            ? time : throw new JsonException("not a time: " + text);
+    }
 
     public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
-        => writer.WriteStringValue(value.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+        => writer.WriteStringValue(value.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture));
 }
 
 public static class JsonLines

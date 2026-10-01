@@ -19,7 +19,7 @@ public sealed class ZeroAsText : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
-public enum SettingsTab { Creatures, Sprites, Talk, Chats }
+public enum SettingsTab { Creatures, Sprites, Talk, Flowers, Bonds, Calendar, Reminders, Voice, Costs, Chats }
 
 /// <summary>Fills a TextBlock with a chat line: the speaker in bold, then the text with the
 /// model's *marks* shown as italic and bold runs. <c>ui:StyledLine.Line="{Binding}"</c>.</summary>

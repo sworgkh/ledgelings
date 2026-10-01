@@ -60,4 +60,55 @@ public class SpendTests
         }
         finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
+    [Fact]
+    public void CostsAreSummedByFeatureAndOldRecordsAreShownAsUnlabelled()
+    {
+        Spend.Record R(Spend.Purpose? purpose, double cost) =>
+            new(Noon, "OpenRouter", "m", new Spend.Usage(10, 0, cost), purpose);
+        var s = Spend.Summarise(new[] { R(Spend.Purpose.Voice, 0.002), R(Spend.Purpose.Voice, 0.001), R(Spend.Purpose.Talk, 0.0005), R(Spend.Purpose.Casting, 0.0001), R(null, 0.01) }, Noon);
+        Assert.Equal(new[] { Spend.UnlabelledPurpose, "Voice", "Talk", "Voice casting" }, s.ByPurpose.Select(p => p.Purpose));
+        Assert.True(s.ByPurpose[1].Total.Calls == 2 && Math.Abs(s.ByPurpose[1].Total.Cost - 0.003) < 1e-12);
+    }
+
+    [Fact]
+    public void ARecordFromBeforeFeaturesWereLabelledStillReads()
+    {
+        var old = "{\"time\":\"2026-09-25T19:44:03Z\",\"provider\":\"OpenRouter\",\"usage\":{\"cost\":0.00033,\"promptTokens\":4,\"completionTokens\":0},\"model\":\"microsoft/mai-voice-2\"}";
+        var record = System.Text.Json.JsonSerializer.Deserialize<Spend.Record>(old, JsonLines.Options)!;
+        Assert.True(record.Purpose is null && Spend.PurposeTitle(record.Purpose) == Spend.UnlabelledPurpose);
+        Assert.True(Spend.PurposeTitle("dreams") == "dreams", "a purpose from a newer build keeps its name");
+    }
+
+    [Fact]
+    public void AllTheMacsPurposesAreHereWithTheirWords()
+    {
+        Assert.Equal(new[] { "talk", "planes", "voice", "casting", "plots", "reminders", "complaints", "teaParties" },
+            Enum.GetValues<Spend.Purpose>().Select(p => p.Raw()));
+        Assert.Equal("Tea parties", Spend.PurposeTitle("teaParties"));
+        var line = System.Text.Json.JsonSerializer.Serialize(new Spend.Record(Noon, "OpenRouter", "m", new Spend.Usage(1, 1, 0), Spend.Purpose.TeaParties), JsonLines.Options);
+        Assert.Contains("\"purpose\":\"teaParties\"", line);
+    }
+
+    [Fact]
+    public void ReminderNotesAreTheirOwnLineInTheCosts()
+    {
+        var usage = new Spend.Usage(120, 30, 0.0001);
+        var s = Spend.Summarise(new[] { new Spend.Record(DateTimeOffset.Now, "OpenRouter", "m", usage, Spend.Purpose.Reminders) }, DateTimeOffset.Now);
+        Assert.Equal(new[] { "Reminders" }, s.ByPurpose.Select(p => p.Purpose));
+        Assert.Equal(1, s.ByPurpose[0].Total.Calls);
+    }
+
+    [Fact]
+    public void TeaPartiesAreTheirOwnLineInTheCosts()
+    {
+        var usage = new Spend.Usage(300, 40, 0.0002);
+        var records = new[]
+        {
+            new Spend.Record(DateTimeOffset.Now, "OpenRouter", "m", usage, Spend.Purpose.TeaParties),
+            new Spend.Record(DateTimeOffset.Now, "OpenRouter", "m", new Spend.Usage(300, 40, 0.0002), Spend.Purpose.Talk),
+        };
+        var s = Spend.Summarise(records, DateTimeOffset.Now);
+        Assert.True(s.ByPurpose.Select(p => p.Purpose).ToHashSet().SetEquals(new[] { "Tea parties", "Talk" }));
+        Assert.Equal(1, s.ByPurpose.First(p => p.Purpose == "Tea parties").Total.Calls);
+    }
 }

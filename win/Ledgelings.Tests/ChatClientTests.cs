@@ -64,6 +64,44 @@ public class ChatClientTests
     }
 
     [Fact]
+    public void AThinkingModelThatRanOutOfRoomIsAnEmptyAnswerThatStillCosts()
+    {
+        var answer = ChatClient.ParseReply("""{"choices":[{"finish_reason":"length","message":{"content":null,"reasoning":null}}],"usage":{"prompt_tokens":200,"completion_tokens":160,"cost":0.0001}}""");
+        Assert.True(answer.Text == "" && answer.Usage == new Spend.Usage(200, 160, 0.0001));
+    }
+
+    [Fact]
+    public void AReplyThatRanOutOfRoomSaysItWasCut()
+    {
+        Assert.Equal(new ChatClient.Answer("Collision report", null, true),
+            ChatClient.ParseReply("""{"choices":[{"finish_reason":"length","message":{"content":"Collision report"}}]}"""));
+        Assert.False(ChatClient.ParseReply("""{"choices":[{"finish_reason":"stop","message":{"content":"Collision logged."}}]}""").Cut);
+    }
+
+    [Fact]
+    public async Task ALineHasRoomToThinkAndIsToldToThinkLittle()
+    {
+        var client = ChatClient.OpenRouter("k", "m");
+        client.LineTokens = 900;
+        using var body = await Body(client.LineRequest("s", "u"));
+        Assert.Equal(900, body.RootElement.GetProperty("max_tokens").GetInt32());
+        Assert.Equal("low", body.RootElement.GetProperty("reasoning").GetProperty("effort").GetString());
+        Assert.Equal(600, ChatClient.OpenRouter("k", "m").LineTokens);
+    }
+
+    [Fact]
+    public async Task OnlyOpenRouterIsToldHowHardToThink()
+    {
+        var openRouter = ChatClient.OpenRouter("k", "m");
+        using (var low = await Body(openRouter.Request("s", "u", reasoning: "low")))
+            Assert.Equal("low", low.RootElement.GetProperty("reasoning").GetProperty("effort").GetString());
+        using (var none = await Body(openRouter.Request("s", "u")))
+            Assert.False(none.RootElement.TryGetProperty("reasoning", out _), "left to the model unless asked");
+        using var local = await Body(ChatClient.LmStudio(new Uri("http://localhost:1234"), "m").Request("s", "u", reasoning: "low"));
+        Assert.False(local.RootElement.TryGetProperty("reasoning", out _));
+    }
+
+    [Fact]
     public async Task OpenRouterIsAskedToReportTheCostAndLMStudioIsNot()
     {
         var remote = ChatClient.OpenRouter("k", "m").Request("s", "u");

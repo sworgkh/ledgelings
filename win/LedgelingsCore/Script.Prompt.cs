@@ -18,10 +18,11 @@ public sealed partial class Script
             "- One conversation per block, with a blank line between blocks.\n" +
             "- The lines of a block alternate: the first line is the one who bumped, the second is the one who was bumped into, and so on. Two to four lines per block, mostly two.\n" +
             "- Each line is at most 20 words. No name prefixes, no quotes, no numbering.\n" +
-            "- Placeholders: {speaker} is the one saying the line, {listener} is the other one, {flower} is the flower being given.\n" +
+            "- Placeholders: {speaker} is the one saying the line, {listener} is the other one, {flower} is the flower being given, {holiday} is the holiday it is today.\n" +
             "- Use *asterisks* for an action or emphasis, like *sighs*.\n" +
             "- About a quarter of the blocks start with the tag line [flower]: the one who bumped has just given the other a {flower}, and the lines are about it.\n" +
             "- A few blocks start with [night]: it is dark, and they are supposed to be asleep. A block can have both: [night, flower].\n" +
+            "- A few blocks start with [holiday]: today is a holiday, named by {holiday} (it could be Christmas, Hanukkah, Eid al-Fitr or any other), so the lines must fit any of them.\n" +
             "- Blocks without a tag line happen at any time.\n" +
             who + "\n" +
             "Example:\n" +

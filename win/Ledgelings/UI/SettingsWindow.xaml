@@ -163,12 +163,17 @@
                 <Slider Minimum="4" Maximum="60" TickFrequency="1" Value="{Binding BubbleSeconds, Mode=TwoWay}"/>
               </DockPanel>
               <DockPanel Margin="0,4">
+                <TextBlock Text="Not repeating their last" Style="{StaticResource RowLabel}" Width="150"/>
+                <TextBlock x:Name="LineMemoryValue" Style="{StaticResource RowValue}"/>
+                <Slider Minimum="0" Maximum="40" TickFrequency="1" Value="{Binding LineMemory, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
                 <TextBlock Text="Flower lasts" Style="{StaticResource RowLabel}"/>
                 <TextBlock Style="{StaticResource RowValue}" Text="{Binding FlowerMinutes, StringFormat={}{0} min}"/>
                 <Slider Minimum="0.5" Maximum="30" TickFrequency="0.5" Value="{Binding FlowerMinutes, Mode=TwoWay}"/>
               </DockPanel>
               <CheckBox Content="The one with the flower follows the giver while it lasts" IsChecked="{Binding FollowGiver, Mode=TwoWay}"/>
-              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. &quot;Make Someone Talk&quot; in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it."/>
+              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. &quot;Make Someone Talk&quot; in the menu works at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new."/>
             </StackPanel>
           </GroupBox>
           <GroupBox Header="Brain">
@@ -232,6 +237,11 @@
                 </ListBox>
                 <TextBlock x:Name="CatalogStatus" FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,0"/>
               </StackPanel>
+              <DockPanel x:Name="LineTokensRow" Margin="0,8,0,0">
+                <TextBlock Text="Room for each line" Style="{StaticResource RowLabel}" Width="130"/>
+                <TextBlock Style="{StaticResource RowValue}" Width="90" Text="{Binding LineTokens, StringFormat={}{0} tokens}"/>
+                <Slider Minimum="100" Maximum="4000" TickFrequency="100" Value="{Binding LineTokens, Mode=TwoWay}"/>
+              </DockPanel>
               <TextBlock x:Name="BrainFooter" Style="{StaticResource Footer}"/>
             </StackPanel>
           </GroupBox>
@@ -308,6 +318,112 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem Header="Bonds">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Stories">
+            <StackPanel>
+              <TextBlock x:Name="BondsNeedsModel"/>
+              <CheckBox x:Name="PlotsToggle" Content="Pairs who live together get a story" IsChecked="{Binding PlotsEnabled, Mode=TwoWay}"/>
+              <DockPanel x:Name="PlotAfterRow" Margin="0,6,0,4">
+                <TextBlock Text="First story after" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding PlotAfterHours, StringFormat={}{0} h}"/>
+                <Slider Minimum="0.25" Maximum="72" TickFrequency="0.25" Value="{Binding PlotAfterHours, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel x:Name="PlotLengthRow" Margin="0,4">
+                <TextBlock Text="A story lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Width="120" Text="{Binding PlotLength, StringFormat={}{0} conversations}"/>
+                <Slider Minimum="2" Maximum="20" TickFrequency="1" Value="{Binding PlotLength, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock x:Name="BondsFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox x:Name="PlotPromptBox" Header="The prompt that writes a story">
+            <StackPanel>
+              <TextBox Text="{Binding PlotPrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="200"/>
+              <Button Content="Reset Prompt" HorizontalAlignment="Right" Click="ResetPlotPrompt_Click" Margin="0,6,0,0"/>
+              <TextBlock x:Name="PlotPromptFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Who lives with whom">
+            <StackPanel>
+              <TextBlock x:Name="BondsEmpty" Text="Nobody has shared the screen yet." Foreground="Gray"/>
+              <ItemsControl x:Name="BondList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Margin="0,4">
+                      <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Forget" Tag="{Binding Key}" Click="ForgetBond_Click" FontSize="11" Padding="6,0"/>
+                        <TextBlock Text="{Binding Names}" FontWeight="Bold"/>
+                      </DockPanel>
+                      <TextBlock Text="{Binding Details}" FontSize="11" Foreground="Gray"/>
+                      <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Visibility="{Binding SummaryVisibility}"/>
+                      <TextBlock Text="{Binding Story}" TextWrapping="Wrap" FontStyle="{Binding StoryStyle}" Foreground="{Binding StoryBrush}" Visibility="{Binding StoryVisibility}"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" Text="Time counts while both are on screen, and is kept by name: rename a character and it starts again as a stranger."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="The file">
+            <DockPanel>
+              <Button DockPanel.Dock="Right" x:Name="ForgetAllBonds" Content="Forget All" Click="ForgetAllBonds_Click" Margin="8,0,0,0"/>
+              <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealBonds_Click"/>
+              <TextBlock x:Name="BondsPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            </DockPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Calendar">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="The day">
+            <StackPanel>
+              <TextBlock x:Name="CalendarNeedsModel"/>
+              <CheckBox x:Name="KnowsTimeToggle" Content="They know the time of day" IsChecked="{Binding KnowsTimeOfDay, Mode=TwoWay}"/>
+              <CheckBox x:Name="KnowsDateToggle" Content="They know the day of the week and the date" IsChecked="{Binding KnowsDate, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <TextBlock Style="{StaticResource Footer}" Text="Your PC's clock and calendar, told to the model before every line and paper plane: &quot;late evening (22:40)&quot;, &quot;Saturday, 26 September 2026&quot;. This is apart from the colony's own day and night, which only says when they sleep."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Holidays">
+            <StackPanel>
+              <CheckBox Content="Jewish holidays" IsChecked="{Binding JewishHolidays, Mode=TwoWay}"/>
+              <CheckBox Content="Christian holidays" IsChecked="{Binding ChristianHolidays, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <CheckBox Content="Muslim holidays" IsChecked="{Binding MuslimHolidays, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <DockPanel x:Name="LookAheadRow" Margin="0,6,0,4">
+                <TextBlock Text="Mention a holiday" Style="{StaticResource RowLabel}"/>
+                <TextBlock x:Name="LookAheadValue" Style="{StaticResource RowValue}" Width="110"/>
+                <Slider Minimum="0" Maximum="14" TickFrequency="1" Value="{Binding HolidayLookAhead, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="On a holiday they know it, and which day of it (&quot;day 3 of Sukkot&quot;); before one, how far off it is. Jewish dates come from the Hebrew calendar and Muslim ones from the Islamic (Umm al-Qura) calendar, both built into Windows, so nothing is looked up online; a holiday that starts at sundown &quot;begins this evening&quot; the evening before. Where the new moon is sighted locally, a Muslim date can fall a day apart. With the built-in lines, one conversation in three on a holiday is about it; they only know a holiday on the day, so how far ahead to mention one needs a model."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="What they know right now">
+            <StackPanel>
+              <TextBlock x:Name="CalendarNow" TextWrapping="Wrap"/>
+              <TextBlock x:Name="CalendarNowFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Coming up in the next 60 days">
+            <StackPanel>
+              <TextBlock x:Name="CalendarAheadEmpty" Foreground="Gray"/>
+              <ItemsControl x:Name="CalendarAhead">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel Margin="0,2">
+                      <TextBlock DockPanel.Dock="Right" Text="{Binding When}" Foreground="Gray"/>
+                      <TextBlock Text="{Binding Name}"/>
+                    </DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem Header="Chats">
       <DockPanel>
         <DockPanel DockPanel.Dock="Bottom" Margin="10">
@@ -332,6 +448,7 @@
                       <TextBlock Text="{Binding Model}" FontSize="11" Foreground="Gray" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
                     </DockPanel>
                     <TextBlock Text="{Binding Situation}" FontSize="11" Foreground="DarkGray" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Plot}" Visibility="{Binding PlotVisibility}" FontSize="11" FontStyle="Italic" Foreground="DarkGray" TextWrapping="Wrap"/>
                     <ItemsControl ItemsSource="{Binding Lines}">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate>

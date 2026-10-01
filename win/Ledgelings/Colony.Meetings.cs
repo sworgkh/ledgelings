@@ -126,18 +126,33 @@ public sealed partial class Colony
         return new Pt(c.Position.X + up.Dx * lift, c.Position.Y + up.Dy * lift);
     }
 
-    /// <summary>Let a pair go once its reply is out, or as soon as one of them is no longer standing there.</summary>
+    /// <summary>Let a pair go once they have finished talking: the last line said and its
+    /// bubble gone, so nobody walks off mid-sentence; or at once when one of them is
+    /// no longer standing there. While either is still talking, their chat's own
+    /// safety limit is kept topped up; once both are quiet it runs out as usual.</summary>
     private void ReleaseChatIfOver()
     {
         var over = chats.Where(chat =>
         {
             var stillThere = new[] { chat.A, chat.B }.All(i => i < creatures.Count && creatures[i].IsChatting);
-            return !stillThere || (chat.ReleaseAt is double at && at <= Elapsed);
+            if (!stillThere) return true;
+            if (IsTalking(chat)) return false;
+            return chat.ReleaseAt is double at && at <= Elapsed;
         }).ToList();
+        foreach (var chat in chats.Where(IsTalking))
+            foreach (var i in new[] { chat.A, chat.B }) if (i < creatures.Count) creatures[i].KeepChatting(ChatGrace);
         if (over.Count == 0) return;
         foreach (var chat in over) Release(chat);
         chats.RemoveAll(over.Contains);
     }
+
+    /// <summary>A line of theirs is still coming (a model is thinking, a scripted line is due)
+    /// or still up in a bubble.</summary>
+    private bool IsTalking(Conversation chat) =>
+        new[] { chat.A, chat.B }.Any(i => busy.Contains(i) || bubbles.ContainsKey(i));
+
+    /// <summary>How long a pair stays put, once both have gone quiet, if nothing lets them go sooner.</summary>
+    private const double ChatGrace = 5;
 
     private FlowerFlight? FlightSnapshot()
     {

@@ -186,6 +186,87 @@ public class SettingsTests
     }
 
     [Fact]
+    public void WithTheBuiltInLinesThereIsNoModelAndTheReasonSaysWhereToChooseOne()
+    {
+        var s = Fresh().Settings;
+        Assert.False(s.HasModel, "a fresh install greys out what only a model can do");
+        Assert.Equal(AppSettings.NeedsModel, s.BrainProblem);
+        Assert.Contains("Settings › Talk", AppSettings.NeedsModel);
+        Assert.True(ChatClient.Failure.NoModel(s.BrainProblem).Message == AppSettings.NeedsModel, "said as it is, not as a server refusal");
+        s.Brain = BrainKind.LmStudio;
+        Assert.True(s.HasModel);
+        s.Brain = BrainKind.OpenRouter;
+        Assert.True(s.HasModel && s.ChatClient() is null, "chosen but keyless: the features show, the key is what is missing");
+    }
+
+    [Fact]
+    public void LineMemoryDefaultsToTwelveAndIsClampedOnLoad()
+    {
+        var box = Fresh();
+        Assert.Equal(12, box.Settings.LineMemory);
+        box.Settings.LineMemory = 0;
+        Assert.Equal(0, box.Again().LineMemory);
+        box.Store.Set("lineMemory", 500);
+        Assert.Equal(AppSettings.LineMemoryMax, box.Again().LineMemory);
+    }
+
+    [Fact]
+    public void RoomForEachLineDefaultsToSixHundredTokensReachesTheClientAndIsClampedOnLoad()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.Equal(600, s.LineTokens);
+        s.LineTokens = 1500;
+        Assert.Equal(1500, box.Again().LineTokens);
+        s.Brain = BrainKind.LmStudio;
+        Assert.Equal(1500, s.ChatClient()?.LineTokens);
+        box.Store.Set("lineTokens", 10);
+        Assert.Equal(AppSettings.LineTokensMin, box.Again().LineTokens);
+        box.Store.Set("lineTokens", 99_999);
+        Assert.Equal(AppSettings.LineTokensMax, box.Again().LineTokens);
+    }
+
+    [Fact]
+    public void StoriesAreOnAfterAnHourForSixConversationsAndRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.PlotsEnabled && s.PlotAfterHours == 1 && s.PlotLength == 6 && s.PlotPrompt == Bonds.DefaultPlotPrompt);
+        s.PlotsEnabled = false;
+        s.PlotAfterHours = 24;
+        s.PlotLength = 10;
+        s.PlotPrompt = "Write {speaker} a plot.";
+        var back = box.Again();
+        Assert.True(!back.PlotsEnabled && back.PlotAfterHours == 24 && back.PlotLength == 10 && back.PlotPrompt == "Write {speaker} a plot.");
+        back.ResetPlotPrompt();
+        Assert.Equal(Bonds.DefaultPlotPrompt, back.PlotPrompt);
+        box.Store.Set("plotAfterHours", 500.0);
+        box.Store.Set("plotLength", 0);
+        var clamped = box.Again();
+        Assert.True(clamped.PlotAfterHours == AppSettings.PlotAfterMax && clamped.PlotLength == AppSettings.PlotLengthMin);
+    }
+
+    [Fact]
+    public void TheyKnowTheTimeDateAndAllThreeFaithsHolidaysByDefaultAndItIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.KnowsTimeOfDay && s.KnowsDate && s.JewishHolidays && s.ChristianHolidays && s.MuslimHolidays);
+        Assert.Equal(3, s.HolidayLookAhead);
+        Assert.Equal(new Almanac.Awareness(true, true, Almanac.AllFaiths, 3), s.Awareness);
+        s.KnowsTimeOfDay = false;
+        s.KnowsDate = false;
+        s.ChristianHolidays = false;
+        s.MuslimHolidays = false;
+        s.HolidayLookAhead = 7;
+        var back = box.Again();
+        Assert.True(!back.KnowsTimeOfDay && !back.KnowsDate && back.JewishHolidays && !back.ChristianHolidays && !back.MuslimHolidays);
+        Assert.Equal(new Almanac.Awareness(false, false, new[] { Almanac.Faith.Jewish }, 7), back.Awareness);
+        box.Store.Set("holidayLookAhead", 99);
+        Assert.Equal(AppSettings.HolidayLookAheadMax, box.Again().HolidayLookAhead);
+    }
+
+    [Fact]
     public void BubbleTimeDefaultsToFourteenSecondsAndIsClampedOnLoad()
     {
         var box = Fresh();

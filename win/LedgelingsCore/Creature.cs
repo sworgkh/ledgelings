@@ -143,15 +143,20 @@ public sealed class Creature
 
     // MARK: Driving it
 
-    public void Update(double dt, Pt? cursor, bool isNight, Random rng)
+    /// <summary>Returns true when the cursor came too close and it jumped away.</summary>
+    public bool Update(double dt, Pt? cursor, bool isNight, Random rng)
     {
-        if (dt <= 0) return;
+        if (dt <= 0) return false;
+        var fled = false;
         if (LooksAsleep) { Eyes = Eyes.Closed; blinkElapsed = null; } else UpdateBlink(dt, rng);
         NoticeTimeOfDay(isNight, rng);
 
         // A sleeper does not notice the cursor. That is what lets you pick it up.
         if (!IsJumping && !LooksAsleep && !IsHeld && !IsRunning && cursor is Pt c && c.DistanceTo(Position) < Settings.FleeRadius)
+        {
             Startle(rng);
+            fled = IsJumping;
+        }
 
         AnimationTime += dt;
         switch (CurrentMode)
@@ -252,6 +257,7 @@ public sealed class Creature
                 break;
             }
         }
+        return fled;
     }
 
     // MARK: Going home
@@ -337,6 +343,13 @@ public sealed class Creature
         if (!IsChatting) courseBeforeChat = Direction;
         Direction = facing < 0 ? -1 : 1;
         Enter(new Mode.Chatting(seconds));
+    }
+
+    /// <summary>Still talking: the chat's safety limit is at least <paramref name="seconds"/> away, so a long
+    /// exchange (a slow model, a line said out loud) does not walk off mid-sentence.</summary>
+    public void KeepChatting(double seconds)
+    {
+        if (CurrentMode is Mode.Chatting(var remaining) && remaining < seconds) CurrentMode = new Mode.Chatting(seconds);
     }
 
     /// <summary>The conversation is over: back on the old course.</summary>
