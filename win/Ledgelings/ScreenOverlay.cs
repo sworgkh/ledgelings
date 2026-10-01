@@ -85,10 +85,13 @@ public sealed partial class ScreenOverlay : IDisposable
 
     public void Render(IReadOnlyList<CreatureSnapshot> snapshots, Bitmap? z, Size cell, Size zCell, Size flowerCell,
                        FlowerFlight? flight, IReadOnlyList<SparkSnapshot> sparks, HouseSnapshot? house, Size houseCell,
+                       IReadOnlyList<PlantedSnapshot>? garden = null,
                        PlaneSnapshot? plane = null, Size planeCell = default, ReminderSnapshot? reminder = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
+        // Bottom to top, as the Mac layers them: the house, the planted flowers, then the creatures.
         AddHouse(ops, house, houseCell);
+        AddGarden(ops, garden, flowerCell);      // behind the creatures, who walk past in front
         var newBubbles = new Dictionary<int, (RectangleF, string, SizeF)>();
         for (int index = 0; index < snapshots.Count; index++)
         {

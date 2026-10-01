@@ -90,6 +90,22 @@
               <TextBlock Style="{StaticResource Footer}" Text="They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake."/>
             </StackPanel>
           </GroupBox>
+          <GroupBox Header="Patience">
+            <StackPanel>
+              <CheckBox Content="Complain when pushed around" IsChecked="{Binding ComplainEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding ComplainEnabled}">
+                <TextBlock Text="Puts up with" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding ComplainAfter, StringFormat={}{0} in a row}"/>
+                <Slider Minimum="1" Maximum="20" TickFrequency="1" Value="{Binding ComplainAfter, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4" IsEnabled="{Binding ComplainEnabled}">
+                <TextBlock Text="Calms down after" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding ComplainCalmSeconds, StringFormat={}{0} s}"/>
+                <Slider Minimum="5" Maximum="120" TickFrequency="5" Value="{Binding ComplainCalmSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again."/>
+            </StackPanel>
+          </GroupBox>
           <GroupBox Header="Startup">
             <StackPanel>
               <CheckBox x:Name="StartAtLogin" Content="Start Ledgelings when you log in" Checked="StartAtLogin_Changed" Unchecked="StartAtLogin_Changed"/>
@@ -167,19 +183,13 @@
                 <TextBlock x:Name="LineMemoryValue" Style="{StaticResource RowValue}"/>
                 <Slider Minimum="0" Maximum="40" TickFrequency="1" Value="{Binding LineMemory, Mode=TwoWay}"/>
               </DockPanel>
-              <DockPanel Margin="0,4">
-                <TextBlock Text="Flower lasts" Style="{StaticResource RowLabel}"/>
-                <TextBlock Style="{StaticResource RowValue}" Text="{Binding FlowerMinutes, StringFormat={}{0} min}"/>
-                <Slider Minimum="0.5" Maximum="30" TickFrequency="0.5" Value="{Binding FlowerMinutes, Mode=TwoWay}"/>
-              </DockPanel>
-              <CheckBox Content="The one with the flower follows the giver while it lasts" IsChecked="{Binding FollowGiver, Mode=TwoWay}"/>
               <CheckBox Content="Paper planes" IsChecked="{Binding PlanesEnabled, Mode=TwoWay}" Margin="0,4,0,0"/>
               <DockPanel Margin="0,6,0,4" IsEnabled="{Binding PlanesEnabled}">
                 <TextBlock Text="A paper plane every" Style="{StaticResource RowLabel}" Width="130"/>
                 <TextBlock Style="{StaticResource RowValue}" Text="{Binding PlaneMinutes, StringFormat={}{0} min}"/>
                 <Slider Minimum="0.5" Maximum="60" TickFrequency="0.5" Value="{Binding PlaneMinutes, Mode=TwoWay}"/>
               </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts; with the box ticked, the wearer trails the giver around the edge until then. Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. &quot;Make Someone Talk&quot; and &quot;Send a Paper Plane&quot; in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new."/>
+              <TextBlock Style="{StaticResource Footer}" Text="Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower (the Flowers tab). Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. &quot;Make Someone Talk&quot; and &quot;Send a Paper Plane&quot; in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new."/>
             </StackPanel>
           </GroupBox>
           <GroupBox Header="Brain">
@@ -319,6 +329,58 @@
               <TextBox Text="{Binding ReplyPrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas" MinHeight="60" Margin="0,2,0,8"/>
               <Button Content="Reset Prompts" HorizontalAlignment="Right" Click="ResetPrompts_Click"/>
               <TextBlock x:Name="PromptFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Flowers">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Wearing">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Flower lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding FlowerMinutes, StringFormat={}{0} min}"/>
+                <Slider Minimum="0.5" Maximum="30" TickFrequency="0.5" Value="{Binding FlowerMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <CheckBox Content="The one with the flower follows the giver while it lasts" IsChecked="{Binding FollowGiver, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" Text="Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts or is planted. With the box ticked, the wearer trails the giver around the edge meanwhile. A creature wearing a flower walks past everyone without bumping."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Planting">
+            <StackPanel>
+              <CheckBox Content="They plant their flowers where they like" IsChecked="{Binding PlantFlowers, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding PlantFlowers}">
+                <TextBlock Text="A planted flower lasts" Style="{StaticResource RowLabel}" Width="180"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding GardenMinutes, StringFormat={}{0} min}"/>
+                <Slider Minimum="1" Maximum="240" TickFrequency="1" Value="{Binding GardenMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4" IsEnabled="{Binding PlantFlowers}">
+                <TextBlock Text="Flowers in the ground at most" Style="{StaticResource RowLabel}" Width="180"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding GardenSize}"/>
+                <Slider Minimum="1" Maximum="40" TickFrequency="1" Value="{Binding GardenSize, Mode=TwoWay}"/>
+              </DockPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <Button Content="Clear Planted Flowers" Click="ClearGarden_Click"/>
+                <TextBlock x:Name="GardenCleared" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="Gray"/>
+              </StackPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="After wearing it a while, each one stops following its giver, goes looking for the kind of spot its character likes and plants the flower in the edge there. What it likes comes from who it is: Blocky wants the bottom edge, Pip the ceiling, Ruth a neat row beside the others, Dot plants at once, Zed waits for dark. If nowhere suits before the flower would wilt, it plants it where it stands. Planting one more than the most wilts the oldest. Clear Planted Flowers, here or in the menu, pulls them all up at once. Planted flowers are not kept when the app quits."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Who plants where">
+            <StackPanel>
+              <ItemsControl x:Name="PlanterList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel Margin="0,3">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Width="110" VerticalAlignment="Top"/>
+                      <TextBlock Text="{Binding Temper}" TextWrapping="Wrap"/>
+                    </DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" Text="Read from each character's description and its species on the Talk tab, the same way voices are cast: words like bottom, ceiling, corner, quiet, cheerful, counts, sleepy or fast. Edit a description and this changes with it."/>
             </StackPanel>
           </GroupBox>
         </StackPanel>

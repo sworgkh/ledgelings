@@ -186,6 +186,39 @@ public class SettingsTests
     }
 
     [Fact]
+    public void FlowersArePlantedByDefaultAndTheGardenSurvivesARelaunch()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.PlantFlowers && s.GardenMinutes == 60 && s.GardenSize == 12);
+        s.PlantFlowers = false; s.GardenMinutes = 90; s.GardenSize = 3;
+        var again = box.Again();
+        Assert.True(!again.PlantFlowers && again.GardenMinutes == 90 && again.GardenSize == 3);
+        box.Store.Set("gardenMinutes", 0.0); box.Store.Set("gardenSize", 500);
+        var repaired = box.Again();
+        Assert.Equal(AppSettings.GardenMinutesMin, repaired.GardenMinutes);
+        Assert.Equal(AppSettings.GardenSizeMax, repaired.GardenSize);
+    }
+
+    [Fact]
+    public void TheyComplainAfterFourInARowCalmAfterTwentySecondsAndItIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.ComplainEnabled && s.ComplainAfter == 4 && s.ComplainCalmSeconds == 20);
+        s.ComplainEnabled = false;
+        s.ComplainAfter = 7;
+        s.ComplainCalmSeconds = 45;
+        var back = box.Again();
+        Assert.True(!back.ComplainEnabled && back.ComplainAfter == 7 && back.ComplainCalmSeconds == 45);
+        box.Store.Set("complainAfter", 99);
+        box.Store.Set("complainCalmSeconds", 1.0);
+        var clamped = box.Again();
+        Assert.Equal(AppSettings.ComplainAfterMax, clamped.ComplainAfter);
+        Assert.Equal(AppSettings.ComplainCalmMin, clamped.ComplainCalmSeconds);
+    }
+
+    [Fact]
     public void WithTheBuiltInLinesThereIsNoModelAndTheReasonSaysWhereToChooseOne()
     {
         var s = Fresh().Settings;

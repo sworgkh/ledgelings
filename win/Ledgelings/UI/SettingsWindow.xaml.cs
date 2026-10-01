@@ -40,6 +40,7 @@ public sealed partial class SettingsWindow : Window
         RefreshSpend();
         RefreshCastSpecies();
         InitChats();
+        InitFlowers();
         PromptBox.Text = library.Prompt;
         SpritesFooter.Text = "Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in " + library.Directory + ".";
         PromptFooter.Text = "Placeholders: " + string.Join(" ", Core.Banter.Placeholders.Select(p => "{" + p + "}")) + ". {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.";

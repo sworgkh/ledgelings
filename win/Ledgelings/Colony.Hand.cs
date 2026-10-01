@@ -37,6 +37,7 @@ public sealed partial class Colony
                 {
                     var p = creatures[i].Position;
                     held = (i, new Vec(p.X - point.X, p.Y - point.Y));
+                    Bothered(i);
                 }
                 break;
             case HandEvent.Dragged(var point):
@@ -47,6 +48,7 @@ public sealed partial class Colony
                     {
                         var p = creatures[pending.Index].Position;
                         held = (pending.Index, new Vec(p.X - pending.At.X, p.Y - pending.At.Y));
+                        Bothered(pending.Index);
                     }
                 }
                 if (held is not { } h) return;
