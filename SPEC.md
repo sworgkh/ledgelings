@@ -1223,7 +1223,7 @@ the screen.
   min(w, h) / 8)` pixels, cut off beyond the diagonal, with the flap drawn in deep
   shade inside a rim. Drawn above everything, on the cursor's screen only.
 
-### 7.8 Tea parties (macOS)
+### 7.8 Tea parties
 
 Now and then a bump is not a word in passing: the two sit down to tea and tell
 each other stories from their lives for a few minutes. One party at a time.

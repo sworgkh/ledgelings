@@ -26,6 +26,7 @@ public sealed partial class Colony
             }
             gifts.Forget(creatures.Count);
             ForgetAnnoyance();
+            if (!Settings.TeaPartiesEnabled) BreakUpTea();
             while (creatures.Count < Settings.CreatureCount)
             {
                 var share = rng.NextDouble();

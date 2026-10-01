@@ -47,6 +47,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadCalendar();
         LoadPatience();
         LoadFlowers();
+        LoadTeaParties();
         LoadPlanes();
         LoadReminders();
     }

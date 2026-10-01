@@ -201,6 +201,27 @@ public class SettingsTests
     }
 
     [Fact]
+    public void TeaPartiesAreOnNowAndThenAndTheirNumbersSurviveARelaunch()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.TeaPartiesEnabled && s.TeaPartyChance == 10 && s.TeaPartyMinutes == 3 && s.TeaSipSeconds == 6);
+        s.TeaPartiesEnabled = false;
+        s.TeaPartyChance = 25;
+        s.TeaPartyMinutes = 5.5;
+        s.TeaSipSeconds = 12;
+        var back = box.Again();
+        Assert.True(!back.TeaPartiesEnabled && back.TeaPartyChance == 25 && back.TeaPartyMinutes == 5.5 && back.TeaSipSeconds == 12);
+        box.Store.Set("teaPartyChance", 500.0);
+        box.Store.Set("teaPartyMinutes", 0.1);
+        box.Store.Set("teaSipSeconds", -3.0);
+        var clamped = box.Again();
+        Assert.Equal(AppSettings.TeaChanceMax, clamped.TeaPartyChance);
+        Assert.Equal(AppSettings.TeaMinutesMin, clamped.TeaPartyMinutes);
+        Assert.Equal(AppSettings.TeaSipMin, clamped.TeaSipSeconds);
+    }
+
+    [Fact]
     public void TheyComplainAfterFourInARowCalmAfterTwentySecondsAndItIsRemembered()
     {
         var box = Fresh();

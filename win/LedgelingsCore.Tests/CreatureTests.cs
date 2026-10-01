@@ -344,6 +344,25 @@ public class MeetingBehaviourTests
     }
 
     [Fact]
+    public void SentToASeatItWalksThereStillChattingThenFacesItsFriend()
+    {
+        var rng = new Random(6);
+        var c = CreatureAt(300);
+        c.Sit(250, 1);
+        Assert.True(!c.IsChatting && !c.IsSeated, "only a chatter takes a seat");
+        c.Meet(1);
+        c.Sit(270, 1);
+        Assert.True(c.IsChatting && !c.IsSeated);
+        Run(c, 0.2, rng);
+        Assert.True(c.Animation == "walk" && c.IsMirrored, "walks back to it, facing the way it goes");
+        Run(c, 1, rng);
+        Assert.True(c.IsSeated && Math.Abs(c.T - 270) < 0.01);
+        Assert.True(!c.IsMirrored && c.Animation == "idle", "sat down facing its friend");
+        c.WalkOn(rng);
+        Assert.False(c.IsChatting);
+    }
+
+    [Fact]
     public void TheCursorStillStartlesAChatterAway()
     {
         var rng = new Random(5);
