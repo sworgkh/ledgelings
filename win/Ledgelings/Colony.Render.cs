@@ -39,8 +39,10 @@ public sealed partial class Colony
         var beds = GardenSnapshots();
         var plane = MailSnapshot();
         var reminder = DeliverySnapshot();
+        var table = TeaTableSnapshot();
         foreach (var overlay in overlays)
             overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: beds,
-                           plane: plane, planeCell: planeCell, reminder: reminder);
+                           plane: plane, planeCell: planeCell, reminder: reminder,
+                           tea: table, teaCell: TeaCell);
     }
 }

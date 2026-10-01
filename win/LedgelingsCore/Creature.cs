@@ -82,6 +82,8 @@ public sealed class Creature
     private bool sleepsThroughLanding;
     /// <summary>The way it was going before it turned to talk to someone.</summary>
     private double courseBeforeChat = 1;
+    /// <summary>Mid-chat, stepping to a seat at a tea table: where, and which way to face once there.</summary>
+    private (double T, double Facing)? seat;
     /// <summary>Whether it was asleep when picked up, so it lands the same way.</summary>
     private bool napsInHand;
     /// <summary>A <see cref="Leap"/> lands and waits instead of walking off.</summary>
@@ -121,13 +123,15 @@ public sealed class Creature
         Mode.Landing => "land",
         Mode.Sleeping => "sleep",
         Mode.Held => napsInHand ? "sleep" : "idle",
-        Mode.Chatting => AnimationTime < Settings.LandDuration ? "land" : "idle",      // a squash on impact
+        Mode.Chatting => seat is not null ? "walk" : AnimationTime < Settings.LandDuration ? "land" : "idle",      // a squash on impact
         Mode.Running => "walk",
         _ => "idle",
     };
 
     public bool IsRunning => CurrentMode is Mode.Running;
     public bool IsChatting => CurrentMode is Mode.Chatting;
+    /// <summary>Chatting and not stepping anywhere: in its seat, if it was sent to one.</summary>
+    public bool IsSeated => IsChatting && seat is null;
 
     /// <summary>Asleep on an edge, or asleep in the user's hand.</summary>
     public bool IsSleeping => CurrentMode switch { Mode.Sleeping => true, Mode.Held => napsInHand, _ => false };
@@ -238,6 +242,7 @@ public sealed class Creature
 
             case Mode.Chatting(var remaining):
                 Turn(RestingRotation, dt);
+                if (seat is { } to) StepToSeat(to, dt);
                 if (remaining - dt <= 0) WalkOn(rng); else CurrentMode = new Mode.Chatting(remaining - dt);
                 break;
 
@@ -376,6 +381,35 @@ public sealed class Creature
         if (CurrentMode is Mode.Chatting(var remaining) && remaining < seconds) CurrentMode = new Mode.Chatting(seconds);
     }
 
+    /// <summary>Only while chatting: walk to <paramref name="t"/> on this loop, the short way round, then
+    /// turn to <paramref name="facing"/>, still chatting. Tea parties seat their pair this way.</summary>
+    public void Sit(double t, double facing)
+    {
+        if (!IsChatting) return;
+        seat = (Loop.Wrap(t), facing < 0 ? -1 : 1);
+        AnimationTime = 0;
+    }
+
+    private void StepToSeat((double T, double Facing) to, double dt)
+    {
+        var ahead = Loop.Wrap(to.T - Spot.T);
+        var behind = Loop.Wrap(Spot.T - to.T);
+        var step = Settings.WalkSpeed * dt;
+        if (Math.Min(ahead, behind) <= step)
+        {
+            Spot = Spot with { T = to.T };
+            Direction = to.Facing;
+            seat = null;
+            AnimationTime = Settings.LandDuration;       // sits straight down, no second squash
+        }
+        else
+        {
+            Direction = ahead <= behind ? 1 : -1;
+            Spot = Spot with { T = Loop.Wrap(Spot.T + Direction * step) };
+        }
+        Position = World.Point(Spot);
+    }
+
     /// <summary>The conversation is over: back on the old course.</summary>
     public void WalkOn(Random rng)
     {
@@ -502,6 +536,7 @@ public sealed class Creature
         CurrentMode = newMode;
         AnimationTime = 0;
         HasArrived = false;
+        seat = null;
     }
 
     private void Turn(double goal, double dt)

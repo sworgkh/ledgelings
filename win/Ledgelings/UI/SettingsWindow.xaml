@@ -75,6 +75,27 @@
               <TextBlock Style="{StaticResource Footer}" Text="Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out. Click a swatch to change it."/>
             </StackPanel>
           </GroupBox>
+          <GroupBox Header="Tea parties">
+            <StackPanel>
+              <CheckBox Content="Sit down to tea now and then" IsChecked="{Binding TeaPartiesEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding TeaPartiesEnabled}">
+                <TextBlock Text="Share of bumps" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding TeaPartyChance, StringFormat={}{0}%}"/>
+                <Slider Minimum="1" Maximum="100" TickFrequency="1" Value="{Binding TeaPartyChance, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4" IsEnabled="{Binding TeaPartiesEnabled}">
+                <TextBlock Text="Lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding TeaPartyMinutes, StringFormat={}{0} min}"/>
+                <Slider Minimum="1" Maximum="10" TickFrequency="0.5" Value="{Binding TeaPartyMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4" IsEnabled="{Binding TeaPartiesEnabled}">
+                <TextBlock Text="Sip between stories" Style="{StaticResource RowLabel}" Width="130"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding TeaSipSeconds, StringFormat={}{0} s}"/>
+                <Slider Minimum="0" Maximum="30" TickFrequency="1" Value="{Binding TeaSipSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="Now and then two creatures who bump into each other put a little table out between them and sit down to tea, taking turns to tell each other stories from their lives. One party at a time. With talk off they just sip."/>
+            </StackPanel>
+          </GroupBox>
           <GroupBox Header="Day and night">
             <StackPanel>
               <DockPanel Margin="0,4">

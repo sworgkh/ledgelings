@@ -96,6 +96,8 @@ public sealed partial class App : Application
         else hide = "Hide Them for a While\u2026";
         items.Add(new TrayIcon.Item(hide, HideThem));
         items.Add(new TrayIcon.Item("Make Someone Talk", () => colony.TalkNow()));
+        if (settings.TeaPartiesEnabled)
+            items.Add(new TrayIcon.Item(colony.CurrentTeaParty?.IsOn == true ? "Tea Party On" : "Have a Tea Party", colony.TeaNow));
         var planted = colony.Garden.Beds.Count;
         if (planted > 0)
             items.Add(new TrayIcon.Item(planted == 1 ? "Clear the Planted Flower" : $"Clear {planted} Planted Flowers", () => colony.ClearGarden()));

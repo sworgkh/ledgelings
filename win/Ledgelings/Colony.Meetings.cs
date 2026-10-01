@@ -44,6 +44,9 @@ public sealed partial class Colony
         sparks.Burst(new Pt((pa.X + pb.X) / 2, (pa.Y + pb.Y) / 2), creatures[bump.A].Loop.Inward(creatures[bump.A].Segment), 8, rng);
         var eventText = "They just walked into each other.";
         string? given = null;
+        // Now and then, instead of a word in passing, they sit down to tea. Not on a
+        // flower's bump: the flower is the moment there.
+        if (!bump.Gift && Settings.TeaPartiesEnabled && TeaParty.Wanted(Settings.TeaPartyChance, rng) && StartTea(bump.A, bump.B)) return;
         if (bump.Gift)
         {
             var flower = rng.Pick(Gifts.Flowers);
