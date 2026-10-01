@@ -349,6 +349,54 @@ extension ColonyTalkTests {
         #expect(w.colony.parties()[0].canTalk, "the giver still meets others")
     }
 
+    @Test func aFlowerIsPlantedInTheEdgeBeforeItWilts() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.flowerMinutes = 0.5
+        var planted: [String] = []
+        w.colony.trace = { if $0.hasPrefix("plant ") { planted.append($0) } }
+        w.colony.gifts.give("tulip", from: 1, to: 0, at: w.colony.elapsed)
+        w.step(1)
+        #expect(w.colony.gifts.hat(of: 0) == "tulip")
+        w.step(29)
+        let name = w.colony.character(forCreature: 0).name
+        #expect(w.colony.gifts.hat(of: 0) == nil)
+        let bed = try #require(w.colony.garden.beds.first)
+        #expect(bed.flower == "tulip" && bed.planter == name)
+        #expect(planted.count == 1 && planted[0].hasPrefix("plant \(name) tulip"))
+        // Its foot is on the screen's edge.
+        let screen = CGRect(x: 0, y: 0, width: 800, height: 600)
+        #expect([bed.floor.x, bed.floor.y, screen.maxX - bed.floor.x, screen.maxY - bed.floor.y].contains { abs($0) < 0.5 })
+        #expect(w.colony.gardenSnapshots().count == 1)
+        w.settings.gardenMinutes = 1
+        w.step(1)
+        #expect(w.colony.garden.beds.count == 1, "the time is set as it is planted")
+    }
+
+    @Test func turnedOffTheFlowerIsWornUntilItWilts() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.flowerMinutes = 0.5
+        w.settings.plantFlowers = false
+        w.colony.gifts.give("rose", from: 1, to: 0, at: w.colony.elapsed)
+        w.step(29)
+        #expect(w.colony.gifts.hat(of: 0) == "rose")
+        w.step(2)
+        #expect(w.colony.gifts.hat(of: 0) == nil && w.colony.garden.beds.isEmpty)
+    }
+
+    @Test func plantedFlowersWiltInTime() throws {
+        let w = try World()
+        defer { w.forget() }
+        w.settings.gardenMinutes = 1
+        w.colony.garden.plant("daisy", at: .zero, rotation: 0, scale: 2, by: "Blocky", at: w.colony.elapsed,
+                              lasts: 60, most: 12)
+        w.step(59)
+        #expect(w.colony.gardenSnapshots().first.map { $0.opacity < 1 } == true, "fading at the end")
+        w.step(2)
+        #expect(w.colony.garden.beds.isEmpty)
+    }
+
     @Test func outLoudTheNextLineWaitsForTheOneBeforeToBeSaid() throws {
         let world = try World()
         defer { world.forget() }

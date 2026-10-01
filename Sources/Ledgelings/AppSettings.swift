@@ -75,6 +75,10 @@ final class AppSettings: ObservableObject {
     static let bubbleRange = 4.0...60.0
     /// Minutes a gifted flower stays on a head before it wilts away.
     static let flowerRange = 0.5...30.0
+    /// Minutes a planted flower stands in the edge before it wilts.
+    static let gardenMinutesRange = 1.0...240.0
+    /// Most flowers in the ground at once; planting one more wilts the oldest.
+    static let gardenSizeRange = 1...40
     /// Minutes from one paper plane to the next.
     static let planeRange = 0.5...60.0
     /// Lines each character remembers saying, so it does not say them again soon.
@@ -121,6 +125,10 @@ final class AppSettings: ObservableObject {
     /// Room for each model-written line (`ChatClient.line`); only what is used is paid for.
     @Published var lineTokens: Int { didSet { save(lineTokens, "lineTokens") } }
     @Published var flowerMinutes: Double { didSet { save(flowerMinutes, "flowerMinutes") } }
+    /// A creature with a flower plants it, when and where its character likes, instead of wearing it till it wilts.
+    @Published var plantFlowers: Bool { didSet { save(plantFlowers, "plantFlowers") } }
+    @Published var gardenMinutes: Double { didSet { save(gardenMinutes, "gardenMinutes") } }
+    @Published var gardenSize: Int { didSet { save(gardenSize, "gardenSize") } }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
     @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
     @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
@@ -306,6 +314,12 @@ final class AppSettings: ObservableObject {
         lineTokens = min(max(room, Self.lineTokensRange.lowerBound), Self.lineTokensRange.upperBound)
         let flower = defaults.object(forKey: "flowerMinutes") as? Double ?? 2
         flowerMinutes = min(max(flower, Self.flowerRange.lowerBound), Self.flowerRange.upperBound)
+        plantFlowers = defaults.object(forKey: "plantFlowers") as? Bool ?? true
+        // Twenty minutes: long enough to come back to a row of them, short enough to keep changing.
+        let planted = defaults.object(forKey: "gardenMinutes") as? Double ?? 20
+        gardenMinutes = min(max(planted, Self.gardenMinutesRange.lowerBound), Self.gardenMinutesRange.upperBound)
+        let beds = defaults.object(forKey: "gardenSize") as? Int ?? 12
+        gardenSize = min(max(beds, Self.gardenSizeRange.lowerBound), Self.gardenSizeRange.upperBound)
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
         // Before species existed, one cast served everyone: it was blocky's.
         if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {
@@ -370,6 +384,16 @@ final class AppSettings: ObservableObject {
         let kept = species.filter { names.contains($0) }
         let wanted = kept.isEmpty ? ["blocky"] : kept
         if wanted != species { species = wanted }
+    }
+
+    /// Who creature `i` is: the k-th creature wearing its species takes the k-th
+    /// character of that species' cast, wrapping round.
+    func character(forCreature i: Int, library: SpriteLibrary) -> Character {
+        let species = species(forCreature: i)
+        let cast = cast(of: species, fallback: library.cast(of: species))
+        guard !cast.isEmpty else { return Character(name: "Ledgeling \(i + 1)", persona: "") }
+        let k = (0..<i).filter { self.species(forCreature: $0) == species }.count
+        return cast[k % cast.count]
     }
 
     /// The cast of a species: the user's edit if there is one, else `fallback` (the sheet's).

@@ -51,6 +51,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--garden-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/garden.mp4"
+            Task { @MainActor in
+                do { try await GardenFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings garden film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--tea-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/tea.mp4"
@@ -166,7 +176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--settings [creatures|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {

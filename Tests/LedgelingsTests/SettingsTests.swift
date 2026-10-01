@@ -223,6 +223,19 @@ import Testing
         #expect(AppSettings(defaults: defaults).flowerMinutes == AppSettings.flowerRange.lowerBound)
     }
 
+    @Test func flowersArePlantedByDefaultAndTheGardenSurvivesARelaunch() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.plantFlowers && s.gardenMinutes == 20 && s.gardenSize == 12)
+        s.plantFlowers = false; s.gardenMinutes = 90; s.gardenSize = 3
+        let again = AppSettings(defaults: defaults)
+        #expect(!again.plantFlowers && again.gardenMinutes == 90 && again.gardenSize == 3)
+        defaults.set(0.0, forKey: "gardenMinutes"); defaults.set(500, forKey: "gardenSize")
+        let repaired = AppSettings(defaults: defaults)
+        #expect(repaired.gardenMinutes == AppSettings.gardenMinutesRange.lowerBound)
+        #expect(repaired.gardenSize == AppSettings.gardenSizeRange.upperBound)
+    }
+
     @Test func lineMemoryDefaultsToTwelveAndIsClampedOnLoad() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

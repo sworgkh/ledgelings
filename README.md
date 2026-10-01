@@ -66,8 +66,10 @@ paste the **agent prompt** into any chat model to get more in the same format. O
 wire up a model of your choice: a small one running locally in
 [LM Studio](https://lmstudio.ai), or anything on [OpenRouter](https://openrouter.ai).
 Every third meeting of the same pair, one gives the other a flower to wear, and
-the wearer follows the giver around until it wilts, walking past everyone
-without bumping.
+the wearer follows the giver around for a while, walking past everyone without
+bumping, then goes off to plant it in the edge wherever its character likes:
+Blocky on the bottom edge, Pip on the ceiling, Ruth in a neat row beside the
+others, Dot straight away, Zed once it gets dark.
 
 **Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
 loud, each character in a voice of its own: the Mac's built-in voices (free,
