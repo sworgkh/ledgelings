@@ -29,7 +29,7 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 |---|---|
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
 | *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens the Reminders tab |
-| **Creature Actions…** (⌘A on macOS) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). The Windows tray still lists them one by one |
+| **Creature Actions…** (⌘A on macOS) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |

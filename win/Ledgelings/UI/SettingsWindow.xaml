@@ -127,6 +127,12 @@
               <TextBlock Style="{StaticResource Footer}" Text="Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again."/>
             </StackPanel>
           </GroupBox>
+          <GroupBox Header="Creature Actions">
+            <StackPanel>
+              <CheckBox Content="Keep the sheet up after an action" IsChecked="{Binding ActionsStayOpen, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" Text="The tray's Creature Actions… opens a sheet of pictures, one for everything you can ask of them. On, it stays up for another go until you press Done; off, it folds away after one."/>
+            </StackPanel>
+          </GroupBox>
           <GroupBox Header="Startup">
             <StackPanel>
               <CheckBox x:Name="StartAtLogin" Content="Start Ledgelings when you log in" Checked="StartAtLogin_Changed" Unchecked="StartAtLogin_Changed"/>

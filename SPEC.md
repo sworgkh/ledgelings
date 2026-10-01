@@ -1590,7 +1590,7 @@ falls through to whatever is underneath.
 | Shift-press and release within 4 pt | **poke**: it speaks to the nearest creature; both stop to talk |
 | Shift-press and move ≥ 4 pt | **carry** any creature; awake ones ride with eyes open and land awake |
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
-| Menu: Creature Actions… (⌘A on macOS) | the actions sheet, below; on Windows the tray menu still lists each action as its own item |
+| Menu: Creature Actions… (⌘A on macOS) | the actions sheet, below |
 | Sheet: Make Them Jump (J) | every creature startles |
 | Sheet: Make Someone Talk (T) | §6.5 |
 | Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
@@ -1609,7 +1609,7 @@ The menu also shows `"Day — they sleep in m:ss"` / `"Night — they wake in
 m:ss"` (or `"Always day — night is set to 0"`, and while hiding `"Hiding in the
 house — out in m:ss"`), the last talk status line (first 70 characters), and Quit.
 
-**The actions sheet** (macOS): a borderless 564×506-point window centred on the
+**The actions sheet**: a borderless 564×506-point (DIP on Windows) window centred on the
 cursor's screen, the letter's paper (`Reminders.paper`, 3 points per pixel) below 54
 points of headroom with a creature peeking over the top, as the paper note (§7.7).
 Eight tiles, four to a row, in the order of the table above: each a raised pixel box

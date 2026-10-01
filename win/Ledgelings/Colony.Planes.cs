@@ -53,6 +53,8 @@ public sealed partial class Colony
 
     /// <summary>The paper plane in the air, or being read; one at a time.</summary>
     private Airmail? airmail;
+    /// <summary>A plane is up: only one at a time.</summary>
+    public bool IsPlaneInAir => airmail is not null;
     /// <summary>How many planes have gone up, so a late model answer finds the right one.</summary>
     private int planeCount;
     /// <summary>Counts the time since the last plane, to know when the next is due.</summary>

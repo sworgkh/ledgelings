@@ -201,6 +201,15 @@ public class SettingsTests
     }
 
     [Fact]
+    public void TheActionsSheetStaysOpenAfterATileUnlessToldOtherwiseAndItIsRemembered()
+    {
+        var box = Fresh();
+        Assert.True(box.Settings.ActionsStayOpen);
+        box.Settings.ActionsStayOpen = false;
+        Assert.False(box.Again().ActionsStayOpen);
+    }
+
+    [Fact]
     public void TeaPartiesAreOnNowAndThenAndTheirNumbersSurviveARelaunch()
     {
         var box = Fresh();

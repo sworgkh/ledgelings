@@ -54,6 +54,8 @@ public sealed partial class Colony : IDisposable
     private readonly Dictionary<int, Bubble> bubbles = new();
     /// <summary>Creatures in a running conversation: a bump or a poke involving them waits.</summary>
     private readonly HashSet<int> busy = new();
+    /// <summary>How many creatures are held for a talk, a party or a plane.</summary>
+    public int BusyCount => busy.Count;
     /// <summary>Who has walked into whom, and how often.</summary>
     private readonly Meetings meetings = new();
     /// <summary>Flowers in the air and on heads.</summary>
