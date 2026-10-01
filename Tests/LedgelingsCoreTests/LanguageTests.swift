@@ -12,6 +12,29 @@ import Testing
         }
     }
 
+    @Test func russianComesFromItsTable() {
+        Language.$override.withValue(.russian) {
+            #expect(tr("Settings…") == "Настройки…")
+            #expect(tr("never heard of this one") == "never heard of this one")
+        }
+    }
+
+    @Test func russianPluralsHaveThreeForms() {
+        let ru = Language.russian
+        #expect([1, 21, 101].map(ru.pluralIndex) == [0, 0, 0])
+        #expect([2, 3, 4, 22, 34].map(ru.pluralIndex) == [1, 1, 1, 1, 1])
+        #expect([0, 5, 11, 12, 14, 20, 25, 111].map(ru.pluralIndex) == [2, 2, 2, 2, 2, 2, 2, 2])
+        Language.$override.withValue(.russian) {
+            #expect(trCount(1, "minute", "minutes") == "1 минута")
+            #expect(trCount(3, "minute", "minutes") == "3 минуты")
+            #expect(trCount(11, "minute", "minutes") == "11 минут")
+        }
+        Language.$override.withValue(.english) {
+            #expect(trCount(1, "minute", "minutes") == "1 minute")
+            #expect(trCount(2, "minute", "minutes") == "2 minutes")
+        }
+    }
+
     @Test func translatedFallsBackToEnglish() {
         let t = Translated(english: "hi", [.russian: "привет"])
         #expect(t(.english) == "hi")
