@@ -36,7 +36,7 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 | **Clear N Planted Flowers** | Pulls up every flower the creatures planted, at once. Shown only while some are planted ([Flowers tab](#flowers-tab)) |
 | **Send a Paper Plane** | One free creature throws a paper plane to another now, whatever the setting below says |
 | **Add a Reminder…** (⌘R; Ctrl+Alt+R from anywhere on Windows) | A paper note to write it on (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. Under it, *Next: Call mom, Today 14:30* while one is waiting; *(off)* when reminders are off |
-| **Hear Them Talk** (⌘V) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
+| **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
 | *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
@@ -271,7 +271,7 @@ minutes says so: *REMINDER · for Today 14:30*. Every letter is also in the Chat
 
 ## Voice tab
 
-macOS only for now. The left column is how they all sound; the right column,
+The left column is how they all sound; the right column,
 **Characters**, is one card per character on screen. Every line that appears in a bubble, from a meeting, a poke, a
 paper plane or the built-in lines, is also read out loud, one line at a time in the
 order they came. When the talk runs far ahead of the voice (four lines waiting),

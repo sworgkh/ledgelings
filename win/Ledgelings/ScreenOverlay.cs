@@ -19,6 +19,8 @@ public sealed class CreatureSnapshot
     public Vec Inward = new(0, 1);
     /// <summary>What it is saying right now, if anything.</summary>
     public string? Bubble;
+    /// <summary>How much of the bubble's text is on show, 0...1, while it is being said out loud.</summary>
+    public double BubbleShare = 1;
     /// <summary>The flower on its head, if it was given one.</summary>
     public Bitmap? Hat;
     /// <summary>Inside the house: draw nothing at all.</summary>

@@ -50,6 +50,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadTeaParties();
         LoadPlanes();
         LoadReminders();
+        LoadVoice();
     }
 
     public int CreatureCount

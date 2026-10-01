@@ -104,8 +104,9 @@ side; keep the assertion's meaning.
 - Names say what a thing is in the product's own words: `walkOn`, `Hideout`,
   `bumped`, `letGo`. The two apps use the same names, cased for their language.
 - No new dependencies in the apps. The Mac app is AppKit and SwiftUI; the Windows
-  app is the .NET desktop framework and Win32. No Electron, no web view, no
-  third-party UI kit.
+  app is the .NET desktop framework and Win32, plus Microsoft's `System.Speech`
+  package: Windows' own speech engine, part of the old .NET Framework but a
+  separate package on .NET. No Electron, no web view, no third-party UI kit.
 - Keep the idle cost low: the overlays must draw only what changed and drop to
   12 fps when everyone sleeps. Measure before and after anything in the frame loop.
 - Sprites are pixel art: nearest-neighbour scaling, 1-bit alpha, the four-colour

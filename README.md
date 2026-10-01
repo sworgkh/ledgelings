@@ -72,12 +72,11 @@ Blocky on the bottom edge, Pip on the ceiling, Ruth in a neat row beside the
 others, Dot straight away, Zed once it gets dark.
 
 **Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
-loud, each character in a voice of its own: the Mac's built-in voices (free,
+loud, each character in a voice of its own: the computer's own voices (free,
 offline), or a speech model on OpenRouter (Kokoro by default, a fraction of a cent
-per hundred lines), or a speech server on your Mac. The built-in lines are voiced
+per hundred lines), or a speech server on your computer. The built-in lines are voiced
 once each and saved, so they play again instantly and for free. Voice, speed,
 pitch and volume are in Settings › Voice.
-macOS only for now.
 
 **They get to know each other.** Creatures who share the screen for an hour (you
 choose how long) get a small story from the model: a rivalry, a secret, a favour

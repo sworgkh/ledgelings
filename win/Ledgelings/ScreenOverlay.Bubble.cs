@@ -37,6 +37,10 @@ public sealed partial class ScreenOverlay
         var at = ToWindow(centre);
         var plate = new RectangleF((float)Math.Round(at.X - size.Width / 2), (float)Math.Round(at.Y - size.Height / 2), size.Width, size.Height);
         into[index] = (plate, text, textSize);
+        var shown = Core.SpeechReveal.Visible(snap.BubbleShare, text.Length);
+        // Never half a letter: an accented letter, a flag or a joined emoji is shown whole or not at all.
+        if (shown > 0 && shown < text.Length)
+            shown = System.Globalization.StringInfo.ParseCombiningCharacters(text).LastOrDefault(start => start <= shown);
         ops.Add((Rectangle.Round(RectangleF.Inflate(plate, 3, 3)), g =>
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -46,8 +50,19 @@ public sealed partial class ScreenOverlay
             using var border = new Pen(Color.FromArgb(89, 255, 255, 255), 1 * ui);
             g.FillPath(fill, path);
             g.DrawPath(border, path);
-            g.DrawString(text, bubbleFont, Brushes.White,
-                         new RectangleF(plate.X + pad, plate.Y + pad, textSize.Width, textSize.Height), BubbleFormat);
+            var layout = new RectangleF(plate.X + pad, plate.Y + pad, textSize.Width, textSize.Height);
+            if (shown >= text.Length) { g.DrawString(text, bubbleFont, Brushes.White, layout, BubbleFormat); return; }
+            if (shown == 0) return;
+            // Being said out loud: the whole line is laid out, only the letters said so far drawn,
+            // so the bubble keeps its size while the text types in.
+            using var format = (StringFormat)BubbleFormat.Clone();
+            format.SetMeasurableCharacterRanges(new[] { new CharacterRange(0, shown) });
+            var said = g.MeasureCharacterRanges(text, bubbleFont, layout, format);
+            var clip = g.Clip;
+            g.SetClip(said[0], CombineMode.Intersect);
+            g.DrawString(text, bubbleFont, Brushes.White, layout, BubbleFormat);
+            g.Clip = clip;
+            foreach (var region in said) region.Dispose();
         }));
     }
 

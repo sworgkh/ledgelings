@@ -130,26 +130,11 @@ public sealed class Garden
     /// <summary>Takes its time over everything.</summary>
     private static readonly string[] Slow = { "slow", "patien", "calm", "old", "wise", "philosoph", "sleep" };
 
-    /// <summary>Words in <paramref name="text"/>, lowercased: letters and apostrophes only.
-    /// The same split as the Mac's <c>Casting.words</c>.</summary>
-    public static List<string> Words(string text)
-    {
-        var words = new List<string>();
-        var word = new System.Text.StringBuilder();
-        foreach (var ch in text.ToLowerInvariant())
-        {
-            if (char.IsLetter(ch) || ch == '\'') { word.Append(ch); continue; }
-            if (word.Length > 0) { words.Add(word.ToString()); word.Clear(); }
-        }
-        if (word.Length > 0) words.Add(word.ToString());
-        return words;
-    }
-
     /// <summary>How the character with this persona, of this kind, plants its flowers.</summary>
     public static Temper TemperOf(string persona, string kind)
     {
-        var own = Words(persona);
-        var theirs = Words(kind);
+        var own = Casting.Words(persona);
+        var theirs = Casting.Words(kind);
         static int? First(string[] stems, List<string> words)
         {
             var at = words.FindIndex(word => stems.Any(stem => word.StartsWith(stem, StringComparison.Ordinal)));

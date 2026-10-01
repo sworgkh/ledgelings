@@ -282,37 +282,6 @@
               <TextBlock x:Name="BrainFooter" Style="{StaticResource Footer}"/>
             </StackPanel>
           </GroupBox>
-          <GroupBox x:Name="SpendBox" Header="Spend">
-            <StackPanel>
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="100"/><ColumnDefinition Width="90"/><ColumnDefinition Width="60"/><ColumnDefinition Width="80"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="Cost" FontSize="11" Foreground="Gray"/>
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="Calls" FontSize="11" Foreground="Gray"/>
-                <TextBlock Grid.Row="0" Grid.Column="3" Text="Tokens" FontSize="11" Foreground="Gray"/>
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Today"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TodayCost"/><TextBlock Grid.Row="1" Grid.Column="2" x:Name="TodayCalls"/><TextBlock Grid.Row="1" Grid.Column="3" x:Name="TodayTokens"/>
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="This month"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MonthCost"/><TextBlock Grid.Row="2" Grid.Column="2" x:Name="MonthCalls"/><TextBlock Grid.Row="2" Grid.Column="3" x:Name="MonthTokens"/>
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="All time"/>
-                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="AllCost"/><TextBlock Grid.Row="3" Grid.Column="2" x:Name="AllCalls"/><TextBlock Grid.Row="3" Grid.Column="3" x:Name="AllTokens"/>
-              </Grid>
-              <ItemsControl x:Name="SpendModels" Margin="0,6,0,0">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Detail}" FontSize="11" Foreground="Gray"/><TextBlock Text="{Binding Model}" FontSize="11"/></DockPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <DockPanel Margin="0,6,0,0">
-                <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealSpend_Click"/>
-                <TextBlock x:Name="SpendPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-              </DockPanel>
-              <TextBlock x:Name="SpendFooter" Style="{StaticResource Footer}"/>
-            </StackPanel>
-          </GroupBox>
           <GroupBox Header="Characters">
             <StackPanel>
               <DockPanel>
@@ -591,6 +560,196 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem Header="Voice">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Voice">
+            <StackPanel>
+              <CheckBox Content="Hear them talk out loud" IsChecked="{Binding VoiceEnabled, Mode=TwoWay}"/>
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <TextBlock Text="Voices" Width="70" VerticalAlignment="Center"/>
+                <RadioButton x:Name="EngineSystem" Content="Built-in voices" Checked="Engine_Checked" Margin="0,0,16,0"/>
+                <RadioButton x:Name="EngineOr" Content="OpenRouter" Checked="Engine_Checked" Margin="0,0,16,0"/>
+                <RadioButton x:Name="EngineLocal" Content="Local server" Checked="Engine_Checked"/>
+              </StackPanel>
+              <CheckBox Content="Every character gets a voice of their own" IsChecked="{Binding VoicePerCharacter, Mode=TwoWay}" Margin="0,6,0,0"/>
+              <CheckBox Content="Cartoon voices: squeakier, sillier" IsChecked="{Binding CartoonVoices, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <CheckBox Content="Voices fit each character's personality" IsChecked="{Binding CastByPersonality, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <StackPanel x:Name="SystemVoicePanel" Margin="0,8,0,0">
+                <DockPanel>
+                  <TextBlock Text="Voice" Width="70" VerticalAlignment="Center"/>
+                  <ComboBox x:Name="SystemVoiceBox" SelectionChanged="SystemVoiceBox_Changed"/>
+                </DockPanel>
+              </StackPanel>
+              <StackPanel x:Name="OrVoicePanel" Margin="0,8,0,0">
+                <DockPanel x:Name="VoiceKeyRow" Margin="0,0,0,4">
+                  <TextBlock Text="API key" Width="70" VerticalAlignment="Center"/>
+                  <PasswordBox x:Name="VoiceKey" PasswordChanged="VoiceKey_Changed"/>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock Text="Model" Width="70" VerticalAlignment="Center"/>
+                  <ComboBox x:Name="VoiceModelBox" SelectionChanged="VoiceModelBox_Changed"/>
+                </DockPanel>
+                <DockPanel>
+                  <TextBlock Text="Voice" Width="70" VerticalAlignment="Center"/>
+                  <ComboBox x:Name="OrVoiceBox" SelectionChanged="OrVoiceBox_Changed"/>
+                </DockPanel>
+                <CheckBox Content="Keep every line it says" IsChecked="{Binding KeepVoices, Mode=TwoWay}" Margin="0,6,0,0"/>
+                <DockPanel Margin="0,4,0,0">
+                  <TextBlock Text="Kept" Width="70" VerticalAlignment="Center"/>
+                  <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealVoices_Click"/>
+                  <TextBlock x:Name="KeptCount" Foreground="Gray" VerticalAlignment="Center"/>
+                </DockPanel>
+                <TextBlock x:Name="VoiceListProblem" Foreground="Red" FontSize="11" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,4,0,0"/>
+              </StackPanel>
+              <StackPanel x:Name="LocalVoicePanel" Margin="0,8,0,0">
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock Text="Server" Width="70" VerticalAlignment="Center"/>
+                  <TextBox Text="{Binding LocalVoiceServer, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock Text="Model" Width="70" VerticalAlignment="Center"/>
+                  <TextBox Text="{Binding LocalVoiceModel, UpdateSourceTrigger=PropertyChanged}"/>
+                </DockPanel>
+                <DockPanel>
+                  <TextBlock Text="Voice" Width="70" VerticalAlignment="Center"/>
+                  <ComboBox x:Name="LocalVoiceBox" SelectionChanged="LocalVoiceBox_Changed"/>
+                </DockPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                  <Button Content="Check" Click="LocalCheck_Click" MinWidth="60"/>
+                  <Button Content="Copy Setup Command" Click="CopySetup_Click" Margin="8,0,0,0"/>
+                </StackPanel>
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"><Run Text="Status: "/><Run x:Name="LocalCheckStatus" Text="not checked" Foreground="Gray"/></TextBlock>
+              </StackPanel>
+              <StackPanel x:Name="LineVoicePanel" Margin="0,6,0,0">
+                <CheckBox Content="Save the built-in lines' voices" IsChecked="{Binding ReuseLineVoices, Mode=TwoWay}"/>
+                <DockPanel Margin="0,4,0,0">
+                  <TextBlock Text="Saved" Width="70" VerticalAlignment="Center"/>
+                  <Button DockPanel.Dock="Right" x:Name="ClearLineVoices" Content="Clear" Click="ClearLineVoices_Click" Margin="8,0,0,0"/>
+                  <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealLineVoices_Click"/>
+                  <TextBlock x:Name="SavedCount" Foreground="Gray" VerticalAlignment="Center"/>
+                </DockPanel>
+              </StackPanel>
+              <DockPanel Margin="0,8,0,4">
+                <TextBlock Text="Speed" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding VoiceSpeed, StringFormat={}{0:0.00}×}"/>
+                <Slider Minimum="0.5" Maximum="2" TickFrequency="0.05" Value="{Binding VoiceSpeed, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Pitch" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding VoicePitch, StringFormat={}{0:0.00}×}"/>
+                <Slider Minimum="0.5" Maximum="2" TickFrequency="0.05" Value="{Binding VoicePitch, Mode=TwoWay}"/>
+              </DockPanel>
+              <CheckBox Content="Speed follows pitch: no echo, higher talks a little faster" IsChecked="{Binding SpeedFollowsPitch, Mode=TwoWay}" Margin="0,4"/>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Pause before the answer" Style="{StaticResource RowLabel}" Width="150"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding VoiceTurnPause, StringFormat={}{0:0.00} s}"/>
+                <Slider Minimum="0" Maximum="2" TickFrequency="0.05" Value="{Binding VoiceTurnPause, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock Text="Volume" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding VoiceVolume, StringFormat={}{0:0.00}}"/>
+                <Slider Minimum="0" Maximum="1" TickFrequency="0.05" Value="{Binding VoiceVolume, Mode=TwoWay}"/>
+              </DockPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <Button Content="Test" Click="VoiceTest_Click" MinWidth="60"/>
+                <Button Content="Stop" Click="VoiceStop_Click" MinWidth="60" Margin="8,0,0,0"/>
+              </StackPanel>
+              <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"><Run Text="Status: "/><Run x:Name="VoiceStatus" Foreground="Gray"/></TextBlock>
+              <TextBlock x:Name="VoiceFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Characters">
+            <StackPanel>
+              <TextBlock x:Name="NoVoiceCharacters" Text="Nobody on screen right now." Foreground="Gray"/>
+              <StackPanel x:Name="CharacterVoiceList"/>
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <Button x:Name="CastEveryone" Content="Cast Everyone with Model" Click="CastEveryone_Click"/>
+              </StackPanel>
+              <TextBlock x:Name="VoiceNeedsModel" Margin="0,6,0,0"/>
+              <TextBlock x:Name="CastAllNote" FontSize="11" Foreground="Gray" TextWrapping="Wrap" Visibility="Collapsed"/>
+              <TextBlock Style="{StaticResource Footer}" Text="The characters on screen now. Each starts automatic: with &quot;Voices fit each character's personality&quot; on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. &quot;Cast with Model&quot; asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders above; Speed follows pitch can be set for one character alone. &quot;Auto&quot; puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, &quot;Custom blend…&quot; mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem Header="Costs">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox Header="Spent">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="100"/><ColumnDefinition Width="90"/><ColumnDefinition Width="60"/><ColumnDefinition Width="80"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Cost" FontSize="11" Foreground="Gray"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Calls" FontSize="11" Foreground="Gray"/>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="Tokens" FontSize="11" Foreground="Gray"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Today"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TodayCost"/><TextBlock Grid.Row="1" Grid.Column="2" x:Name="TodayCalls"/><TextBlock Grid.Row="1" Grid.Column="3" x:Name="TodayTokens"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="This month"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MonthCost"/><TextBlock Grid.Row="2" Grid.Column="2" x:Name="MonthCalls"/><TextBlock Grid.Row="2" Grid.Column="3" x:Name="MonthTokens"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="All time"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="AllCost"/><TextBlock Grid.Row="3" Grid.Column="2" x:Name="AllCalls"/><TextBlock Grid.Row="3" Grid.Column="3" x:Name="AllTokens"/>
+              </Grid>
+              <TextBlock x:Name="SpendFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="By feature">
+            <StackPanel>
+              <TextBlock x:Name="NoPurposes" Text="Nothing yet." Foreground="Gray"/>
+              <ItemsControl x:Name="SpendPurposes">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel Margin="0,1"><TextBlock DockPanel.Dock="Right" Text="{Binding Detail}" Foreground="Gray"/><TextBlock Text="{Binding Name}"/></DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" Text="Talk is the meetings and pokes (two calls a conversation); paper planes the notes and the catcher's thought; voice every line said by a paid speech model; voice casting each Cast with Model; relationship plots one call per story a pair gets (Bonds tab). Calls from before features were labelled are counted apart."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="By model">
+            <ItemsControl x:Name="SpendModels">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <DockPanel Margin="0,1"><TextBlock DockPanel.Dock="Right" Text="{Binding Detail}" FontSize="11" Foreground="Gray"/><TextBlock Text="{Binding Name}" FontSize="11"/></DockPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </GroupBox>
+          <GroupBox Header="Latest calls">
+            <StackPanel>
+              <TextBlock x:Name="NoCalls" Text="No calls yet." Foreground="Gray"/>
+              <ItemsControl x:Name="RecentCalls">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel Margin="0,2">
+                      <TextBlock DockPanel.Dock="Right" Text="{Binding Cost}" Foreground="{Binding CostBrush}" VerticalAlignment="Center"/>
+                      <StackPanel>
+                        <TextBlock Text="{Binding Model}" FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="Gray"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock x:Name="RecentFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="The file">
+            <StackPanel>
+              <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Show in Explorer" Click="RevealSpend_Click"/>
+                <TextBlock x:Name="SpendPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" Text="spend.jsonl, one JSON line per call: time, provider, model, feature, tokens and cost. Plain text on purpose."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem Header="Chats">
       <DockPanel>
         <DockPanel DockPanel.Dock="Bottom" Margin="10">
@@ -610,6 +769,7 @@
                       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                         <TextBlock Text="{Binding Cost}" FontSize="11" Foreground="Gray" Margin="8,0,0,0"/>
                         <TextBlock Text="{Binding Tokens}" FontSize="11" Foreground="Gray" Margin="8,0,0,0"/>
+                        <TextBlock Text="{Binding Voice}" ToolTip="{Binding VoiceModels}" FontSize="11" Foreground="Gray" Margin="8,0,0,0"/>
                       </StackPanel>
                       <TextBlock Text="{Binding Time}" FontSize="11" Foreground="Gray"/>
                       <TextBlock Text="{Binding Model}" FontSize="11" Foreground="Gray" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
