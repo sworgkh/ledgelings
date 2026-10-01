@@ -104,20 +104,27 @@ public sealed class ReminderNote : Window
     }
 
     /// <summary>The middle of the screen the cursor is on, where the letters open too.</summary>
-    private void CentreOnCursorScreen()
+    private void CentreOnCursorScreen() => CentreOnCursorScreen(this);
+
+    /// <summary>Put <paramref name="window"/> in the middle of the screen the cursor is on.</summary>
+    internal static void CentreOnCursorScreen(Window window)
     {
-        var hwnd = new WindowInteropHelper(this).Handle;
+        var hwnd = new WindowInteropHelper(window).Handle;
         var cursor = Desktop.Cursor();
         var monitors = Desktop.Monitors();
         if (hwnd == IntPtr.Zero || (monitors.FirstOrDefault(m => m.Frame.Contains(cursor)) ?? Desktop.Primary(monitors)) is not Monitor m) return;
-        var dpi = VisualTreeHelper.GetDpi(this);
-        int w = (int)Math.Round(ActualWidth * dpi.DpiScaleX), h = (int)Math.Round(ActualHeight * dpi.DpiScaleY);
+        var dpi = VisualTreeHelper.GetDpi(window);
+        int w = (int)Math.Round(window.ActualWidth * dpi.DpiScaleX), h = (int)Math.Round(window.ActualHeight * dpi.DpiScaleY);
         Win32.SetWindowPos(hwnd, IntPtr.Zero, m.Left + (m.Width - w) / 2, m.Top + (m.Height - h) / 2, 0, 0,
             Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | 0x0004 /* SWP_NOZORDER */);
     }
 
     /// <summary>The creature, its feet hidden behind the paper's top edge, eyes over it.</summary>
-    private static FrameworkElement Peeker(System.Drawing.Bitmap face)
+    private static FrameworkElement Peeker(System.Drawing.Bitmap face) => Peeker(face, SheetWidth, Headroom);
+
+    /// <summary>A creature peeking over the top edge of a sheet <paramref name="sheetWidth"/> wide, whose paper starts
+    /// <paramref name="headroom"/> down.</summary>
+    internal static FrameworkElement Peeker(System.Drawing.Bitmap face, double sheetWidth, double headroom)
     {
         const double scale = 3;
         double w = face.Width * scale, h = face.Height * scale;
@@ -128,10 +135,10 @@ public sealed class ReminderNote : Window
             IsHitTestVisible = false,
         };
         RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
-        var top = Headroom + Pixel * 2 - Math.Min(h, Headroom + 6);
-        image.Margin = new Thickness(SheetWidth - w - 60, top, 0, 0);
+        var top = headroom + Pixel * 2 - Math.Min(h, headroom + 6);
+        image.Margin = new Thickness(sheetWidth - w - 60, top, 0, 0);
         // Only what shows over the paper's edge.
-        image.Clip = new RectangleGeometry(new Rect(0, 0, w, Headroom + Pixel * 2 - top));
+        image.Clip = new RectangleGeometry(new Rect(0, 0, w, headroom + Pixel * 2 - top));
         return image;
     }
 

@@ -16,6 +16,8 @@ public sealed partial class Colony
     /// <summary>The one tea party going on, if any, and the table it is laid on.</summary>
     private TeaParty? teaParty;
     public TeaParty? CurrentTeaParty => teaParty;
+    /// <summary>A party is on, or a guest is on its way to one.</summary>
+    public bool IsTeaOn => teaParty is not null || teaInvite is not null;
     private (Pt Floor, double Rotation, double Scale)? teaTable;
     /// <summary>What has been said at it so far, and the built-in stories already told there.</summary>
     private List<ChatLog.Line> teaLines = new();

@@ -54,9 +54,11 @@ not copied into this folder: the project links `Sources/Ledgelings/Resources/spr
 and copies them next to the exe at build time, so there is one set of art for both platforms.
 
 Everything is under the tray icon, the creature itself: the day/night line,
-**Put Them to Sleep Now / Wake Them Up Now**, **Make Them Jump**, **Hide Them for a
-While…**, **Make Someone Talk**, the last talk status, **Chat History…**, the spend
-line, **Settings…**, **Quit**. Left- or right-click the icon.
+**Creature Actions…** (a pixel-paper sheet with a picture tile and a letter key for
+jump, talk, tea, plane, reminder, hide, sleep/wake and clear flowers), the next
+reminder, **Hear Them Talk**, the last talk status, **Chat History…**, the spend
+line, **Settings…**, **Quit**. Left- or right-click the icon. Ctrl+Alt+R adds a
+reminder from anywhere.
 
 ## Where things live
 
@@ -181,7 +183,7 @@ win/
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
                            UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers .Voice .Costs),
-                           ReminderNote, HideDialog, ColourDialog
+                           ReminderNote, ActionsSheet, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

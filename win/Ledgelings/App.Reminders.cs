@@ -4,7 +4,7 @@ using Ledgelings.UI;
 
 namespace Ledgelings;
 
-/// <summary>Paper planes and reminders in the tray menu, and the key that adds a reminder from anywhere.</summary>
+/// <summary>The next reminder in the tray menu, and the key that adds a reminder from anywhere.</summary>
 public sealed partial class App
 {
     /// <summary>Add a Reminder… from anywhere. The Mac's ⌘R; plain Ctrl+R is every browser's reload, so it is Ctrl+Alt+R here.</summary>
@@ -27,13 +27,10 @@ public sealed partial class App
 
     private void StopReminders() => reminderKey?.Dispose();
 
-    /// <summary>Send a Paper Plane, Add a Reminder…, and the next reminder's line, as the Mac orders them.</summary>
-    private void AddMailItems(List<TrayIcon.Item> items)
+    /// <summary>The next reminder's line, under Creature Actions… as the Mac has it.</summary>
+    private void AddNextReminder(List<TrayIcon.Item> items)
     {
-        if (colony is null || settings is null) return;
-        items.Add(new TrayIcon.Item("Send a Paper Plane", () => colony.SendPlane()));
-        var key = reminderKey is { IsRegistered: true } ? "\t" + ReminderHotkeyTitle : "";
-        items.Add(new TrayIcon.Item("Add a Reminder…" + key, AddAReminder));
+        if (settings is null) return;
         if (reminders?.Book.Upcoming is { } next)
         {
             var text = next.Text.Length > 40 ? next.Text[..40] : next.Text;

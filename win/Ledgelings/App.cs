@@ -19,13 +19,6 @@ public sealed partial class App : Application
     private SettingsWindow? settingsWindow;
     private Mutex? single;
 
-    /// <summary>What the dialog offers, in minutes; null means "until tomorrow at eight".</summary>
-    public static readonly IReadOnlyList<(string Title, double? Minutes)> HideChoices = new (string, double?)[]
-    {
-        ("5 minutes", 5), ("15 minutes", 15), ("30 minutes", 30), ("1 hour", 60), ("2 hours", 120), ("4 hours", 240),
-        ("Until tomorrow morning", null),
-    };
-
     public App()
     {
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -86,25 +79,15 @@ public sealed partial class App : Application
         var clock = $"{left / 60}:{left % 60:00}";
         var phase = settings.NightMinutes == 0 ? "Always day \u2014 night is set to 0"
             : colony.IsNight ? $"Night \u2014 they wake in {clock}" : $"Day \u2014 they sleep in {clock}";
-        items.Add(new TrayIcon.Item(phase, Enabled: false));
-        if (settings.NightMinutes > 0) items.Add(new TrayIcon.Item(colony.IsNight ? "Wake Them Up Now" : "Put Them to Sleep Now", colony.SkipPhase));
-        items.Add(TrayIcon.Item.Separator);
-        items.Add(new TrayIcon.Item("Make Them Jump", colony.StartleEveryone));
-        string hide;
         if (colony.IsHiding)
         {
             var back = (int)Math.Ceiling(colony.Hideout.Remaining(colony.Elapsed));
-            hide = back > 0 ? $"Bring Them Back Now ({back / 60}:{back % 60:00} left)" : "Coming home\u2026";
+            phase = back > 0 ? $"Hiding in the house \u2014 out in {back / 60}:{back % 60:00}" : "Coming home\u2026";
         }
-        else hide = "Hide Them for a While\u2026";
-        items.Add(new TrayIcon.Item(hide, HideThem));
-        items.Add(new TrayIcon.Item("Make Someone Talk", () => colony.TalkNow()));
-        if (settings.TeaPartiesEnabled)
-            items.Add(new TrayIcon.Item(colony.CurrentTeaParty?.IsOn == true ? "Tea Party On" : "Have a Tea Party", colony.TeaNow));
-        var planted = colony.Garden.Beds.Count;
-        if (planted > 0)
-            items.Add(new TrayIcon.Item(planted == 1 ? "Clear the Planted Flower" : $"Clear {planted} Planted Flowers", () => colony.ClearGarden()));
-        AddMailItems(items);
+        items.Add(new TrayIcon.Item(phase, Enabled: false));
+        items.Add(TrayIcon.Item.Separator);
+        items.Add(new TrayIcon.Item("Creature Actions\u2026", OpenActions));
+        AddNextReminder(items);
         items.Add(new TrayIcon.Item("Hear Them Talk", () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
@@ -118,13 +101,11 @@ public sealed partial class App : Application
         return items;
     }
 
-    /// <summary>A small dialog: how long should they stay in the house?</summary>
-    private void HideThem()
+    /// <summary>The sheet of picture tiles for everything you can ask of them.</summary>
+    private void OpenActions()
     {
-        if (colony is null) return;
-        if (colony.IsHiding) { colony.BringThemBack(); return; }
-        if (HideDialog.Ask() is not double seconds) return;
-        colony.Hide(seconds);
+        if (colony is null || settings is null) return;
+        ActionsSheet.ShowSheet(settings, colony, AddAReminder);
     }
 
     /// <summary>Seconds until 08:00 tomorrow, local time.</summary>
