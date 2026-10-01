@@ -41,7 +41,7 @@ public sealed class ReminderNote : Window
     private readonly TextBlock placeholder = new();
     private readonly TextBlock dayText = new(), clockText = new(), pastNote = new(), summary = new();
     private readonly List<(Reminders.Repeat Repeat, PixelButton Button)> repeatButtons = new();
-    private readonly PixelButton foldButton = new() { Content = "FOLD IT INTO A PLANE", Chosen = true };
+    private readonly PixelButton foldButton = new() { Content = L10n.Tr("FOLD IT INTO A PLANE"), Chosen = true };
     private readonly Grid root = new() { Width = SheetWidth, Height = SheetHeight };
 
     /// <summary>Show the paper note, closing any open one first. <paramref name="keeper"/>: someone on screen to
@@ -59,7 +59,7 @@ public sealed class ReminderNote : Window
     {
         this.reminders = reminders;
         keeper = who?.Name;
-        Title = "Add a Reminder";
+        Title = L10n.Tr("Add a Reminder");
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -143,8 +143,8 @@ public sealed class ReminderNote : Window
     }
 
     private string TitleLine => keeper is string name
-        ? $"A NOTE FOR THE LEDGELINGS · {name.ToUpperInvariant()} IS READING OVER THE EDGE"
-        : "A NOTE FOR THE LEDGELINGS";
+        ? L10n.Tr("A NOTE FOR THE LEDGELINGS · %@ IS READING OVER THE EDGE", name.ToUpperInvariant())
+        : L10n.Tr("A NOTE FOR THE LEDGELINGS");
 
     private static TextBlock Text(string words, double size, Brush colour, FontWeight? weight = null) => new()
     {
@@ -179,7 +179,7 @@ public sealed class ReminderNote : Window
 
         // What
         var what = new StackPanel { Margin = new Thickness(0, 0, 0, 18) };
-        what.Children.Add(Label("REMIND ME TO"));
+        what.Children.Add(Label(L10n.Tr("REMIND ME TO")));
         writing.FontFamily = mono;
         writing.FontSize = 22;
         writing.FontWeight = FontWeights.Bold;
@@ -188,7 +188,7 @@ public sealed class ReminderNote : Window
         writing.Background = Brushes.Transparent;
         writing.BorderThickness = new Thickness(0);
         writing.TextChanged += (_, _) => Refresh();
-        placeholder.Text = "stretch, call mom, stand-up…";
+        placeholder.Text = L10n.Tr("stretch, call mom, stand-up…");
         placeholder.FontFamily = mono;
         placeholder.FontSize = 22;
         placeholder.FontWeight = FontWeights.Bold;
@@ -201,32 +201,32 @@ public sealed class ReminderNote : Window
         sheet.Children.Add(what);
 
         // When
-        pastNote.Text = "past: it comes\nstraight away";
+        pastNote.Text = L10n.Tr("past: it comes\nstraight away");
         pastNote.FontFamily = mono;
         pastNote.FontSize = 10;
         pastNote.FontWeight = FontWeights.SemiBold;
         pastNote.Foreground = faintInk;
         pastNote.VerticalAlignment = VerticalAlignment.Center;
-        sheet.Children.Add(Row(8, Label("WHEN", 62),
+        sheet.Children.Add(Row(8, Label(L10n.Tr("WHEN"), 62),
             Stepper(dayText, 150, () => Shift(-1), () => Shift(1)),
             Spacer(10),
             Stepper(clockText, 128, () => { time = Reminders.Step(time, -15); Refresh(); }, () => { time = Reminders.Step(time, 15); Refresh(); }),
             Spacer(10),
             pastNote));
         var soon = Row(14, Spacer(62 + 10));
-        foreach (var (words, minutes) in new[] { ("IN 5 MIN", 5.0), ("IN 30 MIN", 30.0), ("IN 1 HOUR", 60.0) })
+        foreach (var (words, minutes) in new[] { (L10n.Tr("IN 5 MIN"), 5.0), (L10n.Tr("IN 30 MIN"), 30.0), (L10n.Tr("IN 1 HOUR"), 60.0) })
         {
             var button = new PixelButton { Content = words, Small = true, Margin = new Thickness(0, 0, 8, 0) };
             button.Click += (_, _) => { time = DateTimeOffset.Now.AddMinutes(minutes); Refresh(); };
             soon.Children.Add(button);
         }
-        var tomorrow = new PixelButton { Content = "TOMORROW 9:00", Small = true };
+        var tomorrow = new PixelButton { Content = L10n.Tr("TOMORROW 9:00"), Small = true };
         tomorrow.Click += (_, _) => { time = TomorrowMorning(); Refresh(); };
         soon.Children.Add(tomorrow);
         sheet.Children.Add(soon);
 
         // Repeat
-        var repeat = Row(18, Label("REPEAT", 62 + 10));
+        var repeat = Row(18, Label(L10n.Tr("REPEAT"), 62 + 10));
         foreach (var choice in Reminders.AllRepeats)
         {
             var button = new PixelButton { Content = choice.Title().ToUpperInvariant(), Small = true, Margin = new Thickness(0, 0, 8, 0) };
@@ -238,7 +238,7 @@ public sealed class ReminderNote : Window
 
         // Fold or not, clear of the paper's folded-down corner.
         var buttons = new DockPanel { Margin = new Thickness(0, 0, 24, 0), LastChildFill = true };
-        var cancel = new PixelButton { Content = "NEVER MIND", Margin = new Thickness(0, 0, 8, 0) };
+        var cancel = new PixelButton { Content = L10n.Tr("NEVER MIND"), Margin = new Thickness(0, 0, 8, 0) };
         cancel.Click += (_, _) => Close();
         foldButton.Click += (_, _) => Send();
         DockPanel.SetDock(foldButton, Dock.Right);
@@ -295,7 +295,7 @@ public sealed class ReminderNote : Window
         clockText.Text = Reminders.Clock(time);
         pastNote.Visibility = time <= now ? Visibility.Visible : Visibility.Hidden;
         foreach (var (choice, button) in repeatButtons) button.Chosen = repeats == choice;
-        summary.Text = Words.Length == 0 ? "write something first"
+        summary.Text = Words.Length == 0 ? L10n.Tr("write something first")
             : Reminders.When(time, now) + (repeats == Reminders.Repeat.Once ? "" : ", " + repeats.Title().ToLowerInvariant());
         foldButton.IsEnabled = Words.Length > 0;
         foldButton.Opacity = Words.Length > 0 ? 1 : 0.5;

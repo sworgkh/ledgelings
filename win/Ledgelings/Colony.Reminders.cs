@@ -37,7 +37,7 @@ public sealed partial class Colony
         /// <summary>The creature throwing it; null when nobody could, and it comes in from below.</summary>
         public int? Thrower;
         /// <summary>Who signs the letter.</summary>
-        public string Writer = "The Ledgelings";
+        public string Writer = L10n.Tr("The Ledgelings");
         public Bitmap? Stamp;
         public PaperPlane Plane = null!;
         /// <summary>The middle of the screen the user is on, and that screen.</summary>
@@ -161,7 +161,7 @@ public sealed partial class Colony
         deliveryCount += 1;
         delivery = new Delivery
         {
-            Id = deliveryCount, Reminder = reminder, Thrower = null, Writer = "The Ledgelings",
+            Id = deliveryCount, Reminder = reminder, Thrower = null, Writer = L10n.Tr("The Ledgelings"),
             Plane = new PaperPlane(-1, -1, target, new Vec(0, 1), target),
             Target = target, Screen = screen, BaseScale = 2.5, Now = new Delivery.Phase.Finding(Elapsed),
         };
@@ -331,13 +331,13 @@ public sealed partial class Colony
         var now = Now();
         var late = (now - mail.Reminder.Time).TotalSeconds > 120;
         mail.Title = late
-            ? $"REMINDER · for {Core.Reminders.When(mail.Reminder.Time, now)}"
-            : $"REMINDER · {mail.Reminder.Time.ToLocalTime():HH:mm}";
-        TalkStatus = $"{mail.Writer} delivered a reminder: {mail.Reminder.Text}";
+            ? L10n.Tr("REMINDER · for %@", Core.Reminders.When(mail.Reminder.Time, now))
+            : L10n.Tr("REMINDER · %@", mail.Reminder.Time.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture));
+        TalkStatus = L10n.Tr("%@ delivered a reminder: %@", mail.Writer, mail.Reminder.Text);
         History.Record(new ChatLog.Exchange
         {
             Time = DateTimeOffset.Now,
-            Situation = $"{mail.Writer} brought you a reminder by paper plane: \"{mail.Reminder.Text}\".",
+            Situation = L10n.Tr("%@ brought you a reminder by paper plane: \"%@\".", mail.Writer, mail.Reminder.Text),
             Provider = modelWrote ? mail.Provider : AppSettings.BrainTitle(BrainKind.Script), Model = modelWrote ? mail.Model : "",
             Lines = new List<ChatLog.Line> { new(mail.Writer, note) },
             Cost = mail.Cost, Tokens = mail.Tokens,
@@ -359,9 +359,9 @@ public sealed partial class Colony
         var me = CharacterFor(i);
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = me.Name, ["speakerKind"] = KindOf(i), ["speakerPersona"] = me.Persona,
-            ["listener"] = "you", ["listenerKind"] = "the person at the computer",
-            ["listenerPersona"] = "The person whose screen you all live on.",
+            ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Spoken(me.Persona),
+            ["listener"] = L10n.Tr("you"), ["listenerKind"] = L10n.Tr("the person at the computer"),
+            ["listenerPersona"] = L10n.Tr("The person whose screen you all live on."),
             ["situation"] = AlmanacSentence, ["reminder"] = mail.Reminder.Text,
         };
         var system = Core.Bonds.WithRelationship(Settings.SystemPrompt, vars, "");
@@ -370,7 +370,7 @@ public sealed partial class Colony
         mail.Writing = true;
         mail.Provider = service.ProviderTitle;
         mail.Model = service.Model;
-        TalkStatus = $"{me.Name} is writing a reminder via {service.Model}…";
+        TalkStatus = L10n.Tr("%@ is writing a reminder via %@…", me.Name, service.Model);
         _ = Write();
 
         async Task Write()
@@ -462,7 +462,7 @@ public sealed partial class Colony
 
     private static LetterSnapshot Letter(Delivery mail, double grow, float opacity) =>
         new(mail.Id, mail.Target, grow, opacity, mail.Title, mail.Reminder.Text, mail.Note ?? "", "— " + mail.Writer,
-            mail.Stamp, "click to fold it away");
+            mail.Stamp, L10n.Tr("click to fold it away"));
 
     /// <summary>The open letter is under <paramref name="point"/>.</summary>
     private bool LetterContains(Pt point) =>

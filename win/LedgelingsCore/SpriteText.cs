@@ -30,7 +30,8 @@ public static partial class SpriteText
             ["land"] = (new[] { "land" }, 1, true),
             ["sleep"] = (new[] { "sleep-0", "sleep-1" }, 0.8, true),
         };
-    public const string DescribePlaceholder = "<describe your creature here>";
+    /// <summary>Where the person writes what they want, in the prompt; in the current language.</summary>
+    public static string DescribePlaceholder => L10n.Tr("<describe your creature here>");
 
     public enum Ink { Clear, Outline, Body, Light, Shade, Eye, Black }
 

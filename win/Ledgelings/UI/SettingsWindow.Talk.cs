@@ -32,9 +32,9 @@ public sealed partial class SettingsWindow
         if (OrKey.Password != settings.OpenRouterKey) OrKey.Password = settings.OpenRouterKey;
         BrainFooter.Text = brain switch
         {
-            BrainKind.Script => "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here.",
-            BrainKind.LmStudio => "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence.",
-            _ => "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in the Windows Credential Manager. \"Check\" confirms the key and lists models. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence.",
+            BrainKind.Script => L10n.Tr("No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here."),
+            BrainKind.LmStudio => L10n.Tr("LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence."),
+            _ => L10n.Tr("OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in the Windows Credential Manager. \"Check\" confirms the key and lists models. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence."),
         };
         syncingBrain = false;
         RefreshScriptStatus();
@@ -55,15 +55,15 @@ public sealed partial class SettingsWindow
     private async void LmCheck_Click(object sender, RoutedEventArgs e)
     {
         if (settings.ChatClient() is not ChatClient client) { LmStatus.Text = settings.BrainProblem; return; }
-        LmStatus.Text = "checking\u2026";
+        LmStatus.Text = L10n.Tr("checking…");
         try
         {
             var found = await client.ListModels();
             LmInstalled.ItemsSource = found;
             LmInstalled.Visibility = found.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             LmStatus.Text = found.Contains(client.Model)
-                ? $"ready: {client.Model} is installed"
-                : $"server is up, but {client.Model} is not installed. Pick one under \"Installed\".";
+                ? L10n.Tr("ready: %@ is installed", client.Model)
+                : L10n.Tr("server is up, but %@ is not installed. Pick one under \"Installed\".", client.Model);
         }
         catch (ChatClient.Failure ex) { LmInstalled.Visibility = Visibility.Collapsed; LmStatus.Text = ex.Message; }
     }
@@ -76,14 +76,14 @@ public sealed partial class SettingsWindow
     private async void OrCheck_Click(object sender, RoutedEventArgs e)
     {
         if (settings.ChatClient() is not ChatClient client) { OrStatus.Text = settings.BrainProblem; return; }
-        OrStatus.Text = "checking\u2026";
+        OrStatus.Text = L10n.Tr("checking…");
         try
         {
             var key = await client.DescribeKey();
             var models = await client.ListModels();
             OrStatus.Text = models.Contains(client.Model)
-                ? $"ready: {key}; {client.Model} is available"
-                : $"{key}, but there is no model {client.Model}. Search below and click one.";
+                ? L10n.Tr("ready: %@; %@ is available", key, client.Model)
+                : L10n.Tr("%@, but there is no model %@. Search below and click one.", key, client.Model);
         }
         catch (ChatClient.Failure ex) { OrStatus.Text = ex.Message; }
     }
@@ -91,14 +91,14 @@ public sealed partial class SettingsWindow
     private async Task LoadCatalog()
     {
         catalogLoaded = true;
-        CatalogStatus.Text = "loading models\u2026";
+        CatalogStatus.Text = L10n.Tr("loading models…");
         try
         {
             catalog = await ChatClient.OpenRouterPublic.Catalog();
-            CatalogStatus.Text = $"{catalog.Models.Count} models on OpenRouter, cheapest first. Prices are dollars per million tokens.";
+            CatalogStatus.Text = L10n.Tr("%d models on OpenRouter, cheapest first. Prices are dollars per million tokens.", catalog.Models.Count);
             RefreshModelList();
         }
-        catch (ChatClient.Failure ex) { CatalogStatus.Text = "could not load the list: " + ex.Message; catalogLoaded = false; }
+        catch (ChatClient.Failure ex) { CatalogStatus.Text = L10n.Tr("could not load the list: %@", ex.Message); catalogLoaded = false; }
     }
 
     private void ReloadCatalog_Click(object sender, RoutedEventArgs e) => _ = LoadCatalog();
@@ -110,7 +110,7 @@ public sealed partial class SettingsWindow
         var hits = catalog.Search(ModelSearch.Text);
         ModelList.ItemsSource = hits.Take(MostModels).Select(m => new ModelRow(m.Id, m.Name, m.PriceLabel,
             m.IsFree ? Brushes.Green : Brushes.Gray, m.Name == m.Id ? Visibility.Collapsed : Visibility.Visible)).ToList();
-        if (hits.Count > MostModels) CatalogStatus.Text = $"{hits.Count - MostModels} more; add a word to narrow it down";
+        if (hits.Count > MostModels) CatalogStatus.Text = L10n.Tr("%d more; add a word to narrow it down", hits.Count - MostModels);
         ModelList.SelectedIndex = hits.Take(MostModels).ToList().FindIndex(m => m.Id == settings.OpenRouterModel);
     }
 
@@ -120,7 +120,7 @@ public sealed partial class SettingsWindow
     }
 
     private void RefreshLineMemory() =>
-        LineMemoryValue.Text = settings.LineMemory == 0 ? "off" : $"{settings.LineMemory} lines";
+        LineMemoryValue.Text = settings.LineMemory == 0 ? L10n.Tr("off") : L10n.TrCount(settings.LineMemory, "line", "lines");
 
     private void ResetPrompts_Click(object sender, RoutedEventArgs e) => settings.ResetPrompts();
 }

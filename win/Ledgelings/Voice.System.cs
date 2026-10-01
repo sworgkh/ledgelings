@@ -18,8 +18,9 @@ public sealed partial class Voice
     public sealed record SystemVoiceInfo(string Name, string Culture, VoiceGender Gender, VoiceAge Age);
 
     private static IReadOnlyList<SystemVoiceInfo>? installed;
+    private static string? sapiDefault;
 
-    /// <summary>Every enabled SAPI voice on this PC; none when speech is not available.</summary>
+    /// <summary>Every enabled SAPI voice on this PC; none when speech is not available. Tests set a pretend list.</summary>
     public static IReadOnlyList<SystemVoiceInfo> Installed
     {
         get
@@ -31,6 +32,7 @@ public sealed partial class Voice
                 installed = synth.GetInstalledVoices().Where(v => v.Enabled)
                     .Select(v => new SystemVoiceInfo(v.VoiceInfo.Name, v.VoiceInfo.Culture?.Name ?? "", v.VoiceInfo.Gender, v.VoiceInfo.Age))
                     .ToList();
+                sapiDefault = synth.Voice?.Name;
             }
             catch (Exception e) when (e is PlatformNotSupportedException or InvalidOperationException or TypeInitializationException)
             {
@@ -38,28 +40,80 @@ public sealed partial class Voice
             }
             return installed;
         }
+        set => installed = value;
     }
 
-    /// <summary>Windows' voices in the user's language (English when there are none), for choosing one.</summary>
+    /// <summary>The voice SAPI speaks with when asked for none (Settings › Time &amp; language › Speech);
+    /// null when speech is not available. Tests set it with <see cref="Installed"/>.</summary>
+    public static string? SapiDefault
+    {
+        get { _ = Installed; return sapiDefault; }
+        set => sapiDefault = value;
+    }
+
+    /// <summary>Windows' voices in the app's language (English when there are none), for choosing one.</summary>
     public static IReadOnlyList<SystemVoiceInfo> SystemVoices
     {
         get
         {
-            var language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-            var mine = Installed.Where(v => v.Culture.StartsWith(language, StringComparison.OrdinalIgnoreCase)).ToList();
-            return (mine.Count == 0 ? Installed.Where(v => v.Culture.StartsWith("en", StringComparison.OrdinalIgnoreCase)).ToList() : mine)
+            var language = VoiceLanguage;
+            return Installed.Where(v => v.Culture.StartsWith(language, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(v => v.Name, StringComparer.Ordinal).ThenBy(v => v.Culture, StringComparer.Ordinal).ToList();
         }
     }
 
-    /// <summary>The voices handed out one per character: each name once, the user's own region first.
+    /// <summary>The language code Windows' voices are taken in: the app's, when this PC has a
+    /// voice for it (Microsoft Irina Desktop for Russian, once Windows' Russian speech pack is
+    /// installed), else English.</summary>
+    public static string VoiceLanguage
+    {
+        get
+        {
+            var code = Languages.Current.Code();
+            return Installed.Any(v => v.Culture.StartsWith(code, StringComparison.OrdinalIgnoreCase)) ? code : "en";
+        }
+    }
+
+    /// <summary>The region whose voice wins when two share a name: the user's own for English,
+    /// the language's home otherwise (RU for Russian).</summary>
+    public static string VoiceRegion
+    {
+        get
+        {
+            var language = VoiceLanguage;
+            if (language == "en") return RegionInfo.CurrentRegion.TwoLetterISORegionName;
+            return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == language
+                ? RegionInfo.CurrentRegion.TwoLetterISORegionName : language.ToUpperInvariant();
+        }
+    }
+
+    /// <summary>True for an installed Windows voice in <paramref name="language"/> (a <see cref="VoiceLanguage"/>);
+    /// false for an empty or unknown one.</summary>
+    public static bool Speaks(string? voice, string language) =>
+        !string.IsNullOrEmpty(voice)
+        && Installed.FirstOrDefault(v => v.Name == voice)?.Culture.StartsWith(language, StringComparison.OrdinalIgnoreCase) == true;
+
+    /// <summary>The voice for a line with none chosen: null, SAPI's own, when that speaks the app's
+    /// language; else Windows' voice for the language (Irina on an English Windows with the Russian pack).</summary>
+    public static string? DefaultVoice
+    {
+        get
+        {
+            var language = VoiceLanguage;
+            if (SapiDefault is null || Speaks(SapiDefault, language)) return null;
+            var pool = CharacterPool;
+            return (pool.FirstOrDefault(v => v.Culture.EndsWith(VoiceRegion, StringComparison.OrdinalIgnoreCase)) ?? pool.FirstOrDefault())?.Name;
+        }
+    }
+
+    /// <summary>The voices handed out one per character: each name once, the language's own region first.
     /// Windows has no character or novelty voices (the Mac's Grandpa, Zarvox), so Cartoon voices
     /// changes the pitch here, not the pool.</summary>
     public static IReadOnlyList<SystemVoiceInfo> CharacterPool
     {
         get
         {
-            var region = RegionInfo.CurrentRegion.TwoLetterISORegionName;
+            var region = VoiceRegion;
             var byName = new Dictionary<string, SystemVoiceInfo>();
             foreach (var voice in SystemVoices)
             {
@@ -93,7 +147,7 @@ public sealed partial class Voice
     /// </summary>
     private bool SpeakHere(string line, string name, IReadOnlyList<string> cast, Action<Cue>? cue)
     {
-        var voice = SystemVoiceFor(name, cast);
+        var voice = SystemVoiceFor(name, cast) ?? DefaultVoice;
         var pitch = Pitch(name);
         var follow = FollowsPitch(name);
         var asked = follow ? Voices.AskedSpeed(Speed(name), pitch, followPitch: true) : Speed(name);
@@ -104,7 +158,7 @@ public sealed partial class Voice
         {
             var audio = await rendered;
             if (audio.Length == 0 || cancel.IsCancellationRequested) return false;
-            Status = $"{name}: {voice ?? "system voice"}";
+            Status = $"{name}: {voice ?? L10n.Tr("system voice")}";
             await Play(audio, follow ? pitch : 1, Estimate(line, Speed(name)), duration => Tell(cue, new Cue.Started(duration)), cancel);
             return true;
         }, cue);

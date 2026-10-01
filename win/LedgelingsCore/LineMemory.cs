@@ -62,6 +62,6 @@ public sealed class LineMemory
 
     /// <summary>What the model is told about its own recent lines.</summary>
     public static string Note(IReadOnlyList<string> lines) =>
-        "You said these lately. Say something new: do not repeat them, their jokes, or the way they start.\n"
+        L10n.Tr("You said these lately. Say something new: do not repeat them, their jokes, or the way they start.") + "\n"
             + string.Join("\n", lines.Select(l => "- " + l));
 }

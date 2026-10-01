@@ -32,7 +32,7 @@ public sealed partial class Script : IEquatable<Script>
     {
         public int Line { get; }
         public string Problem { get; }
-        public ParseException(int line, string problem) : base(line > 0 ? $"line {line}: {problem}" : problem)
+        public ParseException(int line, string problem) : base(line > 0 ? L10n.Tr("line %d: %@", line, problem) : problem)
         {
             Line = line;
             Problem = problem;
@@ -58,7 +58,7 @@ public sealed partial class Script : IEquatable<Script>
         void Close()
         {
             if (lines is null) return;
-            if (lines.Count == 0) throw new ParseException(blockStart, "a conversation needs at least one line after its tags");
+            if (lines.Count == 0) throw new ParseException(blockStart, L10n.Tr("a conversation needs at least one line after its tags"));
             conversations.Add(new Conversation(tags, lines));
             lines = null;
         }
@@ -71,10 +71,10 @@ public sealed partial class Script : IEquatable<Script>
             if (line.StartsWith('#')) continue;
             if (line.StartsWith('[') && line.EndsWith(']'))
             {
-                if (lines is not null) throw new ParseException(number, "tags go on the first line of a conversation");
+                if (lines is not null) throw new ParseException(number, L10n.Tr("tags go on the first line of a conversation"));
                 var names = line[1..^1].Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(n => n.ToLowerInvariant()).ToList();
                 if (names.FirstOrDefault(n => !Tags.Contains(n)) is string bad)
-                    throw new ParseException(number, $"unknown tag \"{bad}\"; the tags are {string.Join(", ", Tags.OrderBy(t => t, StringComparer.Ordinal))}");
+                    throw new ParseException(number, L10n.Tr("unknown tag \"%@\"; the tags are %@", bad, string.Join(", ", Tags.OrderBy(t => t, StringComparer.Ordinal))));
                 tags = new HashSet<string>(names);
                 lines = new List<string>();
                 blockStart = number;
@@ -84,7 +84,7 @@ public sealed partial class Script : IEquatable<Script>
             lines.Add(line);
         }
         Close();
-        if (conversations.Count == 0) throw new ParseException(0, "no conversations");
+        if (conversations.Count == 0) throw new ParseException(0, L10n.Tr("no conversations"));
         return new Script(conversations);
     }
 
@@ -112,10 +112,12 @@ public sealed partial class Script : IEquatable<Script>
         return pool.MinBy(i => order.LastIndexOf(i));
     }
 
+    /// <summary><paramref name="flower"/> is the flower's id; the line gets its name in the current language.</summary>
     public static string Fill(string line, string speaker, string listener, string? flower, string? holiday = null) =>
         Banter.Render(line, new Dictionary<string, string>
         {
-            ["speaker"] = speaker, ["listener"] = listener, ["flower"] = flower ?? "flower", ["holiday"] = holiday ?? "the holiday",
+            ["speaker"] = speaker, ["listener"] = listener,
+            ["flower"] = flower is null ? L10n.Tr("flower") : Gifts.Name(flower), ["holiday"] = holiday ?? L10n.Tr("the holiday"),
         });
 
     public bool Equals(Script? other) => other is not null && Conversations.SequenceEqual(other.Conversations);

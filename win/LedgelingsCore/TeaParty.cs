@@ -179,14 +179,20 @@ public sealed class TeaParty
 /// character the user invented. <c>{other}</c> is the one across the table.</summary>
 public static class Tea
 {
-    public static readonly IReadOnlyList<string> AnyoneStories = new[]
+    /// <summary>The current language's, character by character; English where it has none.</summary>
+    public static IReadOnlyList<string> AnyoneStories => Translated.List(Shared.Current?.TeaAnyoneStories, EnglishAnyoneStories);
+    public static IReadOnlyList<string> AnyoneReplies => Translated.List(Shared.Current?.TeaAnyoneReplies, EnglishAnyoneReplies);
+    public static IReadOnlyDictionary<string, string[]> Stories => Translated.Lists(Shared.Current?.TeaStories, EnglishStories, l => l);
+    public static IReadOnlyDictionary<string, string[]> Replies => Translated.Lists(Shared.Current?.TeaReplies, EnglishReplies, l => l);
+
+    public static readonly IReadOnlyList<string> EnglishAnyoneStories = new[]
     {
         "I wasn't always on this edge, you know. I started out in a corner nobody visits.",
         "When I was small, I thought the screen went on forever. Then I found the first edge.",
         "Once I walked the whole way round without stopping. Nobody noticed. I still think about it.",
         "My secret? Every night I pick a pixel and make a wish on it.",
     };
-    public static readonly IReadOnlyList<string> AnyoneReplies = new[]
+    public static readonly IReadOnlyList<string> EnglishAnyoneReplies = new[]
     {
         "Really? I never knew that about you, {other}.",
         "That's lovely. More tea?",
@@ -194,7 +200,7 @@ public static class Tea
     };
 
     /// <summary>Four stories each: more than one character tells in a party of the default length.</summary>
-    public static readonly IReadOnlyDictionary<string, string[]> Stories = new Dictionary<string, string[]>
+    public static readonly IReadOnlyDictionary<string, string[]> EnglishStories = new Dictionary<string, string[]>
     {
         // blocky's cast
         ["Blocky"] = new[] { "I was the first one here. Before the colours, before the cursor. Those were good days.",
@@ -314,7 +320,7 @@ public static class Tea
             "When I was small, the screen was dimmer. Now it's 12% brighter. I notice." },
     };
 
-    public static readonly IReadOnlyDictionary<string, string[]> Replies = new Dictionary<string, string[]>
+    public static readonly IReadOnlyDictionary<string, string[]> EnglishReplies = new Dictionary<string, string[]>
     {
         ["Blocky"] = new[] { "Hmph. Not bad, {other}. Better than most stories on this screen.",
             "That's nothing. I once waited a whole day for the cursor to leave.",
@@ -421,14 +427,18 @@ public static class Tea
     };
 
     /// <summary>Who they are, and that this is tea, not banter: stories, not jabs.</summary>
-    public const string SystemPrompt =
+    public static string SystemPrompt => Shared.Prompt("teaSystem", EnglishSystemPrompt);
+    public static string StoryPrompt => Shared.Prompt("teaStory", EnglishStoryPrompt);
+    public static string ReplyPrompt => Shared.Prompt("teaReply", EnglishReplyPrompt);
+
+    public const string EnglishSystemPrompt =
         "You are {speaker}, {speakerKind}, living on the edge of a computer screen. {speakerPersona}\n" +
         "You are having a tea party with {listener}, {listenerKind}, at a tiny table on the edge. {listenerPersona}\n" +
         "Over tea the two of you share stories from your lives. Speak in your own voice, true to who you are.\n" +
         "Say ONE line, at most 25 words. Output only the line. No quotes, no name prefix, no explanation.";
 
     /// <summary>The teller's turn.</summary>
-    public const string StoryPrompt =
+    public const string EnglishStoryPrompt =
         "Right now: {situation}\n" +
         "Said at this tea party so far:\n" +
         "{party}\n" +
@@ -436,7 +446,7 @@ public static class Tea
         "a memory, a secret, a mistake, a dream.";
 
     /// <summary>The listener's answer to it.</summary>
-    public const string ReplyPrompt =
+    public const string EnglishReplyPrompt =
         "Right now: {situation}\n" +
         "Said at this tea party so far:\n" +
         "{party}\n" +
@@ -445,6 +455,6 @@ public static class Tea
 
     /// <summary>The party so far, for <c>{party}</c>: the last <paramref name="keep"/> lines, "Name: line".</summary>
     public static string Transcript(IReadOnlyList<ChatLog.Line> lines, int keep = 8) =>
-        lines.Count == 0 ? "(nothing yet: the tea has just been poured)"
+        lines.Count == 0 ? L10n.Tr("(nothing yet: the tea has just been poured)")
             : string.Join("\n", lines.TakeLast(keep).Select(l => $"{l.Speaker}: {l.Text}"));
 }

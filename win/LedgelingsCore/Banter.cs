@@ -15,17 +15,29 @@ public static class Banter
     /// <summary>What the built-in creature is, for the prompt.</summary>
     public const string DefaultKind = "a small square creature";
 
-    public const string DefaultSystemPrompt =
+    /// <summary>A persona or species kind as a prompt in the current language carries it:
+    /// a shipped one in that language's words, one the user wrote as written.
+    /// The English stays the data: casting and planting read that.</summary>
+    public static string Spoken(string text) => L10n.Lookup(text, Languages.Current);
+
+    public static string SystemPromptIn(Language l) => Shared.PromptIn(l, "system", EnglishSystemPrompt);
+    public static string LinePromptIn(Language l) => Shared.PromptIn(l, "line", EnglishLinePrompt);
+    public static string ReplyPromptIn(Language l) => Shared.PromptIn(l, "reply", EnglishReplyPrompt);
+    public static string DefaultSystemPrompt => SystemPromptIn(Languages.Current);
+    public static string DefaultLinePrompt => LinePromptIn(Languages.Current);
+    public static string DefaultReplyPrompt => ReplyPromptIn(Languages.Current);
+
+    public const string EnglishSystemPrompt =
         "You are {speaker}, {speakerKind}, living on the edge of a computer screen. {speakerPersona}\n" +
         "You are talking to {listener}, {listenerKind}, who lives on the same edge. {listenerPersona}\n" +
         "Say ONE line to {listener}: a joke, a jab or a tease, at most 20 words, in your own voice.\n" +
         "Output only the line. No quotes, no name prefix, no explanation.";
 
-    public const string DefaultLinePrompt =
+    public const string EnglishLinePrompt =
         "Right now: {situation}\n" +
         "Say your line to {listener}.";
 
-    public const string DefaultReplyPrompt =
+    public const string EnglishReplyPrompt =
         "Right now: {situation}\n" +
         "{listener} just said to you: \"{line}\"\n" +
         "Answer back in ONE line, in character, at most 20 words.";

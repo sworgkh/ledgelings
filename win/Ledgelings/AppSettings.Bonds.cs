@@ -21,7 +21,7 @@ public sealed partial class AppSettings
         // An hour: a colony that runs all day gets its first stories the same morning.
         plotAfterHours = Math.Clamp(store.Get<double?>("plotAfterHours") ?? 1, PlotAfterMin, PlotAfterMax);
         plotLength = Math.Clamp(store.Get<int?>("plotLength") ?? 6, PlotLengthMin, PlotLengthMax);
-        plotPrompt = store.Get<string>("plotPrompt") ?? Bonds.DefaultPlotPrompt;
+        plotPrompt = store.Get<string>("plotPrompt") ?? Bonds.PlotPromptIn(language);
     }
 
     /// <summary>Pairs who have lived together a while get a small story, written by the
@@ -31,5 +31,5 @@ public sealed partial class AppSettings
     public int PlotLength { get => plotLength; set => Put(ref plotLength, Math.Clamp(value, PlotLengthMin, PlotLengthMax), "plotLength"); }
     public string PlotPrompt { get => plotPrompt; set => Put(ref plotPrompt, value, "plotPrompt"); }
 
-    public void ResetPlotPrompt() => PlotPrompt = Bonds.DefaultPlotPrompt;
+    public void ResetPlotPrompt() => PlotPrompt = Bonds.PlotPromptIn(language);
 }

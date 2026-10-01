@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Markup;
 using System.Windows.Media;
+using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
@@ -14,6 +16,7 @@ public sealed partial class SettingsWindow : Window
     private readonly SpendLedger spend;
 
     private sealed record ColourRow(int Index, string Hex, Brush Brush);
+    private sealed record LanguageChoice(Language Language, string Title);
 
     public SettingsWindow(AppSettings settings, ChatHistory history, SpriteLibrary library, SpendLedger spend)
     {
@@ -22,6 +25,7 @@ public sealed partial class SettingsWindow : Window
         this.library = library;
         this.spend = spend;
         InitializeComponent();
+        LanguageBox.ItemsSource = Languages.All.Select(l => new LanguageChoice(l, l.Title())).ToList();
         DataContext = settings;
         settings.PropertyChanged += (_, e) =>
         {
@@ -30,6 +34,7 @@ public sealed partial class SettingsWindow : Window
             if (e.PropertyName is nameof(AppSettings.Brain)) RefreshBrain();
             if (e.PropertyName is nameof(AppSettings.Script)) RefreshScriptStatus();
             if (e.PropertyName is "Casts") RefreshCast();
+            if (e.PropertyName is nameof(AppSettings.Language)) ShowLanguage();
         };
         library.Changed += RefreshSpecies;
         spend.Changed += RefreshSpend;
@@ -42,8 +47,8 @@ public sealed partial class SettingsWindow : Window
         InitChats();
         InitFlowers();
         PromptBox.Text = library.Prompt;
-        SpritesFooter.Text = "Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in " + library.Directory + ".";
-        PromptFooter.Text = "Placeholders: " + string.Join(" ", Core.Banter.Placeholders.Select(p => "{" + p + "}")) + ". {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.";
+        ShowFooters();
+        LmStatus.Text = OrStatus.Text = LocalCheckStatus.Text = LoginStatus.Text = L10n.Tr("not checked");
         InitTalkExtras();
         InitBonds();
         InitCalendar();
@@ -54,7 +59,7 @@ public sealed partial class SettingsWindow : Window
     public void Show(SettingsTab? tab)
     {
         // By header, not position: tabs are added feature by feature.
-        if (tab is SettingsTab t && Tabs.Items.OfType<TabItem>().FirstOrDefault(i => i.Header as string == t.ToString()) is TabItem item)
+        if (tab is SettingsTab t && Tabs.Items.OfType<TabItem>().FirstOrDefault(i => Tr.GetHeader(i) == t.ToString()) is TabItem item)
             Tabs.SelectedItem = item;
         if (!IsVisible) Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
@@ -63,6 +68,40 @@ public sealed partial class SettingsWindow : Window
         Topmost = false;
         StartAtLogin.IsChecked = LaunchAtLogin.IsOn;
         LoginStatus.Text = LaunchAtLogin.Status;
+    }
+
+    /// <summary>The footers written in code, which name a folder or the placeholders.</summary>
+    private void ShowFooters()
+    {
+        Language = XmlLanguage.GetLanguage(Languages.Current.Culture().IetfLanguageTag);      // dates in the date picker
+        SpritesFooter.Text = L10n.Tr("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in %@.", library.Directory);
+        PromptFooter.Text = L10n.Tr("Placeholders: %@. {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.",
+            string.Join(" ", Banter.Placeholders.Select(p => "{" + p + "}")));
+    }
+
+    /// <summary>A new language while the window is open: every label, footer and list again, in it.
+    /// The app has chosen it already (<see cref="Languages.Choose"/> runs first, from the launch).</summary>
+    private void ShowLanguage()
+    {
+        Tr.Refresh();
+        ShowFooters();
+        LmStatus.Text = OrStatus.Text = LocalCheckStatus.Text = L10n.Tr("not checked");
+        LoginStatus.Text = LaunchAtLogin.Status;
+        RefreshBrain();
+        RefreshCast();
+        RefreshLineMemory();
+        RefreshNeedsModelNotes();
+        RefreshPlanters();
+        RefreshBonds();
+        RefreshBondList();
+        RefreshCalendar();
+        RefreshRepeatChoices();
+        RefreshReminders();
+        RefreshReminderFooter();
+        RefreshVoice();
+        RefreshCharacterVoices();
+        RefreshSpend();
+        ReloadChats();
     }
 
     // MARK: Creatures

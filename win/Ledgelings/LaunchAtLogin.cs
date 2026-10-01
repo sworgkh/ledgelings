@@ -1,3 +1,4 @@
+using Ledgelings.Core;
 using Microsoft.Win32;
 
 namespace Ledgelings;
@@ -21,14 +22,14 @@ public static class LaunchAtLogin
         }
     }
 
-    public static string Status => IsOn ? "on" : "off";
+    public static string Status => IsOn ? L10n.Tr("on") : L10n.Tr("off");
 
     public static void Set(bool on)
     {
-        using var key = Registry.CurrentUser.CreateSubKey(RunKey) ?? throw new InvalidOperationException("cannot open the Run key");
+        using var key = Registry.CurrentUser.CreateSubKey(RunKey) ?? throw new InvalidOperationException(L10n.Tr("cannot open the Run key"));
         if (on)
         {
-            if (ExePath is not string exe) throw new InvalidOperationException("cannot find the program's own path");
+            if (ExePath is not string exe) throw new InvalidOperationException(L10n.Tr("cannot find the program's own path"));
             key.SetValue(Name, "\"" + exe + "\"");
         }
         else key.DeleteValue(Name, throwOnMissingValue: false);

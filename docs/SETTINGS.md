@@ -92,8 +92,9 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 | Character names | Kept as they are (Blocky, Pip, Unit 7): they are names, and voice and bond settings are filed under them |
 | Personas and species descriptions | Stay English in the Sprites tab (they are the data; voice casting reads them). A Russian prompt carries their Russian version; a persona you wrote yourself goes as written, in any language. Casting reads Russian words too (старый, медленный, крошечный, он/она…) |
 | Mac voices | Only voices of the app's language are handed out (on most Macs that is **Milena**; more in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices). A character's own chosen voice of another language is skipped while it cannot speak the line. No Russian voice installed: English voices, as before |
+| Windows voices | Only voices of the app's language: **Microsoft Irina Desktop**, once the Russian speech pack is installed (Settings › Time & language › Speech). Narrator's newer voices (Pavel, Svetlana) are not open to apps. A character's own voice of another language is skipped; with no Russian voice, English voices (David, Zira) read it badly |
 | OpenRouter voices | Most speech models speak Russian with any voice; voices whose names mark a language (`ru_…`, `en_…`) are filtered to Russian when there are any |
-| Local speech server | Depends on the server. Kokoro has no Russian voices: it reads Russian badly or not at all; use the Mac's voices or OpenRouter for Russian |
+| Local speech server | Depends on the server. Kokoro has no Russian voices: it reads Russian badly or not at all; use the system's voices or OpenRouter for Russian |
 | Saved line voices | Filed by the line's text, so a Russian line never plays an English recording |
 | Chat history, bonds' stories already written | Stay in the language they were written in |
 

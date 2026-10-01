@@ -26,7 +26,11 @@ public sealed partial class SettingsWindow
 
     private void RefreshNeedsModelNotes()
     {
-        foreach (var note in needsModelNotes) note.Visibility = settings.HasModel ? Visibility.Collapsed : Visibility.Visible;
+        foreach (var note in needsModelNotes)
+        {
+            note.Text = "ⓘ " + AppSettings.NeedsModel;
+            note.Visibility = settings.HasModel ? Visibility.Collapsed : Visibility.Visible;
+        }
     }
 
     /// <summary>The Talk tab's later rows: how many lines they avoid repeating.</summary>

@@ -32,11 +32,11 @@ public sealed class SpeechClient
         {
             get
             {
-                if (InputPerMillion is not double input) return "price unknown";
-                if (input == 0 && (OutputPerMillion ?? 0) == 0) return "free";
+                if (InputPerMillion is not double input) return L10n.Tr("price unknown");
+                if (input == 0 && (OutputPerMillion ?? 0) == 0) return L10n.Tr("free");
                 if (OutputPerMillion is double output && output > 0)
-                    return string.Format(CultureInfo.InvariantCulture, "${0:0.00} in · ${1:0.00} out per M", input, output);
-                return string.Format(CultureInfo.InvariantCulture, "${0:0.00} per M chars", input);
+                    return L10n.Tr("$%.2f in · $%.2f out per M", input, output);
+                return L10n.Tr("$%.2f per M chars", input);
             }
         }
     }
@@ -88,10 +88,10 @@ public sealed class SpeechClient
             if (ChatClient.ServerError(text) is string message) throw ChatClient.Failure.Refused(message);
             throw ChatClient.Failure.BadReply(ChatClient.Head(text, 160));
         }
-        if (data.Length == 0) throw ChatClient.Failure.BadReply("no audio");
+        if (data.Length == 0) throw ChatClient.Failure.BadReply(L10n.Tr("no audio"));
         // Text or a web page is not a clip, whatever the status said; it would fail on every replay once kept.
         if (type.Length > 0 && !type.StartsWith("audio/", StringComparison.Ordinal) && !type.StartsWith("application/octet-stream", StringComparison.Ordinal))
-            throw ChatClient.Failure.BadReply($"{type.Split(';')[0]}, not audio: " + ChatClient.Head(Encoding.UTF8.GetString(data), 120));
+            throw ChatClient.Failure.BadReply(L10n.Tr("%@, not audio: %@", type.Split(';')[0], ChatClient.Head(Encoding.UTF8.GetString(data), 120)));
         if (!type.StartsWith("audio/pcm", StringComparison.Ordinal) && !type.StartsWith("audio/l16", StringComparison.Ordinal)) return data;
         int? Parameter(string name)
         {
@@ -271,7 +271,7 @@ public sealed class SpeechClient
             return new Reply(body, response.Content.Headers.ContentType?.ToString(), generation);
         }
         catch (OperationCanceledException) when (cancel.IsCancellationRequested) { throw; }
-        catch (OperationCanceledException) { throw ChatClient.Failure.ServerDown("it took too long"); }
+        catch (OperationCanceledException) { throw ChatClient.Failure.ServerDown(L10n.Tr("it took too long")); }
         catch (Exception e) when (e is not ChatClient.Failure) { throw ChatClient.Failure.ServerDown(e.Message); }
     }
 

@@ -19,14 +19,14 @@ public sealed partial class SettingsWindow
         void Row(Spend.Total t, TextBlock cost, TextBlock calls, TextBlock tokens)
         {
             cost.Text = Spend.Label(t.Cost) + (t.Unpriced > 0 ? "+" : "");
-            calls.Text = t.Calls.ToString(CultureInfo.CurrentCulture);
-            tokens.Text = t.Tokens.ToString(CultureInfo.CurrentCulture);
+            calls.Text = t.Calls.ToString(Languages.Current.Culture());
+            tokens.Text = t.Tokens.ToString(Languages.Current.Culture());
         }
         Row(s.Today, TodayCost, TodayCalls, TodayTokens);
         Row(s.Month, MonthCost, MonthCalls, MonthTokens);
         Row(s.AllTime, AllCost, AllCalls, AllTokens);
-        var footer = "Every call to a model, text or voice, is priced as OpenRouter reports it; LM Studio, a local speech server and Windows' own voices are free.";
-        if (s.AllTime.Unpriced > 0) footer += $" {s.AllTime.Unpriced} calls had no price; a + marks a total that is missing some.";
+        var footer = L10n.Tr("Every call to a model, text or voice, is priced as OpenRouter reports it; LM Studio, a local speech server and Windows' own voices are free.");
+        if (s.AllTime.Unpriced > 0) footer += " " + L10n.Tr("%d calls had no price; a + marks a total that is missing some.", s.AllTime.Unpriced);
         SpendFooter.Text = footer;
         NoPurposes.Visibility = s.ByPurpose.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         SpendPurposes.ItemsSource = s.ByPurpose.Select(p => new TotalRow(p.Purpose, Total(p.Total))).ToList();
@@ -34,15 +34,15 @@ public sealed partial class SettingsWindow
         NoCalls.Visibility = spend.Recent.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         RecentCalls.ItemsSource = spend.Recent.Select(r => new CallRow(
             r.Model,
-            $"{r.Time.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)} · {Spend.PurposeTitle(r.Purpose)} · {r.Usage.PromptTokens + r.Usage.CompletionTokens} tokens",
-            r.Usage.Cost is double c ? Spend.Label(c) : "no price",
+            r.Time.ToLocalTime().ToString("g", Languages.Current.Culture()) + " · " + Spend.PurposeTitle(r.Purpose) + " · " + L10n.TrCount(r.Usage.PromptTokens + r.Usage.CompletionTokens, "token", "tokens"),
+            r.Usage.Cost is double c ? Spend.Label(c) : L10n.Tr("no price"),
             r.Usage.Cost is null ? Brushes.DarkOrange : Brushes.Black)).ToList();
-        RecentFooter.Text = $"The last {SpendLedger.RecentCount}, newest first.";
+        RecentFooter.Text = L10n.Tr("The last %d, newest first.", SpendLedger.RecentCount);
         SpendPath.Text = spend.File;
     }
 
     private static string Total(Spend.Total t) =>
-        $"{Spend.Label(t.Cost)}{(t.Unpriced > 0 ? "+" : "")} · {t.Calls} call{(t.Calls == 1 ? "" : "s")}";
+        $"{Spend.Label(t.Cost)}{(t.Unpriced > 0 ? "+" : "")} · " + L10n.TrCount(t.Calls, "call", "calls");
 
     private void RevealSpend_Click(object sender, RoutedEventArgs e) => spend.RevealInExplorer();
 }

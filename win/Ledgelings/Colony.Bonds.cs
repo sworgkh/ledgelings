@@ -43,7 +43,7 @@ public sealed partial class Colony
     private string? PlotLabel(int i, int j)
     {
         if (!Settings.PlotsEnabled || Bonds.Bond(CharacterFor(i).Name, CharacterFor(j).Name)?.Plot is not Core.Bonds.Plot plot) return null;
-        return $"part {Math.Min(plot.Told + 1, plot.Length)} of {plot.Length}: {plot.Text}";
+        return L10n.Tr("part %d of %d: %@", Math.Min(plot.Told + 1, plot.Length), plot.Length, plot.Text);
     }
 
     /// <summary>A conversation between <paramref name="a"/> and <paramref name="b"/> (names) ended: count it, and ask for
@@ -107,7 +107,7 @@ public sealed partial class Colony
         });
         if (written is not null)
         {
-            TalkStatus = $"{a} and {b}: {written.Plot}";
+            TalkStatus = L10n.Tr("%@ and %@: %@", a, b, written.Plot);
             Trace?.Invoke($"plot: {key} · bond: {written.Bond ?? "-"} · plot: {written.Plot}");
         }
     }

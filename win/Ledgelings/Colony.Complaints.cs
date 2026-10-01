@@ -35,7 +35,7 @@ public sealed partial class Colony
         var times = annoyance.Streak(i, Elapsed);
         annoyance.Forgive(i);
         var me = CharacterFor(i);
-        var situation = string.Join(" ", new[] { AlmanacSentence, Describe(i) + ".", $"{me.Name} has been chased or picked up by the user's cursor {times} times in a row." }
+        var situation = string.Join(" ", new[] { AlmanacSentence, Describe(i) + ".", L10n.Tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.Name, times) }
             .Where(s => s.Length > 0));
         var service = Settings.TalkEnabled && Settings.Brain != BrainKind.Script ? Settings.ChatClient() : null;
         if (service is null)
@@ -47,15 +47,15 @@ public sealed partial class Colony
         }
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = me.Name, ["speakerKind"] = KindOf(i), ["speakerPersona"] = me.Persona,
-            ["listener"] = "you", ["listenerKind"] = "the person at the computer",
-            ["listenerPersona"] = "The person whose screen you all live on.",
+            ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Spoken(me.Persona),
+            ["listener"] = L10n.Tr("you"), ["listenerKind"] = L10n.Tr("the person at the computer"),
+            ["listenerPersona"] = L10n.Tr("The person whose screen you all live on."),
             ["situation"] = situation, ["times"] = times.ToString(),
         };
         var system = LineMemory.WithRecent(Core.Bonds.WithRelationship(Settings.SystemPrompt, vars, ""), History.Memory.Recent(me.Name));
         var user = Banter.Render(Complaints.Prompt, vars).Trim();
         complaining.Add(i);
-        TalkStatus = $"{me.Name} is complaining via {service.Model}…";
+        TalkStatus = L10n.Tr("%@ is complaining via %@…", me.Name, service.Model);
         _ = WriteComplaint(service, i, me, times, situation, system, user);
     }
 
@@ -99,7 +99,7 @@ public sealed partial class Colony
     private void RecordComplaint(string line, string name, string situation,
                                  string? provider = null, string model = "", double? cost = null, int? tokens = null)
     {
-        TalkStatus = $"{name} complained: {line}";
+        TalkStatus = L10n.Tr("%@ complained: %@", name, line);
         History.Record(new ChatLog.Exchange
         {
             Time = DateTimeOffset.Now, Situation = situation,

@@ -23,9 +23,17 @@ public static class Almanac
 
     public static string Title(this Faith faith) => faith switch
     {
-        Faith.Jewish => "Jewish",
-        Faith.Christian => "Christian",
-        _ => "Muslim",
+        Faith.Jewish => L10n.Tr("Jewish"),
+        Faith.Christian => L10n.Tr("Christian"),
+        _ => L10n.Tr("Muslim"),
+    };
+
+    /// <summary>"a Jewish holiday", for the sentence.</summary>
+    public static string HolidayWord(this Faith faith) => faith switch
+    {
+        Faith.Jewish => L10n.Tr("a Jewish holiday"),
+        Faith.Christian => L10n.Tr("a Christian holiday"),
+        _ => L10n.Tr("a Muslim holiday"),
     };
 
     public static readonly IReadOnlyList<Faith> AllFaiths = new[] { Faith.Jewish, Faith.Christian, Faith.Muslim };
@@ -68,31 +76,31 @@ public static class Almanac
     {
         var parts = new List<string>();
         var clock = TimePhrase(now, zone);
-        if (aware.Date && aware.TimeOfDay) parts.Add($"For the person at this computer it is {DatePhrase(now, zone)}, {clock}.");
-        else if (aware.Date) parts.Add($"For the person at this computer it is {DatePhrase(now, zone)}.");
-        else if (aware.TimeOfDay) parts.Add($"For the person at this computer it is {clock}.");
+        if (aware.Date && aware.TimeOfDay) parts.Add(L10n.Tr("For the person at this computer it is %@, %@.", DatePhrase(now, zone), clock));
+        else if (aware.Date) parts.Add(L10n.Tr("For the person at this computer it is %@.", DatePhrase(now, zone)));
+        else if (aware.TimeOfDay) parts.Add(L10n.Tr("For the person at this computer it is %@.", clock));
         if (aware.Faiths.Count > 0)
         {
             var hour = Wall(now, zone).Hour;
             foreach (var h in Holidays(now, aware.Faiths, zone))
             {
-                var what = $"a {h.Faith.Title()} holiday";
-                parts.Add(h.Length > 1 ? $"Today is day {h.Day} of {h.Name}, {what}." : $"Today is {h.Name}, {what}.");
+                var what = h.Faith.HolidayWord();
+                parts.Add(h.Length > 1 ? L10n.Tr("Today is day %d of %@, %@.", h.Day, h.Name, what) : L10n.Tr("Today is %@, %@.", h.Name, what));
             }
             foreach (var u in UpcomingHolidays(now, aware.LookAhead, aware.Faiths, zone))
             {
-                var what = $"a {u.Faith.Title()} holiday";
-                if (u.Days == 1 && u.Faith != Faith.Christian && hour >= 17) parts.Add($"{u.Name}, {what}, begins this evening.");
-                else if (u.Days == 1) parts.Add($"Tomorrow is {u.Name}, {what}.");
-                else parts.Add($"{u.Name}, {what}, is in {u.Days} days.");
+                var what = u.Faith.HolidayWord();
+                if (u.Days == 1 && u.Faith != Faith.Christian && hour >= 17) parts.Add(L10n.Tr("%@, %@, begins this evening.", u.Name, what));
+                else if (u.Days == 1) parts.Add(L10n.Tr("Tomorrow is %@, %@.", u.Name, what));
+                else parts.Add(L10n.Tr("%@, %@, is in %@.", u.Name, what, L10n.TrCount(u.Days, "day", "days")));
             }
         }
         return string.Join(" ", parts);
     }
 
-    /// <summary>"Saturday, 26 September 2026".</summary>
+    /// <summary>"Saturday, 26 September 2026", "суббота, 26 сентября 2026".</summary>
     public static string DatePhrase(DateTimeOffset now, TimeZoneInfo? zone = null) =>
-        Wall(now, zone).ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture);
+        Wall(now, zone).ToString("dddd, d MMMM yyyy", Languages.Current == Language.English ? CultureInfo.InvariantCulture : Languages.Current.Culture());
 
     /// <summary>"late evening (22:40)".</summary>
     public static string TimePhrase(DateTimeOffset now, TimeZoneInfo? zone = null)
@@ -104,13 +112,13 @@ public static class Almanac
     /// <summary>The part of the day an hour falls in, in words.</summary>
     public static string PartOfDay(int hour) => hour switch
     {
-        >= 5 and < 8 => "early morning",
-        >= 8 and < 12 => "morning",
-        >= 12 and < 14 => "midday",
-        >= 14 and < 17 => "afternoon",
-        >= 17 and < 21 => "evening",
-        >= 21 and < 24 => "late evening",
-        _ => "the middle of the night",
+        >= 5 and < 8 => L10n.Tr("early morning"),
+        >= 8 and < 12 => L10n.Tr("morning"),
+        >= 12 and < 14 => L10n.Tr("midday"),
+        >= 14 and < 17 => L10n.Tr("afternoon"),
+        >= 17 and < 21 => L10n.Tr("evening"),
+        >= 21 and < 24 => L10n.Tr("late evening"),
+        _ => L10n.Tr("the middle of the night"),
     };
 
     // MARK: Holidays
@@ -130,7 +138,7 @@ public static class Almanac
             var ago = Enumerable.Range(0, feast.Length).Cast<int?>().FirstOrDefault(k => feast.Starts(days[k!.Value]));
             if (ago is not int k) continue;
             if (k > 0 && feast.StillOn is { } still && !still(days[0])) continue;
-            found.Add(new Holiday(feast.Name, feast.Faith, k + 1, feast.Length));
+            found.Add(new Holiday(HolidayName(feast.Name), feast.Faith, k + 1, feast.Length));
         }
         return found;
     }
@@ -147,8 +155,11 @@ public static class Almanac
         {
             var day = new Day(wall.AddDays(ahead));
             foreach (var feast in Feasts)
-                if (faiths.Contains(feast.Faith) && feast.Starts(day) && !today.Contains(feast.Name) && !found.Any(u => u.Name == feast.Name))
-                    found.Add(new Upcoming(feast.Name, feast.Faith, ahead));
+            {
+                if (!faiths.Contains(feast.Faith) || !feast.Starts(day)) continue;
+                var name = HolidayName(feast.Name);
+                if (!today.Contains(name) && !found.Any(u => u.Name == name)) found.Add(new Upcoming(name, feast.Faith, ahead));
+            }
         }
         return found;
     }
@@ -156,6 +167,10 @@ public static class Almanac
     /// <summary>The first holiday name for today, for a built-in line's <c>{holiday}</c>.</summary>
     public static string? Today(DateTimeOffset date, IReadOnlySet<Faith> faiths, TimeZoneInfo? zone = null) =>
         Holidays(date, faiths, zone).FirstOrDefault()?.Name;
+
+    /// <summary>A holiday's name in the current language (or <paramref name="language"/>); <paramref name="english"/> is how <c>Feasts</c> calls it.</summary>
+    public static string HolidayName(string english, Language? language = null) =>
+        Shared.In(language ?? Languages.Current)?.Holidays.TryGetValue(english, out var name) == true && name.Length > 0 ? name : english;
 
     private static readonly HebrewCalendar hebrewCalendar = new();
     private static readonly UmAlQuraCalendar islamicCalendar = new();
@@ -195,12 +210,16 @@ public static class Almanac
         }
     }
 
+    /// <summary><c>Name</c> is in English; <see cref="HolidayName"/> gives it in the current language.</summary>
     internal sealed record Feast(string Name, Faith Faith, int Length, Func<Day, bool> Starts, Func<Day, bool>? StillOn = null);
 
     private static Feast HebrewFeast(string name, int month, int day, int length = 1) => new(name, Faith.Jewish, length, d => d.Hebrew == (month, day));
     private static Feast IslamicFeast(string name, int month, int day, int length = 1) => new(name, Faith.Muslim, length, d => d.Islamic == (month, day));
     private static Feast CivilFeast(string name, int month, int day) => new(name, Faith.Christian, 1, d => d.Civil == (month, day));
     private static Feast EasterFeast(string name, int offset) => new(name, Faith.Christian, 1, d => d.FromEaster == offset);
+
+    /// <summary>Every holiday the almanac knows, by its English name.</summary>
+    public static IReadOnlyList<string> FeastNames => Feasts.Select(f => f.Name).ToList();
 
     internal static readonly IReadOnlyList<Feast> Feasts = new[]
     {

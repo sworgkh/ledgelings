@@ -151,6 +151,38 @@ public static partial class Voices
         return english.Count == 0 ? voices.ToList() : english;
     }
 
+    /// <summary>The voices of a speech model's list that speak <paramref name="language"/>, when their
+    /// names say so; otherwise the whole list, as voices that carry no language
+    /// mark (OpenAI's <c>alloy</c>, Gemini's <c>Puck</c>) speak every language.
+    /// English is <see cref="EnglishFirst"/>; Russian voices are marked <c>ru_</c>, <c>ru-RU-</c>,
+    /// <c>russian_</c> or <c>-ru</c>.</summary>
+    public static List<string> InLanguage(IReadOnlyList<string> voices, Language language)
+    {
+        if (language == Language.English) return EnglishFirst(voices);
+        var russian = voices.Where(IsRussian).ToList();
+        return russian.Count == 0 ? voices.ToList() : russian;
+    }
+
+    /// <summary><see cref="InLanguage"/> for the language the app speaks now.</summary>
+    public static List<string> LanguageFirst(IReadOnlyList<string> voices) => InLanguage(voices, Languages.Current);
+
+    /// <summary>True when <paramref name="voice"/> (or every voice of a Kokoro blend) is among the ones
+    /// <see cref="InLanguage"/> keeps from <paramref name="voices"/>: a voice of another language is not.</summary>
+    public static bool Speaks(string voice, Language language, IReadOnlyList<string> voices)
+    {
+        var kept = InLanguage(voices, language);
+        if (kept.Count == voices.Count) return true;
+        var parts = BlendParts(voice);
+        return parts.Count > 0 && parts.All(kept.Contains);
+    }
+
+    internal static bool IsRussian(string voice)
+    {
+        var v = voice.ToLowerInvariant();
+        return v.StartsWith("ru_", StringComparison.Ordinal) || v.StartsWith("ru-", StringComparison.Ordinal)
+            || v.StartsWith("russian_", StringComparison.Ordinal) || v.EndsWith("-ru", StringComparison.Ordinal) || v.EndsWith("_ru", StringComparison.Ordinal);
+    }
+
     internal static readonly HashSet<string> OrpheusEnglish = new() { "tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe" };
 
     internal static bool IsEnglish(string voice)

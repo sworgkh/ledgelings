@@ -44,15 +44,20 @@ public sealed class Annoyance
 /// voice; <c>{times}</c> is how many times in a row it has been bothered.</summary>
 public static class Complaints
 {
-    /// <summary>For a character the user invented.</summary>
-    public static readonly IReadOnlyList<string> Anyone = new[]
+    /// <summary>For a character the user invented, in the current language.</summary>
+    public static IReadOnlyList<string> Anyone => Translated.List(Shared.Current?.ComplaintsAnyone, EnglishAnyone);
+
+    /// <summary>Each built-in character's complaints, in the current language.</summary>
+    public static IReadOnlyDictionary<string, string[]> Lines => Translated.Lists(Shared.Current?.ComplaintLines, EnglishLines, l => l);
+
+    public static readonly IReadOnlyList<string> EnglishAnyone = new[]
     {
         "Hey! That's {times} times in a row. Leave me alone!",
         "Stop it with the cursor. I mean it.",
         "Do you mind? Some of us live here.",
     };
 
-    public static readonly IReadOnlyDictionary<string, string[]> Lines = new Dictionary<string, string[]>
+    public static readonly IReadOnlyDictionary<string, string[]> EnglishLines = new Dictionary<string, string[]>
     {
         // blocky's cast
         ["Blocky"] = new[] { "{times} times. I have written every one of them down. Back off.",
@@ -148,11 +153,13 @@ public static class Complaints
     public static string Line(string name, int times, Random rng)
     {
         IReadOnlyList<string> lines = Lines.TryGetValue(name, out var own) ? own : Anyone;
-        return Banter.Render(rng.Pick(lines), new Dictionary<string, string> { ["times"] = times.ToString() });
+        return Banter.Render(rng.Pick(lines), new Dictionary<string, string> { ["times"] = times.ToString(System.Globalization.CultureInfo.InvariantCulture) });
     }
 
-    /// <summary>The model writes the complaint, in the creature's voice.</summary>
-    public const string Prompt =
+    /// <summary>The model writes the complaint, in the creature's voice, in the current language.</summary>
+    public static string Prompt => Shared.Prompt("complaint", EnglishPrompt);
+
+    public const string EnglishPrompt =
         "{situation}\n" +
         "The person whose screen you live on keeps chasing you with the mouse cursor and picking you up: " +
         "{times} times in a row now. You have had enough. Say ONE line to them, complaining, in your own voice. " +

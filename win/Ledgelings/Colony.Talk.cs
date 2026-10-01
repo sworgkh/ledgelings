@@ -5,13 +5,22 @@ namespace Ledgelings;
 /// <summary>The creatures' words: who speaks to whom, the prompt for the moment, the bubbles.</summary>
 public sealed partial class Colony
 {
-    private static readonly (double Angle, string Name)[] edgeNames =
+    /// <summary>Where creature <paramref name="c"/> stands, as "on the ceiling", in the current language.</summary>
+    private static string OnEdge(Creature c)
     {
-        (0, "the bottom edge"), (Math.PI / 2, "the right edge"), (Math.PI, "the ceiling"), (3 * Math.PI / 2, "the left edge"),
-    };
+        var edges = new[] { 0, Math.PI / 2, Math.PI, 3 * Math.PI / 2 };
+        var nearest = Enumerable.Range(0, edges.Length).MinBy(i => Math.Abs(Creature.ShortestArc(c.Rotation, edges[i])));
+        return nearest switch
+        {
+            0 => L10n.Tr("on the bottom edge"),
+            1 => L10n.Tr("on the right edge"),
+            2 => L10n.Tr("on the ceiling"),
+            _ => L10n.Tr("on the left edge"),
+        };
+    }
 
-    private static string EdgeName(Creature c) =>
-        edgeNames.MinBy(e => Math.Abs(Creature.ShortestArc(c.Rotation, e.Angle))).Name;
+    /// <summary>"On the edge it is night.", the colony's own day or night.</summary>
+    private string TimeOfDay => IsNight ? L10n.Tr("On the edge it is night.") : L10n.Tr("On the edge it is day.");
 
     /// <summary>One line per talking creature: what it says, when it stops showing, and which
     /// <see cref="Say"/> put it up, so a late word from the voice about an older line is ignored.
@@ -57,25 +66,25 @@ public sealed partial class Colony
     {
         var c = creatures[i];
         var name = CharacterFor(i).Name;
-        if (c.IsHeld) return name + " is dangling from the user's cursor";
-        if (c.IsJumping) return name + " is mid-jump";
-        return $"{name} is {(c.IsSleeping ? "asleep on" : "on")} {EdgeName(c)}";
+        if (c.IsHeld) return L10n.Tr("%@ is dangling from the user's cursor", name);
+        if (c.IsJumping) return L10n.Tr("%@ is mid-jump", name);
+        return c.IsSleeping ? L10n.Tr("%@ is asleep %@", name, OnEdge(c)) : L10n.Tr("%@ is %@", name, OnEdge(c));
     }
 
     /// <summary>"Make Someone Talk" from the menu, or a Shift-poke on <paramref name="chosen"/>: the speaker
     /// says something to the nearest creature that is not already talking.</summary>
     public void TalkNow(int? chosen = null)
     {
-        if (creatures.Count < 2) { TalkStatus = "needs at least two creatures"; return; }
+        if (creatures.Count < 2) { TalkStatus = L10n.Tr("needs at least two creatures"); return; }
         if (hideout.IsActive) return;
         var free = Enumerable.Range(0, creatures.Count).Where(i => !busy.Contains(i) && !ExpectsPlane(i)).ToList();
         var awake = free.Where(i => !creatures[i].IsSleeping && !creatures[i].IsJumping).ToList();
         var pool = awake.Count == 0 ? free : awake;
         int? speaker = chosen ?? (pool.Count == 0 ? null : rng.Pick(pool));
-        if (speaker is not int s || s >= creatures.Count || busy.Contains(s)) { TalkStatus = "everyone is mid-conversation"; return; }
+        if (speaker is not int s || s >= creatures.Count || busy.Contains(s)) { TalkStatus = L10n.Tr("everyone is mid-conversation"); return; }
         var me = creatures[s].Position;
         var listeners = free.Where(i => i != s).ToList();
-        if (listeners.Count == 0) { TalkStatus = "nobody free to listen"; return; }
+        if (listeners.Count == 0) { TalkStatus = L10n.Tr("nobody free to listen"); return; }
         var listener = listeners.MinBy(i => creatures[i].Position.DistanceTo(me));
         Hold(s, listener);
         if (!Talk(s, listener)) EndChat(s, listener, 1);
@@ -87,9 +96,9 @@ public sealed partial class Colony
     private bool Talk(int speaker, int listener, string? because = null, string? flower = null)
     {
         if (speaker >= creatures.Count || listener >= creatures.Count || speaker == listener || busy.Contains(speaker) || busy.Contains(listener)) return false;
-        if (VoiceIsTakenNow) { TalkStatus = "someone else is talking; out loud it is one conversation at a time"; return false; }
+        if (VoiceIsTakenNow) { TalkStatus = L10n.Tr("someone else is talking; out loud it is one conversation at a time"); return false; }
         // The colony's own day and night say who is asleep; the user's clock is the almanac's.
-        var situation = $"On the edge it is {(IsNight ? "night" : "day")}. {Describe(speaker)}. {Describe(listener)}.";
+        var situation = $"{TimeOfDay} {Describe(speaker)}. {Describe(listener)}.";
         var almanac = AlmanacSentence;
         if (almanac.Length > 0) situation = almanac + " " + situation;
         if (because is not null) situation += " " + because;
@@ -97,7 +106,7 @@ public sealed partial class Colony
         var service = Settings.ChatClient();
         if (service is null) { TalkStatus = Settings.BrainProblem; return false; }
         busy.Add(speaker); busy.Add(listener);
-        TalkStatus = $"asking {service.Model} via {service.ProviderTitle}…";
+        TalkStatus = L10n.Tr("asking %@ via %@…", service.Model, service.ProviderTitle);
         _ = Converse(service, speaker, listener, situation, flower);
         return true;
     }

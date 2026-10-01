@@ -20,12 +20,12 @@ public sealed partial class Colony
     {
         Script script;
         try { script = Script.Parse(Settings.Script); }
-        catch (Script.ParseException e) { TalkStatus = "the built-in lines: " + e.Message; return false; }
+        catch (Script.ParseException e) { TalkStatus = L10n.Tr("the built-in lines: %@", e.Message); return false; }
         var moment = new HashSet<string> { IsNight ? "night" : "day" };
         if (flower is not null) moment.Add("flower");
         var holiday = HolidayForLines();
         if (holiday is not null) moment.Add("holiday");
-        if (script.Pick(moment, recentLines, rng) is not int chosen) { TalkStatus = "no built-in line fits right now"; return false; }
+        if (script.Pick(moment, recentLines, rng) is not int chosen) { TalkStatus = L10n.Tr("no built-in line fits right now"); return false; }
         recentLines = recentLines.Where(i => i != chosen).Append(chosen).TakeLast(script.Conversations.Count).ToList();
         var a = CharacterFor(speaker);
         var b = CharacterFor(listener);

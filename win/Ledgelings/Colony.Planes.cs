@@ -99,11 +99,11 @@ public sealed partial class Colony
     /// <summary>Throw a plane now, from anyone free to anyone free. False when nobody can.</summary>
     public bool SendPlane()
     {
-        if (airmail is not null) { TalkStatus = "a paper plane is already in the air"; return false; }
+        if (airmail is not null) { TalkStatus = L10n.Tr("a paper plane is already in the air"); return false; }
         if (hideout.IsActive) return false;
         var free = new Dictionary<int, Pt>();
         for (int i = 0; i < creatures.Count; i++) if (CanHandleMail(i)) free[i] = creatures[i].Position;
-        if (Post.PickPair(free, rng) is not (int from, int to)) { TalkStatus = "nobody free to throw or catch a plane"; return false; }
+        if (Post.PickPair(free, rng) is not (int from, int to)) { TalkStatus = L10n.Tr("nobody free to throw or catch a plane"); return false; }
         ThrowPlane(from, to, null);
         post.Stir(Elapsed);
         return true;
@@ -159,8 +159,8 @@ public sealed partial class Colony
         string aKind = KindOf(from), bKind = KindOf(to);
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = a.Name, ["speakerKind"] = aKind, ["speakerPersona"] = a.Persona,
-            ["listener"] = b.Name, ["listenerKind"] = bKind, ["listenerPersona"] = b.Persona,
+            ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(aKind), ["speakerPersona"] = Banter.Spoken(a.Persona),
+            ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(bKind), ["listenerPersona"] = Banter.Spoken(b.Persona),
             ["situation"] = AlmanacSentence, ["line"] = answering ?? "",
         };
         var system = Settings.SystemPrompt;
@@ -169,7 +169,8 @@ public sealed partial class Colony
         airmail!.Writing = true;
         airmail.Provider = service.ProviderTitle;
         airmail.Model = service.Model;
-        TalkStatus = $"{a.Name} is writing {(answering is null ? "a letter" : "back")} via {service.Model}…";
+        TalkStatus = answering is null ? L10n.Tr("%@ is writing a letter via %@…", a.Name, service.Model)
+                                       : L10n.Tr("%@ is writing back via %@…", a.Name, service.Model);
         var prompt = answering is null ? Letters.NotePrompt : Letters.ReplyPrompt;
         var used = new List<Spend.Usage>();
         // Every call goes to the spend file, even one whose line turned out empty.
@@ -196,8 +197,8 @@ public sealed partial class Colony
                 {
                     note = line;
                     // Swap seats: now the reader thinks.
-                    vars["speaker"] = b.Name; vars["speakerKind"] = bKind; vars["speakerPersona"] = b.Persona;
-                    vars["listener"] = a.Name; vars["listenerKind"] = aKind; vars["listenerPersona"] = a.Persona;
+                    vars["speaker"] = b.Name; vars["speakerKind"] = Banter.Spoken(bKind); vars["speakerPersona"] = Banter.Spoken(b.Persona);
+                    vars["listener"] = a.Name; vars["listenerKind"] = Banter.Spoken(aKind); vars["listenerPersona"] = Banter.Spoken(a.Persona);
                     vars["line"] = line;
                     var thought = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, bSide), bLately),
                                                      Banter.Render(Letters.MusingPrompt, vars));
@@ -322,11 +323,11 @@ public sealed partial class Colony
         if (!Settings.TalkEnabled) return new Airmail.Phase.Reading(Elapsed, Elapsed + 3, true);
 
         var read = Letters.Reading(note, a);
-        TalkStatus = $"{b} got {(mail.IsReply ? "an answer" : "a paper plane")} from {a}";
+        TalkStatus = mail.IsReply ? L10n.Tr("%@ got an answer from %@", b, a) : L10n.Tr("%@ got a paper plane from %@", b, a);
         var exchange = new ChatLog.Exchange
         {
             Time = DateTimeOffset.Now,
-            Situation = mail.IsReply ? $"{a} wrote back to {b} by paper plane." : $"{a} sent {b} a paper plane.",
+            Situation = mail.IsReply ? L10n.Tr("%@ wrote back to %@ by paper plane.", a, b) : L10n.Tr("%@ sent %@ a paper plane.", a, b),
             Provider = modelWrote ? mail.Provider : AppSettings.BrainTitle(BrainKind.Script), Model = modelWrote ? mail.Model : "",
             Lines = new List<ChatLog.Line> { new(a, note), new(b, musing) },
             Cost = mail.Cost, Tokens = mail.Tokens,

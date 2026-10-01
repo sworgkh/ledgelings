@@ -15,6 +15,11 @@ public sealed class Gifts
         "poppy", "tulip", "daisy", "sunflower", "rose", "bluebell", "dandelion", "lavender", "lily", "forget-me-not",
     };
 
+    /// <summary>A flower's name as people read and hear it, in the current language: what
+    /// fills <c>{flower}</c> in a line. The ids above stay English, for the sprite sheet.</summary>
+    public static string Name(string flower) =>
+        Shared.Current?.Flowers.TryGetValue(flower, out var name) == true && name.Length > 0 ? name : flower;
+
     public double FlightTime { get; set; }
     public Flight? CurrentFlight { get; private set; }
     private Dictionary<int, Worn> worn = new();

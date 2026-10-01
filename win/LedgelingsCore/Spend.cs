@@ -20,7 +20,7 @@ public static class Spend
     public enum Purpose { Talk, Planes, Voice, Casting, Plots, Reminders, Complaints, TeaParties }
 
     /// <summary>What records written before features were labelled are shown as.</summary>
-    public const string UnlabelledPurpose = "Earlier, unlabelled";
+    public static string UnlabelledPurpose => L10n.Tr("Earlier, unlabelled");
 
     /// <summary>The title for a record's stored purpose, which may be missing or from a newer app.</summary>
     public static string PurposeTitle(string? raw)
@@ -131,14 +131,14 @@ public static class SpendPurposeExtensions
 {
     public static string Title(this Spend.Purpose purpose) => purpose switch
     {
-        Spend.Purpose.Talk => "Talk",
-        Spend.Purpose.Planes => "Paper planes",
-        Spend.Purpose.Voice => "Voice",
-        Spend.Purpose.Casting => "Voice casting",
-        Spend.Purpose.Plots => "Relationship plots",
-        Spend.Purpose.Reminders => "Reminders",
-        Spend.Purpose.Complaints => "Complaints",
-        _ => "Tea parties",
+        Spend.Purpose.Talk => L10n.Tr("Talk"),
+        Spend.Purpose.Planes => L10n.Tr("Paper planes"),
+        Spend.Purpose.Voice => L10n.Tr("Voice"),
+        Spend.Purpose.Casting => L10n.Tr("Voice casting"),
+        Spend.Purpose.Plots => L10n.Tr("Relationship plots"),
+        Spend.Purpose.Reminders => L10n.Tr("Reminders"),
+        Spend.Purpose.Complaints => L10n.Tr("Complaints"),
+        _ => L10n.Tr("Tea parties"),
     };
 
     /// <summary>"talk", "teaParties": the enum's name in camelCase, as the macOS app writes it.</summary>

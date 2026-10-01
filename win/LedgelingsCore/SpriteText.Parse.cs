@@ -17,7 +17,7 @@ public static partial class SpriteText
         void Finish()
         {
             if (current is not string pose) return;
-            if (rows.Count != Cell) throw new ParseException($"pose {pose} has {rows.Count} rows, not {Cell}");
+            if (rows.Count != Cell) throw new ParseException(L10n.Tr("pose %@ has %d rows, not %d", pose, rows.Count, Cell));
             Validate(pose, rows);
             poses[pose] = rows.ToArray();
             rows = new List<Ink[]>();
@@ -33,7 +33,7 @@ public static partial class SpriteText
             if (Keyed(line, "kind") is string k) { kind = k.Length == 0 ? null : k; continue; }
             if ((Keyed(line, "colour") ?? Keyed(line, "color")) is string c)
             {
-                colour = Tint.FromHex(c) ?? throw new ParseException($"colour must be six hex digits like #f0a0b0, not \"{c}\"");
+                colour = Tint.FromHex(c) ?? throw new ParseException(L10n.Tr("colour must be six hex digits like #f0a0b0, not \"%@\"", c));
                 continue;
             }
             if (Keyed(line, "character") is string who)
@@ -48,7 +48,7 @@ public static partial class SpriteText
             if (Keyed(line, "pose") is string p)
             {
                 Finish();
-                if (!Poses.Contains(p)) throw new ParseException($"pose {p} is not one of {string.Join(", ", Poses)}");
+                if (!Poses.Contains(p)) throw new ParseException(L10n.Tr("pose %@ is not one of %@", p, string.Join(", ", Poses)));
                 current = p;
                 continue;
             }
@@ -59,16 +59,16 @@ public static partial class SpriteText
                 if (InkFor(letter) is Ink ink) row.Add(ink);
                 else if (letter == ' ' || letter == '-' || letter == '_') row.Add(Ink.Clear);
                 else if (letter == '\t' || letter == '\r') continue;
-                else throw new ParseException($"pose {inPose}, row {rows.Count + 1}: `{letter}` is not one of . o b l s k x");
+                else throw new ParseException(L10n.Tr("pose %@, row %d: `%@` is not one of . o b l s k x", inPose, rows.Count + 1, letter));
             }
             while (row.Count > Cell && row[^1] == Ink.Clear) row.RemoveAt(row.Count - 1);
             if (row.Count < Cell && row.All(i => i == Ink.Clear)) row.AddRange(Enumerable.Repeat(Ink.Clear, Cell - row.Count));
-            if (row.Count != Cell) throw new ParseException($"pose {inPose}, row {rows.Count + 1} has {row.Count} letters, not {Cell}");
+            if (row.Count != Cell) throw new ParseException(L10n.Tr("pose %@, row %d has %d letters, not %d", inPose, rows.Count + 1, row.Count, Cell));
             rows.Add(row.ToArray());
         }
         Finish();
-        if (string.IsNullOrEmpty(name)) throw new ParseException("the first line should be `name: something`");
-        foreach (var pose in Poses) if (!poses.ContainsKey(pose)) throw new ParseException($"pose {pose} is missing");
+        if (string.IsNullOrEmpty(name)) throw new ParseException(L10n.Tr("the first line should be `name: something`"));
+        foreach (var pose in Poses) if (!poses.ContainsKey(pose)) throw new ParseException(L10n.Tr("pose %@ is missing", pose));
         return new Sheet { Name = name, Kind = kind, Cast = cast, Colour = colour, Poses = poses };
     }
 
@@ -88,12 +88,13 @@ public static partial class SpriteText
                 if (rows[y][x] == Ink.Clear) continue;
                 any = true;
                 if (x < Box.X || x >= Box.X + Box.W || y < Box.Y || y >= Box.Y + Box.H)
-                    throw new ParseException($"pose {pose} has ink at row {y + 1}, column {x + 1}, outside columns {Box.X + 1}–{Box.X + Box.W} and rows {Box.Y + 1}–{Box.Y + Box.H}");
+                    throw new ParseException(L10n.Tr("pose %@ has ink at row %d, column %d, outside columns %d–%d and rows %d–%d",
+                        pose, y + 1, x + 1, Box.X + 1, Box.X + Box.W, Box.Y + 1, Box.Y + Box.H));
                 if (y == Floor - 1) onFloor = true;
             }
         }
-        if (!any) throw new ParseException($"pose {pose} is empty");
-        if (!onFloor) throw new ParseException($"pose {pose} does not stand on the floor: row {Floor} is empty");
+        if (!any) throw new ParseException(L10n.Tr("pose %@ is empty", pose));
+        if (!onFloor) throw new ParseException(L10n.Tr("pose %@ does not stand on the floor: row %d is empty", pose, Floor));
     }
 
     // MARK: Eyes

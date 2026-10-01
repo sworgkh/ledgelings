@@ -26,7 +26,7 @@ public sealed partial class SettingsWindow
     private void RefreshCast()
     {
         if (CastSpecies?.SelectedItem is null) return;
-        CastKind.Text = library.Kind(CastSpeciesName);
+        CastKind.Text = L10n.Lookup(library.Kind(CastSpeciesName), Languages.Current);      // the kind stays English data; shown as spoken
         CastList.ItemsSource = CurrentCast.Select((c, i) => new CastRow(i, c.Name, c.Persona)).ToList();
     }
 

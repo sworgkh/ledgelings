@@ -6,7 +6,7 @@ let package = Package(
     platforms: [.macOS(.v26)],
     targets: [
         // Pure logic: no AppKit, no window. Everything worth unit-testing lives here.
-        .target(name: "LedgelingsCore"),
+        .target(name: "LedgelingsCore", exclude: ["l10n"]),
         .executableTarget(
             name: "Ledgelings",
             dependencies: ["LedgelingsCore"],

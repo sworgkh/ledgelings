@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Ledgelings.Core;
 using Microsoft.Win32;
 
 namespace Ledgelings.UI;
@@ -45,15 +46,15 @@ public sealed partial class SettingsWindow
     {
         var dialog = new OpenFileDialog
         {
-            Title = "A sprite text file from the kit, or a 288×96 PNG on magenta.",
-            Filter = "Sprite sheets (*.txt;*.md;*.png)|*.txt;*.md;*.png|All files|*.*",
+            Title = L10n.Tr("A sprite text file from the kit, or a 288×96 PNG on magenta."),
+            Filter = L10n.Tr("Sprite sheets") + " (*.txt;*.md;*.png)|*.txt;*.md;*.png|" + L10n.Tr("All files") + "|*.*",
         };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
             var name = library.ImportFile(dialog.FileName);
             if (!settings.Species.Contains(name)) settings.Species = settings.Species.Append(name).ToList();
-            SpriteStatus.Text = "imported " + name;
+            SpriteStatus.Text = L10n.Tr("imported %@", name);
         }
         catch (Exception ex) when (ex is SpriteLibrary.ImportException or IOException or UnauthorizedAccessException)
         {
@@ -66,17 +67,17 @@ public sealed partial class SettingsWindow
     private async void CopyPrompt_Click(object sender, RoutedEventArgs e)
     {
         try { Clipboard.SetText(library.Prompt); }
-        catch (System.Runtime.InteropServices.COMException) { SpriteStatus.Text = "the clipboard is busy; try again"; return; }
-        CopyPrompt.Content = "Copied";
+        catch (System.Runtime.InteropServices.COMException) { SpriteStatus.Text = L10n.Tr("the clipboard is busy; try again"); return; }
+        CopyPrompt.Content = L10n.Tr("Copied");
         await Task.Delay(2000);
-        CopyPrompt.Content = "Copy Prompt";
+        CopyPrompt.Content = L10n.Tr("Copy Prompt");
     }
 
     private void SaveExample_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new SaveFileDialog { FileName = "blocky.txt", Filter = "Text|*.txt" };
+        var dialog = new SaveFileDialog { FileName = "blocky.txt", Filter = L10n.Tr("Text") + "|*.txt" };
         if (dialog.ShowDialog(this) != true) return;
-        try { File.WriteAllText(dialog.FileName, library.ExampleText); SpriteStatus.Text = "saved " + Path.GetFileName(dialog.FileName); }
+        try { File.WriteAllText(dialog.FileName, library.ExampleText); SpriteStatus.Text = L10n.Tr("saved %@", Path.GetFileName(dialog.FileName)); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { SpriteStatus.Text = ex.Message; }
     }
 
@@ -84,7 +85,7 @@ public sealed partial class SettingsWindow
     {
         var dialog = new SaveFileDialog { FileName = "ledgelings-template.png", Filter = "PNG|*.png" };
         if (dialog.ShowDialog(this) != true) return;
-        try { PngIO.Write(library.TemplateImage(), dialog.FileName); SpriteStatus.Text = "saved " + Path.GetFileName(dialog.FileName); }
+        try { PngIO.Write(library.TemplateImage(), dialog.FileName); SpriteStatus.Text = L10n.Tr("saved %@", Path.GetFileName(dialog.FileName)); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.ExternalException) { SpriteStatus.Text = ex.Message; }
     }
 }

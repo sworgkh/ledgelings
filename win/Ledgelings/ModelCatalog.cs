@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Ledgelings.Core;
 
 namespace Ledgelings;
 
@@ -19,9 +20,9 @@ public sealed class ModelCatalog
         {
             get
             {
-                if (PromptPerMillion is not double p || CompletionPerMillion is not double c) return "price unknown";
-                if (IsFree) return "free";
-                return string.Format(CultureInfo.InvariantCulture, "${0:0.00} in · ${1:0.00} out per M", p, c);
+                if (PromptPerMillion is not double p || CompletionPerMillion is not double c) return L10n.Tr("price unknown");
+                if (IsFree) return L10n.Tr("free");
+                return L10n.Tr("$%.2f in · $%.2f out per M", p, c);
             }
         }
     }

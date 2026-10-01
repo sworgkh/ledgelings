@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
+using Ledgelings.Core;
+
 namespace Ledgelings.UI;
 
 /// <summary>Pick a colour: three sliders and a hex field, with a swatch. WPF ships no colour picker.</summary>
@@ -17,7 +19,7 @@ public sealed class ColourDialog : Window
     private ColourDialog(RGB initial)
     {
         value = initial;
-        Title = "Colour";
+        Title = L10n.Tr("Colour");
         SizeToContent = SizeToContent.WidthAndHeight;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
@@ -26,7 +28,7 @@ public sealed class ColourDialog : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(220) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var names = new[] { "Red", "Green", "Blue" };
+        var names = new[] { L10n.Tr("Red"), L10n.Tr("Green"), L10n.Tr("Blue") };
         for (int i = 0; i < 3; i++)
         {
             grid.RowDefinitions.Add(new RowDefinition());
@@ -41,7 +43,7 @@ public sealed class ColourDialog : Window
         }
         grid.RowDefinitions.Add(new RowDefinition());
         var hexRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
-        hexRow.Children.Add(new TextBlock { Text = "Hex", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) });
+        hexRow.Children.Add(new TextBlock { Text = L10n.Tr("Hex"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) });
         hexRow.Children.Add(hex);
         hex.TextChanged += (_, _) => FromHex();
         Grid.SetRow(hexRow, 3); Grid.SetColumn(hexRow, 0); Grid.SetColumnSpan(hexRow, 2);
@@ -50,8 +52,8 @@ public sealed class ColourDialog : Window
         swatch.Margin = new Thickness(16, 0, 0, 0);
         grid.Children.Add(swatch);
 
-        var ok = new Button { Content = "OK", IsDefault = true, MinWidth = 80, Margin = new Thickness(0, 0, 8, 0) };
-        var cancel = new Button { Content = "Cancel", IsCancel = true, MinWidth = 80 };
+        var ok = new Button { Content = L10n.Tr("OK"), IsDefault = true, MinWidth = 80, Margin = new Thickness(0, 0, 8, 0) };
+        var cancel = new Button { Content = L10n.Tr("Cancel"), IsCancel = true, MinWidth = 80 };
         ok.Click += (_, _) => { accepted = true; Close(); };
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(20, 0, 20, 20) };
         buttons.Children.Add(ok);

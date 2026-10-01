@@ -36,6 +36,6 @@ public sealed partial class SettingsWindow
     private void ClearGarden_Click(object sender, RoutedEventArgs e)
     {
         var n = ClearGarden();
-        GardenCleared.Text = n == 0 ? "Nothing was planted." : n == 1 ? "1 flower pulled up." : $"{n} flowers pulled up.";
+        GardenCleared.Text = n == 0 ? L10n.Tr("Nothing was planted.") : L10n.TrCount(n, "flower pulled up.", "flowers pulled up.");
     }
 }

@@ -74,7 +74,7 @@ public sealed partial class Colony : IDisposable
     private readonly Dictionary<int, double> entering = new();
     private readonly Dictionary<int, double> leaving = new();
     /// <summary>The last thing that happened with the model, for the menu.</summary>
-    public string TalkStatus { get; private set; } = "not tried yet";
+    public string TalkStatus { get; private set; } = L10n.Tr("not tried yet");
     public double Elapsed { get; private set; }
 
     public bool IsNight => dayNight.IsNight(Elapsed);

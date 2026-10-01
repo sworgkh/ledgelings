@@ -5,7 +5,12 @@ namespace Ledgelings.Core;
 /// bumped; a <c>[flower]</c> block is said by the giver.</summary>
 public sealed partial class Script
 {
-    public const string BuiltInText = """
+    /// <summary>The built-in lines in <paramref name="l"/>: the Mac's Russian script, shared (SPEC §1.2).</summary>
+    public static string BuiltInTextIn(Language l) => Shared.In(l)?.Script is { Length: > 0 } s ? s : EnglishBuiltInText;
+    /// <summary>The built-in lines in the current language.</summary>
+    public static string BuiltInText => BuiltInTextIn(Languages.Current);
+
+    public const string EnglishBuiltInText = """
     # Ledgelings: the built-in lines.
     #
     # One conversation per block, a blank line between.
