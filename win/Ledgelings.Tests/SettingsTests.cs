@@ -372,4 +372,63 @@ public class SettingsTests
         box.Settings.ReminderPaperNote = false;
         Assert.False(box.Again().ReminderPaperNote);
     }
+
+    [Fact]
+    public void VoiceIsOffUntilAskedAndEveryVoiceSettingIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.False(s.VoiceEnabled);                                   // it must not start talking out loud unasked
+        Assert.True(s.VoiceEngine == VoiceEngine.System && s.VoicePerCharacter);
+        Assert.True(s.VoiceModel == AppSettings.DefaultVoiceModel && s.VoiceSpeed == 1 && s.VoicePitch == 1 && s.VoiceVolume == 0.8);
+        Assert.True(s.KeepVoices);                                      // paid-for sounds are kept unless asked not to
+        Assert.True(s.CartoonVoices);                                   // desktop pets, not newsreaders
+        Assert.Empty(s.CharacterVoices);
+        Assert.True(s.SpeedFollowsPitch);                               // clean sound by default
+        Assert.True(s.CastByPersonality);                               // voices fit who they are by default
+        Assert.Equal(0.35, s.VoiceTurnPause);                           // a natural beat between one line and the answer
+        s.VoiceTurnPause = 0.8;
+        Assert.Equal(0.8, box.Again().VoiceTurnPause);
+        box.Store.Set("voiceTurnPause", 9.0);
+        Assert.Equal(AppSettings.VoiceTurnPauseMax, box.Again().VoiceTurnPause);
+        s.CastByPersonality = false;
+        Assert.False(box.Again().CastByPersonality);
+        s.SpeedFollowsPitch = false;
+        Assert.False(box.Again().SpeedFollowsPitch);
+        Assert.True(s.LocalVoiceUrl == "http://localhost:8880/v1" && s.LocalVoiceModel == "kokoro" && s.LocalVoice.Length == 0);
+        s.LocalVoiceServer = "not a url";
+        Assert.Null(s.LocalVoiceUrl);
+        s.LocalVoiceServer = "http://127.0.0.1:9000";
+        s.LocalVoice = "am_puck";
+        Assert.Equal("http://127.0.0.1:9000/v1", box.Again().LocalVoiceUrl);
+        Assert.Equal("am_puck", box.Again().LocalVoice);
+        s.SetVoice("Pip", v => { v.Pitch = 1.5; v.OpenRouterVoice = "am_puck"; });
+        Assert.Equal(new CharacterVoice { OpenRouterVoice = "am_puck", Pitch = 1.5 }, box.Again().CharacterVoices["Pip"]);
+        s.SetVoice("Pip", v => v.FollowPitch = false);
+        Assert.False(box.Again().CharacterVoices["Pip"].FollowPitch);
+        s.SetVoice("Pip", v => { v.OpenRouterVoice = null; v.Pitch = null; v.FollowPitch = null; });
+        Assert.False(s.CharacterVoices.ContainsKey("Pip"));            // all automatic again: nothing stored
+        s.CartoonVoices = false;
+        Assert.False(box.Again().CartoonVoices);
+        s.KeepVoices = false;
+        Assert.False(box.Again().KeepVoices);
+        Assert.True(box.Again().ReuseLineVoices);                       // the built-in lines are made once unless asked not to
+        s.ReuseLineVoices = false;
+        Assert.False(box.Again().ReuseLineVoices);
+        s.VoiceEnabled = true;
+        s.VoiceEngine = VoiceEngine.OpenRouter;
+        s.VoicePerCharacter = false;
+        s.SystemVoice = "Microsoft Zira Desktop";
+        s.VoiceModel = "deepgram/flux-tts:free";
+        s.OpenRouterVoice = "flux-kit-en";
+        s.VoiceSpeed = 1.5; s.VoicePitch = 0.75; s.VoiceVolume = 0.3;
+        var back = box.Again();
+        Assert.True(back.VoiceEnabled && back.VoiceEngine == VoiceEngine.OpenRouter && !back.VoicePerCharacter);
+        Assert.Equal("openRouter", box.Store.Get<string>("voiceEngine"));     // the macOS app's word for it
+        Assert.Equal("Microsoft Zira Desktop", back.SystemVoice);
+        Assert.True(back.VoiceModel == "deepgram/flux-tts:free" && back.OpenRouterVoice == "flux-kit-en");
+        Assert.True(back.VoiceSpeed == 1.5 && back.VoicePitch == 0.75 && back.VoiceVolume == 0.3);
+        box.Store.Set("voiceSpeed", 9.0);
+        Assert.Equal(AppSettings.VoiceSpeedMax, box.Again().VoiceSpeed);
+    }
 }

@@ -8,7 +8,7 @@ namespace Ledgelings;
 /// so the clock lines and the talk status are current.</summary>
 public sealed class TrayIcon : IDisposable
 {
-    public sealed record Item(string Text, Action? Action = null, bool Enabled = true, bool IsSeparator = false)
+    public sealed record Item(string Text, Action? Action = null, bool Enabled = true, bool IsSeparator = false, bool Checked = false)
     {
         public static readonly Item Separator = new("", null, false, true);
     }
@@ -84,7 +84,7 @@ public sealed class TrayIcon : IDisposable
         {
             var item = items[i];
             if (item.IsSeparator) { Win32.AppendMenuW(menu, Win32.MF_SEPARATOR, UIntPtr.Zero, null); continue; }
-            var flags = Win32.MF_STRING | (item.Enabled ? 0 : Win32.MF_GRAYED);
+            var flags = Win32.MF_STRING | (item.Enabled ? 0 : Win32.MF_GRAYED) | (item.Checked ? Win32.MF_CHECKED : 0);
             Win32.AppendMenuW(menu, flags, (UIntPtr)(i + 1), item.Text.Replace("&", "&&"));
         }
         menuOpen = true;

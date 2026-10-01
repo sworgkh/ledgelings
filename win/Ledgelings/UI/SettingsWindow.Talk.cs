@@ -5,11 +5,10 @@ using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-/// <summary>Settings › Talk: the brain, its check, the model browser, spend, the cast and the prompts.</summary>
+/// <summary>Settings › Talk: the brain, its check, the model browser, the cast and the prompts.</summary>
 public sealed partial class SettingsWindow
 {
     private sealed record ModelRow(string Id, string Name, string Price, Brush PriceBrush, Visibility NameVisibility);
-    private sealed record SpendRow(string Model, string Detail);
     private sealed record CastRow(int Index, string Name, string Persona);
 
     private const int MostModels = 60;
@@ -27,8 +26,7 @@ public sealed partial class SettingsWindow
         ScriptPanel.Visibility = brain == BrainKind.Script ? Visibility.Visible : Visibility.Collapsed;
         LmPanel.Visibility = brain == BrainKind.LmStudio ? Visibility.Visible : Visibility.Collapsed;
         OrPanel.Visibility = brain == BrainKind.OpenRouter ? Visibility.Visible : Visibility.Collapsed;
-        // The built-in lines cost nothing and use no prompt: those sections only matter with a model.
-        SpendBox.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
+        // The built-in lines use no prompt: that section only matters with a model.
         PromptsBox.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
         LineTokensRow.Visibility = brain == BrainKind.Script ? Visibility.Collapsed : Visibility.Visible;
         if (OrKey.Password != settings.OpenRouterKey) OrKey.Password = settings.OpenRouterKey;
@@ -121,31 +119,8 @@ public sealed partial class SettingsWindow
         if (ModelList.SelectedItem is ModelRow row && row.Id != settings.OpenRouterModel) settings.OpenRouterModel = row.Id;
     }
 
-    // MARK: Spend
-
-    private void RefreshSpend()
-    {
-        var s = spend.Summary;
-        void Row(Spend.Total t, TextBlock cost, TextBlock calls, TextBlock tokens)
-        {
-            cost.Text = Spend.Label(t.Cost) + (t.Unpriced > 0 ? "+" : "");
-            calls.Text = t.Calls.ToString();
-            tokens.Text = t.Tokens.ToString();
-        }
-        Row(s.Today, TodayCost, TodayCalls, TodayTokens);
-        Row(s.Month, MonthCost, MonthCalls, MonthTokens);
-        Row(s.AllTime, AllCost, AllCalls, AllTokens);
-        SpendModels.ItemsSource = s.ByModel.Take(5).Select(m => new SpendRow(m.Model, $"{Spend.Label(m.Total.Cost)} · {m.Total.Calls} calls")).ToList();
-        SpendPath.Text = spend.File;
-        var footer = "Every call to the model is written to spend.jsonl with its tokens and, for OpenRouter, the price it reported. LM Studio is free. One conversation is two calls.";
-        if (s.AllTime.Unpriced > 0) footer += $" {s.AllTime.Unpriced} calls had no price; a + marks a total that is missing some.";
-        SpendFooter.Text = footer;
-    }
-
     private void RefreshLineMemory() =>
         LineMemoryValue.Text = settings.LineMemory == 0 ? "off" : $"{settings.LineMemory} lines";
-
-    private void RevealSpend_Click(object sender, RoutedEventArgs e) => spend.RevealInExplorer();
 
     private void ResetPrompts_Click(object sender, RoutedEventArgs e) => settings.ResetPrompts();
 }

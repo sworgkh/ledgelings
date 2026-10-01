@@ -29,7 +29,9 @@ public sealed partial class ChatClient
         public static Failure ServerDown(string why) => new("the server is not answering: " + why);
         public static Failure ModelMissing(string model, IReadOnlyList<string> available) =>
             new($"model {model} is not available" + (available.Count == 0 ? "" : " (have: " + string.Join(", ", available.Take(8)) + ")"));
-        public static Failure Refused(string message) => new("the server refused: " + message);
+        /// <summary>The server's own words when it refused, for a caller that answers a refusal (the speech client).</summary>
+        public string? Refusal { get; private init; }
+        public static Failure Refused(string message) => new("the server refused: " + message) { Refusal = message };
         public static Failure BadReply(string what) => new("unexpected reply: " + what);
         /// <summary>There was nothing to ask: no model chosen, or no key. Said as it is.</summary>
         public static Failure NoModel(string why) => new(why);

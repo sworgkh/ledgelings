@@ -20,6 +20,10 @@
     <ProjectReference Include="..\LedgelingsCore\LedgelingsCore.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Windows' own voices (SAPI) for the Voice tab's built-in engine. -->
+    <PackageReference Include="System.Speech" Version="10.0.12" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- The WPF SDK leaves these out of its implicit usings. -->
     <Using Include="System.IO" />
     <Using Remove="System.Windows.Forms" />

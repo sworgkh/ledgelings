@@ -13,6 +13,7 @@ public sealed partial class App : Application
     private ChatHistory? history;
     private SpriteLibrary? library;
     private SpendLedger? spend;
+    private Voice? voice;
     private Colony? colony;
     private TrayIcon? tray;
     private SettingsWindow? settingsWindow;
@@ -47,6 +48,8 @@ public sealed partial class App : Application
         try
         {
             colony = new Colony(settings, history, library, spend);
+            voice = new Voice(settings, spend, history);
+            colony.Voice = voice;
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException)
         {
@@ -102,12 +105,13 @@ public sealed partial class App : Application
         if (planted > 0)
             items.Add(new TrayIcon.Item(planted == 1 ? "Clear the Planted Flower" : $"Clear {planted} Planted Flowers", () => colony.ClearGarden()));
         AddMailItems(items);
+        items.Add(new TrayIcon.Item("Hear Them Talk", () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
         items.Add(new TrayIcon.Item("Chat History\u2026", () => OpenSettings(SettingsTab.Chats)));
         var s = spend.Summary;
         if (s.AllTime.Calls > 0)
-            items.Add(new TrayIcon.Item($"Spent: {Spend.Label(s.Today.Cost)} today, {Spend.Label(s.Month.Cost)} this month", () => OpenSettings(SettingsTab.Talk)));
+            items.Add(new TrayIcon.Item($"Spent: {Spend.Label(s.Today.Cost)} today, {Spend.Label(s.Month.Cost)} this month", () => OpenSettings(SettingsTab.Costs)));
         items.Add(new TrayIcon.Item("Settings\u2026", () => OpenSettings(null)));
         items.Add(TrayIcon.Item.Separator);
         items.Add(new TrayIcon.Item("Quit Ledgelings", Shutdown));
@@ -133,7 +137,7 @@ public sealed partial class App : Application
     private void OpenSettings(SettingsTab? tab)
     {
         if (settings is null || history is null || library is null || spend is null) return;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds };
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds, Voice = voice };
         AttachReminders(settingsWindow);
         settingsWindow.Show(tab);
     }

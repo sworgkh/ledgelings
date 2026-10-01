@@ -45,6 +45,7 @@ internal static partial class Win32
     public const uint MF_STRING = 0x0000;
     public const uint MF_SEPARATOR = 0x0800;
     public const uint MF_GRAYED = 0x0001;
+    public const uint MF_CHECKED = 0x0008;
     public const uint TPM_RIGHTBUTTON = 0x0002;
     public const uint TPM_BOTTOMALIGN = 0x0020;
     public const uint TPM_RETURNCMD = 0x0100;
