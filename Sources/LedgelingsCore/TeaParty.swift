@@ -169,10 +169,10 @@ public enum Tea {
     public static var anyoneReplies: [String] { anyoneReplyBooks() }
     public static var stories: [String: [String]] { storyBooks() }
     public static var replies: [String: [String]] { replyBooks() }
-    public static let anyoneStoryBooks = Translated(english: englishAnyoneStories)
-    public static let anyoneReplyBooks = Translated(english: englishAnyoneReplies)
-    public static let storyBooks = Translated(english: englishStories)
-    public static let replyBooks = Translated(english: englishReplies)
+    public static let anyoneStoryBooks = Translated(english: englishAnyoneStories, [.russian: russianAnyoneStories])
+    public static let anyoneReplyBooks = Translated(english: englishAnyoneReplies, [.russian: russianAnyoneReplies])
+    public static let storyBooks = Translated(english: englishStories, [.russian: russianStories])
+    public static let replyBooks = Translated(english: englishReplies, [.russian: russianReplies])
 
     public static let englishAnyoneStories = [
         "I wasn't always on this edge, you know. I started out in a corner nobody visits.",

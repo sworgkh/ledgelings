@@ -44,7 +44,7 @@ public struct Annoyance: Sendable {
 public enum Complaints {
     /// For a character the user invented, in the current language.
     public static var anyone: [String] { anyones() }
-    public static let anyones = Translated(english: englishAnyone)
+    public static let anyones = Translated(english: englishAnyone, [.russian: russianAnyone])
     public static let englishAnyone = [
         "Hey! That's {times} times in a row. Leave me alone!",
         "Stop it with the cursor. I mean it.",
@@ -53,7 +53,7 @@ public enum Complaints {
 
     /// Each built-in character's complaints, in the current language.
     public static var lines: [String: [String]] { lineSets() }
-    public static let lineSets = Translated(english: englishLines)
+    public static let lineSets = Translated(english: englishLines, [.russian: russianLines])
     public static let englishLines: [String: [String]] = [
         // blocky's cast
         "Blocky": ["{times} times. I have written every one of them down. Back off.",
