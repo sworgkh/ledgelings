@@ -9,7 +9,7 @@ using Ledgelings.Core;
 namespace Ledgelings.UI;
 
 /// <summary>The colony as the tiles see it.</summary>
-public readonly record struct ActionsState(
+public sealed record ActionsState(
     bool IsNight = false, bool NightOff = false, int PhaseLeft = 0,
     bool TeaEnabled = true, bool TeaOn = false, bool PlaneInAir = false,
     int Planted = 0, bool Hiding = false, int HideLeft = 0);
@@ -110,7 +110,7 @@ public sealed class ActionsSheet : Window
     private readonly TextBlock said = new() { FontFamily = mono, FontSize = 12, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel hideRow = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromSeconds(0.5) };
-    private ActionsState state;
+    private ActionsState state = new();
     private bool choosingHide, folding;
     /// <summary>What the last press did, shown for a few seconds.</summary>
     private string message = "";
