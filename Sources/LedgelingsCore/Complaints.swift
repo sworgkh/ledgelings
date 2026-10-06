@@ -40,10 +40,21 @@ public struct Annoyance: Sendable {
 
 /// What a creature says to the user when the cursor has chased it or carried
 /// it around once too often. Each built-in character complains in its own
-/// voice; `{times}` is how many times in a row it has been bothered.
+/// voice; `{times}` is how many times in a row it has been bothered. What it
+/// makes of being chased follows the cursor mood: a complaint in the bad mood,
+/// a playful tease in the good one, a passing remark in the neutral one
+/// (`Complaints+Moods.swift`).
 public enum Complaints {
-    /// For a character the user invented, in the current language.
-    public static var anyone: [String] { anyones() }
+    /// For a character the user invented, in the current language and mood.
+    public static var anyone: [String] { anyones(for: .current)() }
+    public static func anyones(for mood: CursorMood) -> Translated<[String]> {
+        switch mood {
+        case .good: Translated(english: englishGoodAnyone, [.russian: russianGoodAnyone])
+        case .neutral: Translated(english: englishNeutralAnyone, [.russian: russianNeutralAnyone])
+        case .bad: anyones
+        }
+    }
+    /// The bad mood's, as first written.
     public static let anyones = Translated(english: englishAnyone, [.russian: russianAnyone])
     public static let englishAnyone = [
         "Hey! That's {times} times in a row. Leave me alone!",
@@ -51,8 +62,16 @@ public enum Complaints {
         "Do you mind? Some of us live here.",
     ]
 
-    /// Each built-in character's complaints, in the current language.
-    public static var lines: [String: [String]] { lineSets() }
+    /// Each built-in character's complaints, in the current language and mood.
+    public static var lines: [String: [String]] { lineSets(for: .current)() }
+    public static func lineSets(for mood: CursorMood) -> Translated<[String: [String]]> {
+        switch mood {
+        case .good: Translated(english: englishGoodLines, [.russian: russianGoodLines])
+        case .neutral: Translated(english: englishNeutralLines, [.russian: russianNeutralLines])
+        case .bad: lineSets
+        }
+    }
+    /// The bad mood's, as first written.
     public static let lineSets = Translated(english: englishLines, [.russian: russianLines])
     public static let englishLines: [String: [String]] = [
         // blocky's cast
@@ -151,8 +170,16 @@ public enum Complaints {
         Banter.render((lines[name] ?? anyone).randomElement(using: &rng)!, ["times": "\(times)"])
     }
 
-    /// The model writes the complaint, in the creature's voice, in the current language.
-    public static var prompt: String { prompts() }
+    /// The model writes the complaint, in the creature's voice, in the current language and mood.
+    public static var prompt: String { prompts(for: .current)() }
+    public static func prompts(for mood: CursorMood) -> Translated<String> {
+        switch mood {
+        case .good: Translated(english: englishGoodPrompt, [.russian: russianGoodPrompt])
+        case .neutral: Translated(english: englishNeutralPrompt, [.russian: russianNeutralPrompt])
+        case .bad: prompts
+        }
+    }
+    /// The bad mood's, as first written.
     public static let prompts = Translated(english: englishPrompt, [.russian: russianPrompt])
     public static let englishPrompt = """
     {situation}

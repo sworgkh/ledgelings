@@ -27,11 +27,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
 
     private var speaking: AnyCancellable?
+    private var minding: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Before anything is drawn or said: the language everything looks its words up in.
         Language.choose(settings.language)
         speaking = settings.$language.sink { Language.choose($0) }
+        CursorMood.choose(settings.cursorMood)
+        minding = settings.$cursorMood.sink { CursorMood.choose($0) }
         if let at = CommandLine.arguments.firstIndex(of: "--promo") {
             let out = CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : "build/promo.mp4"
             Task { @MainActor in
@@ -207,6 +210,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let chatsItem = NSMenuItem(title: "", action: #selector(openChats), keyEquivalent: "h")
     private let settingsItem = NSMenuItem(title: "", action: #selector(openSettings), keyEquivalent: ",")
     private let languageItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let cursorMoodItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -239,6 +243,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         languageItem.submenu = languages
         menu.addItem(languageItem)
+        let moods = NSMenu()
+        for mood in CursorMood.allCases {
+            let choice = NSMenuItem(title: "", action: #selector(chooseCursorMood(_:)), keyEquivalent: "")
+            choice.target = self
+            choice.representedObject = mood.rawValue
+            moods.addItem(choice)
+        }
+        cursorMoodItem.submenu = moods
+        menu.addItem(cursorMoodItem)
         settingsItem.target = self
         menu.addItem(settingsItem)
         menu.addItem(.separator())
@@ -258,6 +271,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         quitItem.title = tr("Quit Ledgelings")
         for choice in languageItem.submenu?.items ?? [] {
             choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
+        }
+        cursorMoodItem.title = tr("The Cursor Is")
+        for choice in cursorMoodItem.submenu?.items ?? [] {
+            let mood = (choice.representedObject as? String).flatMap(CursorMood.init(rawValue:))
+            choice.title = mood?.title ?? ""
+            choice.state = mood == settings.cursorMood ? .on : .off
         }
     }
 
@@ -289,6 +308,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func chooseLanguage(_ sender: NSMenuItem) {
         guard let code = sender.representedObject as? String, let language = Language(rawValue: code) else { return }
         settings.language = language
+        retitleMenu()
+    }
+
+    @objc private func chooseCursorMood(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let mood = CursorMood(rawValue: raw) else { return }
+        settings.cursorMood = mood
         retitleMenu()
     }
 

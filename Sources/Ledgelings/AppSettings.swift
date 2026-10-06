@@ -46,6 +46,9 @@ final class AppSettings: ObservableObject {
     @Published var complainEnabled: Bool { didSet { save(complainEnabled, "complainEnabled") } }
     @Published var complainAfter: Int { didSet { save(complainAfter, "complainAfter") } }
     @Published var complainCalmSeconds: Double { didSet { save(complainCalmSeconds, "complainCalmSeconds") } }
+    /// What the creatures make of the cursor: a playmate, nothing at all, or a menace. The app hands it
+    /// to `CursorMood.choose`; prompts, built-in lines and complaints follow it.
+    @Published var cursorMood: CursorMood { didSet { save(cursorMood.rawValue, "cursorMood") } }
 
     // MARK: Tea parties
 
@@ -295,6 +298,8 @@ final class AppSettings: ObservableObject {
         // Twenty seconds: chasing one creature round the screen is a streak; the same thing an hour apart is not.
         let calm = defaults.object(forKey: "complainCalmSeconds") as? Double ?? 20
         complainCalmSeconds = min(max(calm, Self.complainCalmRange.lowerBound), Self.complainCalmRange.upperBound)
+        // A menace: how the creatures were first written, so nobody's colony changes its mind unasked.
+        cursorMood = defaults.string(forKey: "cursorMood").flatMap(CursorMood.init(rawValue:)) ?? .bad
         teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
         actionsStayOpen = defaults.object(forKey: "actionsStayOpen") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.

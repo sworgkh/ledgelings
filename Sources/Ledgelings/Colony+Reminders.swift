@@ -263,7 +263,7 @@ extension Colony {
     private func writeReminderNote(_ mail: inout Delivery) {
         guard settings.brain != .script, let service = settings.chatClient(), let i = mail.thrower else { return }
         let me = character(forCreature: i)
-        let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.spoken(me.persona),
+        let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.persona(me.persona),
                     "listener": tr("you"), "listenerKind": tr("the person at the computer"),
                     "listenerPersona": tr("The person whose screen you all live on."),
                     "situation": almanac, "reminder": mail.reminder.text]

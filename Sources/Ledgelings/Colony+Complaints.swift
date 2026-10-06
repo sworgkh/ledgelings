@@ -2,7 +2,8 @@ import AppKit
 import LedgelingsCore
 
 /// Complaints: chase a creature with the cursor, or pick it up, too many times
-/// in a row and it turns round and tells you off, in its own voice.
+/// in a row and it turns round and tells you about it, in its own voice: off in
+/// the bad cursor mood, a playful tease in the good one, a shrug in the neutral.
 extension Colony {
 
     /// Creature `i` was just chased off its edge by the cursor, or picked up.
@@ -27,7 +28,7 @@ extension Colony {
             record(line, by: me.name, situation: situation)
             return
         }
-        let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.spoken(me.persona),
+        let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.persona(me.persona),
                     "listener": tr("you"), "listenerKind": tr("the person at the computer"),
                     "listenerPersona": tr("The person whose screen you all live on."),
                     "situation": situation, "times": "\(times)"]
@@ -35,7 +36,7 @@ extension Colony {
                                            history.memory.recent(of: me.name))
         let user = Banter.render(Complaints.prompt, vars).trimmingCharacters(in: .whitespacesAndNewlines)
         complaining.insert(i)
-        talkStatus = tr("%@ is complaining via %@…", me.name, service.model)
+        talkStatus = String(format: CursorMood.current.speakingUp, me.name, service.model)
         Task { [weak self] in
             var line = "", cost: Double?, tokens: Int?
             do {
@@ -68,7 +69,7 @@ extension Colony {
     /// Into the Chats tab, with what it cost when a model wrote it.
     private func record(_ line: String, by name: String, situation: String,
                         provider: String? = nil, model: String = "", cost: Double? = nil, tokens: Int? = nil) {
-        talkStatus = tr("%@ complained: %@", name, line)
+        talkStatus = String(format: CursorMood.current.spokeUp, name, line)
 
         history.record(ChatLog.Exchange(time: Date(), situation: situation,
                                         provider: provider ?? AppSettings.Brain.script.title, model: provider == nil ? "" : model,

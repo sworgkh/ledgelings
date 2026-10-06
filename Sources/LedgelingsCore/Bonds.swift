@@ -182,8 +182,8 @@ public enum Bonds {
     /// The values for the plot prompt. `a` and `b` are (name, kind, persona).
     public static func plotValues(_ bond: Bond, a: (name: String, kind: String, persona: String),
                                   b: (name: String, kind: String, persona: String), length: Int) -> [String: String] {
-        ["speaker": a.name, "speakerKind": Banter.spoken(a.kind), "speakerPersona": Banter.spoken(a.persona),
-         "listener": b.name, "listenerKind": Banter.spoken(b.kind), "listenerPersona": Banter.spoken(b.persona),
+        ["speaker": a.name, "speakerKind": Banter.spoken(a.kind), "speakerPersona": Banter.persona(a.persona),
+         "listener": b.name, "listenerKind": Banter.spoken(b.kind), "listenerPersona": Banter.persona(b.persona),
          "together": duration(bond.together),
          "bond": bond.summary ?? tr("they have not really made their minds up about each other yet"),
          "lastPlot": bond.lastPlot ?? tr("none yet; this is their first"),

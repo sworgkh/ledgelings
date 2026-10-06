@@ -106,10 +106,10 @@ public struct Script: Equatable, Sendable {
 
     public static func englishAgentPrompt(cast: [Character], count: Int = 40) -> String {
         let who = cast.isEmpty ? "" : "\nThe creatures who might be talking (a line must work for any of them, so never use a name; write {speaker} and {listener} instead):\n"
-            + cast.map { "- \($0.name): \($0.persona)" }.joined(separator: "\n") + "\n"
+            + cast.map { "- \($0.name): \(CursorMood.current.persona($0.persona))" }.joined(separator: "\n") + "\n"
         return """
         Write \(count) short conversations between two small pixel creatures who live on the edges of a computer screen. \
-        They crawl along the bottom, the sides and the ceiling, flee the mouse cursor, sleep at night, and sometimes walk into each other. \
+        They crawl along the bottom, the sides and the ceiling, \(CursorMood.current.agentPhrase), sleep at night, and sometimes walk into each other. \
         Each conversation happens when one creature walks into another. Make them funny, teasing, a little odd; never mean-spirited.
 
         Format, exactly:

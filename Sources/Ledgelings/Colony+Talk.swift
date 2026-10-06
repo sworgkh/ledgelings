@@ -81,8 +81,8 @@ extension Colony {
         }
         guard let service = settings.chatClient() else { talkStatus = settings.brainProblem; return false }
         let aKind = kind(ofCreature: speaker), bKind = kind(ofCreature: listener)
-        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.spoken(a.persona),
-                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.spoken(b.persona),
+        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.persona(a.persona),
+                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.persona(b.persona),
                     "situation": situation, "line": ""]
         let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
         let bubbleSeconds = settings.bubbleSeconds
@@ -144,8 +144,8 @@ extension Colony {
                 talkStatus = "\(a.name): \(first)"
 
                 // Swap seats for the answer.
-                vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.spoken(b.persona)
-                vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.spoken(a.persona)
+                vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.persona(b.persona)
+                vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.persona(a.persona)
                 vars["line"] = first
                 let answer = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                      user: Banter.render(replyPrompt, vars))
@@ -201,7 +201,8 @@ extension Colony {
         }
         recentLines = Array((recentLines.filter { $0 != chosen } + [chosen]).suffix(script.conversations.count))
         let a = character(forCreature: speaker), b = character(forCreature: listener)
-        let lines = script.conversations[chosen].lines.enumerated().map { i, line in
+        // A shipped conversation about the cursor, as the cursor mood has it.
+        let lines = CursorMood.current.adjust(script.conversations[chosen].lines).enumerated().map { i, line in
             let mine = i.isMultiple(of: 2)
             return (who: mine ? speaker : listener,
                     text: Script.fill(line, speaker: mine ? a.name : b.name, listener: mine ? b.name : a.name,

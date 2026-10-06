@@ -106,8 +106,8 @@ extension Colony {
         guard settings.brain != .script, let service = settings.chatClient() else { return }
         let a = character(forCreature: from), b = character(forCreature: to)
         let aKind = kind(ofCreature: from), bKind = kind(ofCreature: to)
-        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.spoken(a.persona),
-                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.spoken(b.persona),
+        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.persona(a.persona),
+                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.persona(b.persona),
                     "situation": almanac, "line": answering ?? ""]
         let system = settings.systemPrompt
         let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
@@ -137,8 +137,8 @@ extension Colony {
                 if !line.isEmpty {
                     note = line
                     // Swap seats: now the reader thinks.
-                    vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.spoken(b.persona)
-                    vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.spoken(a.persona)
+                    vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.persona(b.persona)
+                    vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.persona(a.persona)
                     vars["line"] = line
                     let thought = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                           user: Banter.render(Letters.musingPrompt, vars))

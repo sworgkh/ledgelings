@@ -165,10 +165,11 @@ public struct TeaParty: Equatable, Sendable {
 /// character the user invented. `{other}` is the one across the table.
 /// The Russian is in `TeaParty+Russian.swift`.
 public enum Tea {
-    public static var anyoneStories: [String] { anyoneStoryBooks() }
-    public static var anyoneReplies: [String] { anyoneReplyBooks() }
-    public static var stories: [String: [String]] { storyBooks() }
-    public static var replies: [String: [String]] { replyBooks() }
+    /// In the current language, with what is said about the cursor in the current mood.
+    public static var anyoneStories: [String] { anyoneStoryBooks().map(CursorMood.current.adjust) }
+    public static var anyoneReplies: [String] { anyoneReplyBooks().map(CursorMood.current.adjust) }
+    public static var stories: [String: [String]] { CursorMood.current.adjust(storyBooks()) }
+    public static var replies: [String: [String]] { CursorMood.current.adjust(replyBooks()) }
     public static let anyoneStoryBooks = Translated(english: englishAnyoneStories, [.russian: russianAnyoneStories])
     public static let anyoneReplyBooks = Translated(english: englishAnyoneReplies, [.russian: russianAnyoneReplies])
     public static let storyBooks = Translated(english: englishStories, [.russian: russianStories])

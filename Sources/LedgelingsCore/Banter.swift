@@ -24,6 +24,17 @@ public enum Banter {
     /// The English stays the data: casting and planting read that.
     public static func spoken(_ text: String) -> String { Strings.lookup(text, in: .current) }
 
+    /// A character's persona as `{speakerPersona}` and `{listenerPersona}` carry it:
+    /// a shipped persona about the cursor as the cursor mood has it, in the current
+    /// language, and then how its owner takes the cursor in that mood
+    /// (`CursorMood.note`), so a model writes in the mood even for a character the
+    /// user invented. Voices are still cast from the persona as written.
+    public static func persona(_ persona: String) -> String {
+        let mood = CursorMood.current
+        let said = spoken(mood.persona(persona)), note = mood.note
+        return note.isEmpty ? said : said.isEmpty ? note : said + " " + note
+    }
+
     public static let systemPrompts = Translated(english: englishSystemPrompt, [.russian: russianSystemPrompt])
     public static let linePrompts = Translated(english: englishLinePrompt, [.russian: russianLinePrompt])
     public static let replyPrompts = Translated(english: englishReplyPrompt, [.russian: russianReplyPrompt])
