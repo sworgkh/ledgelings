@@ -184,6 +184,9 @@ public sealed class Shared
     public Dictionary<string, string[]> ComplaintsAnyoneByMood { get; init; } = new();
     public Dictionary<string, Dictionary<string, string[]>> ComplaintLinesByMood { get; init; } = new();
     public Dictionary<string, string> ComplaintPromptsByMood { get; init; } = new();
+    /// <summary>The count lines (SPEC §4.7.2) per cursor mood (<c>good</c>/<c>neutral</c>/<c>bad</c>): by character, and for anyone.</summary>
+    public Dictionary<string, Dictionary<string, string[]>> HuntLinesByMood { get; init; } = new();
+    public Dictionary<string, string[]> HuntAnyoneByMood { get; init; } = new();
     /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
@@ -235,6 +238,8 @@ public sealed class Shared
         var rewrites = Get(mood, "rewrites");
         var moodComplaints = Get(mood, "complaints");
         string[] moods = { "good", "neutral" };
+        var hunts = Get(root, "hunts");
+        string[] allMoods = { "good", "neutral", "bad" };
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -262,6 +267,8 @@ public sealed class Shared
             ComplaintsAnyoneByMood = moods.ToDictionary(m => m, m => List(Get(Get(moodComplaints, m), "anyone"))),
             ComplaintLinesByMood = moods.ToDictionary(m => m, m => Lists(Get(Get(moodComplaints, m), "lines"))),
             ComplaintPromptsByMood = Map(Get(mood, "complaintPrompts")),
+            HuntLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(hunts, m), "lines"))),
+            HuntAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(hunts, m), "anyone"))),
         };
     }
 }

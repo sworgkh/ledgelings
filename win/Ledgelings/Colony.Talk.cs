@@ -102,6 +102,8 @@ public sealed partial class Colony
         var almanac = AlmanacSentence;
         if (almanac.Length > 0) situation = almanac + " " + situation;
         if (because is not null) situation += " " + because;
+        var counts = HuntSentence(new[] { speaker, listener });
+        if (counts.Length > 0) situation += " " + counts;
         if (Settings.Brain == BrainKind.Script) return Recite(speaker, listener, flower, situation);
         var service = Settings.ChatClient();
         if (service is null) { TalkStatus = Settings.BrainProblem; return false; }

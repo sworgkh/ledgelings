@@ -152,6 +152,78 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Chases">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Counting">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Count chases and pick-ups" IsChecked="{Binding HuntCountEnabled, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every time the cursor chases a creature off its edge or picks it up, it counts, by character: today, this week and in all. Days and weeks follow your calendar. Off, nothing is counted and the numbers stay as they are."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Talking about it">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="They know their count" IsChecked="{Binding HuntTalkEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding HuntTalkEnabled}">
+                <TextBlock ui:Tr.Text="How often it comes up" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding HuntTalkChance}" ui:Tr.Unit="%"/>
+                <Slider Minimum="0" Maximum="100" TickFrequency="5" Value="{Binding HuntTalkChance, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="This share of conversations, tea stories and paper planes carries the numbers: with a model they go into its prompt, compared with yesterday and the week, with any record; with the built-in lines a creature says its count in its own voice. A complaint always knows them, and a round number or a record day is said out loud. How they take it follows the cursor mood: a score, a fact, or a grudge. No extra model calls."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Wariness" IsEnabled="{Binding HuntCountEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Much-chased creatures keep their distance" IsChecked="{Binding HuntWary, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding HuntWary}">
+                <TextBlock ui:Tr.Text="After" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Width="110" ui:Tr.Value="{Binding HuntWaryAfter}" ui:Tr.Format="%d in a day"/>
+                <Slider Minimum="5" Maximum="200" TickFrequency="5" Value="{Binding HuntWaryAfter, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When the cursor is a menace, a creature chased this often today jumps away from further off, until tomorrow."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The count">
+            <StackPanel>
+              <Grid Margin="0,0,0,4" TextElement.Foreground="Gray" TextElement.FontSize="11">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/><ColumnDefinition Width="80"/><ColumnDefinition Width="80"/><ColumnDefinition Width="80"/><ColumnDefinition Width="90"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" ui:Tr.Text="Creature"/>
+                <TextBlock Grid.Column="1" ui:Tr.Text="Today" TextAlignment="Right"/>
+                <TextBlock Grid.Column="2" ui:Tr.Text="This week" TextAlignment="Right"/>
+                <TextBlock Grid.Column="3" ui:Tr.Text="In all" TextAlignment="Right"/>
+              </Grid>
+              <ItemsControl x:Name="HuntList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Margin="0,2">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="80"/><ColumnDefinition Width="80"/><ColumnDefinition Width="80"/><ColumnDefinition Width="90"/>
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="{Binding Weight}"/>
+                      <TextBlock Grid.Column="1" Text="{Binding Today}" TextAlignment="Right" FontWeight="{Binding Weight}"/>
+                      <TextBlock Grid.Column="2" Text="{Binding Week}" TextAlignment="Right" FontWeight="{Binding Weight}"/>
+                      <TextBlock Grid.Column="3" Text="{Binding All}" TextAlignment="Right" FontWeight="{Binding Weight}"/>
+                      <Button Grid.Column="4" ui:Tr.Content="Reset" Tag="{Binding Name}" Click="ResetHunt_Click" FontSize="11" Padding="6,0"
+                              HorizontalAlignment="Right" Visibility="{Binding ResetVisibility}" IsEnabled="{Binding CanReset}"/>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock x:Name="HuntsSince" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The file">
+            <DockPanel>
+              <Button DockPanel.Dock="Right" x:Name="ResetAllHunts" ui:Tr.Content="Reset All…" Click="ResetAllHunts_Click" Margin="8,0,0,0"/>
+              <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealHunts_Click"/>
+              <TextBlock x:Name="HuntsPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            </DockPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Sprites">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">
