@@ -114,6 +114,13 @@ becomes a game of tag they love winning, or to *Just there* and they hop aside
 without a thought. Their lines, tea stories, letters, complaints and whatever a
 model writes for them all follow it, in English and Russian.
 
+**They keep count.** Every chase and pick-up is counted, per creature: today, this
+week and in all, and they know it. Blocky keeps a list of grievances, Unit 7 a
+status report, and a playmate brags about the score. The numbers turn up in what
+they say (compared with yesterday and the week, with a record day), a round number
+gets said out loud, and a much-chased creature keeps its distance. See the count,
+and reset it, in Settings › Chases.
+
 **Reminders.** Tell them what to remind you of and when (once, every day, every
 weekday, every week). When the time comes, one of them folds it into a paper plane
 and throws it at you: it swirls to the middle of your screen, turns to face you,

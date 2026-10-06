@@ -8,8 +8,10 @@ extension Colony {
 
     /// Creature `i` was just chased off its edge by the cursor, or picked up.
     func bothered(_ i: Int) {
+        // Counted first: a creature remarking on its count does not complain over it.
+        let remarked = hunted(i)
         guard settings.complainEnabled, creatures.indices.contains(i) else { return }
-        guard annoyance.bothered(i, at: elapsed) else { return }
+        guard annoyance.bothered(i, at: elapsed), !remarked else { return }
         complain(i)
     }
 
@@ -20,11 +22,13 @@ extension Colony {
         let times = annoyance.streak(of: i, at: elapsed)
         annoyance.forgive(i)
         let me = character(forCreature: i)
-        let situation = [almanac, "\(describe(i)).", tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.name, times)]
+        let situation = [almanac, "\(describe(i)).", tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.name, times),
+                         huntSentence([i], always: true)]
             .filter { !$0.isEmpty }.joined(separator: " ")
         guard settings.talkEnabled, settings.brain != .script, let service = settings.chatClient() else {
-            let line = Complaints.line(by: me.name, times: times, using: &rng)
-            say(line, from: i, builtIn: true)
+            let tally = huntLineInstead(i)
+            let line = tally ?? Complaints.line(by: me.name, times: times, using: &rng)
+            say(line, from: i, builtIn: tally == nil)
             record(line, by: me.name, situation: situation)
             return
         }
@@ -59,7 +63,7 @@ extension Colony {
             // Gone, or talking by now: the moment has passed.
             guard creatures.indices.contains(i), character(forCreature: i).name == me.name, !busy.contains(i) else { return }
             let modelWrote = !line.isEmpty
-            if !modelWrote { line = Complaints.line(by: me.name, times: times, using: &rng) }
+            if !modelWrote { line = huntLineInstead(i) ?? Complaints.line(by: me.name, times: times, using: &rng) }
             say(line, from: i, builtIn: !modelWrote)
             record(line, by: me.name, situation: situation,
                    provider: modelWrote ? service.provider.title : nil, model: service.model, cost: cost, tokens: tokens)

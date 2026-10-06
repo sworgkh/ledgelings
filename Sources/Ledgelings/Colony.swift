@@ -17,6 +17,8 @@ final class Colony: NSObject {
     let spend: SpendLedger
     /// Who has lived beside whom, how they get on, and the story between them.
     let bonds: BondBook
+    /// How often the cursor has hunted each character: today, this week, in all.
+    let hunts: HuntBook
     /// What the user asked to be reminded of, and when.
     let reminders: ReminderBook
     /// Pairs whose next plot is being written, by `Bonds.key`.
@@ -169,13 +171,14 @@ final class Colony: NSObject {
     /// `stage`: draw for this one virtual display, offscreen, stepped by hand
     /// (the promo). Nil means the attached monitors, live.
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger,
-         bonds: BondBook? = nil, reminders: ReminderBook? = nil, stage: Display? = nil) throws {
+         bonds: BondBook? = nil, reminders: ReminderBook? = nil, hunts: HuntBook? = nil, stage: Display? = nil) throws {
         self.settings = settings
         self.history = history
         self.library = library
         self.spend = spend
         self.bonds = bonds ?? BondBook(directory: spend.ledger.directory)
         self.reminders = reminders ?? ReminderBook(directory: spend.ledger.directory)
+        self.hunts = hunts ?? HuntBook(directory: spend.ledger.directory)
         self.stage = stage
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
@@ -245,8 +248,9 @@ final class Colony: NSObject {
             guard size != sizes[i] else { continue }
             sizes[i] = size
             creatures[i].rehome(to: world(forSize: size))
-            creatures[i].config.fleeRadius = fleeRadius(forSize: size)
         }
+        // Size, mood and the Chases tab all set how far off a creature jumps.
+        for i in creatures.indices { beWary(i) }
 
         frames = creatures.indices.map { index in
             let name = settings.species(forCreature: index)

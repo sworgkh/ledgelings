@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Nine tabs: **Creatures**, **Sprites**, **Talk**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Eleven tabs: **Creatures**, **Chases**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## Without a model
 
@@ -118,6 +118,26 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 | **Lasts** (`teaPartyMinutes`) | 3 min | 1 to 10, in half minutes | A story being told when the time is up is let finish |
 | **Sip between stories** (`teaSipSeconds`) | 6 s | 0 to 30 | The quiet between one story and its answer being over and the next story |
 | **Start at login** | off | | macOS: the system's Login Items (only an installed app can register). Windows: the per-user Startup list |
+
+## Chases tab
+
+How often the cursor hunts each creature, and what they make of it (SPEC §4.7.2).
+A hunt is what bothers a creature: the cursor chasing it off its edge, or picking it
+up (a plain press on a sleeper, or a Shift-drag).
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Count chases and pick-ups** (`huntCountEnabled`) | on | | Counted per character, by your calendar: today, this week (from the first day of the week your system's region uses) and in all. Off: nothing is counted, and the numbers stay as they are |
+| **They know their count** (`huntTalkEnabled`) | on | | With a model, the numbers go into the prompt beside where they are and the time, compared with yesterday and this week, with a record day and who is the most hunted on screen. With the built-in lines, each character has two lines per cursor mood that say its count. A complaint always knows the numbers. A round number today (10, 25, 50…) or in all (100, 250…), or a new record day, is said at once. How they take it follows *The cursor is*: a game's score, a plain fact, or a list of grievances. No extra model calls |
+| **How often it comes up** (`huntTalkChance`) | 25 % | 0 to 100 | Share of conversations, tea stories, paper planes and built-in complaints that bring the count up. Milestones are said whatever this is |
+| **Much-chased creatures keep their distance** (`huntWary`) | on | | Only when the cursor is a menace: a creature hunted *After* times today jumps away from 35 % further off, until tomorrow |
+| **After** (`huntWaryAfter`) | 20 in a day | 5 to 200, in fives | |
+
+**The count**, on the right: every creature on screen, then anyone else ever
+counted, with today, this week and in all, and **Reset** for each; **Everyone**,
+the total; since when it has been counting. Kept by name: rename a character and
+it starts from zero. **Reset All…** (asks first) clears everyone. The count is
+in `hunts.json` beside the chats, path shown.
 
 ## Sprites tab
 

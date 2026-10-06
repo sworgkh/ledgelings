@@ -10,9 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let spend = SpendLedger()
     private let bonds = BondBook()
     private let reminders = ReminderBook()
+    private let hunts = HuntBook()
     private lazy var voice = Voice(settings: settings, spend: spend, history: history)
     private lazy var settingsWindow = SettingsWindowController(
-        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice,
+        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, voice: voice,
         send: { [weak self] in self?.colony?.deliverNow($0) },
         clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 })
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
@@ -76,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         do {
-            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders)
+            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts)
             colony?.voice = voice
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
@@ -190,9 +191,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--settings [creatures|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|chases|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "chases": .chases, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
