@@ -41,14 +41,30 @@ public sealed class Annoyance
 
 /// <summary>What a creature says to the user when the cursor has chased it or carried
 /// it around once too often. Each built-in character complains in its own
-/// voice; <c>{times}</c> is how many times in a row it has been bothered.</summary>
-public static class Complaints
+/// voice; <c>{times}</c> is how many times in a row it has been bothered. What it makes
+/// of being chased follows the cursor mood: a complaint in the bad mood, a playful tease
+/// in the good one, a passing remark in the neutral one (<c>Complaints.Moods.cs</c>).</summary>
+public static partial class Complaints
 {
-    /// <summary>For a character the user invented, in the current language.</summary>
-    public static IReadOnlyList<string> Anyone => Translated.List(Shared.Current?.ComplaintsAnyone, EnglishAnyone);
+    /// <summary>For a character the user invented, in the current language and mood.</summary>
+    public static IReadOnlyList<string> Anyone => AnyoneFor(CursorMoods.Current);
 
-    /// <summary>Each built-in character's complaints, in the current language.</summary>
-    public static IReadOnlyDictionary<string, string[]> Lines => Translated.Lists(Shared.Current?.ComplaintLines, EnglishLines, l => l);
+    /// <summary>Each built-in character's complaints, in the current language and mood.</summary>
+    public static IReadOnlyDictionary<string, string[]> Lines => LinesFor(CursorMoods.Current);
+
+    public static IReadOnlyList<string> AnyoneFor(CursorMood m) => m switch
+    {
+        CursorMood.Bad => Translated.List(Shared.Current?.ComplaintsAnyone, EnglishAnyone),
+        _ => Translated.List(Shared.Current?.ComplaintsAnyoneByMood.GetValueOrDefault(m.Code()),
+                             m == CursorMood.Good ? EnglishGoodAnyone : EnglishNeutralAnyone),
+    };
+
+    public static IReadOnlyDictionary<string, string[]> LinesFor(CursorMood m) => m switch
+    {
+        CursorMood.Bad => Translated.Lists(Shared.Current?.ComplaintLines, EnglishLines, l => l),
+        _ => Translated.Lists(Shared.Current?.ComplaintLinesByMood.GetValueOrDefault(m.Code()),
+                              m == CursorMood.Good ? EnglishGoodLines : EnglishNeutralLines, l => l),
+    };
 
     public static readonly IReadOnlyList<string> EnglishAnyone = new[]
     {
@@ -156,8 +172,15 @@ public static class Complaints
         return Banter.Render(rng.Pick(lines), new Dictionary<string, string> { ["times"] = times.ToString(System.Globalization.CultureInfo.InvariantCulture) });
     }
 
-    /// <summary>The model writes the complaint, in the creature's voice, in the current language.</summary>
-    public static string Prompt => Shared.Prompt("complaint", EnglishPrompt);
+    /// <summary>The model writes the complaint, in the creature's voice, in the current language and mood.</summary>
+    public static string Prompt => PromptFor(CursorMoods.Current);
+
+    public static string PromptFor(CursorMood m)
+    {
+        if (m == CursorMood.Bad) return Shared.Prompt("complaint", EnglishPrompt);
+        var english = m == CursorMood.Good ? EnglishGoodPrompt : EnglishNeutralPrompt;
+        return Shared.Current?.ComplaintPromptsByMood.TryGetValue(m.Code(), out var p) == true && p.Length > 0 ? p : english;
+    }
 
     public const string EnglishPrompt =
         "{situation}\n" +

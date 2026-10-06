@@ -208,8 +208,8 @@ public static class Bonds
     public static Dictionary<string, string> PlotValues(Bond bond, (string Name, string Kind, string Persona) a,
                                                         (string Name, string Kind, string Persona) b, int length) => new()
     {
-        ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(a.Kind), ["speakerPersona"] = Banter.Spoken(a.Persona),
-        ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(b.Kind), ["listenerPersona"] = Banter.Spoken(b.Persona),
+        ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(a.Kind), ["speakerPersona"] = Banter.Persona(a.Persona),
+        ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(b.Kind), ["listenerPersona"] = Banter.Persona(b.Persona),
         ["together"] = Duration(bond.Together),
         ["bond"] = bond.Summary ?? L10n.Tr("they have not really made their minds up about each other yet"),
         ["lastPlot"] = bond.LastPlot ?? L10n.Tr("none yet; this is their first"),

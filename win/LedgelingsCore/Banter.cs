@@ -20,6 +20,17 @@ public static class Banter
     /// The English stays the data: casting and planting read that.</summary>
     public static string Spoken(string text) => L10n.Lookup(text, Languages.Current);
 
+    /// <summary>A character's persona as <c>{speakerPersona}</c> and <c>{listenerPersona}</c> carry it: a shipped
+    /// persona about the cursor as the cursor mood has it, in the current language, then how its owner takes
+    /// the cursor in that mood, so a model writes in the mood even for a character the user invented.
+    /// Voices are still cast from the persona as written.</summary>
+    public static string Persona(string persona)
+    {
+        var mood = CursorMoods.Current;
+        string said = Spoken(mood.Persona(persona)), note = mood.Note();
+        return note.Length == 0 ? said : said.Length == 0 ? note : said + " " + note;
+    }
+
     public static string SystemPromptIn(Language l) => Shared.PromptIn(l, "system", EnglishSystemPrompt);
     public static string LinePromptIn(Language l) => Shared.PromptIn(l, "line", EnglishLinePrompt);
     public static string ReplyPromptIn(Language l) => Shared.PromptIn(l, "reply", EnglishReplyPrompt);

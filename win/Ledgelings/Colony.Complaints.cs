@@ -47,7 +47,7 @@ public sealed partial class Colony
         }
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Spoken(me.Persona),
+            ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Persona(me.Persona),
             ["listener"] = L10n.Tr("you"), ["listenerKind"] = L10n.Tr("the person at the computer"),
             ["listenerPersona"] = L10n.Tr("The person whose screen you all live on."),
             ["situation"] = situation, ["times"] = times.ToString(),
@@ -55,7 +55,7 @@ public sealed partial class Colony
         var system = LineMemory.WithRecent(Core.Bonds.WithRelationship(Settings.SystemPrompt, vars, ""), History.Memory.Recent(me.Name));
         var user = Banter.Render(Complaints.Prompt, vars).Trim();
         complaining.Add(i);
-        TalkStatus = L10n.Tr("%@ is complaining via %@…", me.Name, service.Model);
+        TalkStatus = L10n.Format(CursorMoods.Current.SpeakingUp(), new object[] { me.Name, service.Model });
         _ = WriteComplaint(service, i, me, times, situation, system, user);
     }
 
@@ -99,7 +99,7 @@ public sealed partial class Colony
     private void RecordComplaint(string line, string name, string situation,
                                  string? provider = null, string model = "", double? cost = null, int? tokens = null)
     {
-        TalkStatus = L10n.Tr("%@ complained: %@", name, line);
+        TalkStatus = L10n.Format(CursorMoods.Current.SpokeUp(), new object[] { name, line });
         History.Record(new ChatLog.Exchange
         {
             Time = DateTimeOffset.Now, Situation = situation,

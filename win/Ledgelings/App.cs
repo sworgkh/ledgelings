@@ -40,6 +40,8 @@ public sealed partial class App : Application
         // Before anything is drawn or said: the language everything looks its words up in.
         Languages.Choose(settings.Language);
         settings.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(AppSettings.Language)) Languages.Choose(settings.Language); };
+        CursorMoods.Choose(settings.CursorMood);
+        settings.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(AppSettings.CursorMood)) CursorMoods.Choose(settings.CursorMood); };
         history = new ChatHistory();
         library = new SpriteLibrary();
         spend = new SpendLedger();
@@ -103,6 +105,8 @@ public sealed partial class App : Application
         // Each language under its own name, so whoever cannot read the current one still finds theirs.
         items.Add(new TrayIcon.Item(L10n.Tr("Language"), Children: Languages.All
             .Select(l => new TrayIcon.Item(l.Title(), () => settings.Language = l, Checked: settings.Language == l)).ToList()));
+        items.Add(new TrayIcon.Item(L10n.Tr("The Cursor Is"), Children: CursorMoods.All
+            .Select(m => new TrayIcon.Item(m.Title(), () => settings.CursorMood = m, Checked: settings.CursorMood == m)).ToList()));
         items.Add(new TrayIcon.Item(L10n.Tr("Settings\u2026"), () => OpenSettings(null)));
         items.Add(TrayIcon.Item.Separator);
         items.Add(new TrayIcon.Item(L10n.Tr("Quit Ledgelings"), Shutdown));

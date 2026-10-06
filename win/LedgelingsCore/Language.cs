@@ -174,6 +174,16 @@ public sealed class Shared
     public Dictionary<string, string[]> ReminderNotes { get; init; } = new();
     public Dictionary<string, string> Holidays { get; init; } = new();
     public Dictionary<string, string> Flowers { get; init; } = new();
+    /// <summary>The cursor mood's text (SPEC §6.1.2): shipped lines and what the good and neutral moods say
+    /// instead, the lines that fit every mood, each mood's persona note and script-prompt phrase (keyed
+    /// <c>good</c>/<c>neutral</c>/<c>bad</c>), and the good and neutral complaints and their prompts.</summary>
+    public Dictionary<string, Rewrite> CursorRewrites { get; init; } = new();
+    public HashSet<string> CursorFitsEveryMood { get; init; } = new();
+    public Dictionary<string, string> CursorNotes { get; init; } = new();
+    public Dictionary<string, string> CursorAgentPhrases { get; init; } = new();
+    public Dictionary<string, string[]> ComplaintsAnyoneByMood { get; init; } = new();
+    public Dictionary<string, Dictionary<string, string[]>> ComplaintLinesByMood { get; init; } = new();
+    public Dictionary<string, string> ComplaintPromptsByMood { get; init; } = new();
     /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
@@ -221,6 +231,10 @@ public sealed class Shared
         var complaints = Get(root, "complaints");
         var reminders = Get(root, "reminders");
         var voices = Get(letters, "voices");
+        var mood = Get(root, "cursorMood");
+        var rewrites = Get(mood, "rewrites");
+        var moodComplaints = Get(mood, "complaints");
+        string[] moods = { "good", "neutral" };
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -238,6 +252,16 @@ public sealed class Shared
             Holidays = Map(Get(root, "holidays")),
             Flowers = Map(Get(root, "flowers")),
             Prompts = Map(Get(root, "prompts")),
+            CursorRewrites = rewrites.ValueKind == JsonValueKind.Object
+                ? rewrites.EnumerateObject().ToDictionary(p => p.Name,
+                    p => new Rewrite(Get(p.Value, "good").GetString() ?? "", Get(p.Value, "neutral").GetString() ?? ""))
+                : new(),
+            CursorFitsEveryMood = List(Get(mood, "fitsEveryMood")).ToHashSet(),
+            CursorNotes = Map(Get(mood, "notes")),
+            CursorAgentPhrases = Map(Get(mood, "agentPhrases")),
+            ComplaintsAnyoneByMood = moods.ToDictionary(m => m, m => List(Get(Get(moodComplaints, m), "anyone"))),
+            ComplaintLinesByMood = moods.ToDictionary(m => m, m => Lists(Get(Get(moodComplaints, m), "lines"))),
+            ComplaintPromptsByMood = Map(Get(mood, "complaintPrompts")),
         };
     }
 }

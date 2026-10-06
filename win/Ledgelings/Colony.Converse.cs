@@ -15,8 +15,8 @@ public sealed partial class Colony
         string aKind = KindOf(speaker), bKind = KindOf(listener);
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(aKind), ["speakerPersona"] = Banter.Spoken(a.Persona),
-            ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(bKind), ["listenerPersona"] = Banter.Spoken(b.Persona),
+            ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(aKind), ["speakerPersona"] = Banter.Persona(a.Persona),
+            ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(bKind), ["listenerPersona"] = Banter.Persona(b.Persona),
             ["situation"] = situation, ["line"] = "",
         };
         string system = Settings.SystemPrompt, linePrompt = Settings.LinePrompt, replyPrompt = Settings.ReplyPrompt;
@@ -67,8 +67,8 @@ public sealed partial class Colony
             TalkStatus = $"{a.Name}: {first}";
 
             // Swap seats for the answer.
-            vars["speaker"] = b.Name; vars["speakerKind"] = Banter.Spoken(bKind); vars["speakerPersona"] = Banter.Spoken(b.Persona);
-            vars["listener"] = a.Name; vars["listenerKind"] = Banter.Spoken(aKind); vars["listenerPersona"] = Banter.Spoken(a.Persona);
+            vars["speaker"] = b.Name; vars["speakerKind"] = Banter.Spoken(bKind); vars["speakerPersona"] = Banter.Persona(b.Persona);
+            vars["listener"] = a.Name; vars["listenerKind"] = Banter.Spoken(aKind); vars["listenerPersona"] = Banter.Persona(a.Persona);
             vars["line"] = first;
             var answer = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, bSide), bLately),
                                             Banter.Render(replyPrompt, vars));

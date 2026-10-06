@@ -180,10 +180,17 @@ public sealed class TeaParty
 public static class Tea
 {
     /// <summary>The current language's, character by character; English where it has none.</summary>
-    public static IReadOnlyList<string> AnyoneStories => Translated.List(Shared.Current?.TeaAnyoneStories, EnglishAnyoneStories);
-    public static IReadOnlyList<string> AnyoneReplies => Translated.List(Shared.Current?.TeaAnyoneReplies, EnglishAnyoneReplies);
-    public static IReadOnlyDictionary<string, string[]> Stories => Translated.Lists(Shared.Current?.TeaStories, EnglishStories, l => l);
-    public static IReadOnlyDictionary<string, string[]> Replies => Translated.Lists(Shared.Current?.TeaReplies, EnglishReplies, l => l);
+    // In the current language, with what is said about the cursor in the current mood.
+    public static IReadOnlyList<string> AnyoneStories => CursorMoods.Current.AdjustEach(Translated.List(Shared.Current?.TeaAnyoneStories, EnglishAnyoneStories));
+    public static IReadOnlyList<string> AnyoneReplies => CursorMoods.Current.AdjustEach(Translated.List(Shared.Current?.TeaAnyoneReplies, EnglishAnyoneReplies));
+    public static IReadOnlyDictionary<string, string[]> Stories => InMood(Translated.Lists(Shared.Current?.TeaStories, EnglishStories, l => l));
+    public static IReadOnlyDictionary<string, string[]> Replies => InMood(Translated.Lists(Shared.Current?.TeaReplies, EnglishReplies, l => l));
+
+    private static IReadOnlyDictionary<string, string[]> InMood(IReadOnlyDictionary<string, string[]> lines)
+    {
+        var m = CursorMoods.Current;
+        return m == CursorMood.Bad ? lines : lines.ToDictionary(kv => kv.Key, kv => kv.Value.Select(l => m.Adjust(l)).ToArray());
+    }
 
     public static readonly IReadOnlyList<string> EnglishAnyoneStories = new[]
     {

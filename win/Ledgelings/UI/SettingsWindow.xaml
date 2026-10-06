@@ -112,8 +112,12 @@
               <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake."/>
             </StackPanel>
           </GroupBox>
-          <GroupBox ui:Tr.Header="Patience">
+          <GroupBox ui:Tr.Header="The cursor">
             <StackPanel>
+              <DockPanel Margin="0,0,0,6">
+                <TextBlock ui:Tr.Text="The cursor is" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="CursorMoodBox" DisplayMemberPath="Title" SelectedValuePath="Mood" SelectedValue="{Binding CursorMood, Mode=TwoWay}" Width="160" HorizontalAlignment="Left"/>
+              </DockPanel>
               <CheckBox ui:Tr.Content="Complain when pushed around" IsChecked="{Binding ComplainEnabled, Mode=TwoWay}"/>
               <DockPanel Margin="0,6,0,4" IsEnabled="{Binding ComplainEnabled}">
                 <TextBlock ui:Tr.Text="Puts up with" Style="{StaticResource RowLabel}"/>
@@ -125,7 +129,7 @@
                 <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding ComplainCalmSeconds}" ui:Tr.Unit=" s"/>
                 <Slider Minimum="5" Maximum="120" TickFrequency="5" Value="{Binding ComplainCalmSeconds, Mode=TwoWay}"/>
               </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again."/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A playmate: a chase is a game of tag. Just there: they hop aside. A menace: a grudge. Chase one too often in a row and it says so in its own voice."/>
             </StackPanel>
           </GroupBox>
           <GroupBox ui:Tr.Header="Creature Actions">

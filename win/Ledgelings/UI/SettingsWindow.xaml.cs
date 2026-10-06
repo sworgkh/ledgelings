@@ -17,6 +17,7 @@ public sealed partial class SettingsWindow : Window
 
     private sealed record ColourRow(int Index, string Hex, Brush Brush);
     private sealed record LanguageChoice(Language Language, string Title);
+    private sealed record CursorMoodChoice(CursorMood Mood, string Title);
 
     public SettingsWindow(AppSettings settings, ChatHistory history, SpriteLibrary library, SpendLedger spend)
     {
@@ -26,6 +27,7 @@ public sealed partial class SettingsWindow : Window
         this.spend = spend;
         InitializeComponent();
         LanguageBox.ItemsSource = Languages.All.Select(l => new LanguageChoice(l, l.Title())).ToList();
+        ShowCursorMoods();
         DataContext = settings;
         settings.PropertyChanged += (_, e) =>
         {
@@ -79,12 +81,20 @@ public sealed partial class SettingsWindow : Window
             string.Join(" ", Banter.Placeholders.Select(p => "{" + p + "}")));
     }
 
+    /// <summary>The cursor moods under their names in the current language, the chosen one kept.</summary>
+    private void ShowCursorMoods()
+    {
+        CursorMoodBox.ItemsSource = CursorMoods.All.Select(m => new CursorMoodChoice(m, m.Title())).ToList();
+        CursorMoodBox.SelectedValue = settings.CursorMood;
+    }
+
     /// <summary>A new language while the window is open: every label, footer and list again, in it.
     /// The app has chosen it already (<see cref="Languages.Choose"/> runs first, from the launch).</summary>
     private void ShowLanguage()
     {
         Tr.Refresh();
         ShowFooters();
+        ShowCursorMoods();
         LmStatus.Text = OrStatus.Text = LocalCheckStatus.Text = L10n.Tr("not checked");
         LoginStatus.Text = LaunchAtLogin.Status;
         RefreshBrain();

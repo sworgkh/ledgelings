@@ -267,10 +267,18 @@ public static partial class Reminders
     /// <summary>What each built-in character writes above your reminder, in its own
     /// voice. <c>{reminder}</c> is what you asked to be reminded of. A character the
     /// user invented uses <see cref="Anyone"/>. Both in the current language.</summary>
-    public static IReadOnlyList<string> Anyone => Translated.List(Shared.Current?.RemindersAnyone, EnglishAnyone);
+    public static IReadOnlyList<string> Anyone => CursorMoods.Current.AdjustEach(Translated.List(Shared.Current?.RemindersAnyone, EnglishAnyone));
 
-    public static IReadOnlyDictionary<string, IReadOnlyList<string>> Notes =>
-        Translated.Lists<IReadOnlyList<string>>(Shared.Current?.ReminderNotes, EnglishNotes, l => l);
+    /// <summary>With what is said about the cursor in the current mood.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> Notes
+    {
+        get
+        {
+            var notes = Translated.Lists<IReadOnlyList<string>>(Shared.Current?.ReminderNotes, EnglishNotes, l => l);
+            var m = CursorMoods.Current;
+            return m == CursorMood.Bad ? notes : notes.ToDictionary(kv => kv.Key, kv => m.AdjustEach(kv.Value));
+        }
+    }
 
     public static readonly IReadOnlyList<string> EnglishAnyone = new[]
     {
