@@ -15,10 +15,10 @@ public sealed partial class Script
     public static string EnglishAgentPrompt(IReadOnlyList<Character> cast, int count = 40)
     {
         var who = cast.Count == 0 ? "" : "\nThe creatures who might be talking (a line must work for any of them, so never use a name; write {speaker} and {listener} instead):\n"
-            + string.Join("\n", cast.Select(c => $"- {c.Name}: {c.Persona}")) + "\n";
+            + string.Join("\n", cast.Select(c => $"- {c.Name}: {CursorMoods.Current.Persona(c.Persona)}")) + "\n";
         return
             $"Write {count} short conversations between two small pixel creatures who live on the edges of a computer screen. " +
-            "They crawl along the bottom, the sides and the ceiling, flee the mouse cursor, sleep at night, and sometimes walk into each other. " +
+            $"They crawl along the bottom, the sides and the ceiling, {CursorMoods.Current.AgentPhrase()}, sleep at night, and sometimes walk into each other. " +
             "Each conversation happens when one creature walks into another. Make them funny, teasing, a little odd; never mean-spirited.\n" +
             "\n" +
             "Format, exactly:\n" +
@@ -54,10 +54,10 @@ public sealed partial class Script
     public static string RussianAgentPrompt(IReadOnlyList<Character> cast, int count = 40)
     {
         var who = cast.Count == 0 ? "" : "\nСущества, которые могут разговаривать (реплика должна подходить любому из них, поэтому никогда не пиши имён; пиши {speaker} и {listener}):\n"
-            + string.Join("\n", cast.Select(c => $"- {c.Name}: {Banter.Spoken(c.Persona)}")) + "\n";
+            + string.Join("\n", cast.Select(c => $"- {c.Name}: {Banter.Spoken(CursorMoods.Current.Persona(c.Persona))}")) + "\n";
         return
             $"Напиши {count} коротких разговоров (столько блоков) между двумя маленькими пиксельными существами, которые живут на краях экрана компьютера. " +
-            "Они ползают по нижнему краю, по бокам и по потолку, убегают от курсора мыши, ночью спят, а иногда врезаются друг в друга. " +
+            $"Они ползают по нижнему краю, по бокам и по потолку, {CursorMoods.Current.AgentPhrase()}, ночью спят, а иногда врезаются друг в друга. " +
             "Каждый разговор случается, когда одно существо врезается в другое. Пусть будет смешно, с подколками и немного странно, но никогда не зло.\n" +
             "\n" +
             "Пиши по-русски. Существа говорят друг другу «ты». Мы не знаем их пола, поэтому избегай прошедшего времени " +

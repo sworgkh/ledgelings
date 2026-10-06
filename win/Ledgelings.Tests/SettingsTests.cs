@@ -20,6 +20,20 @@ public class SettingsTests
     private static Sandbox Fresh() => new();
 
     [Fact]
+    public void TheCursorIsAMenaceByDefaultAndAChoiceIsRemembered()
+    {
+        var box = Fresh();
+        Assert.Equal(CursorMood.Bad, box.Settings.CursorMood);
+        foreach (var m in CursorMoods.All)
+        {
+            box.Settings.CursorMood = m;
+            Assert.Equal(m, box.Again().CursorMood);
+        }
+        box.Store.Set("cursorMood", "grumpy");
+        Assert.Equal(CursorMood.Bad, box.Again().CursorMood);      // an unknown value falls back
+    }
+
+    [Fact]
     public void FollowingTheGiverIsOnByDefaultAndRemembered()
     {
         var box = Fresh();

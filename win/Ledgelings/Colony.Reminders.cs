@@ -359,7 +359,7 @@ public sealed partial class Colony
         var me = CharacterFor(i);
         var vars = new Dictionary<string, string>
         {
-            ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Spoken(me.Persona),
+            ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Persona(me.Persona),
             ["listener"] = L10n.Tr("you"), ["listenerKind"] = L10n.Tr("the person at the computer"),
             ["listenerPersona"] = L10n.Tr("The person whose screen you all live on."),
             ["situation"] = AlmanacSentence, ["reminder"] = mail.Reminder.Text,

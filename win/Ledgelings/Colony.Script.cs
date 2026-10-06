@@ -29,7 +29,8 @@ public sealed partial class Colony
         recentLines = recentLines.Where(i => i != chosen).Append(chosen).TakeLast(script.Conversations.Count).ToList();
         var a = CharacterFor(speaker);
         var b = CharacterFor(listener);
-        var lines = script.Conversations[chosen].Lines.Select((line, i) =>
+        // A shipped conversation about the cursor, as the cursor mood has it.
+        var lines = CursorMoods.Current.Adjust(script.Conversations[chosen].Lines).Select((line, i) =>
         {
             var mine = i % 2 == 0;
             return (Who: mine ? speaker : listener,

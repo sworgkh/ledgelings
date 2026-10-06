@@ -15,13 +15,19 @@ public static class Letters
     /// <param name="Notes">Notes it folds into a plane.</param>
     /// <param name="Musings">What it mutters to itself after reading a note, from anyone.</param>
     /// <param name="Replies">What it writes back, once, to whoever sent it a plane.</param>
-    public sealed record Voice(IReadOnlyList<string> Topics, IReadOnlyList<string> Notes, IReadOnlyList<string> Musings, IReadOnlyList<string> Replies);
+    public sealed record Voice(IReadOnlyList<string> Topics, IReadOnlyList<string> Notes, IReadOnlyList<string> Musings, IReadOnlyList<string> Replies)
+    {
+        /// <summary>This voice with its lines about the cursor as <paramref name="m"/> says them.</summary>
+        public Voice InMood(CursorMood m) => m == CursorMood.Bad ? this : new(Topics, m.AdjustEach(Notes), m.AdjustEach(Musings), m.AdjustEach(Replies));
+    }
 
-    /// <summary>For a character the user invented, in the current language.</summary>
-    public static Voice Anyone => InLanguage(Languages.Current).Anyone;
+    /// <summary>For a character the user invented, in the current language and cursor mood.</summary>
+    public static Voice Anyone => InLanguage(Languages.Current).Anyone.InMood(CursorMoods.Current);
 
-    /// <summary>Each built-in character's voice, in the current language.</summary>
-    public static IReadOnlyDictionary<string, Voice> Voices => InLanguage(Languages.Current).Voices;
+    /// <summary>Each built-in character's voice, in the current language and cursor mood.</summary>
+    public static IReadOnlyDictionary<string, Voice> Voices => CursorMoods.Current == CursorMood.Bad
+        ? InLanguage(Languages.Current).Voices
+        : InLanguage(Languages.Current).Voices.ToDictionary(kv => kv.Key, kv => kv.Value.InMood(CursorMoods.Current));
 
     private static readonly Dictionary<Language, (Voice Anyone, IReadOnlyDictionary<string, Voice> Voices)> built = new();
 
