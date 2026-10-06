@@ -3,7 +3,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, sprites, talk, flowers, bonds, calendar, reminders, voice, costs, chats }
+enum SettingsTab: Hashable { case creatures, chases, sprites, talk, flowers, bonds, calendar, reminders, voice, costs, chats }
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
@@ -18,6 +18,7 @@ struct SettingsView: View {
     @ObservedObject var spend: SpendLedger
     @ObservedObject var bonds: BondBook
     @ObservedObject var reminders: ReminderBook
+    @ObservedObject var hunts: HuntBook
     @ObservedObject var voice: Voice
     @ObservedObject var navigation: SettingsNavigation
     /// Deliver a reminder now.
@@ -28,6 +29,7 @@ struct SettingsView: View {
     var body: some View {
         TabView(selection: $navigation.tab) {
             creaturesTab.tabItem { Text(tr("Creatures")) }.tag(SettingsTab.creatures)
+            ChasesSettingsView(settings: settings, library: library, hunts: hunts).tabItem { Text(tr("Chases")) }.tag(SettingsTab.chases)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
@@ -266,6 +268,7 @@ final class SettingsWindowController {
     private let spend: SpendLedger
     private let bonds: BondBook
     private let reminders: ReminderBook
+    private let hunts: HuntBook
     private let voice: Voice
     private let send: (Reminders.Reminder) -> Void
     private let clearGarden: () -> Int
@@ -273,7 +276,7 @@ final class SettingsWindowController {
     private var retitle: AnyCancellable?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
-         reminders: ReminderBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void,
+         reminders: ReminderBook, hunts: HuntBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void,
          clearGarden: @escaping () -> Int = { 0 }) {
         self.settings = settings
         self.history = history
@@ -281,6 +284,7 @@ final class SettingsWindowController {
         self.spend = spend
         self.bonds = bonds
         self.reminders = reminders
+        self.hunts = hunts
         self.voice = voice
         self.send = send
         self.clearGarden = clearGarden
@@ -289,7 +293,7 @@ final class SettingsWindowController {
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, voice: voice, navigation: navigation, send: send, clearGarden: clearGarden))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, voice: voice, navigation: navigation, send: send, clearGarden: clearGarden))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }

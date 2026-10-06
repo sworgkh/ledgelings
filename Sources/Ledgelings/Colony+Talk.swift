@@ -76,6 +76,8 @@ extension Colony {
 
         if !almanac.isEmpty { situation = almanac + " " + situation }
         if let event { situation += " " + event }
+        let counts = huntSentence([speaker, listener])
+        if !counts.isEmpty { situation += " " + counts }
         if settings.brain == .script {
             return recite(from: speaker, to: listener, flower: flower, situation: situation)
         }

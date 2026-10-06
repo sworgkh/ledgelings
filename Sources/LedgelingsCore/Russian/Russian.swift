@@ -17,5 +17,6 @@ extension Strings {
         "linesPrompts": ruLinesPrompts,
         "personas": ruPersonas,
         "cursorMood": ruCursorMood,
+        "hunts": ruHunts,
     ]
 }

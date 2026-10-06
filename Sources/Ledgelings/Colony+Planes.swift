@@ -108,7 +108,8 @@ extension Colony {
         let aKind = kind(ofCreature: from), bKind = kind(ofCreature: to)
         var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.persona(a.persona),
                     "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.persona(b.persona),
-                    "situation": almanac, "line": answering ?? ""]
+                    "situation": [almanac, huntSentence([from, to])].filter { !$0.isEmpty }.joined(separator: " "),
+                    "line": answering ?? ""]
         let system = settings.systemPrompt
         let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
         let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
@@ -244,7 +245,7 @@ extension Colony {
         let from = mail.plane.from, to = mail.plane.to
         let a = character(forCreature: from).name, b = character(forCreature: to).name
         let modelWrote = mail.note != nil, modelMused = mail.musing != nil
-        let note = mail.note ?? (mail.isReply ? Letters.reply(by: a, to: b, memory: history.memory, using: &rng)
+        let note = mail.note ?? huntLineInstead(from) ?? (mail.isReply ? Letters.reply(by: a, to: b, memory: history.memory, using: &rng)
                                     : Letters.note(by: a, to: b, memory: history.memory, using: &rng))
         let musing = mail.musing ?? Letters.musing(by: b, from: a, memory: history.memory, using: &rng)
         mail.note = note

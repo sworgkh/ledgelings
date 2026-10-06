@@ -36,6 +36,8 @@ import Testing
                                "neutral": ["anyone": Complaints.anyones(for: .neutral)(l), "lines": Complaints.lineSets(for: .neutral)(l)]],
                 "complaintPrompts": ["good": Complaints.prompts(for: .good)(l), "neutral": Complaints.prompts(for: .neutral)(l)],
             ],
+            "hunts": Dictionary(uniqueKeysWithValues: CursorMood.allCases.map { mood in
+                (mood.rawValue, ["anyone": Hunts.anyones(for: mood)(l), "lines": Hunts.lineSets(for: mood)(l)] as [String: Any]) }),
             "holidays": Almanac.holidayNames[l] ?? [:],
             "flowers": Gifts.names(l),
             "prompts": [

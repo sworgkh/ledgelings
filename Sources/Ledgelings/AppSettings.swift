@@ -50,6 +50,21 @@ final class AppSettings: ObservableObject {
     /// to `CursorMood.choose`; prompts, built-in lines and complaints follow it.
     @Published var cursorMood: CursorMood { didSet { save(cursorMood.rawValue, "cursorMood") } }
 
+    // MARK: Chases
+
+    /// Percent of the moments they could bring their count up that they do.
+    static let huntTalkChanceRange = 0.0...100.0
+    /// Hunts in one day before a creature keeps further from the cursor (menace mood only).
+    static let huntWaryAfterRange = 5...200
+    /// Count every chase and pick-up, per character: today, this week, in all (`Hunts`).
+    @Published var huntCountEnabled: Bool { didSet { save(huntCountEnabled, "huntCountEnabled") } }
+    /// The creatures know their count: it reaches the prompts and the built-in lines.
+    @Published var huntTalkEnabled: Bool { didSet { save(huntTalkEnabled, "huntTalkEnabled") } }
+    @Published var huntTalkChance: Double { didSet { save(huntTalkChance, "huntTalkChance") } }
+    /// In the menace mood, much-hunted creatures jump away from further off.
+    @Published var huntWary: Bool { didSet { save(huntWary, "huntWary") } }
+    @Published var huntWaryAfter: Int { didSet { save(huntWaryAfter, "huntWaryAfter") } }
+
     // MARK: Tea parties
 
     /// Share of bumps, in percent, that become a tea party instead of a quick word.
@@ -300,6 +315,15 @@ final class AppSettings: ObservableObject {
         complainCalmSeconds = min(max(calm, Self.complainCalmRange.lowerBound), Self.complainCalmRange.upperBound)
         // A menace: how the creatures were first written, so nobody's colony changes its mind unasked.
         cursorMood = defaults.string(forKey: "cursorMood").flatMap(CursorMood.init(rawValue:)) ?? .bad
+        huntCountEnabled = defaults.object(forKey: "huntCountEnabled") as? Bool ?? true
+        huntTalkEnabled = defaults.object(forKey: "huntTalkEnabled") as? Bool ?? true
+        // One moment in four: often enough that the numbers come up every so often, rarely enough that they are not all anyone talks about.
+        let huntChance = defaults.object(forKey: "huntTalkChance") as? Double ?? 25
+        huntTalkChance = min(max(huntChance, Self.huntTalkChanceRange.lowerBound), Self.huntTalkChanceRange.upperBound)
+        huntWary = defaults.object(forKey: "huntWary") as? Bool ?? true
+        // Twenty in a day: a creature chased that much has a reason to keep its distance.
+        let wary = defaults.object(forKey: "huntWaryAfter") as? Int ?? 20
+        huntWaryAfter = min(max(wary, Self.huntWaryAfterRange.lowerBound), Self.huntWaryAfterRange.upperBound)
         teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
         actionsStayOpen = defaults.object(forKey: "actionsStayOpen") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.

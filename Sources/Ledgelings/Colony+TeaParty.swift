@@ -152,6 +152,8 @@ extension Colony {
         var situation = timeOfDay + " "
             + tr("%@ and %@ have put a little table out %@ and are sitting down to tea together.", a, b, onEdge(creatures[teller]))
         if !almanac.isEmpty { situation = almanac + " " + situation }
+        let counts = huntSentence([teller, listener])
+        if !counts.isEmpty { situation += " " + counts }
         return situation
     }
 
@@ -258,7 +260,7 @@ extension Colony {
     private func builtInTeaRound(teller: Int, listener: Int) {
         let count = teaCount
         let a = character(forCreature: teller).name, b = character(forCreature: listener).name
-        let story = Tea.story(by: a, avoiding: teaTold, using: &rng)
+        let story = huntLineInstead(teller) ?? Tea.story(by: a, avoiding: teaTold, using: &rng)
         teaTold.insert(story)
         let reply = Tea.reply(by: b, to: a, using: &rng)
         let lines = [(who: teller, text: story, builtIn: true), (who: listener, text: reply, builtIn: true)]

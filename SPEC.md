@@ -307,6 +307,50 @@ character in `good` and `neutral`, `{times}` in at least one, plus `anyone`) and
 its own prompt; the menu status reads "is complaining", "is teasing you" or "is
 talking to you" to match.
 
+### 4.7.2 Counting the hunts
+
+Every bother (§4.7.1) is also a **hunt**, counted whether complaints are on or
+not, as long as `huntCountEnabled` is on. `Hunts.Book` keeps a tally per
+character name: a count per calendar day (`"2026-10-06"`, the user's own time
+zone and calendar), and a count in all. From it, at any moment: **today**,
+**yesterday**, **this week** (from the week's first day as the system's locale
+has it, `Calendar.dateInterval(of: .weekOfYear)`, through today), **in all**, the
+best day before today, and the days of this week before today. Days older than
+92 are let go on the next count; the count in all is kept. It is saved to
+`hunts.json` beside `bonds.json` on every count, with `since`, the moment of the
+first count after a start or reset, so it survives a relaunch. Kept by name: a
+renamed character starts from zero. Reset clears one character or all.
+
+The creatures know their count, when `huntTalkEnabled` is on, and add no model
+call of their own:
+
+- **In the prompts.** `Hunts.sentence` for the speaker (and listener) joins
+  `{situation}`: "Today the user's cursor has chased or picked up Blocky 7 times
+  (yesterday 3 times), 10 times this week and 412 times in all." Then, as they
+  apply: "Today has been quiet so far." / "That is more than yesterday already." /
+  "That is fewer than yesterday."; "Earlier days this week averaged 3." when today
+  is at least twice that average; "It is Blocky's most hunted day on record." past
+  a best day of 5 or more; "Blocky is the most hunted of everyone on screen today."
+  Then the mood (§6.1.2): `good` "keeps this score proudly, like a game being won",
+  `neutral` "knows these numbers and is matter-of-fact about them", `bad` "keeps it
+  as a tally of grievances", and "may bring the numbers up, or compare them, if it
+  fits." A character never hunted gets nothing. A complaint always carries it; a
+  conversation, a tea round and a paper plane carry it `huntTalkChance` percent of
+  the time.
+- **Built-in lines.** `Hunts.lines` (two per built-in character per mood, in its
+  voice, and `anyone` for an invented one; English and Russian, line for line)
+  with `{today}`, `{week}` and `{all}`. Only said when today's count is 2 or more.
+  `huntTalkChance` percent of the time a built-in complaint, a built-in tea story
+  or a built-in paper-plane note is a count line instead. A **milestone** is said
+  at once, as a bubble of its own, when the creature is free (not talking, no
+  bubble up, the voice free) and talk is on: today reaching 10, 25, 50, 100, 200,
+  300 or 500; all reaching 100, 250, 500, 1000, 2500, 5000 or 10 000; or the first
+  hunt past a best day of 5 or more. That bother then does not complain. It goes
+  to the chat log as a one-line built-in exchange.
+- **Wariness.** In the `bad` mood, with `huntWary` on, a creature hunted
+  `huntWaryAfter` times today has its flee radius (§5.2) times 1.35 until the day
+  turns. Re-applied on every count and every settings change.
+
 ### 4.8 Meeting someone
 
 - `meet(facing, for = 30 s)`: refused while jumping, asleep-looking or held.
@@ -1714,6 +1758,11 @@ An error for want of a model reads as that note, never as a server refusal.
 | complainAfter | 4 | 1–20, clamped on load: bothers it puts up with; the next one in a row gets a complaint |
 | complainCalmSeconds | 20 | 5–120 s, clamped on load: a gap this long starts the count over |
 | cursorMood | `bad` | `good`, `neutral`, `bad`; an unknown value reads as `bad`; applied live (§6.1.2) |
+| huntCountEnabled | true | every chase and pick-up is counted per character, today / this week / in all (§4.7.2) |
+| huntTalkEnabled | true | the creatures know their count: prompts, built-in lines, milestones (§4.7.2) |
+| huntTalkChance | 25 | 0–100 %, clamped on load: share of conversations, tea rounds, planes and built-in complaints that bring the count up |
+| huntWary | true | in the `bad` mood a much-hunted creature jumps from further off (§4.7.2) |
+| huntWaryAfter | 20 | 5–200, clamped on load: hunts in one day before it does |
 | actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
@@ -1767,12 +1816,13 @@ An error for want of a model reads as that note, never as a server refusal.
 | reminderReadAloud | true | with voice on, the thrower reads its note out loud |
 | reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, the Reminders tab |
 
-The reminders themselves are in `reminders.json`, not the preferences (§7.7).
+The reminders themselves are in `reminders.json`, not the preferences (§7.7),
+and the hunt counts in `hunts.json` (§4.7.2).
 
-Settings window: 1100×760 points, ten tabs, each laid out as two columns
+Settings window: 1100×760 points, eleven tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
-colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Talk**: talk toggle,
+colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Chases**: counting toggle; talking about it (toggle, how often); wariness (toggle, after how many in a day); the count per character on screen and anyone else counted, today / this week / in all with a Reset each, the total, since when, the file and Reset All… (confirmed). **Talk**: talk toggle,
 bubble slider, paper-plane toggle and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),

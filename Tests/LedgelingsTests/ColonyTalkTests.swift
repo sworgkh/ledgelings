@@ -553,6 +553,8 @@ extension ColonyTalkTests {
         let w = try World()
         defer { w.forget() }
         w.settings.creatureCount = 1          // nobody else on top of it to catch the press
+        // The complaint itself, never a count line or a milestone (HuntsSettingsTests has those).
+        w.settings.huntTalkEnabled = false
         w.colony.applySettings()
         let name = w.colony.character(forCreature: 0).name
         func grab() {
