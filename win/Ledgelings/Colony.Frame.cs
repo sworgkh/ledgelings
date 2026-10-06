@@ -39,8 +39,8 @@ public sealed partial class Colony
                 if (size == sizes[i]) continue;
                 sizes[i] = size;
                 creatures[i].Rehome(World(size));
-                creatures[i].Settings.FleeRadius = FleeRadius(size);
             }
+            ApplyWariness();
 
             frames.Clear();
             for (int i = 0; i < creatures.Count; i++)
@@ -165,6 +165,8 @@ public sealed partial class Colony
     partial void Bothered(int i);
     /// <summary>The colony changed size, or its patience did (Complaints).</summary>
     partial void ForgetAnnoyance();
+    /// <summary>How far off each creature jumps from the cursor: its size, and how hunted it is (Hunts).</summary>
+    partial void ApplyWariness();
     /// <summary>Creature <paramref name="i"/>'s bubble is about to be taken down (Voice: a voiced line ends its turn).</summary>
     partial void BubbleGone(int i);
     partial void UpdateGarden();

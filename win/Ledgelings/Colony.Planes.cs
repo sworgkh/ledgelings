@@ -161,7 +161,8 @@ public sealed partial class Colony
         {
             ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(aKind), ["speakerPersona"] = Banter.Persona(a.Persona),
             ["listener"] = b.Name, ["listenerKind"] = Banter.Spoken(bKind), ["listenerPersona"] = Banter.Persona(b.Persona),
-            ["situation"] = AlmanacSentence, ["line"] = answering ?? "",
+            ["situation"] = string.Join(" ", new[] { AlmanacSentence, HuntSentence(new[] { from, to }) }.Where(s => s.Length > 0)),
+            ["line"] = answering ?? "",
         };
         var system = Settings.SystemPrompt;
         string aSide = Relationship(from, to), bSide = Relationship(to, from);
@@ -316,7 +317,7 @@ public sealed partial class Colony
         int from = mail.Plane.From, to = mail.Plane.To;
         string a = CharacterFor(from).Name, b = CharacterFor(to).Name;
         bool modelWrote = mail.Note is not null, modelMused = mail.Musing is not null;
-        var note = mail.Note ?? (mail.IsReply ? Letters.Reply(a, b, rng, History.Memory) : Letters.Note(a, b, rng, History.Memory));
+        var note = mail.Note ?? HuntLineInstead(from) ?? (mail.IsReply ? Letters.Reply(a, b, rng, History.Memory) : Letters.Note(a, b, rng, History.Memory));
         var musing = mail.Musing ?? Letters.Musing(b, a, rng, History.Memory);
         mail.Note = note;
         mail.Musing = musing;

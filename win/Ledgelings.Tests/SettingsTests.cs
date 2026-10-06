@@ -34,6 +34,25 @@ public class SettingsTests
     }
 
     [Fact]
+    public void ChasesAreCountedAndTalkedAboutByDefaultAndAChangeIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.HuntCountEnabled && s.HuntTalkEnabled && s.HuntWary);
+        Assert.Equal(25, s.HuntTalkChance);
+        Assert.Equal(20, s.HuntWaryAfter);
+        s.HuntCountEnabled = false; s.HuntTalkEnabled = false; s.HuntTalkChance = 60; s.HuntWary = false; s.HuntWaryAfter = 45;
+        var again = box.Again();
+        Assert.False(again.HuntCountEnabled || again.HuntTalkEnabled || again.HuntWary);
+        Assert.Equal(60, again.HuntTalkChance);
+        Assert.Equal(45, again.HuntWaryAfter);
+        box.Store.Set("huntTalkChance", 500.0);
+        box.Store.Set("huntWaryAfter", 1);
+        Assert.Equal(100, box.Again().HuntTalkChance);      // clamped on load
+        Assert.Equal(5, box.Again().HuntWaryAfter);
+    }
+
+    [Fact]
     public void FollowingTheGiverIsOnByDefaultAndRemembered()
     {
         var box = Fresh();

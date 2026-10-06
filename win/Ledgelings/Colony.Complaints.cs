@@ -22,8 +22,10 @@ public sealed partial class Colony
     /// <summary>Creature <paramref name="i"/> was just chased off its edge by the cursor, or picked up.</summary>
     partial void Bothered(int i)
     {
+        // Counted first: a creature remarking on its count does not complain over it.
+        var remarked = Hunted(i);
         if (!Settings.ComplainEnabled || i < 0 || i >= creatures.Count) return;
-        if (!annoyance.Bothered(i, Elapsed)) return;
+        if (!annoyance.Bothered(i, Elapsed) || remarked) return;
         Complain(i);
     }
 
@@ -35,13 +37,15 @@ public sealed partial class Colony
         var times = annoyance.Streak(i, Elapsed);
         annoyance.Forgive(i);
         var me = CharacterFor(i);
-        var situation = string.Join(" ", new[] { AlmanacSentence, Describe(i) + ".", L10n.Tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.Name, times) }
+        var situation = string.Join(" ", new[] { AlmanacSentence, Describe(i) + ".", L10n.Tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.Name, times),
+                                             HuntSentence(new[] { i }, always: true) }
             .Where(s => s.Length > 0));
         var service = Settings.TalkEnabled && Settings.Brain != BrainKind.Script ? Settings.ChatClient() : null;
         if (service is null)
         {
-            var line = Complaints.Line(me.Name, times, rng);
-            Say(line, i, builtIn: true);
+            var tally = HuntLineInstead(i);
+            var line = tally ?? Complaints.Line(me.Name, times, rng);
+            Say(line, i, builtIn: tally is null);
             RecordComplaint(line, me.Name, situation);
             return;
         }
@@ -90,7 +94,7 @@ public sealed partial class Colony
         // Gone, or talking by now: the moment has passed.
         if (i >= creatures.Count || CharacterFor(i).Name != me.Name || busy.Contains(i)) return;
         var modelWrote = line.Length > 0;
-        if (!modelWrote) line = Complaints.Line(me.Name, times, rng);
+        if (!modelWrote) line = HuntLineInstead(i) ?? Complaints.Line(me.Name, times, rng);
         Say(line, i, builtIn: !modelWrote);
         RecordComplaint(line, me.Name, situation, modelWrote ? service.ProviderTitle : null, service.Model, cost, tokens);
     }

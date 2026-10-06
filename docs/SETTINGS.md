@@ -137,7 +137,7 @@ up (a plain press on a sleeper, or a Shift-drag).
 counted, with today, this week and in all, and **Reset** for each; **Everyone**,
 the total; since when it has been counting. Kept by name: rename a character and
 it starts from zero. **Reset All…** (asks first) clears everyone. The count is
-in `hunts.json` beside the chats, path shown.
+in `hunts.json` beside the chats, path shown. On Windows the tab is one column, in the same order, with **Show in Explorer** beside the file, and the week starts on the first day of the week of the system's region format.
 
 ## Sprites tab
 

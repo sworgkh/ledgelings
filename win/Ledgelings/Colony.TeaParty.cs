@@ -183,6 +183,8 @@ public sealed partial class Colony
             + L10n.Tr("%@ and %@ have put a little table out %@ and are sitting down to tea together.", a, b, OnEdge(creatures[teller]));
         var almanac = AlmanacSentence;
         if (almanac.Length > 0) situation = almanac + " " + situation;
+        var counts = HuntSentence(new[] { teller, listener });
+        if (counts.Length > 0) situation += " " + counts;
         return situation;
     }
 
@@ -310,7 +312,7 @@ public sealed partial class Colony
         var count = teaCount;
         var a = CharacterFor(teller).Name;
         var b = CharacterFor(listener).Name;
-        var story = Tea.Story(a, teaTold, rng);
+        var story = HuntLineInstead(teller) ?? Tea.Story(a, teaTold, rng);
         teaTold.Add(story);
         var reply = Tea.Reply(b, a, rng);
         var lines = new[] { (Who: teller, Text: story, BuiltIn: true), (Who: listener, Text: reply, BuiltIn: true) };
