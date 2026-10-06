@@ -8,6 +8,15 @@ extension Strings {
         "a small pixel creature": "маленькое пиксельное существо",
         "Grumpy and proud. Hates the mouse cursor. Thinks the bottom edge is the only respectable edge.":
             "Ворчливый гордец. Ненавидит курсор мыши. Считает нижний край единственным приличным краем.",
+        // Blocky and Glitch as the good and neutral cursor moods have them (`CursorMood.personas`)
+        "Grumpy and proud. Secretly loves racing the mouse cursor and would never admit it. Thinks the bottom edge is the only respectable edge.":
+            "Ворчливый гордец. Втайне обожает гоняться с курсором мыши наперегонки, но ни за что не признается. Считает нижний край единственным приличным краем.",
+        "Grumpy and proud. Thinks the bottom edge is the only respectable edge.":
+            "Ворчливый гордец. Считает нижний край единственным приличным краем.",
+        "Occasionally repeats a word word. Scanned the cursor once: it is a friend friend.":
+            "Иногда повторяет слово слово. Однажды просканировал курсор: это друг друг.",
+        "Occasionally repeats a word word. Runs virus scans on everything, out of habit.":
+            "Иногда повторяет слово слово. По привычке проверяет на вирусы всё подряд.",
         "Cheerful and easily impressed. Loves the ceiling. Laughs at everything, including insults.":
             "Весёлый, всему удивляется. Обожает потолок. Смеётся над всем, даже над обидами.",
         "Old and philosophical. Speaks slowly, quotes wisdom he made up, sighs a lot.":

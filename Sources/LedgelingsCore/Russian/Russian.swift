@@ -16,5 +16,6 @@ extension Strings {
         "teaPrompts": ruTeaPrompts,
         "linesPrompts": ruLinesPrompts,
         "personas": ruPersonas,
+        "cursorMood": ruCursorMood,
     ]
 }

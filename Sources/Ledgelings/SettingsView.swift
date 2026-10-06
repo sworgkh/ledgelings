@@ -104,6 +104,9 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker(tr("The cursor is"), selection: $settings.cursorMood) {
+                    ForEach(CursorMood.allCases, id: \.self) { Text(verbatim: $0.title).tag($0) }
+                }
                 Toggle(tr("Complain when pushed around"), isOn: $settings.complainEnabled)
                 Stepper(value: $settings.complainAfter, in: AppSettings.complainAfterRange) {
                     LabeledContent(tr("Puts up with"), value: tr("%d in a row", settings.complainAfter))
@@ -112,9 +115,9 @@ struct SettingsView: View {
                 SliderRow(tr("Calms down after"), value: $settings.complainCalmSeconds, in: AppSettings.complainCalmRange, step: 5, unit: tr(" s"))
                     .disabled(!settings.complainEnabled)
             } header: {
-                Text(tr("Patience"))
+                Text(tr("The cursor"))
             } footer: {
-                Text(tr("Chase a creature with the cursor or pick it up more than this many times in a row, and it tells you off in its own voice. Leave it alone this long and it starts counting again."))
+                Text(tr("A playmate: a chase is a game of tag. Just there: they hop aside. A menace: a grudge. Chase one too often in a row and it says so in its own voice."))
             }
 
             Section {

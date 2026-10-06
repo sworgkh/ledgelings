@@ -167,8 +167,8 @@ extension Colony {
         let a = character(forCreature: teller), b = character(forCreature: listener)
         let aKind = kind(ofCreature: teller), bKind = kind(ofCreature: listener)
         let situation = teaSituation(teller, listener)
-        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.spoken(a.persona),
-                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.spoken(b.persona),
+        var vars = ["speaker": a.name, "speakerKind": Banter.spoken(aKind), "speakerPersona": Banter.persona(a.persona),
+                    "listener": b.name, "listenerKind": Banter.spoken(bKind), "listenerPersona": Banter.persona(b.persona),
                     "situation": situation, "party": Tea.transcript(teaLines), "line": ""]
         let aSide = relationship(of: teller, with: listener), bSide = relationship(of: listener, with: teller)
         let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
@@ -220,8 +220,8 @@ extension Colony {
                 talkStatus = "\(a.name): \(first)"
 
                 // Swap seats for the answer.
-                vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.spoken(b.persona)
-                vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.spoken(a.persona)
+                vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.persona(b.persona)
+                vars["listener"] = a.name; vars["listenerKind"] = Banter.spoken(aKind); vars["listenerPersona"] = Banter.persona(a.persona)
                 vars["line"] = first
                 vars["party"] = Tea.transcript(teaLines)
                 let answer = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(Tea.systemPrompt, vars, context: bSide), bLately),

@@ -26,6 +26,16 @@ import Testing
                     "anyoneStories": Tea.anyoneStoryBooks(l), "anyoneReplies": Tea.anyoneReplyBooks(l)],
             "complaints": ["anyone": Complaints.anyones(l), "lines": Complaints.lineSets(l)],
             "reminders": ["anyone": Reminders.anyones(l), "notes": Reminders.noteSets(l)],
+            "cursorMood": [
+                "rewrites": CursorMood.rewrites(l).mapValues { ["good": $0.good, "neutral": $0.neutral] },
+                "fitsEveryMood": CursorMood.fitsEveryMood(l).sorted(),
+                "notes": ["good": CursorMood.notes(.good)(l), "neutral": CursorMood.notes(.neutral)(l)],
+                "agentPhrases": Dictionary(uniqueKeysWithValues: CursorMood.allCases.map { mood in
+                    (mood.rawValue, Language.$override.withValue(l) { mood.agentPhrase }) }),
+                "complaints": ["good": ["anyone": Complaints.anyones(for: .good)(l), "lines": Complaints.lineSets(for: .good)(l)],
+                               "neutral": ["anyone": Complaints.anyones(for: .neutral)(l), "lines": Complaints.lineSets(for: .neutral)(l)]],
+                "complaintPrompts": ["good": Complaints.prompts(for: .good)(l), "neutral": Complaints.prompts(for: .neutral)(l)],
+            ],
             "holidays": Almanac.holidayNames[l] ?? [:],
             "flowers": Gifts.names(l),
             "prompts": [

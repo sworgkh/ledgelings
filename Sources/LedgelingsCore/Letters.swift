@@ -17,13 +17,19 @@ public enum Letters {
         public var musings: [String]
         /// What it writes back, once, to whoever sent it a plane.
         public var replies: [String]
+
+        /// This voice with its lines about the cursor as `mood` says them.
+        public func inMood(_ mood: CursorMood) -> Voice {
+            Voice(topics: topics, notes: notes.map(mood.adjust), musings: musings.map(mood.adjust), replies: replies.map(mood.adjust))
+        }
     }
 
     /// Every voice in the current language: the Russian ones are in `Letters+Russian.swift`.
     public static let anyones = Translated(english: englishAnyone, [.russian: russianAnyone])
     public static let voiceSets = Translated(english: englishVoices, [.russian: russianVoices])
-    public static var anyone: Voice { anyones() }
-    public static var voices: [String: Voice] { voiceSets() }
+    /// In the current language, with what is said about the cursor in the current mood.
+    public static var anyone: Voice { anyones().inMood(.current) }
+    public static var voices: [String: Voice] { voiceSets().mapValues { $0.inMood(.current) } }
 
     public static let englishAnyone = Voice(
         topics: ["the quiet", "the wind", "the other side of the screen"],

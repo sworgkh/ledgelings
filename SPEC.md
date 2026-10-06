@@ -300,6 +300,13 @@ spend file with purpose `complaints` whatever comes back; an empty answer or an
 error falls back to a built-in line. Either way it goes to the chat log as a
 one-line exchange, with its cost when a model wrote it.
 
+What the complaint is follows the cursor mood (§6.1.2): in `bad` a telling-off,
+as above; in `good` a playful tease after a game of tag; in `neutral` a passing
+remark, neither pleased nor annoyed. Each mood has its own lines (two per
+character in `good` and `neutral`, `{times}` in at least one, plus `anyone`) and
+its own prompt; the menu status reads "is complaining", "is teasing you" or "is
+talking to you" to match.
+
 ### 4.8 Meeting someone
 
 - `meet(facing, for = 30 s)`: refused while jumping, asleep-looking or held.
@@ -471,6 +478,38 @@ The almanac opens `situation` for every conversation, and fills `{situation}`
 at the top of a paper plane's note and reply prompts (§7.6). With the built-in
 lines, on a holiday one conversation in three adds `holiday` to the moment
 (§6.7), and `{holiday}` is the day's first holiday.
+
+### 6.1.2 The cursor mood
+
+`cursorMood` says what the creatures make of the cursor that chases them:
+`good` (a playmate; being chased is a game of tag), `neutral` (it just happens,
+like weather; no feelings about it) or `bad` (a menace: how they were first
+written, and the default). The cursor itself behaves the same in every mood: a
+creature still jumps out of its way and can still be picked up. The mood reaches
+what is said three ways, and adds no model call:
+
+- **Personas.** `{speakerPersona}` and `{listenerPersona}` are filled by
+  `persona(p)`: a shipped persona that talks about the cursor is first swapped for
+  the mood's version (Blocky "Hates the mouse cursor" becomes "Secretly loves
+  racing the mouse cursor…" in `good` and loses the sentence in `neutral`; Glitch
+  likewise), then put in the current language, then, in `good` and `neutral`,
+  followed by the mood's note ("To them the mouse cursor is a playmate…" / "The
+  mouse cursor means nothing to them…"). Every persona gets the note, a user's own
+  included, so an edited prompt follows the mood as long as it carries
+  `{speakerPersona}`. Voices are cast from the persona as written.
+- **Built-in lines.** Every shipped line or script conversation about the cursor
+  (script, tea stories and replies, paper-plane notes, musings and replies,
+  reminder notes) has a `good` and a `neutral` version per language, keyed by the
+  shipped text; a conversation is rewritten whole with the same number of lines.
+  A handful that read right in every mood (a fond or plain mention) are listed as
+  such. Text the user wrote is never rewritten. A test fails when a shipped line
+  that mentions the cursor has neither.
+- **Complaints** have their own lines and prompt per mood (§4.7.1), and the prompt
+  that asks a model for more built-in lines says the creatures "play tag with",
+  "hop out of the way of" or "flee" the mouse cursor.
+
+Changing the mood applies at once, from the settings (Creatures tab) or the menu
+("The Cursor Is").
 
 ### 6.2 One conversation
 
@@ -1674,6 +1713,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | complainEnabled | true | a creature bothered too often in a row complains (§4.7.1) |
 | complainAfter | 4 | 1–20, clamped on load: bothers it puts up with; the next one in a row gets a complaint |
 | complainCalmSeconds | 20 | 5–120 s, clamped on load: a gap this long starts the count over |
+| cursorMood | `bad` | `good`, `neutral`, `bad`; an unknown value reads as `bad`; applied live (§6.1.2) |
 | actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |

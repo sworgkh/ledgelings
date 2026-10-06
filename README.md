@@ -108,6 +108,12 @@ in a row and it turns round and tells you off, in its own voice: Blocky keeps a 
 Zed just wants to sleep, Unit 7 reports its annoyance in percent. How patient they
 are is in Settings › Creatures.
 
+**The cursor can be a friend.** Out of the box the cursor is their nemesis. Set
+*The cursor is* (Settings › Creatures, or the menu) to *A playmate* and every chase
+becomes a game of tag they love winning, or to *Just there* and they hop aside
+without a thought. Their lines, tea stories, letters, complaints and whatever a
+model writes for them all follow it, in English and Russian.
+
 **Reminders.** Tell them what to remind you of and when (once, every day, every
 weekday, every week). When the time comes, one of them folds it into a paper plane
 and throws it at you: it swirls to the middle of your screen, turns to face you,

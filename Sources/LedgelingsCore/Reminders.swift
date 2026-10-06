@@ -210,14 +210,15 @@ public enum Reminders {
     /// What each built-in character writes above your reminder, in its own
     /// voice. `{reminder}` is what you asked to be reminded of. A character the
     /// user invented uses `anyone`.
-    public static var anyone: [String] { anyones() }
+    /// In the current language, with what is said about the cursor in the current mood.
+    public static var anyone: [String] { anyones().map(CursorMood.current.adjust) }
     public static let anyones = Translated(english: englishAnyone, [.russian: russianAnyone])
     public static let englishAnyone = [
         "It's time: {reminder}. You asked me to tell you, so I'm telling you.",
         "Knock knock. {reminder}. That's the whole joke. Go on.",
     ]
 
-    public static var notes: [String: [String]] { noteSets() }
+    public static var notes: [String: [String]] { CursorMood.current.adjust(noteSets()) }
     public static let noteSets = Translated(english: englishNotes, [.russian: russianNotes])
     public static let englishNotes: [String: [String]] = [
         // blocky's cast
