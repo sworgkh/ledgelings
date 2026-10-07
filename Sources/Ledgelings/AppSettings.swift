@@ -65,6 +65,26 @@ final class AppSettings: ObservableObject {
     @Published var huntWary: Bool { didSet { save(huntWary, "huntWary") } }
     @Published var huntWaryAfter: Int { didSet { save(huntWaryAfter, "huntWaryAfter") } }
 
+    // MARK: Revenge
+
+    /// Chases or pick-ups of one creature, inside the window, before it grabs the cursor.
+    static let revengeAfterRange = 3...50
+    /// Seconds those chases must fall within.
+    static let revengeWindowRange = 30.0...600.0
+    /// Longest a creature may hold the cursor, in seconds; then it lets go by itself.
+    static let revengeHoldRange = 3.0...30.0
+    /// Quick back-and-forth strokes it takes to shake a creature off.
+    static let revengeShakesRange = 2...16
+    /// Minutes after one grab before any creature grabs again.
+    static let revengeCooldownRange = 1.0...120.0
+    /// Hunted too often in a short time, a creature grabs the cursor and shames the user until shaken off.
+    @Published var revengeEnabled: Bool { didSet { save(revengeEnabled, "revengeEnabled") } }
+    @Published var revengeAfter: Int { didSet { save(revengeAfter, "revengeAfter") } }
+    @Published var revengeWindowSeconds: Double { didSet { save(revengeWindowSeconds, "revengeWindowSeconds") } }
+    @Published var revengeHoldSeconds: Double { didSet { save(revengeHoldSeconds, "revengeHoldSeconds") } }
+    @Published var revengeShakes: Int { didSet { save(revengeShakes, "revengeShakes") } }
+    @Published var revengeCooldownMinutes: Double { didSet { save(revengeCooldownMinutes, "revengeCooldownMinutes") } }
+
     // MARK: Tea parties
 
     /// Share of bumps, in percent, that become a tea party instead of a quick word.
@@ -324,6 +344,20 @@ final class AppSettings: ObservableObject {
         // Twenty in a day: a creature chased that much has a reason to keep its distance.
         let wary = defaults.object(forKey: "huntWaryAfter") as? Int ?? 20
         huntWaryAfter = min(max(wary, Self.huntWaryAfterRange.lowerBound), Self.huntWaryAfterRange.upperBound)
+        // On: the owner asked for it. Ten chases in two minutes is well past the
+        // fifth-in-a-row complaint, so it only answers real abuse; ten seconds at
+        // most, six quick strokes to break free, then ten minutes' peace.
+        revengeEnabled = defaults.object(forKey: "revengeEnabled") as? Bool ?? true
+        let revengeAfter = defaults.object(forKey: "revengeAfter") as? Int ?? 10
+        self.revengeAfter = min(max(revengeAfter, Self.revengeAfterRange.lowerBound), Self.revengeAfterRange.upperBound)
+        let revengeShakes = defaults.object(forKey: "revengeShakes") as? Int ?? 6
+        self.revengeShakes = min(max(revengeShakes, Self.revengeShakesRange.lowerBound), Self.revengeShakesRange.upperBound)
+        func clampRevenge(_ key: String, _ fallback: Double, _ range: ClosedRange<Double>) -> Double {
+            min(max(defaults.object(forKey: key) as? Double ?? fallback, range.lowerBound), range.upperBound)
+        }
+        revengeWindowSeconds = clampRevenge("revengeWindowSeconds", 120, Self.revengeWindowRange)
+        revengeHoldSeconds = clampRevenge("revengeHoldSeconds", 10, Self.revengeHoldRange)
+        revengeCooldownMinutes = clampRevenge("revengeCooldownMinutes", 10, Self.revengeCooldownRange)
         teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
         actionsStayOpen = defaults.object(forKey: "actionsStayOpen") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.

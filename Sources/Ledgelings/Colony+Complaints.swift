@@ -10,6 +10,8 @@ extension Colony {
     func bothered(_ i: Int) {
         // Counted first: a creature remarking on its count does not complain over it.
         let remarked = hunted(i)
+        // Had far too much: it grabs the cursor instead of complaining.
+        if takeRevenge(i) { return }
         guard settings.complainEnabled, creatures.indices.contains(i) else { return }
         guard annoyance.bothered(i, at: elapsed), !remarked else { return }
         complain(i)

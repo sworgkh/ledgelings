@@ -18,5 +18,6 @@ extension Strings {
         "personas": ruPersonas,
         "cursorMood": ruCursorMood,
         "hunts": ruHunts,
+        "revenge": ruRevenge,
     ]
 }

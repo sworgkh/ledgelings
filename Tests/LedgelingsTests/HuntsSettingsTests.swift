@@ -59,6 +59,7 @@ import Testing
         defer { w.forget() }
         w.settings.complainEnabled = false
         w.settings.huntTalkChance = 0          // only the milestone speaks
+        w.settings.revengeEnabled = false      // ten in a row would grab the cursor instead
         w.colony.applySettings()
         for _ in 0..<9 { w.colony.bothered(0) }
         #expect(w.colony.bubbles[0] == nil)
