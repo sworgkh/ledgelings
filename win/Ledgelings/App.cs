@@ -96,6 +96,7 @@ public sealed partial class App : Application
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026"), OpenActions));
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
+        items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
         items.Add(new TrayIcon.Item(L10n.Tr("Chat History\u2026"), () => OpenSettings(SettingsTab.Chats)));

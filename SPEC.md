@@ -392,6 +392,12 @@ it and tells the user off; shaking the mouse hard throws it off.
   only with Accessibility allowed), when the screens sleep or lock, the session is
   switched away from, the screens change, they hide, it is turned off, or the app
   quits. A screen share is not detected.
+- **Windows.** The same, with `SetCursorPos` to hold the pointer (no permission;
+  it fails on the secure desktop, and the creature then only clings). Escape is a
+  system-wide `RegisterHotKey` while a creature holds on, so it works whichever app
+  is in front and is taken from that app for those seconds; it is let go with the
+  grab. A session switch or lock (`SessionSwitch`) and suspending (`PowerModeChanged`)
+  let go too.
 
 ### 4.8 Meeting someone
 

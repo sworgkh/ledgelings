@@ -139,6 +139,8 @@ up (a plain press on a sleeper, or a Shift-drag).
 | **Shakes to break free** (`revengeShakes`) | 6 | 2 to 16 | Quick turns back after a stroke of 30 points or more, within 1.5 s. Small jitters and slow moves never count |
 | **Then peace for** (`revengeCooldownMinutes`) | 10 min | 1 to 120 | Nobody grabs again for this long |
 
+On Windows the Revenge group sits after Wariness. The pointer is held with `SetCursorPos`, which needs no permission either. Escape lets go whichever app is in front: while a creature holds on, Escape is a system-wide hotkey, so for those seconds it goes to Ledgelings rather than the app in front. If the pointer cannot be moved (a UAC prompt or the lock screen is up), the creature only clings to it. Locking the session or putting the PC to sleep lets go at once.
+
 **The count**, on the right: every creature on screen, then anyone else ever
 counted, with today, this week and in all, and **Reset** for each; **Everyone**,
 the total; since when it has been counting. Kept by name: rename a character and

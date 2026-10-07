@@ -105,4 +105,9 @@ internal static partial class Win32
     public const uint MOD_ALT = 0x0001, MOD_CONTROL = 0x0002, MOD_NOREPEAT = 0x4000;
     [DllImport("user32.dll", SetLastError = true)] public static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr hwnd, int id);
+
+    // Revenge: holding the pointer where a creature grabbed it, and Escape to let go.
+    public const uint VK_ESCAPE = 0x1B;
+    public const int VK_LBUTTON = 0x01, VK_RBUTTON = 0x02, VK_MBUTTON = 0x04;
+    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 }

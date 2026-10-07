@@ -24,6 +24,8 @@ public sealed partial class Colony
     {
         // Counted first: a creature remarking on its count does not complain over it.
         var remarked = Hunted(i);
+        // Had far too much: it grabs the cursor instead of complaining.
+        if (TakeRevenge(i)) return;
         if (!Settings.ComplainEnabled || i < 0 || i >= creatures.Count) return;
         if (!annoyance.Bothered(i, Elapsed) || remarked) return;
         Complain(i);
