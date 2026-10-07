@@ -69,6 +69,8 @@ with `scripts/make-app.sh`, installed and seen working.
   time, then quits once the pair is let go: the way to measure dialogue timing.
 - `--garden-film out.mp4` hands five creatures a flower each and films them offscreen
   until all have planted, printing who planted what and why (`plant Blocky poppy floor`).
+- `--grab` makes the first creature grab the real cursor now and prints each step
+  with its time (`grab Blocky`, `let go Blocky: shaken`), then quits once it lets go.
 - `--tea` starts a tea party on the real screen and prints every line with its time,
   then quits once the pair walks on; `--tea-film out.mp4` films a one-minute party
   offscreen (built-in lines, or a local server named by `LEDGELINGS_TEA_SERVER`),

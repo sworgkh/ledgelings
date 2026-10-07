@@ -2,8 +2,8 @@ import LedgelingsCore
 import SwiftUI
 
 /// Settings › Chases: whether the cursor's hunts are counted and how the
-/// creatures use the count on the left; the count itself on the right, per
-/// character and in total, with a reset for each and for all.
+/// creatures use the count on the left; revenge, then the count itself on the
+/// right, per character and in total, with a reset for each and for all.
 struct ChasesSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var library: SpriteLibrary
@@ -42,7 +42,28 @@ struct ChasesSettingsView: View {
                 Text(tr("When the cursor is a menace, a creature chased this often today jumps away from further off, until tomorrow."))
             }
             .disabled(!settings.huntCountEnabled)
+
         } right: {
+            Section {
+                Toggle(tr("Grab the cursor in revenge"), isOn: $settings.revengeEnabled)
+                Group {
+                    Stepper(value: $settings.revengeAfter, in: AppSettings.revengeAfterRange) {
+                        LabeledContent(tr("After"), value: trCount(settings.revengeAfter, "time", "times"))
+                    }
+                    SliderRow(tr("Within"), value: $settings.revengeWindowSeconds, in: AppSettings.revengeWindowRange, step: 30, unit: tr(" s"))
+                    SliderRow(tr("Holds on for at most"), value: $settings.revengeHoldSeconds, in: AppSettings.revengeHoldRange, step: 1, unit: tr(" s"))
+                    Stepper(value: $settings.revengeShakes, in: AppSettings.revengeShakesRange) {
+                        LabeledContent(tr("Shakes to break free"), value: "\(settings.revengeShakes)")
+                    }
+                    SliderRow(tr("Then peace for"), value: $settings.revengeCooldownMinutes, in: AppSettings.revengeCooldownRange, step: 1, unit: tr(" min"))
+                }
+                .disabled(!settings.revengeEnabled)
+            } header: {
+                Text(tr("Revenge"))
+            } footer: {
+                Text(tr("Chased or picked up this often in that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood. Shake the mouse hard, back and forth, to throw it off. Escape lets go too, and it never holds on past the limit. Moving the pointer needs no permission; Escape outside Ledgelings works only with Accessibility allowed."))
+            }
+
             Section {
                 tally
             } header: {

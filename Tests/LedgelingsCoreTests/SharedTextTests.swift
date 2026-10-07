@@ -38,6 +38,10 @@ import Testing
             ],
             "hunts": Dictionary(uniqueKeysWithValues: CursorMood.allCases.map { mood in
                 (mood.rawValue, ["anyone": Hunts.anyones(for: mood)(l), "lines": Hunts.lineSets(for: mood)(l)] as [String: Any]) }),
+            "revenge": Dictionary(uniqueKeysWithValues: CursorMood.allCases.map { mood in
+                (mood.rawValue, ["anyone": Revenge.anyones(for: mood)(l), "lines": Revenge.lineSets(for: mood)(l),
+                                 "anyoneLastWords": Revenge.anyoneLastWords(for: mood)(l), "lastWords": Revenge.lastWordSets(for: mood)(l),
+                                 "prompt": Revenge.prompts(for: mood)(l)] as [String: Any]) }),
             "holidays": Almanac.holidayNames[l] ?? [:],
             "flowers": Gifts.names(l),
             "prompts": [

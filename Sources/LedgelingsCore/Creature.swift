@@ -34,6 +34,8 @@ public struct Creature: Sendable {
         public var bulge: CGVector
         public var duration: Double
         public var elapsed: Double = 0
+        /// Extra whole turns, in radians, tumbled on the way down: thrown off the cursor.
+        public var spin: Double = 0
     }
 
     public enum Mode: Sendable, Equatable {
@@ -201,7 +203,7 @@ public struct Creature: Sendable {
                 y: jump.from.y + (target.y - jump.from.y) * eased + jump.bulge.dy * pull
             )
             let goal = landing.rotation(ofSegment: landing.segment(at: jump.to.t))
-            rotation = jump.fromRotation + Self.shortestArc(from: jump.fromRotation, to: goal) * eased
+            rotation = jump.fromRotation + (Self.shortestArc(from: jump.fromRotation, to: goal) + jump.spin) * eased
             if p >= 1 {
                 spot = jump.to
                 position = target
@@ -429,15 +431,30 @@ public struct Creature: Sendable {
         position = point
     }
 
+    /// Revenge: it jumps on the cursor and hangs on, awake, whatever it was doing.
+    /// Returns whether it did; it cannot while something else already holds it.
+    @discardableResult
+    public mutating func cling() -> Bool {
+        guard !isHeld else { return false }
+        napsInHand = false
+        isNapping = false
+        sleepsThroughLanding = false
+        enter(.held)
+        return true
+    }
+
     /// Let go: it drops to the nearest edge of any monitor, asleep if it was asleep.
-    public mutating func drop() {
+    /// `tumbling`: shaken off, it turns head over heels twice on the way down.
+    public mutating func drop(tumbling: Bool = false) {
         guard isHeld else { return }
         let to = world.nearest(to: position)
         let target = world.point(at: to)
         let distance = hypot(target.x - position.x, target.y - position.y)
         sleepsThroughLanding = napsInHand
+        let fall = max(0.12, min(Double(distance / config.jumpSpeed), config.jumpDuration.upperBound))
         enter(.jumping(Jump(from: position, fromRotation: rotation, to: to, bulge: .zero,
-                            duration: max(0.12, min(Double(distance / config.jumpSpeed), config.jumpDuration.upperBound)))))
+                            duration: tumbling ? max(fall, 0.6) : fall,
+                            spin: tumbling ? 4 * .pi * Double(direction) : 0)))
     }
 
     /// React to dusk and dawn, once each.

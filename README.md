@@ -121,6 +121,12 @@ they say (compared with yesterday and the week, with a record day), a round numb
 gets said out loud, and a much-chased creature keeps its distance. See the count,
 and reset it, in Settings › Chases.
 
+**They take revenge.** Chase one around too often (ten times in two minutes) and it
+jumps on your cursor, hangs on and tells you exactly what it thinks of you. Shake
+the mouse hard to throw it off; it tumbles down with a last word. It never holds on
+longer than ten seconds, Escape lets go, and *Cursor Revenge* in the menu turns it
+off. Tune it in Settings › Chases.
+
 **Reminders.** Tell them what to remind you of and when (once, every day, every
 weekday, every week). When the time comes, one of them folds it into a paper plane
 and throws it at you: it swirls to the middle of your screen, turns to face you,

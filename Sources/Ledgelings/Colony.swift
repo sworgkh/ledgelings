@@ -104,6 +104,18 @@ final class Colony: NSObject {
     var annoyance = Annoyance()
     /// Creatures whose complaint the model is writing.
     var complaining: Set<Int> = []
+    /// Hunts in the last few minutes per creature: too many and one grabs the cursor.
+    var revengeFuse = Revenge.Fuse()
+    /// The creature hanging on to the cursor right now, if any.
+    var grab: Grab?
+    /// Counts grabs, so a model's late line finds whether its grab is still on.
+    var grabCount = 0
+    /// The real pointer, for a grab. Nil offscreen and in tests that don't set one.
+    var pointer: PointerHold?
+    /// Whether a mouse button is down: nobody grabs the cursor mid-drag.
+    var mouseIsDown: () -> Bool = { NSEvent.pressedMouseButtons != 0 }
+    /// Where the pointer is; tests set it.
+    var pointerLocation: () -> CGPoint = { NSEvent.mouseLocation }
     /// Pixel stars from the last bump, and the colours they wear.
     var sparks = Sparks()
     var sparkPalette: [CGColor] = []
@@ -238,6 +250,11 @@ final class Colony: NSObject {
         annoyance.forget(creaturesFrom: creatures.count)
         annoyance.limit = settings.complainAfter
         annoyance.calmAfter = settings.complainCalmSeconds
+        revengeFuse.after = settings.revengeAfter
+        revengeFuse.window = settings.revengeWindowSeconds
+        revengeFuse.cooldown = settings.revengeCooldownMinutes * 60
+        revengeFuse.forget(creaturesFrom: creatures.count)
+        if let grab, !settings.revengeEnabled || grab.index >= settings.creatureCount { letGoOfCursor(.escape) }
         if !settings.teaPartiesEnabled { breakUpTea() }
         while creatures.count < settings.creatureCount {
             let share = Double.random(in: 0...1, using: &rng), size = settings.size(forShare: share)
@@ -265,6 +282,7 @@ final class Colony: NSObject {
     }
 
     @objc func screensChanged() {
+        letGoOfCursor(.escape)
         rebuildOverlays()
         worlds.removeAll()
         for i in creatures.indices { creatures[i].rehome(to: world(forSize: sizes[i])) }
@@ -327,12 +345,13 @@ final class Colony: NSObject {
         elapsed += dt
         let night = isNight
         for i in creatures.indices where !hideout.isInside(i) {
-            if creatures[i].update(dt: dt, cursor: shift || hideout.isActive ? nil : cursor, isNight: night, using: &rng) {
+            if creatures[i].update(dt: dt, cursor: shift || hideout.isActive || grab != nil ? nil : cursor, isNight: night, using: &rng) {
                 bothered(i)
             }
             asleepFor[i] = creatures[i].looksAsleep ? asleepFor[i] + dt : 0
         }
         updateHideout()
+        updateGrab(cursor: cursor)
         updateClickability(cursor: cursor, shift: shift)
 
         for (i, bubble) in bubbles where bubble.until <= elapsed || i >= creatures.count {
@@ -353,7 +372,7 @@ final class Colony: NSObject {
         updateReminders(dt: dt)
         liveTogether(dt: dt)
         render()
-        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
+        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
 
     /// A sleeping colony only breathes and floats Zs: 12 fps is plenty.

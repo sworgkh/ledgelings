@@ -132,6 +132,12 @@ up (a plain press on a sleeper, or a Shift-drag).
 | **How often it comes up** (`huntTalkChance`) | 25 % | 0 to 100 | Share of conversations, tea stories, paper planes and built-in complaints that bring the count up. Milestones are said whatever this is |
 | **Much-chased creatures keep their distance** (`huntWary`) | on | | Only when the cursor is a menace: a creature hunted *After* times today jumps away from 35 % further off, until tomorrow |
 | **After** (`huntWaryAfter`) | 20 in a day | 5 to 200, in fives | |
+| **Grab the cursor in revenge** (`revengeEnabled`) | on | | Chased or picked up *After* times *Within* that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood (with a model, priced as *Revenge* in Costs). Shake the mouse hard, back and forth, to throw it off. Also in the menu as **Cursor Revenge**. Moving the pointer needs no permission; if it cannot be moved, the creature only clings to it |
+| **After** (`revengeAfter`) | 10 times | 3 to 50 | Counted per creature, even with complaints off |
+| **Within** (`revengeWindowSeconds`) | 120 s | 30 to 600, in 30s | |
+| **Holds on for at most** (`revengeHoldSeconds`) | 10 s | 3 to 30 | Then it lets go by itself. Escape lets go at once (outside Ledgelings only with Accessibility allowed); so does the screen sleeping or locking |
+| **Shakes to break free** (`revengeShakes`) | 6 | 2 to 16 | Quick turns back after a stroke of 30 points or more, within 1.5 s. Small jitters and slow moves never count |
+| **Then peace for** (`revengeCooldownMinutes`) | 10 min | 1 to 120 | Nobody grabs again for this long |
 
 **The count**, on the right: every creature on screen, then anyone else ever
 counted, with today, this week and in all, and **Reset** for each; **Everyone**,

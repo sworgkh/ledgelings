@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "", action: #selector(toggleVoice), keyEquivalent: "v")
+    private let revengeItem = NSMenuItem(title: "", action: #selector(toggleRevenge), keyEquivalent: "")
+    private let pointer = SystemPointer()
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
 
     private var speaking: AnyCancellable?
@@ -79,6 +81,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         do {
             colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts)
             colony?.voice = voice
+            colony?.pointer = pointer
+            freeTheCursorWhenTheScreenGoes()
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
             NSApp.terminate(nil)
@@ -98,6 +102,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try? await Task.sleep(for: .seconds(1))
                 for _ in 0..<900 where !colony.busy.isEmpty || !colony.chats.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
                 colony.trace?("pair let go")
+                exit(0)
+            }
+        }
+        // `--grab`: the first creature grabs the cursor now; every step on stderr
+        // with the time since, then quit once it has let go.
+        if CommandLine.arguments.contains("--grab"), let colony {
+            let start = Date()
+            colony.trace = { line in
+                FileHandle.standardError.write(Data(String(format: "grab %6.2f  %@\n", Date().timeIntervalSince(start), line).utf8))
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                colony.grabCursor(0)
+                while colony.grab != nil { try? await Task.sleep(for: .seconds(0.1)) }
+                try? await Task.sleep(for: .seconds(2))
                 exit(0)
             }
         }
@@ -228,6 +247,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(nextReminderItem)
         voiceItem.target = self
         menu.addItem(voiceItem)
+        revengeItem.target = self
+        menu.addItem(revengeItem)
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         chatsItem.target = self
@@ -266,6 +287,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func retitleMenu() {
         actionsItem.title = tr("Creature Actions…")
         voiceItem.title = tr("Hear Them Talk")
+        revengeItem.title = tr("Cursor Revenge")
         chatsItem.title = tr("Chat History…")
         settingsItem.title = tr("Settings…")
         languageItem.title = tr("Language")
@@ -289,6 +311,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         phaseItem.title = colony.isNight ? tr("Night — they wake in %@", clock) : tr("Day — they sleep in %@", clock)
         if settings.nightMinutes == 0 { phaseItem.title = tr("Always day — night is set to 0") }
         voiceItem.state = settings.voiceEnabled ? .on : .off
+        revengeItem.state = settings.revengeEnabled ? .on : .off
         if let next = reminders.book.upcoming {
             nextReminderItem.title = "   " + tr("Next: %@, %@", String(next.text.prefix(40)), Reminders.when(next.time, now: Date()))
                 + (settings.remindersEnabled ? "" : " " + tr("(off)"))
@@ -320,6 +343,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openActions() { actions.show() }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
+    @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }
+
+    /// A creature holding the cursor lets go the moment the screen sleeps or locks,
+    /// the user switches away, or the app quits.
+    private func freeTheCursorWhenTheScreenGoes() {
+        let workspace = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.screensDidSleepNotification, NSWorkspace.willSleepNotification,
+                     NSWorkspace.sessionDidResignActiveNotification] {
+            workspace.addObserver(self, selector: #selector(freeTheCursor), name: name, object: nil)
+        }
+        DistributedNotificationCenter.default().addObserver(self, selector: #selector(freeTheCursor),
+                                                            name: .init("com.apple.screenIsLocked"), object: nil)
+    }
+
+    @objc private func freeTheCursor() { colony?.letGoOfCursor(.escape) }
+
+    func applicationWillTerminate(_ notification: Notification) { colony?.letGoOfCursor(.escape) }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
     @objc private func openReminders() { settings.reminderPaperNote ? note.show() : settingsWindow.show(tab: .reminders) }
