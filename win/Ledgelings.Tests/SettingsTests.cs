@@ -53,6 +53,30 @@ public class SettingsTests
     }
 
     [Fact]
+    public void RevengeIsOnByDefaultAndAChangeIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.RevengeEnabled);
+        Assert.Equal(10, s.RevengeAfter);
+        Assert.Equal(120, s.RevengeWindowSeconds);
+        Assert.Equal(10, s.RevengeHoldSeconds);
+        Assert.Equal(6, s.RevengeShakes);
+        Assert.Equal(10, s.RevengeCooldownMinutes);
+        s.RevengeEnabled = false; s.RevengeAfter = 15; s.RevengeWindowSeconds = 300; s.RevengeHoldSeconds = 20; s.RevengeShakes = 9; s.RevengeCooldownMinutes = 45;
+        var again = box.Again();
+        Assert.False(again.RevengeEnabled);
+        Assert.Equal((15, 300.0, 20.0, 9, 45.0), (again.RevengeAfter, again.RevengeWindowSeconds, again.RevengeHoldSeconds, again.RevengeShakes, again.RevengeCooldownMinutes));
+        box.Store.Set("revengeAfter", 1);
+        box.Store.Set("revengeHoldSeconds", 999.0);
+        box.Store.Set("revengeShakes", 0);
+        box.Store.Set("revengeCooldownMinutes", 0.0);
+        box.Store.Set("revengeWindowSeconds", 1.0);
+        var clamped = box.Again();      // clamped on load
+        Assert.Equal((3, 30.0, 2, 1.0, 30.0), (clamped.RevengeAfter, clamped.RevengeHoldSeconds, clamped.RevengeShakes, clamped.RevengeCooldownMinutes, clamped.RevengeWindowSeconds));
+    }
+
+    [Fact]
     public void FollowingTheGiverIsOnByDefaultAndRemembered()
     {
         var box = Fresh();

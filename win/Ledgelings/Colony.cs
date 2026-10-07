@@ -118,6 +118,7 @@ public sealed partial class Colony : IDisposable
 
     public void Dispose()
     {
+        LetGoOfCursor(Revenge.Release.Escape);
         Settings.Changed -= ApplySettings;
         Desktop.MonitorsChanged -= ScreensChanged;
         clock?.Dispose();

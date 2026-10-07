@@ -187,6 +187,12 @@ public sealed class Shared
     /// <summary>The count lines (SPEC §4.7.2) per cursor mood (<c>good</c>/<c>neutral</c>/<c>bad</c>): by character, and for anyone.</summary>
     public Dictionary<string, Dictionary<string, string[]>> HuntLinesByMood { get; init; } = new();
     public Dictionary<string, string[]> HuntAnyoneByMood { get; init; } = new();
+    /// <summary>Revenge (SPEC §4.7.3), by mood: the lines said holding the cursor, the last words, and the prompt.</summary>
+    public Dictionary<string, Dictionary<string, string[]>> RevengeLinesByMood { get; init; } = new();
+    public Dictionary<string, string[]> RevengeAnyoneByMood { get; init; } = new();
+    public Dictionary<string, Dictionary<string, string[]>> RevengeLastWordsByMood { get; init; } = new();
+    public Dictionary<string, string[]> RevengeAnyoneLastWordsByMood { get; init; } = new();
+    public Dictionary<string, string> RevengePromptByMood { get; init; } = new();
     /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
@@ -239,6 +245,7 @@ public sealed class Shared
         var moodComplaints = Get(mood, "complaints");
         string[] moods = { "good", "neutral" };
         var hunts = Get(root, "hunts");
+        var revenge = Get(root, "revenge");
         string[] allMoods = { "good", "neutral", "bad" };
         return new Shared
         {
@@ -269,6 +276,12 @@ public sealed class Shared
             ComplaintPromptsByMood = Map(Get(mood, "complaintPrompts")),
             HuntLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(hunts, m), "lines"))),
             HuntAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(hunts, m), "anyone"))),
+            RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),
+            RevengeAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(revenge, m), "anyone"))),
+            RevengeLastWordsByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lastWords"))),
+            RevengeAnyoneLastWordsByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(revenge, m), "anyoneLastWords"))),
+            RevengePromptByMood = allMoods.ToDictionary(m => m, m => Get(Get(revenge, m), "prompt") is { ValueKind: JsonValueKind.String } p
+                ? p.GetString() ?? "" : ""),
         };
     }
 }

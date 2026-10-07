@@ -43,6 +43,8 @@ public sealed class Creature
         public Vec Bulge;
         public double Duration;
         public double Elapsed;
+        /// <summary>Extra whole turns, in radians, tumbled on the way down: thrown off the cursor.</summary>
+        public double Spin;
     }
 
     public abstract record Mode
@@ -200,7 +202,7 @@ public sealed class Creature
                     jump.From.X + (target.X - jump.From.X) * eased + jump.Bulge.Dx * pull,
                     jump.From.Y + (target.Y - jump.From.Y) * eased + jump.Bulge.Dy * pull);
                 var goal = landing.Rotation(landing.Segment(jump.To.T));
-                Rotation = jump.FromRotation + ShortestArc(jump.FromRotation, goal) * eased;
+                Rotation = jump.FromRotation + (ShortestArc(jump.FromRotation, goal) + jump.Spin) * eased;
                 if (p >= 1)
                 {
                     Spot = jump.To;
@@ -454,18 +456,33 @@ public sealed class Creature
         Position = point;
     }
 
-    /// <summary>Let go: it drops to the nearest edge of any monitor, asleep if it was asleep.</summary>
-    public void Drop()
+    /// <summary>Revenge: it jumps on the cursor and hangs on, awake, whatever it was doing.
+    /// Returns whether it did; it cannot while something else already holds it.</summary>
+    public bool Cling()
+    {
+        if (IsHeld) return false;
+        napsInHand = false;
+        IsNapping = false;
+        sleepsThroughLanding = false;
+        Enter(new Mode.Held());
+        return true;
+    }
+
+    /// <summary>Let go: it drops to the nearest edge of any monitor, asleep if it was asleep.
+    /// <paramref name="tumbling"/>: shaken off, it turns head over heels twice on the way down.</summary>
+    public void Drop(bool tumbling = false)
     {
         if (!IsHeld) return;
         var to = World.Nearest(Position);
         var target = World.Point(to);
         var distance = target.DistanceTo(Position);
         sleepsThroughLanding = napsInHand;
+        var fall = Math.Max(0.12, Math.Min(distance / Settings.JumpSpeed, Settings.JumpDuration.High));
         Enter(new Mode.Jumping(new Jump
         {
             From = Position, FromRotation = Rotation, To = to, Bulge = Vec.Zero,
-            Duration = Math.Max(0.12, Math.Min(distance / Settings.JumpSpeed, Settings.JumpDuration.High)),
+            Duration = tumbling ? Math.Max(fall, 0.6) : fall,
+            Spin = tumbling ? 4 * Math.PI * Direction : 0,
         }));
     }
 

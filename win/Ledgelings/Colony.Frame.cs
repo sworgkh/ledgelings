@@ -41,6 +41,7 @@ public sealed partial class Colony
                 creatures[i].Rehome(World(size));
             }
             ApplyWariness();
+            ApplyRevenge();
 
             frames.Clear();
             for (int i = 0; i < creatures.Count; i++)
@@ -62,6 +63,7 @@ public sealed partial class Colony
 
     private void ScreensChanged()
     {
+        LetGoOfCursor(Revenge.Release.Escape);
         RebuildOverlays();
         worlds.Clear();
         for (int i = 0; i < creatures.Count; i++) creatures[i].Rehome(World(sizes[i]));
@@ -133,10 +135,11 @@ public sealed partial class Colony
         for (int i = 0; i < creatures.Count; i++)
         {
             if (hideout.IsInside(i)) continue;
-            if (creatures[i].Update(dt, shift || hideout.IsActive ? null : cursor, night, rng)) Bothered(i);
+            if (creatures[i].Update(dt, shift || hideout.IsActive || CurrentGrab is not null ? null : cursor, night, rng)) Bothered(i);
             asleepFor[i] = creatures[i].LooksAsleep ? asleepFor[i] + dt : 0;
         }
         UpdateHideout();
+        UpdateGrab(cursor);
         UpdateClickability(cursor, shift);
 
         foreach (var i in bubbles.Where(b => b.Value.Until <= Elapsed || b.Key >= creatures.Count).Select(b => b.Key).ToList())
@@ -156,7 +159,7 @@ public sealed partial class Colony
         UpdateReminders(dt);
         LiveTogether(dt);
         Render();
-        SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
+        SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && CurrentGrab is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
     }
 
     // Feature steps, each implemented in its own partial file (Colony.Complaints, .Garden, .TeaParty,
@@ -167,6 +170,10 @@ public sealed partial class Colony
     partial void ForgetAnnoyance();
     /// <summary>How far off each creature jumps from the cursor: its size, and how hunted it is (Hunts).</summary>
     partial void ApplyWariness();
+    /// <summary>How the revenge fuse counts, and a grab the settings no longer allow (Revenge).</summary>
+    partial void ApplyRevenge();
+    /// <summary>A creature holding the cursor: the struggle, and the longest hold (Revenge).</summary>
+    partial void UpdateGrab(Pt cursor);
     /// <summary>Creature <paramref name="i"/>'s bubble is about to be taken down (Voice: a voiced line ends its turn).</summary>
     partial void BubbleGone(int i);
     partial void UpdateGarden();

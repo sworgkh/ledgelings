@@ -17,7 +17,7 @@ public static class Spend
 
     /// <summary>Which feature made a call. Every model call is recorded with one, so the
     /// Costs tab can say what each feature costs, not just each model.</summary>
-    public enum Purpose { Talk, Planes, Voice, Casting, Plots, Reminders, Complaints, TeaParties }
+    public enum Purpose { Talk, Planes, Voice, Casting, Plots, Reminders, Complaints, TeaParties, Revenge }
 
     /// <summary>What records written before features were labelled are shown as.</summary>
     public static string UnlabelledPurpose => L10n.Tr("Earlier, unlabelled");
@@ -138,7 +138,8 @@ public static class SpendPurposeExtensions
         Spend.Purpose.Plots => L10n.Tr("Relationship plots"),
         Spend.Purpose.Reminders => L10n.Tr("Reminders"),
         Spend.Purpose.Complaints => L10n.Tr("Complaints"),
-        _ => L10n.Tr("Tea parties"),
+        Spend.Purpose.TeaParties => L10n.Tr("Tea parties"),
+        _ => L10n.Tr("Revenge"),
     };
 
     /// <summary>"talk", "teaParties": the enum's name in camelCase, as the macOS app writes it.</summary>

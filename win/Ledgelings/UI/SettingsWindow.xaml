@@ -183,6 +183,39 @@
               <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When the cursor is a menace, a creature chased this often today jumps away from further off, until tomorrow."/>
             </StackPanel>
           </GroupBox>
+          <GroupBox ui:Tr.Header="Revenge">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Grab the cursor in revenge" IsChecked="{Binding RevengeEnabled, Mode=TwoWay}"/>
+              <StackPanel IsEnabled="{Binding RevengeEnabled}">
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="After" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" Width="110" ui:Tr.Value="{Binding RevengeAfter}" ui:Tr.Count="time|times"/>
+                  <Slider Minimum="3" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeAfter, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock ui:Tr.Text="Within" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeWindowSeconds}" ui:Tr.Unit=" s"/>
+                  <Slider Minimum="30" Maximum="600" TickFrequency="30" IsSnapToTickEnabled="True" Value="{Binding RevengeWindowSeconds, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock ui:Tr.Text="Holds on for at most" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeHoldSeconds}" ui:Tr.Unit=" s"/>
+                  <Slider Minimum="3" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeHoldSeconds, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock ui:Tr.Text="Shakes to break free" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeShakes}"/>
+                  <Slider Minimum="2" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeShakes, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,0,0,4">
+                  <TextBlock ui:Tr.Text="Then peace for" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeCooldownMinutes}" ui:Tr.Unit=" min"/>
+                  <Slider Minimum="1" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeCooldownMinutes, Mode=TwoWay}"/>
+                </DockPanel>
+              </StackPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Chased or picked up this often in that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood. Shake the mouse hard, back and forth, to throw it off. Escape lets go too, whichever app is in front, and it never holds on past the limit. Moving the pointer needs no permission."/>
+            </StackPanel>
+          </GroupBox>
           <GroupBox ui:Tr.Header="The count">
             <StackPanel>
               <Grid Margin="0,0,0,4" TextElement.Foreground="Gray" TextElement.FontSize="11">

@@ -48,6 +48,7 @@ public sealed partial class Colony
     {
         if (hideout.IsActive || creatures.Count == 0) return;
         LetGo();
+        LetGoOfCursor(Revenge.Release.Escape);
         BreakUpTea();
         ReleaseChat();
         bubbles.Clear();
