@@ -276,6 +276,55 @@ public class SettingsTests
     }
 
     [Fact]
+    public void TheShortcutIsControlAltLAndAChangeIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.ShortcutEnabled && s.Shortcut == Shortcut.Standard && s.ReopenShowsActions);
+        Assert.Equal(new Shortcut(0x4C, ShortcutModifiers.Control | ShortcutModifiers.Option), Shortcut.Standard);
+        s.ShortcutEnabled = false;
+        s.Shortcut = new Shortcut(0x20, ShortcutModifiers.Command | ShortcutModifiers.Shift);
+        s.ReopenShowsActions = false;
+        s.RecordingShortcut = true;
+        var back = box.Again();
+        Assert.True(!back.ShortcutEnabled && back.Shortcut == new Shortcut(0x20, ShortcutModifiers.Command | ShortcutModifiers.Shift) && !back.ReopenShowsActions);
+        Assert.True(!back.RecordingShortcut && back.ShortcutProblem.Length == 0);
+        // A saved key someone types (Shift alone, or nothing held), or no key at all, reads as the standard one.
+        box.Store.Set("shortcutModifiers", (int)ShortcutModifiers.Shift);
+        Assert.Equal(Shortcut.Standard, box.Again().Shortcut);
+        box.Store.Set("shortcutModifiers", (int)ShortcutModifiers.Control);
+        box.Store.Set("shortcutKeyCode", 900);
+        Assert.Equal(Shortcut.Standard, box.Again().Shortcut);
+    }
+
+    [Fact]
+    public void TheShortcutIsWrittenAsWindowsWritesIt()
+    {
+        Assert.Equal("Ctrl+Alt+L", ShortcutKeys.Label(Shortcut.Standard));
+        Assert.Equal("Ctrl+Alt+Shift+Win+Space", ShortcutKeys.Label(new Shortcut(0x20, ShortcutModifiers.Command | ShortcutModifiers.Shift | ShortcutModifiers.Control | ShortcutModifiers.Option)));
+        Assert.Equal("Ctrl+F12", ShortcutKeys.Label(new Shortcut(0x7B, ShortcutModifiers.Control)));
+        Assert.Equal(0x0002u | 0x0001u, ShortcutKeys.Win32Modifiers(Shortcut.Standard.Modifiers));      // MOD_CONTROL | MOD_ALT
+        Assert.Equal(ShortcutModifiers.Control | ShortcutModifiers.Shift,
+            ShortcutKeys.From(System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift));
+    }
+
+    /// <summary>Nobody else would hold this one, so the first to ask gets it and the second is told no.</summary>
+    [Fact]
+    public void AShortcutAlreadyTakenIsNotRegisteredAndIsFreeAgainOnceLetGo()
+    {
+        var rare = new Shortcut(0x7B, ShortcutModifiers.Command | ShortcutModifiers.Shift | ShortcutModifiers.Control | ShortcutModifiers.Option);
+        uint modifiers = ShortcutKeys.Win32Modifiers(rare.Modifiers), key = (uint)rare.KeyCode;
+        using (var first = new GlobalHotkey(modifiers, key, () => { }))
+        {
+            Assert.True(first.IsRegistered);
+            using var second = new GlobalHotkey(modifiers, key, () => { });
+            Assert.False(second.IsRegistered);
+        }
+        using var third = new GlobalHotkey(modifiers, key, () => { });
+        Assert.True(third.IsRegistered);
+    }
+
+    [Fact]
     public void TeaPartiesAreOnNowAndThenAndTheirNumbersSurviveARelaunch()
     {
         var box = Fresh();

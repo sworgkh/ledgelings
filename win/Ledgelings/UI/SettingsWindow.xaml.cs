@@ -37,7 +37,9 @@ public sealed partial class SettingsWindow : Window
             if (e.PropertyName is nameof(AppSettings.Script)) RefreshScriptStatus();
             if (e.PropertyName is "Casts") RefreshCast();
             if (e.PropertyName is nameof(AppSettings.Language)) ShowLanguage();
+            if (e.PropertyName is nameof(AppSettings.Shortcut) or nameof(AppSettings.RecordingShortcut) or nameof(AppSettings.ShortcutProblem) or nameof(AppSettings.Language)) ShowShortcut();
         };
+        InitActions();
         library.Changed += RefreshSpecies;
         spend.Changed += RefreshSpend;
         history.Changed += ReloadChats;

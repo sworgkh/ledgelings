@@ -132,12 +132,6 @@
               <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A playmate: a chase is a game of tag. Just there: they hop aside. A menace: a grudge. Chase one too often in a row and it says so in its own voice."/>
             </StackPanel>
           </GroupBox>
-          <GroupBox ui:Tr.Header="Creature Actions">
-            <StackPanel>
-              <CheckBox ui:Tr.Content="Keep the sheet up after an action" IsChecked="{Binding ActionsStayOpen, Mode=TwoWay}"/>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="On, the Creature Actions sheet stays up until you press Done; off, it folds away after one action."/>
-            </StackPanel>
-          </GroupBox>
           <GroupBox ui:Tr.Header="Language and startup">
             <StackPanel>
               <DockPanel Margin="0,0,0,6">
@@ -147,6 +141,30 @@
               <CheckBox x:Name="StartAtLogin" ui:Tr.Content="Start Ledgelings when you log in" Checked="StartAtLogin_Changed" Unchecked="StartAtLogin_Changed"/>
               <TextBlock Margin="0,4,0,0"><Run ui:Tr.Text="Status"/><Run Text=": "/><Run x:Name="LoginStatus" Foreground="Gray"/></TextBlock>
               <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the per-user Startup list; Task Manager › Startup apps shows it too."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Actions">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Creature Actions">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Keep the sheet up after an action" IsChecked="{Binding ActionsStayOpen, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="On, the Creature Actions sheet stays up until you press Done; off, it folds away after one action."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="When the icon is hidden">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Shortcut from any app" IsChecked="{Binding ShortcutEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding ShortcutEnabled}">
+                <TextBlock ui:Tr.Text="Shortcut" Style="{StaticResource RowLabel}"/>
+                <Button x:Name="ShortcutButton" Click="ShortcutButton_Click" MinWidth="120" Padding="10,3" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <TextBlock x:Name="ShortcutProblemText" Text="{Binding ShortcutProblem}" Foreground="Firebrick" TextWrapping="Wrap" Margin="0,2,0,4"/>
+              <CheckBox ui:Tr.Content="Opening Ledgelings again shows the sheet" IsChecked="{Binding ReopenShowsActions, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Windows tucks tray icons away when there are many. The shortcut brings the Creature Actions sheet up whichever app is in front, and pressed again puts it away; the sheet has the menu's switches, Settings and Quit. Click the shortcut to record another: a key with Ctrl, Alt or the Windows key held. Esc keeps the old one. Or start Ledgelings again from the Start menu."/>
             </StackPanel>
           </GroupBox>
         </StackPanel>

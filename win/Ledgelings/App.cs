@@ -30,8 +30,11 @@ public sealed partial class App : Application
         single = new Mutex(true, "Ledgelings.SingleInstance", out var first);
         if (!first)
         {
-            // Said in the running copy's language, read from its settings without writing them.
-            Languages.Choose(Languages.FromCode(new JsonSettingsStore(AppFolders.SettingsFile).Get<string>("language")) ?? Languages.System);
+            // The running copy's settings, read without writing them.
+            var saved = new JsonSettingsStore(AppFolders.SettingsFile);
+            // With the icon tucked away this is a way in: the running copy shows its sheet, and this one leaves quietly.
+            if ((saved.Get<bool?>("reopenShowsActions") ?? true) && TellTheRunningCopy()) { Shutdown(); return; }
+            Languages.Choose(Languages.FromCode(saved.Get<string>("language")) ?? Languages.System);
             MessageBox.Show(L10n.Tr("Ledgelings is already running. Look for the square in the notification area."), "Ledgelings");
             Shutdown();
             return;
@@ -58,6 +61,7 @@ public sealed partial class App : Application
             return;
         }
         StartReminders();
+        StartShortcut();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
 
@@ -93,7 +97,9 @@ public sealed partial class App : Application
         }
         items.Add(new TrayIcon.Item(phase, Enabled: false));
         items.Add(TrayIcon.Item.Separator);
-        items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026"), OpenActions));
+        // After a tab a menu draws the rest at the right, as it does for any shortcut.
+        var keys = ShortcutTitle;
+        items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
@@ -118,7 +124,7 @@ public sealed partial class App : Application
     private void OpenActions()
     {
         if (colony is null || settings is null) return;
-        ActionsSheet.ShowSheet(settings, colony, AddAReminder);
+        ActionsSheet.ShowSheet(settings, colony, AddAReminder, Follow, () => ShortcutTitle);
     }
 
     /// <summary>Seconds until 08:00 tomorrow, local time.</summary>
@@ -140,6 +146,7 @@ public sealed partial class App : Application
     {
         tray?.Dispose();
         StopReminders();
+        StopShortcut();
         colony?.Dispose();
         single?.Dispose();
         base.OnExit(e);
