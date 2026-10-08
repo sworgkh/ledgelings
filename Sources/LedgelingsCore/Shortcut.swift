@@ -17,21 +17,6 @@ public struct Shortcut: Equatable, Sendable {
         static let all: Modifiers = [.command, .shift, .option, .control]
     }
 
-    /// What the shortcut brings up.
-    public enum Opens: String, CaseIterable, Sendable {
-        /// The Creature Actions sheet; pressed again, it puts the sheet away.
-        case actions
-        /// The tray menu, under the cursor: everything the hidden icon would have offered.
-        case menu
-
-        public var title: String {
-            switch self {
-            case .actions: tr("Creature Actions")
-            case .menu: tr("The whole menu")
-            }
-        }
-    }
-
     public static let keyCodes = 0...127
     /// Control-Option-L, L for Ledgelings: free in the system and in the common window managers.
     public static let standard = Shortcut(keyCode: 37, modifiers: [.control, .option])

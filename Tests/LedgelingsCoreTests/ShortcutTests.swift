@@ -26,12 +26,4 @@ import Testing
         #expect(Shortcut.standard.label(key: "L") == "⌃⌥L")
         #expect(Shortcut(keyCode: 0, modifiers: [.command, .shift, .option, .control]).symbols == "⌃⌥⇧⌘")
     }
-
-    @Test func itOpensTheSheetOrTheMenuAndBothAreNamedInRussian() {
-        #expect(Shortcut.Opens.allCases == [.actions, .menu])
-        Language.$override.withValue(.russian) {
-            #expect(Shortcut.Opens.actions.title == "Действия существ")
-            #expect(Shortcut.Opens.menu.title == "Всё меню")
-        }
-    }
 }

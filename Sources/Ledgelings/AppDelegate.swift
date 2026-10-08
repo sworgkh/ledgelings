@@ -18,9 +18,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 })
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private lazy var actions = ActionsController(settings: settings, colony: { [weak self] in self?.colony },
-                                                 addReminder: { [weak self] in self?.openReminders() })
+                                                 addReminder: { [weak self] in self?.openReminders() },
+                                                 open: { [weak self] in self?.follow($0) })
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
+    private var shortcutShown: AnyCancellable?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -91,6 +93,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         installStatusItem()
         shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
+        shortcutShown = Publishers.CombineLatest(settings.$shortcutEnabled, settings.$shortcut)
+            .sink { [weak self] enabled, shortcut in self?.showShortcutInMenu(enabled ? shortcut : nil) }
         // `--shortcut`: says on stderr whether the system took the shortcut, then each press; quits after the first.
         if CommandLine.arguments.contains("--shortcut") {
             let label = GlobalShortcut.label(settings.shortcut)
@@ -352,18 +356,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openActions() { actions.show() }
 
-    /// The shortcut from any app: the sheet, or the whole menu under the cursor, as if the icon were there.
+    /// The shortcut from any app: the sheet comes up, or goes away if it is up.
     private func shortcutPressed() {
+        actions.toggle()
         if CommandLine.arguments.contains("--shortcut") {
-            FileHandle.standardError.write(Data("shortcut pressed: \(settings.shortcutOpens.rawValue)\n".utf8))
+            FileHandle.standardError.write(Data("shortcut pressed: sheet \(actions.isUp ? "up" : "away")\n".utf8))
             Task { @MainActor in try? await Task.sleep(for: .seconds(2)); exit(0) }
         }
-        switch settings.shortcutOpens {
-        case .actions:
-            actions.toggle()
-        case .menu:
-            NSApp.activate(ignoringOtherApps: true)
-            statusItem?.menu?.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+    }
+
+    /// Creature Actions… in the menu wears the shortcut from any app, so it can be
+    /// learnt there; ⌘A, which only works with the menu open, while there is none.
+    private func showShortcutInMenu(_ shortcut: Shortcut?) {
+        let key = shortcut.map { GlobalShortcut.keyName($0.keyCode).lowercased() } ?? ""
+        guard let shortcut, key.count == 1 else {
+            actionsItem.keyEquivalent = "a"
+            actionsItem.keyEquivalentModifierMask = .command
+            return
+        }
+        actionsItem.keyEquivalent = key
+        actionsItem.keyEquivalentModifierMask = GlobalShortcut.flags(shortcut.modifiers)
+    }
+
+    /// Opened again while running: with the icon hidden, the way in that needs no shortcut.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        actions.reopened()
+        return false
+    }
+
+    private func follow(_ link: ActionsLink) {
+        switch link {
+        case .settings: openSettings()
+        case .chats: openChats()
+        case .quit: NSApp.terminate(nil)
         }
     }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }

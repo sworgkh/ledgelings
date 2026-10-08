@@ -1761,8 +1761,11 @@ falls through to whatever is underneath.
 | Shift-press and release within 4 pt | **poke**: it speaks to the nearest creature; both stop to talk |
 | Shift-press and move ≥ 4 pt | **carry** any creature; awake ones ride with eyes open and land awake |
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
-| Menu: Creature Actions… (⌘A on macOS) | the actions sheet, below |
-| The shortcut, in any app (`shortcut`, ⌃⌥L; macOS so far) | what `shortcutOpens` says: the actions sheet, or the tray menu under the cursor; see *The shortcut* below |
+| Menu: Creature Actions… (⌘A on macOS; the menu shows the shortcut below instead while it is on) | the actions sheet, below |
+| The shortcut, in any app (`shortcut`, ⌃⌥L; macOS so far) | the actions sheet comes up; pressed while it is up, it folds away. See *The shortcut* below |
+| Opening the app again while it runs (macOS so far) | the actions sheet comes up, with `reopenShowsActions` on |
+| Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
+| Sheet: Settings (⌘,), Chats, Quit (⌘Q) | puts the sheet away; the settings window, its Chats tab, or the app quits |
 | Sheet: Make Them Jump (J) | every creature startles |
 | Sheet: Make Someone Talk (T) | §6.5 |
 | Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
@@ -1781,7 +1784,7 @@ The menu also shows `"Day — they sleep in m:ss"` / `"Night — they wake in
 m:ss"` (or `"Always day — night is set to 0"`, and while hiding `"Hiding in the
 house — out in m:ss"`), the last talk status line (first 70 characters), and Quit.
 
-**The actions sheet**: a borderless 564×506-point (DIP on Windows) window centred on the
+**The actions sheet**: a borderless 564×548-point (DIP on Windows) window centred on the
 cursor's screen, the letter's paper (`Reminders.paper`, 3 points per pixel) below 54
 points of headroom with a creature peeking over the top, as the paper note (§7.7).
 Eight tiles, four to a row, in the order of the table above: each a raised pixel box
@@ -1792,22 +1795,37 @@ Z, a poppy), its title, a small detail line, and its key in the top-right corner
 with nothing to do is drawn at 45 % and ignores presses; while the creatures hide,
 Jump, Talk, Tea and Plane are greyed. Under the tiles, one line: the hide durations
 while choosing, else what the last press did for 5 s, else `click a picture, or press
-its letter`. Done or Esc closes it; with `actionsStayOpen` off a press also folds it
+its letter` (followed, while the shortcut is on, by ` · ⌃⌥L opens and closes this`).
+Under that, a row of small pixel buttons, the menu's switches, each worded as it stands
+and drawn pressed in while on: `TALK ON/OFF` (`talkEnabled`), `VOICE ON/OFF`
+(`voiceEnabled`), `REVENGE ON/OFF` (`revengeEnabled`), `CURSOR: <mood>` (`cursorMood`,
+each press the next mood, round again). The last row: the language under its own name
+(each press the next one), `SETTINGS`, `CHATS`, `QUIT`, and Done at the right. A switch
+says what it did on the line above and never folds the sheet, whatever `actionsStayOpen`
+says. With these, everything the tray menu offers can be done from the sheet (costs and
+the reminder list through Settings), so a hidden icon loses nothing. Done or Esc closes it; with `actionsStayOpen` off a press also folds it
 away (shrinks up and fades, 0.28 s). It reads the colony twice a second while open.
 
 **The shortcut**: the tray can run out of room (a notched Mac hides the icons that do
-not fit, without a word), so one system-wide shortcut reaches everything the icon did.
-With `shortcutEnabled` on, pressing `shortcut` in any app does what `shortcutOpens` says:
-`actions` brings the actions sheet up, or folds it away when it is already up and has
-the keyboard; `menu` opens the tray menu at the cursor, the app brought to the front so
-its keys work. A shortcut is a key with at least one of Command, Control, Option held
-(Shift alone would be a letter someone types); anything else saved reads as the default,
-Control-Option-L. Settings (the Actions tab, with `actionsStayOpen`) shows it as a button, drawn as the platform draws shortcuts
+not fit, without a word), so one system-wide shortcut reaches the sheet, and the sheet
+everything the icon did. With `shortcutEnabled` on, pressing `shortcut` in any app
+brings the actions sheet up, or folds it away when it is up. A shortcut is a key with
+at least one of Command, Control, Option held (Shift alone would be a letter someone
+types); anything else saved reads as the default, Control-Option-L: L for Ledgelings,
+and not taken by the system or the common window managers. Settings (the Actions tab,
+with `actionsStayOpen`) shows it as a button, drawn as the platform draws shortcuts
 (`⌃⌥L`): click it and the next such keys pressed become the shortcut, Escape or a second
 click keeps the old one, any other key beeps. While it listens, and while the setting is
 off, the shortcut is let go, so the keys reach the app in front. If the system refuses
-it (another app holds it), a red line under the button says so. No permission is asked.
-macOS so far; Windows has only Ctrl+Alt+R for Add a Reminder (§7.7).
+it (already taken), a red line under the button says so and nothing is registered. No
+permission is asked. macOS tells an app nothing when *another app* registered the same
+keys: both are accepted and one of them gets the press, so the cure is to record another.
+The menu's Creature Actions… item shows the shortcut. macOS so far; Windows has only
+Ctrl+Alt+R for Add a Reminder (§7.7).
+
+**Opening it again**: the other way in without an icon. With `reopenShowsActions` on,
+opening the app while it already runs (Spotlight, Finder, the Dock) brings the sheet up;
+it never puts it away.
 
 ---
 
@@ -1850,7 +1868,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
 | shortcutEnabled | true | a shortcut that works in every app (§11); macOS so far |
 | shortcutKeyCode / shortcutModifiers | 37 / 12 (⌃⌥L) | the platform's key number, 0–127; modifier bits Command 1, Shift 2, Option 4, Control 8, others dropped. Without Command, Control or Option, or with a key out of range: the default |
-| shortcutOpens | `actions` | `actions`, `menu`; an unknown value reads as `actions` |
+| reopenShowsActions | true | opening the app again while it runs brings the sheet up (§11); macOS so far |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
 | teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |

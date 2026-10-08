@@ -76,7 +76,7 @@ with `scripts/make-app.sh`, installed and seen working.
   offscreen (built-in lines, or a local server named by `LEDGELINGS_TEA_SERVER`),
   which works even while the display sleeps and the live display link stops.
 - `--shortcut` says whether the system took the shortcut from any app (`shortcut ⌃⌥L registered`),
-  then `shortcut pressed: actions` when it is pressed, and quits; nothing in 30 s is exit 2.
+  then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
 - `swift build` does not update `build/Ledgelings.app`; run `scripts/make-app.sh`.
 - The app's preferences are shared with the owner's running copy. Back them up
   (`defaults export com.alterman.ledgelings file.plist`) before a test changes

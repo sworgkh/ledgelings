@@ -382,17 +382,17 @@ import Testing
         #expect(!AppSettings(defaults: defaults).actionsStayOpen)
     }
 
-    @Test func theShortcutIsControlOptionLOpensTheSheetAndAChangeIsRemembered() {
+    @Test func theShortcutIsControlOptionLAndAChangeIsRemembered() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }
-        #expect(s.shortcutEnabled && s.shortcut == .standard && s.shortcutOpens == .actions)
+        #expect(s.shortcutEnabled && s.shortcut == .standard && s.reopenShowsActions)
         #expect(Shortcut.standard == Shortcut(keyCode: 37, modifiers: [.control, .option]))
         s.shortcutEnabled = false
         s.shortcut = Shortcut(keyCode: 49, modifiers: [.command, .shift])
-        s.shortcutOpens = .menu
+        s.reopenShowsActions = false
         s.recordingShortcut = true
         let back = AppSettings(defaults: defaults)
-        #expect(!back.shortcutEnabled && back.shortcut == Shortcut(keyCode: 49, modifiers: [.command, .shift]) && back.shortcutOpens == .menu)
+        #expect(!back.shortcutEnabled && back.shortcut == Shortcut(keyCode: 49, modifiers: [.command, .shift]) && !back.reopenShowsActions)
         #expect(!back.recordingShortcut && back.shortcutProblem.isEmpty)
         // A saved key someone types (Shift alone, or nothing held), or no key at all, reads as the standard one.
         defaults.set(Shortcut.Modifiers.shift.rawValue, forKey: "shortcutModifiers")
@@ -400,8 +400,6 @@ import Testing
         defaults.set(Shortcut.Modifiers.command.rawValue, forKey: "shortcutModifiers")
         defaults.set(900, forKey: "shortcutKeyCode")
         #expect(AppSettings(defaults: defaults).shortcut == .standard)
-        defaults.set("the moon", forKey: "shortcutOpens")
-        #expect(AppSettings(defaults: defaults).shortcutOpens == .actions)
     }
 
     @Test func theShortcutIsLabelledAsTheMacDrawsIt() {
@@ -409,6 +407,30 @@ import Testing
         #expect(GlobalShortcut.label(.standard).hasPrefix("⌃⌥"))
         #expect(GlobalShortcut.carbon([.control, .option]) == 4096 + 2048)
         #expect(GlobalShortcut.modifiers([.command, .capsLock, .shift]) == [.command, .shift])
+        #expect(GlobalShortcut.flags([.control, .option]) == [.control, .option])
+    }
+
+    /// Nobody else would hold this one, so the first to ask gets it and the second is told no.
+    @Test func aShortcutAlreadyTakenIsReportedAndClearsWhenItIsFreeOrOff() {
+        let box = fresh(), s = box.settings
+        defer { box.forget() }
+        let rare = Shortcut(keyCode: 111, modifiers: [.command, .shift, .option, .control])
+        s.shortcut = rare
+        let first = GlobalShortcut(settings: s) {}
+        #expect(s.shortcutProblem.isEmpty)
+        let other = AppSettings(defaults: UserDefaults(suiteName: "ledgelings-tests-2")!, keychain: Keychain(service: "ledgelings-tests"))
+        defer { UserDefaults.standard.removePersistentDomain(forName: "ledgelings-tests-2") }
+        other.shortcut = rare
+        let second = GlobalShortcut(settings: other) {}
+        #expect(other.shortcutProblem.contains("⌃⌥⇧⌘F12"))
+        // Off, it asks for nothing, so there is nothing to complain of.
+        other.shortcutEnabled = false
+        #expect(other.shortcutProblem.isEmpty)
+        // The first lets go while a new one is recorded: now the second may have it.
+        s.recordingShortcut = true
+        other.shortcutEnabled = true
+        #expect(other.shortcutProblem.isEmpty)
+        _ = (first, second)
     }
 
     @Test func addAReminderOpensThePaperNoteUnlessToldOtherwiseAndItIsRemembered() {

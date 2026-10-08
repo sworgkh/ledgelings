@@ -113,8 +113,8 @@ final class AppSettings: ObservableObject {
     @Published var shortcut: Shortcut {
         didSet { save(shortcut.keyCode, "shortcutKeyCode"); save(shortcut.modifiers.rawValue, "shortcutModifiers") }
     }
-    /// What the shortcut brings up: the Creature Actions sheet, or the menu under the cursor.
-    @Published var shortcutOpens: Shortcut.Opens { didSet { save(shortcutOpens.rawValue, "shortcutOpens") } }
+    /// Opening the app again while it runs (Spotlight, Finder, the Dock) brings the Creature Actions sheet up.
+    @Published var reopenShowsActions: Bool { didSet { save(reopenShowsActions, "reopenShowsActions") } }
     /// The settings window is listening for a new shortcut, so the old one is let go. Not saved.
     @Published var recordingShortcut = false
     /// Why the shortcut does nothing, when the system refused it; empty while all is well. Not saved.
@@ -392,7 +392,7 @@ final class AppSettings: ObservableObject {
         shortcutEnabled = defaults.object(forKey: "shortcutEnabled") as? Bool ?? true
         shortcut = Shortcut(savedKeyCode: defaults.object(forKey: "shortcutKeyCode") as? Int,
                             savedModifiers: defaults.object(forKey: "shortcutModifiers") as? Int)
-        shortcutOpens = defaults.string(forKey: "shortcutOpens").flatMap(Shortcut.Opens.init(rawValue:)) ?? .actions
+        reopenShowsActions = defaults.object(forKey: "reopenShowsActions") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.
         let chance = defaults.object(forKey: "teaPartyChance") as? Double ?? 10
         teaPartyChance = min(max(chance, Self.teaChanceRange.lowerBound), Self.teaChanceRange.upperBound)

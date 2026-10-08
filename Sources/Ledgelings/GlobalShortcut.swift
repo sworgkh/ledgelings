@@ -44,7 +44,7 @@ final class GlobalShortcut {
                                              GetApplicationEventTarget(), 0, &hotKey)
             if status != noErr {
                 hotKey = nil
-                problem = tr("macOS would not take %@: another app holds it. Record another.", Self.label(shortcut))
+                problem = tr("macOS would not take %@: it is already taken. Record another.", Self.label(shortcut))
             }
         }
         if settings.shortcutProblem != problem { settings.shortcutProblem = problem }
@@ -53,6 +53,15 @@ final class GlobalShortcut {
     static func carbon(_ modifiers: Shortcut.Modifiers) -> UInt32 {
         UInt32((modifiers.contains(.command) ? cmdKey : 0) | (modifiers.contains(.shift) ? shiftKey : 0)
             | (modifiers.contains(.option) ? optionKey : 0) | (modifiers.contains(.control) ? controlKey : 0))
+    }
+
+    static func flags(_ modifiers: Shortcut.Modifiers) -> NSEvent.ModifierFlags {
+        var f: NSEvent.ModifierFlags = []
+        if modifiers.contains(.command) { f.insert(.command) }
+        if modifiers.contains(.shift) { f.insert(.shift) }
+        if modifiers.contains(.option) { f.insert(.option) }
+        if modifiers.contains(.control) { f.insert(.control) }
+        return f
     }
 
     static func modifiers(_ flags: NSEvent.ModifierFlags) -> Shortcut.Modifiers {
