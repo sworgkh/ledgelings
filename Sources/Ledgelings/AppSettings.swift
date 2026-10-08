@@ -71,10 +71,16 @@ final class AppSettings: ObservableObject {
     static let revengeAfterRange = 3...50
     /// Seconds those chases must fall within.
     static let revengeWindowRange = 30.0...600.0
-    /// Longest a creature may hold the cursor, in seconds; then it lets go by itself.
-    static let revengeHoldRange = 3.0...30.0
+    /// Longest a creature may hold the cursor, in seconds; then it lets go by itself. 0: until shaken off.
+    static let revengeHoldRange = 0.0...30.0
+    /// Seconds between tellings-off while it holds on. 0: only the first.
+    static let revengeTauntRange = 0.0...60.0
     /// Quick back-and-forth strokes it takes to shake a creature off.
     static let revengeShakesRange = 2...16
+    /// Points a stroke must travel one way before turning back counts as a shake.
+    static let revengeShakeStrokeRange = 10.0...60.0
+    /// Seconds the shakes must fall within.
+    static let revengeShakeWindowRange = 1.0...4.0
     /// Minutes after one grab before any creature grabs again.
     static let revengeCooldownRange = 1.0...120.0
     /// Hunted too often in a short time, a creature grabs the cursor and shames the user until shaken off.
@@ -82,7 +88,12 @@ final class AppSettings: ObservableObject {
     @Published var revengeAfter: Int { didSet { save(revengeAfter, "revengeAfter") } }
     @Published var revengeWindowSeconds: Double { didSet { save(revengeWindowSeconds, "revengeWindowSeconds") } }
     @Published var revengeHoldSeconds: Double { didSet { save(revengeHoldSeconds, "revengeHoldSeconds") } }
+    @Published var revengeTauntSeconds: Double { didSet { save(revengeTauntSeconds, "revengeTauntSeconds") } }
     @Published var revengeShakes: Int { didSet { save(revengeShakes, "revengeShakes") } }
+    @Published var revengeShakeStroke: Double { didSet { save(revengeShakeStroke, "revengeShakeStroke") } }
+    @Published var revengeShakeWindowSeconds: Double { didSet { save(revengeShakeWindowSeconds, "revengeShakeWindowSeconds") } }
+    /// Off, the creature rides along on the pointer; on, it holds the pointer where it was.
+    @Published var revengePinsCursor: Bool { didSet { save(revengePinsCursor, "revengePinsCursor") } }
     @Published var revengeCooldownMinutes: Double { didSet { save(revengeCooldownMinutes, "revengeCooldownMinutes") } }
 
     // MARK: Tea parties
@@ -346,18 +357,25 @@ final class AppSettings: ObservableObject {
         huntWaryAfter = min(max(wary, Self.huntWaryAfterRange.lowerBound), Self.huntWaryAfterRange.upperBound)
         // On: the owner asked for it. Ten chases in two minutes is well past the
         // fifth-in-a-row complaint, so it only answers real abuse; ten seconds at
-        // most, six quick strokes to break free, then ten minutes' peace.
+        // ten minutes' peace. It rides along on the pointer rather than holding it
+        // still (the owner found a pinned pointer too much) and stays until shaken
+        // off, telling the user off again every 15 s; four strokes of 20 points
+        // within two seconds shake it off: a wiggle, not a fight.
         revengeEnabled = defaults.object(forKey: "revengeEnabled") as? Bool ?? true
         let revengeAfter = defaults.object(forKey: "revengeAfter") as? Int ?? 10
         self.revengeAfter = min(max(revengeAfter, Self.revengeAfterRange.lowerBound), Self.revengeAfterRange.upperBound)
-        let revengeShakes = defaults.object(forKey: "revengeShakes") as? Int ?? 6
+        let revengeShakes = defaults.object(forKey: "revengeShakes") as? Int ?? 4
         self.revengeShakes = min(max(revengeShakes, Self.revengeShakesRange.lowerBound), Self.revengeShakesRange.upperBound)
         func clampRevenge(_ key: String, _ fallback: Double, _ range: ClosedRange<Double>) -> Double {
             min(max(defaults.object(forKey: key) as? Double ?? fallback, range.lowerBound), range.upperBound)
         }
         revengeWindowSeconds = clampRevenge("revengeWindowSeconds", 120, Self.revengeWindowRange)
-        revengeHoldSeconds = clampRevenge("revengeHoldSeconds", 10, Self.revengeHoldRange)
+        revengeHoldSeconds = clampRevenge("revengeHoldSeconds", 0, Self.revengeHoldRange)
+        revengeTauntSeconds = clampRevenge("revengeTauntSeconds", 15, Self.revengeTauntRange)
         revengeCooldownMinutes = clampRevenge("revengeCooldownMinutes", 10, Self.revengeCooldownRange)
+        revengeShakeStroke = clampRevenge("revengeShakeStroke", 20, Self.revengeShakeStrokeRange)
+        revengeShakeWindowSeconds = clampRevenge("revengeShakeWindowSeconds", 2, Self.revengeShakeWindowRange)
+        revengePinsCursor = defaults.object(forKey: "revengePinsCursor") as? Bool ?? false
         teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
         actionsStayOpen = defaults.object(forKey: "actionsStayOpen") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.

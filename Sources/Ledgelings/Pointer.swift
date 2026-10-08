@@ -7,6 +7,8 @@ protocol PointerHold: AnyObject {
     /// Keep the pointer at `point` and start listening for the user's struggle.
     /// False when the pointer cannot be moved: the creature then only clings to it.
     func pin(at point: CGPoint) -> Bool
+    /// Only listen for the user's moves and Escape, leaving the pointer free: the creature rides along.
+    func follow()
     /// Put the pointer back on `point` after the user moved it.
     func hold(at point: CGPoint)
     /// Stop holding and listening.
@@ -33,6 +35,11 @@ final class SystemPointer: PointerHold {
 
     func pin(at point: CGPoint) -> Bool {
         guard Self.warp(to: point) else { return false }
+        follow()
+        return true
+    }
+
+    func follow() {
         release()
         let moves: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged]
         if let global = NSEvent.addGlobalMonitorForEvents(matching: moves, handler: { [weak self] _ in
@@ -51,7 +58,6 @@ final class SystemPointer: PointerHold {
             self?.onEscape?()
             return nil
         }) { monitors.append(local) }
-        return true
     }
 
     func hold(at point: CGPoint) { Self.warp(to: point) }

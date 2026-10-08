@@ -50,19 +50,23 @@ public enum Revenge {
         public mutating func forget(creaturesFrom count: Int) { times = times.filter { $0.key < count } }
     }
 
-    /// Whether the user is shaking the cursor hard: quick strokes back and forth.
+    /// Whether the user is shaking the cursor: strokes back and forth.
     /// A stroke counts once it has travelled `stroke` points one way; turning back
     /// after one is a reversal. `needed` reversals within `window` seconds, on either
     /// axis, shake the creature off. Slow drifting and small jitters never add up.
     public struct Shake: Sendable {
         public var needed: Int
-        public static let stroke = 30.0
-        public static let window = 1.5
+        public var stroke: Double
+        public var window: Double
         private struct Axis: Sendable { var sign = 0.0, travel = 0.0 }
         private var axes = [Axis(), Axis()]
         private var reversals: [Double] = []
 
-        public init(needed: Int = 6) { self.needed = needed }
+        public init(needed: Int = 4, stroke: Double = 20, window: Double = 2) {
+            self.needed = needed
+            self.stroke = stroke
+            self.window = window
+        }
 
         /// The cursor tried to move by `dx`, `dy` points at `time`. True once it is shaken off.
         public mutating func moved(dx: Double, dy: Double, at time: Double) -> Bool {
@@ -71,19 +75,29 @@ public enum Revenge {
                 if sign == axes[axis].sign {
                     axes[axis].travel += abs(d)
                 } else {
-                    if axes[axis].sign != 0, axes[axis].travel >= Self.stroke { reversals.append(time) }
+                    if axes[axis].sign != 0, axes[axis].travel >= stroke { reversals.append(time) }
                     axes[axis] = Axis(sign: sign, travel: abs(d))
                 }
             }
-            reversals.removeAll { time - $0 > Self.window }
+            reversals.removeAll { time - $0 > window }
             return reversals.count >= needed
         }
 
         /// How close to shaken off, 0...1, as of `time`: how hard the creature wobbles.
         public func vigour(at time: Double) -> Double {
             guard needed > 0 else { return 1 }
-            return min(1, Double(reversals.filter { time - $0 <= Self.window }.count) / Double(needed))
+            return min(1, Double(reversals.filter { time - $0 <= window }.count) / Double(needed))
         }
+    }
+
+    /// Holding the pointer still with no limit set, a creature still lets go after this many seconds.
+    public static let pinnedHoldCap = 10.0
+
+    /// How long a grab may last: `limit` seconds, 0 for until shaken off; never past
+    /// `pinnedHoldCap` when the pointer is held still.
+    public static func longestHold(limit: Double, pinned: Bool) -> Double {
+        let limit = limit > 0 ? limit : .infinity
+        return pinned ? min(limit, pinnedHoldCap) : limit
     }
 
     /// Why a creature let go of the cursor.

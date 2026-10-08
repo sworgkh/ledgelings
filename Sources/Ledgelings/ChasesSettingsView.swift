@@ -43,6 +43,19 @@ struct ChasesSettingsView: View {
             }
             .disabled(!settings.huntCountEnabled)
 
+            Section {
+                Stepper(value: $settings.revengeShakes, in: AppSettings.revengeShakesRange) {
+                    LabeledContent(tr("Shakes to break free"), value: "\(settings.revengeShakes)")
+                }
+                SliderRow(tr("Each shake at least"), value: $settings.revengeShakeStroke, in: AppSettings.revengeShakeStrokeRange, step: 5, unit: tr(" pt"))
+                SliderRow(tr("Shakes within"), value: $settings.revengeShakeWindowSeconds, in: AppSettings.revengeShakeWindowRange, step: 0.5, unit: tr(" s"))
+            } header: {
+                Text(tr("Shaking it off"))
+            } footer: {
+                Text(tr("Move the mouse back and forth: this many turns, each after a stroke this long, within this time. Fewer, shorter, slower is gentler."))
+            }
+            .disabled(!settings.revengeEnabled)
+
         } right: {
             Section {
                 Toggle(tr("Grab the cursor in revenge"), isOn: $settings.revengeEnabled)
@@ -51,17 +64,16 @@ struct ChasesSettingsView: View {
                         LabeledContent(tr("After"), value: trCount(settings.revengeAfter, "time", "times"))
                     }
                     SliderRow(tr("Within"), value: $settings.revengeWindowSeconds, in: AppSettings.revengeWindowRange, step: 30, unit: tr(" s"))
-                    SliderRow(tr("Holds on for at most"), value: $settings.revengeHoldSeconds, in: AppSettings.revengeHoldRange, step: 1, unit: tr(" s"))
-                    Stepper(value: $settings.revengeShakes, in: AppSettings.revengeShakesRange) {
-                        LabeledContent(tr("Shakes to break free"), value: "\(settings.revengeShakes)")
-                    }
+                    SliderRow(tr("Holds on for at most"), value: $settings.revengeHoldSeconds, in: AppSettings.revengeHoldRange, step: 1, unit: tr(" s"), zero: tr("no limit"))
+                    SliderRow(tr("Tells you off again every"), value: $settings.revengeTauntSeconds, in: AppSettings.revengeTauntRange, step: 5, unit: tr(" s"), zero: tr("never"))
+                    Toggle(tr("Holds the pointer still"), isOn: $settings.revengePinsCursor)
                     SliderRow(tr("Then peace for"), value: $settings.revengeCooldownMinutes, in: AppSettings.revengeCooldownRange, step: 1, unit: tr(" min"))
                 }
                 .disabled(!settings.revengeEnabled)
             } header: {
                 Text(tr("Revenge"))
             } footer: {
-                Text(tr("Chased or picked up this often in that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood. Shake the mouse hard, back and forth, to throw it off. Escape lets go too, and it never holds on past the limit. Moving the pointer needs no permission; Escape outside Ledgelings works only with Accessibility allowed."))
+                Text(tr("Chased or picked up this often in that time, a creature jumps on the cursor and rides along on it, telling you off now and then in its own words and the cursor mood, until you shake it off or the limit runs out. Holding the pointer still, you cannot move it until it lets go, after 10 s at the latest. Escape lets go too; outside Ledgelings only with Accessibility allowed."))
             }
 
             Section {

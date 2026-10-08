@@ -353,8 +353,8 @@ call of their own:
 
 ### 4.7.3 Revenge: grabbing the cursor
 
-Hunted far too often in a short time, a creature jumps on the cursor, hangs on to
-it and tells the user off; shaking the mouse hard throws it off.
+Hunted far too often in a short time, a creature jumps on the cursor, rides along
+on it and tells the user off; shaking the mouse throws it off.
 
 - **When.** `Revenge.Fuse` keeps each creature's hunts (the same moments as §4.7.1,
   counted even with complaints and counting off) from the last
@@ -367,13 +367,16 @@ it and tells the user off; shaking the mouse hard throws it off.
 - **The grab.** `Creature.cling()` puts it in `held` from any mode, awake. It hangs
   with the arrow's tip in the top of its body (0.2 of its half size right, 0.55
   down). The other creatures ignore the cursor while it is held, so it adds no
-  hunts. The real pointer is held where it was (`SystemPointer`): every move the
+  hunts. By default it **rides along**: the pointer stays the user's, never moved
+  or slowed, and the creature hangs from it wherever it goes (`SystemPointer.follow`
+  only listens for moves and Escape). With `revengePinsCursor` on, the real pointer
+  is held where it was (`SystemPointer.pin`): every move the
   user makes is read, then the pointer is put back with `CGWarpMouseCursorPosition`,
   which needs no permission; `CGAssociateMouseAndMouseCursorPosition(1)` after each
   move back undoes the quarter second the warp would mute the mouse. Nothing is
   detached, so a crash or a kill leaves the pointer simply free. Moves are read
   from the frame and from global and local mouse-moved monitors. If the pointer
-  cannot be moved, the creature only clings and rides along with it.
+  cannot be moved, the creature only rides along.
 - **Words.** With the built-in lines, `Revenge.lines` (two per built-in character
   per mood, `anyone` for an invented one; English and Russian, line for line) with
   `{today}` and `{all}` from the hunt count. With a model, `Revenge.prompt` per mood
@@ -382,17 +385,24 @@ it and tells the user off; shaking the mouse hard throws it off.
   `{times}`, the speaker's persona and kind; priced as `Spend.Purpose.revenge`,
   even when the grab is over before the answer; a failed or empty answer falls back
   to the built-in line. It goes to the chat log. Said out loud when voice is on.
+  While it holds on it tells the user off again with another built-in line,
+  `revengeTauntSeconds` after the last (0: never), once its bubble has gone; these
+  repeats call no model and are not logged.
 - **Letting go.** Shaken off (`Revenge.Shake`): a stroke counts once it has moved
-  30 points one way, and turning back after one is a reversal; `revengeShakes`
-  reversals inside 1.5 s on either axis throw it off. It wobbles harder as the
+  `revengeShakeStroke` points one way (20), and turning back after one is a
+  reversal; `revengeShakes` reversals (4) inside `revengeShakeWindowSeconds` (2 s)
+  on either axis throw it off. It wobbles harder as the
   reversals add up, then drops to the nearest edge, turning head over heels twice
   (at least 0.6 s), and says a last word in its voice and mood
   (`Revenge.lastWords`). It also lets go, without a word, after
-  `revengeHoldSeconds`, on Escape (heard while Ledgelings is in front, elsewhere
+  `revengeHoldSeconds` (0: only when shaken off; holding the pointer still, never
+  past `Revenge.pinnedHoldCap`, 10 s, whatever the setting), on Escape (heard while Ledgelings is in front, elsewhere
   only with Accessibility allowed), when the screens sleep or lock, the session is
   switched away from, the screens change, they hide, it is turned off, or the app
   quits. A screen share is not detected.
-- **Windows.** The same, with `SetCursorPos` to hold the pointer (no permission;
+- **Windows.** Not yet updated: it always holds the pointer still, with the old
+  ranges and defaults (hold 3–30 s, 10; 6 reversals of 30 points within 1.5 s).
+  Otherwise the same, with `SetCursorPos` to hold the pointer (no permission;
   it fails on the secure desktop, and the creature then only clings). Escape is a
   system-wide `RegisterHotKey` while a creature holds on, so it works whichever app
   is in front and is taken from that app for those seconds; it is let go with the
@@ -1814,8 +1824,12 @@ An error for want of a model reads as that note, never as a server refusal.
 | revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |
-| revengeHoldSeconds | 10 | 3–30 s, clamped on load: it lets go by itself after this |
-| revengeShakes | 6 | 2–16, clamped on load: quick reversals within 1.5 s that throw it off |
+| revengeHoldSeconds | 0 | 0–30 s, clamped on load: it lets go by itself after this; 0 = until shaken off (holding the pointer still: 10 s at most) |
+| revengeTauntSeconds | 15 | 0–60 s, clamped on load: another built-in telling-off this long after the last while it holds on; 0 = never |
+| revengePinsCursor | false | off: it rides along on the pointer; on: the pointer is held where it was |
+| revengeShakes | 4 | 2–16, clamped on load: reversals within the shake window that throw it off |
+| revengeShakeStroke | 20 | 10–60 points, clamped on load: how far a stroke goes before turning back counts |
+| revengeShakeWindowSeconds | 2 | 1–4 s, clamped on load: the reversals must fall within this |
 | revengeCooldownMinutes | 10 | 1–120 min, clamped on load: nobody grabs again for this long |
 | actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
@@ -1876,7 +1890,7 @@ and the hunt counts in `hunts.json` (§4.7.2).
 Settings window: 1100×760 points, eleven tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
-colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Chases**: counting toggle; talking about it (toggle, how often); wariness (toggle, after how many in a day); revenge (toggle, after how many, within, longest hold, shakes to break free, then peace for); the count per character on screen and anyone else counted, today / this week / in all with a Reset each, the total, since when, the file and Reset All… (confirmed). **Talk**: talk toggle,
+colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Chases**: counting toggle; talking about it (toggle, how often); wariness (toggle, after how many in a day); revenge (toggle, after how many, within, longest hold, tells you off again every, holds the pointer still, shakes to break free, each shake at least, shakes within, then peace for); the count per character on screen and anyone else counted, today / this week / in all with a Reset each, the total, since when, the file and Reset All… (confirmed). **Talk**: talk toggle,
 bubble slider, paper-plane toggle and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),
