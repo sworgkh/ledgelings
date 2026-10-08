@@ -4,7 +4,8 @@ using Microsoft.Win32;
 namespace Ledgelings;
 
 /// <summary>Revenge (SPEC §4.7.3): chased or picked up too often in a short time, a creature jumps on the
-/// cursor, hangs on to it and tells the user what it thinks of them. Shaking the mouse hard throws it off;
+/// cursor, rides along on it (or, with <c>RevengePinsCursor</c>, holds it still) and tells the user what it thinks
+/// of them. Shaking the mouse throws it off;
 /// Escape, or the longest hold running out, lets go too. The same as the Mac's <c>Colony+Revenge.swift</c>.</summary>
 public sealed partial class Colony
 {
@@ -17,9 +18,11 @@ public sealed partial class Colony
         /// <summary>Where the cursor is held, and where it was last seen.</summary>
         public Pt Pin, Last;
         public Revenge.Shake Shake = new();
-        /// <summary>Whether the real pointer is held; without it the creature only clings and rides along.</summary>
+        /// <summary>Whether the real pointer is held still; otherwise the creature clings and rides along.</summary>
         public bool Pinned;
         public int Serial;
+        /// <summary>When it tells the user off again, on the colony's clock.</summary>
+        public double NextTaunt;
     }
 
     /// <summary>Hunts in the last few minutes per creature: too many and one grabs the cursor.</summary>
@@ -101,30 +104,48 @@ public sealed partial class Colony
         revengeFuse.Grabbed(Elapsed);
         annoyance.Forgive(i);
         grabCount++;
-        var pinned = Pointer?.Pin(cursor) ?? false;
+        var pinned = Settings.RevengePinsCursor && Pointer?.Pin(cursor) == true;
+        if (!pinned) Pointer?.Follow();
         if (Pointer is not null) Pointer.OnEscape = () => LetGoOfCursor(Revenge.Release.Escape);
         WatchTheSession();
         CurrentGrab = new Grab
         {
             Index = i, Since = Elapsed, Pin = cursor, Last = cursor,
-            Shake = new Revenge.Shake(Settings.RevengeShakes), Pinned = pinned, Serial = grabCount,
+            Shake = new Revenge.Shake(Settings.RevengeShakes, Settings.RevengeShakeStroke, Settings.RevengeShakeWindowSeconds),
+            Pinned = pinned, Serial = grabCount, NextTaunt = Elapsed + Math.Max(Settings.RevengeTauntSeconds, 1),
         };
         creatures[i].Drag(Hang(i, cursor));
-        Trace?.Invoke($"grab {CharacterFor(i).Name}{(pinned ? "" : " (clinging only)")}");
+        Trace?.Invoke($"grab {CharacterFor(i).Name}{(pinned ? " (holding still)" : "")}");
         Shame(i, times, grabCount);
     }
 
-    /// <summary>Every frame of a grab: count the struggle, keep the cursor held, and let go when it has been held long enough.</summary>
+    /// <summary>Every frame of a grab: count the struggle, keep the cursor held, tell the user off now and then,
+    /// and let go when it has been held long enough.</summary>
     partial void UpdateGrab(Pt cursor)
     {
         if (CurrentGrab is not { } g) return;
         if (g.Index >= creatures.Count || !creatures[g.Index].IsHeld) { LetGoOfCursor(Revenge.Release.Escape); return; }
-        if (Elapsed - g.Since >= Settings.RevengeHoldSeconds) { LetGoOfCursor(Revenge.Release.Tired); return; }
+        if (Elapsed - g.Since >= Revenge.LongestHold(Settings.RevengeHoldSeconds, g.Pinned)) { LetGoOfCursor(Revenge.Release.Tired); return; }
         Struggle(cursor);
+        Taunt();
+    }
+
+    /// <summary>Riding along, it tells the user off again every <c>RevengeTauntSeconds</c>, with its built-in lines
+    /// (no further model calls), once the last bubble is gone.</summary>
+    private void Taunt()
+    {
+        if (CurrentGrab is not { } g || Settings.RevengeTauntSeconds <= 0 || Elapsed < g.NextTaunt) return;
+        if (!Settings.TalkEnabled || bubbles.ContainsKey(g.Index)) return;
+        g.NextTaunt = Elapsed + Settings.RevengeTauntSeconds;
+        var name = CharacterFor(g.Index).Name;
+        var n = Hunts.NumbersOf(name);
+        var line = Revenge.Line(name, Math.Max(n.Today, 1), Math.Max(n.All, 1), Settings.CursorMood, rng);
+        Say(line, g.Index, builtIn: true);
+        Trace?.Invoke($"taunt {name}: {line}");
     }
 
     /// <summary>The user moved the cursor to <paramref name="point"/>: that is part of a shake, and a held cursor
-    /// goes straight back. Hard enough, and the creature is thrown off.</summary>
+    /// goes straight back. Enough of it, and the creature is thrown off.</summary>
     public void Struggle(Pt point)
     {
         if (CurrentGrab is not { } g) return;

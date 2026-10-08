@@ -143,9 +143,9 @@ up (a plain press on a sleeper, or a Shift-drag).
 | **Shakes within** (`revengeShakeWindowSeconds`) | 2 s | 1 to 4, in halves | Longer is gentler |
 | **Then peace for** (`revengeCooldownMinutes`) | 10 min | 1 to 120 | Nobody grabs again for this long |
 
-Until 0.39.0 the creature always held the pointer still, for 10 s at most, and took 6 turns of 30 points within 1.5 s. Saved values carry over (a saved hold of 3–30 s stays a limit); unsaved ones take the new defaults. On Windows, until its own update, it still holds the pointer still with the old ranges and defaults.
+Until 0.39.0 the creature always held the pointer still, for 10 s at most, and took 6 turns of 30 points within 1.5 s. Saved values carry over (a saved hold of 3–30 s stays a limit); unsaved ones take the new defaults. Windows has the same settings and defaults since 0.39.0.
 
-On Windows the Revenge group sits after Wariness. The pointer is held with `SetCursorPos`, which needs no permission either. Escape lets go whichever app is in front: while a creature holds on, Escape is a system-wide hotkey, so for those seconds it goes to Ledgelings rather than the app in front. If the pointer cannot be moved (a UAC prompt or the lock screen is up), the creature only clings to it. Locking the session or putting the PC to sleep lets go at once.
+On Windows the Revenge group sits after Wariness, and *Shaking it off* right after it. Holding the pointer still uses `SetCursorPos`, which needs no permission either. Escape lets go whichever app is in front: while a creature holds on, Escape is a system-wide hotkey, so for those seconds it goes to Ledgelings rather than the app in front. If the pointer cannot be moved (a UAC prompt or the lock screen is up), the creature only clings to it. Locking the session or putting the PC to sleep lets go at once.
 
 **The count**, on the right: every creature on screen, then anyone else ever
 counted, with today, this week and in all, and **Reset** for each; **Everyone**,

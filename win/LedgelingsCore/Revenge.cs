@@ -52,18 +52,24 @@ public static partial class Revenge
         }
     }
 
-    /// <summary>Whether the user is shaking the cursor hard: quick strokes back and forth. A stroke counts
+    /// <summary>Whether the user is shaking the cursor: strokes back and forth. A stroke counts
     /// once it has travelled <see cref="Stroke"/> points one way; turning back after one is a reversal.
     /// <see cref="Needed"/> reversals within <see cref="Window"/> seconds, on either axis, shake the
     /// creature off. Slow drifting and small jitters never add up.</summary>
     public sealed class Shake
     {
-        public const double Stroke = 30, Window = 1.5;
         public int Needed { get; }
+        public double Stroke { get; }
+        public double Window { get; }
         private readonly double[] sign = new double[2], travel = new double[2];
         private readonly List<double> reversals = new();
 
-        public Shake(int needed = 6) { Needed = needed; }
+        public Shake(int needed = 4, double stroke = 20, double window = 2)
+        {
+            Needed = needed;
+            Stroke = stroke;
+            Window = window;
+        }
 
         /// <summary>The cursor tried to move by <paramref name="dx"/>, <paramref name="dy"/> points at
         /// <paramref name="time"/>. True once it is shaken off.</summary>
@@ -89,6 +95,17 @@ public static partial class Revenge
         /// <summary>How close to shaken off, 0...1, as of <paramref name="time"/>: how hard the creature wobbles.</summary>
         public double Vigour(double time) =>
             Needed <= 0 ? 1 : Math.Min(1, (double)reversals.Count(t => time - t <= Window) / Needed);
+    }
+
+    /// <summary>Holding the pointer still with no limit set, a creature still lets go after this many seconds.</summary>
+    public const double PinnedHoldCap = 10;
+
+    /// <summary>How long a grab may last: <paramref name="limit"/> seconds, 0 for until shaken off; never past
+    /// <see cref="PinnedHoldCap"/> when the pointer is held still.</summary>
+    public static double LongestHold(double limit, bool pinned)
+    {
+        var l = limit > 0 ? limit : double.PositiveInfinity;
+        return pinned ? Math.Min(l, PinnedHoldCap) : l;
     }
 
     /// <summary>Why a creature let go of the cursor.</summary>
