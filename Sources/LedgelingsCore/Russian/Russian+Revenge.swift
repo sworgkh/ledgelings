@@ -11,7 +11,16 @@ extension Strings {
         "Holds on for at most": "Держит не дольше",
         "Shakes to break free": "Встряхиваний, чтобы вырваться",
         "Then peace for": "Потом покой на",
-        "Chased or picked up this often in that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood. Shake the mouse hard, back and forth, to throw it off. Escape lets go too, and it never holds on past the limit. Moving the pointer needs no permission; Escape outside Ledgelings works only with Accessibility allowed.":
-            "Если существо столько раз за это время гоняли или хватали, оно прыгает на курсор и держит его, пока высказывает вам всё, своими словами и в настроении курсора. Резко потрясите мышью туда-сюда, чтобы его стряхнуть. Escape тоже отпускает, и дольше предела оно не держит. Чтобы держать указатель, разрешения не нужны; Escape вне Ledgelings работает, только если разрешён Универсальный доступ.",
+        "Tells you off again every": "Снова отчитывает каждые",
+        "no limit": "без предела",
+        "Holds the pointer still": "Держит указатель на месте",
+        "Each shake at least": "Каждый рывок не короче",
+        "Shakes within": "Встряхивания за",
+        " pt": " пт",
+        "Chased or picked up this often in that time, a creature jumps on the cursor and rides along on it, telling you off now and then in its own words and the cursor mood, until you shake it off or the limit runs out. Holding the pointer still, you cannot move it until it lets go, after 10 s at the latest. Escape lets go too; outside Ledgelings only with Accessibility allowed.":
+            "Если существо столько раз за это время гоняли или хватали, оно прыгает на курсор и катается на нём, то и дело высказывая вам всё в настроении курсора, пока вы его не стряхнёте или не выйдет предел. Держа указатель на месте, оно не даёт его двигать, но не дольше 10 с. Escape тоже отпускает; вне Ledgelings — при разрешённом Универсальном доступе.",
+        "Shaking it off": "Как стряхнуть",
+        "Move the mouse back and forth: this many turns, each after a stroke this long, within this time. Fewer, shorter, slower is gentler.":
+            "Водите мышью туда-сюда. Меньше, короче, медленнее — мягче.",
     ]
 }

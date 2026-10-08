@@ -132,12 +132,18 @@ up (a plain press on a sleeper, or a Shift-drag).
 | **How often it comes up** (`huntTalkChance`) | 25 % | 0 to 100 | Share of conversations, tea stories, paper planes and built-in complaints that bring the count up. Milestones are said whatever this is |
 | **Much-chased creatures keep their distance** (`huntWary`) | on | | Only when the cursor is a menace: a creature hunted *After* times today jumps away from 35 % further off, until tomorrow |
 | **After** (`huntWaryAfter`) | 20 in a day | 5 to 200, in fives | |
-| **Grab the cursor in revenge** (`revengeEnabled`) | on | | Chased or picked up *After* times *Within* that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood (with a model, priced as *Revenge* in Costs). Shake the mouse hard, back and forth, to throw it off. Also in the menu as **Cursor Revenge**. Moving the pointer needs no permission; if it cannot be moved, the creature only clings to it |
+| **Grab the cursor in revenge** (`revengeEnabled`) | on | | Chased or picked up *After* times *Within* that time, a creature jumps on the cursor and rides along on it while it tells you off, in its own words and the cursor mood (with a model, priced as *Revenge* in Costs; the first line only). Shake the mouse back and forth to throw it off. Also in the menu as **Cursor Revenge** |
 | **After** (`revengeAfter`) | 10 times | 3 to 50 | Counted per creature, even with complaints off |
 | **Within** (`revengeWindowSeconds`) | 120 s | 30 to 600, in 30s | |
-| **Holds on for at most** (`revengeHoldSeconds`) | 10 s | 3 to 30 | Then it lets go by itself. Escape lets go at once (outside Ledgelings only with Accessibility allowed); so does the screen sleeping or locking |
-| **Shakes to break free** (`revengeShakes`) | 6 | 2 to 16 | Quick turns back after a stroke of 30 points or more, within 1.5 s. Small jitters and slow moves never count |
+| **Holds on for at most** (`revengeHoldSeconds`) | no limit | 0 to 30 s; 0 is *no limit*: until shaken off | Then it lets go by itself. Holding the pointer still, never past 10 s. Escape lets go at once (outside Ledgelings only with Accessibility allowed); so does the screen sleeping or locking |
+| **Tells you off again every** (`revengeTauntSeconds`) | 15 s | 0 to 60, in fives; 0 is *never* | While it holds on, another of its built-in lines, once the last one has faded. No more model calls |
+| **Holds the pointer still** (`revengePinsCursor`) | off | | Off: the pointer stays yours and the creature rides along on it. On: every move is put straight back, so you cannot move the pointer until it lets go (10 s at most). Moving the pointer needs no permission; if it cannot be moved, the creature only rides along |
+| **Shakes to break free** (`revengeShakes`) | 4 | 2 to 16 | In its own group, *Shaking it off*, in the left column. Turns back after a long enough stroke, within *Shakes within*. Small jitters and slow moves never count |
+| **Each shake at least** (`revengeShakeStroke`) | 20 pt | 10 to 60, in fives | How far the mouse must travel one way before turning back counts. Lower is gentler |
+| **Shakes within** (`revengeShakeWindowSeconds`) | 2 s | 1 to 4, in halves | Longer is gentler |
 | **Then peace for** (`revengeCooldownMinutes`) | 10 min | 1 to 120 | Nobody grabs again for this long |
+
+Until 0.39.0 the creature always held the pointer still, for 10 s at most, and took 6 turns of 30 points within 1.5 s. Saved values carry over (a saved hold of 3–30 s stays a limit); unsaved ones take the new defaults. On Windows, until its own update, it still holds the pointer still with the old ranges and defaults.
 
 On Windows the Revenge group sits after Wariness. The pointer is held with `SetCursorPos`, which needs no permission either. Escape lets go whichever app is in front: while a creature holds on, Escape is a system-wide hotkey, so for those seconds it goes to Ledgelings rather than the app in front. If the pointer cannot be moved (a UAC prompt or the lock screen is up), the creature only clings to it. Locking the session or putting the PC to sleep lets go at once.
 

@@ -2,8 +2,9 @@ import AppKit
 import LedgelingsCore
 
 /// Revenge: chased or picked up too often in a short time, a creature jumps on the
-/// cursor, hangs on to it and tells the user what it thinks of them. Shaking the
-/// mouse hard throws it off; Escape, or the longest hold running out, lets go too.
+/// cursor, rides along on it (or, with `revengePinsCursor`, holds it still) and tells
+/// the user what it thinks of them. Shaking the mouse throws it off; Escape, or the
+/// longest hold running out, lets go too.
 extension Colony {
 
     /// The one creature holding the cursor.
@@ -15,9 +16,11 @@ extension Colony {
         var pin: CGPoint
         var last: CGPoint
         var shake: Revenge.Shake
-        /// Whether the real pointer is held; without it the creature only clings and rides along.
+        /// Whether the real pointer is held still; otherwise the creature clings and rides along.
         var pinned: Bool
         var serial: Int
+        /// When it tells the user off again, on the colony's clock.
+        var nextTaunt: Double
     }
 
     /// Creature `i` was just hunted. True when that was once too often and it grabbed the cursor.
@@ -47,28 +50,48 @@ extension Colony {
         revengeFuse.grabbed(at: elapsed)
         annoyance.forgive(i)
         grabCount += 1
-        let pinned = pointer?.pin(at: cursor) ?? false
+        let pinned = settings.revengePinsCursor && pointer?.pin(at: cursor) == true
+        if !pinned { pointer?.follow() }
         pointer?.onMove = { [weak self] at in self?.struggle(to: at); self?.render() }
         pointer?.onEscape = { [weak self] in self?.letGoOfCursor(.escape) }
         grab = Grab(index: i, since: elapsed, pin: cursor, last: cursor,
-                    shake: Revenge.Shake(needed: settings.revengeShakes), pinned: pinned, serial: grabCount)
+                    shake: Revenge.Shake(needed: settings.revengeShakes, stroke: settings.revengeShakeStroke,
+                                         window: settings.revengeShakeWindowSeconds),
+                    pinned: pinned, serial: grabCount, nextTaunt: elapsed + max(settings.revengeTauntSeconds, 1))
         creatures[i].drag(to: hang(i, from: cursor))
         let name = character(forCreature: i).name
-        trace?("grab \(name)\(pinned ? "" : " (clinging only)")")
+        trace?("grab \(name)\(pinned ? " (holding still)" : "")")
         shame(i, times: times, serial: grabCount)
     }
 
-    /// Every frame of a grab: count the struggle, keep the cursor held, and let go
-    /// when it has been held long enough.
+    /// Every frame of a grab: count the struggle, keep the cursor held, tell the user
+    /// off now and then, and let go when it has been held long enough.
     func updateGrab(cursor: CGPoint) {
         guard let g = grab else { return }
         guard creatures.indices.contains(g.index), creatures[g.index].isHeld else { return letGoOfCursor(.escape) }
-        if elapsed - g.since >= settings.revengeHoldSeconds { return letGoOfCursor(.tired) }
+        if elapsed - g.since >= Revenge.longestHold(limit: settings.revengeHoldSeconds, pinned: g.pinned) {
+            return letGoOfCursor(.tired)
+        }
         struggle(to: cursor)
+        taunt()
+    }
+
+    /// Riding along, it tells the user off again every `revengeTauntSeconds`, with
+    /// its built-in lines (no further model calls), once the last bubble is gone.
+    private func taunt() {
+        guard var g = grab, settings.revengeTauntSeconds > 0, elapsed >= g.nextTaunt else { return }
+        guard settings.talkEnabled, bubbles[g.index] == nil else { return }
+        g.nextTaunt = elapsed + settings.revengeTauntSeconds
+        grab = g
+        let name = character(forCreature: g.index).name
+        let n = hunts.numbers(of: name)
+        let line = Revenge.line(by: name, today: max(n.today, 1), all: max(n.all, 1), mood: settings.cursorMood, using: &rng)
+        say(line, from: g.index, builtIn: true)
+        trace?("taunt \(name): \(line)")
     }
 
     /// The user moved the cursor to `point`: that is part of a shake, and a held
-    /// cursor goes straight back. Hard enough, and the creature is thrown off.
+    /// cursor goes straight back. Enough of it, and the creature is thrown off.
     func struggle(to point: CGPoint) {
         guard var g = grab else { return }
         let dx = Double(point.x - g.last.x), dy = Double(point.y - g.last.y)

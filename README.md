@@ -122,10 +122,12 @@ gets said out loud, and a much-chased creature keeps its distance. See the count
 and reset it, in Settings › Chases.
 
 **They take revenge.** Chase one around too often (ten times in two minutes) and it
-jumps on your cursor, hangs on and tells you exactly what it thinks of you. Shake
-the mouse hard to throw it off; it tumbles down with a last word. It never holds on
-longer than ten seconds, Escape lets go, and *Cursor Revenge* in the menu turns it
-off. Tune it in Settings › Chases.
+jumps on your cursor and rides along on it wherever you move, telling you every so
+often exactly what it thinks of you. Wiggle the mouse back and forth to throw it
+off; it tumbles down with a last word. Escape lets go, and *Cursor Revenge* in the
+menu turns it off. In Settings › Chases you can make it hold the pointer still
+instead (ten seconds at most), give it a time limit, and make the shake gentler or
+harder.
 
 **Reminders.** Tell them what to remind you of and when (once, every day, every
 weekday, every week). When the time comes, one of them folds it into a paper plane

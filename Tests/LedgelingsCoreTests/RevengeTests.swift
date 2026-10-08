@@ -66,6 +66,26 @@ import Testing
         #expect(drift.vigour(at: 24) < 1)
     }
 
+    @Test func theStrokeAndTheWindowAreTunable() {
+        var gentle = Revenge.Shake(needed: 2, stroke: 10, window: 2)
+        _ = gentle.moved(dx: 12, dy: 0, at: 0)
+        _ = gentle.moved(dx: -12, dy: 0, at: 0.8)
+        let off = gentle.moved(dx: 12, dy: 0, at: 1.6)
+        #expect(off, "short strokes count when the stroke is short")
+        var strict = Revenge.Shake(needed: 2, stroke: 40, window: 1)
+        _ = strict.moved(dx: 50, dy: 0, at: 0)
+        _ = strict.moved(dx: -50, dy: 0, at: 0.8)
+        let late = strict.moved(dx: 50, dy: 0, at: 1.9)
+        #expect(!late, "too slow for a one-second window")
+    }
+
+    @Test func noLimitMeansUntilShakenOffExceptWhenHeldStill() {
+        #expect(Revenge.longestHold(limit: 0, pinned: false) == .infinity)
+        #expect(Revenge.longestHold(limit: 0, pinned: true) == Revenge.pinnedHoldCap)
+        #expect(Revenge.longestHold(limit: 20, pinned: true) == 10)
+        #expect(Revenge.longestHold(limit: 5, pinned: false) == 5)
+    }
+
     @Test func shakingUpAndDownCountsToo() {
         var shake = Revenge.Shake(needed: 2)
         let r12 = shake.moved(dx: 0, dy: 40, at: 0)
