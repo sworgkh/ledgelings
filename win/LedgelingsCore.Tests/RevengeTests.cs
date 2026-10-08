@@ -143,6 +143,37 @@ public class RevengeTests
     }
 
     [Fact]
+    public void TheStrokeAndTheWindowAreTunable()
+    {
+        var gentle = new Revenge.Shake(2, stroke: 10, window: 2);
+        gentle.Moved(12, 0, 0);
+        gentle.Moved(-12, 0, 0.8);
+        Assert.True(gentle.Moved(12, 0, 1.6));      // short strokes count when the stroke is short
+        var strict = new Revenge.Shake(2, stroke: 40, window: 1);
+        strict.Moved(50, 0, 0);
+        strict.Moved(-50, 0, 0.8);
+        Assert.False(strict.Moved(50, 0, 1.9));     // too slow for a one-second window
+    }
+
+    [Fact]
+    public void AGentleWiggleShakesItOffWithTheDefaults()
+    {
+        var shake = new Revenge.Shake();
+        var off = false;
+        for (int k = 0; k < 8 && !off; k++) off = shake.Moved(k % 2 == 0 ? 25 : -25, 0, k * 0.1);
+        Assert.True(off);
+    }
+
+    [Fact]
+    public void NoLimitMeansUntilShakenOffExceptWhenHeldStill()
+    {
+        Assert.Equal(double.PositiveInfinity, Revenge.LongestHold(0, pinned: false));
+        Assert.Equal(Revenge.PinnedHoldCap, Revenge.LongestHold(0, pinned: true));
+        Assert.Equal(10, Revenge.LongestHold(20, pinned: true));
+        Assert.Equal(5, Revenge.LongestHold(5, pinned: false));
+    }
+
+    [Fact]
     public void AClingerTumblesDownWhenShakenOff()
     {
         var world = new EdgeWorld(new[] { new Rect(0, 0, 800, 600) }, 10);

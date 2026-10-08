@@ -199,21 +199,42 @@
                 </DockPanel>
                 <DockPanel Margin="0,0,0,4">
                   <TextBlock ui:Tr.Text="Holds on for at most" Style="{StaticResource RowLabel}"/>
-                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeHoldSeconds}" ui:Tr.Unit=" s"/>
-                  <Slider Minimum="3" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeHoldSeconds, Mode=TwoWay}"/>
+                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeHoldSeconds}" ui:Tr.Unit=" s" ui:Tr.Zero="no limit"/>
+                  <Slider Minimum="0" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeHoldSeconds, Mode=TwoWay}"/>
                 </DockPanel>
                 <DockPanel Margin="0,0,0,4">
-                  <TextBlock ui:Tr.Text="Shakes to break free" Style="{StaticResource RowLabel}"/>
-                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeShakes}"/>
-                  <Slider Minimum="2" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeShakes, Mode=TwoWay}"/>
+                  <TextBlock ui:Tr.Text="Tells you off again every" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeTauntSeconds}" ui:Tr.Unit=" s" ui:Tr.Zero="never"/>
+                  <Slider Minimum="0" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding RevengeTauntSeconds, Mode=TwoWay}"/>
                 </DockPanel>
+                <CheckBox Margin="0,0,0,4" ui:Tr.Content="Holds the pointer still" IsChecked="{Binding RevengePinsCursor, Mode=TwoWay}"/>
                 <DockPanel Margin="0,0,0,4">
                   <TextBlock ui:Tr.Text="Then peace for" Style="{StaticResource RowLabel}"/>
                   <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeCooldownMinutes}" ui:Tr.Unit=" min"/>
                   <Slider Minimum="1" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeCooldownMinutes, Mode=TwoWay}"/>
                 </DockPanel>
               </StackPanel>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Chased or picked up this often in that time, a creature jumps on the cursor and holds it while it tells you off, in its own words and the cursor mood. Shake the mouse hard, back and forth, to throw it off. Escape lets go too, whichever app is in front, and it never holds on past the limit. Moving the pointer needs no permission."/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Chased or picked up this often in that time, a creature jumps on the cursor and rides along on it, telling you off now and then in its own words and the cursor mood, until you shake it off or the limit runs out. Holding the pointer still, you cannot move it until it lets go, after 10 s at the latest. Escape lets go too, whichever app is in front. No permission is needed."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Shaking it off" IsEnabled="{Binding RevengeEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Shakes to break free" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeShakes}"/>
+                <Slider Minimum="2" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RevengeShakes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Each shake at least" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeShakeStroke}" ui:Tr.Unit=" pt"/>
+                <Slider Minimum="10" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding RevengeShakeStroke, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Shakes within" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding RevengeShakeWindowSeconds}" ui:Tr.Unit=" s"/>
+                <Slider Minimum="1" Maximum="4" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding RevengeShakeWindowSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Move the mouse back and forth: this many turns, each after a stroke this long, within this time. Fewer, shorter, slower is gentler."/>
             </StackPanel>
           </GroupBox>
           <GroupBox ui:Tr.Header="The count">

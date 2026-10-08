@@ -10,6 +10,8 @@ public interface IPointerHold
     /// <summary>Keep the pointer at <paramref name="point"/> and start listening for Escape. False when the
     /// pointer cannot be moved: the creature then only clings to it.</summary>
     bool Pin(Pt point);
+    /// <summary>Only listen for Escape, leaving the pointer free: the creature rides along.</summary>
+    void Follow();
     /// <summary>Put the pointer back on <paramref name="point"/> after the user moved it.</summary>
     void Hold(Pt point);
     /// <summary>Stop holding and listening.</summary>
@@ -31,10 +33,15 @@ public sealed class SystemPointer : IPointerHold
     public bool Pin(Pt point)
     {
         if (!Warp(point)) return false;      // the secure desktop (a UAC prompt, the lock screen) refuses
+        Follow();
+        return true;
+    }
+
+    public void Follow()
+    {
         Release();
         try { escape = new GlobalHotkey(0, Win32.VK_ESCAPE, () => OnEscape?.Invoke()); }
         catch (Exception) { escape = null; }      // no Escape this time; shaking and the longest hold still work
-        return true;
     }
 
     public void Hold(Pt point) => Warp(point);

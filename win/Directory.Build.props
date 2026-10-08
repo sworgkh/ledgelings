@@ -6,7 +6,7 @@
     <!-- Lets a Mac or Linux machine compile the WPF app (it cannot run it): the core tests run anywhere. -->
     <EnableWindowsTargeting Condition="'$(OS)' != 'Windows_NT'">true</EnableWindowsTargeting>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <Version>0.38.0</Version>
+    <Version>0.39.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>Evgeny Alterman</Authors>
     <Product>Ledgelings</Product>

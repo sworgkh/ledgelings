@@ -60,19 +60,28 @@ public class SettingsTests
         Assert.True(s.RevengeEnabled);
         Assert.Equal(10, s.RevengeAfter);
         Assert.Equal(120, s.RevengeWindowSeconds);
-        Assert.Equal(10, s.RevengeHoldSeconds);
-        Assert.Equal(6, s.RevengeShakes);
+        Assert.Equal(0, s.RevengeHoldSeconds);      // until shaken off
+        Assert.Equal(4, s.RevengeShakes);
         Assert.Equal(10, s.RevengeCooldownMinutes);
+        Assert.Equal((15.0, 20.0, 2.0), (s.RevengeTauntSeconds, s.RevengeShakeStroke, s.RevengeShakeWindowSeconds));
+        Assert.False(s.RevengePinsCursor);      // it rides along
         s.RevengeEnabled = false; s.RevengeAfter = 15; s.RevengeWindowSeconds = 300; s.RevengeHoldSeconds = 20; s.RevengeShakes = 9; s.RevengeCooldownMinutes = 45;
         var again = box.Again();
         Assert.False(again.RevengeEnabled);
         Assert.Equal((15, 300.0, 20.0, 9, 45.0), (again.RevengeAfter, again.RevengeWindowSeconds, again.RevengeHoldSeconds, again.RevengeShakes, again.RevengeCooldownMinutes));
+        s.RevengeTauntSeconds = 30; s.RevengeShakeStroke = 40; s.RevengeShakeWindowSeconds = 1.5; s.RevengePinsCursor = true;
+        again = box.Again();
+        Assert.Equal((30.0, 40.0, 1.5, true), (again.RevengeTauntSeconds, again.RevengeShakeStroke, again.RevengeShakeWindowSeconds, again.RevengePinsCursor));
         box.Store.Set("revengeAfter", 1);
         box.Store.Set("revengeHoldSeconds", 999.0);
         box.Store.Set("revengeShakes", 0);
         box.Store.Set("revengeCooldownMinutes", 0.0);
         box.Store.Set("revengeWindowSeconds", 1.0);
+        box.Store.Set("revengeShakeStroke", 500.0);
+        box.Store.Set("revengeShakeWindowSeconds", 0.1);
+        box.Store.Set("revengeTauntSeconds", -5.0);
         var clamped = box.Again();      // clamped on load
+        Assert.Equal((60.0, 1.0, 0.0), (clamped.RevengeShakeStroke, clamped.RevengeShakeWindowSeconds, clamped.RevengeTauntSeconds));
         Assert.Equal((3, 30.0, 2, 1.0, 30.0), (clamped.RevengeAfter, clamped.RevengeHoldSeconds, clamped.RevengeShakes, clamped.RevengeCooldownMinutes, clamped.RevengeWindowSeconds));
     }
 

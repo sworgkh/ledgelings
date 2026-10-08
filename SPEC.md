@@ -400,9 +400,9 @@ on it and tells the user off; shaking the mouse throws it off.
   only with Accessibility allowed), when the screens sleep or lock, the session is
   switched away from, the screens change, they hide, it is turned off, or the app
   quits. A screen share is not detected.
-- **Windows.** Not yet updated: it always holds the pointer still, with the old
-  ranges and defaults (hold 3–30 s, 10; 6 reversals of 30 points within 1.5 s).
-  Otherwise the same, with `SetCursorPos` to hold the pointer (no permission;
+- **Windows.** The same settings, defaults and riding along (`SystemPointer.Follow`
+  registers only the Escape hotkey); *Shaking it off* is a group after Revenge. The
+  same, with `SetCursorPos` to hold the pointer (no permission;
   it fails on the secure desktop, and the creature then only clings). Escape is a
   system-wide `RegisterHotKey` while a creature holds on, so it works whichever app
   is in front and is taken from that app for those seconds; it is let go with the
