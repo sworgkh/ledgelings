@@ -5,7 +5,7 @@ using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-public enum SettingsTab { Creatures, Chases, Sprites, Talk, Flowers, Bonds, Calendar, Reminders, Voice, Costs, Chats }
+public enum SettingsTab { Creatures, Actions, Chases, Sprites, Talk, Flowers, Bonds, Calendar, Reminders, Voice, Costs, Chats }
 
 /// <summary>Fills a TextBlock with a chat line: the speaker in bold, then the text with the
 /// model's *marks* shown as italic and bold runs. <c>ui:StyledLine.Line="{Binding}"</c>.</summary>

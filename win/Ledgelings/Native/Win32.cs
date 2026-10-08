@@ -102,7 +102,7 @@ internal static partial class Win32
     [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
     [DllImport("kernel32.dll")] public static extern uint GetTickCount();
     public const uint WM_HOTKEY = 0x0312;
-    public const uint MOD_ALT = 0x0001, MOD_CONTROL = 0x0002, MOD_NOREPEAT = 0x4000;
+    public const uint MOD_ALT = 0x0001, MOD_CONTROL = 0x0002, MOD_SHIFT = 0x0004, MOD_WIN = 0x0008, MOD_NOREPEAT = 0x4000;
     [DllImport("user32.dll", SetLastError = true)] public static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr hwnd, int id);
 

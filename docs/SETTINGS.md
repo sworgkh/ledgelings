@@ -29,7 +29,8 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 that is often. Press **⌃⌥L** (Control-Option-L) in any app: Creature Actions comes up,
 and the same keys put it away. Or open Ledgelings again from Spotlight or Finder. The
 sheet has everything this menu has: the switches, Settings…, the chats and Quit. The
-keys are yours to change: [Actions tab](#actions-tab).
+keys are yours to change: [Actions tab](#actions-tab). On Windows, where the tray tucks
+icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from the Start menu.
 
 | Item | What it does |
 |---|---|
@@ -74,8 +75,8 @@ stands and flips at a click; the sheet stays up.
 | **REVENGE ON / OFF** | *Cursor Revenge* |
 | **CURSOR: A MENACE** | *The Cursor Is*: each click the next of playmate, just there, menace |
 | **ENGLISH / РУССКИЙ** | The language, under its own name; each click the next |
-| **SETTINGS** (⌘,), **CHATS** | Puts the sheet away and opens the settings window, or its Chats tab |
-| **QUIT** (⌘Q) | Quits Ledgelings |
+| **SETTINGS** (⌘, · Ctrl+, on Windows), **CHATS** | Puts the sheet away and opens the settings window, or its Chats tab |
+| **QUIT** (⌘Q · Ctrl+Q) | Quits Ledgelings |
 
 ## What your hand can do
 
@@ -144,9 +145,9 @@ The Creature Actions sheet, and the way to it when the menu bar icon is hidden.
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Keep the sheet up after an action** (`actionsStayOpen`) | on | | Creature Actions… stays up after a tile, for another go, until Done or Esc. Off: it folds away after one. Add a Reminder always puts it away |
-| **Shortcut from any app** (`shortcutEnabled`) | on | | macOS. One shortcut that works whichever app is in front, for when the menu bar has no room for the icon: it brings Creature Actions… up, and pressed again puts it away. The menu shows it beside *Creature Actions…*, the sheet in its hint line. Off: the keys go to the app in front again |
-| **Shortcut** (`shortcutKeyCode`, `shortcutModifiers`) | ⌃⌥L | a key with ⌘, ⌃ or ⌥ held | Click the button and press the new keys; Esc or a second click keeps the old ones, a key with none of ⌘ ⌃ ⌥ beeps. The label is the key as the Latin layout prints it, so it reads the same in any typing language. If macOS refuses the keys, a red line says so. It cannot tell when another app uses the same keys: if the shortcut does nothing, record another. No permission is asked |
-| **Opening Ledgelings again shows the sheet** (`reopenShowsActions`) | on | | macOS. Open the app from Spotlight, Finder or the Dock while it already runs and Creature Actions… comes up: the way in that needs no keys at all |
+| **Shortcut from any app** (`shortcutEnabled`) | on | | One shortcut that works whichever app is in front, for when the menu bar has no room for the icon: it brings Creature Actions… up, and pressed again puts it away. The menu shows it beside *Creature Actions…*, the sheet in its hint line. Off: the keys go to the app in front again |
+| **Shortcut** (`shortcutKeyCode`, `shortcutModifiers`) | ⌃⌥L; Ctrl+Alt+L on Windows | a key with ⌘, ⌃ or ⌥ held; on Windows Ctrl, Alt or the Windows key | Click the button and press the new keys; Esc or a second click keeps the old ones, a key with none of ⌘ ⌃ ⌥ beeps. The label is the key as the Latin layout prints it, so it reads the same in any typing language. If macOS refuses the keys, a red line says so. macOS cannot tell when another app uses the same keys: if the shortcut does nothing, record another. Windows can, and the red line says so. No permission is asked |
+| **Opening Ledgelings again shows the sheet** (`reopenShowsActions`) | on | | Open the app from Spotlight, Finder or the Dock (Windows: the Start menu or Explorer) while it already runs and Creature Actions… comes up: the way in that needs no keys at all |
 
 ## Chases tab
 

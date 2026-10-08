@@ -58,7 +58,9 @@ Everything is under the tray icon, the creature itself: the day/night line,
 jump, talk, tea, plane, reminder, hide, sleep/wake and clear flowers), the next
 reminder, **Hear Them Talk**, the last talk status, **Chat History…**, the spend
 line, **Settings…**, **Quit**. Left- or right-click the icon. Ctrl+Alt+R adds a
-reminder from anywhere.
+reminder from anywhere. When Windows has tucked the icon into the overflow, **Ctrl+Alt+L**
+in any app brings Creature Actions… up (and puts it away), and so does starting
+Ledgelings again; the sheet has the menu's switches, Settings and Quit.
 
 ## Where things live
 
@@ -84,6 +86,8 @@ reminder from anywhere.
 | Global cursor, no permission prompt | `GetCursorPos` |
 | How long the user has been away (an open letter waits) | `GetLastInputInfo` |
 | Add a Reminder… from anywhere | `RegisterHotKey` (Ctrl+Alt+R) on a hidden window of the UI thread |
+| The shortcut from any app (§11) | `RegisterHotKey` again (`App.Shortcut`), re-registered as the setting changes; a failure is shown in Settings › Actions |
+| Opening the app again shows the sheet (§11) | the second copy sets the named event `Ledgelings.ShowActions` and exits; the first waits on it |
 | Shift and Control polled each frame | `GetAsyncKeyState` |
 | Monitor geometry and change notice | `EnumDisplayMonitors` + `GetMonitorInfo`; `SystemEvents.DisplaySettingsChanged` |
 | A 30 fps frame timer, 12 fps asleep | `FrameClock`: a high-resolution waitable timer on its own thread, ticking the UI thread |
@@ -135,6 +139,11 @@ core tests are the Swift tests line for line.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
+- **The shortcut from any app** is **Ctrl+Alt+L** and written the Windows way; the Mac's
+  Command is the Windows key, Option is Alt. Windows refuses keys any other app holds, so
+  the red line in Settings › Actions is reliable here (macOS cannot tell). The tray menu
+  shows the shortcut beside Creature Actions… only while it is registered. On the sheet,
+  Settings is Ctrl+, and Quit is Ctrl+Q. Switching the language on the sheet rebuilds it.
 - **The paper note** opens centred on the whole monitor under the cursor (the Mac
   uses the screen's area below the menu bar). Its **When** is a date picker and a
   24-hour time field. The letter's writing is Consolas Bold at the Mac's sizes.
@@ -182,7 +191,7 @@ win/
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
                                      .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea), FrameClock, Desktop
-                           TrayIcon, App (+ .Reminders), GlobalHotkey, Program
+                           TrayIcon, App (+ .Reminders, .Shortcut), GlobalHotkey, ShortcutKeys, Program
                            AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook

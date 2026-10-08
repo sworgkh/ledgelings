@@ -71,7 +71,7 @@ bumping, then goes off to plant it in the edge wherever its character likes:
 Blocky on the bottom edge, Pip on the ceiling, Ruth in a neat row beside the
 others, Dot straight away, Zed once it gets dark.
 
-**Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, or opening
+**Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, Ctrl+Alt+L on Windows, or opening
 the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
 paper as the letters, a creature peeking over the top: one picture for everything you
 can ask of them (jump, talk, tea, a plane, a reminder, hide, sleep or wake, clear the

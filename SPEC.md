@@ -1762,10 +1762,10 @@ falls through to whatever is underneath.
 | Shift-press and move ≥ 4 pt | **carry** any creature; awake ones ride with eyes open and land awake |
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
 | Menu: Creature Actions… (⌘A on macOS; the menu shows the shortcut below instead while it is on) | the actions sheet, below |
-| The shortcut, in any app (`shortcut`, ⌃⌥L; macOS so far) | the actions sheet comes up; pressed while it is up, it folds away. See *The shortcut* below |
-| Opening the app again while it runs (macOS so far) | the actions sheet comes up, with `reopenShowsActions` on |
+| The shortcut, in any app (`shortcut`: ⌃⌥L on macOS, Ctrl+Alt+L on Windows) | the actions sheet comes up; pressed while it is up, it folds away. See *The shortcut* below |
+| Opening the app again while it runs | the actions sheet comes up, with `reopenShowsActions` on |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
-| Sheet: Settings (⌘,), Chats, Quit (⌘Q) | puts the sheet away; the settings window, its Chats tab, or the app quits |
+| Sheet: Settings (⌘, · Ctrl+, on Windows), Chats, Quit (⌘Q · Ctrl+Q) | puts the sheet away; the settings window, its Chats tab, or the app quits |
 | Sheet: Make Them Jump (J) | every creature startles |
 | Sheet: Make Someone Talk (T) | §6.5 |
 | Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
@@ -1820,12 +1820,16 @@ off, the shortcut is let go, so the keys reach the app in front. If the system r
 it (already taken), a red line under the button says so and nothing is registered. No
 permission is asked. macOS tells an app nothing when *another app* registered the same
 keys: both are accepted and one of them gets the press, so the cure is to record another.
-The menu's Creature Actions… item shows the shortcut. macOS so far; Windows has only
-Ctrl+Alt+R for Add a Reminder (§7.7).
+Windows does tell: `RegisterHotKey` fails when any app holds the keys, and the red line
+names them. The menu's Creature Actions… item shows the shortcut while it is registered.
+On Windows the key number is a virtual-key code (1–254), Command is the Windows key and
+Option is Alt, the default is Ctrl+Alt+L, and it is written `Ctrl+Alt+L`.
 
 **Opening it again**: the other way in without an icon. With `reopenShowsActions` on,
-opening the app while it already runs (Spotlight, Finder, the Dock) brings the sheet up;
-it never puts it away.
+opening the app while it already runs (Spotlight, Finder, the Dock; the Start menu or
+Explorer) brings the sheet up; it never puts it away. On Windows the second copy reads
+the setting from the settings file, sets a named event the running copy waits on, and
+leaves; with the setting off it says, as before, that Ledgelings is already running.
 
 ---
 
@@ -1866,9 +1870,9 @@ An error for want of a model reads as that note, never as a server refusal.
 | revengeShakeWindowSeconds | 2 | 1–4 s, clamped on load: the reversals must fall within this |
 | revengeCooldownMinutes | 10 | 1–120 min, clamped on load: nobody grabs again for this long |
 | actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
-| shortcutEnabled | true | a shortcut that works in every app (§11); macOS so far |
-| shortcutKeyCode / shortcutModifiers | 37 / 12 (⌃⌥L) | the platform's key number, 0–127; modifier bits Command 1, Shift 2, Option 4, Control 8, others dropped. Without Command, Control or Option, or with a key out of range: the default |
-| reopenShowsActions | true | opening the app again while it runs brings the sheet up (§11); macOS so far |
+| shortcutEnabled | true | a shortcut that works in every app (§11) |
+| shortcutKeyCode / shortcutModifiers | 37 / 12 (⌃⌥L); Windows 76 / 12 (Ctrl+Alt+L) | the platform's key number, 0–127 (Windows: a virtual-key code, 1–254); modifier bits Command 1, Shift 2, Option 4, Control 8, others dropped. Without Command, Control or Option, or with a key out of range: the default |
+| reopenShowsActions | true | opening the app again while it runs brings the sheet up (§11) |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
 | teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |
