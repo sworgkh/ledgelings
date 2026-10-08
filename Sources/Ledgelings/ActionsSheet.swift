@@ -47,6 +47,11 @@ final class ActionsController {
         }
     }
 
+    /// The shortcut from any app: up if it is away, away if it is up and in front.
+    func toggle() {
+        if let window, window.isKeyWindow { foldAway() } else { show() }
+    }
+
     /// What the tiles need to know, read from the colony twice a second.
     private func refresh() {
         guard let colony = colony() else { return }

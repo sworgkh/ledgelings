@@ -3,7 +3,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, chases, sprites, talk, flowers, bonds, calendar, reminders, voice, costs, chats }
+enum SettingsTab: Hashable { case creatures, actions, chases, sprites, talk, flowers, bonds, calendar, reminders, voice, costs, chats }
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
@@ -29,6 +29,7 @@ struct SettingsView: View {
     var body: some View {
         TabView(selection: $navigation.tab) {
             creaturesTab.tabItem { Text(tr("Creatures")) }.tag(SettingsTab.creatures)
+            ActionsSettingsView(settings: settings).tabItem { Text(tr("Actions")) }.tag(SettingsTab.actions)
             ChasesSettingsView(settings: settings, library: library, hunts: hunts).tabItem { Text(tr("Chases")) }.tag(SettingsTab.chases)
             SpritesSettingsView(settings: settings, library: library).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
@@ -120,14 +121,6 @@ struct SettingsView: View {
                 Text(tr("The cursor"))
             } footer: {
                 Text(tr("A playmate: a chase is a game of tag. Just there: they hop aside. A menace: a grudge. Chase one too often in a row and it says so in its own voice."))
-            }
-
-            Section {
-                Toggle(tr("Keep the sheet up after an action"), isOn: $settings.actionsStayOpen)
-            } header: {
-                Text(tr("Creature Actions"))
-            } footer: {
-                Text(tr("On, the Creature Actions sheet stays up until you press Done; off, it folds away after one action."))
             }
 
             Section {

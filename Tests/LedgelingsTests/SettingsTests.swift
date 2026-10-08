@@ -382,6 +382,35 @@ import Testing
         #expect(!AppSettings(defaults: defaults).actionsStayOpen)
     }
 
+    @Test func theShortcutIsControlOptionLOpensTheSheetAndAChangeIsRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.shortcutEnabled && s.shortcut == .standard && s.shortcutOpens == .actions)
+        #expect(Shortcut.standard == Shortcut(keyCode: 37, modifiers: [.control, .option]))
+        s.shortcutEnabled = false
+        s.shortcut = Shortcut(keyCode: 49, modifiers: [.command, .shift])
+        s.shortcutOpens = .menu
+        s.recordingShortcut = true
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.shortcutEnabled && back.shortcut == Shortcut(keyCode: 49, modifiers: [.command, .shift]) && back.shortcutOpens == .menu)
+        #expect(!back.recordingShortcut && back.shortcutProblem.isEmpty)
+        // A saved key someone types (Shift alone, or nothing held), or no key at all, reads as the standard one.
+        defaults.set(Shortcut.Modifiers.shift.rawValue, forKey: "shortcutModifiers")
+        #expect(AppSettings(defaults: defaults).shortcut == .standard)
+        defaults.set(Shortcut.Modifiers.command.rawValue, forKey: "shortcutModifiers")
+        defaults.set(900, forKey: "shortcutKeyCode")
+        #expect(AppSettings(defaults: defaults).shortcut == .standard)
+        defaults.set("the moon", forKey: "shortcutOpens")
+        #expect(AppSettings(defaults: defaults).shortcutOpens == .actions)
+    }
+
+    @Test func theShortcutIsLabelledAsTheMacDrawsIt() {
+        #expect(GlobalShortcut.label(Shortcut(keyCode: 49, modifiers: [.command, .shift, .control, .option])) == "⌃⌥⇧⌘Space")
+        #expect(GlobalShortcut.label(.standard).hasPrefix("⌃⌥"))
+        #expect(GlobalShortcut.carbon([.control, .option]) == 4096 + 2048)
+        #expect(GlobalShortcut.modifiers([.command, .capsLock, .shift]) == [.command, .shift])
+    }
+
     @Test func addAReminderOpensThePaperNoteUnlessToldOtherwiseAndItIsRemembered() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private lazy var actions = ActionsController(settings: settings, colony: { [weak self] in self?.colony },
                                                  addReminder: { [weak self] in self?.openReminders() })
     private var statusItem: NSStatusItem?
+    private var shortcut: GlobalShortcut?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -89,6 +90,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         installStatusItem()
+        shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
+        // `--shortcut`: says on stderr whether the system took the shortcut, then each press; quits after the first.
+        if CommandLine.arguments.contains("--shortcut") {
+            let label = GlobalShortcut.label(settings.shortcut)
+            let state = !settings.shortcutEnabled ? "off" : settings.shortcutProblem.isEmpty ? "registered" : "refused: \(settings.shortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(label) \(state)\n".utf8))
+            Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
+        }
         // `--converse`: one conversation, every line and voice cue on stderr with
         // the time since it started, then quit once the pair is let go.
         if CommandLine.arguments.contains("--converse"), let colony {
@@ -210,9 +219,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--settings [creatures|chases|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|actions|chases|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "chases": .chases, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
@@ -342,6 +351,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func openActions() { actions.show() }
+
+    /// The shortcut from any app: the sheet, or the whole menu under the cursor, as if the icon were there.
+    private func shortcutPressed() {
+        if CommandLine.arguments.contains("--shortcut") {
+            FileHandle.standardError.write(Data("shortcut pressed: \(settings.shortcutOpens.rawValue)\n".utf8))
+            Task { @MainActor in try? await Task.sleep(for: .seconds(2)); exit(0) }
+        }
+        switch settings.shortcutOpens {
+        case .actions:
+            actions.toggle()
+        case .menu:
+            NSApp.activate(ignoringOtherApps: true)
+            statusItem?.menu?.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+        }
+    }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }
 

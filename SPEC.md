@@ -35,6 +35,7 @@ game, not a widget, not a desktop pet that wanders over windows: edges only.
 | Monitor geometry in one global coordinate space, and a change notification | `NSScreen.screens`, `didChangeScreenParametersNotification` | RandR / `EnumDisplayMonitors` + `WM_DISPLAYCHANGE` |
 | A frame timer tied to the display | `CADisplayLink` at 30 fps, 12 fps when all asleep | any 30 Hz timer; vsync not required |
 | A tray icon with a menu | `NSStatusItem` | StatusNotifier / Shell_NotifyIcon |
+| A keyboard shortcut that works in every app, without a permission prompt | Carbon `RegisterEventHotKey` | Windows `RegisterHotKey` / X11 `XGrabKey` |
 | A settings window | SwiftUI form | anything |
 | A key-value settings store | `UserDefaults` | ini/json/registry |
 | A secret store for the API key | Keychain generic password, service `Ledgelings`, account `openRouterKey` | libsecret / Credential Manager; never the plain settings file |
@@ -1761,6 +1762,7 @@ falls through to whatever is underneath.
 | Shift-press and move ≥ 4 pt | **carry** any creature; awake ones ride with eyes open and land awake |
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
 | Menu: Creature Actions… (⌘A on macOS) | the actions sheet, below |
+| The shortcut, in any app (`shortcut`, ⌃⌥L; macOS so far) | what `shortcutOpens` says: the actions sheet, or the tray menu under the cursor; see *The shortcut* below |
 | Sheet: Make Them Jump (J) | every creature startles |
 | Sheet: Make Someone Talk (T) | §6.5 |
 | Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
@@ -1792,6 +1794,20 @@ Jump, Talk, Tea and Plane are greyed. Under the tiles, one line: the hide durati
 while choosing, else what the last press did for 5 s, else `click a picture, or press
 its letter`. Done or Esc closes it; with `actionsStayOpen` off a press also folds it
 away (shrinks up and fades, 0.28 s). It reads the colony twice a second while open.
+
+**The shortcut**: the tray can run out of room (a notched Mac hides the icons that do
+not fit, without a word), so one system-wide shortcut reaches everything the icon did.
+With `shortcutEnabled` on, pressing `shortcut` in any app does what `shortcutOpens` says:
+`actions` brings the actions sheet up, or folds it away when it is already up and has
+the keyboard; `menu` opens the tray menu at the cursor, the app brought to the front so
+its keys work. A shortcut is a key with at least one of Command, Control, Option held
+(Shift alone would be a letter someone types); anything else saved reads as the default,
+Control-Option-L. Settings (the Actions tab, with `actionsStayOpen`) shows it as a button, drawn as the platform draws shortcuts
+(`⌃⌥L`): click it and the next such keys pressed become the shortcut, Escape or a second
+click keeps the old one, any other key beeps. While it listens, and while the setting is
+off, the shortcut is let go, so the keys reach the app in front. If the system refuses
+it (another app holds it), a red line under the button says so. No permission is asked.
+macOS so far; Windows has only Ctrl+Alt+R for Add a Reminder (§7.7).
 
 ---
 
@@ -1832,6 +1848,9 @@ An error for want of a model reads as that note, never as a server refusal.
 | revengeShakeWindowSeconds | 2 | 1–4 s, clamped on load: the reversals must fall within this |
 | revengeCooldownMinutes | 10 | 1–120 min, clamped on load: nobody grabs again for this long |
 | actionsStayOpen | true | the Creature Actions sheet stays up after a press (§11); off, it folds away |
+| shortcutEnabled | true | a shortcut that works in every app (§11); macOS so far |
+| shortcutKeyCode / shortcutModifiers | 37 / 12 (⌃⌥L) | the platform's key number, 0–127; modifier bits Command 1, Shift 2, Option 4, Control 8, others dropped. Without Command, Control or Option, or with a key out of range: the default |
+| shortcutOpens | `actions` | `actions`, `menu`; an unknown value reads as `actions` |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
 | teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |

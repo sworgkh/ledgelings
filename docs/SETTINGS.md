@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Eleven tabs: **Creatures**, **Chases**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Twelve tabs: **Creatures**, **Actions**, **Chases**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## Without a model
 
@@ -24,6 +24,11 @@ An OpenRouter voice needs its key even with the built-in lines: the key field is
 Voice tab then, and a line said without one tells you so in the Voice tab's status.
 
 ## The menu
+
+**No icon in the menu bar?** macOS hides the icons that do not fit, and beside a notch
+that is often. Press **⌃⌥L** (Control-Option-L) in any app: Creature Actions comes up,
+and the same keys put it away. It can open the whole menu under the cursor instead, and
+the keys are yours to change: [Actions tab](#actions-tab).
 
 | Item | What it does |
 |---|---|
@@ -112,12 +117,22 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 | **Complain when pushed around** (`complainEnabled`) | on | | Chasing a creature off its edge with the cursor, or picking it up, bothers it. Bothered more than *Puts up with* times in a row, it tells you about it in a bubble, in its own voice: off when the cursor is a menace, a tease when it is a playmate, a shrug when it is just there (a model writes it when one is set up and talk is on; that call is priced under *Complaints* in Costs). The count then starts over |
 | **Puts up with** (`complainAfter`) | 4 in a row | 1 to 20 | The 5th chase in a row, by default, gets the complaint |
 | **Calms down after** (`complainCalmSeconds`) | 20 s | 5 to 120 | Leave it alone this long and its count starts again from zero |
-| **Keep the sheet up after an action** (`actionsStayOpen`) | on | | Creature Actions… stays up after a tile, for another go, until Done or Esc. Off: it folds away after one. Add a Reminder always puts it away |
 | **Tea parties** (`teaPartiesEnabled`) | on | | Now and then two creatures who bump into each other step apart, a little table with a teapot and two cups comes up between them, and they sit down to tea, taking turns to tell each other a story from their lives and answer it. One party at a time; *Have a Tea Party* in Creature Actions… starts one now. With talk off they just sip. A model writes the stories when one is set up (priced under *Tea parties* in Costs); otherwise every built-in character has its own. Chasing one of them off, picking one up or hiding them all ends the party |
 | **Share of bumps** (`teaPartyChance`) | 10 % | 1 to 100 | How many bumps become a tea party. A flower's bump never does, and a pair near a corner, with no room for the table, just talks |
 | **Lasts** (`teaPartyMinutes`) | 3 min | 1 to 10, in half minutes | A story being told when the time is up is let finish |
 | **Sip between stories** (`teaSipSeconds`) | 6 s | 0 to 30 | The quiet between one story and its answer being over and the next story |
 | **Start at login** | off | | macOS: the system's Login Items (only an installed app can register). Windows: the per-user Startup list |
+
+## Actions tab
+
+The Creature Actions sheet, and the way to it when the menu bar icon is hidden.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Keep the sheet up after an action** (`actionsStayOpen`) | on | | Creature Actions… stays up after a tile, for another go, until Done or Esc. Off: it folds away after one. Add a Reminder always puts it away |
+| **Shortcut from any app** (`shortcutEnabled`) | on | | macOS. One shortcut that works whichever app is in front, for when the menu bar has no room for the icon. Off: the keys go to the app in front again |
+| **Shortcut** (`shortcutKeyCode`, `shortcutModifiers`) | ⌃⌥L | a key with ⌘, ⌃ or ⌥ held | Click the button and press the new keys; Esc or a second click keeps the old ones, a key with none of ⌘ ⌃ ⌥ beeps. The label is the key as the Latin layout prints it, so it reads the same in any typing language. If another app already holds the shortcut, a red line says so. No permission is asked |
+| **It opens** (`shortcutOpens`) | Creature Actions | Creature Actions, The whole menu | *Creature Actions*: the sheet; pressed again while the sheet is in front, it folds away. *The whole menu*: the menu bar icon's menu, under the cursor, with Settings…, Chat History…, Language and Quit |
 
 ## Chases tab
 
