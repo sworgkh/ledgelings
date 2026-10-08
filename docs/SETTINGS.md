@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Eleven tabs: **Creatures**, **Chases**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Twelve tabs: **Creatures**, **Actions**, **Chases**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## Without a model
 
@@ -25,11 +25,17 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 
 ## The menu
 
+**No icon in the menu bar?** macOS hides the icons that do not fit, and beside a notch
+that is often. Press **⌃⌥L** (Control-Option-L) in any app: Creature Actions comes up,
+and the same keys put it away. Or open Ledgelings again from Spotlight or Finder. The
+sheet has everything this menu has: the switches, Settings…, the chats and Quit. The
+keys are yours to change: [Actions tab](#actions-tab).
+
 | Item | What it does |
 |---|---|
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
 | *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens the Reminders tab |
-| **Creature Actions…** (⌘A on macOS) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
+| **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
@@ -57,6 +63,19 @@ what the last press did (*A paper plane goes up.*, *No plane: nobody free…*).
 | **Clear N Flowers** | F | Pulls up every flower the creatures planted, at once ([Flowers tab](#flowers-tab)). Greyed while none are planted |
 
 While they hide, jumping, talking, tea and planes are greyed: there is nobody outside.
+
+Under the tiles, the menu's switches, so a hidden icon loses nothing. Each says how it
+stands and flips at a click; the sheet stays up.
+
+| Button | What it does |
+|---|---|
+| **TALK ON / OFF** | Whether they talk at all (Talk tab) |
+| **VOICE ON / OFF** | *Hear Them Talk*: bubbles read out loud |
+| **REVENGE ON / OFF** | *Cursor Revenge* |
+| **CURSOR: A MENACE** | *The Cursor Is*: each click the next of playmate, just there, menace |
+| **ENGLISH / РУССКИЙ** | The language, under its own name; each click the next |
+| **SETTINGS** (⌘,), **CHATS** | Puts the sheet away and opens the settings window, or its Chats tab |
+| **QUIT** (⌘Q) | Quits Ledgelings |
 
 ## What your hand can do
 
@@ -112,12 +131,22 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 | **Complain when pushed around** (`complainEnabled`) | on | | Chasing a creature off its edge with the cursor, or picking it up, bothers it. Bothered more than *Puts up with* times in a row, it tells you about it in a bubble, in its own voice: off when the cursor is a menace, a tease when it is a playmate, a shrug when it is just there (a model writes it when one is set up and talk is on; that call is priced under *Complaints* in Costs). The count then starts over |
 | **Puts up with** (`complainAfter`) | 4 in a row | 1 to 20 | The 5th chase in a row, by default, gets the complaint |
 | **Calms down after** (`complainCalmSeconds`) | 20 s | 5 to 120 | Leave it alone this long and its count starts again from zero |
-| **Keep the sheet up after an action** (`actionsStayOpen`) | on | | Creature Actions… stays up after a tile, for another go, until Done or Esc. Off: it folds away after one. Add a Reminder always puts it away |
 | **Tea parties** (`teaPartiesEnabled`) | on | | Now and then two creatures who bump into each other step apart, a little table with a teapot and two cups comes up between them, and they sit down to tea, taking turns to tell each other a story from their lives and answer it. One party at a time; *Have a Tea Party* in Creature Actions… starts one now. With talk off they just sip. A model writes the stories when one is set up (priced under *Tea parties* in Costs); otherwise every built-in character has its own. Chasing one of them off, picking one up or hiding them all ends the party |
 | **Share of bumps** (`teaPartyChance`) | 10 % | 1 to 100 | How many bumps become a tea party. A flower's bump never does, and a pair near a corner, with no room for the table, just talks |
 | **Lasts** (`teaPartyMinutes`) | 3 min | 1 to 10, in half minutes | A story being told when the time is up is let finish |
 | **Sip between stories** (`teaSipSeconds`) | 6 s | 0 to 30 | The quiet between one story and its answer being over and the next story |
 | **Start at login** | off | | macOS: the system's Login Items (only an installed app can register). Windows: the per-user Startup list |
+
+## Actions tab
+
+The Creature Actions sheet, and the way to it when the menu bar icon is hidden.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Keep the sheet up after an action** (`actionsStayOpen`) | on | | Creature Actions… stays up after a tile, for another go, until Done or Esc. Off: it folds away after one. Add a Reminder always puts it away |
+| **Shortcut from any app** (`shortcutEnabled`) | on | | macOS. One shortcut that works whichever app is in front, for when the menu bar has no room for the icon: it brings Creature Actions… up, and pressed again puts it away. The menu shows it beside *Creature Actions…*, the sheet in its hint line. Off: the keys go to the app in front again |
+| **Shortcut** (`shortcutKeyCode`, `shortcutModifiers`) | ⌃⌥L | a key with ⌘, ⌃ or ⌥ held | Click the button and press the new keys; Esc or a second click keeps the old ones, a key with none of ⌘ ⌃ ⌥ beeps. The label is the key as the Latin layout prints it, so it reads the same in any typing language. If macOS refuses the keys, a red line says so. It cannot tell when another app uses the same keys: if the shortcut does nothing, record another. No permission is asked |
+| **Opening Ledgelings again shows the sheet** (`reopenShowsActions`) | on | | macOS. Open the app from Spotlight, Finder or the Dock while it already runs and Creature Actions… comes up: the way in that needs no keys at all |
 
 ## Chases tab
 

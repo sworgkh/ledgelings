@@ -71,10 +71,11 @@ bumping, then goes off to plant it in the edge wherever its character likes:
 Blocky on the bottom edge, Pip on the ceiling, Ruth in a neat row beside the
 others, Dot straight away, Zed once it gets dark.
 
-**Play with them.** *Creature Actions…* in the menu opens a sheet of the same pixel
+**Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, or opening
+the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
 paper as the letters, a creature peeking over the top: one picture for everything you
 can ask of them (jump, talk, tea, a plane, a reminder, hide, sleep or wake, clear the
-flowers), each with a letter key.
+flowers), each with a letter key, and under them the menu's switches, Settings and Quit.
 
 **Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
 loud, each character in a voice of its own: the computer's own voices (free,

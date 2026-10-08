@@ -8,25 +8,33 @@ import SwiftUI
 /// `actionsStayOpen` the sheet stays up for another go, else it folds away.
 @MainActor
 final class ActionsController {
-    static let size = CGSize(width: 564, height: 506)
+    static let size = CGSize(width: 564, height: 548)
 
     private let settings: AppSettings
     private let colony: () -> Colony?
     private let addReminder: () -> Void
+    private let open: (ActionsLink) -> Void
     private let model = ActionsModel()
     private var window: NoteWindow?
     private var timer: Timer?
 
-    init(settings: AppSettings, colony: @escaping () -> Colony?, addReminder: @escaping () -> Void) {
+    init(settings: AppSettings, colony: @escaping () -> Colony?, addReminder: @escaping () -> Void,
+         open: @escaping (ActionsLink) -> Void = { _ in }) {
         self.settings = settings
         self.colony = colony
         self.addReminder = addReminder
+        self.open = open
         model.press = { [weak self] in self?.press($0) }
+        model.flip = { [weak self] in self?.flip($0) }
+        model.open = { [weak self] in self?.follow($0) }
         model.hide = { [weak self] in self?.hide(minutes: $0) }
     }
 
+    /// Whether the sheet is on screen.
+    var isUp: Bool { window != nil }
+
     func show() {
-        NSApp.activate(ignoringOtherApps: true)
+        NSApplication.shared.activate(ignoringOtherApps: true)
         if let window { window.makeKeyAndOrderFront(nil); return }
         let made = NoteWindow(size: Self.size)
         model.keeper = colony()?.noteKeeper()
@@ -47,10 +55,30 @@ final class ActionsController {
         }
     }
 
+    /// The shortcut from any app: up if it is away, away if it is up.
+    func toggle() {
+        if isUp { foldAway() } else { show() }
+    }
+
+    /// The app was opened again while running (Spotlight, Finder, the Dock): with
+    /// no icon in the menu bar that is the other way in, so the sheet comes up.
+    func reopened() {
+        if settings.reopenShowsActions { show() }
+    }
+
     /// What the tiles need to know, read from the colony twice a second.
     private func refresh() {
-        guard let colony = colony() else { return }
         var s = ActionsState()
+        s.talkOn = settings.talkEnabled
+        s.voiceOn = settings.voiceEnabled
+        s.revengeOn = settings.revengeEnabled
+        s.mood = settings.cursorMood
+        s.language = settings.language
+        model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
+        guard let colony = colony() else {
+            if model.state != s { model.state = s }
+            return
+        }
         s.isNight = colony.isNight
         s.nightOff = settings.nightMinutes == 0
         s.phaseLeft = Int(colony.secondsLeftInPhase.rounded(.up))
@@ -103,6 +131,33 @@ final class ActionsController {
             said = pulled == 1 ? tr("Pulled up the flower.") : tr("Pulled up %@.", trCount(pulled, "flower", "flowers"))
         }
         after(said)
+    }
+
+    /// A switch from the menu bar menu, flipped here. The sheet stays up whatever
+    /// `actionsStayOpen` says: its new state is the answer, and there may be another to flip.
+    private func flip(_ flipped: ActionsSwitch) {
+        model.choosingHide = false
+        switch flipped {
+        case .talk: settings.talkEnabled.toggle()
+        case .voice: settings.voiceEnabled.toggle()
+        case .revenge: settings.revengeEnabled.toggle()
+        case .cursor: settings.cursorMood = Self.next(after: settings.cursorMood)
+        case .language: settings.language = Self.next(after: settings.language)
+        }
+        refresh()
+        model.said = flipped.said(in: model.state)
+        model.saidAt = Date()
+    }
+
+    static func next<T: CaseIterable & Equatable>(after value: T) -> T {
+        let all = Array(T.allCases)
+        return all[((all.firstIndex(of: value) ?? -1) + 1) % all.count]
+    }
+
+    /// Settings, the chats, or out: the sheet is put away first.
+    private func follow(_ link: ActionsLink) {
+        dismiss()
+        open(link)
     }
 
     private func hide(minutes: Double?) {
@@ -175,6 +230,63 @@ struct ActionsState: Equatable {
     var hiding = false
     /// Seconds until the house opens again.
     var hideLeft = 0
+    var talkOn = true
+    var voiceOn = false
+    var revengeOn = true
+    var mood = CursorMood.bad
+    var language = Language.english
+}
+
+/// The switches under the tiles: what the menu bar menu offers besides the
+/// actions, here too, so that nothing is lost when the icon is hidden.
+enum ActionsSwitch: CaseIterable {
+    case talk, voice, revenge, cursor, language
+
+    /// Its words say how it stands now.
+    func title(in s: ActionsState) -> String {
+        switch self {
+        case .talk: s.talkOn ? tr("TALK ON") : tr("TALK OFF")
+        case .voice: s.voiceOn ? tr("VOICE ON") : tr("VOICE OFF")
+        case .revenge: s.revengeOn ? tr("REVENGE ON") : tr("REVENGE OFF")
+        case .cursor: tr("CURSOR: %@", s.mood.title.uppercased())
+        // Under its own name, as in the menu, so whoever cannot read the current one still finds theirs.
+        case .language: s.language.title.uppercased()
+        }
+    }
+
+    /// Drawn pressed in while it is on.
+    func isOn(in s: ActionsState) -> Bool {
+        switch self {
+        case .talk: s.talkOn
+        case .voice: s.voiceOn
+        case .revenge: s.revengeOn
+        case .cursor, .language: false
+        }
+    }
+
+    /// The line under the tiles after a press.
+    func said(in s: ActionsState) -> String {
+        switch self {
+        case .talk: s.talkOn ? tr("They talk again.") : tr("They keep quiet.")
+        case .voice: s.voiceOn ? tr("You hear them talk.") : tr("They talk in bubbles only.")
+        case .revenge: s.revengeOn ? tr("They may grab the cursor.") : tr("They leave the cursor alone.")
+        case .cursor: tr("The cursor is: %@.", s.mood.title)
+        case .language: tr("They speak %@ now.", s.language.title)
+        }
+    }
+}
+
+/// Where the sheet can send you, as the menu did.
+enum ActionsLink: CaseIterable {
+    case settings, chats, quit
+
+    var title: String {
+        switch self {
+        case .settings: tr("SETTINGS")
+        case .chats: tr("CHATS")
+        case .quit: tr("QUIT")
+        }
+    }
 }
 
 /// One tile on the sheet, in the order they are laid out, four to a row.
@@ -247,8 +359,12 @@ final class ActionsModel: ObservableObject {
     @Published var choosingHide = false
     var saidAt: Date?
     var keeper: (name: String, face: CGImage?)?
+    /// The shortcut from any app as drawn ("⌃⌥L"), empty while it is off.
+    @Published var shortcut = ""
     var press: (ActionsTile) -> Void = { _ in }
     var hide: (Double?) -> Void = { _ in }
+    var flip: (ActionsSwitch) -> Void = { _ in }
+    var open: (ActionsLink) -> Void = { _ in }
 }
 
 // MARK: The pictures
@@ -372,6 +488,7 @@ struct ActionsSheetView: View {
                     .padding(.bottom, 14)
                 grid.padding(.bottom, 14)
                 line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
+                switches.padding(.bottom, 12)
                 footer
             }
             .padding(.horizontal, 33)
@@ -441,15 +558,36 @@ struct ActionsSheetView: View {
                 }
             }
         } else {
-            Text(model.said.isEmpty ? tr("click a picture, or press its letter") : model.said)
+            Text(model.said.isEmpty ? hint : model.said)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundStyle(model.said.isEmpty ? Self.faintInk : Self.softInk)
                 .lineLimit(1)
         }
     }
 
+    private var hint: String {
+        model.shortcut.isEmpty ? tr("click a picture, or press its letter")
+            : tr("click a picture, or press its letter · %@ opens and closes this", model.shortcut)
+    }
+
+    /// The menu's quick switches, each saying how it stands; the language sits with the links below.
+    private var switches: some View {
+        HStack(spacing: 6) {
+            ForEach(ActionsSwitch.allCases.filter { $0 != .language }, id: \.self) { flipped in
+                PixelButton(title: flipped.title(in: model.state), small: true, chosen: flipped.isOn(in: model.state)) { model.flip(flipped) }
+                    .lineLimit(1).fixedSize()
+            }
+        }
+    }
+
     private var footer: some View {
-        HStack {
+        HStack(spacing: 6) {
+            PixelButton(title: ActionsSwitch.language.title(in: model.state), small: true) { model.flip(.language) }
+            PixelButton(title: ActionsLink.settings.title, small: true) { model.open(.settings) }
+                .keyboardShortcut(",", modifiers: .command)
+            PixelButton(title: ActionsLink.chats.title, small: true) { model.open(.chats) }
+            PixelButton(title: ActionsLink.quit.title, small: true) { model.open(.quit) }
+                .keyboardShortcut("q", modifiers: .command)
             Spacer()
             PixelButton(title: tr("DONE"), action: done)
                 .keyboardShortcut(.cancelAction)

@@ -108,6 +108,17 @@ final class AppSettings: ObservableObject {
     @Published var teaPartiesEnabled: Bool { didSet { save(teaPartiesEnabled, "teaPartiesEnabled") } }
     /// The Creature Actions sheet stays up after a tile is pressed, for another go. Off: it folds away.
     @Published var actionsStayOpen: Bool { didSet { save(actionsStayOpen, "actionsStayOpen") } }
+    /// A shortcut that works in every app, for when the menu bar has no room for the icon.
+    @Published var shortcutEnabled: Bool { didSet { save(shortcutEnabled, "shortcutEnabled") } }
+    @Published var shortcut: Shortcut {
+        didSet { save(shortcut.keyCode, "shortcutKeyCode"); save(shortcut.modifiers.rawValue, "shortcutModifiers") }
+    }
+    /// Opening the app again while it runs (Spotlight, Finder, the Dock) brings the Creature Actions sheet up.
+    @Published var reopenShowsActions: Bool { didSet { save(reopenShowsActions, "reopenShowsActions") } }
+    /// The settings window is listening for a new shortcut, so the old one is let go. Not saved.
+    @Published var recordingShortcut = false
+    /// Why the shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var shortcutProblem = ""
     @Published var teaPartyChance: Double { didSet { save(teaPartyChance, "teaPartyChance") } }
     @Published var teaPartyMinutes: Double { didSet { save(teaPartyMinutes, "teaPartyMinutes") } }
     @Published var teaSipSeconds: Double { didSet { save(teaSipSeconds, "teaSipSeconds") } }
@@ -378,6 +389,10 @@ final class AppSettings: ObservableObject {
         revengePinsCursor = defaults.object(forKey: "revengePinsCursor") as? Bool ?? false
         teaPartiesEnabled = defaults.object(forKey: "teaPartiesEnabled") as? Bool ?? true
         actionsStayOpen = defaults.object(forKey: "actionsStayOpen") as? Bool ?? true
+        shortcutEnabled = defaults.object(forKey: "shortcutEnabled") as? Bool ?? true
+        shortcut = Shortcut(savedKeyCode: defaults.object(forKey: "shortcutKeyCode") as? Int,
+                            savedModifiers: defaults.object(forKey: "shortcutModifiers") as? Int)
+        reopenShowsActions = defaults.object(forKey: "reopenShowsActions") as? Bool ?? true
         // One bump in ten: with a few creatures that is a party every quarter of an hour or so, a treat, not the routine.
         let chance = defaults.object(forKey: "teaPartyChance") as? Double ?? 10
         teaPartyChance = min(max(chance, Self.teaChanceRange.lowerBound), Self.teaChanceRange.upperBound)

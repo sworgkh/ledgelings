@@ -18,8 +18,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 })
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private lazy var actions = ActionsController(settings: settings, colony: { [weak self] in self?.colony },
-                                                 addReminder: { [weak self] in self?.openReminders() })
+                                                 addReminder: { [weak self] in self?.openReminders() },
+                                                 open: { [weak self] in self?.follow($0) })
     private var statusItem: NSStatusItem?
+    private var shortcut: GlobalShortcut?
+    private var shortcutShown: AnyCancellable?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -89,6 +92,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         installStatusItem()
+        shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
+        shortcutShown = Publishers.CombineLatest(settings.$shortcutEnabled, settings.$shortcut)
+            .sink { [weak self] enabled, shortcut in self?.showShortcutInMenu(enabled ? shortcut : nil) }
+        // `--shortcut`: says on stderr whether the system took the shortcut, then each press; quits after the first.
+        if CommandLine.arguments.contains("--shortcut") {
+            let label = GlobalShortcut.label(settings.shortcut)
+            let state = !settings.shortcutEnabled ? "off" : settings.shortcutProblem.isEmpty ? "registered" : "refused: \(settings.shortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(label) \(state)\n".utf8))
+            Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
+        }
         // `--converse`: one conversation, every line and voice cue on stderr with
         // the time since it started, then quit once the pair is let go.
         if CommandLine.arguments.contains("--converse"), let colony {
@@ -210,9 +223,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--settings [creatures|chases|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|actions|chases|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "chases": .chases, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
@@ -342,6 +355,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func openActions() { actions.show() }
+
+    /// The shortcut from any app: the sheet comes up, or goes away if it is up.
+    private func shortcutPressed() {
+        actions.toggle()
+        if CommandLine.arguments.contains("--shortcut") {
+            FileHandle.standardError.write(Data("shortcut pressed: sheet \(actions.isUp ? "up" : "away")\n".utf8))
+            Task { @MainActor in try? await Task.sleep(for: .seconds(2)); exit(0) }
+        }
+    }
+
+    /// Creature Actions… in the menu wears the shortcut from any app, so it can be
+    /// learnt there; ⌘A, which only works with the menu open, while there is none.
+    private func showShortcutInMenu(_ shortcut: Shortcut?) {
+        let key = shortcut.map { GlobalShortcut.keyName($0.keyCode).lowercased() } ?? ""
+        guard let shortcut, key.count == 1 else {
+            actionsItem.keyEquivalent = "a"
+            actionsItem.keyEquivalentModifierMask = .command
+            return
+        }
+        actionsItem.keyEquivalent = key
+        actionsItem.keyEquivalentModifierMask = GlobalShortcut.flags(shortcut.modifiers)
+    }
+
+    /// Opened again while running: with the icon hidden, the way in that needs no shortcut.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        actions.reopened()
+        return false
+    }
+
+    private func follow(_ link: ActionsLink) {
+        switch link {
+        case .settings: openSettings()
+        case .chats: openChats()
+        case .quit: NSApp.terminate(nil)
+        }
+    }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }
 

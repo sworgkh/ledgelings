@@ -29,7 +29,7 @@ Nothing the creatures do is hard-wired if someone could want it otherwise.
 - An on/off toggle, and every number a person might tune (how often, how long,
   how loud), in `AppSettings`: `@Published`, saved on change, clamped to its range
   on load, with a default that is chosen, not accidental.
-- Shown in the settings window on the tab it belongs to (Creatures, Chases, Sprites, Talk, Flowers,
+- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Sprites, Talk, Flowers,
   Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice and
   Costs did). Two columns; a tab fits a laptop screen without scrolling. A footer
   says what the setting does in plain words.
@@ -62,7 +62,7 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
-  writes a settings tab to a PNG (tabs: creatures, chases, sprites, talk, flowers, voice, costs, chats).
+  writes a settings tab to a PNG (tabs: creatures, actions, chases, sprites, talk, flowers, voice, costs, chats).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
@@ -75,6 +75,8 @@ with `scripts/make-app.sh`, installed and seen working.
   then quits once the pair walks on; `--tea-film out.mp4` films a one-minute party
   offscreen (built-in lines, or a local server named by `LEDGELINGS_TEA_SERVER`),
   which works even while the display sleeps and the live display link stops.
+- `--shortcut` says whether the system took the shortcut from any app (`shortcut ⌃⌥L registered`),
+  then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
 - `swift build` does not update `build/Ledgelings.app`; run `scripts/make-app.sh`.
 - The app's preferences are shared with the owner's running copy. Back them up
   (`defaults export com.alterman.ledgelings file.plist`) before a test changes
