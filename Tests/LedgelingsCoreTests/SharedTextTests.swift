@@ -42,6 +42,8 @@ import Testing
                 (mood.rawValue, ["anyone": Revenge.anyones(for: mood)(l), "lines": Revenge.lineSets(for: mood)(l),
                                  "anyoneLastWords": Revenge.anyoneLastWords(for: mood)(l), "lastWords": Revenge.lastWordSets(for: mood)(l),
                                  "prompt": Revenge.prompts(for: mood)(l)] as [String: Any]) }),
+            "beds": ["settle": Beds.settleSets(l), "settleAnyone": Beds.settleAnyone(l),
+                     "moved": Beds.movedSets(l), "movedAnyone": Beds.movedAnyone(l)],
             "holidays": Almanac.holidayNames[l] ?? [:],
             "flowers": Gifts.names(l),
             "prompts": [

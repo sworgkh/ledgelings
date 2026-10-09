@@ -29,7 +29,7 @@ Nothing the creatures do is hard-wired if someone could want it otherwise.
 - An on/off toggle, and every number a person might tune (how often, how long,
   how loud), in `AppSettings`: `@Published`, saved on change, clamped to its range
   on load, with a default that is chosen, not accidental.
-- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Sprites, Talk, Flowers,
+- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Sprites, Talk, Flowers,
   Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice and
   Costs did). Two columns; a tab fits a laptop screen without scrolling. A footer
   says what the setting does in plain words.
@@ -62,13 +62,16 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
-  writes a settings tab to a PNG (tabs: creatures, actions, chases, sprites, talk, flowers, voice, costs, chats).
+  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, sprites, talk, flowers, voice, costs, chats).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
   time, then quits once the pair is let go: the way to measure dialogue timing.
 - `--garden-film out.mp4` hands five creatures a flower each and films them offscreen
   until all have planted, printing who planted what and why (`plant Blocky poppy floor`).
+- `--bed-film out.mp4` films one creature of each species offscreen from nightfall until all
+  are asleep in their beds, then drags one bed to the ceiling, printing each step
+  (`bed Blocky walks to crate (floor)`, `bed Morel moved …`).
 - `--grab` makes the first creature grab the real cursor now and prints each step
   with its time (`grab Blocky`, `let go Blocky: shaken`), then quits once it lets go.
 - `--tea` starts a tea party on the real screen and prints every line with its time,

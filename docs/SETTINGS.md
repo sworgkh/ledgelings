@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Twelve tabs: **Creatures**, **Actions**, **Chases**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Thirteen tabs: **Creatures**, **Actions**, **Chases**, **Beds**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## Without a model
 
@@ -90,7 +90,8 @@ takes focus from the app you are in.
 | Hold **Shift** | Nobody flees, so you can get the cursor onto one |
 | **Shift-click** a creature (press and release without moving) | A poke: it says a line to whoever is nearest, and both stop to talk |
 | **Shift-drag** a creature | It comes along, awake or asleep, dangling upright under the cursor, and lands the same way it left on the nearest edge of whichever monitor it is over |
-| **Drag** a sleeper (no Shift) | The same; a sleeper never notices the cursor, so it can be picked up as it is |
+| **Drag** a sleeper (no Shift) | The same; a sleeper never notices the cursor, so it can be picked up as it is. Its bed folds away, and comes out again where it lands |
+| **Drag a sleeper's bed** (press on the bed beside or under it, not on the body) | Bed and sleeper go together and land on the nearest edge, still asleep: that is its favourite place from now on. Not a chase: nothing is counted, nobody complains |
 | **Shift-right-click** (or Shift-Control-click) a creature | A nap: it lies down on the spot, day or night. The same again wakes it; the next dawn also ends a nap |
 | Click a speech bubble | Closes it |
 | Click a reminder's letter | Folds it back into a plane, which flies away |
@@ -182,6 +183,46 @@ counted, with today, this week and in all, and **Reset** for each; **Everyone**,
 the total; since when it has been counting. Kept by name: rename a character and
 it starts from zero. **Reset All…** (asks first) clears everyone. The count is
 in `hunts.json` beside the chats, path shown. On Windows the tab is one column, in the same order, with **Show in Explorer** beside the file, and the week starts on the first day of the week of the system's region format.
+
+## Beds tab
+
+Every character has a bed of its own (SPEC §7.9), picked for who it is: Blocky a
+crate full of straw, Pip a striped hammock, Mortimer a patchwork quilt, Zed an
+enormous pillow, Dot a matchbox, Ruth a neatly made little bed; Whiskers a cardboard
+box, Mittens a cat basket, Sir Pounce a royal cushion; Hopper a lily pad, Mossy a
+mound of moss, Croak a puddle; Boo a little cloud, Wisp an autumn leaf, Sheet a
+folded blanket; Morel a slice of log, Puff a tuft of grass, Cap a flowerpot; Unit 7
+a charging dock, Sprocket a toolbox, Glitch a spacebar keycap; Goop a sponge,
+Puddle a teacup, Blorp bubble wrap; Spike a pincushion, Wedge a stack of books,
+Delta a striped sock. A character of your own gets one from its persona and its
+species' words (a cat a basket, a robot a dock, anything small a matchbox), else a
+tuft of grass.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Each one sleeps in its own bed** (`bedsEnabled`) | on | | Falling asleep, a creature puts its bed down and sleeps on it, raised onto the mattress; waking, the bed fades. Off: they sleep on the bare edge |
+| **Pull of the favourite place** (`bedPull`) | 80 % | 0 to 100, in fives | The chance it walks back to its favourite at nightfall is this times 1 − ½ⁿ after n nights there: 40 % after one night, 60 % after two, 75 % after five. 0: they sleep where night finds them |
+| **Walks to it at most** (`bedWalkDistance`) | 2000 pt | 100 to 6000, in hundreds | Along its own edge, the short way round. Further, or on another screen outline, and it sleeps where it is |
+| **Say something about it now and then** (`bedTalk`) | on | | One night in three, a line as it lies down, in its own voice; always a mumble when you move its bed. Built-in lines, needs *Talk* on, no model calls |
+
+How a place is learned: the first night a creature walks to a place its character
+likes, the way it picks where to plant a flower (Blocky the bottom edge, Pip the
+ceiling, Unit 7 a corner). Every night it sleeps within 48 points of its favourite
+the habit grows, up to 12 nights; a night slept elsewhere takes one off, and at 0
+that place is the new favourite. Dragging the bed makes the drop point the favourite
+at once, with at least 3 nights behind it. Nobody sleeps on top of anybody else: a
+creature whose place is taken lies down a bed's width along. A nap you ask for
+(Shift-right-click) is slept where it is and teaches nothing.
+
+**Who sleeps where**, on the right: every creature on screen with a picture of its
+bed, what it is, where it likes to sleep ("on the ceiling, 4 nights") and **Forget**
+for each. **Forget All Places…** (asks first) forgets everyone's. Kept by name in
+`beds.json` beside the chats, path shown: rename a character and it looks for a
+place afresh. A place that is no longer on any screen (a monitor unplugged) is only
+reached when it is near the creature's own edge; otherwise it sleeps where it is,
+and the habit moves in a few nights.
+
+Not on the Creature Actions sheet or in the menu: it is set once, not flipped often.
 
 ## Sprites tab
 

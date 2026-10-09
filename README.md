@@ -71,6 +71,12 @@ bumping, then goes off to plant it in the edge wherever its character likes:
 Blocky on the bottom edge, Pip on the ceiling, Ruth in a neat row beside the
 others, Dot straight away, Zed once it gets dark.
 
+**They go to bed.** Each one has a bed of its own: Blocky a crate of straw, Mittens a
+cat basket, Hopper a lily pad, Unit 7 a charging dock, Puddle a teacup. At nightfall
+it walks to its favourite place, puts the bed down and sleeps on it, and the more
+nights it spends there the likelier it goes back. Drag a sleeper's bed somewhere else
+and that is its place from now on.
+
 **Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, Ctrl+Alt+L on Windows, or opening
 the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
 paper as the letters, a creature peeking over the top: one picture for everything you

@@ -255,3 +255,22 @@ def test_the_tea_table_stands_on_the_floor_with_a_cup_at_each_end_and_steams():
     diff = [(px, py) for px in range(cells[0].width) for py in range(cells[0].height)
             if cells[0].getpixel((px, py)) != cells[1].getpixel((px, py))]
     assert diff and all(cells[1].getpixel(p)[:3] in (painter.STEAM, (0, 0, 0)) or cells[0].getpixel(p)[:3] == painter.STEAM for p in diff)
+
+
+BEDS = Path(__file__).resolve().parents[2] / "sprites" / "beds.yaml"
+
+
+def test_every_bed_stands_on_the_floor_within_its_cell_and_has_a_lift():
+    from spritetool.painters import beds as painter
+
+    recipe = load_recipe(BEDS)
+    names = [p for p, _ in recipe.poses]
+    assert sorted(names) == sorted(painter.BEDS) == sorted(painter.LIFT)
+    sheet = key_out(get_painter("beds")(recipe), recipe.background, recipe.tolerance)
+    for col, row, pose, _ in recipe.cells():
+        x, y, w, h = recipe.cell_rect(col, row)
+        cell = sheet.crop((x, y, x + w, y + h))
+        left, top, right, bottom = cell.getchannel("A").getbbox()
+        assert bottom == h, f"{pose} does not stand on the floor"
+        assert right - left >= 26, f"{pose} is narrower than a sleeper"
+        assert 0 < painter.LIFT[pose] < h - top + 1, f"{pose}'s mattress is above the bed"

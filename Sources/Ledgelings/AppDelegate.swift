@@ -11,9 +11,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let bonds = BondBook()
     private let reminders = ReminderBook()
     private let hunts = HuntBook()
+    private let beds = BedBook()
     private lazy var voice = Voice(settings: settings, spend: spend, history: history)
     private lazy var settingsWindow = SettingsWindowController(
-        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, voice: voice,
+        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice,
         send: { [weak self] in self?.colony?.deliverNow($0) },
         clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 })
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
@@ -71,6 +72,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--bed-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/beds.mp4"
+            Task { @MainActor in
+                do { try await BedFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings bed film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--tea-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/tea.mp4"
@@ -82,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         do {
-            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts)
+            colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds)
             colony?.voice = voice
             colony?.pointer = pointer
             freeTheCursorWhenTheScreenGoes()
@@ -223,9 +234,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--settings [creatures|actions|chases|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|actions|chases|beds|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {

@@ -80,6 +80,8 @@ public struct Creature: Sendable {
     private var napsInHand = false
     /// A `leap` lands and waits instead of walking off.
     private var waitsAfterLanding = false
+    /// Times its walking speed while `running`: hurrying home, or plodding off to bed.
+    private var runPace: CGFloat = 2.5
     /// Reached the spot it was running or leaping to, and has not moved since.
     public private(set) var hasArrived = false
 
@@ -245,7 +247,7 @@ public struct Creature: Sendable {
             if remaining - dt <= 0 { walkOn(using: &rng) } else { mode = .chatting(remaining: remaining - dt) }
 
         case .running(let target):
-            let step = config.walkSpeed * 2.5 * dt
+            let step = config.walkSpeed * runPace * dt
             let left = direction > 0 ? loop.wrap(target - spot.t) : loop.wrap(spot.t - target)
             if left <= step {
                 spot.t = target
@@ -263,14 +265,24 @@ public struct Creature: Sendable {
     // MARK: Going home
 
     /// Hurry to `target` on this loop, the short way round, waking up if needed.
-    /// Not from the air or the user's hand; the caller waits for those.
-    public mutating func run(to target: CGFloat) {
+    /// Not from the air or the user's hand; the caller waits for those. `pace`
+    /// is times its walking speed: 2.5 hurries, 1 walks.
+    public mutating func run(to target: CGFloat, pace: CGFloat = 2.5) {
         guard !isJumping, !isHeld else { return }
+        runPace = pace
         isNapping = false
         sleepsThroughLanding = false
         let ahead = loop.wrap(target - spot.t)
         direction = ahead <= loop.length / 2 ? 1 : -1
         enter(.running(to: loop.wrap(target)))
+    }
+
+    /// Lie down and sleep right here, now: in its bed, once it has walked there.
+    /// Not from the air or the user's hand.
+    public mutating func settle() {
+        guard !isJumping, !isHeld else { return }
+        sleepsThroughLanding = false
+        enter(.sleeping(wakeIn: nil))
     }
 
     /// Jump straight to `spot` (any loop) and wait there.

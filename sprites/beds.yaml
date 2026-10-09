@@ -1,0 +1,85 @@
+# beds — one little bed for every built-in character, put down where it sleeps:
+# Blocky's crate, Mittens' basket, Hopper's lily pad, Unit 7's charging dock and
+# the rest (`Beds.Kind` in the app says who sleeps in which). Drawn STANDING ON
+# THE FLOOR of the cell, so the app can lay one on any edge under a sleeper, who
+# is drawn in front of it, lifted to the top of its mattress. Blocky's rules
+# throughout: flat blocks, a 1px outline in a dark tint of each block's colour,
+# a light line top-left, a shade line bottom-right, stepped corners, no curves.
+#
+#   python -m spritetool build sprites/beds.yaml
+
+version: 1
+name: beds
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [36, 16]
+  content_box: [0, 0, 36, 16]
+
+background:
+  color: "#ff00ff"
+  tolerance: 60
+
+painter: beds
+
+style: >-
+  pixel art, flat colour, 1px outline in a dark tint of each block's colour,
+  one small bed seen from the side, standing on the floor line
+
+poses:
+  - {name: crate, prompt: "Blocky - a sturdy wooden crate stuffed with straw. Square, like him."}
+  - {name: hammock, prompt: "Pip - a striped hammock slung between two posts, for swinging and laughing."}
+  - {name: quilt, prompt: "Mortimer - an old patchwork quilt on a low mattress, a pillow at one end."}
+  - {name: pillow, prompt: "Zed - the biggest, fluffiest pillow there is, with a stitched seam. For napping."}
+  - {name: matchbox, prompt: "Dot - a matchbox tray, because Dot is tiny. A match laid in for a pillow."}
+  - {name: bed, prompt: "Ruth - a proper little bed, neatly made, the blanket folded back square."}
+  - {name: box, prompt: "Whiskers - a cardboard box. It is not for sleeping in. It is being slept in."}
+  - {name: catbed, prompt: "Mittens - a round basket bed with a warm cream cushion. The warm side."}
+  - {name: cushion, prompt: "Sir Pounce - a royal red cushion, gold piping, a tassel at each corner."}
+  - {name: lilypad, prompt: "Hopper - a lily pad on a strip of pond, with a pink flower to brag about."}
+  - {name: moss, prompt: "Mossy - a soft green mound of moss, lumpy, a pebble at its foot."}
+  - {name: puddle, prompt: "Croak - a puddle, finally. Wet. And a bulrush to lean on."}
+  - {name: cloud, prompt: "Boo - a little cloud to float on. Spooky, if you squint. Do not squint."}
+  - {name: leaf, prompt: "Wisp - a big autumn leaf, fallen from a tree it remembers."}
+  - {name: blanket, prompt: "Sheet - a folded check blanket. Technically a bed. Technically."}
+  - {name: log, prompt: "Morel - a slice of old log, its rings at one end, a tiny mushroom sprouting."}
+  - {name: grass, prompt: "Puff - a tuft of soft grass with a daisy in it. Nice to giggle in."}
+  - {name: flowerpot, prompt: "Cap - a terracotta pot of good dark soil, the way they did it in his day."}
+  - {name: dock, prompt: "Unit 7 - a charging dock. Green lights: 3 of 3. Charge: in progress."}
+  - {name: toolbox, prompt: "Sprocket - a red toolbox, every bolt tightened, a spanner left out."}
+  - {name: spacebar, prompt: "Glitch - a big spacebar keycap. Press press to sleep."}
+  - {name: sponge, prompt: "Goop - a sponge, green scrubby side up. Nice. Sticky. Nice."}
+  - {name: teacup, prompt: "Puddle - a teacup on its saucer. Never dries out, never gets stepped on."}
+  - {name: bubblewrap, prompt: "Blorp - a sheet of bubble wrap. Pop. Pop. Blorp."}
+  - {name: pincushion, prompt: "Spike - a tomato pincushion. The pins make the point."}
+  - {name: books, prompt: "Wedge - a stack of three thick books. Stable. Will not be tipped over."}
+  - {name: sock, prompt: "Delta - one striped sock, lying down. Its pair moved. Delta noticed."}
+
+animations:
+  crate: {frames: [crate], fps: 1, loop: true}
+  hammock: {frames: [hammock], fps: 1, loop: true}
+  quilt: {frames: [quilt], fps: 1, loop: true}
+  pillow: {frames: [pillow], fps: 1, loop: true}
+  matchbox: {frames: [matchbox], fps: 1, loop: true}
+  bed: {frames: [bed], fps: 1, loop: true}
+  box: {frames: [box], fps: 1, loop: true}
+  catbed: {frames: [catbed], fps: 1, loop: true}
+  cushion: {frames: [cushion], fps: 1, loop: true}
+  lilypad: {frames: [lilypad], fps: 1, loop: true}
+  moss: {frames: [moss], fps: 1, loop: true}
+  puddle: {frames: [puddle], fps: 1, loop: true}
+  cloud: {frames: [cloud], fps: 1, loop: true}
+  leaf: {frames: [leaf], fps: 1, loop: true}
+  blanket: {frames: [blanket], fps: 1, loop: true}
+  log: {frames: [log], fps: 1, loop: true}
+  grass: {frames: [grass], fps: 1, loop: true}
+  flowerpot: {frames: [flowerpot], fps: 1, loop: true}
+  dock: {frames: [dock], fps: 1, loop: true}
+  toolbox: {frames: [toolbox], fps: 1, loop: true}
+  spacebar: {frames: [spacebar], fps: 1, loop: true}
+  sponge: {frames: [sponge], fps: 1, loop: true}
+  teacup: {frames: [teacup], fps: 1, loop: true}
+  bubblewrap: {frames: [bubblewrap], fps: 1, loop: true}
+  pincushion: {frames: [pincushion], fps: 1, loop: true}
+  books: {frames: [books], fps: 1, loop: true}
+  sock: {frames: [sock], fps: 1, loop: true}
