@@ -92,6 +92,8 @@ public sealed class Creature
     private bool waitsAfterLanding;
     /// <summary>Reached the spot it was running or leaping to, and has not moved since.</summary>
     public bool HasArrived { get; private set; }
+    /// <summary>Times its walking speed while running: hurrying home, or plodding off to bed.</summary>
+    private double runPace = 2.5;
 
     /// <summary>half -> closed -> half, in seconds.</summary>
     private static readonly (Eyes Eyes, double Length)[] BlinkPhases = { (Eyes.Half, 0.05), (Eyes.Closed, 0.09), (Eyes.Half, 0.05) };
@@ -250,7 +252,7 @@ public sealed class Creature
 
             case Mode.Running(var target):
             {
-                var step = Settings.WalkSpeed * 2.5 * dt;
+                var step = Settings.WalkSpeed * runPace * dt;
                 var left = Direction > 0 ? Loop.Wrap(target - Spot.T) : Loop.Wrap(Spot.T - target);
                 if (left <= step)
                 {
@@ -270,15 +272,26 @@ public sealed class Creature
     // MARK: Going home
 
     /// <summary>Hurry to <paramref name="target"/> on this loop, the short way round, waking up if needed.
-    /// Not from the air or the user's hand; the caller waits for those.</summary>
-    public void Run(double target)
+    /// Not from the air or the user's hand; the caller waits for those. <paramref name="pace"/> is times
+    /// its walking speed: 2.5 hurries, 1 walks.</summary>
+    public void Run(double target, double pace = 2.5)
     {
         if (IsJumping || IsHeld) return;
+        runPace = pace;
         IsNapping = false;
         sleepsThroughLanding = false;
         var ahead = Loop.Wrap(target - Spot.T);
         Direction = ahead <= Loop.Length / 2 ? 1 : -1;
         Enter(new Mode.Running(Loop.Wrap(target)));
+    }
+
+    /// <summary>Lie down and sleep right here, now: in its bed, once it has walked there.
+    /// Not from the air or the user's hand.</summary>
+    public void Settle()
+    {
+        if (IsJumping || IsHeld) return;
+        sleepsThroughLanding = false;
+        Enter(new Mode.Sleeping(null));
     }
 
     /// <summary>Jump straight to <paramref name="spot"/> (any loop) and wait there.</summary>

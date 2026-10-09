@@ -25,6 +25,7 @@ public sealed partial class Colony
                 creatures.RemoveAt(last); asleepFor.RemoveAt(last); sizeShares.RemoveAt(last); sizes.RemoveAt(last);
             }
             gifts.Forget(creatures.Count);
+            ForgetBeds(creatures.Count);
             ForgetAnnoyance();
             if (!Settings.TeaPartiesEnabled) BreakUpTea();
             while (creatures.Count < Settings.CreatureCount)
@@ -139,6 +140,7 @@ public sealed partial class Colony
             asleepFor[i] = creatures[i].LooksAsleep ? asleepFor[i] + dt : 0;
         }
         UpdateHideout();
+        UpdateBeds();
         UpdateGrab(cursor);
         UpdateClickability(cursor, shift);
 

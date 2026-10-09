@@ -224,6 +224,8 @@ and the habit moves in a few nights.
 
 Not on the Creature Actions sheet or in the menu: it is set once, not flipped often.
 
+On Windows the tab is one column, in the same order, with **Show in Explorer** beside the file; the beds, the walk to bed, the drag and the lines are the same, and `beds.json` has the Mac's shape, so a file copied across reads on either.
+
 ## Sprites tab
 
 Every species the app knows, built in or imported, as a card showing its idle pose.

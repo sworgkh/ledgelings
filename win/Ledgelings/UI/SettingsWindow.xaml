@@ -296,6 +296,71 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Beds">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Beds">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Each one sleeps in its own bed" IsChecked="{Binding BedsEnabled, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every character has a bed of its own, picked for who it is: a crate for Blocky, a basket for Mittens, a lily pad for Hopper. Falling asleep, it puts the bed down and sleeps on it; waking, it folds it away. Off, they sleep on the bare edge as before."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The favourite place" IsEnabled="{Binding BedsEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Pull of the favourite place" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BedPull}" ui:Tr.Unit="%"/>
+                <Slider Minimum="0" Maximum="100" TickFrequency="5" Value="{Binding BedPull, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Walks to it at most" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BedWalkDistance}" ui:Tr.Unit=" pt"/>
+                <Slider Minimum="100" Maximum="6000" TickFrequency="100" Value="{Binding BedWalkDistance, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="At nightfall a creature gets up and walks to its favourite place, if it is on the same screen outline and no further along the edge than this. The first night it picks a place its character likes (Blocky the bottom edge, Pip the ceiling). Each night there makes it likelier to go back, up to this pull; a night slept elsewhere wears the habit down, and enough of them move it. A nap you ask for is slept where it is."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Talking about it" IsEnabled="{Binding BedsEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Say something about it now and then" IsChecked="{Binding BedTalk, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Some nights a creature says a line as it lies down, in its own voice, and it mumbles something when you move its bed. Built-in lines: no model calls."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Who sleeps where">
+            <StackPanel>
+              <ItemsControl x:Name="BedList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Margin="0,3">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="84"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/>
+                      </Grid.ColumnDefinitions>
+                      <Image Grid.Column="0" Source="{Binding Picture}" Width="72" Height="32" HorizontalAlignment="Left"
+                             RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}"/>
+                        <TextBlock Text="{Binding Bed}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" Margin="6,0"/>
+                      <Button Grid.Column="3" ui:Tr.Content="Forget" Tag="{Binding Name}" Click="ForgetBed_Click" FontSize="11" Padding="6,0"
+                              HorizontalAlignment="Right" VerticalAlignment="Center" IsEnabled="{Binding CanForget}"/>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Drag a sleeper's bed, by its edge or the part under its feet, to anywhere on an edge: it lands there, still asleep, and that is its favourite place from now on. Dragging a bed is not a chase. Kept by name: rename a character and it looks for a place afresh."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The file">
+            <DockPanel>
+              <Button DockPanel.Dock="Right" x:Name="ForgetAllBeds" ui:Tr.Content="Forget All Places…" Click="ForgetAllBeds_Click" Margin="8,0,0,0"/>
+              <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealBeds_Click"/>
+              <TextBlock x:Name="BedsPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            </DockPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Sprites">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">

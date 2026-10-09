@@ -464,6 +464,25 @@ public class GoingHomeTests
     }
 
     [Fact]
+    public void WalksToBedAtWalkingSpeedAndSettlesThere()
+    {
+        var rng = new Random(23);
+        var c = CreatureAt(100);
+        c.Run(160, pace: 1);                    // off to bed: a walk, not a hurry
+        Run(c, 0.2, rng, night: true);
+        Assert.True(Math.Abs((c.T - 100) - 55 * 0.2) < 1);
+        Run(c, 1.5, rng, night: true);
+        Assert.True(c.HasArrived && c.T == 160);
+        c.Settle();
+        Assert.True(c.IsSleeping);
+        Run(c, 2, rng, night: true);
+        Assert.True(c.IsSleeping && c.T == 160);
+        c.Run(100);
+        Run(c, 0.2, rng);
+        Assert.True(Math.Abs((160 - c.T) - 55 * 2.5 * 0.2) < 1);      // the house's hurry is back to 2.5
+    }
+
+    [Fact]
     public void RunningWrapsAroundTheLoopEndIfThatIsShorter()
     {
         var rng = new Random(22);

@@ -16,9 +16,10 @@ public sealed partial class Colony
             var inward = c.IsHeld ? new Vec(0, 1) : c.Loop.Inward(c.Segment);
             // Shrinking, it keeps its feet on the floor: the centre sinks as the body gets smaller.
             var sink = atlas.BodyHalfSize * sizes[i] * (1 - shrink);
+            var p = DrawnPosition(i);       // lying in its bed, a sleeper is raised onto the mattress
             snapshots.Add(new CreatureSnapshot
             {
-                Position = new Pt(c.Position.X - inward.Dx * sink, c.Position.Y - inward.Dy * sink),
+                Position = new Pt(p.X - inward.Dx * sink, p.Y - inward.Dy * sink),
                 Rotation = c.Rotation,
                 IsMirrored = c.IsMirrored,
                 Image = frames[i].Frame(c.Animation, c.AnimationTime, c.Eyes),
@@ -37,12 +38,13 @@ public sealed partial class Colony
         var inFlight = FlightSnapshot();
         var stars = SparkSnapshots();
         var home = HouseSnapshot();
-        var beds = GardenSnapshots();
+        var planted = GardenSnapshots();
+        var sleepers = BedSnapshots();
         var plane = MailSnapshot();
         var reminder = DeliverySnapshot();
         var table = TeaTableSnapshot();
         foreach (var overlay in overlays)
-            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: beds,
+            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: planted, beds: sleepers, bedCell: BedCell,
                            plane: plane, planeCell: planeCell, reminder: reminder,
                            tea: table, teaCell: TeaCell);
     }
