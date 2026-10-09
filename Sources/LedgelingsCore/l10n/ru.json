@@ -1,4 +1,207 @@
 {
+  "beds" : {
+    "moved" : {
+      "Blocky" : [
+        "Кто двигал мой ящик? ...ладно. Ящик всё равно хороший."
+      ],
+      "Blorp" : [
+        "Вжух! Блорп. Хрр."
+      ],
+      "Boo" : [
+        "Бу? А. Облачко уплыло. Облачка так делают."
+      ],
+      "Cap" : [
+        "В моё время горшок стоял, где поставили. Ну что ж."
+      ],
+      "Croak" : [
+        "Мою лужу передвинули. А мокрее её сделать нельзя было?"
+      ],
+      "Delta" : [
+        "Мой носок сдвинулся. Я заметил. Я всегда замечаю."
+      ],
+      "Dot" : [
+        "Передвинули? Быстро. Откуда такая прыть?"
+      ],
+      "Glitch" : [
+        "Пробел сдвинут. Сдвинут. Ошибка пропущена. Сплю."
+      ],
+      "Goop" : [
+        "Передвинули! Здорово. Всё ещё липко."
+      ],
+      "Hopper" : [
+        "Моя кувшинка прыгнула! Дальше, чем я!"
+      ],
+      "Mittens" : [
+        "Мрр... тут тоже тепло... мур..."
+      ],
+      "Morel" : [
+        "...новое... место... сойдёт..."
+      ],
+      "Mortimer" : [
+        "*вздыхает* Новое место для старого одеяла. Так оно и бывает."
+      ],
+      "Mossy" : [
+        "Мох растёт там, где его положили."
+      ],
+      "Pip" : [
+        "Ух ты! Гамак полетел! Ха! А ещё раз можно?"
+      ],
+      "Puddle" : [
+        "Где мы? Тут сухо? Тут не опасно? ...ну ладно."
+      ],
+      "Puff" : [
+        "Хи! Травка поехала! Ой, сейчас спорами брызну!"
+      ],
+      "Ruth" : [
+        "Перенос кровати без предупреждения. Учтено. Так и быть."
+      ],
+      "Sheet" : [
+        "Перенесли. Строго говоря, несли как раз меня."
+      ],
+      "Sir Pounce" : [
+        "Логово перенесено! Новые охотничьи угодья! ...завтра."
+      ],
+      "Spike" : [
+        "Игольницу передвинули. Смело. Бессмысленно, но смело."
+      ],
+      "Sprocket" : [
+        "Новое место! Утром подтяну тут пол."
+      ],
+      "Unit 7" : [
+        "Станция перемещена. Новые координаты сохранены. Режим сна продолжается."
+      ],
+      "Wedge" : [
+        "Книги передвинули. Меня не опрокинуть. Учтено."
+      ],
+      "Whiskers" : [
+        "Тут и было задумано спать. С самого начала."
+      ],
+      "Wisp" : [
+        "Унесло на новое место, как лист ветром."
+      ],
+      "Zed" : [
+        "...передвинули?... всё равно... сплю..."
+      ]
+    },
+    "movedAnyone" : [
+      "М-м? Новое место? ...ладно. Значит, тут.",
+      "Кто-то передвинул мою постель... тут тоже хорошо..."
+    ],
+    "settle" : {
+      "Blocky" : [
+        "Мой ящик. На нижнем краю. Там, где кровати и место.",
+        "Солома, крепкие доски, никакого курсора. Спокойной ночи."
+      ],
+      "Blorp" : [
+        "Пуп! Пуп! Блорп. Хрр.",
+        "Пупырка! Пуп. Ночь. Пуп."
+      ],
+      "Boo" : [
+        "Бу! ...А теперь я сплю на облачке. Бу.",
+        "Даже страшным привидениям нужно пушистое облачко. Никому ни слова."
+      ],
+      "Cap" : [
+        "В моё время спали в горшке с хорошей землёй. И сейчас спим.",
+        "Хорошая тёмная земля. Такую больше не делают."
+      ],
+      "Croak" : [
+        "Лужа. Настоящая лужа. Разбудите, когда высохнет. Нет, не будите.",
+        "Наконец хоть что-то мокрое на этом сухом краю."
+      ],
+      "Delta" : [
+        "Мой носок там же, где и был. В отличие от его пары.",
+        "Со вчерашней ночи что-то сдвинулось. Не мой носок. Хорошо."
+      ],
+      "Dot" : [
+        "Спичечный коробок. Мне как раз. Валуну — никогда.",
+        "В кровати раньше всех, как всегда. Спокойной ночи, тихоходы."
+      ],
+      "Glitch" : [
+        "Пробел. Про. Бел. Сплю на самой большой большой клавише.",
+        "Если придёт курсор, я клавиатура. Клавиатура. Спокойной ночи."
+      ],
+      "Goop" : [
+        "Губка! Здорово! Мягкая! Здорово!",
+        "Хорошая губка. Липко. Спокойной ночи."
+      ],
+      "Hopper" : [
+        "Смотрите, как я прыгну прямо на кувшинку! ...Пешком. Всё равно считается.",
+        "Лучший лист кувшинки на всех экранах! Спокойной ночи всем!"
+      ],
+      "Mittens" : [
+        "Мрр... моя корзинка... тёплая сторона... мурр...",
+        "Корзинка. Клубочком. Мур. Спокойной ночи..."
+      ],
+      "Morel" : [
+        "Старое бревно... терпеливое... как я...",
+        "Хорошее сырое дерево... хорошая долгая ночь..."
+      ],
+      "Mortimer" : [
+        "*вздыхает* Старое лоскутное одеяло. Каждая заплатка — год, и каждый год — сон.",
+        "Один мудрец говорил: ложись, пока не упадёшь. Это я. Только что."
+      ],
+      "Mossy" : [
+        "Мягкий мох — подушка медленного пруда.",
+        "Мох сырой. Ночь длинная. Всё хорошо."
+      ],
+      "Pip" : [
+        "Время гамака! Ха! Он качается! Всё качается!",
+        "Тут, в гамаке, почти под потолком! Спокойной ночи!"
+      ],
+      "Puddle" : [
+        "В чашке нельзя высохнуть. Ведь нельзя? Нельзя. Точно нельзя.",
+        "В чашке безопасно. На чашку никто не наступит. Правда?"
+      ],
+      "Puff" : [
+        "Травка! Щекотно! Хи! Сейчас спорами брызну!",
+        "Зарываюсь в травку! Хи-хи! Спокойной ночи!"
+      ],
+      "Ruth" : [
+        "Простыня ровно, одеяло сложено, отбой — ровно сейчас.",
+        "Кровать заправлена. Мной. Как всегда."
+      ],
+      "Sheet" : [
+        "Одеяло для простыни. Строго говоря, постельное бельё тут я.",
+        "Ложусь. Строго говоря, опускаюсь в воздухе."
+      ],
+      "Sir Pounce" : [
+        "Королевская подушка ждёт охотника. Отдохну. Недолго. Величественно.",
+        "Узрите: ночное логово! Это подушка. Она прекрасна."
+      ],
+      "Spike" : [
+        "Игольница. Мягкая сверху, острая по краям. Как я.",
+        "Спокойной ночи. Осторожно, иголки. В этом весь смысл."
+      ],
+      "Sprocket" : [
+        "Мой ящик с инструментами! Все болты затянуты, все петли смазаны. Лучшая подушка.",
+        "Сплю на инструментах — вдруг ночью что-нибудь надо подтянуть."
+      ],
+      "Unit 7" : [
+        "Стыковка выполнена. Заряд 12%. Полный к 06:00. Режим сна: вкл.",
+        "Зарядная станция достигнута с 1 из 1 попыток. Отключаюсь."
+      ],
+      "Wedge" : [
+        "Три толстые книги под низом. Ночью меня не опрокинуть.",
+        "Крепкая стопка. Крепкий сон. Разговор окончен."
+      ],
+      "Whiskers" : [
+        "Эта коробка моя. Мне до неё нет дела. Она моя.",
+        "Я не сплю в коробке. Я отдыхаю рядом с её внутренностью."
+      ],
+      "Wisp" : [
+        "Лист с дерева, которого больше нет. Всё равно на нём посплю.",
+        "Лист помнит осень. Я помню старый монитор. Спокойной ночи."
+      ],
+      "Zed" : [
+        "Подушка... наконец-то... весь день о ней думаю...",
+        "У нас с подушкой договор. Спокойной ночи..."
+      ]
+    },
+    "settleAnyone" : [
+      "Наконец-то спать. Моя постель — {bed}.",
+      "Прямо тут. Моя кровать — {bed}. Всем спокойной ночи."
+    ]
+  },
   "complaints" : {
     "anyone" : [
       "Эй! Уже {times}-й раз подряд. Оставь меня в покое!",
@@ -2292,6 +2495,7 @@
     "%@ has been chased or picked up by the user's cursor %d times in the last few minutes." : "За последние несколько минут курсор пользователя гонял или хватал %@ столько раз: %d.",
     "%@ is %@" : "%@ сидит %@",
     "%@ is asleep %@" : "%@ спит %@",
+    "%@ is asleep in its own bed, %@, %@" : "%@ спит в своей кровати (%@) %@",
     "%@ is complaining via %@…" : "%@ жалуется через %@…",
     "%@ is dangling from the user's cursor" : "%@ болтается на курсоре пользователя",
     "%@ is mid-jump" : "%@ в прыжке",
@@ -2309,6 +2513,7 @@
     "%@ knows these numbers and is matter-of-fact about them." : "%@ знает эти цифры и относится к ним спокойно, как к факту.",
     "%@ left" : "ещё %@",
     "%@ may bring the numbers up, or compare them, if it fits." : "%@ может упомянуть эти цифры или сравнить их, если к месту.",
+    "%@ of screen %d" : "%@ экрана %d",
     "%@ or %@" : "%@ или %@",
     "%@ said to you: %@" : "%@ говорит: %@",
     "%@ sent %@ a paper plane." : "%@ отправляет %@ бумажный самолётик.",
@@ -2340,32 +2545,58 @@
     "5 MIN" : "5 МИН",
     "15 MIN" : "15 МИН",
     "30 MIN" : "30 МИН",
+    "a big autumn leaf" : "большой осенний лист",
     "a boxy little robot with an antenna, square eyes and a row of rivets" : "маленький угловатый робот с антенной, квадратными глазами и рядом заклёпок",
+    "a cardboard box" : "картонная коробка",
+    "a charging dock" : "зарядная станция",
     "a Christian holiday" : "христианский праздник",
     "a conversation needs at least one line after its tags" : "после тегов у разговора должна быть хотя бы одна реплика",
     "a fat green frog with two bulging eyes and a wide mouth" : "толстая зелёная лягушка с выпученными глазами и широким ртом",
+    "a flowerpot of good soil" : "цветочный горшок с хорошей землёй",
+    "a folded check blanket" : "сложенный клетчатый плед",
     "a Jewish holiday" : "иудейский праздник",
+    "a kitchen sponge" : "кухонная губка",
+    "a lily pad" : "лист кувшинки",
+    "a little cloud" : "маленькое облачко",
     "a little round ghost with a wavy hem, hovering just above the edge" : "маленькое круглое привидение с волнистым подолом, парит чуть над краем",
+    "a matchbox" : "спичечный коробок",
     "A menace" : "Угроза",
     "a moment" : "совсем недолго",
+    "a mound of soft moss" : "кочка мягкого мха",
     "a Muslim holiday" : "мусульманский праздник",
+    "a neatly made little bed" : "аккуратно заправленная кроватка",
     "A NOTE FOR THE LEDGELINGS" : "ЗАПИСКА ДЛЯ LEDGELINGS",
     "A NOTE FOR THE LEDGELINGS · %@ IS READING OVER THE EDGE" : "ЗАПИСКА ДЛЯ LEDGELINGS · %@ ЗАГЛЯДЫВАЕТ ЧЕРЕЗ КРАЙ",
     "A paper note: ⌘R in the menu opens a sheet of the same paper to write a reminder on; off, ⌘R opens this tab." : "Бумажная записка: ⌘R в меню открывает лист той же бумаги, чтобы написать напоминание; если выключено, ⌘R открывает эту вкладку.",
     "A paper plane every" : "Самолётик каждые",
     "A paper plane goes up." : "Бумажный самолётик взлетает.",
     "a paper plane is already in the air" : "бумажный самолётик уже в воздухе",
+    "a patchwork quilt" : "лоскутное одеяло",
+    "a pincushion" : "игольница",
     "A planted flower lasts" : "Посаженный цветок живёт",
     "A playmate" : "Приятель по играм",
     "A playmate: a chase is a game of tag. Just there: they hop aside. A menace: a grudge. Chase one too often in a row and it says so in its own voice." : "Приятель по играм: погоня — это догонялки. Просто есть: они отпрыгивают. Угроза: обида. Гоняйте существо слишком часто подряд — и оно скажет об этом своим голосом.",
+    "a puddle" : "лужа",
+    "a round cat basket" : "круглая кошачья корзинка",
+    "a royal red cushion" : "королевская красная подушка",
+    "a sheet of bubble wrap" : "лист пупырчатой плёнки",
+    "a slice of old log" : "спил старого бревна",
     "a small pixel creature" : "маленькое пиксельное существо",
     "a small red mushroom with light spots on its flat cap and a face on its pale stem" : "маленький красный гриб со светлыми пятнами на плоской шляпке и лицом на бледной ножке",
     "a small square cat with pointed ears and whiskers" : "маленький квадратный кот с острыми ушами и усами",
     "a small square creature" : "маленькое квадратное существо",
+    "a spacebar keycap" : "клавиша пробела",
     "A sprite text file from the kit, or a 288×96 PNG on magenta." : "Текстовый файл спрайта из набора или PNG 288×96 на пурпурном фоне.",
+    "a stack of books" : "стопка книг",
     "a stepped triangle creature, point up, that rocks from side to side as it walks" : "ступенчатое треугольное существо остриём вверх, при ходьбе качается из стороны в сторону",
     "A story lasts" : "История длится",
+    "a striped hammock" : "полосатый гамак",
+    "a striped sock" : "полосатый носок",
+    "a teacup on its saucer" : "чашка на блюдце",
+    "a toolbox" : "ящик с инструментами",
+    "a tuft of grass" : "пучок травы",
     "a wobbly blue-green slime blob with a drip on one side" : "дрожащий сине-зелёный комок слизи с каплей на боку",
+    "a wooden crate full of straw" : "деревянный ящик с соломой",
     "Actions" : "Действия",
     "ADD A REMINDER" : "ДОБАВИТЬ НАПОМИНАНИЕ",
     "Add a Reminder… opens a paper note" : "«Добавить напоминание…» открывает бумажную записку",
@@ -2382,15 +2613,18 @@
     "All time" : "За всё время",
     "Aloof. Pretends not to care, then asks what you are doing." : "Отстранённый. Делает вид, что ему всё равно, а потом спрашивает, чем ты занят.",
     "Always day — night is set to 0" : "Всегда день — ночь выставлена на 0",
+    "an enormous fluffy pillow" : "огромная пушистая подушка",
     "And I'm %@." : "А я %@.",
     "Anxious. Worried about drying out, evaporating, or being stepped on." : "Тревожный. Боится высохнуть, испариться или попасть под ногу.",
     "Any speech server on this Mac that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint." : "Любой речевой сервер на этом Mac, который отвечает как /v1/audio/speech у OpenAI и перечисляет голоса на /v1/audio/voices, например Kokoro-FastAPI (порт 8880, модель «kokoro», те же голоса, что у Kokoro на OpenRouter). Бесплатно, после настройки работает без интернета, ничего не тарифицируется. «Скопировать команду установки» кладёт в буфер обмена строку, которая устанавливает и запускает Kokoro-FastAPI; нужны git и uv, в первый раз скачивается около гигабайта. LM Studio говорить не умеет: у его сервера нет речевого API.",
     "API key" : "Ключ API",
     "As overall (%@)" : "Как в общих (%@)",
     "asking %@ via %@…" : "спрашиваю %@ через %@…",
+    "At nightfall a creature gets up and walks to its favourite place, if it is on the same screen outline and no further along the edge than this. The first night it picks a place its character likes (Blocky the bottom edge, Pip the ceiling). Each night there makes it likelier to go back, up to this pull; a night slept elsewhere wears the habit down, and enough of them move it. A nap you ask for is slept where it is." : "С наступлением ночи существо встаёт и идёт к любимому месту, если оно на том же контуре экранов и не дальше по краю, чем здесь. В первую ночь оно выбирает место по характеру (Blocky — нижний край, Pip — потолок). Каждая ночь там делает возвращение вероятнее, вплоть до этой тяги; ночь в другом месте ослабляет привычку, а несколько таких ночей переносят её. Дрёма по вашей просьбе — там, где застала.",
     "At once" : "Сразу",
     "Auto" : "Авто",
     "Automatic (%@)" : "Автоматически (%@)",
+    "Beds" : "Кровати",
     "beside the flowers already planted" : "рядом с уже посаженными цветами",
     "Blend" : "Смесь",
     "Blends %@. Test to hear it." : "Смешивает %@. Нажмите «Прослушать».",
@@ -2483,9 +2717,11 @@
     "Delete this imported creature" : "Удалить это импортированное существо",
     "Delivery" : "Доставка",
     "DONE" : "ГОТОВО",
+    "Drag a sleeper's bed, by its edge or the part under its feet, to anywhere on an edge: it lands there, still asleep, and that is its favourite place from now on. Dragging a bed is not a chase. Kept by name: rename a character and it looks for a place afresh." : "Перетащите кровать спящего — за край или за часть под ногами — на любое место у края: он опустится туда, не просыпаясь, и отныне это его любимое место. Перетаскивание кровати — не погоня. Хранится по имени: переименуйте персонажа, и он будет искать место заново.",
     "Dramatic. Announces every step as a hunt." : "Драматичный. Объявляет каждый свой шаг охотой.",
     "dusk in %@" : "до заката %@",
     "e.g. flash lite, gemma, free" : "например: flash lite, gemma, free",
+    "Each one sleeps in its own bed" : "Каждый спит в своей кровати",
     "Each shake at least" : "Каждый рывок не короче",
     "Earlier days this week averaged %d." : "В прошлые дни этой недели выходило в среднем %d.",
     "Earlier, unlabelled" : "Раньше, без пометки",
@@ -2494,6 +2730,7 @@
     "evening" : "вечер",
     "Every call to a model, text or voice, is priced as OpenRouter reports it; LM Studio, a local speech server and the Mac's own voices are free." : "Каждый вызов модели, текстовой или речевой, оценивается так, как сообщает OpenRouter; LM Studio, локальный речевой сервер и собственные голоса Mac бесплатны.",
     "Every character gets a voice of their own" : "У каждого персонажа свой голос",
+    "Every character has a bed of its own, picked for who it is: a crate for Blocky, a basket for Mittens, a lily pad for Hopper. Falling asleep, it puts the bed down and sleeps on it; waking, it folds it away. Off, they sleep on the bare edge as before." : "У каждого персонажа своя кровать, под стать характеру: ящик у Blocky, корзинка у Mittens, кувшинка у Hopper. Засыпая, он ставит кровать и спит на ней; проснувшись, убирает. Выключено — спят на голом краю, как раньше.",
     "Every creature gets its own size between the two. Set them equal and they all match." : "Каждое существо получает свой размер между этими двумя. Сделайте их равными — и все будут одного размера.",
     "Every day" : "Каждый день",
     "Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog." : "У каждого вида свой состав. Первое существо этого вида — его первый персонаж, второе — второй и так далее; когда состав кончается, всё начинается сначала. Сам вид тоже описывается модели, так что лягушка говорит как лягушка.",
@@ -2518,6 +2755,9 @@
     "For the person at this computer it is %@." : "У человека за этим компьютером сейчас %@.",
     "Forget" : "Забыть",
     "Forget All" : "Забыть всех",
+    "Forget All Places" : "Забыть все места",
+    "Forget All Places…" : "Забыть все места…",
+    "Forget where everyone likes to sleep?" : "Забыть, где кто любит спать?",
     "free" : "бесплатно",
     "Giggly. Threatens to release spores when excited." : "Хихикает. Когда волнуется, грозится выпустить споры.",
     "Good morning." : "Доброе утро.",
@@ -2607,6 +2847,7 @@
     "Night — they wake in %@" : "Ночь — проснутся через %@",
     "night is set to 0" : "ночь выключена",
     "Night lasts" : "Ночь длится",
+    "night|nights" : "ночь|ночи|ночей",
     "no audio" : "нет звука",
     "no built-in line fits right now" : "сейчас не подходит ни одна встроенная реплика",
     "No calls yet." : "Вызовов пока не было.",
@@ -2617,6 +2858,7 @@
     "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here." : "Без модели, сервера и ключа: существа говорят эти реплики. Формат объяснён в начале текста. «Скопировать промпт для агента» кладёт в буфер обмена запрос, на который любая чат-модель ответит новыми блоками в этом формате — их можно сразу вставить сюда.",
     "no OpenRouter API key; add one in Settings › %@" : "нет ключа API OpenRouter; добавьте его в Настройках › %@",
     "no OpenRouter API key; add one in Settings › Talk" : "нет ключа API OpenRouter; добавьте его в Настройках › Разговоры",
+    "no place yet" : "места пока нет",
     "No plane: %@." : "Самолётика не будет: %@.",
     "no price" : "без цены",
     "No reminders yet." : "Напоминаний пока нет.",
@@ -2697,6 +2939,7 @@
     "Press the keys…" : "Нажмите клавиши…",
     "price unknown" : "цена неизвестна",
     "Prompts" : "Промпты",
+    "Pull of the favourite place" : "Тяга к любимому месту",
     "Pulled up %@." : "Выдернуто: %@.",
     "Pulled up the flower." : "Цветок выдернут.",
     "PUT THEM TO SLEEP" : "УЛОЖИТЬ СПАТЬ",
@@ -2737,6 +2980,7 @@
     "Save the built-in lines' voices" : "Сохранять озвучку встроенных реплик",
     "Saved" : "Сохранено",
     "saved %@" : "сохранён файл %@",
+    "Say something about it now and then" : "Иногда говорить об этом",
     "Search models" : "Поиск моделей",
     "SEND A PAPER PLANE" : "ЗАПУСТИТЬ САМОЛЁТИК",
     "Send a Test Letter" : "Отправить тестовое письмо",
@@ -2760,6 +3004,7 @@
     "Sleepy. Would rather be napping. Every sentence drifts toward bed." : "Сонный. Лучше бы вздремнул. Любая фраза сползает к подушке.",
     "Slow and damp. Answers everything with a proverb about ponds." : "Медленная и сырая. На всё отвечает пословицей про пруды.",
     "Smallest" : "Самый маленький",
+    "Some nights a creature says a line as it lies down, in its own voice, and it mumbles something when you move its bed. Built-in lines: no model calls." : "Иногда, укладываясь, существо говорит реплику своим голосом, а если передвинуть его кровать — что-то бормочет. Встроенные реплики: без обращений к модели.",
     "someone else is talking; out loud it is one conversation at a time" : "говорит кто-то другой; вслух — только один разговор за раз",
     "Someone has something to say." : "Кому-то есть что сказать.",
     "Speaks in sound effects and short words. Very pleased with itself." : "Говорит звуками и короткими словами. Очень собой доволен.",
@@ -2809,6 +3054,7 @@
     "The cursor is: %@." : "Курсор — это: %@.",
     "The day" : "День",
     "The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import." : "Пример — встроенное существо, записанное теми же буквами: его полезно показать модели или поправить вручную. Шаблон PNG размечает клетки и рамку тела для модели-художника или графического редактора; пурпурный фон приложение вырезает при импорте.",
+    "The favourite place" : "Любимое место",
     "The file" : "Файл",
     "the first line should be `name: something`" : "первая строка должна быть `name: что-нибудь`",
     "the holiday" : "праздник",
@@ -2891,6 +3137,7 @@
     "Volume" : "Громкость",
     "waiting for your approval in System Settings › General › Login Items" : "ждёт вашего разрешения в Системных настройках › Основные › Объекты входа",
     "WAKE THEM UP" : "РАЗБУДИТЬ",
+    "Walks to it at most" : "Идёт к нему не дальше",
     "Wariness" : "Осторожность",
     "Wearing" : "Цветок на голове",
     "What a model would be told. The built-in lines use only today's holiday, when there is one." : "Что узнала бы модель. Встроенные реплики знают только о сегодняшнем празднике, если он есть.",
@@ -2907,6 +3154,7 @@
     "Who is speaking (system prompt)" : "Кто говорит (системный промпт)",
     "Who lives with whom" : "Кто с кем живёт",
     "Who plants where" : "Кто где сажает",
+    "Who sleeps where" : "Кто где спит",
     "Who they are" : "Кто это",
     "Wistful and poetic. Remembers monitors that are gone." : "Задумчивое и поэтичное. Помнит мониторы, которых больше нет.",
     "With a model, the note is written for the moment (Costs › Reminders)." : "С моделью записка пишется к моменту (Расходы › Напоминания).",

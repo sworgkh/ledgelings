@@ -21,6 +21,8 @@ final class Colony: NSObject {
     let hunts: HuntBook
     /// What the user asked to be reminded of, and when.
     let reminders: ReminderBook
+    /// Where each character likes to sleep.
+    let beds: BedBook
     /// Pairs whose next plot is being written, by `Bonds.key`.
     var plotting: Set<String> = []
     /// Time together not yet added to the bonds; they are saved every half minute, not every frame.
@@ -39,6 +41,9 @@ final class Colony: NSObject {
     /// The tea party's table, steaming.
     let teaFrames: SpriteAtlas.Frames
     let teaCell: CGSize
+    /// Every character's own bed, one picture each.
+    let bedFrames: SpriteAtlas.Frames
+    let bedCell: CGSize
 
     /// A bigger body walks further from the screen edge, so each size has its
     /// own outline. Sizes come in half steps, so this stays a handful of entries.
@@ -93,6 +98,16 @@ final class Colony: NSObject {
     var gifts = Gifts()
     /// Flowers planted in the edge.
     var garden = Garden()
+    /// Creatures walking to their favourite place for the night, and where on their loop it is.
+    var bedTrips: [Int: CGFloat] = [:]
+    /// Sleepers whose bed is out, by when it came out.
+    var bedSince: [Int: Double] = [:]
+    /// Beds fading away under someone who just woke up: how they last looked, and when they are gone.
+    var bedFades: [Int: (snapshot: PlantedSnapshot, until: Double)] = [:]
+    /// Who was asleep last frame, so a creature nodding off is noticed once.
+    var wasAsleep: Set<Int> = []
+    /// The sleeper whose bed the user is carrying, until it lands.
+    var bedCarry: Int?
     /// Flower wearers done wearing theirs and looking for a place to plant it; they no longer trail their giver.
     var gardeners: Set<Int> = []
     /// A Shift-press on a creature that has not moved yet: a poke if it lets go, a carry if it drags.
@@ -183,7 +198,8 @@ final class Colony: NSObject {
     /// `stage`: draw for this one virtual display, offscreen, stepped by hand
     /// (the promo). Nil means the attached monitors, live.
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger,
-         bonds: BondBook? = nil, reminders: ReminderBook? = nil, hunts: HuntBook? = nil, stage: Display? = nil) throws {
+         bonds: BondBook? = nil, reminders: ReminderBook? = nil, hunts: HuntBook? = nil, beds: BedBook? = nil,
+         stage: Display? = nil) throws {
         self.settings = settings
         self.history = history
         self.library = library
@@ -191,6 +207,7 @@ final class Colony: NSObject {
         self.bonds = bonds ?? BondBook(directory: spend.ledger.directory)
         self.reminders = reminders ?? ReminderBook(directory: spend.ledger.directory)
         self.hunts = hunts ?? HuntBook(directory: spend.ledger.directory)
+        self.beds = beds ?? BedBook(directory: spend.ledger.directory)
         self.stage = stage
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
@@ -208,6 +225,9 @@ final class Colony: NSObject {
         let tea = try SpriteAtlas(named: "tea")
         teaFrames = tea.frames()
         teaCell = tea.cellSize
+        let bedSheet = try SpriteAtlas(named: "beds")
+        bedFrames = bedSheet.frames()
+        bedCell = bedSheet.cellSize
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
         super.init()
 
@@ -247,6 +267,7 @@ final class Colony: NSObject {
             creatures.removeLast(); asleepFor.removeLast(); sizeShares.removeLast(); sizes.removeLast()
         }
         gifts.forget(creaturesFrom: creatures.count)
+        forgetBeds(creaturesFrom: creatures.count)
         annoyance.forget(creaturesFrom: creatures.count)
         annoyance.limit = settings.complainAfter
         annoyance.calmAfter = settings.complainCalmSeconds
@@ -351,6 +372,7 @@ final class Colony: NSObject {
             asleepFor[i] = creatures[i].looksAsleep ? asleepFor[i] + dt : 0
         }
         updateHideout()
+        updateBeds()
         updateGrab(cursor: cursor)
         updateClickability(cursor: cursor, shift: shift)
 
@@ -390,8 +412,9 @@ final class Colony: NSObject {
             // Shrinking, it keeps its feet on the floor: the centre sinks as the body gets smaller.
             let sink = atlas.bodyHalfSize * CGFloat(sizes[i]) * (1 - shrink)
             let shown = bubbles[i].map { $0.reveal.shown($0.text, at: elapsed) }
+            let p = drawnPosition(of: i)       // lying in its bed, a sleeper is raised onto the mattress
             return CreatureSnapshot(
-                position: CGPoint(x: c.position.x - inward.dx * sink, y: c.position.y - inward.dy * sink),
+                position: CGPoint(x: p.x - inward.dx * sink, y: p.y - inward.dy * sink),
                 rotation: c.rotation, isMirrored: c.isMirrored,
                 image: frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes),
                 scale: CGFloat(sizes[i]),
@@ -407,12 +430,12 @@ final class Colony: NSObject {
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
-        let reminder = reminderSnapshot(), table = teaTableSnapshot(), beds = gardenSnapshots()
+        let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
                            plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,
-                           garden: beds)
+                           garden: planted, beds: sleepers, bedCell: bedCell)
         }
     }
 }

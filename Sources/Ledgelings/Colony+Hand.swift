@@ -9,7 +9,7 @@ extension Colony {
         creatures.indices.reversed().first { i in
             guard !hideout.isInside(i) else { return false }
             let half = atlas.bodyHalfSize * CGFloat(sizes[i]) + 4      // a little forgiveness
-            let p = creatures[i].position
+            let p = drawnPosition(of: i)
             return abs(point.x - p.x) <= half && abs(point.y - p.y) <= half
         }
     }
@@ -21,6 +21,8 @@ extension Colony {
         switch event {
         case .down(let point, let shift):
             if letterContains(point) { closeLetter(); break }
+            // A press on a sleeper's bed, beside or under it, carries the bed: no chase, no pick-up.
+            if !shift, let i = bed(at: point), !onBody(i, point) { liftBed(i, at: point); break }
             guard let i = creature(at: point) else {
                 if let spoken = bubble(at: point) { bubbles.removeValue(forKey: spoken) }
                 break
@@ -52,6 +54,12 @@ extension Colony {
         render()      // follow the hand at the mouse's rate, not the display link's
     }
 
+    /// Whether `point` is on creature `i`'s body itself, without the forgiveness `creature(at:)` allows.
+    func onBody(_ i: Int, _ point: CGPoint) -> Bool {
+        let half = atlas.bodyHalfSize * CGFloat(sizes[i]), p = drawnPosition(of: i)
+        return abs(point.x - p.x) <= half && abs(point.y - p.y) <= half
+    }
+
     func letGo() {
         if let held, creatures.indices.contains(held.index) { creatures[held.index].drop() }
         held = nil
@@ -62,7 +70,7 @@ extension Colony {
     /// speech bubble, or a reminder's open letter. Shift is also how you get close enough to right-click one.
     func updateClickability(cursor: CGPoint, shift: Bool) {
         let target = held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
-            || bubble(at: cursor) != nil || letterContains(cursor)
+            || bubble(at: cursor) != nil || letterContains(cursor) || bed(at: cursor) != nil
         for overlay in overlays { overlay.setClickable(target && overlay.display.frame.contains(cursor)) }
     }
 }

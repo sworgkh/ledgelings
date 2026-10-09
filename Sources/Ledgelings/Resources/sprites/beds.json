@@ -1,0 +1,371 @@
+{
+  "name": "beds",
+  "image": "beds.png",
+  "cell": [
+    36,
+    16
+  ],
+  "contentBox": [
+    0,
+    0,
+    36,
+    16
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "crate": {
+      "x": 0,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "hammock": {
+      "x": 36,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "quilt": {
+      "x": 72,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "pillow": {
+      "x": 108,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "matchbox": {
+      "x": 144,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "bed": {
+      "x": 180,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "box": {
+      "x": 216,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "catbed": {
+      "x": 252,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "cushion": {
+      "x": 288,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "lilypad": {
+      "x": 324,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "moss": {
+      "x": 360,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "puddle": {
+      "x": 396,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "cloud": {
+      "x": 432,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "leaf": {
+      "x": 468,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "blanket": {
+      "x": 504,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "log": {
+      "x": 540,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "grass": {
+      "x": 576,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "flowerpot": {
+      "x": 612,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "dock": {
+      "x": 648,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "toolbox": {
+      "x": 684,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "spacebar": {
+      "x": 720,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "sponge": {
+      "x": 756,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "teacup": {
+      "x": 792,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "bubblewrap": {
+      "x": 828,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "pincushion": {
+      "x": 864,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "books": {
+      "x": 900,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "sock": {
+      "x": 936,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    }
+  },
+  "animations": {
+    "crate": {
+      "frames": [
+        "crate"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "hammock": {
+      "frames": [
+        "hammock"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "quilt": {
+      "frames": [
+        "quilt"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "pillow": {
+      "frames": [
+        "pillow"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "matchbox": {
+      "frames": [
+        "matchbox"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "bed": {
+      "frames": [
+        "bed"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "box": {
+      "frames": [
+        "box"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "catbed": {
+      "frames": [
+        "catbed"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "cushion": {
+      "frames": [
+        "cushion"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "lilypad": {
+      "frames": [
+        "lilypad"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "moss": {
+      "frames": [
+        "moss"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "puddle": {
+      "frames": [
+        "puddle"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "cloud": {
+      "frames": [
+        "cloud"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "leaf": {
+      "frames": [
+        "leaf"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "blanket": {
+      "frames": [
+        "blanket"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "log": {
+      "frames": [
+        "log"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "grass": {
+      "frames": [
+        "grass"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "flowerpot": {
+      "frames": [
+        "flowerpot"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "dock": {
+      "frames": [
+        "dock"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "toolbox": {
+      "frames": [
+        "toolbox"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "spacebar": {
+      "frames": [
+        "spacebar"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "sponge": {
+      "frames": [
+        "sponge"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "teacup": {
+      "frames": [
+        "teacup"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "bubblewrap": {
+      "frames": [
+        "bubblewrap"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "pincushion": {
+      "frames": [
+        "pincushion"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "books": {
+      "frames": [
+        "books"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "sock": {
+      "frames": [
+        "sock"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}

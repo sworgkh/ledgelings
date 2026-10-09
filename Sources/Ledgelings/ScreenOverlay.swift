@@ -146,7 +146,8 @@ final class ScreenOverlay {
         root.addSublayer(layer)
         return layer
     }()
-    private var beds: [CALayer] = []
+    private var flowerBeds: [CALayer] = []
+    private var sleeperBeds: [CALayer] = []
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String, shown: Int)] = [:]
     private var sparkLayers: [CALayer] = []
     private lazy var house: CALayer = {
@@ -240,9 +241,11 @@ final class ScreenOverlay {
                 flowerCell: CGSize, flight inFlight: FlowerFlight? = nil, sparks: [SparkSnapshot] = [],
                 house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
                 plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
-                tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = []) {
+                tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = [],
+                beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero) {
         renderFlight(inFlight, flowerCell: flowerCell)
-        renderGarden(garden, cell: flowerCell)
+        renderStanding(garden, cell: flowerCell, pool: &flowerBeds)
+        renderStanding(beds, cell: bedCell, pool: &sleeperBeds)
         renderTeaTable(tea, cell: teaCell)
         mailPlane.render(plane, cell: planeCell, origin: display.frame.origin)
         reminderPlane.render(reminder?.plane, cell: planeCell, origin: display.frame.origin)
@@ -488,12 +491,13 @@ final class ScreenOverlay {
         teaTable.transform = CATransform3DMakeRotation(tea.rotation, 0, 0, 1)
     }
 
-    private func renderGarden(_ planted: [PlantedSnapshot], cell: CGSize) {
+    /// Things standing on an edge, grown up out of it: planted flowers, and the sleepers' beds.
+    private func renderStanding(_ planted: [PlantedSnapshot], cell: CGSize, pool beds: inout [CALayer]) {
         let origin = display.frame.origin
         while beds.count < planted.count {
             let layer = makeLayers().sprite
-            layer.zPosition = -1                       // behind the creatures, who walk past in front
-            layer.anchorPoint = CGPoint(x: 0.5, y: 0)  // stands on the foot of its stem
+            layer.zPosition = -1                       // behind the creatures, who walk past (or sleep) in front
+            layer.anchorPoint = CGPoint(x: 0.5, y: 0)  // stands on its foot
             root.addSublayer(layer)
             beds.append(layer)
         }

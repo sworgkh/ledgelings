@@ -199,6 +199,19 @@ final class AppSettings: ObservableObject {
     @Published var plantFlowers: Bool { didSet { save(plantFlowers, "plantFlowers") } }
     @Published var gardenMinutes: Double { didSet { save(gardenMinutes, "gardenMinutes") } }
     @Published var gardenSize: Int { didSet { save(gardenSize, "gardenSize") } }
+
+    // MARK: Beds
+
+    /// How strongly a character walks back to its favourite place at nightfall, 0...100 %.
+    static let bedPullRange = 0.0...100.0
+    /// Farthest, in screen points along its edge, a creature walks to its bed at nightfall.
+    static let bedWalkRange = 100.0...6000.0
+    /// Each character puts its own bed down where it sleeps, and learns a favourite place for it.
+    @Published var bedsEnabled: Bool { didSet { save(bedsEnabled, "bedsEnabled") } }
+    @Published var bedPull: Double { didSet { save(bedPull, "bedPull") } }
+    @Published var bedWalkDistance: Double { didSet { save(bedWalkDistance, "bedWalkDistance") } }
+    /// Now and then a creature says a line as it lays its bed down, or when its bed is moved.
+    @Published var bedTalk: Bool { didSet { save(bedTalk, "bedTalk") } }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
     @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
     @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
@@ -430,6 +443,14 @@ final class AppSettings: ObservableObject {
         gardenMinutes = min(max(planted, Self.gardenMinutesRange.lowerBound), Self.gardenMinutesRange.upperBound)
         let beds = defaults.object(forKey: "gardenSize") as? Int ?? 12
         gardenSize = min(max(beds, Self.gardenSizeRange.lowerBound), Self.gardenSizeRange.upperBound)
+        bedsEnabled = defaults.object(forKey: "bedsEnabled") as? Bool ?? true
+        // 80 %: after two or three nights in one place they nearly always go back, and still wander now and then.
+        let pull = defaults.object(forKey: "bedPull") as? Double ?? 80
+        bedPull = min(max(pull, Self.bedPullRange.lowerBound), Self.bedPullRange.upperBound)
+        // About a laptop screen's width and a half: across one screen, not round the whole outline.
+        let walk = defaults.object(forKey: "bedWalkDistance") as? Double ?? 2000
+        bedWalkDistance = min(max(walk, Self.bedWalkRange.lowerBound), Self.bedWalkRange.upperBound)
+        bedTalk = defaults.object(forKey: "bedTalk") as? Bool ?? true
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
         // Before species existed, one cast served everyone: it was blocky's.
         if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {

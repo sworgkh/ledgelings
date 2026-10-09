@@ -1467,6 +1467,73 @@ feet, turned with the edge, at `scale · grown`, animating `steam`.
 
 ---
 
+### 7.9 Beds
+
+Every character has a bed (`Beds.Kind`, a picture in the `beds` sheet: 36×16
+sheet pixels, standing on the floor of its cell). The built-in 27 have their own,
+by name (`Beds.builtIn`), no two alike; anyone else gets one from the first rule
+whose word starts appear in its persona, then its species' kind (`Beds.rules`: cat →
+cat basket, frog/pond → lily pad, ghost/float → cloud, mushroom/moss → moss, robot →
+dock, slime → sponge, sleep → pillow, old/wise → quilt, tiny/small → matchbox,
+boss/tidy → bed), else a tuft of grass. Each kind has a `lift`, sheet pixels from
+the floor to the top of its mattress (kept in step with `LIFT` in
+`spritetool/painters/beds.py`).
+
+**The bed out.** With `bedsEnabled` on, a creature lying asleep on an edge (mode
+`sleeping`, not held) has its bed out; the bed comes up from its foot over 0.35 s
+(scale 0 → 1 along the creature's up), and the sleeper is drawn raised by `lift ·
+size` points along its up, so it lies on the mattress, the bed behind it (z −1). The
+creature's own position does not change; hit tests on its body use the raised
+position. Waking, held, or the house out: the bed goes, fading over 0.4 s where it
+was. A sleeper carried by hand loses its bed and gets it back where it lands.
+
+**The favourite place** (`Beds.Book`, `beds.json`, by character name): a point in
+global screen points (a creature's centre on its edge) and `nights`.
+- `slept(name, at p)`: no spot yet → `(p, 1)`; within `near = 48` points →
+  `(p, min(nights + 1, 12))`; elsewhere `nights − 1`, and at 0 → `(p, 1)`.
+- `moved(name, to p)`: `(p, max(nights, 3))`.
+- `pull(nights, strength) = strength · (1 − 0.5^nights)`, with `strength = bedPull / 100`.
+
+**Nightfall.** Each frame, after the creatures move: a creature that was not asleep
+last frame and is now lying asleep has nodded off. A nap (§4.7) or nodding off by
+day: the bed comes out, nothing else. By night:
+1. With a favourite within `near`: lie down here (with room, below).
+2. With a favourite further off: with probability `pull`, if the favourite is within
+   `2 · near` of a point on its own loop and that point is at most `bedWalkDistance`
+   along the loop the short way, it walks there (`run(to: t, pace: 1)`: awake, at its
+   walking speed, ignoring the cursor). Otherwise it sleeps here.
+3. With none: the first of its `Garden.temper` likes (§7.3.1) that `target` can walk
+   to within `bedWalkDistance`; else here.
+4. Arriving by night it lies down (`settle`) and the night counts at the favourite;
+   arriving after dawn it goes on with the day. A trip broken off (a chat, the house)
+   is forgotten.
+5. Sleeping here: `slept(name, at: position)`; one night in three (`bedLine`, with
+   `bedTalk` and `talkEnabled`, no bubble up, not busy, voice free) a built-in
+   `settle` line in its own voice, recorded in the chat log like a hunt line.
+
+**Room.** Nobody lies within a bed's width (`36 · size + 4` points along the loop)
+of a sleeper with its bed out, or of where someone is walking to bed: the target is
+moved to the nearest free spot at 0, ±1, ±2, ±3, ±4 bed widths, and a creature
+nodding off where the room is taken walks to the free spot.
+
+**The hand.** A plain press inside a lying sleeper's bed (within its 36 × 16 cell
+scaled by size, ±3 points) and not on its body (its exact half-size square, no
+forgiveness) lifts bed and sleeper: `pickUp` with no hunt counted, no complaint, no
+revenge. They hang under the cursor (the bed under the feet) and drop like a carried
+sleeper. When the sleeper lies again: `moved(name, to: position)`, and a built-in
+`moved` line (with `bedTalk`). A press on the body is the ordinary pick-up (§4.7),
+which is a hunt.
+
+**Words.** A sleeper with its bed out is described in `{situation}` as `"<name> is
+asleep in its own bed, <bed>, <edge>"`. Lines: two `settle` and one `moved` per
+built-in character per language (`Beds+Lines.swift`, `Beds+Russian.swift`, exported
+to `l10n/ru.json` under `beds`), and two of each for anyone else, where `{bed}` is the
+bed in words.
+
+`--bed-film out.mp4` films one creature of every shipped species offscreen from
+nightfall until all are in bed, then drags the first bed it finds to the ceiling;
+each step is printed (`bed Blocky walks to crate (floor)`, `bed Morel moved на потолке`).
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -1757,7 +1824,8 @@ falls through to whatever is underneath.
 |---|---|
 | Move the cursor near a creature | it jumps to another edge (§4.6); Shift held suppresses this |
 | Click a speech bubble | closes it |
-| Drag a sleeper (no modifier) | carried, still asleep; drops to the nearest edge of whichever monitor it is over |
+| Drag a sleeper (no modifier) | carried, still asleep; drops to the nearest edge of whichever monitor it is over; its bed folds and comes out again where it lands (§7.9) |
+| Drag a sleeper's bed (press on the bed, not the body) | bed and sleeper go together; where they land is its favourite place (§7.9). Not a hunt |
 | Shift-press and release within 4 pt | **poke**: it speaks to the nearest creature; both stop to talk |
 | Shift-press and move ≥ 4 pt | **carry** any creature; awake ones ride with eyes open and land awake |
 | Shift-right-click (or Shift-Control-click) | nap toggle: lie down now, or wake |
@@ -1859,6 +1927,10 @@ An error for want of a model reads as that note, never as a server refusal.
 | huntTalkChance | 25 | 0–100 %, clamped on load: share of conversations, tea rounds, planes and built-in complaints that bring the count up |
 | huntWary | true | in the `bad` mood a much-hunted creature jumps from further off (§4.7.2) |
 | huntWaryAfter | 20 | 5–200, clamped on load: hunts in one day before it does |
+| bedsEnabled | true | every character sleeps in its own bed (§7.9) |
+| bedPull | 80 | 0–100 %, clamped on load: the habit's full pull; the chance after n nights is this × (1 − ½ⁿ) |
+| bedWalkDistance | 2000 | 100–6000 points along its own loop, clamped on load: farthest it walks to bed |
+| bedTalk | true | a built-in line one night in three as it lies down, and when its bed is moved; needs `talkEnabled` |
 | revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |
@@ -1926,12 +1998,13 @@ An error for want of a model reads as that note, never as a server refusal.
 | reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, the Reminders tab |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7),
-and the hunt counts in `hunts.json` (§4.7.2).
+the hunt counts in `hunts.json` (§4.7.2), and the favourite sleeping places in
+`beds.json` (§7.9).
 
-Settings window: 1100×760 points, eleven tabs, each laid out as two columns
+Settings window: 1100×760 points, thirteen tabs, each laid out as two columns
 that scroll on their own so a tab fits on one screen (Chats is a day list
 beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
-colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Chases**: counting toggle; talking about it (toggle, how often); wariness (toggle, after how many in a day); revenge (toggle, after how many, within, longest hold, tells you off again every, holds the pointer still, shakes to break free, each shake at least, shakes within, then peace for); the count per character on screen and anyone else counted, today / this week / in all with a Reset each, the total, since when, the file and Reset All… (confirmed). **Talk**: talk toggle,
+colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Chases**: counting toggle; talking about it (toggle, how often); wariness (toggle, after how many in a day); revenge (toggle, after how many, within, longest hold, tells you off again every, holds the pointer still, shakes to break free, each shake at least, shakes within, then peace for); the count per character on screen and anyone else counted, today / this week / in all with a Reset each, the total, since when, the file and Reset All… (confirmed). **Beds**: beds toggle; the favourite place (pull, walks to it at most); talking about it (toggle); who sleeps where (each creature on screen: its bed's picture and name, its place in words and nights, Forget), the file and Forget All Places… (confirmed). **Talk**: talk toggle,
 bubble slider, paper-plane toggle and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
 monospaced editor, a status line (block counts, or the error and its line),
@@ -1988,6 +2061,16 @@ pulled in by the inset; two equal screens side by side become one loop with no
 seam; a shorter neighbour makes an outside corner to walk round; negative
 coordinates work; screens touching only at a corner stay separate loops;
 `nearest` picks the right loop; an absurd inset still leaves a loop.
+
+Beds: every built-in character has a bed and no two share one; an unknown persona
+gets one from its words, else grass; `lift` matches the painter; the pull grows
+½, ¾, ⅞ with the nights; the favourite grows nearby, wears down elsewhere and moves
+at 0; a moved bed is the favourite at once with at least 3 nights; the book survives
+a relaunch; a nap puts the bed out and teaches nothing, waking fades it; off, no
+bed; at nightfall it walks to a favourite in reach and sleeps there; out of reach
+it sleeps where it is and the habit wears down; two with one favourite sleep a bed
+apart; dragging a bed lands the sleeper asleep, saves the place and counts no hunt;
+a plain press on the body still picks it up and counts.
 
 Creature: walks at its speed; turns the corner onto the next side and its
 rotation settles at the segment's; blinks and reopens; a distant cursor is

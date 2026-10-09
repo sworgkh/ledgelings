@@ -40,6 +40,9 @@ extension Colony {
         let c = creatures[i], name = character(forCreature: i).name
         if c.isHeld { return tr("%@ is dangling from the user's cursor", name) }
         if c.isJumping { return tr("%@ is mid-jump", name) }
+        if c.isSleeping, settings.bedsEnabled, bedSince[i] != nil {
+            return tr("%@ is asleep in its own bed, %@, %@", name, bedKind(of: i).title, onEdge(c))
+        }
         return c.isSleeping ? tr("%@ is asleep %@", name, onEdge(c)) : tr("%@ is %@", name, onEdge(c))
     }
 
