@@ -89,13 +89,15 @@ public sealed partial class ScreenOverlay : IDisposable
                        FlowerFlight? flight, IReadOnlyList<SparkSnapshot> sparks, HouseSnapshot? house, Size houseCell,
                        IReadOnlyList<PlantedSnapshot>? garden = null,
                        PlaneSnapshot? plane = null, Size planeCell = default, ReminderSnapshot? reminder = null,
-                       TeaTableSnapshot? tea = null, Size teaCell = default)
+                       TeaTableSnapshot? tea = null, Size teaCell = default,
+                       IReadOnlyList<PlantedSnapshot>? beds = null, Size bedCell = default)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
         // Bottom to top, as the Mac layers them: the tea table, the house, the planted flowers, then the creatures.
         AddTeaTable(ops, tea, teaCell);
         AddHouse(ops, house, houseCell);
         AddGarden(ops, garden, flowerCell);      // behind the creatures, who walk past in front
+        AddGarden(ops, beds, bedCell);           // the sleepers' beds stand on their edge the same way, sleepers in front
         var newBubbles = new Dictionary<int, (RectangleF, string, SizeF)>();
         for (int index = 0; index < snapshots.Count; index++)
         {

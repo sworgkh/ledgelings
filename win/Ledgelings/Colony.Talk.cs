@@ -68,6 +68,8 @@ public sealed partial class Colony
         var name = CharacterFor(i).Name;
         if (c.IsHeld) return L10n.Tr("%@ is dangling from the user's cursor", name);
         if (c.IsJumping) return L10n.Tr("%@ is mid-jump", name);
+        if (c.IsSleeping && Settings.BedsEnabled && BedIsOut(i))
+            return L10n.Tr("%@ is asleep in its own bed, %@, %@", name, BedKindOf(i).Title(), OnEdge(c));
         return c.IsSleeping ? L10n.Tr("%@ is asleep %@", name, OnEdge(c)) : L10n.Tr("%@ is %@", name, OnEdge(c));
     }
 

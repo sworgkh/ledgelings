@@ -193,6 +193,11 @@ public sealed class Shared
     public Dictionary<string, Dictionary<string, string[]>> RevengeLastWordsByMood { get; init; } = new();
     public Dictionary<string, string[]> RevengeAnyoneLastWordsByMood { get; init; } = new();
     public Dictionary<string, string> RevengePromptByMood { get; init; } = new();
+    /// <summary>The bed lines (SPEC §7.9): as it lies down, and when its bed is moved; by character, and for anyone.</summary>
+    public Dictionary<string, string[]> BedSettleLines { get; init; } = new();
+    public string[] BedSettleAnyone { get; init; } = Array.Empty<string>();
+    public Dictionary<string, string[]> BedMovedLines { get; init; } = new();
+    public string[] BedMovedAnyone { get; init; } = Array.Empty<string>();
     /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
@@ -247,6 +252,7 @@ public sealed class Shared
         var hunts = Get(root, "hunts");
         var revenge = Get(root, "revenge");
         string[] allMoods = { "good", "neutral", "bad" };
+        var beds = Get(root, "beds");
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -276,6 +282,10 @@ public sealed class Shared
             ComplaintPromptsByMood = Map(Get(mood, "complaintPrompts")),
             HuntLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(hunts, m), "lines"))),
             HuntAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(hunts, m), "anyone"))),
+            BedSettleLines = Lists(Get(beds, "settle")),
+            BedSettleAnyone = List(Get(beds, "settleAnyone")),
+            BedMovedLines = Lists(Get(beds, "moved")),
+            BedMovedAnyone = List(Get(beds, "movedAnyone")),
             RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),
             RevengeAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(revenge, m), "anyone"))),
             RevengeLastWordsByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lastWords"))),

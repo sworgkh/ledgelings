@@ -12,7 +12,7 @@ public sealed partial class Colony
         {
             if (hideout.IsInside(i)) continue;
             var half = atlas.BodyHalfSize * sizes[i] + 4;      // a little forgiveness
-            var p = creatures[i].Position;
+            var p = DrawnPosition(i);
             if (Math.Abs(point.X - p.X) <= half && Math.Abs(point.Y - p.Y) <= half) return i;
         }
         return null;
@@ -27,6 +27,8 @@ public sealed partial class Colony
         {
             case HandEvent.Down(var point, var shift):
                 if (LetterContains(point)) { CloseLetter(); break; }      // a press on a reminder's letter folds it away
+                // A press on a sleeper's bed, beside or under it, carries the bed: no chase, no pick-up.
+                if (!shift && BedAt(point) is int sleeper && !OnBody(sleeper, point)) { LiftBed(sleeper, point); break; }
                 if (CreatureAt(point) is not int i)
                 {
                     if (BubbleAt(point) is int spoken) bubbles.Remove(spoken);
@@ -78,7 +80,7 @@ public sealed partial class Colony
     {
         var under = CreatureAt(cursor);
         var target = held is not null || (under is int i && (shift || creatures[i].IsSleeping)) || BubbleAt(cursor) is not null
-                     || LetterContains(cursor);
+                     || LetterContains(cursor) || BedAt(cursor) is not null;
         foreach (var overlay in overlays) overlay.SetClickable(target && overlay.Monitor.Frame.Contains(cursor));
     }
 }

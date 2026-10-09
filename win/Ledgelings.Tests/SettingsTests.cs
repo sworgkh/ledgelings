@@ -53,6 +53,25 @@ public class SettingsTests
     }
 
     [Fact]
+    public void BedsAreOnByDefaultAndAChangeIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.BedsEnabled && s.BedTalk);
+        Assert.Equal(80, s.BedPull);
+        Assert.Equal(2000, s.BedWalkDistance);
+        s.BedsEnabled = false; s.BedTalk = false; s.BedPull = 35; s.BedWalkDistance = 600;
+        var again = box.Again();
+        Assert.False(again.BedsEnabled || again.BedTalk);
+        Assert.Equal(35, again.BedPull);
+        Assert.Equal(600, again.BedWalkDistance);
+        box.Store.Set("bedPull", 500.0);
+        box.Store.Set("bedWalkDistance", 1.0);
+        Assert.Equal(100, box.Again().BedPull);      // clamped on load
+        Assert.Equal(100, box.Again().BedWalkDistance);
+    }
+
+    [Fact]
     public void RevengeIsOnByDefaultAndAChangeIsRemembered()
     {
         var box = Fresh();

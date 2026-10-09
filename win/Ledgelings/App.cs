@@ -137,7 +137,7 @@ public sealed partial class App : Application
     private void OpenSettings(SettingsTab? tab)
     {
         if (settings is null || history is null || library is null || spend is null) return;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, Voice = voice };
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
         settingsWindow.Show(tab);
     }

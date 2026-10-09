@@ -15,7 +15,7 @@ holidays), paper planes, reminders delivered by plane with the paper note to
 write them on, the chat log and spend ledger, hiding in the house, imported
 creatures from the sprite kit, planting flowers where each character likes (the
 Flowers tab), complaints when pushed around, tea parties, voices (Windows' own,
-OpenRouter or a local speech server) and the Costs tab.
+OpenRouter or a local speech server), the Costs tab, and every character's own bed at a place it learns (the Beds tab).
 
 ## Stack
 
