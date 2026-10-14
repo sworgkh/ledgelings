@@ -162,7 +162,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         // `--plot`: the first two creatures on screen get their next story now,
-        // however long they have lived together; bond, story and prompt text on stderr, then quit.
+        // however long they have lived together; bond, story, their story so far
+        // and prompt text on stderr, then quit.
         if CommandLine.arguments.contains("--plot"), let colony {
             let start = Date()
             colony.trace = { FileHandle.standardError.write(Data(String(format: "plot %6.2f  %@\n", Date().timeIntervalSince(start), $0).utf8)) }
@@ -170,8 +171,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 guard colony.creatures.count >= 2 else { colony.trace?("needs two creatures"); exit(1) }
                 let a = colony.character(forCreature: 0).name, b = colony.character(forCreature: 1).name
                 colony.writePlotIfDue(a, b, now: true)
-                guard colony.plotting.contains(Bonds.key(a, b)) else { colony.trace?("not asked: \(colony.settings.brainProblem)"); exit(1) }
+                // The built-in lines write it at once; a model in the background.
+                guard colony.plotting.contains(Bonds.key(a, b)) || colony.bonds.bond(a, b)?.plot != nil else {
+                    colony.trace?("not asked: \(colony.settings.brainProblem)"); exit(1)
+                }
                 while colony.plotting.contains(Bonds.key(a, b)) { try? await Task.sleep(for: .seconds(0.1)) }
+                colony.trace?("story so far: \(colony.bonds.bond(a, b)?.chronicle ?? "-")")
                 colony.trace?("\(a) hears: \(colony.relationship(of: 0, with: 1))")
                 colony.trace?("\(b) hears: \(colony.relationship(of: 1, with: 0))")
                 exit(colony.bonds.bond(a, b)?.plot == nil ? 1 : 0)

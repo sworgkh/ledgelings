@@ -60,6 +60,8 @@ extension Colony {
                     pinned: pinned, serial: grabCount, nextTaunt: elapsed + max(settings.revengeTauntSeconds, 1))
         creatures[i].drag(to: hang(i, from: cursor))
         let name = character(forCreature: i).name
+        // Everyone else on screen saw it: part of each one's story with the grabber.
+        for j in creatures.indices where character(forCreature: j).name != name { shared(i, j, .grab) }
         trace?("grab \(name)\(pinned ? " (holding still)" : "")")
         shame(i, times: times, serial: grabCount)
     }

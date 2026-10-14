@@ -27,6 +27,8 @@ final class BondBook: ObservableObject {
 
     func forget(_ key: String) { change { $0.forget(key) } }
     func forgetAll() { change { $0 = Bonds.Book() } }
+    func resetStory(_ key: String) { change { $0.resetStory(key) } }
+    func resetAllStories() { change { $0.resetAllStories() } }
 
     func revealInFinder() {
         if FileManager.default.fileExists(atPath: file.path) { NSWorkspace.shared.activateFileViewerSelecting([file]) }

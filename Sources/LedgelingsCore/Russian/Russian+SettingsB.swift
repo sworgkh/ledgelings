@@ -48,8 +48,8 @@ extension Strings {
         "conversation|conversations": "разговор|разговора|разговоров",
         "Stories": "Истории",
         "The prompt that writes a story": "Промпт, который пишет историю",
-        "Placeholders: %@. The answer needs a PLOT: line, and may have a BOND: line. {relationship} in the Talk prompt places the story; without it, it goes at the end.":
-            "Подстановки: %@. В ответе нужна строка PLOT:, может быть и строка BOND:. {relationship} в промпте разговора задаёт место истории; без него она идёт в конец.",
+        "Placeholders: %@. The answer needs a PLOT: line, and may have BOND: and STORY: lines (their story so far, rewritten). {relationship} in the Talk prompt places the story; without it, it goes at the end.":
+            "Подстановки: %@. В ответе нужна строка PLOT:, могут быть и строки BOND: и STORY: (их история до сих пор, переписанная). {relationship} в промпте разговора задаёт место истории; без него она идёт в конец.",
         "Nobody has shared the screen yet.": "Пока никто не делил экран.",
         "Who lives with whom": "Кто с кем живёт",
         "Time counts while both are on screen, and is kept by name: rename a character and it starts again as a stranger.":

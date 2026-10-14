@@ -215,8 +215,11 @@ extension Colony {
                     builtIn: true)
         }
         busy.formUnion([speaker, listener])
+        let said = lines.map { ChatLog.Line(speaker: character(forCreature: $0.who).name, text: $0.text) }
         history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",
-                                        lines: lines.map { ChatLog.Line(speaker: character(forCreature: $0.who).name, text: $0.text) }))
+                                        lines: said, plot: plotLabel(speaker, listener)))
+        // Built-in talk is part of their story too: counted, and a built-in story when due.
+        talked(a.name, b.name, lines: said)
         if isVoiced {
             sayInTurns(lines) { [weak self] in
                 self?.busy.subtract([speaker, listener])

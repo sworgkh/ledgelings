@@ -325,6 +325,24 @@ import Testing
         #expect(AppSettings(defaults: defaults).voiceSpeed == AppSettings.voiceSpeedRange.upperBound)
     }
 
+    @Test func storylinesAreOnAtEightyWordsAndEightMomentsAndRemembered() {
+        let box = fresh(), s = box.settings, defaults = box.defaults
+        defer { box.forget() }
+        #expect(s.storylinesEnabled && s.storyWords == 80 && s.storyMoments == 8)
+        #expect(s.storyTelling == Bonds.Telling(words: 80, moments: 8))
+        s.storylinesEnabled = false
+        s.storyWords = 150
+        s.storyMoments = 3
+        let back = AppSettings(defaults: defaults)
+        #expect(!back.storylinesEnabled && back.storyWords == 150 && back.storyMoments == 3 && back.storyTelling == nil)
+        defaults.set(5000, forKey: "storyWords")
+        defaults.set(0, forKey: "storyMoments")
+        defaults.set(Bonds.englishPlotPromptV1, forKey: "plotPrompt")
+        #expect(AppSettings(defaults: defaults).plotPrompt == Bonds.defaultPlotPrompt, "an unedited prompt from before storylines is upgraded")
+        let clamped = AppSettings(defaults: defaults)
+        #expect(clamped.storyWords == AppSettings.storyWordsRange.upperBound && clamped.storyMoments == AppSettings.storyMomentsRange.lowerBound)
+    }
+
     @Test func storiesAreOnAfterAnHourForSixConversationsAndRemembered() {
         let box = fresh(), s = box.settings, defaults = box.defaults
         defer { box.forget() }

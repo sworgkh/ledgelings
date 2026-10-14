@@ -140,7 +140,7 @@ extension Colony {
         let lines = teaLines
         teaLines = []
         guard !lines.isEmpty, creatures.indices.contains(party.a), creatures.indices.contains(party.b) else { return }
-        talked(character(forCreature: party.a).name, character(forCreature: party.b).name, lines: lines)
+        talked(character(forCreature: party.a).name, character(forCreature: party.b).name, lines: lines, as: .tea)
         trace?("tea: over after \(lines.count) lines")
     }
 

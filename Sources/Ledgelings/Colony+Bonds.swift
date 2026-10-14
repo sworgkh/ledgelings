@@ -34,30 +34,57 @@ extension Colony {
     }
 
     /// A conversation between `a` and `b` (names) ended: count it, and ask for
-    /// their next story if they are due one.
-    func talked(_ a: String, _ b: String, lines: [ChatLog.Line]) {
+    /// their next story if they are due one. `kind`: `.tea` for a whole tea party.
+    func talked(_ a: String, _ b: String, lines: [ChatLog.Line], as kind: Bonds.Moment.Kind = .talk) {
         guard !lines.isEmpty else { return }
-        bonds.change { $0.talked(a, b, lines: lines) }
+        bonds.change { $0.talked(a, b, lines: lines, as: kind) }
         writePlotIfDue(a, b)
     }
 
-    /// One model call, in the background, for the pair's next story; ready for
-    /// their next conversation. Recorded as `.plots` whatever comes back.
+    /// Something two creatures lived through together that is not a conversation
+    /// (a flower, a paper plane, a cursor grab), for their storyline.
+    func shared(_ i: Int, _ j: Int, _ kind: Bonds.Moment.Kind, detail: String? = nil) {
+        guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
+        let a = character(forCreature: i).name, b = character(forCreature: j).name
+        bonds.change { $0.note(a, b, Bonds.Moment(time: Date(), kind: kind, who: a, detail: detail)) }
+    }
+
+    /// The pair's past from before moments were kept, read from the chat log once.
+    func seedStoryline(_ a: String, _ b: String) {
+        guard bonds.bond(a, b)?.seeded == false else { return }
+        let exchanges = history.days().reversed().flatMap { history.exchanges(on: $0) }
+        bonds.change { $0.seed(a, b, from: exchanges) }
+        trace?("story: \(Bonds.key(a, b)) seeded, \(bonds.bond(a, b)?.tally ?? [:])")
+    }
+
+    /// The pair's next story, ready for their next conversation: one model call
+    /// in the background, recorded as `.plots` whatever comes back; with the
+    /// built-in lines, a story from what they lived through, no call at all.
     /// `now`: ask even if they have not lived together long enough (`--plot`).
     func writePlotIfDue(_ a: String, _ b: String, now: Bool = false) {
         let key = Bonds.key(a, b)
         if now { bonds.change { $0.update(a, b) { $0.plot = nil; $0.lastAsked = nil } } }
-        guard settings.plotsEnabled, settings.brain != .script, !plotting.contains(key),
-              bonds.book.needsPlot(a, b, after: now ? 0 : settings.plotAfterHours * 3600, now: Date()),
-              let bond = bonds.bond(a, b), let service = settings.chatClient(),
+        guard settings.plotsEnabled, !plotting.contains(key),
+              bonds.book.needsPlot(a, b, after: now ? 0 : settings.plotAfterHours * 3600, now: Date()) else { return }
+        let telling = settings.storyTelling
+        if telling != nil { seedStoryline(a, b) }
+        guard let bond = bonds.bond(a, b) else { return }
+        let length = settings.plotLength
+        if settings.brain == .script {
+            let written = Bonds.builtInPlot(bond, using: &rng)
+            bonds.change { $0.begin(a, b, written, length: length, at: Date(), keepsStory: telling != nil, words: telling?.words ?? Bonds.storyWords) }
+            trace?("plot: \(key) · built in · plot: \(written.plot)")
+            return
+        }
+        guard let service = settings.chatClient(),
               let i = creatures.indices.first(where: { character(forCreature: $0).name == a }),
               let j = creatures.indices.first(where: { character(forCreature: $0).name == b }) else { return }
-        let length = settings.plotLength
         let values = Bonds.plotValues(bond, a: (a, kind(ofCreature: i), character(forCreature: i).persona),
-                                      b: (b, kind(ofCreature: j), character(forCreature: j).persona), length: length)
+                                      b: (b, kind(ofCreature: j), character(forCreature: j).persona), length: length,
+                                      story: telling)
         let prompt = Banter.render(settings.plotPrompt, values)
         plotting.insert(key)
-        trace?("plot: asking for \(key)")
+        trace?("plot: asking for \(key), \(prompt.count / 4) tokens or so")
         Task { [weak self] in
             var cost: Double?, written: Bonds.Written?
             do {
@@ -80,12 +107,14 @@ extension Colony {
             let now = Date()
             bonds.change { book in
                 book.asked(a, b, at: now, cost: cost)
-                if let written { book.begin(a, b, written, length: length, at: now) }
+                if let written {
+                    book.begin(a, b, written, length: length, at: now, keepsStory: telling != nil, words: telling?.words ?? Bonds.storyWords)
+                }
             }
             if let written {
                 talkStatus = tr("%@ and %@: %@", a, b, written.plot)
 
-                trace?("plot: \(key) · bond: \(written.bond ?? "-") · plot: \(written.plot)")
+                trace?("plot: \(key) · bond: \(written.bond ?? "-") · plot: \(written.plot) · story: \(written.story ?? "(folded)")")
             }
         }
     }

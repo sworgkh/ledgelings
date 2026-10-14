@@ -482,14 +482,30 @@ extension ColonyTalkTests {
         #expect(w.colony.relationship(of: 0, with: 1) == "" && w.colony.plotLabel(0, 1) == nil)
     }
 
-    @Test func theBuiltInLinesNeverAskForAStory() throws {
+    @Test func theBuiltInLinesMakeAStoryFromTheirHistoryWithoutAsking() throws {
         let w = try World()
         defer { w.forget() }
         let a = w.colony.character(forCreature: 0).name, b = w.colony.character(forCreature: 1).name
         w.colony.bonds.change { $0.liveTogether(1e6, names: [a, b]) }
+        w.colony.shared(0, 1, .flower, detail: "poppy")
         w.colony.talked(a, b, lines: [ChatLog.Line(speaker: a, text: "Hi.")])
         #expect(w.colony.plotting.isEmpty, "no model, no call")
-        #expect(w.colony.bonds.bond(a, b)?.talks == 1)
+        let bond = try #require(w.colony.bonds.bond(a, b))
+        #expect(bond.talks == 1 && bond.plots == 1)
+        #expect(bond.plot?.text.contains("poppy") == true, "the flower is the most telling thing they shared: \(bond.plot?.text ?? "-")")
+        #expect(bond.chronicle?.contains("poppy") == true && bond.moments.isEmpty, "the moments are folded into their story so far")
+        #expect(bond.tally == ["flower": 1, "talk": 1])
+    }
+
+    @Test func aStorylineIsKeptOnlyWhileStorylinesAreOn() throws {
+        let w = try World()
+        defer { w.forget() }
+        let a = w.colony.character(forCreature: 0).name, b = w.colony.character(forCreature: 1).name
+        w.settings.storylinesEnabled = false
+        w.colony.bonds.change { $0.liveTogether(1e6, names: [a, b]) }
+        w.colony.talked(a, b, lines: [ChatLog.Line(speaker: a, text: "Hi.")])
+        let bond = try #require(w.colony.bonds.bond(a, b))
+        #expect(bond.plot != nil && bond.chronicle == nil, "a story still, but no chronicle")
     }
 
     // MARK: Reminders
