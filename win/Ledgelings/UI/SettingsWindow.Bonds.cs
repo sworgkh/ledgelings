@@ -10,7 +10,8 @@ namespace Ledgelings.UI;
 public sealed partial class SettingsWindow
 {
     private sealed record BondRow(string Key, string Names, string Details, string Summary, Visibility SummaryVisibility,
-                                  string Story, FontStyle StoryStyle, Brush StoryBrush, Visibility StoryVisibility);
+                                  string Story, FontStyle StoryStyle, Brush StoryBrush, Visibility StoryVisibility,
+                                  string SoFar, Visibility SoFarVisibility);
 
     private BondBook? bondBook;
 
@@ -30,29 +31,30 @@ public sealed partial class SettingsWindow
 
     private void InitBonds()
     {
-        NeedsModelNote(BondsNeedsModel);
-        PlotPromptFooter.Text = L10n.Tr("Placeholders: %@. The answer needs a PLOT: line, and may have a BOND: line. {relationship} in the Talk prompt places the story; without it, it goes at the end.",
+        PlotPromptFooter.Text = L10n.Tr("Placeholders: %@. The answer needs a PLOT: line, and may have BOND: and STORY: lines (their story so far, rewritten). {relationship} in the Talk prompt places the story; without it, it goes at the end.",
             string.Join(" ", Bonds.Placeholders.Select(p => "{" + p + "}")));
         settings.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(AppSettings.Brain) or nameof(AppSettings.PlotsEnabled)) RefreshBonds();
+            if (e.PropertyName is nameof(AppSettings.Brain) or nameof(AppSettings.PlotsEnabled) or nameof(AppSettings.StorylinesEnabled)) RefreshBonds();
         };
         RefreshBonds();
         RefreshBondList();
     }
 
-    /// <summary>Greyed out without a model; the prompt hidden like the Talk tab's.</summary>
+    /// <summary>Stories work with the built-in lines too (made from what they lived through);
+    /// only the prompt needs a model, and is hidden without one like the Talk tab's.</summary>
     private void RefreshBonds()
     {
         var hasModel = settings.HasModel;
-        var writes = settings.PlotsEnabled && hasModel;
-        PlotsToggle.IsEnabled = hasModel;
-        PlotAfterRow.IsEnabled = writes;
-        PlotLengthRow.IsEnabled = writes;
+        PlotAfterRow.IsEnabled = settings.PlotsEnabled;
+        PlotLengthRow.IsEnabled = settings.PlotsEnabled;
+        StorylinesToggle.IsEnabled = settings.PlotsEnabled;
+        StoryWordsRow.IsEnabled = settings.PlotsEnabled && settings.StorylinesEnabled;
+        StoryMomentsRow.IsEnabled = settings.PlotsEnabled && settings.StorylinesEnabled;
         PlotPromptBox.Visibility = hasModel ? Visibility.Visible : Visibility.Collapsed;
-        var footer = L10n.Tr("Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots).");
-        if (!hasModel) footer += " " + L10n.Tr("Time together is still counted meanwhile: once a model is chosen, a pair that has lived together long enough gets its first story at its next talk.");
-        BondsFooter.Text = footer;
+        BondsFooter.Text = hasModel
+            ? L10n.Tr("Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots).")
+            : L10n.Tr("Once two characters have shared the screen this long, they get a small story and a line on how they get on. With the built-in lines there is no model: the story is made from what they lived through, at no cost; choose a model in Settings › Talk for written ones.");
     }
 
     private void RefreshBondList()
@@ -60,6 +62,7 @@ public sealed partial class SettingsWindow
         var pairs = bondBook?.Book.Closest ?? new List<Bonds.Bond>();
         BondsEmpty.Visibility = pairs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ForgetAllBonds.IsEnabled = pairs.Count > 0;
+        ResetAllStories.IsEnabled = pairs.Count > 0;
         BondList.ItemsSource = pairs.Select(bond =>
         {
             string story = "";
@@ -77,7 +80,8 @@ public sealed partial class SettingsWindow
             }
             return new BondRow(Bonds.Key(bond.Names[0], bond.Names[^1]), string.Join(" & ", bond.Names), Details(bond),
                 bond.Summary ?? "", bond.Summary is null ? Visibility.Collapsed : Visibility.Visible,
-                story, italic, brush, story.Length == 0 ? Visibility.Collapsed : Visibility.Visible);
+                story, italic, brush, story.Length == 0 ? Visibility.Collapsed : Visibility.Visible,
+                bond.Chronicle is string so ? L10n.Tr("So far: %@", so) : "", bond.Chronicle is null ? Visibility.Collapsed : Visibility.Visible);
         }).ToList();
     }
 
@@ -97,6 +101,13 @@ public sealed partial class SettingsWindow
     }
 
     private void ForgetAllBonds_Click(object sender, RoutedEventArgs e) => bondBook?.ForgetAll();
+
+    private void ResetStory_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string key }) bondBook?.ResetStory(key);
+    }
+
+    private void ResetAllStories_Click(object sender, RoutedEventArgs e) => bondBook?.ResetAllStories();
 
     private void RevealBonds_Click(object sender, RoutedEventArgs e) => bondBook?.RevealInExplorer();
 }

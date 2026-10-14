@@ -605,7 +605,6 @@
         <StackPanel Margin="12">
           <GroupBox ui:Tr.Header="Stories">
             <StackPanel>
-              <TextBlock x:Name="BondsNeedsModel"/>
               <CheckBox x:Name="PlotsToggle" ui:Tr.Content="Pairs who live together get a story" IsChecked="{Binding PlotsEnabled, Mode=TwoWay}"/>
               <DockPanel x:Name="PlotAfterRow" Margin="0,6,0,4">
                 <TextBlock ui:Tr.Text="First story after" Style="{StaticResource RowLabel}"/>
@@ -618,6 +617,22 @@
                 <Slider Minimum="2" Maximum="20" TickFrequency="1" Value="{Binding PlotLength, Mode=TwoWay}"/>
               </DockPanel>
               <TextBlock x:Name="BondsFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Storylines">
+            <StackPanel>
+              <CheckBox x:Name="StorylinesToggle" ui:Tr.Content="Each story grows from their whole history" IsChecked="{Binding StorylinesEnabled, Mode=TwoWay}"/>
+              <DockPanel x:Name="StoryWordsRow" Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Their story so far is kept to" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Width="120" ui:Tr.Value="{Binding StoryWords}" ui:Tr.Count="word|words"/>
+                <Slider Minimum="30" Maximum="200" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding StoryWords, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel x:Name="StoryMomentsRow" Margin="0,4">
+                <TextBlock ui:Tr.Text="Latest moments told one by one" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" Text="{Binding StoryMoments}"/>
+                <Slider Minimum="2" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding StoryMoments, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every talk, tea party, flower, paper plane and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."/>
             </StackPanel>
           </GroupBox>
           <GroupBox x:Name="PlotPromptBox" ui:Tr.Header="The prompt that writes a story">
@@ -636,11 +651,13 @@
                     <StackPanel Margin="0,4">
                       <DockPanel>
                         <Button DockPanel.Dock="Right" ui:Tr.Content="Forget" Tag="{Binding Key}" Click="ForgetBond_Click" FontSize="11" Padding="6,0"/>
+                        <Button DockPanel.Dock="Right" ui:Tr.Content="Reset Story" Tag="{Binding Key}" Click="ResetStory_Click" FontSize="11" Padding="6,0" Margin="0,0,6,0"/>
                         <TextBlock Text="{Binding Names}" FontWeight="Bold"/>
                       </DockPanel>
                       <TextBlock Text="{Binding Details}" FontSize="11" Foreground="Gray"/>
                       <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Visibility="{Binding SummaryVisibility}"/>
                       <TextBlock Text="{Binding Story}" TextWrapping="Wrap" FontStyle="{Binding StoryStyle}" Foreground="{Binding StoryBrush}" Visibility="{Binding StoryVisibility}"/>
+                      <TextBlock Text="{Binding SoFar}" TextWrapping="Wrap" FontSize="11" Foreground="Gray" MaxHeight="48" TextTrimming="CharacterEllipsis" ToolTip="{Binding SoFar}" Visibility="{Binding SoFarVisibility}"/>
                     </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -651,6 +668,7 @@
           <GroupBox ui:Tr.Header="The file">
             <DockPanel>
               <Button DockPanel.Dock="Right" x:Name="ForgetAllBonds" ui:Tr.Content="Forget All" Click="ForgetAllBonds_Click" Margin="8,0,0,0"/>
+              <Button DockPanel.Dock="Right" x:Name="ResetAllStories" ui:Tr.Content="Reset All Stories" Click="ResetAllStories_Click" Margin="8,0,0,0"/>
               <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealBonds_Click"/>
               <TextBlock x:Name="BondsPath" FontSize="11" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
             </DockPanel>

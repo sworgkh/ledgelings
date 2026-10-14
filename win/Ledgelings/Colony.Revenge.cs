@@ -115,6 +115,9 @@ public sealed partial class Colony
             Pinned = pinned, Serial = grabCount, NextTaunt = Elapsed + Math.Max(Settings.RevengeTauntSeconds, 1),
         };
         creatures[i].Drag(Hang(i, cursor));
+        // Everyone else on screen saw it: part of each one's story with the grabber.
+        for (int j = 0; j < creatures.Count; j++)
+            if (CharacterFor(j).Name != CharacterFor(i).Name) Shared(i, j, Core.Bonds.MomentKind.Grab);
         Trace?.Invoke($"grab {CharacterFor(i).Name}{(pinned ? " (holding still)" : "")}");
         Shame(i, times, grabCount);
     }

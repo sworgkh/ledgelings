@@ -424,6 +424,26 @@ public class SettingsTests
     }
 
     [Fact]
+    public void StorylinesAreOnAtEightyWordsAndEightMomentsAndRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.StorylinesEnabled && s.StoryWords == 80 && s.StoryMoments == 8);
+        Assert.Equal(new Bonds.Telling(80, 8), s.StoryTelling);
+        s.StorylinesEnabled = false;
+        s.StoryWords = 150;
+        s.StoryMoments = 3;
+        var back = box.Again();
+        Assert.True(!back.StorylinesEnabled && back.StoryWords == 150 && back.StoryMoments == 3 && back.StoryTelling is null);
+        box.Store.Set("plotPrompt", Bonds.EnglishPlotPromptV1);
+        Assert.True(box.Again().PlotPrompt == Bonds.DefaultPlotPrompt, "an unedited prompt from before storylines is upgraded");
+        box.Store.Set("storyWords", 5000);
+        box.Store.Set("storyMoments", 0);
+        var clamped = box.Again();
+        Assert.True(clamped.StoryWords == AppSettings.StoryWordsMax && clamped.StoryMoments == AppSettings.StoryMomentsMin);
+    }
+
+    [Fact]
     public void StoriesAreOnAfterAnHourForSixConversationsAndRemembered()
     {
         var box = Fresh();

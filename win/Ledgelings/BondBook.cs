@@ -30,6 +30,8 @@ public sealed class BondBook
 
     public void Forget(string key) => Change(b => b.Forget(key));
     public void ForgetAll() => Change(b => b.Bonds.Clear());
+    public void ResetStory(string key) => Change(b => b.ResetStory(key));
+    public void ResetAllStories() => Change(b => b.ResetAllStories());
 
     public void RevealInExplorer()
     {

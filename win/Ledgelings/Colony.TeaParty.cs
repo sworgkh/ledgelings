@@ -169,7 +169,7 @@ public sealed partial class Colony
         var lines = teaLines;
         teaLines = new();
         if (lines.Count == 0 || party.A >= creatures.Count || party.B >= creatures.Count) return;
-        Talked(CharacterFor(party.A).Name, CharacterFor(party.B).Name, lines);
+        Talked(CharacterFor(party.A).Name, CharacterFor(party.B).Name, lines, Core.Bonds.MomentKind.Tea);
     }
 
     /// <summary>The party this round belongs to is still going.</summary>
