@@ -771,16 +771,23 @@ rewritten whole on each change; key = the two names sorted, joined by `" & "`
 {"names": ["Blocky", "Pip"], "together": 7260, "talks": 9, "plots": 1,
  "summary": "Grudging friends; Blocky pretends not to care.",
  "plot": {"text": "Pip hides Blocky's favourite pixel.", "length": 6, "told": 2, "started": "…"},
- "lastPlot": null, "recent": [{"speaker": "Pip", "text": "…"}], "lastAsked": "…", "cost": 0.0003}
+ "lastPlot": null, "recent": [{"speaker": "Pip", "text": "…"}], "lastAsked": "…", "cost": 0.0003,
+ "chronicle": "They met on 14 Sep over the cursor. On 3 Oct Pip gave Blocky a poppy…",
+ "moments": [{"time": "…", "kind": "tea", "who": "Pip", "detail": "Tea? I baked a pixel."}],
+ "tally": {"talk": 9, "tea": 1, "flower": 1}, "met": "…", "seeded": true}
 ```
+
+Fields missing from an older file load at their defaults (no chronicle, no
+moments, empty tally, `seeded` false).
 
 - **Time together.** Every 30 s of the colony clock, each pair of distinct
   character names on screen gains 30 s of `together` (saved then).
-- **Due.** After a conversation with a model that said at least one line, the
+- **Due.** After a conversation (with a model, or built-in lines) that said at least one line, the
   pair's `talks` goes up, its last 4 lines are kept in `recent`, and a running
   plot's `told` goes up; at `told ≥ length` the plot moves to `lastPlot`. Then,
-  if `plotsEnabled`, the brain is a model, `together ≥ plotAfterHours`, no plot
-  is running, none is being written, and the last ask was over 10 min ago, one
+  if `plotsEnabled`, `together ≥ plotAfterHours`, no plot
+  is running, none is being written, and the last ask was over 10 min ago, a
+  built-in brain gets a built-in plot (§6.5.2.1) and a model brain one
   call is made in the background: system `"You write tiny, playful stories for
   small characters. Follow the answer format exactly."`, user = `plotPrompt`
   rendered with `speaker…listenerPersona` (the pair), `together` (§ duration
@@ -807,6 +814,48 @@ rewritten whole on each change; key = the two names sorted, joined by `" & "`
   "1 minute", "45 minutes", "5 hours", "2 days".
 - **Log.** A conversation played under a plot is written with
   `"plot": "part 2 of 6: …"` (§6.5) and the Chats viewer shows it.
+
+#### 6.5.2.1 Storylines: every new plot from the whole shared history
+
+- **Moments.** Everything two characters live through together is a moment
+  `{time, kind, who, detail}`: `talk` (a conversation ended, model or built-in; who
+  = first speaker, detail = first line), `tea` (a whole tea party), `flower` (the
+  giver, the flower's id), `plane` (thrower, the note), `grab` (a cursor grab, one
+  moment with every other character on screen). Each goes on the pair's `moments`
+  (last 20 kept) and `tally[kind] += 1`; `met` is the earliest. Recorded whatever
+  the settings, so turning storylines on later has a past to use. Hunts and beds
+  are per character, not per pair, and are not moments.
+- **Seeding.** An old pair (`seeded` false), when its next plot is due with
+  storylines on: every chat-log exchange with lines by both, older than its first
+  kept moment, becomes a `talk` moment (newest 20 kept, all counted), once.
+- **In the plot prompt.** `{today}` = today as "14 Oct" (`d MMM`, en_GB / ru_RU);
+  `{story}` = "They first met on {met}; all told: 9 talks, 1 tea party, …." + the
+  chronicle, moments beyond the last `storyMoments` folded into it first (below),
+  or "nothing yet; they have only just met"; `{since}` = the last `storyMoments`
+  moments, one per line `- 14 Oct: Pip gave Blocky a poppy`, or "(nothing yet)";
+  `{storyWords}` = `storyWords`. With storylines off `{story}` and `{since}` are
+  "(not kept)". The answer may carry a third line, `STORY:` (parsed like `PLOT:`,
+  cut at 2000 characters): the chronicle rewritten. Same one call, still `plots`
+  in Costs; about 300 tokens more than before (≈400 → ≈600 for a week-old pair; under
+  900 however long the friendship, a test).
+- **When a plot begins** (storylines on): the chronicle becomes the `STORY:` text
+  trimmed to `storyWords`, or, without one (built-in, or the model sent none), the
+  moments folded in; `moments` empties. **Folding**: a sentence per kind, "On 3 Oct,
+  Pip gave Blocky a poppy." or "Between 1 Oct and 3 Oct, 4 talks in all, the last:
+  …", then "Then this story played out: {lastPlot}"; trimmed by dropping the
+  oldest whole sentences (a quoted line is one sentence) until ≤ `storyWords`
+  words, a single over-long sentence cut with "…". Dates, never "today".
+- **Without a model** (brain = built-in lines): when a plot is due, it is made
+  from the latest moment of the first kind present in flower, tea, plane, grab,
+  talk ("Since Pip gave Blocky the poppy 3 days ago, Blocky has been looking for a
+  gift to give back."), two wordings per kind, with when as today / yesterday /
+  N days ago / N weeks ago; strangers get one of two generic plots. A pair with no
+  bond line yet gets "After {tally}, they know each other well." (10+ moments) or
+  "…are getting to know each other."; one it has (a model's) stays. No network call, nothing in Costs. Built-in talk now counts
+  as a conversation for `talks` and plot parts, like model talk.
+- **Reset.** Bonds tab › **Reset Story** per pair, **Reset All Stories**: chronicle,
+  moments, tally, `met`, summary, plot, last plot, plots and recent go; time
+  together, talks and cost stay; `seeded` = true so the log is not read back in.
 
 ### 6.5.3 Not repeating themselves
 
@@ -1971,7 +2020,10 @@ An error for want of a model reads as that note, never as a server refusal.
 | plotsEnabled | true | bonds get plots, and both reach the prompts (§6.5.2) |
 | plotAfterHours | 1 | 0.25–72, clamped on load: time on screen together before a pair's first plot |
 | plotLength | 6 | 2–20, clamped on load: conversations one plot lasts |
-| plotPrompt | §6.5.2 | free text; "Reset Prompt" restores |
+| plotPrompt | §6.5.2 | free text; "Reset Prompt" restores; a saved copy of the shipped prompt from before storylines (`Bonds.earlierPlotPrompts`) loads as the current one |
+| storylinesEnabled | true | each new plot grows from the pair's whole history: chronicle + moments (§6.5.2) |
+| storyWords | 80 | 30–200 in steps of 10, clamped on load: words the chronicle is kept to |
+| storyMoments | 8 | 2–20, clamped on load: moments since the last plot the prompt lists one by one; older ones are folded into the chronicle first |
 | voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
 | voiceEngine | system | system, openRouter, local |
 | voicePerCharacter | true | |

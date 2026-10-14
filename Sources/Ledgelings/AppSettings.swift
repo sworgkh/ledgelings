@@ -230,6 +230,18 @@ final class AppSettings: ObservableObject {
     @Published var plotAfterHours: Double { didSet { save(plotAfterHours, "plotAfterHours") } }
     @Published var plotLength: Int { didSet { save(plotLength, "plotLength") } }
     @Published var plotPrompt: String { didSet { save(plotPrompt, "plotPrompt") } }
+    /// Words a pair's storyline (their story so far) is kept to.
+    static let storyWordsRange = 30...200
+    /// Moments since the last story the prompt lists one by one.
+    static let storyMomentsRange = 2...20
+    /// Each new story grows from the pair's whole shared history: a short
+    /// chronicle rewritten with every story, plus what they lived through since.
+    @Published var storylinesEnabled: Bool { didSet { save(storylinesEnabled, "storylinesEnabled") } }
+    @Published var storyWords: Int { didSet { save(storyWords, "storyWords") } }
+    @Published var storyMoments: Int { didSet { save(storyMoments, "storyMoments") } }
+
+    /// How much history a new story is told with; nil when storylines are off.
+    var storyTelling: Bonds.Telling? { storylinesEnabled ? Bonds.Telling(words: storyWords, moments: storyMoments) : nil }
 
     // MARK: Calendar
 
@@ -488,7 +500,15 @@ final class AppSettings: ObservableObject {
         plotAfterHours = clamp("plotAfterHours", 1, Self.plotAfterRange)
         let length = defaults.object(forKey: "plotLength") as? Int ?? 6
         plotLength = min(max(length, Self.plotLengthRange.lowerBound), Self.plotLengthRange.upperBound)
-        plotPrompt = defaults.string(forKey: "plotPrompt") ?? Bonds.plotPrompts(language)
+        // A saved copy of a shipped prompt from before storylines is the shipped one now.
+        let savedPlot = defaults.string(forKey: "plotPrompt").flatMap { Bonds.earlierPlotPrompts.contains($0) ? nil : $0 }
+        plotPrompt = savedPlot ?? Bonds.plotPrompts(language)
+        storylinesEnabled = defaults.object(forKey: "storylinesEnabled") as? Bool ?? true
+        // 80 words: a few weeks of a friendship in about 110 tokens.
+        let words = defaults.object(forKey: "storyWords") as? Int ?? Bonds.storyWords
+        storyWords = min(max(words, Self.storyWordsRange.lowerBound), Self.storyWordsRange.upperBound)
+        let moments = defaults.object(forKey: "storyMoments") as? Int ?? Bonds.storyMoments
+        storyMoments = min(max(moments, Self.storyMomentsRange.lowerBound), Self.storyMomentsRange.upperBound)
         knowsTimeOfDay = defaults.object(forKey: "knowsTimeOfDay") as? Bool ?? true
         knowsDate = defaults.object(forKey: "knowsDate") as? Bool ?? true
         jewishHolidays = defaults.object(forKey: "jewishHolidays") as? Bool ?? true

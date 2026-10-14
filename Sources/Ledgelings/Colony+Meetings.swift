@@ -43,6 +43,7 @@ extension Colony {
         if bump.gift, let flower = Gifts.flowers.randomElement(using: &rng), gifts.give(flower, from: giver, to: receiver, at: elapsed) {
             let a = character(forCreature: giver).name, b = character(forCreature: receiver).name
             event = tr("%1$@ just walked into %2$@ and gave %2$@ a %3$@.", a, b, Gifts.name(of: flower))
+            shared(giver, receiver, .flower, detail: flower)
 
             given = flower
         }

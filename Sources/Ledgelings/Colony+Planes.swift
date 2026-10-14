@@ -250,6 +250,7 @@ extension Colony {
         let musing = mail.musing ?? Letters.musing(by: b, from: a, memory: history.memory, using: &rng)
         mail.note = note
         mail.musing = musing
+        shared(from, to, .plane, detail: note)
         guard settings.talkEnabled else { return .reading(musingAt: elapsed, doneAt: elapsed + 3, musingSaid: true) }
 
         let read = Letters.reading(note, from: a)

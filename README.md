@@ -93,8 +93,14 @@ pitch and volume are in Settings › Voice.
 **They get to know each other.** Creatures who share the screen for an hour (you
 choose how long) get a small story from the model: a rivalry, a secret, a favour
 owed. It colours their next few conversations and ends; the next grows from how
-they get on. Only a few dozen words reach each prompt, so a long friendship costs
-no more than a new one. Settings › Bonds shows every pair and its story.
+they get on and from **everything they have lived through together**: every talk,
+tea party, flower, paper plane and cursor grab is kept, and folded with each new story
+into a short chronicle of "their story so far", so a new story can bring back the
+poppy Pip gave Blocky three weeks ago and never contradicts what came before. Only
+the chronicle and the latest moments reach the prompt, so a long friendship costs
+little more than a new one. With the built-in lines there is no model, and the stories
+are made from those moments instead ("Since Pip gave Blocky the poppy yesterday…").
+Settings › Bonds shows every pair, its story and its chronicle.
 
 **They know what day it is.** Your clock, the date and the holidays you tick
 (Jewish, Christian, Muslim) go into every line and paper plane: "late evening

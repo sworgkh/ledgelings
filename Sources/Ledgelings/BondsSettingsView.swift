@@ -10,9 +10,7 @@ struct BondsSettingsView: View {
     var body: some View {
         TwoColumns {
             Section {
-                if !settings.hasModel { NeedsModelNote() }
                 Toggle(tr("Pairs who live together get a story"), isOn: $settings.plotsEnabled)
-                    .disabled(!settings.hasModel)
                 SliderRow(tr("First story after"), value: $settings.plotAfterHours, in: AppSettings.plotAfterRange, step: 0.25, unit: tr(" h"))
                     .disabled(!writesStories)
                 Stepper(value: $settings.plotLength, in: AppSettings.plotLengthRange) {
@@ -23,6 +21,23 @@ struct BondsSettingsView: View {
                 Text(tr("Stories"))
             } footer: {
                 Text(footer)
+            }
+
+            Section {
+                Toggle(tr("Each story grows from their whole history"), isOn: $settings.storylinesEnabled)
+                    .disabled(!settings.plotsEnabled)
+                Stepper(value: $settings.storyWords, in: AppSettings.storyWordsRange, step: 10) {
+                    LabeledContent(tr("Their story so far is kept to"), value: trCount(settings.storyWords, "word", "words"))
+                }
+                .disabled(!keepsStorylines)
+                Stepper(value: $settings.storyMoments, in: AppSettings.storyMomentsRange) {
+                    LabeledContent(tr("Latest moments told one by one"), value: "\(settings.storyMoments)")
+                }
+                .disabled(!keepsStorylines)
+            } header: {
+                Text(tr("Storylines"))
+            } footer: {
+                Text(tr("Every talk, tea party, flower, paper plane and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."))
             }
 
             // Like the Talk tab's prompts: nothing to edit until there is a model to read it.
@@ -37,7 +52,7 @@ struct BondsSettingsView: View {
             } header: {
                 Text(tr("The prompt that writes a story"))
             } footer: {
-                Text(tr("Placeholders: %@. The answer needs a PLOT: line, and may have a BOND: line. {relationship} in the Talk prompt places the story; without it, it goes at the end.", Bonds.placeholders.map { "{\($0)}" }.joined(separator: " ")))
+                Text(tr("Placeholders: %@. The answer needs a PLOT: line, and may have BOND: and STORY: lines (their story so far, rewritten). {relationship} in the Talk prompt places the story; without it, it goes at the end.", Bonds.placeholders.map { "{\($0)}" }.joined(separator: " ")))
             } }
         } right: {
             Section {
@@ -56,6 +71,7 @@ struct BondsSettingsView: View {
                         .textSelection(.enabled)
                     Spacer()
                     Button(tr("Reveal in Finder")) { bonds.revealInFinder() }
+                    Button(tr("Reset All Stories")) { bonds.resetAllStories() }.disabled(bonds.book.bonds.isEmpty)
                     Button(tr("Forget All")) { bonds.forgetAll() }.disabled(bonds.book.bonds.isEmpty)
                 }
             } header: {
@@ -65,20 +81,22 @@ struct BondsSettingsView: View {
     }
 
     private var footer: String {
-        var text = tr("Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots).")
-        if !settings.hasModel { text += " " + tr("Time together is still counted meanwhile: once a model is chosen, a pair that has lived together long enough gets its first story at its next talk.") }
-        return text
+        if !settings.hasModel {
+            return tr("Once two characters have shared the screen this long, they get a small story and a line on how they get on. With the built-in lines there is no model: the story is made from what they lived through, at no cost; choose a model in Settings › Talk for written ones.")
+        }
+        return tr("Once two characters have shared the screen this long, the model writes them a small story and a line on how they get on. A few dozen words of it go into their prompts; when it has run its course, the next grows from the last. One short call per story (Costs › Relationship plots).")
     }
 
-    /// Stories are on, and there is a model to write them.
-    private var writesStories: Bool { settings.plotsEnabled && settings.hasModel
-    }
+    private var writesStories: Bool { settings.plotsEnabled }
+    private var keepsStorylines: Bool { settings.plotsEnabled && settings.storylinesEnabled }
 
     private func pair(_ bond: Bonds.Bond) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline) {
                 Text(bond.names.joined(separator: " & ")).font(.headline)
                 Spacer()
+                Button(tr("Reset Story")) { bonds.resetStory(Bonds.key(bond.names[0], bond.names[bond.names.count - 1])) }
+                    .buttonStyle(.link).font(.caption)
                 Button(tr("Forget")) { bonds.forget(Bonds.key(bond.names[0], bond.names[bond.names.count - 1])) }
                     .buttonStyle(.link).font(.caption)
             }
@@ -88,6 +106,10 @@ struct BondsSettingsView: View {
                 Text(tr("Part %d of %d: %@", min(plot.told + 1, plot.length), plot.length, plot.text)).font(.callout).italic()
             } else if let last = bond.lastPlot {
                 Text(tr("Last story: %@", last)).font(.caption).foregroundStyle(.secondary)
+            }
+            if let chronicle = bond.chronicle {
+                Text(tr("So far: %@", chronicle)).font(.caption).foregroundStyle(.secondary).lineLimit(3)
+                    .help(chronicle)
             }
         }
         .padding(.vertical, 2)

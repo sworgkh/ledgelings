@@ -323,16 +323,32 @@ crush) and a **bond**, one line on how they get on. Both go into their prompts, 
 dozen words, with which part of the story this conversation is, so the next
 conversations follow it and the last one wraps it up. When a story has run its
 course the next one grows from the bond, the last story and the last four lines they
-said. One short call per story (about 300 tokens), shown as *Relationship plots* on
-the Costs tab. With the built-in lines there is no model and so no stories: the
-controls are greyed out under a *Needs a model* note, and the story prompt is hidden.
+said, and from their **storyline** (below). One short call per story (about 600
+tokens), shown as *Relationship plots* on the Costs tab. With the built-in lines there
+is no model: the story is made from what they lived through ("Since Pip gave Blocky the
+poppy yesterday, Blocky has been looking for a gift to give back"), at no cost, and the
+story prompt is hidden.
+
+**Storylines.** Every talk, tea party, flower, paper plane and cursor grab two
+characters share is kept as a moment. When a new story is written, the model gets
+their story so far (a short chronicle) and the latest moments, and sends back, in the
+same call, the chronicle rewritten to take them in. A new story can therefore bring back
+something from weeks ago and never contradicts it, while the prompt stays a few hundred
+tokens however long the friendship. Without a model the moments are folded into the
+chronicle plainly. Each pair's chronicle shows under it on the right (*So far: …*);
+**Reset Story** starts one pair's story over (time together stays), **Reset All
+Stories** everyone's. A pair from before storylines reads its past from the chat log
+once.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Pairs who live together get a story** | on | | Off: time together is still counted, but nothing goes into the prompts and no story is written |
 | **First story after** | 1 h | 0.25 to 72 h | Time both must have been on screen together before their first story |
 | **A story lasts** | 6 conversations | 2 to 20 | Conversations with a model between the two; a paper plane uses the story but does not count |
-| **The prompt that writes a story** | the built-in one | | Placeholders `{speaker}` `{speakerKind}` `{speakerPersona}` `{listener}` `{listenerKind}` `{listenerPersona}` `{together}` `{bond}` `{lastPlot}` `{recent}` `{length}`. The answer must have a line starting `PLOT:` and may have one starting `BOND:`. **Reset Prompt** brings the built-in one back |
+| **Each story grows from their whole history** | on | | Off: stories grow only from the bond, the last story and the last lines, as before; moments are still kept for later |
+| **Their story so far is kept to** | 80 words | 30 to 200, steps of 10 | The chronicle's length; longer remembers more and costs a little more per story |
+| **Latest moments told one by one** | 8 | 2 to 20 | Moments since the last story listed in the prompt; older ones are folded into the chronicle first |
+| **The prompt that writes a story** | the built-in one | | Placeholders `{speaker}` `{speakerKind}` `{speakerPersona}` `{listener}` `{listenerKind}` `{listenerPersona}` `{together}` `{bond}` `{lastPlot}` `{recent}` `{length}` `{today}` `{story}` `{since}` `{storyWords}`. The answer must have a line starting `PLOT:` and may have ones starting `BOND:` and `STORY:` (the chronicle rewritten). **Reset Prompt** brings the built-in one back |
 
 On the right, every pair, the longest together first: time together, conversations,
 stories so far and what they cost, the bond, and the story with its part (or the last
