@@ -321,6 +321,7 @@ public sealed partial class Colony
         var musing = mail.Musing ?? Letters.Musing(b, a, rng, History.Memory);
         mail.Note = note;
         mail.Musing = musing;
+        Shared(from, to, Core.Bonds.MomentKind.Plane, note);
         if (!Settings.TalkEnabled) return new Airmail.Phase.Reading(Elapsed, Elapsed + 3, true);
 
         var read = Letters.Reading(note, a);

@@ -338,7 +338,8 @@ tokens however long the friendship. Without a model the moments are folded into 
 chronicle plainly. Each pair's chronicle shows under it on the right (*So far: …*);
 **Reset Story** starts one pair's story over (time together stays), **Reset All
 Stories** everyone's. A pair from before storylines reads its past from the chat log
-once.
+once. Windows has the same section, settings and file since 0.42.0 (sliders for the
+two numbers).
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|

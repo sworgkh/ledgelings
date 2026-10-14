@@ -56,6 +56,7 @@ public sealed partial class Colony
                 var b = CharacterFor(receiver).Name;
                 eventText = L10n.Tr("%1$@ just walked into %2$@ and gave %2$@ a %3$@.", a, b, Gifts.Name(flower));
                 given = flower;
+                Shared(giver, receiver, Core.Bonds.MomentKind.Flower, flower);
             }
         }
         if (!Settings.TalkEnabled || !Talk(giver, receiver, eventText, given)) EndChat(giver, receiver, 2);

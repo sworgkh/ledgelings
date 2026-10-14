@@ -38,11 +38,14 @@ public sealed partial class Colony
                     BuiltIn: true);
         }).ToList();
         busy.Add(speaker); busy.Add(listener);
+        var said = lines.Select(l => new ChatLog.Line(CharacterFor(l.Who).Name, l.Text)).ToList();
         History.Record(new ChatLog.Exchange
         {
             Time = DateTimeOffset.Now, Situation = situation, Provider = AppSettings.BrainTitle(BrainKind.Script), Model = "",
-            Lines = lines.Select(l => new ChatLog.Line(CharacterFor(l.Who).Name, l.Text)).ToList(),
+            Lines = said, Plot = PlotLabel(speaker, listener),
         });
+        // Built-in talk is part of their story too: counted, and a built-in story when due.
+        Talked(a.Name, b.Name, said);
         if (IsVoiced)
         {
             _ = SayInTurns(lines, () =>

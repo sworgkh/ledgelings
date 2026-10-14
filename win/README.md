@@ -10,7 +10,7 @@ monitor, day and night, meetings with stars and flowers (the wearer trails the
 giver), talk from the built-in lines (the default: no model needed) or through
 LM Studio or OpenRouter, lines they rarely repeat, room for a thinking model,
 built-in lines when LM Studio is not running, model-only settings greyed out
-without a model, bonds and their plots, the calendar (time of day, date,
+without a model, bonds and their plots (each new story grown from the pair's whole shared history, built-in stories without a model), the calendar (time of day, date,
 holidays), paper planes, reminders delivered by plane with the paper note to
 write them on, the chat log and spend ledger, hiding in the house, imported
 creatures from the sprite kit, planting flowers where each character likes (the

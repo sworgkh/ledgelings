@@ -11,13 +11,16 @@ namespace Ledgelings.Core;
 /// <b>plot</b>: a few words of story (a rivalry, a secret, a favour owed) that
 /// colours their next few conversations, and a one-line <b>bond</b> saying how
 /// they get on. When the plot has been played out, the next one grows from the
-/// bond and from what they said lately. The prompt carries only those few
-/// words, never the whole history, so a long friendship costs no more tokens
-/// than a new one.
+/// bond, from what they said lately and from their <b>storyline</b>: a short
+/// chronicle of everything they have lived through together (talks, tea
+/// parties, flowers, paper planes, a cursor grab), rewritten with each new
+/// story to take in what happened since (<c>Bonds.Storyline.cs</c>). The prompt
+/// carries that chronicle and the latest moments, never the raw history, so a
+/// long friendship costs only a little more than a new one.
 ///
 /// Pairs are kept by character name: a rename is a new character with no past.
 /// </summary>
-public static class Bonds
+public static partial class Bonds
 {
     /// <summary>The story between two characters, and how far into it they are.</summary>
     public sealed record Plot
@@ -57,13 +60,25 @@ public static class Bonds
         public DateTimeOffset? LastAsked { get; set; }
         /// <summary>What their plots have cost, US dollars, when the server said.</summary>
         public double? Cost { get; set; }
+        /// <summary>Their story so far, a few dozen words, rewritten with each new plot.</summary>
+        public string? Chronicle { get; set; }
+        /// <summary>What they have lived through since the chronicle was last written, oldest first.</summary>
+        public List<Moment> Moments { get; set; } = new();
+        /// <summary>Everything they ever did together, counted by kind (<see cref="MomentKind"/>).</summary>
+        public Dictionary<string, int> Tally { get; set; } = new();
+        /// <summary>The first moment they shared.</summary>
+        public DateTimeOffset? Met { get; set; }
+        /// <summary>Their past in the chat log, from before moments were kept, has been read in.</summary>
+        public bool Seeded { get; set; }
 
         public Bond() { }
         public Bond(IEnumerable<string> names) { Names = names.ToList(); }
 
         public override bool Equals(object? obj) => obj is Bond o && o.Names.SequenceEqual(Names) && o.Together == Together
             && o.Talks == Talks && o.Summary == Summary && Equals(o.Plot, Plot) && o.LastPlot == LastPlot && o.Plots == Plots
-            && o.Recent.SequenceEqual(Recent) && o.LastAsked == LastAsked && o.Cost == Cost;
+            && o.Recent.SequenceEqual(Recent) && o.LastAsked == LastAsked && o.Cost == Cost
+            && o.Chronicle == Chronicle && o.Moments.SequenceEqual(Moments) && o.Met == Met && o.Seeded == Seeded
+            && o.Tally.Count == Tally.Count && Tally.All(kv => o.Tally.TryGetValue(kv.Key, out var n) && n == kv.Value);
         public override int GetHashCode() => HashCode.Combine(string.Join(" & ", Names), Together);
     }
 
@@ -75,7 +90,7 @@ public static class Bonds
     public static string Key(string a, string b) => string.Join(" & ", new[] { a, b }.OrderBy(n => n, StringComparer.Ordinal));
 
     /// <summary>Every bond, by pair.</summary>
-    public sealed class Book
+    public sealed partial class Book
     {
         public Dictionary<string, Bond> Bonds { get; set; } = new();
 
@@ -109,10 +124,12 @@ public static class Bonds
         }
 
         /// <summary>A conversation between them ended with <paramref name="lines"/> said: one more part of
-        /// the plot is told, and it is over once all its parts are.</summary>
-        public void Talked(string a, string b, IReadOnlyList<ChatLog.Line> lines)
+        /// the plot is told, and it is over once all its parts are. It is a moment of their
+        /// storyline too (<paramref name="kind"/>: <see cref="MomentKind.Tea"/> for a whole tea party).</summary>
+        public void Talked(string a, string b, IReadOnlyList<ChatLog.Line> lines, string kind = MomentKind.Talk, DateTimeOffset? at = null)
         {
             if (lines.Count == 0) return;
+            Note(a, b, new Moment(at ?? DateTimeOffset.Now, kind, lines[0].Speaker, lines[0].Text));
             Update(a, b, bond =>
             {
                 bond.Talks += 1;
@@ -131,11 +148,22 @@ public static class Bonds
             });
         }
 
-        /// <summary>The model wrote them a new story.</summary>
-        public void Begin(string a, string b, Written written, int length, DateTimeOffset now)
+        /// <summary>The model (or the built-in lines) wrote them a new story. Their storyline
+        /// takes in the moments since the last one: the model's rewrite when it sent
+        /// one (<c>STORY:</c>), else the moments folded in plainly, at most <paramref name="words"/> words.
+        /// <paramref name="keepsStory"/> false (storylines off): the chronicle is left as it was.</summary>
+        public void Begin(string a, string b, Written written, int length, DateTimeOffset now,
+                          bool keepsStory = true, int words = StoryWords)
         {
             Update(a, b, bond =>
             {
+                if (keepsStory)
+                {
+                    bond.Chronicle = written.Story is string story
+                        ? Trimmed(story, words)
+                        : Fold(bond.Chronicle, bond.Moments, bond.Names, bond.LastPlot, words);
+                    bond.Moments = new();
+                }
                 if (written.Bond is string summary) bond.Summary = summary;
                 bond.Plot = new Plot(written.Plot, length, 0, now);
                 bond.Plots += 1;
@@ -155,6 +183,18 @@ public static class Bonds
         /// <summary>Forget one pair.</summary>
         public void Forget(string key) => Bonds.Remove(key);
 
+        /// <summary>Start one pair's storyline over: no chronicle, no moments, no stories,
+        /// as if they had only just met, though their time together stays. The chat
+        /// log is not read back in again.</summary>
+        public void ResetStory(string key)
+        {
+            if (!Bonds.TryGetValue(key, out var bond)) return;
+            bond.Chronicle = null; bond.Moments = new(); bond.Tally = new(); bond.Met = null; bond.Seeded = true;
+            bond.Summary = null; bond.Plot = null; bond.LastPlot = null; bond.Plots = 0; bond.Recent = new(); bond.LastAsked = null;
+        }
+
+        public void ResetAllStories() { foreach (var key in Bonds.Keys.ToList()) ResetStory(key); }
+
         /// <summary>Pairs with the most time together first.</summary>
         public List<Bond> Closest => Bonds.Values
             .OrderByDescending(b => b.Together).ThenBy(b => string.Concat(b.Names), StringComparer.Ordinal).ToList();
@@ -166,16 +206,18 @@ public static class Bonds
 
     // MARK: Asking for a plot
 
-    /// <summary>What the model sent back: a new bond line (optional) and the plot.</summary>
-    public sealed record Written(string? Bond, string Plot);
+    /// <summary>What the model sent back: a new bond line (optional), the plot, and
+    /// their storyline rewritten to take in what happened since (optional).</summary>
+    public sealed record Written(string? Bond, string Plot, string? Story = null);
 
     public static readonly IReadOnlyList<string> Placeholders = new[]
     {
         "speaker", "speakerKind", "speakerPersona", "listener", "listenerKind", "listenerPersona",
         "together", "bond", "lastPlot", "recent", "length",
+        "today", "story", "since", "storyWords",
     };
 
-    /// <summary>The answer is about 60 tokens; the rest is room for a model that thinks first.</summary>
+    /// <summary>The answer is about 200 tokens; the rest is room for a model that thinks first.</summary>
     public const int PlotMaxTokens = 1000;
 
     /// <summary>The system side of the plot call: short, so the user prompt carries the work.</summary>
@@ -187,25 +229,47 @@ public static class Bonds
 
     /// <summary>One call, one small answer: the story for a pair's next few conversations.</summary>
     public const string EnglishPlotPrompt =
-        "Do not write their conversations. Write only the two lines described at the end.\n" +
+        "Do not write their conversations. Write only the three lines described at the end.\n" +
         "\n" +
         "Two small creatures live on the edges of a computer screen and have shared it for {together}.\n" +
         "{speaker}, {speakerKind}: {speakerPersona}\n" +
         "{listener}, {listenerKind}: {listenerPersona}\n" +
         "How they get on so far: {bond}\n" +
+        "Their story so far: {story}\n" +
         "Their last story: {lastPlot}\n" +
+        "What they have lived through since (today is {today}):\n" +
+        "{since}\n" +
         "What they said lately:\n" +
         "{recent}\n" +
         "\n" +
         "Think up what happens between them over their next {length} conversations: a small plot (a rivalry, a secret, " +
-        "a favour owed, a shared plan, a misunderstanding, a crush), true to both of them and growing from how they get on.\n" +
+        "a favour owed, a shared plan, a misunderstanding, a crush), true to both of them, growing from how they get on " +
+        "and from their story so far: it may bring back something that happened, and it never contradicts it.\n" +
         "\n" +
-        "Answer with exactly these two lines and nothing else:\n" +
+        "Answer with exactly these three lines and nothing else:\n" +
         "BOND: how they get on now, at most 15 words\n" +
-        "PLOT: the story to play out, at most 30 words";
+        "PLOT: the story to play out, at most 30 words\n" +
+        "STORY: their story so far, rewritten to take in what they have lived through since, at most {storyWords} words; " +
+        "keep what matters most from before, with dates rather than \"today\" or \"yesterday\"";
 
-    /// <summary>The values for the plot prompt. <paramref name="a"/> and <paramref name="b"/> are (name, kind, persona).</summary>
+    /// <summary>The values for the plot prompt. <paramref name="a"/> and <paramref name="b"/> are (name, kind, persona).
+    /// <paramref name="story"/>: how much of their history to tell, from the settings; null when storylines
+    /// are off, and the prompt says none is kept.</summary>
     public static Dictionary<string, string> PlotValues(Bond bond, (string Name, string Kind, string Persona) a,
+                                                        (string Name, string Kind, string Persona) b, int length,
+                                                        Telling? story = null, DateTimeOffset? now = null)
+    {
+        var at = now ?? DateTimeOffset.Now;
+        var told = story is Telling t ? History(bond, t, at) : ((string Story, string Since)?)null;
+        var values = BaseValues(bond, a, b, length);
+        values["today"] = Day(at);
+        values["story"] = told?.Story ?? L10n.Tr("(not kept)");
+        values["since"] = told?.Since ?? L10n.Tr("(not kept)");
+        values["storyWords"] = (story?.Words ?? StoryWords).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return values;
+    }
+
+    private static Dictionary<string, string> BaseValues(Bond bond, (string Name, string Kind, string Persona) a,
                                                         (string Name, string Kind, string Persona) b, int length) => new()
     {
         ["speaker"] = a.Name, ["speakerKind"] = Banter.Spoken(a.Kind), ["speakerPersona"] = Banter.Persona(a.Persona),
@@ -223,19 +287,20 @@ public static class Bonds
         var text = raw;
         var close = text.IndexOf("</think>", StringComparison.Ordinal);
         if (close >= 0) text = text[(close + "</think>".Length)..];
-        string? bond = null, plot = null;
+        var found = new Dictionary<string, string>();
         foreach (var line in text.Split('\n', '\r'))
         {
             var bare = line.Trim(' ', '\t').Trim('*', '#', '-', '_', ' ');
-            foreach (var (label, isPlot) in new[] { ("BOND:", false), ("PLOT:", true) })
+            foreach (var label in new[] { "BOND:", "PLOT:", "STORY:" })
             {
-                if (!bare.ToUpperInvariant().StartsWith(label, StringComparison.Ordinal)) continue;
-                var value = Clean(bare[label.Length..]);
-                if (value.Length == 0) continue;
-                if (isPlot) plot ??= value; else bond ??= value;
+                if (found.ContainsKey(label) || !bare.ToUpperInvariant().StartsWith(label, StringComparison.Ordinal)) continue;
+                // The storyline is longer than the other two: room for a few hundred words, trimmed later to the setting.
+                var value = Clean(bare[label.Length..], label == "STORY:" ? 2000 : 240);
+                if (value.Length > 0) found[label] = value;
             }
         }
-        return plot is null ? null : new Written(bond, plot);
+        return found.TryGetValue("PLOT:", out var plot)
+            ? new Written(found.GetValueOrDefault("BOND:"), plot, found.GetValueOrDefault("STORY:")) : null;
     }
 
     private static string Clean(string value, int maxLength = 240)

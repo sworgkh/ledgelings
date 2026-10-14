@@ -47,36 +47,67 @@ public sealed partial class Colony
     }
 
     /// <summary>A conversation between <paramref name="a"/> and <paramref name="b"/> (names) ended: count it, and ask for
-    /// their next story if they are due one.</summary>
-    private void Talked(string a, string b, IReadOnlyList<ChatLog.Line> lines)
+    /// their next story if they are due one. <paramref name="kind"/>: a tea party is one moment of its own.</summary>
+    internal void Talked(string a, string b, IReadOnlyList<ChatLog.Line> lines, string kind = Core.Bonds.MomentKind.Talk)
     {
         if (lines.Count == 0) return;
-        Bonds.Change(book => book.Talked(a, b, lines));
+        Bonds.Change(book => book.Talked(a, b, lines, kind));
         WritePlotIfDue(a, b);
     }
 
-    /// <summary>One model call, in the background, for the pair's next story; ready for
-    /// their next conversation. Recorded as <see cref="Core.Spend.Purpose.Plots"/> whatever comes back.
+    /// <summary>Something two creatures lived through together that is not a conversation
+    /// (a flower, a paper plane, a cursor grab), for their storyline.</summary>
+    internal void Shared(int i, int j, string kind, string? detail = null)
+    {
+        if (i < 0 || j < 0 || i >= creatures.Count || j >= creatures.Count || i == j) return;
+        string a = CharacterFor(i).Name, b = CharacterFor(j).Name;
+        Bonds.Change(book => book.Note(a, b, new Core.Bonds.Moment(DateTimeOffset.Now, kind, a, detail)));
+    }
+
+    /// <summary>The pair's past from before moments were kept, read from the chat log once.</summary>
+    private void SeedStoryline(string a, string b)
+    {
+        if (Bonds.Bond(a, b)?.Seeded != false) return;
+        var exchanges = Enumerable.Reverse(History.Days()).SelectMany(History.Exchanges).ToList();
+        Bonds.Change(book => book.Seed(a, b, exchanges));
+        Trace?.Invoke($"story: {Core.Bonds.Key(a, b)} seeded, {Bonds.Bond(a, b)?.Tally.Values.Sum() ?? 0} moments");
+    }
+
+    /// <summary>The pair's next story, ready for their next conversation: one model call in the
+    /// background, recorded as <see cref="Core.Spend.Purpose.Plots"/> whatever comes back; with the
+    /// built-in lines, a story from what they lived through, no call at all.
     /// <paramref name="now"/>: ask even if they have not lived together long enough (the Mac's <c>--plot</c>).</summary>
     public void WritePlotIfDue(string a, string b, bool now = false)
     {
         var key = Core.Bonds.Key(a, b);
         if (now) Bonds.Change(book => book.Update(a, b, bond => { bond.Plot = null; bond.LastAsked = null; }));
-        if (!Settings.PlotsEnabled || Settings.Brain == BrainKind.Script || plotting.Contains(key)) return;
+        if (!Settings.PlotsEnabled || plotting.Contains(key)) return;
         if (!Bonds.Book.NeedsPlot(a, b, now ? 0 : Settings.PlotAfterHours * 3600, DateTimeOffset.Now)) return;
-        if (Bonds.Bond(a, b) is not Core.Bonds.Bond bond || Settings.ChatClient() is not ChatClient service) return;
+        var telling = Settings.StoryTelling;
+        if (telling is not null) SeedStoryline(a, b);
+        if (Bonds.Bond(a, b) is not Core.Bonds.Bond bond) return;
+        if (Settings.Brain == BrainKind.Script)
+        {
+            var builtIn = Core.Bonds.BuiltInPlot(bond, DateTimeOffset.Now, rng);
+            Bonds.Change(book => book.Begin(a, b, builtIn, Settings.PlotLength, DateTimeOffset.Now,
+                                            telling is not null, telling?.Words ?? Core.Bonds.StoryWords));
+            Trace?.Invoke($"plot: {key} · built in · plot: {builtIn.Plot}");
+            return;
+        }
+        if (Settings.ChatClient() is not ChatClient service) return;
         var i = Enumerable.Range(0, creatures.Count).Cast<int?>().FirstOrDefault(k => CharacterFor(k!.Value).Name == a);
         var j = Enumerable.Range(0, creatures.Count).Cast<int?>().FirstOrDefault(k => CharacterFor(k!.Value).Name == b);
         if (i is not int ai || j is not int bj) return;
         var length = Settings.PlotLength;
-        var values = Core.Bonds.PlotValues(bond, (a, KindOf(ai), CharacterFor(ai).Persona), (b, KindOf(bj), CharacterFor(bj).Persona), length);
+        var values = Core.Bonds.PlotValues(bond, (a, KindOf(ai), CharacterFor(ai).Persona), (b, KindOf(bj), CharacterFor(bj).Persona), length,
+                                           telling, DateTimeOffset.Now);
         var prompt = Banter.Render(Settings.PlotPrompt, values);
         plotting.Add(key);
-        Trace?.Invoke($"plot: asking for {key}");
-        _ = WritePlot(service, a, b, key, prompt, length);
+        Trace?.Invoke($"plot: asking for {key}, {prompt.Length / 4} tokens or so");
+        _ = WritePlot(service, a, b, key, prompt, length, telling);
     }
 
-    private async Task WritePlot(ChatClient service, string a, string b, string key, string prompt, int length)
+    private async Task WritePlot(ChatClient service, string a, string b, string key, string prompt, int length, Core.Bonds.Telling? telling)
     {
         double? cost = null;
         Core.Bonds.Written? written = null;
@@ -103,12 +134,12 @@ public sealed partial class Colony
         Bonds.Change(book =>
         {
             book.Asked(a, b, at, cost);
-            if (written is not null) book.Begin(a, b, written, length, at);
+            if (written is not null) book.Begin(a, b, written, length, at, telling is not null, telling?.Words ?? Core.Bonds.StoryWords);
         });
         if (written is not null)
         {
             TalkStatus = L10n.Tr("%@ and %@: %@", a, b, written.Plot);
-            Trace?.Invoke($"plot: {key} · bond: {written.Bond ?? "-"} · plot: {written.Plot}");
+            Trace?.Invoke($"plot: {key} · bond: {written.Bond ?? "-"} · plot: {written.Plot} · story: {written.Story ?? "(folded)"}");
         }
     }
 }
