@@ -264,6 +264,8 @@ choose. The form is kept (`spriteKitForm`) until **Clear**.
 How a picture is read, the text format and what a species can declare are in
 [SPRITES.md](SPRITES.md).
 
+On Windows the tab is one column, in the same order: the colour is a switch and a swatch that opens the colour dialog, **Show** unfolds the prompt under the buttons, and **Copy Images** copies the two files as Explorer does. The pictures are the same bytes as the Mac's.
+
 ## Talk tab
 
 ### Talking

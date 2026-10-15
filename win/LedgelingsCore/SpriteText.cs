@@ -3,8 +3,9 @@ using System.Globalization;
 namespace Ledgelings.Core;
 
 /// <summary>
-/// A creature written as letters: nine 32×32 grids, one per pose, which is
-/// what a chat model can produce when asked. This turns such text into the
+/// A creature written as letters: nine 32×32 grids, one per pose, for editing a
+/// creature by hand in a text editor. (The sprite kit asks image models for a
+/// picture instead: <see cref="SpriteKit"/>.) This turns such text into the
 /// same sheet layout the built-in creature uses (poses in columns, eye
 /// variants in rows), with the real palette, so recolouring and blinking work
 /// on an imported creature exactly as on the built-in one.
@@ -30,7 +31,7 @@ public static partial class SpriteText
             ["land"] = (new[] { "land" }, 1, true),
             ["sleep"] = (new[] { "sleep-0", "sleep-1" }, 0.8, true),
         };
-    /// <summary>Where the person writes what they want, in the prompt; in the current language.</summary>
+    /// <summary>What the kit's prompt says when the form has no description yet; in the current language.</summary>
     public static string DescribePlaceholder => L10n.Tr("<describe your creature here>");
 
     public enum Ink { Clear, Outline, Body, Light, Shade, Eye, Black }

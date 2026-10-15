@@ -1745,8 +1745,11 @@ Three import routes:
   2. *Patches*: 8-connected painted pixels; specks under `w·h/50000` pixels
      and lines (one side under a twelfth of the other) are dropped. Patches
      within a tenth of a big patch's size of each other are one creature.
-  3. *Creatures*: groups under a fifth of the median of the nine biggest, or
-     longer than 4× their width (words, labels), are dropped. Fewer than nine
+  3. *Creatures*: a group made mostly of small separate patches (its biggest
+     patch under half its pixels: the letters of a word), one whose longer side
+     is under a 33rd of the picture's, one under a fifth of the median of the
+     nine biggest, or one longer than 4× its width (labels) is dropped. An empty
+     template is refused, not read as nine words. Fewer than nine
      left is refused (`found N creatures in the picture, not 9`). The rest are
      read top row first, left to right (a row is everything within half a
      creature's height), and the first nine are the poses in order: one row,
@@ -1811,6 +1814,12 @@ The **sprite kit** (right column) makes a new creature with an image model:
   Images** puts both on the clipboard as files, as Finder copies them.
 - **Import…** takes the model's picture (or a text sheet) with the form's name,
   kind, colour and cast, as above.
+
+Windows has the same form, pictures (the same bytes: both test the SHA-256 of
+their RGBA), prompt, import and Refine with AI, in its one-column tab: the colour
+is a switch and a swatch that opens the colour dialog, **Show** unfolds the prompt
+under the buttons, and **Copy Images** puts the two files on the clipboard as
+Explorer copies them.
 
 ### 9.2 Recolouring
 

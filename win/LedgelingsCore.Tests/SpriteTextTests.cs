@@ -165,7 +165,6 @@ public class SpriteTextTests
         Assert.Null(SpriteText.Parse(Text()).Colour);
         Assert.Null(SpriteText.Atlas("boxy")["colour"]);
         Assert.Throws<SpriteText.ParseException>(() => SpriteText.Parse("name: pig\ncolour: pinkish\n" + Text(name: "pig")));
-        Assert.Contains("colour:", SpriteText.Prompt(Array.Empty<string>()));
     }
 
     [Fact]
@@ -174,15 +173,5 @@ public class SpriteTextTests
         var sheet = SpriteText.Parse(Text());
         Assert.True(sheet.Kind == null && sheet.Cast.Count == 0);
         Assert.Null(SpriteText.Atlas("boxy")["kind"]);
-    }
-
-    [Fact]
-    public void ThePromptCarriesTheRulesAndTheExample()
-    {
-        var prompt = SpriteText.Prompt(new[] { "....", "..o." });
-        Assert.True(prompt.Contains("pose: idle") && prompt.Contains("32") && prompt.Contains("..o."));
-        Assert.Contains(SpriteText.DescribePlaceholder, prompt);
-        Assert.True(prompt.Contains("kind:") && prompt.Contains("character:"));
-        foreach (var pose in SpriteText.Poses) Assert.Contains(pose, prompt);
     }
 }

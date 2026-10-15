@@ -42,7 +42,10 @@ extension SpriteKit {
         }
         // How far apart two patches may be and still be one creature: a tenth of a big patch's size.
         let big = found.sorted { $0.count > $1.count }.prefix(SpriteText.poses.count).map { max($0.w, $0.h) }.sorted()
-        var groups = merged(found, margin: max(1, median(big) / 10))
+        // A word is many small letters; a creature is one big patch with a few small ones (feet, a shine).
+        // A creature is not a speck beside the picture (a lone letter of a label): at least a 33rd of its longer side.
+        let least = max(w, h) / 33
+        var groups = merged(found, margin: max(1, median(big) / 10)).filter { $0.largest * 2 >= $0.count && max($0.w, $0.h) >= least }
         let reference = median(Array(groups.map(\.count).sorted(by: >).prefix(SpriteText.poses.count)))
         groups = groups.filter { g in
             g.count * 5 >= reference && max(g.w, g.h) <= 4 * min(g.w, g.h) // labels, words and specks
@@ -98,6 +101,8 @@ extension SpriteKit {
 
     struct Blob: Equatable {
         var x: Int, y: Int, w: Int, h: Int, count: Int
+        /// Pixels in its biggest single patch.
+        var largest: Int
         var midX: Double { Double(x) + Double(w) / 2 }
         var midY: Double { Double(y) + Double(h) / 2 }
     }
@@ -127,7 +132,7 @@ extension SpriteKit {
                     }
                 }
             }
-            if n >= speck { out.append(Blob(x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, count: n)) }
+            if n >= speck { out.append(Blob(x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, count: n, largest: n)) }
         }
         return out
     }
@@ -146,7 +151,7 @@ extension SpriteKit {
                     guard !apart else { continue }
                     let x0 = min(p.x, q.x), y0 = min(p.y, q.y)
                     let x1 = max(p.x + p.w, q.x + q.w), y1 = max(p.y + p.h, q.y + q.h)
-                    groups[a] = Blob(x: x0, y: y0, w: x1 - x0, h: y1 - y0, count: p.count + q.count)
+                    groups[a] = Blob(x: x0, y: y0, w: x1 - x0, h: y1 - y0, count: p.count + q.count, largest: max(p.largest, q.largest))
                     groups.remove(at: b)
                     changed = true
                     break outer

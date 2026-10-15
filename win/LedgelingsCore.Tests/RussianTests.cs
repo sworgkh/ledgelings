@@ -94,6 +94,9 @@ public class RussianTests
         ("teaReply", Tea.EnglishReplyPrompt, () => Tea.ReplyPrompt),
         ("complaint", Complaints.EnglishPrompt, () => Complaints.Prompt),
         ("reminder", Reminders.EnglishNotePrompt, () => Reminders.NotePrompt),
+        ("spriteImage", SpriteKit.EnglishImagePrompt, () => SpriteKit.ImagePromptTemplate(Languages.Current)),
+        ("spriteRefine", SpriteKit.EnglishRefinePrompt, () => SpriteKit.RefinePromptTemplate(Languages.Current)),
+        ("spriteRefineSystem", SpriteKit.EnglishRefineSystem, () => SpriteKit.RefineSystem),
     }.Select(p => new object[] { p.Key, p.English, p.Current });
 
     [Theory]
@@ -478,15 +481,18 @@ public class RussianTests
     }
 
     [Fact]
-    public void TheSpritePromptKeepsTheFormat()
+    public void TheSpritePromptKeepsTheNamesThePicturesCarry()
     {
-        var english = En(() => SpriteText.Prompt(new[] { "..o." }));
-        var russian = Ru_(() => SpriteText.Prompt(new[] { "..o." }));
-        Assert.NotEqual(english, russian);
-        foreach (var key in new[] { "name:", "kind:", "colour:", "character:", "pose: idle", "pose: walk-0", ". o b l s k x" }) Assert.Contains(key, russian);
+        var form = new SpriteKit.Form();
+        var english = SpriteKit.ImagePrompt(form, Language.English);
+        var russian = SpriteKit.ImagePrompt(form, Language.Russian);
+        Assert.True(english != russian && Cyrillic(russian));
+        foreach (var key in SpriteKit.AttachmentNames.Concat(new[] { "#FF00FF", "walk-0", "sleep-1" })) Assert.Contains(key, russian);
         Assert.Contains(string.Join(", ", SpriteText.Poses), russian);
         Assert.Contains(Ru_(() => SpriteText.DescribePlaceholder), russian);
         Assert.True(Cyrillic(Ru_(() => SpriteText.DescribePlaceholder)));
+        var e = Assert.Throws<SpriteKit.ReadException>(() => Ru_(() => SpriteKit.Read(SpriteKit.TemplateImage())));
+        Assert.True(Cyrillic(e.Message), e.Message);
     }
 
     [Fact]

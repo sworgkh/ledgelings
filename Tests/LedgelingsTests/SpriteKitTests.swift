@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import LedgelingsCore
 import Testing
@@ -121,6 +122,16 @@ import Testing
         #expect(differ == blockyPixels * 36)
     }
 
+    /// The Windows app draws the same pictures; both test the bytes against these.
+    static let templateSHA = "18203cf4dcf942af7279f82ec25477c37741a7e02bf9e367901bd459a3150535"
+    static let posesSHA = "aab71e929bb733b44e4e7e19bb05c7574fb2df8e68407704d28459580d0d6589"
+    static func sha(_ image: SpriteText.Image) -> String { SHA256.hash(data: Data(image.rgba)).map { String(format: "%02x", $0) }.joined() }
+
+    @Test func thePicturesAreTheSameBytesTheWindowsAppDraws() {
+        #expect(Self.sha(SpriteKit.templateImage()) == Self.templateSHA)
+        #expect(Self.sha(SpriteKit.posesImage(Self.blocky)) == Self.posesSHA)
+    }
+
     @Test func thePicturesReadBackAsBlockyHimself() throws {
         let reading = try SpriteKit.read(SpriteKit.posesImage(Self.blocky))
         #expect(Self.agreement(reading).values.allSatisfy { $0 == 1024 }, "\(Self.agreement(reading))")
@@ -161,9 +172,9 @@ import Testing
         var p = Paint()
         p.width = 900 // the last four poses fall off the edge
         #expect(throws: SpriteKit.ReadError.self) { try SpriteKit.read(Self.painted(p)) }
-        do { _ = try SpriteKit.read(SpriteKit.templateImage()) } catch {
-            #expect("\(error)".contains("found 0 creatures"))
-        }
+        // The empty template: its labels and title are words, not creatures.
+        #expect(throws: SpriteKit.ReadError.self) { try SpriteKit.read(SpriteKit.templateImage()) }
+        #expect(throws: SpriteKit.ReadError.self) { try SpriteKit.read(SpriteKit.posesImage(SpriteText.Image(width: 0, height: 0, rgba: []))) }
     }
 
     @Test func aModelsPictureImportsWithTheFormsNameKindColourAndCast() throws {

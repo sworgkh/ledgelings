@@ -389,7 +389,6 @@
               </ItemsControl>
               <DockPanel Margin="0,8,0,0">
                 <StackPanel Orientation="Horizontal">
-                  <Button ui:Tr.Content="Import Sheet…" Click="ImportSheet_Click" Margin="0,0,8,0"/>
                   <Button ui:Tr.Content="Open Folder" Click="OpenSpritesFolder_Click"/>
                 </StackPanel>
                 <TextBlock x:Name="SpriteStatus" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="Gray" TextWrapping="Wrap" FontSize="11"/>
@@ -397,16 +396,61 @@
               <TextBlock x:Name="SpritesFooter" Style="{StaticResource Footer}"/>
             </StackPanel>
           </GroupBox>
-          <GroupBox ui:Tr.Header="Sprite kit">
+          <GroupBox ui:Tr.Header="Sprite kit: the new creature">
             <StackPanel>
-              <TextBlock TextWrapping="Wrap" ui:Tr.Text="Copy the prompt, paste it into any chat model, replace the placeholder with a description of the creature you want, and save the model's answer as a .txt file. Then Import Sheet…"/>
-              <StackPanel Orientation="Horizontal" Margin="0,8">
-                <Button x:Name="CopyPrompt" ui:Tr.Content="Copy Prompt" Click="CopyPrompt_Click"/>
-                <Button ui:Tr.Content="Save Example Sheet…" Click="SaveExample_Click" Margin="8,0,0,0"/>
-                <Button ui:Tr.Content="Save PNG Template…" Click="SaveTemplate_Click" Margin="8,0,0,0"/>
-              </StackPanel>
-              <TextBox x:Name="PromptBox" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas" FontSize="11" Height="220" VerticalScrollBarVisibility="Auto"/>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import."/>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Style="{StaticResource RowLabel}" ui:Tr.Text="What it is"/>
+                <TextBox Grid.Row="0" Grid.Column="1" x:Name="KitKind" Margin="0,2" TextWrapping="Wrap" AcceptsReturn="False" TextChanged="KitField_Changed"/>
+                <TextBlock Grid.Row="1" Style="{StaticResource RowLabel}" ui:Tr.Text="Name"/>
+                <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,2">
+                  <Button DockPanel.Dock="Right" x:Name="KitSwatch" Width="44" Margin="8,0,0,0" Click="KitColour_Click" ui:Tr.ToolTip="Body colour"/>
+                  <CheckBox DockPanel.Dock="Right" x:Name="KitOwnColour" ui:Tr.Content="Own colour" Margin="12,0,0,0" VerticalAlignment="Center" Click="KitOwnColour_Click"/>
+                  <TextBox x:Name="KitName" TextChanged="KitField_Changed"/>
+                </DockPanel>
+                <TextBlock Grid.Row="2" Style="{StaticResource RowLabel}" x:Name="KitCharacter1Label"/>
+                <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,2">
+                  <TextBox DockPanel.Dock="Left" x:Name="KitCast0Name" Width="120" Margin="0,0,8,0" TextChanged="KitField_Changed"/>
+                  <TextBox x:Name="KitCast0Persona" TextChanged="KitField_Changed"/>
+                </DockPanel>
+                <TextBlock Grid.Row="3" Style="{StaticResource RowLabel}" x:Name="KitCharacter2Label"/>
+                <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,2">
+                  <TextBox DockPanel.Dock="Left" x:Name="KitCast1Name" Width="120" Margin="0,0,8,0" TextChanged="KitField_Changed"/>
+                  <TextBox x:Name="KitCast1Persona" TextChanged="KitField_Changed"/>
+                </DockPanel>
+                <TextBlock Grid.Row="4" Style="{StaticResource RowLabel}" x:Name="KitCharacter3Label"/>
+                <DockPanel Grid.Row="4" Grid.Column="1" Margin="0,2">
+                  <TextBox DockPanel.Dock="Left" x:Name="KitCast2Name" Width="120" Margin="0,0,8,0" TextChanged="KitField_Changed"/>
+                  <TextBox x:Name="KitCast2Persona" TextChanged="KitField_Changed"/>
+                </DockPanel>
+              </Grid>
+              <DockPanel Margin="0,8,0,0">
+                <Button DockPanel.Dock="Right" ui:Tr.Content="Clear" Click="KitClear_Click"/>
+                <Button DockPanel.Dock="Left" x:Name="KitRefine" ui:Tr.Content="Refine with AI" Click="KitRefine_Click"/>
+                <TextBlock x:Name="KitRefineNote" Margin="12,0" VerticalAlignment="Center" Foreground="Gray" TextWrapping="Wrap" FontSize="11"/>
+              </DockPanel>
+              <TextBlock x:Name="KitFormFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Ask an image model">
+            <StackPanel>
+              <Image x:Name="KitPoses" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True" Margin="0,2"/>
+              <Image x:Name="KitTemplate" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True" Margin="0,2"/>
+              <WrapPanel Margin="0,8,0,0">
+                <Button x:Name="CopyPrompt" ui:Tr.Content="Copy Prompt" Click="CopyPrompt_Click" Margin="0,0,8,4"/>
+                <ToggleButton x:Name="ShowPrompt" ui:Tr.Content="Show" Click="ShowPrompt_Click" Margin="0,0,8,4"/>
+                <Button ui:Tr.Content="Save Images…" Click="SaveImages_Click" Margin="0,0,8,4"/>
+                <Button x:Name="CopyImages" ui:Tr.Content="Copy Images" Click="CopyImages_Click" Margin="0,0,8,4"/>
+                <Button ui:Tr.Content="Import…" Click="ImportSheet_Click" Margin="0,0,8,4"/>
+              </WrapPanel>
+              <TextBox x:Name="PromptBox" IsReadOnly="True" TextWrapping="Wrap" FontSize="11" Height="220" VerticalScrollBarVisibility="Auto" Visibility="Collapsed"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Give an image model (ChatGPT, Gemini…) the prompt and both pictures, in order: 1 the poses to copy, 2 the sheet to paint on. Import… what it paints, at any size; a text sheet (.txt) imports too."/>
             </StackPanel>
           </GroupBox>
         </StackPanel>

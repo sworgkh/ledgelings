@@ -3,21 +3,11 @@ extension Strings {
     /// for a new reminder and the Creature Actions sheet.
     static let ruSettingsB: [String: String] = [
         // Sprites
-        "Import Sheet…": "Импортировать лист…",
         "Open Folder": "Открыть папку",
-        "Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in %@.":
-            "Нажмите на существо, чтобы добавить его в колонию или убрать. Первое существо носит первый выбранный облик, второе — второй и так далее, по кругу. Импортируйте текстовый лист (.txt) из набора ниже или PNG 288×96, нарисованный на пурпурном фоне по шаблону. Листы лежат в %@.",
-        "Copy the prompt, paste it into any chat model, replace the placeholder with a description of the creature you want, and save the model's answer as a .txt file. Then Import Sheet…":
-            "Скопируйте промпт, вставьте его в любую чат-модель, замените заглушку описанием нужного существа и сохраните ответ модели в файл .txt. Затем — «Импортировать лист…»",
         "Copied": "Скопировано",
         "Copy Prompt": "Скопировать промпт",
-        "Save Example Sheet…": "Сохранить пример…",
-        "Save PNG Template…": "Сохранить шаблон PNG…",
         "Sprite kit": "Набор для спрайтов",
-        "The example sheet is the built-in creature written in the same letters: a good thing to show the model, or to edit by hand. The PNG template marks the cells and the body box for an image model or a paint program; the app cuts the magenta away on import.":
-            "Пример — встроенное существо, записанное теми же буквами: его полезно показать модели или поправить вручную. Шаблон PNG размечает клетки и рамку тела для модели-художника или графического редактора; пурпурный фон приложение вырезает при импорте.",
         "Delete this imported creature": "Удалить это импортированное существо",
-        "A sprite text file from the kit, or a 288×96 PNG on magenta.": "Текстовый файл спрайта из набора или PNG 288×96 на пурпурном фоне.",
 
         // Sprites › sprite kit
         "Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. New ones come from the sprite kit. Imported creatures live in %@.":

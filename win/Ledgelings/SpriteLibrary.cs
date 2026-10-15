@@ -8,9 +8,9 @@ namespace Ledgelings;
 /// Every creature sheet the app can use: the built-in ones, plus whatever the
 /// user imported into <c>%APPDATA%\Ledgelings\sprites\&lt;name&gt;\</c>.
 ///
-/// An import takes either the text format (<see cref="SpriteText"/>) or a painted PNG in
-/// the same 288×96 layout on magenta, and writes a normal atlas (PNG + JSON)
-/// the app loads like its own.
+/// An import takes the text format (<see cref="SpriteText"/>), a PNG in the sheet's exact
+/// 288×96 layout on magenta, or any picture an image model painted from the kit
+/// (<see cref="SpriteKit.Read"/>), and writes a normal atlas (PNG + JSON) the app loads like its own.
 /// </summary>
 public sealed partial class SpriteLibrary
 {
@@ -82,9 +82,12 @@ public sealed partial class SpriteLibrary
     /// it names one, otherwise <paramref name="slot"/>, the colour of the creature's number.</summary>
     public RGB BodyColour(string name, RGB slot) => RGB.FromHex(Atlas(name)?.Info.Colour) ?? slot;
 
-    /// <summary>Import a text sheet or a painted PNG. Returns the species name.</summary>
-    public string ImportFile(string path)
+    /// <summary>Import a text sheet or a painted picture. Returns the species name. A picture says
+    /// nothing about who the creature is, so <paramref name="form"/> (the kit's) gives it a name,
+    /// kind, colour and cast; a text sheet keeps its own.</summary>
+    public string ImportFile(string path, SpriteKit.Form? form = null)
     {
+        form ??= new SpriteKit.Form();
         var ext = Path.GetExtension(path).ToLowerInvariant();
         SpriteText.Image sheet;
         string name;
@@ -92,13 +95,25 @@ public sealed partial class SpriteLibrary
         IReadOnlyList<Character> cast = Array.Empty<Character>();
         SpriteText.Tint? colour = null;
         string? sourceText = null;
-        if (ext == ".png")
+        if (ext is ".png" or ".jpg" or ".jpeg" or ".webp" or ".bmp")
         {
             SpriteText.Image raw;
             try { raw = PngIO.Read(path); }
             catch (Exception e) when (e is ArgumentException or IOException or OutOfMemoryException) { throw new ImportException(L10n.Tr("cannot read %@", Path.GetFileName(path) + ": " + e.Message)); }
-            sheet = KeyedOut(raw);
-            name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+            if (IsExactSheet(raw)) sheet = KeyedOut(raw);
+            else
+            {
+                SpriteKit.Reading reading;
+                try { reading = SpriteKit.Read(raw); }
+                catch (SpriteKit.ReadException e) { throw new ImportException(e.Message); }
+                sheet = reading.Sheet;
+                colour = reading.Colour;
+            }
+            var file = Path.GetFileNameWithoutExtension(path);
+            name = SpriteKit.SpeciesName(form.Name) ?? SpriteKit.SpeciesName(file) ?? file.ToLowerInvariant();
+            kind = form.TrimmedKind.Length == 0 ? null : form.TrimmedKind;
+            cast = form.NamedCast;
+            colour = form.Tint ?? colour;
         }
         else if (ext is ".txt" or ".md" or ".text" or "")
         {

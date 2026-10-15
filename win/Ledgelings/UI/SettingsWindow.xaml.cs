@@ -34,6 +34,7 @@ public sealed partial class SettingsWindow : Window
             if (e.PropertyName is nameof(AppSettings.Colors)) RefreshColours();
             if (e.PropertyName is nameof(AppSettings.Species)) RefreshSpecies();
             if (e.PropertyName is nameof(AppSettings.Brain)) RefreshBrain();
+            if (e.PropertyName is nameof(AppSettings.Brain) or nameof(AppSettings.VoiceEngine) or nameof(AppSettings.OpenRouterKey) or nameof(AppSettings.SpriteKitForm)) RefreshSpriteKit();
             if (e.PropertyName is nameof(AppSettings.Script)) RefreshScriptStatus();
             if (e.PropertyName is "Casts") RefreshCast();
             if (e.PropertyName is nameof(AppSettings.Language)) ShowLanguage();
@@ -50,7 +51,7 @@ public sealed partial class SettingsWindow : Window
         RefreshCastSpecies();
         InitChats();
         InitFlowers();
-        PromptBox.Text = library.Prompt;
+        InitSpriteKit();
         ShowFooters();
         LmStatus.Text = OrStatus.Text = LocalCheckStatus.Text = LoginStatus.Text = L10n.Tr("not checked");
         InitTalkExtras();
@@ -78,7 +79,8 @@ public sealed partial class SettingsWindow : Window
     private void ShowFooters()
     {
         Language = XmlLanguage.GetLanguage(Languages.Current.Culture().IetfLanguageTag);      // dates in the date picker
-        SpritesFooter.Text = L10n.Tr("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. Import a text sheet (.txt) from the kit below, or a 288×96 PNG painted on magenta from the template. Sheets live in %@.", library.Directory);
+        SpritesFooter.Text = L10n.Tr("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. New ones come from the sprite kit. Imported creatures live in %@.", library.Directory);
+        RefreshSpriteKit();
         PromptFooter.Text = L10n.Tr("Placeholders: %@. {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.",
             string.Join(" ", Banter.Placeholders.Select(p => "{" + p + "}")));
     }

@@ -112,13 +112,49 @@ public class SpriteLibraryTests : IDisposable
     }
 
     [Fact]
-    public void ThePromptShowsTheBuiltInIdlePoseAsLetters()
+    public void ThePromptFollowsTheFormAndNeverShowsLetters()
     {
         var library = Fresh();
-        var prompt = library.Prompt;
-        Assert.Contains(SpriteText.DescribePlaceholder, prompt);
+        var prompt = library.Prompt(new SpriteKit.Form { Kind = "a tall blue robot" });
+        Assert.Contains("a tall blue robot", prompt);
         var idle = SpriteText.Describe(SpriteAtlas.Named("blocky").Image(), "idle", SpriteText.Palette.Blocky);
-        Assert.Contains(string.Join("\n", idle), prompt);
-        Assert.True(idle[26].Contains('o'), "the example stands on the floor");
+        Assert.DoesNotContain(idle[5], prompt);
+    }
+
+    [Fact]
+    public void SaveImagesWritesBothAttachmentsByTheirNumbersAsTheMacDraws()
+    {
+        var library = Fresh();
+        var files = library.SaveKitImages(TempPath("kit-out-" + Guid.NewGuid()));
+        Assert.Equal(new[] { "1-poses.png", "2-template.png" }, files.Select(Path.GetFileName));
+        AssertSameImage(SpriteKit.PosesImage(SpriteAtlas.Named("blocky").Image()), PngIO.Read(files[0]));
+    }
+
+    [Fact]
+    public void AModelsPictureImportsWithTheFormsNameKindColourAndCast()
+    {
+        var library = Fresh();
+        // The poses picture, blown up off-size: what an image model hands back, near enough.
+        var file = TempPath("ChatGPT Image " + Guid.NewGuid() + ".png");
+        var poses = SpriteKit.PosesImage(SpriteAtlas.Named("blocky").Image());
+        int w = 1536, h = 256;
+        var big = new SpriteText.Image(w, h, new byte[w * h * 4]);
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+            {
+                int sx = x * poses.Width / w, sy = y * poses.Height / h;
+                Array.Copy(poses.Rgba, (sy * poses.Width + sx) * 4, big.Rgba, (y * w + x) * 4, 4);
+            }
+        PngIO.Write(big, file);
+        var form = new SpriteKit.Form
+        {
+            Kind = "a boxy moss sprite", Name = "Moss Ball", Colour = "#55aa33",
+            Cast = new[] { new Character("Fern", "A tiny, anxious girl who speaks fast."), new Character("", "") },
+        };
+        Assert.Equal("moss-ball", library.ImportFile(file, form));
+        var atlas = library.Atlas("moss-ball")!;
+        Assert.Equal("a boxy moss sprite", atlas.Info.Kind);
+        Assert.Equal("#55aa33", atlas.Info.Colour);
+        Assert.Equal(new[] { "Fern" }, atlas.Info.Cast!.Select(c => c.Name));
     }
 }
