@@ -198,7 +198,7 @@ public sealed class Shared
     public string[] BedSettleAnyone { get; init; } = Array.Empty<string>();
     public Dictionary<string, string[]> BedMovedLines { get; init; } = new();
     public string[] BedMovedAnyone { get; init; } = Array.Empty<string>();
-    /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder.</summary>
+    /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder, spriteImage, spriteRefine, spriteRefineSystem.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
     private static readonly Dictionary<Language, Shared?> loaded = new();

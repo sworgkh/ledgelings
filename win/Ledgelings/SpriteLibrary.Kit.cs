@@ -2,8 +2,8 @@ using Ledgelings.Core;
 
 namespace Ledgelings;
 
-/// <summary>The sprite kit: the prompt for a chat model, the built-in creature as text,
-/// a PNG template for image models, and the magenta key-out on the way back in.</summary>
+/// <summary>The sprite kit: the prompt for an image model, its two pictures, the built-in
+/// creature as text (for hand editing), and the magenta key-out of an exact sheet.</summary>
 public sealed partial class SpriteLibrary
 {
     /// <summary>The built-in creature written in the text format: the worked example, and a file to hand out.</summary>
@@ -24,18 +24,39 @@ public sealed partial class SpriteLibrary
         }
     }
 
-    /// <summary>What to paste into a chat model.</summary>
-    public string Prompt
+    /// <summary>What to paste into an image model, with <see cref="KitImages"/> attached.</summary>
+    public string Prompt(SpriteKit.Form form) => SpriteKit.ImagePrompt(form);
+
+    private IReadOnlyList<(string Name, SpriteText.Image Image)>? kitImages;
+
+    /// <summary>The prompt's attachments, in its order, by the file names it calls them:
+    /// the built-in creature's nine poses, and the empty template. The Mac's bytes.</summary>
+    public IReadOnlyList<(string Name, SpriteText.Image Image)> KitImages => kitImages ??= new[]
     {
-        get
+        (SpriteKit.AttachmentNames[0], SpriteKit.PosesImage(Atlas("blocky")?.Image() ?? new SpriteText.Image(0, 0, Array.Empty<byte>()))),
+        (SpriteKit.AttachmentNames[1], SpriteKit.TemplateImage()),
+    };
+
+    /// <summary>Write the attachments into <paramref name="folder"/>, overwriting earlier copies. Returns their files.</summary>
+    public IReadOnlyList<string> SaveKitImages(string folder)
+    {
+        System.IO.Directory.CreateDirectory(folder);
+        return KitImages.Select(item =>
         {
-            var blocky = Atlas("blocky");
-            var idle = blocky is null ? new List<string>() : SpriteText.Describe(blocky.Image(), "idle", SpriteText.Palette.Blocky);
-            return SpriteText.Prompt(idle);
-        }
+            var file = Path.Combine(folder, item.Name);
+            PngIO.Write(item.Image, file);
+            return file;
+        }).ToList();
     }
 
-    /// <summary>A blank 288×96 sheet on magenta with the cells and body boxes marked, for an image model or a paint program.</summary>
+    /// <summary>A sheet in the exact layout, 288×96 or a whole multiple: painted by hand, read pixel for pixel.</summary>
+    public static bool IsExactSheet(SpriteText.Image image)
+    {
+        int w = SpriteText.Poses.Count * SpriteText.Cell, h = SpriteText.Variants.Count * SpriteText.Cell;
+        return image.Width >= w && image.Width % w == 0 && image.Height % h == 0 && image.Width / w == image.Height / h;
+    }
+
+    /// <summary>A blank 288×96 sheet on magenta with the cells and body boxes marked, for a paint program.</summary>
     public SpriteText.Image TemplateImage()
     {
         int cell = SpriteText.Cell;
