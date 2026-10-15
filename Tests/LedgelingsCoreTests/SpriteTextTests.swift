@@ -132,20 +132,11 @@ import Testing
         #expect(try SpriteText.parse(Self.text()).colour == nil)
         #expect(SpriteText.atlas(name: "boxy")["colour"] == nil)
         #expect(throws: SpriteText.ParseError.self) { try SpriteText.parse("name: pig\ncolour: pinkish\n" + Self.text(name: "pig")) }
-        #expect(SpriteText.prompt(example: []).contains("colour:"))
     }
 
     @Test func aSheetWithoutKindOrCastStillParses() throws {
         let sheet = try SpriteText.parse(Self.text())
         #expect(sheet.kind == nil && sheet.cast.isEmpty)
         #expect(SpriteText.atlas(name: "boxy")["kind"] == nil)
-    }
-
-    @Test func thePromptCarriesTheRulesAndTheExample() {
-        let prompt = SpriteText.prompt(example: ["....", "..o."])
-        #expect(prompt.contains("pose: idle") && prompt.contains("32") && prompt.contains("..o."))
-        #expect(prompt.contains(SpriteText.describePlaceholder))
-        #expect(prompt.contains("kind:") && prompt.contains("character:"))
-        for pose in SpriteText.poses { #expect(prompt.contains(pose)) }
     }
 }

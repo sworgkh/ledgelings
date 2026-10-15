@@ -19,6 +19,39 @@ extension Strings {
         "Delete this imported creature": "Удалить это импортированное существо",
         "A sprite text file from the kit, or a 288×96 PNG on magenta.": "Текстовый файл спрайта из набора или PNG 288×96 на пурпурном фоне.",
 
+        // Sprites › sprite kit
+        "Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. New ones come from the sprite kit. Imported creatures live in %@.":
+            "Нажмите на существо, чтобы добавить его в колонию или убрать. Первое существо носит первый выбранный облик, второе — второй и так далее, по кругу. Новые делаются в наборе для спрайтов. Импортированные существа лежат в %@.",
+        "Sprite kit: the new creature": "Набор для спрайтов: новое существо",
+        "What it is": "Что это",
+        "What it is: a fat green frog with big eyes": "Что это: толстая зелёная лягушка с большими глазами",
+        "Name (the model chooses)": "Имя (выберет модель)",
+        "Own colour": "Свой цвет",
+        "Body colour": "Цвет тела",
+        "Character %d": "Персонаж %d",
+        "Personality": "Характер",
+        "who they are, how they sound": "какой он, как звучит",
+        "Refine with AI": "Доработать с ИИ",
+        "refined; edit anything you like": "доработано; правьте что угодно",
+        "Anything empty is the model's to choose. On import the name, colour and characters come from here; the picture gives only the looks.":
+            "Пустое выберет модель. При импорте имя, цвет и персонажи берутся отсюда, а с картинки — только внешность.",
+        "Refine with AI turns your words into a whole creature in Blocky's style, with three characters who say how they sound: one OpenRouter call with the Talk tab's model (Costs › Sprite kit: Refine with AI).":
+            "«Доработать с ИИ» превращает ваши слова в целое существо в стиле Blocky и трёх персонажей, по описанию которых слышно, как они звучат: один вызов OpenRouter моделью с вкладки «Разговоры» (Расходы › Набор для спрайтов: доработка с ИИ).",
+        "Refine with AI needs an OpenRouter key (Settings › Talk), with OpenRouter as the brain or the voice.":
+            "Для «Доработать с ИИ» нужен ключ OpenRouter (Настройки › Разговоры), с OpenRouter в роли мозга или голоса.",
+        "Ask an image model": "Попросите модель-художника",
+        "Show": "Показать",
+        "Save Images…": "Сохранить картинки…",
+        "Copy Images": "Скопировать картинки",
+        "Save Here": "Сохранить сюда",
+        "A folder for 1-poses.png and 2-template.png.": "Папка для 1-poses.png и 2-template.png.",
+        "The picture the image model painted, or a hand-written text sheet.": "Картинка, которую нарисовала модель, или текстовый лист, написанный вручную.",
+        "Give an image model (ChatGPT, Gemini…) the prompt and both pictures, in order: 1 the poses to copy, 2 the sheet to paint on. Import… what it paints, at any size; a text sheet (.txt) imports too.":
+            "Дайте модели-художнику (ChatGPT, Gemini…) промпт и обе картинки по порядку: 1 — позы, которые надо повторить, 2 — лист, на котором рисовать. Импортируйте то, что она нарисует, любого размера; текстовый лист (.txt) тоже подойдёт.",
+        "found %d creatures in the picture, not %d: it needs one per pose, apart from each other, on a plain background":
+            "на картинке найдено существ: %d, а нужно %d — по одному на позу, отдельно друг от друга, на ровном фоне",
+        "Sprite kit: Refine with AI": "Набор для спрайтов: доработка с ИИ",
+
         // Flowers
         "Flower lasts": "Цветок живёт",
         "The one with the flower follows the giver while it lasts": "Получивший цветок ходит за дарителем, пока цветок жив",

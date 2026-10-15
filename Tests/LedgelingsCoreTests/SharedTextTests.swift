@@ -52,6 +52,8 @@ import Testing
                 "planeNote": Letters.notePrompts(l), "planeReply": Letters.replyPrompts(l), "planeMusing": Letters.musingPrompts(l),
                 "teaSystem": Tea.systemPrompts(l), "teaStory": Tea.storyPrompts(l), "teaReply": Tea.replyPrompts(l),
                 "complaint": Complaints.prompts(l), "reminder": Reminders.notePrompts(l),
+                "spriteImage": SpriteKit.imagePrompts(l), "spriteRefine": SpriteKit.refinePrompts(l),
+                "spriteRefineSystem": SpriteKit.refineSystems(l),
             ],
         ]
     }

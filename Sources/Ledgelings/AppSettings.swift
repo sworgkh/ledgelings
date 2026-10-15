@@ -214,6 +214,9 @@ final class AppSettings: ObservableObject {
     @Published var bedTalk: Bool { didSet { save(bedTalk, "bedTalk") } }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
     @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
+    /// The sprite kit's form on Settings › Sprites: what the next creature is, its
+    /// name, colour and three characters. Empty fields are the model's to choose.
+    @Published var spriteKitForm: SpriteKit.Form { didSet { saveJSON(spriteKitForm, "spriteKitForm") } }
     @Published var systemPrompt: String { didSet { save(systemPrompt, "systemPrompt") } }
     @Published var linePrompt: String { didSet { save(linePrompt, "linePrompt") } }
     @Published var replyPrompt: String { didSet { save(replyPrompt, "replyPrompt") } }
@@ -469,6 +472,11 @@ final class AppSettings: ObservableObject {
             casts["blocky"] = old
         }
         self.casts = casts
+        // Empty: nothing is decided until someone types. A colour that is not hex is dropped, the cast kept to three.
+        var form = defaults.data(forKey: "spriteKitForm").flatMap { try? JSONDecoder().decode(SpriteKit.Form.self, from: $0) } ?? SpriteKit.Form()
+        if form.tint == nil { form.colour = "" }
+        form.cast = SpriteKit.Form.three(form.cast)
+        spriteKitForm = form
         voiceEnabled = defaults.object(forKey: "voiceEnabled") as? Bool ?? false
         voiceEngine = defaults.string(forKey: "voiceEngine").flatMap(VoiceEngine.init(rawValue:)) ?? .system
         voicePerCharacter = defaults.object(forKey: "voicePerCharacter") as? Bool ?? true
@@ -579,6 +587,20 @@ final class AppSettings: ObservableObject {
         }
         client.lineTokens = lineTokens
         return client
+    }
+
+    /// An OpenRouter key is saved and in use, for talk or for voice. Asked about
+    /// the brain and the voice first, so the keychain is read only by someone
+    /// who uses OpenRouter already.
+    var openRouterConnected: Bool {
+        (brain == .openRouter || voiceEngine == .openRouter) && !openRouterKey.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// What Settings › Sprites › Refine with AI asks: OpenRouter, with the Talk
+    /// tab's OpenRouter model, whichever brain is chosen. Nil without a key.
+    func refineClient() -> ChatClient? {
+        guard openRouterConnected else { return nil }
+        return .openRouter(key: openRouterKey.trimmingCharacters(in: .whitespaces), model: openRouterModel.trimmingCharacters(in: .whitespaces))
     }
 
     /// A model is chosen as the brain: LM Studio or OpenRouter. Off with the

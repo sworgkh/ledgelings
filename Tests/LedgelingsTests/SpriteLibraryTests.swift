@@ -97,12 +97,11 @@ import Testing
         #expect(library.species.count == SpriteLibrary.builtIn.count)
     }
 
-    @Test func thePromptShowsTheBuiltInIdlePoseAsLetters() {
+    @Test func thePromptFollowsTheFormAndNeverShowsLetters() {
         let library = fresh()
-        let prompt = library.prompt
-        #expect(prompt.contains(SpriteText.describePlaceholder))
+        let prompt = library.prompt(SpriteKit.Form(kind: "a tall blue robot"))
+        #expect(prompt.contains("a tall blue robot"))
         let idle = SpriteText.describe(try! SpriteAtlas(named: "blocky").image(), pose: "idle", palette: .blocky)
-        #expect(prompt.contains(idle.joined(separator: "\n")))
-        #expect(idle[26].contains("o"), "the example stands on the floor")
+        #expect(!prompt.contains(idle[5]), "no row of Blocky in letters")
     }
 }

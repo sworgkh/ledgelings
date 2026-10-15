@@ -2,20 +2,50 @@
 
 ## The sprite kit (for users)
 
-A creature is nine 32×32 poses. The app can read them as **letters**, which is
-something any chat model can write, so making a new creature is a conversation:
+A creature is nine 32×32 poses. The kit gets them painted by an **image model**
+(ChatGPT, Gemini, any model that takes pictures and paints one):
 
-1. Settings › Sprites › **Copy Prompt**.
-2. Paste it into any chat model and replace `<describe your creature here>` with
-   what you want ("a fat green frog with big eyes", "a grumpy teapot").
-3. Save the model's answer as a `.txt` file and Settings › Sprites › **Import Sheet…**.
+1. Settings › Sprites › **Sprite kit: the new creature**: say what it is in a few
+   words ("a grumpy teapot"). Name, colour and the three characters are optional;
+   anything empty is the model's to choose. With an OpenRouter key, **Refine with
+   AI** turns your words into a whole creature in Blocky's style and fills the form.
+2. **Save Images…** (or **Copy Images**) for the two pictures, and **Copy Prompt**.
+3. Paste the prompt into the image model and attach both pictures, in order:
+   - `1-poses.png`: Blocky in his nine poses, labelled, to copy in style and order;
+   - `2-template.png`: the same grid, empty, to paint on.
+4. Save the picture it sends back and **Import…** it.
 
 The new species appears as a card, joins the colony, blinks, walks, turns corners
-and takes your colours like the built-in ones. It talks as what it is, with the
-characters the model gave it. If the import is refused, the message says which pose
-and row is wrong; fix the text and import again, or ask the model to.
+and takes your colours like the built-in ones. It is called what the form says,
+looks like what the picture shows, and talks as the form's description with the
+form's characters.
 
-### The text format
+![Picture 1, the poses](sprite-kit/1-poses.png)
+![Picture 2, the template](sprite-kit/2-template.png)
+
+### What the import forgives
+
+Image models never paint exactly what was asked. The import does not trust the
+picture's size or layout:
+
+- **Any size and shape**: a 1728×288 strip, a 1024×1024 square, 1536×1024.
+- **Any reading order**: one row, three rows, a 3×3 grid; read top row first, left to right.
+- **Any plain paper**: magenta, white, a checkerboard, transparency. The template's
+  lines and the magenta fringe round the creatures go with it.
+- **Blur, anti-aliasing and noise**: each sprite pixel takes the colour most of the
+  middle of its square has.
+- **Labels and specks**: small patches and long words are left out.
+
+Then every creature is snapped to the house style: a 1-pixel outline all round,
+black eyes that blink, the light, shade and body colours. If fewer than nine
+creatures are found, the import says how many it saw: ask the model to keep them
+apart, one per cell, on plain magenta.
+
+### The text format, for editing by hand
+
+The kit's prompt never asks for this (models shown letters answer in letters,
+not pictures), but **Import…** still reads it, for anyone who would rather type a
+creature than paint one.
 
 ```
 name: pip
@@ -57,22 +87,21 @@ What the header lines do:
 - `character` lines are the species' cast; the prompt asks for three. Without any,
   the species gets one placeholder character you can edit in Settings › Talk.
 
-### Painting instead
+### Painting by hand
 
-**Save PNG Template…** writes a 288×96 sheet on magenta (`#ff00ff`) with every cell
-and body box marked: nine pose columns, three eye rows (open, half, closed). Paint
-on it, or hand it to an image model, and import the PNG. Magenta becomes
-transparent, alpha is hardened to 1 bit, and a sheet painted at 2× or 3× is sampled
-down. Use the four palette colours (body `#ff8a3d`, light `#ffb27a`, shade
-`#d66220`, outline `#3b1f0f`) for the body if you want recolouring to work; any
-other colour is drawn as painted.
+Paint on `2-template.png` in any paint program and import it like a model's
+picture. Or paint a sheet in the exact layout, 288×96 on magenta (`#ff00ff`): nine
+pose columns, three eye rows (open, half, closed), or a whole multiple of that
+size. That one is read pixel for pixel, colours as painted: use the four palette
+colours (body `#ff8a3d`, light `#ffb27a`, shade `#d66220`, outline `#3b1f0f`) for
+the body if you want recolouring to work.
 
 ### Where they live
 
 An imported creature becomes a normal atlas, `<name>.png` + `<name>.json`, in the
 app's sprites folder (`~/Library/Application Support/Ledgelings/sprites/<name>/` on
 macOS, `%APPDATA%\Ledgelings\sprites\<name>\` on Windows), with the original `.txt`
-beside it. **Open Folder** in Settings › Sprites takes you there. Copy a folder to
+beside it when it came from one. **Open Folder** in Settings › Sprites takes you there. Copy a folder to
 another machine, of either platform, and it works there too.
 
 ## spritetool (for the built-in art)

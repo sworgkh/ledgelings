@@ -34,7 +34,7 @@ import Testing
     @Test func pastedPromptsFollowTheLanguage() {
         Language.$override.withValue(.russian) {
             #expect(Script.agentPrompt(cast: []).contains(/[а-яё]/))
-            #expect(SpriteText.prompt(example: ["...."]).contains(/[а-яё]/))
+            #expect(SpriteKit.imagePrompt(SpriteKit.Form()).contains(/[а-яё]/))
         }
         Language.$override.withValue(.english) {
             #expect(!Script.agentPrompt(cast: []).contains(/[а-яё]/))

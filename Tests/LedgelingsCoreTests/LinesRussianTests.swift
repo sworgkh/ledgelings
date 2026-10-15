@@ -138,15 +138,15 @@ import Testing
         }
     }
 
-    @Test func theSpritePromptKeepsTheFormat() {
-        let english = Language.$override.withValue(.english) { SpriteText.prompt(example: ["..o."]) }
-        let russian = Language.$override.withValue(.russian) { SpriteText.prompt(example: ["..o."]) }
-        #expect(russian != english)
-        for key in ["name:", "kind:", "colour:", "character:", "pose: idle", "pose: walk-0", ". o b l s k x"] {
-            #expect(russian.contains(key), "\(key)")
-        }
+    @Test func theSpritePromptKeepsTheNamesThePicturesCarry() {
+        let form = SpriteKit.Form(kind: "", name: "", colour: "")
+        let english = SpriteKit.imagePrompt(form, language: .english)
+        let russian = SpriteKit.imagePrompt(form, language: .russian)
+        #expect(russian != english && russian.contains(/[а-яё]/))
+        for key in SpriteKit.attachmentNames + ["#FF00FF", "walk-0", "sleep-1"] { #expect(russian.contains(key), "\(key)") }
         #expect(russian.contains(SpriteText.poses.joined(separator: ", ")))
         #expect(Language.$override.withValue(.russian) { russian.contains(SpriteText.describePlaceholder) })
+        #expect(SpriteKit.refinePrompt(form, language: .russian).contains("\"characters\""), "the JSON keys stay English")
     }
 }
 
