@@ -28,13 +28,19 @@ final class ActionsController {
         model.flip = { [weak self] in self?.flip($0) }
         model.open = { [weak self] in self?.follow($0) }
         model.hide = { [weak self] in self?.hide(minutes: $0) }
+        model.play = { [weak self] in self?.play($0) }
     }
+
+    /// Which page is showing.
+    var page: ActionsPage { model.page }
 
     /// Whether the sheet is on screen.
     var isUp: Bool { window != nil }
 
-    func show() {
+    /// `page`: the sheet, or straight to its Activities page (the menu's Activities…).
+    func show(page: ActionsPage = .main) {
         NSApplication.shared.activate(ignoringOtherApps: true)
+        model.page = page
         if let window { window.makeKeyAndOrderFront(nil); return }
         let made = NoteWindow(size: Self.size)
         model.keeper = colony()?.noteKeeper()
@@ -72,6 +78,8 @@ final class ActionsController {
         s.talkOn = settings.talkEnabled
         s.voiceOn = settings.voiceEnabled
         s.revengeOn = settings.revengeEnabled
+        s.playOn = settings.playEnabled
+        s.playsOff = Set(Plays.Kind.allCases.filter { !settings.playEnabled || !settings.enabledPlays.contains($0) })
         s.mood = settings.cursorMood
         s.language = settings.language
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
@@ -85,6 +93,7 @@ final class ActionsController {
         s.teaEnabled = settings.teaPartiesEnabled
         s.teaOn = colony.teaParty != nil || colony.teaInvite != nil
         s.planeInAir = colony.airmail != nil
+        s.playing = colony.play != nil
         s.planted = colony.garden.beds.count
         s.hiding = colony.isHiding
         s.hideLeft = colony.isHiding ? Int(colony.hideout.remaining(at: colony.elapsed).rounded(.up)) : 0
@@ -141,6 +150,7 @@ final class ActionsController {
         case .talk: settings.talkEnabled.toggle()
         case .voice: settings.voiceEnabled.toggle()
         case .revenge: settings.revengeEnabled.toggle()
+        case .play: settings.playEnabled.toggle()
         case .cursor: settings.cursorMood = Self.next(after: settings.cursorMood)
         case .language: settings.language = Self.next(after: settings.language)
         }
@@ -158,6 +168,12 @@ final class ActionsController {
     private func follow(_ link: ActionsLink) {
         dismiss()
         open(link)
+    }
+
+    /// Play now, from the Activities page: the game starts, or the line says why not.
+    private func play(_ kind: Plays.Kind) {
+        guard let colony = colony() else { return }
+        after(colony.startPlay(kind) ? tr("Off they go: %@.", kind.title) : tr("No game: %@.", colony.talkStatus))
     }
 
     private func hide(minutes: Double?) {
@@ -233,6 +249,10 @@ struct ActionsState: Equatable {
     var talkOn = true
     var voiceOn = false
     var revengeOn = true
+    var playOn = true
+    /// Games switched off in settings (all of them while play is off).
+    var playsOff: Set<Plays.Kind> = []
+    var playing = false
     var mood = CursorMood.bad
     var language = Language.english
 }
@@ -240,7 +260,7 @@ struct ActionsState: Equatable {
 /// The switches under the tiles: what the menu bar menu offers besides the
 /// actions, here too, so that nothing is lost when the icon is hidden.
 enum ActionsSwitch: CaseIterable {
-    case talk, voice, revenge, cursor, language
+    case talk, voice, revenge, cursor, language, play
 
     /// Its words say how it stands now.
     func title(in s: ActionsState) -> String {
@@ -248,6 +268,7 @@ enum ActionsSwitch: CaseIterable {
         case .talk: s.talkOn ? tr("TALK ON") : tr("TALK OFF")
         case .voice: s.voiceOn ? tr("VOICE ON") : tr("VOICE OFF")
         case .revenge: s.revengeOn ? tr("REVENGE ON") : tr("REVENGE OFF")
+        case .play: s.playOn ? tr("PLAY ON") : tr("PLAY OFF")
         case .cursor: tr("CURSOR: %@", s.mood.title.uppercased())
         // Under its own name, as in the menu, so whoever cannot read the current one still finds theirs.
         case .language: s.language.title.uppercased()
@@ -260,6 +281,7 @@ enum ActionsSwitch: CaseIterable {
         case .talk: s.talkOn
         case .voice: s.voiceOn
         case .revenge: s.revengeOn
+        case .play: s.playOn
         case .cursor, .language: false
         }
     }
@@ -270,6 +292,7 @@ enum ActionsSwitch: CaseIterable {
         case .talk: s.talkOn ? tr("They talk again.") : tr("They keep quiet.")
         case .voice: s.voiceOn ? tr("You hear them talk.") : tr("They talk in bubbles only.")
         case .revenge: s.revengeOn ? tr("They may grab the cursor.") : tr("They leave the cursor alone.")
+        case .play: s.playOn ? tr("They play now and then.") : tr("No more games.")
         case .cursor: tr("The cursor is: %@.", s.mood.title)
         case .language: tr("They speak %@ now.", s.language.title)
         }
@@ -286,6 +309,48 @@ enum ActionsLink: CaseIterable {
         case .chats: tr("CHATS")
         case .quit: tr("QUIT")
         }
+    }
+}
+
+/// The sheet has one inner page: the games, listed (`Plays`).
+enum ActionsPage { case main, activities }
+
+/// A game as a row of the Activities page: what it is called, a line on what
+/// happens, and the key that plays it.
+extension Plays.Kind {
+    var activityTitle: String {
+        switch self {
+        case .tag: tr("CATCH ME IF YOU CAN")
+        case .rope: tr("NINJA ROPE")
+        case .parachute: tr("PARACHUTE")
+        case .basketball: tr("BASKETBALL")
+        }
+    }
+
+    var activityLine: String {
+        switch self {
+        case .tag: tr("Two friends chase each other round the edges. A touch, and the other one is it.")
+        case .rope: tr("A hook into the ceiling, a big swing over the floor, a somersault down.")
+        case .parachute: tr("Up to the ceiling, then down slowly under a little parachute.")
+        case .basketball: tr("A hoop on the wall and a few throws; two friends take turns.")
+        }
+    }
+
+    var activityKey: Swift.Character {
+        switch self {
+        case .tag: "c"
+        case .rope: "w"
+        case .parachute: "u"
+        case .basketball: "b"
+        }
+    }
+
+    /// Why Play Now is greyed, or nil when it is not.
+    func activityDetail(in s: ActionsState) -> String? {
+        if s.hiding { return tr("they are hiding") }
+        if s.playsOff.contains(self) { return tr("off in settings") }
+        if s.playing { return tr("one at a time") }
+        return nil
     }
 }
 
@@ -365,6 +430,9 @@ final class ActionsModel: ObservableObject {
     var hide: (Double?) -> Void = { _ in }
     var flip: (ActionsSwitch) -> Void = { _ in }
     var open: (ActionsLink) -> Void = { _ in }
+    /// The main sheet, or its Activities page.
+    @Published var page = ActionsPage.main
+    var play: (Plays.Kind) -> Void = { _ in }
 }
 
 // MARK: The pictures
@@ -386,6 +454,17 @@ enum ActionIcons {
         made[.hide] = (try? SpriteAtlas(named: "house"))?.frames().frame(animation: "house", time: 0)
         made[.flowers] = (try? SpriteAtlas(named: "flowers"))?.frames().frame(animation: "poppy", time: 0)
         made[.talk] = glyph(bubble)
+        return made.compactMapValues { trimmed($0) }
+    }()
+
+    /// Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop.
+    static let games: [Plays.Kind: CGImage] = {
+        var made: [Plays.Kind: CGImage] = [:]
+        let props = (try? SpriteAtlas(named: "play"))?.frames()
+        made[.tag] = (try? SpriteAtlas(named: "blocky"))?.frames().frame(animation: "walk", time: 0)
+        made[.rope] = props?.frame(animation: "hook", time: 0)
+        made[.parachute] = props?.frame(animation: "chute", time: 0)
+        made[.basketball] = props?.frame(animation: "hoop", time: 0)
         return made.compactMapValues { trimmed($0) }
     }()
 
@@ -484,19 +563,28 @@ struct ActionsSheetView: View {
                 .offset(y: Self.headroom)
             if let face = model.keeper?.face { Peeker(face: face, sheetWidth: size.width, headroom: Self.headroom) }
             VStack(alignment: .leading, spacing: 0) {
-                Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    .padding(.bottom, 14)
-                grid.padding(.bottom, 14)
-                line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
-                switches.padding(.bottom, 12)
-                footer
+                if model.page == .activities {
+                    Text(tr("ACTIVITIES · WHAT SHOULD THEY PLAY?")).font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Self.faintInk).padding(.bottom, 14)
+                    activities.padding(.bottom, 14)
+                    line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
+                    activitiesFooter
+                } else {
+                    Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                        .padding(.bottom, 14)
+                    grid.padding(.bottom, 14)
+                    line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
+                    switches.padding(.bottom, 12)
+                    footer
+                }
             }
             .padding(.horizontal, 33)
             .padding(.top, Self.headroom + 27)
             .frame(width: size.width, alignment: .leading)
         }
         .frame(width: size.width, height: size.height, alignment: .topLeading)
-        .onExitCommand(perform: done)
+        // Esc on the inner page goes back; on the sheet it puts the sheet away.
+        .onExitCommand { if model.page == .activities { model.page = .main } else { done() } }
     }
 
     private var title: String {
@@ -573,7 +661,7 @@ struct ActionsSheetView: View {
     /// The menu's quick switches, each saying how it stands; the language sits with the links below.
     private var switches: some View {
         HStack(spacing: 6) {
-            ForEach(ActionsSwitch.allCases.filter { $0 != .language }, id: \.self) { flipped in
+            ForEach(ActionsSwitch.allCases.filter { $0 != .language && $0 != .play }, id: \.self) { flipped in
                 PixelButton(title: flipped.title(in: model.state), small: true, chosen: flipped.isOn(in: model.state)) { model.flip(flipped) }
                     .lineLimit(1).fixedSize()
             }
@@ -582,6 +670,8 @@ struct ActionsSheetView: View {
 
     private var footer: some View {
         HStack(spacing: 6) {
+            PixelButton(title: tr("ACTIVITIES…"), small: true) { model.page = .activities }
+                .keyboardShortcut("a", modifiers: [])
             PixelButton(title: ActionsSwitch.language.title(in: model.state), small: true) { model.flip(.language) }
             PixelButton(title: ActionsLink.settings.title, small: true) { model.open(.settings) }
                 .keyboardShortcut(",", modifiers: .command)
@@ -593,6 +683,64 @@ struct ActionsSheetView: View {
                 .keyboardShortcut(.cancelAction)
         }
         // Clear of the paper's folded-down corner.
+        .padding(.trailing, 24)
+    }
+}
+
+extension ActionsSheetView {
+    /// The Activities page: a row per game, its picture, name and what happens, and Play Now.
+    var activities: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(Plays.Kind.allCases, id: \.self) { activityRow($0) }
+        }
+    }
+
+    private func activityRow(_ kind: Plays.Kind) -> some View {
+        let s = model.state, why = kind.activityDetail(in: s)
+        return Button { model.play(kind) } label: {
+            HStack(spacing: 12) {
+                activityPicture(ActionIcons.games[kind]).frame(width: 64, height: 46)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(kind.activityTitle).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                    Text(kind.activityLine).font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color(cgColor: ScreenOverlay.softInk)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 6)
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(tr("PLAY NOW")).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                    Text(why ?? String(kind.activityKey).uppercased()).font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color(cgColor: ScreenOverlay.faintInk)).lineLimit(1)
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(width: ActionsController.size.width - 66, height: 58, alignment: .leading)
+        }
+        .buttonStyle(PixelTileStyle(chosen: false))
+        .keyboardShortcut(KeyEquivalent(kind.activityKey), modifiers: [])
+        .disabled(why != nil)
+        .opacity(why == nil ? 1 : 0.45)
+    }
+
+    @ViewBuilder private func activityPicture(_ image: CGImage?) -> some View {
+        if let image {
+            let scale = max(1, min(64 / CGFloat(image.width), 46 / CGFloat(image.height)).rounded(.down))
+            Image(decorative: image, scale: 1).resizable().interpolation(.none)
+                .frame(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
+        }
+    }
+
+    /// Back to the sheet, games on or off, and Done.
+    var activitiesFooter: some View {
+        HStack(spacing: 6) {
+            PixelButton(title: tr("BACK"), small: true) { model.page = .main }
+                .keyboardShortcut(.leftArrow, modifiers: [])
+            PixelButton(title: ActionsSwitch.play.title(in: model.state), small: true, chosen: ActionsSwitch.play.isOn(in: model.state)) { model.flip(.play) }
+                .lineLimit(1).fixedSize()
+            Spacer()
+            PixelButton(title: tr("DONE"), action: done)
+                .keyboardShortcut(.return, modifiers: [])
+        }
+        .padding(.top, 40)
         .padding(.trailing, 24)
     }
 }

@@ -212,6 +212,45 @@ final class AppSettings: ObservableObject {
     @Published var bedWalkDistance: Double { didSet { save(bedWalkDistance, "bedWalkDistance") } }
     /// Now and then a creature says a line as it lays its bed down, or when its bed is moved.
     @Published var bedTalk: Bool { didSet { save(bedTalk, "bedTalk") } }
+
+    // MARK: Plays
+
+    /// Average minutes between games, before close friends shorten it.
+    static let playEveryRange = 1.0...60.0
+    /// How much a close pair speeds the games up, in percent: 100 halves the wait.
+    static let playBondBoostRange = 0.0...300.0
+    /// Seconds a game of tag lasts.
+    static let tagSecondsRange = 10.0...120.0
+    /// Points per second a parachute comes down at.
+    static let parachuteFallRange = 30.0...200.0
+    /// Percent of its speed the ball keeps on each bounce.
+    static let ballBounceRange = 0.0...90.0
+    /// Throws each player has at the hoop.
+    static let basketballThrowsRange = 1...10
+    /// Now and then, and more between friends, they play: tag, a rope swing, a parachute jump, basketball.
+    @Published var playEnabled: Bool { didSet { save(playEnabled, "playEnabled") } }
+    @Published var playTagEnabled: Bool { didSet { save(playTagEnabled, "playTagEnabled") } }
+    @Published var playRopeEnabled: Bool { didSet { save(playRopeEnabled, "playRopeEnabled") } }
+    @Published var playParachuteEnabled: Bool { didSet { save(playParachuteEnabled, "playParachuteEnabled") } }
+    @Published var playBasketballEnabled: Bool { didSet { save(playBasketballEnabled, "playBasketballEnabled") } }
+    @Published var playEveryMinutes: Double { didSet { save(playEveryMinutes, "playEveryMinutes") } }
+    @Published var playBondBoost: Double { didSet { save(playBondBoost, "playBondBoost") } }
+    @Published var tagSeconds: Double { didSet { save(tagSeconds, "tagSeconds") } }
+    @Published var parachuteFallSpeed: Double { didSet { save(parachuteFallSpeed, "parachuteFallSpeed") } }
+    @Published var ballBounce: Double { didSet { save(ballBounce, "ballBounce") } }
+    @Published var basketballThrows: Int { didSet { save(basketballThrows, "basketballThrows") } }
+    /// A line as a game starts and once it is over, in the character's own voice.
+    @Published var playTalk: Bool { didSet { save(playTalk, "playTalk") } }
+
+    /// The games switched on, whether or not play itself is.
+    var enabledPlays: Set<Plays.Kind> {
+        var on: Set<Plays.Kind> = []
+        if playTagEnabled { on.insert(.tag) }
+        if playRopeEnabled { on.insert(.rope) }
+        if playParachuteEnabled { on.insert(.parachute) }
+        if playBasketballEnabled { on.insert(.basketball) }
+        return on
+    }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
     @Published var casts: [String: [Character]] { didSet { saveJSON(casts, "casts") } }
     /// The sprite kit's form on Settings › Sprites: what the next creature is, its
@@ -466,6 +505,29 @@ final class AppSettings: ObservableObject {
         let walk = defaults.object(forKey: "bedWalkDistance") as? Double ?? 2000
         bedWalkDistance = min(max(walk, Self.bedWalkRange.lowerBound), Self.bedWalkRange.upperBound)
         bedTalk = defaults.object(forKey: "bedTalk") as? Bool ?? true
+        playEnabled = defaults.object(forKey: "playEnabled") as? Bool ?? true
+        playTagEnabled = defaults.object(forKey: "playTagEnabled") as? Bool ?? true
+        playRopeEnabled = defaults.object(forKey: "playRopeEnabled") as? Bool ?? true
+        playParachuteEnabled = defaults.object(forKey: "playParachuteEnabled") as? Bool ?? true
+        playBasketballEnabled = defaults.object(forKey: "playBasketballEnabled") as? Bool ?? true
+        // Five minutes: a game now and then in a working hour, not a circus.
+        let every = defaults.object(forKey: "playEveryMinutes") as? Double ?? 5
+        playEveryMinutes = min(max(every, Self.playEveryRange.lowerBound), Self.playEveryRange.upperBound)
+        // 100 %: the closest friends play twice as often as strangers.
+        let boost = defaults.object(forKey: "playBondBoost") as? Double ?? 100
+        playBondBoost = min(max(boost, Self.playBondBoostRange.lowerBound), Self.playBondBoostRange.upperBound)
+        // Long enough for a few touches round a screen, short enough to watch to the end.
+        let tag = defaults.object(forKey: "tagSeconds") as? Double ?? 25
+        tagSeconds = min(max(tag, Self.tagSecondsRange.lowerBound), Self.tagSecondsRange.upperBound)
+        // About ten seconds down a laptop screen: slow enough to sway, quick enough to land.
+        let fall = defaults.object(forKey: "parachuteFallSpeed") as? Double ?? 70
+        parachuteFallSpeed = min(max(fall, Self.parachuteFallRange.lowerBound), Self.parachuteFallRange.upperBound)
+        // 60 %: two or three bounces, then it rolls to a stop.
+        let bounce = defaults.object(forKey: "ballBounce") as? Double ?? 60
+        ballBounce = min(max(bounce, Self.ballBounceRange.lowerBound), Self.ballBounceRange.upperBound)
+        let throwsEach = defaults.object(forKey: "basketballThrows") as? Int ?? 3
+        basketballThrows = min(max(throwsEach, Self.basketballThrowsRange.lowerBound), Self.basketballThrowsRange.upperBound)
+        playTalk = defaults.object(forKey: "playTalk") as? Bool ?? true
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
         // Before species existed, one cast served everyone: it was blocky's.
         if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {

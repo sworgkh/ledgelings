@@ -69,7 +69,7 @@ import Testing
     /// Everything the menu bar menu offers besides the actions is on the sheet too.
     @Test func theMenusSwitchesSayHowTheyStandAndTheLinksAreThere() {
         var s = ActionsState()
-        #expect(ActionsSwitch.allCases.count == 5 && ActionsLink.allCases.count == 3)
+        #expect(ActionsSwitch.allCases.count == 6 && ActionsLink.allCases.count == 3)
         #expect(ActionsSwitch.talk.title(in: s) == "TALK ON" && ActionsSwitch.talk.isOn(in: s))
         #expect(ActionsSwitch.voice.title(in: s) == "VOICE OFF" && !ActionsSwitch.voice.isOn(in: s))
         #expect(ActionsSwitch.cursor.title(in: s) == "CURSOR: A MENACE")

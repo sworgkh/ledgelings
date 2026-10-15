@@ -21,5 +21,6 @@ extension Strings {
         "revenge": ruRevenge,
         "beds": ruBeds,
         "storyline": ruStoryline,
+        "play": ruPlay,
     ]
 }

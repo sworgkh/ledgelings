@@ -118,3 +118,63 @@ public struct EdgeWorld: Equatable, Sendable {
         return loops
     }
 }
+
+// MARK: Looking up and down
+
+extension EdgeWorld {
+    /// A level stretch of an outline: a floor (walked rightwards, the screen
+    /// above it) or a ceiling (walked leftwards, the screen below), in the
+    /// same inset points as the loops.
+    public struct Level: Equatable, Sendable {
+        public var loop: Int
+        public var segment: Int
+        public var y: CGFloat
+        public var span: ClosedRange<CGFloat>
+    }
+
+    /// A wall standing at one end of a floor, going up from it.
+    public struct Wall: Equatable, Sendable {
+        public var x: CGFloat
+        /// +1 when the wall is at the floor's right end.
+        public var side: CGFloat
+        public var height: CGFloat
+    }
+
+    private func levels(rightwards: Bool) -> [Level] {
+        loops.indices.flatMap { l in
+            (0..<loops[l].segmentCount).compactMap { s -> Level? in
+                let d = loops[l].direction(ofSegment: s)
+                guard abs(d.dy) < 0.5, rightwards ? d.dx > 0 : d.dx < 0 else { return nil }
+                let a = loops[l].vertices[s], b = loops[l].vertices[(s + 1) % loops[l].vertices.count]
+                return Level(loop: l, segment: s, y: a.y, span: min(a.x, b.x)...max(a.x, b.x))
+            }
+        }
+    }
+
+    /// The floor straight below `point` (or level with it): the highest one.
+    public func floor(under point: CGPoint) -> Level? {
+        levels(rightwards: true).filter { $0.y <= point.y + 0.5 && $0.span.contains(point.x) }.max { $0.y < $1.y }
+    }
+
+    /// The ceiling straight above `point`: the lowest one.
+    public func ceiling(over point: CGPoint) -> Level? {
+        levels(rightwards: false).filter { $0.y >= point.y - 0.5 && $0.span.contains(point.x) }.min { $0.y < $1.y }
+    }
+
+    /// Every ceiling, for somewhere to jump up to.
+    public var ceilings: [Level] { levels(rightwards: false) }
+
+    /// The walls going up from either end of a floor; a step down at an end is no wall.
+    public func walls(of floor: Level) -> [Wall] {
+        let loop = loops[floor.loop], n = loop.segmentCount
+        var found: [Wall] = []
+        let next = (floor.segment + 1) % n, previous = (floor.segment + n - 1) % n
+        if loop.direction(ofSegment: next).dy > 0.5 {
+            found.append(Wall(x: floor.span.upperBound, side: 1, height: loop.length(ofSegment: next)))
+        }
+        if loop.direction(ofSegment: previous).dy < -0.5 {
+            found.append(Wall(x: floor.span.lowerBound, side: -1, height: loop.length(ofSegment: previous)))
+        }
+        return found
+    }
+}

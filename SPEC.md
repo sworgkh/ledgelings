@@ -193,11 +193,16 @@ sleeping(wakeIn?)    wakeIn is nil during the night, a countdown once day breaks
 held                 in the user's hand (§4.7)
 chatting(remaining)  stopped to talk (§4.8)
 running(to)          hurrying home along its loop (§4.9)
+playing              in a game, off its edge: put where the game says each frame (§7.10)
 ```
 
 Animation name per mode: walking→`walk`, idle→`idle`, jumping→`jump`,
 landing→`land`, sleeping→`sleep`, held→`sleep` if it was asleep when picked up
-else `idle`, chatting→`land` for the first 0.16 s then `idle`, running→`walk`.
+else `idle`, chatting→`land` for the first 0.16 s then `idle`, running→`walk`,
+playing→the game's pose. Re-steering `run` while already running keeps the stride
+(no reset). `takeOff` enters `playing` (not asleep, not held), `carry` sets its
+position, turn and pose, `touchDown` puts it on the nearest edge (standing there if
+within 2 points, else a drop as from the hand); `standStill(s)` idles s seconds.
 
 `animationTime` resets to 0 on every mode change ("enter").
 
@@ -734,7 +739,7 @@ Every model call, whether or not its line was usable, appends one record to
 model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2), `reminders`
 (a reminder's note, §7.7), `complaints` (a creature telling the user off, §4.7.1), `teaParties`
 (the stories and answers at a tea party, §7.8), `revenge`, `creatureRefine` (the sprite kit's
-Refine with AI, §9.1). Recording a call requires one. Records from
+Refine with AI, §9.1), `plays` (a game's opening line, §7.10). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -822,7 +827,8 @@ moments, empty tally, `seeded` false).
   `{time, kind, who, detail}`: `talk` (a conversation ended, model or built-in; who
   = first speaker, detail = first line), `tea` (a whole tea party), `flower` (the
   giver, the flower's id), `plane` (thrower, the note), `grab` (a cursor grab, one
-  moment with every other character on screen). Each goes on the pair's `moments`
+  moment with every other character on screen), `play` (a game for two, who started
+  it, the game, §7.10). Each goes on the pair's `moments`
   (last 20 kept) and `tally[kind] += 1`; `met` is the earliest. Recorded whatever
   the settings, so turning storylines on later has a past to use. Hunts and beds
   are per character, not per pair, and are not moments.
@@ -847,7 +853,7 @@ moments, empty tally, `seeded` false).
   oldest whole sentences (a quoted line is one sentence) until ≤ `storyWords`
   words, a single over-long sentence cut with "…". Dates, never "today".
 - **Without a model** (brain = built-in lines): when a plot is due, it is made
-  from the latest moment of the first kind present in flower, tea, plane, grab,
+  from the latest moment of the first kind present in flower, tea, play, plane, grab,
   talk ("Since Pip gave Blocky the poppy 3 days ago, Blocky has been looking for a
   gift to give back."), two wordings per kind, with when as today / yesterday /
   N days ago / N weeks ago; strangers get one of two generic plots. A pair with no
@@ -1584,6 +1590,105 @@ bed in words.
 nightfall until all are in bed, then drags the first bed it finds to the ceiling;
 each step is printed (`bed Blocky walks to crate (floor)`, `bed Morel moved на потолке`).
 
+### 7.10 Plays
+
+Now and then a creature stops walking and plays a game, the way the worms in Worms
+fool about between turns, with nobody hurt (`Plays`). One game at a time. Its players
+are put in `busy` for the whole game, so no bump, talk, tea party, plane, grab or poke
+starts with them, and they are let go at the end.
+
+**Who may play.** A creature is free to play when it is walking or idle (`isAtLeisure`),
+not busy, not expecting a plane, not wearing a flower or looking for a place to plant
+one, not walking to bed, not holding a letter, not complaining, not in the house, not
+in a conversation, not grabbing the cursor or in the hand, not a tea guest or host.
+
+**When.** With `playEnabled` on, by day, with the house in, no grab and nothing in the
+hand, a game is due `wait` seconds after the last one ended (or after start-up, or
+after `playEveryMinutes` changed):
+`wait = playEveryMinutes · 60 · U(0.6, 1.4) / (1 + playBondBoost/100 · c)`, `c` the
+closeness of the closest pair on screen. When it is due, a random free creature
+starts one (`Plays.choose`); if nobody can, the colony looks again in 30 s.
+
+**Closeness** of two characters: `min(1, max(Σ tally, talks) / 20)` (§6.5.2.1). A
+pair is **friends** at 3 shared moments (0.15). `choose(initiator, others, enabled)`:
+`others` are the other free creatures on the initiator's loop; with a friend among
+them and a pair game on, it plays with its closest friend with probability
+`min(0.85, 0.2 + 0.65 · c)` (always, when no solo game is on): tag or basketball,
+chosen evenly among those on; else a solo game (rope, parachute, basketball) evenly.
+Strangers therefore only play alone. If the chosen game has no room where they are,
+each other enabled solo game is tried in turn.
+
+**The games.** `g = 1600` points/s² throughout.
+
+| Game | Players | Where | How it goes |
+|---|---|---|---|
+| tag (`playTagEnabled`) | 2, same loop | where they are | The one who starts runs; the other is "it". Ready 1.2 s (both stand). Then the runner runs away from "it" the short way round (`run`, 130 pt/s) and "it" runs at the runner (190 pt/s). Within `half sizes` points along the loop, "it" touches: the other is "it" and stands counting 1 s (no tagging back). After `tagSeconds` both stand facing each other for 3.5 s, a drop of sweat bobbing by each head, and the last "it" has the last word |
+| rope (`playRopeEnabled`) | 1 | a floor under a ceiling | Leaps to the floor under it first if not on one. A swing: aim 0.5 s, fire the hook 0.3 s to the ceiling (the screen's top edge) ahead, reel up 0.55 s, swing, let go, fly, land (below) |
+| parachute (`playParachuteEnabled`) | 1 | a ceiling ≥ 120 pt long over a floor ≥ 200 pt below | Leaps to the ceiling (over itself if there is one, at 15–85 % of its length), hangs 0.8 s upside down, drops 0.4 s turning upright (`y = y0 − g t²/2`), the canopy opens over 0.4 s slowing it to `parachuteFallSpeed`, floats down swaying ±16 pt over 2.6 s (tilting ±0.14 rad), lands, the canopy folds away over 0.7 s |
+| basketball (`playBasketballEnabled`) | 1, or 2 friends taking turns | a floor ≥ 260 pt with a wall rising from an end | A hoop on the wall further from the initiator; `basketballThrows` throws each |
+
+**Rope.** Planned from the creature's centre `P` on a floor running `[a, b]`, under a
+ceiling at `Y` (the screen edge): `H = Y − P.y`, rope length `L = H − 2.5 · half size`
+(at least 60), swinging toward the floor's middle if there is room, else the other way.
+The start angle θ from straight down is the steepest of 45°, 40° … 20° for which
+`H · tan θ + reach + 10` fits between `P` and that end of the floor, `reach` being how
+far past the hook it carries: to where it lets go (`0.55 θ` the other side, `L sin`)
+plus its flight from there to the floor. No angle fits either way: no rope. The hook
+is at `(P.x ± H tan θ, Y)`. Reeled in, it hangs `L` from the hook at θ; it swings as a
+pendulum (`ω' = −(g/L) sin θ`, stepped at 1/240 s), drawn turned by θ; going out the
+far side past `0.55 θ` it lets go with the pendulum's velocity and flies under `g`,
+turning a whole somersault forwards by the time it is back at floor height, held
+inside `[a, b]`, then stands 1 s.
+
+**Basketball.** The hoop (`play` sheet `hoop`, mirrored on a left wall) hangs with its
+cell's wall side on the screen's wall, its rim `min(max(0.45 · wall height, 90), 240)`
+points above the screen's floor, drawn at the players' mean size. In sheet pixels its
+rim runs along row 14 from column 8 to 25 (`Plays.Props`): its middle 15 pixels from
+the wall, half-width 9; the ball's radius is 5. Each turn the thrower runs (2.2 × its
+walking speed) to 150–380 points from the wall, faces it, squats (`land`, 0.35 s) and
+throws (`jump`, 0.3 s) from `half size · (0.4 toward the wall, 1.1 up)` of its centre,
+aimed (`Ball.aim`) to peak 50–150 points above the rim and come down through its
+middle; one throw in two (`makeChance`) has its sideways speed × 0.8–0.9 or 1.1–1.2.
+The ball falls under `g`, bounces off the floor (keeping `ballBounce` % of its speed,
+× 0.9 sideways; settled below 30 pt/s up), off the wall the hoop hangs on, the court's
+ends and the rim's front end (a point), and is **in** when it crosses the rim's top
+going down within `half-width − 0.4 · radius` of its middle (stars at the rim, the
+net swishes 0.5 s). It fades 0.5 s after it rests or 5 s after the throw; then the
+next throw, the players alternating. The one who scored most has the last word.
+
+**Breaking off.** A player picked up, startled into a jump, asleep or chatting; the
+house coming out; play turned off; the screens changing; a player removed: the game
+ends at once, anyone in the air drops to the nearest edge, everyone stands 0.6 s and
+walks on. Getting into place (leaping) gives up after 6 s. Players are in the
+`playing` mode (§4.2) while off their edge, so the cursor does not startle them and
+they cannot be picked up; running (tag) also ignores the cursor.
+
+**Words.** With `playTalk` and `talkEnabled` on and the voice free: whoever starts
+says a start line as the game begins, and at the end someone has the last word: a
+built-in `done` line (`Plays+Lines.swift`: for each built-in character one start line
+per game, `{other}` in tag's being the one who is "it", and two `done` lines, in its
+voice; `anyone` lines for others; Russian in `Plays+Russian.swift`, exported to
+`l10n/ru.json` under `plays`). With a model (brain not built-in) the start line is one
+call, `Plays.lineSystemPrompt` + `Plays.linePrompt` (`{speaker}`, `{speakerKind}`,
+`{speakerPersona}`, `{play}` the game's title, `{others}` " with <name>" or "",
+`{situation}` the almanac, time of day and where each player is), recorded with purpose
+`plays` whatever comes back; empty or failed, the built-in line. Every line goes to the
+chat log (with its cost).
+
+**Their story.** A pair game that ends normally is a `play` moment of the pair's
+storyline (§6.5.2.1), detail = the game (`tag`, `basketball`).
+
+**Drawn** (`play` sheet, §9.1), all props the same for every species: the hook at the
+rope's end turned along it, the rope as `rope` links every 2 sheet pixels from 0.8 of
+a half size above the creature's centre to 3 sheet pixels short of the hook; the
+canopy (`chute`) over the head at `size · open`, turned with the creature (its bubble
+floats that much higher); the hoop and ball; a sweat `drop` after tag. Props are drawn
+behind the creatures, the ball in front.
+
+`--play-film out.mp4 [tag|rope|parachute|basketball]` films each game (or one)
+offscreen with four creatures, the first two old friends, printing each step
+(`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`).
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -1681,6 +1786,7 @@ Shipped sheets:
 | flowers | 160×16 | 16×16 | [1,1,14,15] | ten flowers, one frame each | one per flower |
 | house | 68×60 | 68×60 | [2,2,64,58] | `house` | house |
 | tea | 72×28 | 36×28 | whole | `tea-0`, `tea-1`: the table, its steam low and risen | steam 2 frames 2 fps loop |
+| play | 256×28 | 32×28 | whole | `ball-0`, `ball-1`, `hoop`, `hoop-swish`, `chute`, `hook`, `rope`, `drop` (§7.10) | ball 2 frames 8 fps loop; hoop; swish; chute; hook; rope; drop |
 
 Art rules for any new creature sheet: drawn **standing on a floor, facing
 right**, body **centred in its cell** (rotation is about the cell centre), eyes
@@ -1969,6 +2075,10 @@ falls through to whatever is underneath.
 | Menu: `Next: <text>, <when>` | shown while a reminder waits (with `(off)` when reminders are off); the Reminders tab |
 | Click a reminder's open letter | folds it away (§7.7) |
 | Sheet: Put Them to Sleep / Wake Them Up (S) | skip to the next phase; shows `dusk in m:ss` / `dawn in m:ss`; greyed when night = 0 |
+| Sheet: Activities… (A) | the sheet's inner page, the games (below) |
+| Activities: Catch Me If You Can (C), Ninja Rope (W), Parachute (U), Basketball (B) | that game now (§7.10): tag with the closest pair on one outline; basketball with the starter's closest friend, if it has one. Greyed, saying why, while play or that game is off, while a game is on, and while they hide |
+| Activities: Back (← or Esc), Play On/Off, Done | back to the sheet; `playEnabled`; the sheet put away |
+| Menu: Activities… | the sheet, opened on its Activities page |
 | Sheet: Hide Them for a While / Bring Them Back (H) | a row of durations comes up under the tiles (§7.5); while hiding the tile shows `m:ss left` and ends it early |
 | Menu: Chat History… | the settings window on the Chats tab (§6.5) |
 | Menu: Settings… | the settings window |
@@ -1993,8 +2103,14 @@ its letter` (followed, while the shortcut is on, by ` · ⌃⌥L opens and close
 Under that, a row of small pixel buttons, the menu's switches, each worded as it stands
 and drawn pressed in while on: `TALK ON/OFF` (`talkEnabled`), `VOICE ON/OFF`
 (`voiceEnabled`), `REVENGE ON/OFF` (`revengeEnabled`), `CURSOR: <mood>` (`cursorMood`,
-each press the next mood, round again). The last row: the language under its own name
-(each press the next one), `SETTINGS`, `CHATS`, `QUIT`, and Done at the right. A switch
+each press the next mood, round again). The last row: `ACTIVITIES…` (key A), the language under its own name
+(each press the next one), `SETTINGS`, `CHATS`, `QUIT`, and Done at the right.
+**Activities** is the sheet's one inner page, the same size: `ACTIVITIES · WHAT SHOULD
+THEY PLAY?`, then a row per game (§7.10), each a raised pixel box the width of the
+sheet with its picture (Blocky's `walk`, the hook, the parachute, the hoop), its name,
+a line on what happens, and `PLAY NOW` over its key, or over why it is greyed; the
+same line as the sheet under the rows; then `BACK`, `PLAY ON/OFF` and Done. The games
+are not tiles on the sheet itself, which stays as it was. A switch
 says what it did on the line above and never folds the sheet, whatever `actionsStayOpen`
 says. With these, everything the tray menu offers can be done from the sheet (costs and
 the reminder list through Settings), so a hidden icon loses nothing. Done or Esc closes it; with `actionsStayOpen` off a press also folds it
@@ -2058,6 +2174,15 @@ An error for want of a model reads as that note, never as a server refusal.
 | bedPull | 80 | 0–100 %, clamped on load: the habit's full pull; the chance after n nights is this × (1 − ½ⁿ) |
 | bedWalkDistance | 2000 | 100–6000 points along its own loop, clamped on load: farthest it walks to bed |
 | bedTalk | true | a built-in line one night in three as it lies down, and when its bed is moved; needs `talkEnabled` |
+| playEnabled | true | now and then they play a game (§7.10); also `PLAY ON/OFF` on the sheet's Activities page |
+| playTagEnabled, playRopeEnabled, playParachuteEnabled, playBasketballEnabled | true | each game on or off |
+| playEveryMinutes | 5 | 1–60 min, clamped on load: the average wait between games before closeness shortens it |
+| playBondBoost | 100 | 0–300 %, clamped on load: a perfectly close pair divides the wait by 1 + this/100 |
+| tagSeconds | 25 | 10–120 s, clamped on load: how long tag runs before they stop, out of breath |
+| parachuteFallSpeed | 70 | 30–200 points/s, clamped on load |
+| ballBounce | 60 | 0–90 %, clamped on load: share of its speed the ball keeps on a bounce |
+| basketballThrows | 3 | 1–10, clamped on load: throws each player has |
+| playTalk | true | a start line and a last word for each game; needs `talkEnabled` |
 | revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |

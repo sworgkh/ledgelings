@@ -51,6 +51,8 @@ public struct Creature: Sendable {
         case chatting(remaining: Double)
         /// Hurrying to a spot on its own loop: home, when the house is out.
         case running(to: CGFloat)
+        /// In a game (`Plays`): off its edge, put where the game says each frame.
+        case playing
     }
 
     public private(set) var world: EdgeWorld
@@ -82,6 +84,8 @@ public struct Creature: Sendable {
     private var waitsAfterLanding = false
     /// Times its walking speed while `running`: hurrying home, or plodding off to bed.
     private var runPace: CGFloat = 2.5
+    /// The pose a game has it in while `playing`.
+    private var playPose = "jump"
     /// Reached the spot it was running or leaping to, and has not moved since.
     public private(set) var hasArrived = false
 
@@ -118,8 +122,11 @@ public struct Creature: Sendable {
         case .held: napsInHand ? "sleep" : "idle"
         case .chatting: seat != nil ? "walk" : animationTime < config.landDuration ? "land" : "idle"      // a squash on impact
         case .running: "walk"
+        case .playing: playPose
         }
     }
+
+    public var isPlaying: Bool { mode == .playing }
 
     public var isRunning: Bool {
         if case .running = mode { return true }
@@ -164,7 +171,7 @@ public struct Creature: Sendable {
         noticeTimeOfDay(isNight: isNight, using: &rng)
 
         // A sleeper does not notice the cursor. That is what lets you pick it up.
-        if !isJumping, !looksAsleep, !isHeld, !isRunning, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
+        if !isJumping, !looksAsleep, !isHeld, !isRunning, !isPlaying, let cursor, hypot(cursor.x - position.x, cursor.y - position.y) < config.fleeRadius {
             startle(using: &rng)
             fled = isJumping
         }
@@ -258,6 +265,9 @@ public struct Creature: Sendable {
             }
             position = world.point(at: spot)
             turn(toward: restingRotation, dt: dt)
+
+        case .playing:
+            break      // the game moves it
         }
         return fled
     }
@@ -268,13 +278,14 @@ public struct Creature: Sendable {
     /// Not from the air or the user's hand; the caller waits for those. `pace`
     /// is times its walking speed: 2.5 hurries, 1 walks.
     public mutating func run(to target: CGFloat, pace: CGFloat = 2.5) {
-        guard !isJumping, !isHeld else { return }
+        guard !isJumping, !isHeld, !isPlaying else { return }
         runPace = pace
         isNapping = false
         sleepsThroughLanding = false
         let ahead = loop.wrap(target - spot.t)
         direction = ahead <= loop.length / 2 ? 1 : -1
-        enter(.running(to: loop.wrap(target)))
+        // Steered afresh every frame (a game of tag): the stride goes on where it was.
+        if isRunning { mode = .running(to: loop.wrap(target)); hasArrived = false } else { enter(.running(to: loop.wrap(target))) }
     }
 
     /// Lie down and sleep right here, now: in its bed, once it has walked there.
@@ -287,7 +298,7 @@ public struct Creature: Sendable {
 
     /// Jump straight to `spot` (any loop) and wait there.
     public mutating func leap(to spot: EdgeWorld.Spot) {
-        guard !isJumping, !isHeld else { return }
+        guard !isJumping, !isHeld, !isPlaying else { return }
         isNapping = false
         sleepsThroughLanding = false
         waitsAfterLanding = true
@@ -342,6 +353,61 @@ public struct Creature: Sendable {
         else { enter(.walking(remaining: 1)) }
     }
 
+    // MARK: Playing
+
+    /// Leave the edge for a game: from now on the game puts it where it goes
+    /// (`carry`) until it comes down (`touchDown`). Not asleep, not in the hand.
+    /// Returns whether it did.
+    @discardableResult
+    public mutating func takeOff() -> Bool {
+        guard !isHeld, !looksAsleep else { return false }
+        isNapping = false
+        waitsAfterLanding = false
+        if !isPlaying { enter(.playing) }
+        return true
+    }
+
+    /// Where the game has it now: its centre, its turn, and its pose ("jump", "land", "idle", "walk").
+    public mutating func carry(to point: CGPoint, rotation: Double, pose: String) {
+        guard isPlaying else { return }
+        position = point
+        self.rotation = rotation
+        if pose != playPose { playPose = pose; animationTime = 0 }
+    }
+
+    /// The game is over for it: back onto the nearest edge. Standing right on
+    /// it, it just stands there a moment (`for` seconds) and walks on; off it,
+    /// it drops there as a carried creature does.
+    public mutating func touchDown(standingFor seconds: Double = 0.4) {
+        guard isPlaying else { return }
+        let to = world.nearest(to: position)
+        let target = world.point(at: to)
+        let distance = hypot(target.x - position.x, target.y - position.y)
+        if distance < 2 {
+            spot = to
+            position = target
+            enter(.idle(remaining: seconds))
+        } else {
+            let fall = max(0.12, min(Double(distance / config.jumpSpeed), config.jumpDuration.upperBound))
+            enter(.jumping(Jump(from: position, fromRotation: rotation, to: to, bulge: .zero, duration: fall)))
+        }
+    }
+
+    /// Turn to face along the loop: +1 toward growing t. While standing or walking.
+    public mutating func face(_ facing: CGFloat) {
+        guard !isJumping, !isHeld else { return }
+        direction = facing < 0 ? -1 : 1
+    }
+
+    /// Stand still where it is for `seconds` (catching its breath, waiting its
+    /// turn), then walk on. From walking, idling, running or a landing.
+    public mutating func standStill(for seconds: Double) {
+        switch mode {
+        case .walking, .idle, .running, .landing: enter(.idle(remaining: seconds))
+        default: break
+        }
+    }
+
     // MARK: Meeting someone
 
     /// Stop and face the other creature: `facing` is +1 when it is further along
@@ -372,7 +438,7 @@ public struct Creature: Sendable {
     }
 
     public mutating func meet(facing: CGFloat, for seconds: Double = 30) {
-        guard !isJumping, !looksAsleep, !isHeld else { return }
+        guard !isJumping, !looksAsleep, !isHeld, !isPlaying else { return }
         if !isChatting { courseBeforeChat = direction }
         direction = facing < 0 ? -1 : 1
         enter(.chatting(remaining: seconds))
@@ -432,7 +498,7 @@ public struct Creature: Sendable {
     /// says so (a Shift-drag). Returns whether it was.
     @discardableResult
     public mutating func pickUp(evenAwake: Bool = false) -> Bool {
-        guard !isJumping, !isHeld else { return false }
+        guard !isJumping, !isHeld, !isPlaying else { return false }
         if case .sleeping = mode { napsInHand = true } else if evenAwake { napsInHand = false } else { return false }
         enter(.held)
         return true
@@ -490,7 +556,7 @@ public struct Creature: Sendable {
     /// Jump to a random spot on a random OTHER edge -- of any monitor. Longer
     /// edges are likelier, so a big monitor gets its fair share of landings.
     public mutating func startle(using rng: inout some RandomNumberGenerator) {
-        guard !isJumping else { return }
+        guard !isJumping, !isPlaying else { return }
         let here = (loop: spot.loop, segment: segment)
         let others = world.segments.filter { ($0.loop, $0.segment) != here && $0.length > 1 }
         guard !others.isEmpty else { return }

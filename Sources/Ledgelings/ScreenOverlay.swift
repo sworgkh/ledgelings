@@ -26,6 +26,8 @@ struct CreatureSnapshot {
     var shrink: CGFloat = 1
     /// The paper plane's note, unfolded and held out in front while it is read.
     var letter: CGImage?
+    /// Points to float the bubble further off the head: over an open parachute.
+    var bubbleLift: CGFloat = 0
 }
 
 /// The paper plane and its dotted trail, in GLOBAL coordinates.
@@ -90,6 +92,19 @@ struct TeaTableSnapshot {
     var scale: CGFloat
 }
 
+/// One of a game's props (`Colony+Play`), in GLOBAL coordinates: drawn about its middle.
+struct PropSnapshot {
+    var image: CGImage?
+    var position: CGPoint
+    var rotation: Double
+    /// Screen points per sprite pixel.
+    var scale: CGFloat
+    var mirrored = false
+    var opacity: Float = 1
+    /// Over the creatures (the ball), rather than behind them (the hoop, the rope).
+    var inFront = false
+}
+
 /// A flower planted in the edge, in GLOBAL coordinates.
 struct PlantedSnapshot {
     var image: CGImage?
@@ -148,6 +163,7 @@ final class ScreenOverlay {
     }()
     private var flowerBeds: [CALayer] = []
     private var sleeperBeds: [CALayer] = []
+    private var propLayers: [CALayer] = []
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String, shown: Int)] = [:]
     private var sparkLayers: [CALayer] = []
     private lazy var house: CALayer = {
@@ -242,11 +258,12 @@ final class ScreenOverlay {
                 house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
                 plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
                 tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = [],
-                beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero) {
+                beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero, props: [PropSnapshot] = [], propCell: CGSize = .zero) {
         renderFlight(inFlight, flowerCell: flowerCell)
         renderStanding(garden, cell: flowerCell, pool: &flowerBeds)
         renderStanding(beds, cell: bedCell, pool: &sleeperBeds)
         renderTeaTable(tea, cell: teaCell)
+        renderProps(props, cell: propCell)
         mailPlane.render(plane, cell: planeCell, origin: display.frame.origin)
         reminderPlane.render(reminder?.plane, cell: planeCell, origin: display.frame.origin)
         renderLetter(reminder?.letter, cell: cell)
@@ -269,7 +286,7 @@ final class ScreenOverlay {
             if layers.body.isHidden == here { layers.body.isHidden = !here }
             guard here else { removeBubble(for: index); continue }
             let hatHeight = snap.hat == nil ? 0 : flowerCell.height * scale
-            renderBubble(snap, index: index, bodyHalf: cell.width * scale / 2 + hatHeight)
+            renderBubble(snap, index: index, bodyHalf: cell.width * scale / 2 + hatHeight + snap.bubbleLift)
             // The body layer carries position and the turn onto the edge; the
             // sprite inside it carries only the mirror, so the Zs never flip.
             layers.body.position = CGPoint(x: snap.position.x - origin.x, y: snap.position.y - origin.y)
@@ -489,6 +506,33 @@ final class ScreenOverlay {
         teaTable.bounds = CGRect(x: 0, y: 0, width: cell.width * tea.scale, height: cell.height * tea.scale)
         teaTable.position = CGPoint(x: tea.floor.x - origin.x, y: tea.floor.y - origin.y)
         teaTable.transform = CATransform3DMakeRotation(tea.rotation, 0, 0, 1)
+    }
+
+    /// A game's props, pooled: a rope is many links, so the pool grows to the longest and stays.
+    private func renderProps(_ props: [PropSnapshot], cell: CGSize) {
+        let origin = display.frame.origin
+        while propLayers.count < props.count {
+            let layer = makeLayers().sprite
+            root.addSublayer(layer)
+            propLayers.append(layer)
+        }
+        for (k, layer) in propLayers.enumerated() {
+            guard k < props.count, let image = props[k].image else {
+                if !layer.isHidden { layer.isHidden = true }
+                continue
+            }
+            let prop = props[k]
+            let reach = max(cell.width, cell.height) * prop.scale
+            let here = display.frame.insetBy(dx: -reach, dy: -reach).contains(prop.position)
+            if layer.isHidden == here { layer.isHidden = !here }
+            guard here else { continue }
+            if (layer.contents as AnyObject?) !== image { layer.contents = image }
+            layer.zPosition = prop.inFront ? 2 : -0.5
+            layer.bounds = CGRect(x: 0, y: 0, width: cell.width * prop.scale, height: cell.height * prop.scale)
+            layer.position = CGPoint(x: prop.position.x - origin.x, y: prop.position.y - origin.y)
+            layer.transform = CATransform3DScale(CATransform3DMakeRotation(prop.rotation, 0, 0, 1), prop.mirrored ? -1 : 1, 1, 1)
+            layer.opacity = prop.opacity
+        }
     }
 
     /// Things standing on an edge, grown up out of it: planted flowers, and the sleepers' beds.

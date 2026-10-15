@@ -77,11 +77,20 @@ it walks to its favourite place, puts the bed down and sleeps on it, and the mor
 nights it spends there the likelier it goes back. Drag a sleeper's bed somewhere else
 and that is its place from now on.
 
+**They play.** Now and then, and more often between old friends, they play Worms-style
+games, with nobody hurt: two chase each other round the edges at catch me if you can,
+one fires a ninja rope into the ceiling and swings across the screen, one jumps off
+the ceiling and floats down under a little parachute, and one hangs a hoop on the wall
+and shoots some baskets (friends take turns). A line from whoever starts it, in its
+own voice, and a game two played goes into their story. Settings › Play; *Activities…*
+in the menu to start one now.
+
 **Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, Ctrl+Alt+L on Windows, or opening
 the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
 paper as the letters, a creature peeking over the top: one picture for everything you
 can ask of them (jump, talk, tea, a plane, a reminder, hide, sleep or wake, clear the
-flowers), each with a letter key, and under them the menu's switches, Settings and Quit.
+flowers), each with a letter key, and under them the menu's switches, Activities (the
+games, each with Play now), Settings and Quit.
 
 **Hear them.** Switch on *Hear Them Talk* in the menu and every bubble is read out
 loud, each character in a voice of its own: the computer's own voices (free,
@@ -94,7 +103,7 @@ pitch and volume are in Settings › Voice.
 choose how long) get a small story from the model: a rivalry, a secret, a favour
 owed. It colours their next few conversations and ends; the next grows from how
 they get on and from **everything they have lived through together**: every talk,
-tea party, flower, paper plane and cursor grab is kept, and folded with each new story
+tea party, flower, paper plane, game and cursor grab is kept, and folded with each new story
 into a short chronicle of "their story so far", so a new story can bring back the
 poppy Pip gave Blocky three weeks ago and never contradicts what came before. Only
 the chronicle and the latest moments reach the prompt, so a long friendship costs
