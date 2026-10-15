@@ -100,6 +100,7 @@ public sealed partial class App : Application
         // After a tab a menu draws the rest at the right, as it does for any shortcut.
         var keys = ShortcutTitle;
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
+        items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
@@ -125,6 +126,13 @@ public sealed partial class App : Application
     {
         if (colony is null || settings is null) return;
         ActionsSheet.ShowSheet(settings, colony, AddAReminder, Follow, () => ShortcutTitle);
+    }
+
+    /// <summary>The sheet, straight on its Activities page: the games, each with Play Now.</summary>
+    private void OpenActivities()
+    {
+        if (colony is null || settings is null) return;
+        ActionsSheet.ShowSheet(settings, colony, AddAReminder, Follow, () => ShortcutTitle, ActionsPage.Activities);
     }
 
     /// <summary>Seconds until 08:00 tomorrow, local time.</summary>

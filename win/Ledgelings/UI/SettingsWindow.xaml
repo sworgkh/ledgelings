@@ -361,6 +361,89 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Play">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Playing">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="They play now and then" IsChecked="{Binding PlayEnabled, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Now and then a creature stops walking and plays, the way the worms in Worms fool about between turns, with nobody hurt. One game at a time, never in the middle of a talk, a tea party, a flower, a plane, a grab or sleep; the players are left alone until it is over."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Which games" IsEnabled="{Binding PlayEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Catch me if you can (two)" IsChecked="{Binding PlayTagEnabled, Mode=TwoWay}"/>
+              <CheckBox ui:Tr.Content="Ninja rope swing" IsChecked="{Binding PlayRopeEnabled, Mode=TwoWay}"/>
+              <CheckBox ui:Tr.Content="Parachute jump" IsChecked="{Binding PlayParachuteEnabled, Mode=TwoWay}"/>
+              <CheckBox ui:Tr.Content="Basketball (alone, or two taking turns)" IsChecked="{Binding PlayBasketballEnabled, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Tag is for two: they chase each other round the edges, and a touch makes the other one &quot;it&quot;. The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Off, a game is never played, and its row on the Activities page is greyed."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="How often" IsEnabled="{Binding PlayEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="A game about every" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding PlayEveryMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="1" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding PlayEveryMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Friends play more often by" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding PlayBondBoost}" ui:Tr.Unit="%"/>
+                <Slider Minimum="0" Maximum="300" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding PlayBondBoost, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The wait between games is this many minutes, give or take, shortened by how close the closest pair on screen is: at 100 % the best of friends play twice as often. Close pairs (who have shared a few talks, tea parties, flowers) play tag and take turns at the hoop; strangers play alone."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="How the games go" IsEnabled="{Binding PlayEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Tag lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding TagSeconds}" ui:Tr.Unit=" s"/>
+                <Slider Minimum="10" Maximum="120" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding TagSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Parachute comes down at" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding ParachuteFallSpeed}" ui:Tr.Unit=" pt/s"/>
+                <Slider Minimum="30" Maximum="200" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding ParachuteFallSpeed, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Ball keeps on each bounce" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BallBounce}" ui:Tr.Unit="%"/>
+                <Slider Minimum="0" Maximum="90" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding BallBounce, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Throws at the hoop each" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BasketballThrows}"/>
+                <Slider Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding BasketballThrows, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="After tag both stand puffing for a few seconds. The parachute sways as it comes down; slower is longer to watch. The ball bounces off the floor, the board and the rim; at 0 % it drops dead. About half the throws are aimed true; the rest fall short or bang off the board."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Talking about it" IsEnabled="{Binding PlayEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Say something as a game starts and ends" IsChecked="{Binding PlayTalk, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays on the Costs tab); otherwise, and for the last word, built-in lines. Needs Talk on."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The props">
+            <StackPanel>
+              <ItemsControl x:Name="PropList">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Image Source="{Binding}" Width="64" Height="56" Margin="0,4,18,4" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Drawn like the creatures, and the same for every species, your own imported ones too."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Sprites">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">
@@ -676,7 +759,7 @@
                 <TextBlock Style="{StaticResource RowValue}" Text="{Binding StoryMoments}"/>
                 <Slider Minimum="2" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding StoryMoments, Mode=TwoWay}"/>
               </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every talk, tea party, flower, paper plane and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every talk, tea party, flower, paper plane, game and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."/>
             </StackPanel>
           </GroupBox>
           <GroupBox x:Name="PlotPromptBox" ui:Tr.Header="The prompt that writes a story">

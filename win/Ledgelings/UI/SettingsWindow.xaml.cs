@@ -57,6 +57,7 @@ public sealed partial class SettingsWindow : Window
         InitTalkExtras();
         InitBonds();
         InitCalendar();
+        InitPlay();
         Closing += (_, e) => { e.Cancel = true; Hide(); };      // the window is reused; the app lives in the tray
     }
 

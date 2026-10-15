@@ -13,7 +13,7 @@ public sealed partial class Colony
         {
             var c = creatures[i];
             var shrink = DoorShrink(i);
-            var inward = c.IsHeld ? new Vec(0, 1) : c.Loop.Inward(c.Segment);
+            var inward = c.IsHeld || c.IsPlaying ? new Vec(0, 1) : c.Loop.Inward(c.Segment);
             // Shrinking, it keeps its feet on the floor: the centre sinks as the body gets smaller.
             var sink = atlas.BodyHalfSize * sizes[i] * (1 - shrink);
             var p = DrawnPosition(i);       // lying in its bed, a sleeper is raised onto the mattress
@@ -32,6 +32,7 @@ public sealed partial class Colony
                 Hidden = hideout.IsInside(i),
                 Shrink = shrink,
                 Letter = LetterImage(i),
+                BubbleLift = PlayBubbleLift(i),
             });
         }
         var z = zFrames.Frame("float", 0);
@@ -43,9 +44,10 @@ public sealed partial class Colony
         var plane = MailSnapshot();
         var reminder = DeliverySnapshot();
         var table = TeaTableSnapshot();
+        var props = PlayProps();
         foreach (var overlay in overlays)
             overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: planted, beds: sleepers, bedCell: BedCell,
                            plane: plane, planeCell: planeCell, reminder: reminder,
-                           tea: table, teaCell: TeaCell);
+                           tea: table, teaCell: TeaCell, props: props, propCell: PlayCell);
     }
 }
