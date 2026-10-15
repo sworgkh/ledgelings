@@ -48,7 +48,7 @@ public class ActionsSheetTests
     public void TheMenusSwitchesSayHowTheyStandAndTheLinksAreThere()
     {
         var s = new ActionsState();
-        Assert.True(ActionsSwitches.All.Count == 5 && ActionsLinks.All.Count == 3);
+        Assert.True(ActionsSwitches.All.Count == 6 && ActionsLinks.All.Count == 3);
         Assert.True(ActionsSwitch.Talk.Title(s) == "TALK ON" && ActionsSwitch.Talk.IsOn(s));
         Assert.True(ActionsSwitch.Voice.Title(s) == "VOICE OFF" && !ActionsSwitch.Voice.IsOn(s));
         Assert.Equal("CURSOR: A MENACE", ActionsSwitch.Cursor.Title(s));

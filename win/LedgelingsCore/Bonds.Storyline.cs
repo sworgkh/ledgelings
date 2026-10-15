@@ -21,9 +21,9 @@ public static partial class Bonds
     /// <summary>The kinds of moment, as written in <c>bonds.json</c>.</summary>
     public static class MomentKind
     {
-        public const string Talk = "talk", Tea = "tea", Flower = "flower", Plane = "plane", Grab = "grab";
+        public const string Talk = "talk", Tea = "tea", Flower = "flower", Plane = "plane", Grab = "grab", Play = "play";
         /// <summary>In the order the tally and the folding list them.</summary>
-        public static readonly IReadOnlyList<string> All = new[] { Talk, Tea, Flower, Plane, Grab };
+        public static readonly IReadOnlyList<string> All = new[] { Talk, Tea, Flower, Plane, Grab, Play };
     }
 
     public sealed record Moment
@@ -128,6 +128,7 @@ public static partial class Bonds
         MomentKind.Flower => L10n.TrCount(n, "flower", "flowers"),
         MomentKind.Plane => L10n.TrCount(n, "paper plane", "paper planes"),
         MomentKind.Grab => L10n.TrCount(n, "cursor grab", "cursor grabs"),
+        MomentKind.Play => L10n.TrCount(n, "game", "games"),
         _ => L10n.TrCount(n, "talk", "talks"),
     };
 
@@ -142,6 +143,7 @@ public static partial class Bonds
             MomentKind.Flower => L10n.Tr("%1$@ gave %2$@ a %3$@", moment.Who, other, Gifts.Name(moment.Detail ?? "")),
             MomentKind.Plane => L10n.Tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.Who, other, said),
             MomentKind.Grab => L10n.Tr("%1$@ grabbed the cursor while %2$@ looked on", moment.Who, other),
+            MomentKind.Play => L10n.Tr("%1$@ and %2$@ played: %3$@", moment.Who, other, Plays.Name(moment.Detail)),
             _ => L10n.Tr("%1$@ and %2$@ talked; %1$@ said: \"%3$@\"", moment.Who, other, said),
         };
     }
@@ -231,7 +233,7 @@ public static partial class Bonds
     /// bond line from everything they ever did together, unless they already have one.</summary>
     public static Written BuiltInPlot(Bond bond, DateTimeOffset now, Random rng)
     {
-        var order = new[] { MomentKind.Flower, MomentKind.Tea, MomentKind.Plane, MomentKind.Grab, MomentKind.Talk };
+        var order = new[] { MomentKind.Flower, MomentKind.Tea, MomentKind.Play, MomentKind.Plane, MomentKind.Grab, MomentKind.Talk };
         var moment = order.Select(k => bond.Moments.LastOrDefault(m => m.Kind == k)).FirstOrDefault(m => m is not null);
         var names = bond.Names;
         string a = names.FirstOrDefault() ?? "", b = names.LastOrDefault() ?? "";
@@ -258,6 +260,11 @@ public static partial class Bonds
                 {
                     L10n.Tr("%2$@ still has the paper plane %1$@ sent %3$@ (\"%4$@\") and is writing an answer.", who, other, when, said),
                     L10n.Tr("%1$@ waits for %2$@ to answer the paper plane from %3$@.", who, other, when),
+                },
+                MomentKind.Play => new[]
+                {
+                    L10n.Tr("%2$@ wants a rematch of %3$@ with %1$@, after %4$@.", who, other, Plays.Name(moment.Detail), when),
+                    L10n.Tr("%1$@ has been practising since %3$@ with %2$@ %4$@, and means to win next time.", who, other, Plays.Name(moment.Detail), when),
                 },
                 MomentKind.Grab => new[]
                 {

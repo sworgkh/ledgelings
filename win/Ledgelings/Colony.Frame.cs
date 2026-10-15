@@ -28,6 +28,7 @@ public sealed partial class Colony
             ForgetBeds(creatures.Count);
             ForgetAnnoyance();
             if (!Settings.TeaPartiesEnabled) BreakUpTea();
+            if (play is { } game && (!Settings.PlayEnabled || game.Players.Any(p => p >= Settings.CreatureCount))) EndPlay(false);
             while (creatures.Count < Settings.CreatureCount)
             {
                 var share = rng.NextDouble();
@@ -65,6 +66,7 @@ public sealed partial class Colony
     private void ScreensChanged()
     {
         LetGoOfCursor(Revenge.Release.Escape);
+        EndPlay(false);
         RebuildOverlays();
         worlds.Clear();
         for (int i = 0; i < creatures.Count; i++) creatures[i].Rehome(World(sizes[i]));
@@ -155,6 +157,7 @@ public sealed partial class Colony
         sparks.Update(dt);
         SayScheduledLines();
         UpdateTeaParty();
+        UpdatePlay(dt);
         ReleaseChatIfOver();
         foreach (var bump in meetings.Update(Parties(), Elapsed)) Bumped(bump);
         UpdatePost(dt);

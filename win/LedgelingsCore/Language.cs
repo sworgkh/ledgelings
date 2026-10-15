@@ -198,6 +198,12 @@ public sealed class Shared
     public string[] BedSettleAnyone { get; init; } = Array.Empty<string>();
     public Dictionary<string, string[]> BedMovedLines { get; init; } = new();
     public string[] BedMovedAnyone { get; init; } = Array.Empty<string>();
+    /// <summary>The play lines (SPEC §7.10): as a game starts, by character and game (and for anyone, by game),
+    /// and once it is over.</summary>
+    public Dictionary<string, Dictionary<string, string>> PlayStart { get; init; } = new();
+    public Dictionary<string, string> PlayStartAnyone { get; init; } = new();
+    public Dictionary<string, string[]> PlayDone { get; init; } = new();
+    public string[] PlayDoneAnyone { get; init; } = Array.Empty<string>();
     /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder, spriteImage, spriteRefine, spriteRefineSystem.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
@@ -253,6 +259,8 @@ public sealed class Shared
         var revenge = Get(root, "revenge");
         string[] allMoods = { "good", "neutral", "bad" };
         var beds = Get(root, "beds");
+        var plays = Get(root, "plays");
+        var playStart = Get(plays, "start");
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -286,6 +294,10 @@ public sealed class Shared
             BedSettleAnyone = List(Get(beds, "settleAnyone")),
             BedMovedLines = Lists(Get(beds, "moved")),
             BedMovedAnyone = List(Get(beds, "movedAnyone")),
+            PlayStart = playStart.ValueKind == JsonValueKind.Object ? playStart.EnumerateObject().ToDictionary(p => p.Name, p => Map(p.Value)) : new(),
+            PlayStartAnyone = Map(Get(plays, "startAnyone")),
+            PlayDone = Lists(Get(plays, "done")),
+            PlayDoneAnyone = List(Get(plays, "doneAnyone")),
             RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),
             RevengeAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(revenge, m), "anyone"))),
             RevengeLastWordsByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lastWords"))),

@@ -169,6 +169,56 @@ public sealed class EdgeWorld : IEquatable<EdgeWorld>
         return loops;
     }
 
+    // MARK: Looking up and down
+
+    /// <summary>A level stretch of an outline: a floor (walked rightwards, the screen above it) or a
+    /// ceiling (walked leftwards, the screen below), in the same inset points as the loops.</summary>
+    public readonly record struct Level(int Loop, int Segment, double Y, double From, double To)
+    {
+        public bool Covers(double x) => x >= From && x <= To;
+    }
+
+    /// <summary>A wall standing at one end of a floor, going up from it. <c>Side</c> +1 at the floor's right end.</summary>
+    public readonly record struct Wall(double X, double Side, double Height);
+
+    private List<Level> Levels(bool rightwards)
+    {
+        var found = new List<Level>();
+        for (int l = 0; l < Loops.Count; l++)
+            for (int s = 0; s < Loops[l].SegmentCount; s++)
+            {
+                var d = Loops[l].Direction(s);
+                if (Math.Abs(d.Dy) >= 0.5 || (rightwards ? d.Dx <= 0 : d.Dx >= 0)) continue;
+                var a = Loops[l].Vertices[s];
+                var b = Loops[l].Vertices[(s + 1) % Loops[l].Vertices.Count];
+                found.Add(new Level(l, s, a.Y, Math.Min(a.X, b.X), Math.Max(a.X, b.X)));
+            }
+        return found;
+    }
+
+    /// <summary>The floor straight below <paramref name="point"/> (or level with it): the highest one.</summary>
+    public Level? Floor(Pt point) =>
+        Levels(true).Where(l => l.Y <= point.Y + 0.5 && l.Covers(point.X)).OrderByDescending(l => l.Y).Cast<Level?>().FirstOrDefault();
+
+    /// <summary>The ceiling straight above <paramref name="point"/>: the lowest one.</summary>
+    public Level? Ceiling(Pt point) =>
+        Levels(false).Where(l => l.Y >= point.Y - 0.5 && l.Covers(point.X)).OrderBy(l => l.Y).Cast<Level?>().FirstOrDefault();
+
+    /// <summary>Every ceiling, for somewhere to jump up to.</summary>
+    public IReadOnlyList<Level> Ceilings => Levels(false);
+
+    /// <summary>The walls going up from either end of a floor; a step down at an end is no wall.</summary>
+    public IReadOnlyList<Wall> Walls(Level floor)
+    {
+        var loop = Loops[floor.Loop];
+        var n = loop.SegmentCount;
+        var found = new List<Wall>();
+        int next = (floor.Segment + 1) % n, previous = (floor.Segment + n - 1) % n;
+        if (loop.Direction(next).Dy > 0.5) found.Add(new Wall(floor.To, 1, loop.SegmentLength(next)));
+        if (loop.Direction(previous).Dy < -0.5) found.Add(new Wall(floor.From, -1, loop.SegmentLength(previous)));
+        return found;
+    }
+
     public bool Equals(EdgeWorld? other) => other is not null && Loops.SequenceEqual(other.Loops);
     public override bool Equals(object? obj) => Equals(obj as EdgeWorld);
     public override int GetHashCode() => Loops.Aggregate(19, (h, l) => h * 31 + l.GetHashCode());

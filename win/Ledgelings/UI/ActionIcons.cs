@@ -14,6 +14,28 @@ public static class ActionIcons
 
     public static Bitmap? Picture(ActionsTile tile) => (pictures ??= Make()).GetValueOrDefault(tile);
 
+    private static Dictionary<Ledgelings.Core.Plays.Kind, Bitmap>? games;
+
+    /// <summary>Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop.</summary>
+    public static Bitmap? Game(Ledgelings.Core.Plays.Kind kind) => (games ??= MakeGames()).GetValueOrDefault(kind);
+
+    private static Dictionary<Ledgelings.Core.Plays.Kind, Bitmap> MakeGames()
+    {
+        var made = new Dictionary<Ledgelings.Core.Plays.Kind, Bitmap>();
+        SpriteAtlas.Frames? Load(string name)
+        {
+            try { return SpriteAtlas.Named(name).MakeFrames(); }
+            catch (Exception e) when (e is IOException or InvalidDataException) { return null; }
+        }
+        void Put(Ledgelings.Core.Plays.Kind kind, Bitmap? image) { if (image is not null) made[kind] = Trimmed(image); }
+        var props = Load("play");
+        Put(Ledgelings.Core.Plays.Kind.Tag, Load("blocky")?.Frame("walk", 0));
+        Put(Ledgelings.Core.Plays.Kind.Rope, props?.Frame("hook", 0));
+        Put(Ledgelings.Core.Plays.Kind.Parachute, props?.Frame("chute", 0));
+        Put(Ledgelings.Core.Plays.Kind.Basketball, props?.Frame("hoop", 0));
+        return made;
+    }
+
     /// <summary>A speech bubble with three dots: o rim, l light, w fill, s shade, k ink.</summary>
     public static readonly string[] Bubble =
     {

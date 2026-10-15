@@ -15,7 +15,9 @@ holidays), paper planes, reminders delivered by plane with the paper note to
 write them on, the chat log and spend ledger, hiding in the house, imported
 creatures from the sprite kit, planting flowers where each character likes (the
 Flowers tab), complaints when pushed around, tea parties, voices (Windows' own,
-OpenRouter or a local speech server), the Costs tab, and every character's own bed at a place it learns (the Beds tab).
+OpenRouter or a local speech server), the Costs tab, every character's own bed at a place it learns (the Beds tab), and
+the plays: tag, a ninja rope, a parachute jump and basketball, more often between friends (the Play tab, and the
+Activities page of Creature Actions).
 
 ## Stack
 
@@ -133,7 +135,7 @@ core tests are the Swift tests line for line.
   in two columns on one screen.
 - **The OpenRouter key** is read at launch: the Credential Manager never prompts,
   so there is nothing to save the user from by reading it late.
-- **Steppers are sliders** (lines not repeated, story length, holiday look-ahead);
+- **Steppers are sliders** (lines not repeated, story length, holiday look-ahead, throws at the hoop);
   same ranges and steps.
 - **Reveal in Finder** is **Show in Explorer**; the Reminders tab's file box has one too.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
@@ -171,12 +173,14 @@ core tests are the Swift tests line for line.
 
 ## Not on Windows
 
-- **The films and the promo video** (`--garden-film`, `--tea-film`, the reminder
-  film, `scripts/make-promo.sh`): they render offscreen with the Mac's video APIs.
-- **The command-line checks** (`--settings … --snapshot`, `--say`, `--cast`,
+- **The films and the promo video** (`--garden-film`, `--tea-film`, `--bed-film`,
+  `--play-film`, the reminder film, `scripts/make-promo.sh`): they render offscreen
+  with the Mac's video APIs.
+- **The command-line checks** (`--settings … --snapshot`, `--actions --activities`, `--say`, `--cast`,
   `--converse`, `--tea`, `--plot`, `--remind`, `--note`). A Windows colony always
   opens real overlay windows, so the Mac's colony-level tests (`ColonyTalkTests`)
-  are not ported either; the core tests are.
+  are not ported either (nor the Mac's colony-level play tests in `PlaySettingsTests`);
+  the core tests are, `PlaysTests` among them.
 
 ## Layout
 
@@ -186,13 +190,14 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal (+ Geometry: Pt, Vec, Rect)
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines)
+                           (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
-                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice)
-                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea), FrameClock, Desktop
+                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play)
+                           OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
                            TrayIcon, App (+ .Reminders, .Shortcut), GlobalHotkey, ShortcutKeys, Program
-                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice),
+                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape

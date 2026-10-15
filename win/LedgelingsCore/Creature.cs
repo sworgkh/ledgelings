@@ -61,6 +61,8 @@ public sealed class Creature
         public sealed record Chatting(double Remaining) : Mode;
         /// <summary>Hurrying to a spot on its own loop: home, when the house is out.</summary>
         public sealed record Running(double To) : Mode;
+        /// <summary>In a game (<see cref="Plays"/>): off its edge, put where the game says each frame.</summary>
+        public sealed record Playing : Mode;
     }
 
     public EdgeWorld World { get; private set; }
@@ -94,6 +96,8 @@ public sealed class Creature
     public bool HasArrived { get; private set; }
     /// <summary>Times its walking speed while running: hurrying home, or plodding off to bed.</summary>
     private double runPace = 2.5;
+    /// <summary>The pose a game has it in while playing.</summary>
+    private string playPose = "jump";
 
     /// <summary>half -> closed -> half, in seconds.</summary>
     private static readonly (Eyes Eyes, double Length)[] BlinkPhases = { (Eyes.Half, 0.05), (Eyes.Closed, 0.09), (Eyes.Half, 0.05) };
@@ -129,8 +133,11 @@ public sealed class Creature
         Mode.Held => napsInHand ? "sleep" : "idle",
         Mode.Chatting => seat is not null ? "walk" : AnimationTime < Settings.LandDuration ? "land" : "idle",      // a squash on impact
         Mode.Running => "walk",
+        Mode.Playing => playPose,
         _ => "idle",
     };
+
+    public bool IsPlaying => CurrentMode is Mode.Playing;
 
     public bool IsRunning => CurrentMode is Mode.Running;
     public bool IsChatting => CurrentMode is Mode.Chatting;
@@ -160,7 +167,7 @@ public sealed class Creature
         NoticeTimeOfDay(isNight, rng);
 
         // A sleeper does not notice the cursor. That is what lets you pick it up.
-        if (!IsJumping && !LooksAsleep && !IsHeld && !IsRunning && cursor is Pt c && c.DistanceTo(Position) < Settings.FleeRadius)
+        if (!IsJumping && !LooksAsleep && !IsHeld && !IsRunning && !IsPlaying && cursor is Pt c && c.DistanceTo(Position) < Settings.FleeRadius)
         {
             Startle(rng);
             fled = IsJumping;
@@ -276,13 +283,15 @@ public sealed class Creature
     /// its walking speed: 2.5 hurries, 1 walks.</summary>
     public void Run(double target, double pace = 2.5)
     {
-        if (IsJumping || IsHeld) return;
+        if (IsJumping || IsHeld || IsPlaying) return;
         runPace = pace;
         IsNapping = false;
         sleepsThroughLanding = false;
         var ahead = Loop.Wrap(target - Spot.T);
         Direction = ahead <= Loop.Length / 2 ? 1 : -1;
-        Enter(new Mode.Running(Loop.Wrap(target)));
+        // Steered afresh every frame (a game of tag): the stride goes on where it was.
+        if (IsRunning) { CurrentMode = new Mode.Running(Loop.Wrap(target)); HasArrived = false; }
+        else Enter(new Mode.Running(Loop.Wrap(target)));
     }
 
     /// <summary>Lie down and sleep right here, now: in its bed, once it has walked there.
@@ -297,7 +306,7 @@ public sealed class Creature
     /// <summary>Jump straight to <paramref name="spot"/> (any loop) and wait there.</summary>
     public void Leap(EdgeWorld.Spot spot)
     {
-        if (IsJumping || IsHeld) return;
+        if (IsJumping || IsHeld || IsPlaying) return;
         IsNapping = false;
         sleepsThroughLanding = false;
         waitsAfterLanding = true;
@@ -377,13 +386,71 @@ public sealed class Creature
         else Enter(new Mode.Walking(1));
     }
 
+    // MARK: Playing
+
+    /// <summary>Leave the edge for a game: from now on the game puts it where it goes (<see cref="Carry"/>)
+    /// until it comes down (<see cref="TouchDown"/>). Not asleep, not in the hand. Returns whether it did.</summary>
+    public bool TakeOff()
+    {
+        if (IsHeld || LooksAsleep) return false;
+        IsNapping = false;
+        waitsAfterLanding = false;
+        if (!IsPlaying) Enter(new Mode.Playing());
+        return true;
+    }
+
+    /// <summary>Where the game has it now: its centre, its turn, and its pose ("jump", "land", "idle", "walk").</summary>
+    public void Carry(Pt point, double rotation, string pose)
+    {
+        if (!IsPlaying) return;
+        Position = point;
+        Rotation = rotation;
+        if (pose != playPose) { playPose = pose; AnimationTime = 0; }
+    }
+
+    /// <summary>The game is over for it: back onto the nearest edge. Standing right on it, it just stands
+    /// there a moment (<paramref name="standingFor"/> seconds) and walks on; off it, it drops there as a
+    /// carried creature does.</summary>
+    public void TouchDown(double standingFor = 0.4)
+    {
+        if (!IsPlaying) return;
+        var to = World.Nearest(Position);
+        var target = World.Point(to);
+        var distance = target.DistanceTo(Position);
+        if (distance < 2)
+        {
+            Spot = to;
+            Position = target;
+            Enter(new Mode.Idle(standingFor));
+        }
+        else
+        {
+            var fall = Math.Max(0.12, Math.Min(distance / Settings.JumpSpeed, Settings.JumpDuration.High));
+            Enter(new Mode.Jumping(new Jump { From = Position, FromRotation = Rotation, To = to, Bulge = Vec.Zero, Duration = fall }));
+        }
+    }
+
+    /// <summary>Turn to face along the loop: +1 toward growing t. While standing or walking.</summary>
+    public void Face(double facing)
+    {
+        if (IsJumping || IsHeld) return;
+        Direction = facing < 0 ? -1 : 1;
+    }
+
+    /// <summary>Stand still where it is for <paramref name="seconds"/> (catching its breath, waiting its
+    /// turn), then walk on. From walking, idling, running or a landing.</summary>
+    public void StandStill(double seconds)
+    {
+        if (CurrentMode is Mode.Walking or Mode.Idle or Mode.Running or Mode.Landing) Enter(new Mode.Idle(seconds));
+    }
+
     // MARK: Meeting someone
 
     /// <summary>Stop and face the other creature: <paramref name="facing"/> is +1 when it is further along
     /// the loop, -1 when it is behind. Only an awake creature on the ground can.</summary>
     public void Meet(double facing, double seconds = 30)
     {
-        if (IsJumping || LooksAsleep || IsHeld) return;
+        if (IsJumping || LooksAsleep || IsHeld || IsPlaying) return;
         if (!IsChatting) courseBeforeChat = Direction;
         Direction = facing < 0 ? -1 : 1;
         Enter(new Mode.Chatting(seconds));
@@ -455,7 +522,7 @@ public sealed class Creature
     /// says so (a Shift-drag). Returns whether it was.</summary>
     public bool PickUp(bool evenAwake = false)
     {
-        if (IsJumping || IsHeld) return false;
+        if (IsJumping || IsHeld || IsPlaying) return false;
         if (CurrentMode is Mode.Sleeping) napsInHand = true;
         else if (evenAwake) napsInHand = false;
         else return false;
@@ -522,7 +589,7 @@ public sealed class Creature
     /// edges are likelier, so a big monitor gets its fair share of landings.</summary>
     public void Startle(Random rng)
     {
-        if (IsJumping) return;
+        if (IsJumping || IsPlaying) return;
         var hereLoop = Spot.Loop;
         var hereSegment = Segment;
         var others = World.Segments.Where(s => (s.Loop != hereLoop || s.Segment != hereSegment) && s.Length > 1).ToList();
