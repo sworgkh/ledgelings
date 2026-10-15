@@ -1,7 +1,8 @@
 import Foundation
 
-/// A creature written as letters: nine 32×32 grids, one per pose, which is
-/// what a chat model can produce when asked. This turns such text into the
+/// A creature written as letters: nine 32×32 grids, one per pose, for editing a
+/// creature by hand in a text editor. (The sprite kit asks image models for a
+/// picture instead: `SpriteKit`.) This turns such text into the
 /// same sheet layout the built-in creature uses (poses in columns, eye
 /// variants in rows), with the real palette, so recolouring and blinking work
 /// on an imported creature exactly as on the built-in one.
@@ -31,7 +32,7 @@ public enum SpriteText {
         "land": (["land"], 1, true),
         "sleep": (["sleep-0", "sleep-1"], 0.8, true),
     ]
-    /// Where the person writes what they want, in the prompt; in the current language.
+    /// What the kit's prompt says when the form has no description yet; in the current language.
     public static var describePlaceholder: String { tr("<describe your creature here>") }
 
     public enum Ink: String, CaseIterable, Sendable {
@@ -293,63 +294,5 @@ public enum SpriteText {
         if !cast.isEmpty { meta["cast"] = cast.map { ["name": $0.name, "persona": $0.persona] } }
         if let colour { meta["colour"] = colour.hex }
         return meta
-    }
-
-    // MARK: The prompt
-
-    /// What to paste into a chat model, with the built-in creature's idle pose as the
-    /// worked example, in the current language. The format's keys and letters stay as they are.
-    public static func prompt(example: [String]) -> String {
-        switch Language.current {
-        case .english: englishPrompt(example: example)
-        case .russian: russianPrompt(example: example)
-        }
-    }
-
-    public static func englishPrompt(example: [String]) -> String {
-        """
-        I need a tiny pixel-art creature for a desktop toy, written as text so I can paste it back.
-        The creature: \(describePlaceholder)
-
-        Write it as a sprite sheet in this exact text format and nothing else:
-
-        name: <one lowercase word, letters and digits only>
-        kind: <what it is, in a few words, e.g. "a fat green frog with big eyes">
-        colour: <its body colour as six hex digits, e.g. #6cbf4a; leave this line out to let the app pick>
-        character: <a name>: <its personality in one or two sentences>
-        character: <another name>: <another personality>
-        character: <a third name>: <a third personality>
-        pose: idle
-        <32 rows of exactly 32 characters>
-        pose: walk-0
-        <32 rows>
-        ... and so on for every pose, in this order: \(poses.joined(separator: ", "))
-
-        Characters, one per pixel:
-          .  nothing (transparent)
-          o  outline, a dark line around the body
-          b  body, the main colour
-          l  light, a highlight along the top and left inside the outline
-          s  shade, a shadow along the bottom and right inside the outline
-          k  eye pixels (black). Make each eye a vertical block of k; the app blinks by lowering a lid over it
-          x  other black detail that must not blink (a mouth, a spot)
-
-        Rules the app checks:
-          - Every pose is exactly 32 rows of exactly 32 characters. No other characters, no spaces inside rows.
-          - The creature stays inside columns \(box.x + 1) to \(box.x + box.w) and rows \(box.y + 1) to \(box.y + box.h) (1-based). Rows outside are empty.
-          - Row \(floor) is the floor: every pose has ink on row \(floor). The creature stands on it, facing RIGHT.
-          - Keep the body roughly centred left-to-right in that box; the app rotates it about the centre at screen corners.
-          - The poses: idle stands still. walk-0 to walk-3 are one walk cycle (walk-1 squashed a little, walk-3 stretched, feet alternating).
-            jump is stretched tall with feet tucked in. land is squashed very flat and wide. sleep-0 and sleep-1 are slumped low,
-            eyes still drawn as k (the app closes them), sleep-1 one row lower than sleep-0.
-          - Use only . o b l s k x. Do not add colours, comments or explanations. Output the text block and nothing else.
-          - The three characters are who the creatures of this kind will be when they talk to each other: give each a
-            distinct voice that fits what the creature is.
-
-        Here is the built-in creature's idle pose, as an example of the size and style (a square body, two eyes, small feet):
-
-        pose: idle
-        \(example.joined(separator: "\n"))
-        """
     }
 }

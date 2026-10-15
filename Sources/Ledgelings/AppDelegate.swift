@@ -42,6 +42,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         speaking = settings.$language.sink { Language.choose($0) }
         CursorMood.choose(settings.cursorMood)
         minding = settings.$cursorMood.sink { CursorMood.choose($0) }
+        if let at = CommandLine.arguments.firstIndex(of: "--kit-images") {
+            // The sprite kit's attachments and its prompt (from the saved form), written to a folder.
+            let args = CommandLine.arguments
+            let folder = URL(fileURLWithPath: args.indices.contains(at + 1) ? args[at + 1] : "build/sprite-kit")
+            do {
+                for file in try library.saveKitImages(to: folder) { print("kit \(file.path)") }
+                let prompt = folder.appendingPathComponent("prompt.txt")
+                try library.prompt(settings.spriteKitForm).write(to: prompt, atomically: true, encoding: .utf8)
+                print("kit \(prompt.path)")
+                exit(0)
+            } catch { FileHandle.standardError.write(Data("Ledgelings kit: \(error)\n".utf8)); exit(1) }
+        }
+        if let at = CommandLine.arguments.firstIndex(of: "--kit-import"), CommandLine.arguments.indices.contains(at + 1) {
+            // Import one picture with the saved form, as Import… does, and print what was read: name, colour, idle pose.
+            do {
+                let name = try library.importFile(URL(fileURLWithPath: CommandLine.arguments[at + 1]), form: settings.spriteKitForm)
+                if !settings.species.contains(name) { settings.species.append(name) }
+                let atlas = library.atlas(named: name)
+                print("imported \(name) colour \(atlas?.meta.colour ?? "none") kind \(atlas?.meta.kind ?? "none")")
+                if let image = try? atlas?.image() { for row in SpriteText.describe(image, pose: "idle", palette: .blocky) { print(row) } }
+                exit(0)
+            } catch { FileHandle.standardError.write(Data("Ledgelings kit: \(error)\n".utf8)); exit(1) }
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--promo") {
             let out = CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : "build/promo.mp4"
             Task { @MainActor in

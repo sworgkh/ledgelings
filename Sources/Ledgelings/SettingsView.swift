@@ -33,7 +33,7 @@ struct SettingsView: View {
             ActionsSettingsView(settings: settings).tabItem { Text(tr("Actions")) }.tag(SettingsTab.actions)
             ChasesSettingsView(settings: settings, library: library, hunts: hunts).tabItem { Text(tr("Chases")) }.tag(SettingsTab.chases)
             BedsSettingsView(settings: settings, library: library, beds: beds).tabItem { Text(tr("Beds")) }.tag(SettingsTab.beds)
-            SpritesSettingsView(settings: settings, library: library).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
+            SpritesSettingsView(settings: settings, library: library, spend: spend).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)

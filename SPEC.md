@@ -733,7 +733,8 @@ Every model call, whether or not its line was usable, appends one record to
 `planes` (a note and the catcher's thought), `voice` (a line said by a paid speech
 model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2), `reminders`
 (a reminder's note, §7.7), `complaints` (a creature telling the user off, §4.7.1), `teaParties`
-(the stories and answers at a tea party, §7.8). Recording a call requires one. Records from
+(the stories and answers at a tea party, §7.8), `revenge`, `creatureRefine` (the sprite kit's
+Refine with AI, §9.1). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -1702,9 +1703,9 @@ body box `[5,5,22,22]`, 9 pose columns × 3 eye-variant rows, same palette),
 so the app treats them like its own. Creature `i` wears species
 `speciesInUse[i mod count]` ("blocky" when the list is empty).
 
-Two import routes:
+Three import routes:
 
-- **Text** (`.txt`/`.md`), the format a chat model can write:
+- **Text** (`.txt`/`.md`), for writing or editing a creature by hand:
 
   ```
   name: pip
@@ -1732,17 +1733,84 @@ Two import routes:
   derived: for each vertical run of `k`, `half` keeps the lower half (rounded
   up), `closed` keeps the bottom row; what the lid covers becomes body.
   Pixels use the built-in palette, so recolouring (§9.2) works.
-- **PNG** on magenta `#ff00ff` (tolerance 60 in RGB distance), 288×96 or a
-  whole multiple of it (sampled down at cell centres), alpha hardened to 1 bit.
+- **PNG in the exact layout**: on magenta `#ff00ff` (tolerance 60 in RGB
+  distance), 288×96 or a whole multiple of it (sampled down at cell centres),
+  alpha hardened to 1 bit, colours kept as painted.
+- **Any other picture** (PNG, JPEG, WebP), which is what an image model sends
+  back (`SpriteKit.read`). Nothing about its size or layout is trusted:
+  1. *Paper*: transparent pixels, magenta and anything mixed from it
+     (`r ≥ 140, b ≥ 140, g < 0.6·min(r, b)`, which takes the template's lines
+     too), and every colour covering at least a tenth of the picture's edge
+     (white, a checkerboard), within 40 in RGB distance.
+  2. *Patches*: 8-connected painted pixels; specks under `w·h/50000` pixels
+     and lines (one side under a twelfth of the other) are dropped. Patches
+     within a tenth of a big patch's size of each other are one creature.
+  3. *Creatures*: groups under a fifth of the median of the nine biggest, or
+     longer than 4× their width (words, labels), are dropped. Fewer than nine
+     left is refused (`found N creatures in the picture, not 9`). The rest are
+     read top row first, left to right (a row is everything within half a
+     creature's height), and the first nine are the poses in order: one row,
+     the old three-row sheet and a 3×3 grid all work.
+  4. *Pixels*: one scale for all nine, so the biggest pose fills the 22-pixel
+     body box. Each sprite pixel samples the middle 60 % of its square (up to
+     9×9 points): painted when more than half of them are, in their median
+     colour, so blur and anti-aliased fringes decide nothing. The pose is
+     trimmed, centred left to right in the body box and stood on the floor.
+  5. *Inks*: the body colour is the most common colour inside the creatures.
+     Every painted pixel on the edge is `o`. Inside, a dark patch (near black,
+     or under 0.55 of the body's luma) touching a dark edge pixel is `o` (the
+     feet), a mostly near-black patch on its own is `k` (an eye, so it blinks),
+     another dark patch is `s`; the rest is `l`, `s` or `b` by luma, more than
+     `max(16, 0.1·body)` above or below the body's.
+  The sheet is then built from the inks like a text sheet, in the built-in
+  palette, and the colour read in step 5 becomes the species' `colour` unless
+  the kit's form names one. A picture carries no name or cast, so the form
+  gives `name` (made safe: lowercase Latin, digits, dashes; else the file
+  name), `kind` and the named characters.
 
 Settings › Sprites shows every species as a card (idle pose at 3×, name, a
 check overlay when it is in the colony); a click toggles it; imported ones
-have a delete button. The **sprite kit** below offers: the prompt (the format
-above including `kind` and three `character` lines, the rules, and the
-built-in creature's idle pose written in letters as the example, with a
-placeholder for the user's description), the built-in creature as a whole
-text file, and a PNG template: magenta with cell borders and body boxes
-marked.
+have a delete button.
+
+The **sprite kit** (right column) makes a new creature with an image model:
+
+- **The form** (`spriteKitForm`): what it is (free text), a name, an own body
+  colour (a switch and a colour picker), three characters (name and
+  personality). Anything empty is the model's to choose.
+- **Refine with AI**, only when an OpenRouter key is connected
+  (`openRouterConnected`: OpenRouter is the brain or the voice engine, and a
+  key is saved; the keychain is read only then), otherwise greyed out with a
+  footer saying so. One call to OpenRouter with `openRouterModel`, whatever
+  the brain (max 3000 tokens, temperature 0.8, reasoning low), with
+  `SpriteKit.refineSystems` and `refinePrompts` (placeholders `{idea}`
+  `{name}` `{colour}` `{cast}`). The answer is one JSON object (`name`,
+  `kind`, `colour`, `characters[{name, persona}]`): a kind line in Blocky's
+  style, a colour, three characters whose personas say how they sound
+  (§6.6.1). It is laid over the form: what it has replaces, what it lacks
+  stays; an answer with none of them is refused. Recorded as
+  `Spend.Purpose.creatureRefine` ("Sprite kit: Refine with AI") before the
+  answer is read, so an unusable one is priced too.
+- **The prompt** (`SpriteKit.imagePrompts`, placeholders `{kind}`
+  `{colourLine}` `{nameLine}` `{poses}`) asks an image model for ONE picture
+  in the layout of picture 2, and says which attachment is which. No letter
+  grid, no letter key, no example rows: models shown letters answered in
+  letters. **Copy Prompt**, and **Show** for reading it in a popover.
+- **The pictures**, 1728×288 each, the same grid: a 48-pixel title strip, nine
+  32×32 cells at 6× (192 pixels), a 48-pixel strip of labels. Magenta
+  background, 2-pixel cell lines `#c800c8`, a 2-pixel frame `#ff78ff` just
+  outside each body box (its bottom edge is the floor), labels and title in a
+  built-in 5×7 pixel font (`SpriteKit.glyphs`) at 4×, black.
+  1. `1-poses.png`, title `1 - POSES: COPY THIS STYLE AND ORDER`: Blocky's
+     open-eyes row drawn on the grid, every pixel a 6×6 square.
+  2. `2-template.png`, title `2 - TEMPLATE: PAINT YOUR CREATURE HERE`: the
+     same grid, empty.
+  Two, not three: a third reference (a style card) was left out because each
+  extra picture makes it less clear which one is the canvas, and the style
+  rules fit in the prompt's words; picture 1 is the style card.
+  **Save Images…** writes both to a chosen folder by those names; **Copy
+  Images** puts both on the clipboard as files, as Finder copies them.
+- **Import…** takes the model's picture (or a text sheet) with the form's name,
+  kind, colour and cast, as above.
 
 ### 9.2 Recolouring
 
@@ -1964,6 +2032,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | language | the system's preferred language when the app has it, else `en` | `en`, `ru`; applied live (§1.2) |
 | creatureCount | 3 | 1–24 |
 | colors | `#ff8a3d #3dc7b5 #ff6fa3 #ffd23d #9b7bff #7bd65a` | 1–12 hex colours; invalid ones dropped on load |
+| spriteKitForm | empty (no kind, name or colour; three empty characters) | JSON `{kind, name, colour, cast[{name, persona}]}`; the sprite kit's form (§9.1); a colour that is not hex is dropped and the cast cut or padded to three on load |
 | minSize / maxSize | 1.5 / 3 | 1–5 in 0.5 steps; setting one past the other drags the other |
 | dayMinutes | 3 | 0.5–60 |
 | nightMinutes | 5 | 0–60; 0 = never sleep |

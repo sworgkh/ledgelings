@@ -6,9 +6,10 @@ import UniformTypeIdentifiers
 /// Every creature sheet the app can use: the built-in one, plus whatever the
 /// user imported into `~/Library/Application Support/Ledgelings/sprites/<name>/`.
 ///
-/// An import takes either the text format (`SpriteText`) or a painted PNG in
-/// the same 288×96 layout on magenta, and writes a normal atlas (PNG + JSON)
-/// the app loads like its own.
+/// An import takes the text format (`SpriteText`), a PNG in the sheet's exact
+/// 288×96 layout on magenta, or any picture an image model painted from the
+/// kit (`SpriteKit.read`), and writes a normal atlas (PNG + JSON) the app
+/// loads like its own.
 @MainActor
 final class SpriteLibrary: ObservableObject {
     struct Species: Identifiable {
@@ -82,9 +83,11 @@ final class SpriteLibrary: ObservableObject {
         atlas(named: name)?.meta.colour.flatMap(RGB.init(hex:)) ?? slot
     }
 
-    /// Import a text sheet or a painted PNG. Returns the species name.
+    /// Import a text sheet or a painted PNG. Returns the species name. A PNG says
+    /// nothing about who the creature is, so `form` (the kit's) gives it a name,
+    /// kind, colour and cast; a text sheet keeps its own.
     @discardableResult
-    func importFile(_ url: URL) throws -> String {
+    func importFile(_ url: URL, form: SpriteKit.Form = SpriteKit.Form()) throws -> String {
         let ext = url.pathExtension.lowercased()
         let sheet: SpriteText.Image
         let name: String
@@ -93,8 +96,19 @@ final class SpriteLibrary: ObservableObject {
         var colour: SpriteText.Tint?
         var source: (data: Data, ext: String)?
         if ext == "png" {
-            sheet = try Self.keyedOut(try Self.readPNG(url))
-            name = url.deletingPathExtension().lastPathComponent.lowercased()
+            let picture = try Self.readPNG(url)
+            if Self.isExactSheet(picture) {
+                sheet = try Self.keyedOut(picture)
+            } else {
+                let reading = try SpriteKit.read(picture)
+                sheet = reading.sheet
+                colour = reading.colour
+            }
+            let file = url.deletingPathExtension().lastPathComponent
+            name = SpriteKit.speciesName(form.name) ?? SpriteKit.speciesName(file) ?? file.lowercased()
+            kind = form.trimmedKind.isEmpty ? nil : form.trimmedKind
+            cast = form.namedCast
+            colour = form.tint ?? colour
         } else if ["txt", "md", "text", ""].contains(ext) {
             guard let text = try? String(contentsOf: url, encoding: .utf8) else { throw ImportError.unreadable(url.lastPathComponent) }
             let parsed = try SpriteText.parse(text)
@@ -144,13 +158,34 @@ final class SpriteLibrary: ObservableObject {
         return lines.joined(separator: "\n") + "\n"
     }
 
-    /// What to paste into a chat model.
-    var prompt: String {
-        let idle = (try? SpriteAtlas(named: "blocky").image()).map { SpriteText.describe($0, pose: "idle", palette: .blocky) } ?? []
-        return SpriteText.prompt(example: idle)
+    /// What to paste into an image model, with `kitImages` attached.
+    func prompt(_ form: SpriteKit.Form) -> String { SpriteKit.imagePrompt(form) }
+
+    /// The prompt's attachments, in its order, by the file names it calls them:
+    /// the built-in creature's nine poses, and the empty template.
+    lazy var kitImages: [(name: String, image: SpriteText.Image)] = {
+        let blocky = (try? SpriteAtlas(named: "blocky").image()) ?? SpriteText.Image(width: 0, height: 0, rgba: [])
+        return Array(zip(SpriteKit.attachmentNames, [SpriteKit.posesImage(blocky), SpriteKit.templateImage()])).map { ($0, $1) }
+    }()
+
+    /// Write the attachments into `folder`, overwriting earlier copies. Returns their files.
+    @discardableResult
+    func saveKitImages(to folder: URL) throws -> [URL] {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return try kitImages.map { item in
+            let file = folder.appendingPathComponent(item.name)
+            try Self.writePNG(item.image, to: file)
+            return file
+        }
     }
 
-    /// A blank 288×96 sheet on magenta with the cells and body boxes marked, for an image model or a paint program.
+    /// A sheet in the exact layout, 288×96 or a whole multiple: painted by hand, read pixel for pixel.
+    nonisolated static func isExactSheet(_ image: SpriteText.Image) -> Bool {
+        let w = SpriteText.poses.count * SpriteText.cell, h = SpriteText.variants.count * SpriteText.cell
+        return image.width >= w && image.width % w == 0 && image.height % h == 0 && image.width / w == image.height / h
+    }
+
+    /// A blank 288×96 sheet on magenta with the cells and body boxes marked, for a paint program.
     func templateImage() -> SpriteText.Image {
         let cell = SpriteText.cell, box = SpriteText.box
         let w = SpriteText.poses.count * cell, h = SpriteText.variants.count * cell

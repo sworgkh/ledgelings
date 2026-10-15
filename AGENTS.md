@@ -80,6 +80,9 @@ with `scripts/make-app.sh`, installed and seen working.
   which works even while the display sleeps and the live display link stops.
 - `--shortcut` says whether the system took the shortcut from any app (`shortcut ⌃⌥L registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
+- `--kit-images <folder>` writes the sprite kit's two pictures and the prompt (from the saved
+  form) and quits; `--kit-import <picture>` imports one picture with the saved form, as
+  Import… does, and prints the name, colour and idle pose it read (it adds the species).
 - `swift build` does not update `build/Ledgelings.app`; run `scripts/make-app.sh`.
 - The app's preferences are shared with the owner's running copy. Back them up
   (`defaults export com.alterman.ledgelings file.plist`) before a test changes

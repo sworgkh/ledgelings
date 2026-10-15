@@ -154,8 +154,10 @@ Every conversation is kept, and every call to the model is priced.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
 triangle and a mushroom come built in, each with its own cast of characters. The
-**sprite kit** is a prompt you paste into any chat model with a description of the
-creature you want; the model answers in a letter format the app imports as a real
+**sprite kit** is a small form (what it is, a name, a colour, three characters; *Refine
+with AI* fills it in with an OpenRouter key), a prompt built from it, and two pictures
+to attach: Blocky's nine poses and an empty template. Paste them into an image model,
+import the picture it paints at whatever size it comes, and the app turns it into a real
 sprite sheet that blinks and takes your colours. See [docs/SPRITES.md](docs/SPRITES.md).
 
 **They have tea.** Now and then two who bump into each other put a little table out

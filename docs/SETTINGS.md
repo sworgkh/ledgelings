@@ -235,15 +235,34 @@ so on, starting over when they run out; with nothing chosen everyone is Blocky.
 
 | Control | What it does |
 |---|---|
-| **Import Sheet…** | A `.txt` from the sprite kit, or a 288×96 PNG painted on magenta (or a whole multiple of that size). The new species is added to the colony at once |
 | **Open Folder** | The folder imported creatures live in |
 | 🗑 on an imported card | Deletes that creature's folder |
-| **Copy Prompt** | The sprite kit prompt, for any chat model |
-| **Save Example Sheet…** | Blocky written in the kit's letter format, to show a model or edit by hand |
-| **Save PNG Template…** | A magenta 288×96 sheet with every cell and body box marked, for an image model or a paint program |
 
-The format, the rules the import checks, and what a species can declare
-(`kind`, `colour`, `character` lines) are in [SPRITES.md](SPRITES.md).
+### Sprite kit: the new creature
+
+A small form for the creature you want next. Anything left empty is the model's to
+choose. The form is kept (`spriteKitForm`) until **Clear**.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **What it is** (`spriteKitForm.kind`) | empty | free text | A few words: "a fat green frog with big eyes". Goes into the prompt and becomes the species' description, which its characters talk as |
+| **Name** (`spriteKitForm.name`) | empty | lowercase Latin letters, digits, dashes | The species' name. Anything else is made safe ("Moss Ball" → `moss-ball`); empty takes the picture's file name |
+| **Own colour** (`spriteKitForm.colour`) | off | a colour | On: the species always wears it, and the prompt asks for it. Off: the model picks, and the import keeps the colour it painted |
+| **Character 1–3** (`spriteKitForm.cast`) | empty | name + personality | Who the creatures of this kind are. Say how they sound (old, slow, tiny, grumpy, he/she) and their voices are cast from it. Empty ones are left out |
+| **Refine with AI** | | | Only with an OpenRouter key (OpenRouter as the brain or the voice); greyed out otherwise, with a footer saying why. Turns your words into a whole creature in Blocky's style, a colour and three characters who say how they sound, and fills the form for you to edit. One call with the Talk tab's OpenRouter model, priced under *Sprite kit: Refine with AI* in Costs |
+
+### Ask an image model
+
+| Control | What it does |
+|---|---|
+| **Copy Prompt** | A prompt for an image model (ChatGPT, Gemini…), built from the form. It asks for a picture, never for text |
+| **Show** | The prompt, to read before copying |
+| **Save Images…** | Writes the two pictures the prompt talks about into a folder: `1-poses.png` (Blocky's nine poses, the style and order to copy) and `2-template.png` (the empty sheet to paint on). 1728×288, the same grid |
+| **Copy Images** | Both pictures on the clipboard as files, for pasting into a chat |
+| **Import…** | The picture the model sends back, at any size: the app finds the nine creatures, brings them down to pixels, cuts the magenta and the blur away, and gives them the form's name, colour and characters. A hand-written text sheet (`.txt`) or a 288×96 PNG painted on magenta imports too. The new species joins the colony at once |
+
+How a picture is read, the text format and what a species can declare are in
+[SPRITES.md](SPRITES.md).
 
 ## Talk tab
 
