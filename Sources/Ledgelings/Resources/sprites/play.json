@@ -1,0 +1,118 @@
+{
+  "name": "play",
+  "image": "play.png",
+  "cell": [
+    32,
+    28
+  ],
+  "contentBox": [
+    0,
+    0,
+    32,
+    28
+  ],
+  "variants": [],
+  "palette": {},
+  "frames": {
+    "ball-0": {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "ball-1": {
+      "x": 32,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "hoop": {
+      "x": 64,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "hoop-swish": {
+      "x": 96,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "chute": {
+      "x": 128,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "hook": {
+      "x": 160,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "rope": {
+      "x": 192,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "drop": {
+      "x": 224,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    }
+  },
+  "animations": {
+    "ball": {
+      "frames": [
+        "ball-0",
+        "ball-1"
+      ],
+      "fps": 8.0,
+      "loop": true
+    },
+    "hoop": {
+      "frames": [
+        "hoop"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "swish": {
+      "frames": [
+        "hoop-swish"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "chute": {
+      "frames": [
+        "chute"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "hook": {
+      "frames": [
+        "hook"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "rope": {
+      "frames": [
+        "rope"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "drop": {
+      "frames": [
+        "drop"
+      ],
+      "fps": 1.0,
+      "loop": true
+    }
+  }
+}

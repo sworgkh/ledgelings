@@ -44,6 +44,8 @@ import Testing
                                  "prompt": Revenge.prompts(for: mood)(l)] as [String: Any]) }),
             "beds": ["settle": Beds.settleSets(l), "settleAnyone": Beds.settleAnyone(l),
                      "moved": Beds.movedSets(l), "movedAnyone": Beds.movedAnyone(l)],
+            "plays": ["start": Plays.startSets(l), "startAnyone": Plays.startAnyone(l),
+                      "done": Plays.doneSets(l), "doneAnyone": Plays.doneAnyone(l)],
             "holidays": Almanac.holidayNames[l] ?? [:],
             "flowers": Gifts.names(l),
             "prompts": [
@@ -54,6 +56,7 @@ import Testing
                 "complaint": Complaints.prompts(l), "reminder": Reminders.notePrompts(l),
                 "spriteImage": SpriteKit.imagePrompts(l), "spriteRefine": SpriteKit.refinePrompts(l),
                 "spriteRefineSystem": SpriteKit.refineSystems(l),
+                "play": Plays.linePrompts(l), "playSystem": Plays.lineSystemPrompts(l),
             ],
         ]
     }

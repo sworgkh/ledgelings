@@ -142,6 +142,7 @@ The recipes:
 | `sprites/zzz.yaml` | the Z a sleeper floats, one cell | `painters/zzz.py` |
 | `sprites/house.yaml` | the house, 68×60 | `painters/house.py` |
 | `sprites/tea.yaml` | the tea party table with its pot and two cups, 36×28, steam in two frames | `painters/tea.py`, with the house's blocks |
+| `sprites/play.yaml` | the games' props, 32×28 each: a ball in two frames, the hoop and its swishing net, a parachute, a grappling hook, a rope link, a drop of sweat | `painters/play.py`: material glyphs shaded like the body (light top-left, shade bottom-right) with a dark-tint outline added in code; strings and net are bare threads |
 | `sprites/flowers.yaml` | ten flowers, one cell each | `painters/flowers.py`, from hand-placed glyphs with the outline added in code |
 | `sprites/plane.yaml` | the paper plane and the note it opens into, 18×12 | `painters/plane.py`, same glyph-plus-outline method |
 | `sprites/text/*.txt` | frog, cat, ghost, slime, robot, triangle, mushroom, in the letter format | `sprites/text/make.py` (shapes plus an automatic outline, light and shade) |

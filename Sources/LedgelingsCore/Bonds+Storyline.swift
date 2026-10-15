@@ -16,13 +16,13 @@ extension Bonds {
 
     public struct Moment: Codable, Equatable, Sendable {
         public enum Kind: String, Codable, CaseIterable, Sendable {
-            case talk, tea, flower, plane, grab
+            case talk, tea, flower, plane, grab, play
         }
         public var time: Date
         public var kind: Kind
-        /// Who did it: the first to speak, the giver, the thrower, the grabber.
+        /// Who did it: the first to speak, the giver, the thrower, the grabber, who started the game.
         public var who: String
-        /// The first line said, the flower given, the note sent; nil for a grab.
+        /// The first line said, the flower given, the note sent, the game played (`Plays.Kind`); nil for a grab.
         public var detail: String?
         public init(time: Date, kind: Kind, who: String, detail: String? = nil) {
             self.time = time; self.kind = kind; self.who = who; self.detail = detail
@@ -122,6 +122,7 @@ extension Bonds {
         case .flower: trCount(n, "flower", "flowers")
         case .plane: trCount(n, "paper plane", "paper planes")
         case .grab: trCount(n, "cursor grab", "cursor grabs")
+        case .play: trCount(n, "game", "games")
         }
     }
 
@@ -135,6 +136,7 @@ extension Bonds {
         case .flower: return tr("%1$@ gave %2$@ a %3$@", moment.who, other, Gifts.name(of: moment.detail ?? ""))
         case .plane: return tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.who, other, said)
         case .grab: return tr("%1$@ grabbed the cursor while %2$@ looked on", moment.who, other)
+        case .play: return tr("%1$@ and %2$@ played: %3$@", moment.who, other, Plays.name(of: moment.detail))
         }
     }
 
@@ -213,7 +215,7 @@ extension Bonds {
     /// tea party over a plane over a grab over a talk), with when it was, and a
     /// bond line from everything they ever did together, unless they already have one.
     public static func builtInPlot(_ bond: Bond, now: Date = Date(), using rng: inout some RandomNumberGenerator) -> Written {
-        let order: [Moment.Kind] = [.flower, .tea, .plane, .grab, .talk]
+        let order: [Moment.Kind] = [.flower, .tea, .play, .plane, .grab, .talk]
         let moment = order.lazy.compactMap { kind in bond.moments.last { $0.kind == kind } }.first
         let names = bond.names
         let a = names.first ?? "", b = names.last ?? ""
@@ -237,6 +239,10 @@ extension Bonds {
             case .grab:
                 choices = [tr("%2$@ cannot decide whether %1$@ grabbing the cursor %3$@ was brave or silly.", who, other, when),
                            tr("%1$@ wants %2$@ to help grab the cursor next time, after %3$@.", who, other, when)]
+            case .play:
+                let game = Plays.name(of: moment.detail)
+                choices = [tr("%2$@ wants a rematch of %3$@ with %1$@, after %4$@.", who, other, game, when),
+                           tr("%1$@ has been practising since %3$@ with %2$@ %4$@, and means to win next time.", who, other, game, when)]
             case .talk:
                 choices = [tr("%2$@ keeps coming back to what %1$@ said %3$@: \"%4$@\"", who, other, when, said),
                            tr("%1$@ and %2$@ have not settled what they talked about %3$@.", who, other, when)]

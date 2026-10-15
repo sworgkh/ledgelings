@@ -1,0 +1,47 @@
+# play — the props of the creatures' games: a basketball spinning in two
+# frames, the hoop it is thrown at (and its net swishing), a parachute, a
+# grappling hook and the links of its rope, and a drop of sweat for whoever is
+# out of breath after tag. Props, not poses: every species, an imported one
+# too, plays with the same ones. Blocky's rules throughout: flat patches, a 1px
+# outline in a dark tint of the colour beside it, a light line top-left, a
+# shade line bottom-right, no curves.
+#
+#   python -m spritetool build sprites/play.yaml
+
+version: 1
+name: play
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [32, 28]
+  content_box: [0, 0, 32, 28]
+
+background:
+  color: "#ff00ff"
+  tolerance: 60
+
+painter: play
+
+style: >-
+  pixel art, flat colour, 1px outline in a dark tint of each patch's colour,
+  playground props: an orange basketball, a hoop on a white board, a red and
+  white parachute, a grey grappling hook, rope, a blue drop of sweat
+
+poses:
+  - {name: ball-0, prompt: an orange basketball, seams in a cross}
+  - {name: ball-1, prompt: the same ball turned an eighth, seams diagonal}
+  - {name: hoop, prompt: a basketball hoop from the side, board on the right against a wall, rim to the left, net below}
+  - {name: hoop-swish, prompt: the same hoop, its net swung a pixel to the right}
+  - {name: chute, prompt: an open parachute, red and white panels, four strings meeting at the bottom middle}
+  - {name: hook, prompt: a grey grappling hook, three prongs up}
+  - {name: rope, prompt: one link of a brown rope}
+  - {name: drop, prompt: a small blue drop of sweat}
+
+animations:
+  ball: {frames: [ball-0, ball-1], fps: 8, loop: true}
+  hoop: {frames: [hoop], fps: 1, loop: true}
+  swish: {frames: [hoop-swish], fps: 1, loop: true}
+  chute: {frames: [chute], fps: 1, loop: true}
+  hook: {frames: [hook], fps: 1, loop: true}
+  rope: {frames: [rope], fps: 1, loop: true}
+  drop: {frames: [drop], fps: 1, loop: true}

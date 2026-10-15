@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "", action: #selector(toggleVoice), keyEquivalent: "v")
     private let revengeItem = NSMenuItem(title: "", action: #selector(toggleRevenge), keyEquivalent: "")
+    private let activitiesItem = NSMenuItem(title: "", action: #selector(openActivities), keyEquivalent: "")
     private let pointer = SystemPointer()
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
 
@@ -101,6 +102,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 do { try await BedFilm.run(output: URL(fileURLWithPath: out)) }
                 catch { FileHandle.standardError.write(Data("Ledgelings bed film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
+        if let at = CommandLine.arguments.firstIndex(of: "--play-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/play.mp4"
+            let only = args.indices.contains(at + 2) ? Plays.Kind(rawValue: args[at + 2]) : nil
+            Task { @MainActor in
+                do { try await PlayFilm.run(output: URL(fileURLWithPath: out), only: only) }
+                catch { FileHandle.standardError.write(Data("Ledgelings play film: \(error)\n".utf8)); exit(1) }
                 exit(0)
             }
             return
@@ -250,21 +262,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--actions`: the Creature Actions sheet; `--snapshot <file.png>` with it writes it to a file and quits.
+        // `--actions [--activities]`: the Creature Actions sheet (on its Activities page); `--snapshot <file.png>` with it writes it to a file and quits.
         if CommandLine.arguments.contains("--actions") {
             let actions = actions
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
-                actions.show()
+                actions.show(page: CommandLine.arguments.contains("--activities") ? .activities : .main)
                 guard let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) else { return }
                 try? await Task.sleep(for: .seconds(1))
                 do { try actions.snapshot(to: URL(fileURLWithPath: CommandLine.arguments[shot + 1])) } catch { FileHandle.standardError.write(Data("Ledgelings snapshot: \(error)\n".utf8)) }
                 exit(0)
             }
         }
-        // `--settings [creatures|actions|chases|beds|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|actions|chases|beds|play|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
+            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
             settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
@@ -295,12 +307,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         actionsItem.target = self
         menu.addItem(actionsItem)
+        activitiesItem.target = self
+        menu.addItem(activitiesItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
         voiceItem.target = self
         menu.addItem(voiceItem)
         revengeItem.target = self
         menu.addItem(revengeItem)
+
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         chatsItem.target = self
@@ -340,6 +355,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         actionsItem.title = tr("Creature Actions…")
         voiceItem.title = tr("Hear Them Talk")
         revengeItem.title = tr("Cursor Revenge")
+        activitiesItem.title = tr("Activities…")
         chatsItem.title = tr("Chat History…")
         settingsItem.title = tr("Settings…")
         languageItem.title = tr("Language")
@@ -432,6 +448,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }
+    /// The games, on the Actions sheet's inner page: Play Now for each, and games on or off.
+    @objc private func openActivities() { actions.show(page: .activities) }
 
     /// A creature holding the cursor lets go the moment the screen sleeps or locks,
     /// the user switches away, or the app quits.

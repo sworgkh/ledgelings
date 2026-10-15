@@ -44,6 +44,9 @@ final class Colony: NSObject {
     /// Every character's own bed, one picture each.
     let bedFrames: SpriteAtlas.Frames
     let bedCell: CGSize
+    /// The games' props: ball, hoop, parachute, hook, rope, a drop of sweat.
+    let playFrames: SpriteAtlas.Frames
+    let playCell: CGSize
 
     /// A bigger body walks further from the screen edge, so each size has its
     /// own outline. Sizes come in half steps, so this stays a handful of entries.
@@ -146,6 +149,13 @@ final class Colony: NSObject {
     var teaRoundEnds: Double?
     /// "Have a Tea Party" from the menu, when nobody shares an edge: the guest jumping over to the host.
     var teaInvite: (host: Int, guest: Int, until: Double)?
+    /// The game going on, if any (`Colony+Play`), and when the next one is due.
+    var play: PlaySession?
+    var nextPlayAt: Double?
+    /// The "how often" setting the next game was timed with; a change times it afresh.
+    var playEveryWas = 0.0
+    /// Counts games, so a model's late line finds whether its game is still on.
+    var playCount = 0
     /// The house they hide in when asked to go away for a while.
     var hideout = Hideout()
     /// Creatures shrinking into the doorway, and creatures growing out of it, by when they started.
@@ -228,6 +238,9 @@ final class Colony: NSObject {
         let bedSheet = try SpriteAtlas(named: "beds")
         bedFrames = bedSheet.frames()
         bedCell = bedSheet.cellSize
+        let props = try SpriteAtlas(named: "play")
+        playFrames = props.frames()
+        playCell = props.cellSize
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
         super.init()
 
@@ -277,6 +290,7 @@ final class Colony: NSObject {
         revengeFuse.forget(creaturesFrom: creatures.count)
         if let grab, !settings.revengeEnabled || grab.index >= settings.creatureCount { letGoOfCursor(.escape) }
         if !settings.teaPartiesEnabled { breakUpTea() }
+        if let play, !settings.playEnabled || play.players.contains(where: { $0 >= settings.creatureCount }) { endPlay(completed: false) }
         while creatures.count < settings.creatureCount {
             let share = Double.random(in: 0...1, using: &rng), size = settings.size(forShare: share)
             creatures.append(spawn(size: size)); asleepFor.append(0); sizeShares.append(share); sizes.append(size)
@@ -304,6 +318,7 @@ final class Colony: NSObject {
 
     @objc func screensChanged() {
         letGoOfCursor(.escape)
+        endPlay(completed: false)
         rebuildOverlays()
         worlds.removeAll()
         for i in creatures.indices { creatures[i].rehome(to: world(forSize: sizes[i])) }
@@ -388,6 +403,7 @@ final class Colony: NSObject {
         sparks.update(dt: dt)
         sayScheduledLines()
         updateTeaParty()
+        updatePlay(dt: dt)
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
@@ -408,7 +424,7 @@ final class Colony: NSObject {
         let snapshots = creatures.indices.map { i in
             let c = creatures[i]
             let shrink = doorShrink(of: i)
-            let inward = c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment)
+            let inward = c.isHeld || c.isPlaying ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment)
             // Shrinking, it keeps its feet on the floor: the centre sinks as the body gets smaller.
             let sink = atlas.bodyHalfSize * CGFloat(sizes[i]) * (1 - shrink)
             let shown = bubbles[i].map { $0.reveal.shown($0.text, at: elapsed) }
@@ -419,23 +435,25 @@ final class Colony: NSObject {
                 image: frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes),
                 scale: CGFloat(sizes[i]),
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
-                inward: c.isHeld ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
+                inward: c.isHeld || c.isPlaying ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
                 bubble: shown?.text,
                 bubbleShare: shown?.share ?? 1,
                 hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) },
                 hidden: hideout.isInside(i),
                 shrink: shrink,
-                letter: letterImage(for: i)
+                letter: letterImage(for: i),
+                bubbleLift: playBubbleLift(of: i)
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
         let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
+        let props = playProps()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
                            plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,
-                           garden: planted, beds: sleepers, bedCell: bedCell)
+                           garden: planted, beds: sleepers, bedCell: bedCell, props: props, propCell: playCell)
         }
     }
 }

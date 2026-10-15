@@ -274,3 +274,45 @@ def test_every_bed_stands_on_the_floor_within_its_cell_and_has_a_lift():
         assert bottom == h, f"{pose} does not stand on the floor"
         assert right - left >= 26, f"{pose} is narrower than a sleeper"
         assert 0 < painter.LIFT[pose] < h - top + 1, f"{pose}'s mattress is above the bed"
+
+
+PLAY = Path(__file__).resolve().parents[2] / "sprites" / "play.yaml"
+
+
+def test_the_play_props_sit_where_the_app_expects_them_in_blocky_rules():
+    from spritetool.painters import play as painter
+
+    recipe = load_recipe(PLAY)
+    sheet = key_out(get_painter("play")(recipe), recipe.background, recipe.tolerance)
+    names = [p for p, _ in recipe.poses]
+
+    def cell(pose):
+        x, y, w, h = recipe.cell_rect(names.index(pose), 0)
+        return sheet.crop((x, y, x + w, y + h))
+
+    # The hoop hangs on a wall to its right: its board's outline is the last column.
+    hoop = cell("hoop")
+    left, top, right, bottom = hoop.getchannel("A").getbbox()
+    assert right == painter.CELL_W, "the board does not touch the wall"
+    # Its rim, red, along RIM_ROW from RIM_FROM to RIM_TO (the app's Plays.Props), nearly twice the ball.
+    rim = [px for px in range(painter.CELL_W) if hoop.getpixel((px, painter.RIM_ROW))[3] and
+           hoop.getpixel((px, painter.RIM_ROW))[0] > 150 and hoop.getpixel((px, painter.RIM_ROW))[1] < 140]
+    assert min(rim) == painter.RIM_FROM and max(rim) == painter.RIM_TO
+    assert (painter.RIM_TO - painter.RIM_FROM + 1) >= 1.7 * len(painter.BALL)
+    # The parachute's strings end on the bottom row, in the middle, where the head is.
+    chute = cell("chute")
+    assert chute.getchannel("A").getbbox()[3] == painter.CELL_H
+    feet = [px for px in range(painter.CELL_W) if chute.getpixel((px, painter.CELL_H - 1))[3]]
+    assert feet and abs((min(feet) + max(feet)) / 2 - painter.CELL_W / 2) <= 2
+    # The ball is round in steps, with its light top-left, its shade bottom-right and a dark outline.
+    ball = cell("ball-0")
+    left, top, right, bottom = ball.getchannel("A").getbbox()
+    assert (right - left, bottom - top) == (len(painter.BALL[0]) + 2, len(painter.BALL) + 2)
+    assert ball.getpixel((left, top))[3] == 0, "stepped corners, not a square"
+    assert ball.getpixel((left + 2, top + 2))[:3] == painter.light(painter.ORANGE)
+    assert ball.getpixel((right - 3, bottom - 3))[:3] == painter.shade(painter.ORANGE)
+    assert ball.getpixel((left, top + 5))[:3] == painter.outline(painter.ORANGE)
+    # Two ball frames differ only in the seams; every prop is painted.
+    assert cell("ball-0").tobytes() != cell("ball-1").tobytes()
+    for pose in names:
+        assert cell(pose).getchannel("A").getbbox(), pose

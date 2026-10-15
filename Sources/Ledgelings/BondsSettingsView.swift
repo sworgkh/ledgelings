@@ -37,7 +37,7 @@ struct BondsSettingsView: View {
             } header: {
                 Text(tr("Storylines"))
             } footer: {
-                Text(tr("Every talk, tea party, flower, paper plane and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."))
+                Text(tr("Every talk, tea party, flower, paper plane, game and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."))
             }
 
             // Like the Talk tab's prompts: nothing to edit until there is a model to read it.

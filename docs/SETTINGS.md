@@ -37,6 +37,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
 | *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens the Reminders tab |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
+| **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
@@ -75,6 +76,7 @@ stands and flips at a click; the sheet stays up.
 | **REVENGE ON / OFF** | *Cursor Revenge* |
 | **CURSOR: A MENACE** | *The Cursor Is*: each click the next of playmate, just there, menace |
 | **ENGLISH / РУССКИЙ** | The language, under its own name; each click the next |
+| **ACTIVITIES…** (A) | The sheet's inner page, below |
 | **SETTINGS** (⌘, · Ctrl+, on Windows), **CHATS** | Puts the sheet away and opens the settings window, or its Chats tab |
 | **QUIT** (⌘Q · Ctrl+Q) | Quits Ledgelings |
 
@@ -184,6 +186,20 @@ the total; since when it has been counting. Kept by name: rename a character and
 it starts from zero. **Reset All…** (asks first) clears everyone. The count is
 in `hunts.json` beside the chats, path shown. On Windows the tab is one column, in the same order, with **Show in Explorer** beside the file, and the week starts on the first day of the week of the system's region format.
 
+**Activities** (the sheet's one inner page): a row per game, each with its picture,
+its name, a line on what happens and **PLAY NOW**. Click a row, or press its letter.
+**BACK** (or ← or Esc) returns to the sheet; **PLAY ON / OFF** turns games on or off.
+
+| Row | Key | What it does |
+|---|---|---|
+| **Catch me if you can** | C | The closest two free creatures on one screen outline play tag now |
+| **Ninja rope** | W | One free creature swings on a ninja rope now (it hops down to a floor first if it is on a wall) |
+| **Parachute** | U | One free creature jumps up to the ceiling and comes down under a parachute |
+| **Basketball** | B | One free creature hangs a hoop on a wall and throws; with a close friend free, they take turns |
+
+A row is greyed, saying why, while play or that game is off, while a game is on, and
+while they hide ([Play tab](#play-tab)).
+
 ## Beds tab
 
 Every character has a bed of its own (SPEC §7.9), picked for who it is: Blocky a
@@ -225,6 +241,48 @@ and the habit moves in a few nights.
 Not on the Creature Actions sheet or in the menu: it is set once, not flipped often.
 
 On Windows the tab is one column, in the same order, with **Show in Explorer** beside the file; the beds, the walk to bed, the drag and the lines are the same, and `beds.json` has the Mac's shape, so a file copied across reads on either.
+
+## Play tab
+
+Now and then a creature stops walking and plays a game, the way the worms in Worms
+fool about between turns, with nobody hurt (SPEC §7.10). One game at a time, never in
+the middle of a talk, a tea party, a flower, a plane, a cursor grab or sleep; nothing
+else starts with the players until it is over.
+
+- **Catch me if you can**: two chase each other round the edges; a touch makes the
+  other one "it", who counts a second before running after. When time is up both
+  stand puffing, a drop of sweat by each head.
+- **Ninja rope**: it fires a grappling hook into the ceiling, is reeled up off the
+  floor, swings through, lets go at the top of the swing and turns a somersault down.
+- **Parachute**: it jumps up to the ceiling, lets go, and floats down under a red
+  and white parachute, swaying, to land softly.
+- **Basketball**: it hangs a hoop on the wall at the end of its floor and throws a few
+  times; the ball bounces off the floor, the board and the rim, and sometimes goes in
+  (stars, and the net swishes). Two friends take turns.
+
+Close friends play more: the wait between games shrinks with how close the closest
+pair on screen is (their shared talks, tea parties, flowers, planes, games), and only
+pairs who have shared at least 3 such moments play tag or take turns at the hoop.
+Strangers play alone. A game two played together goes into their storyline (Bonds tab),
+so their next story can bring it up.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **They play now and then** (`playEnabled`) | on | | Also **PLAY ON / OFF** on the sheet's Activities page (*Activities…* in the menu). Off: no games, and one going on stops at once |
+| **Catch me if you can (two)** (`playTagEnabled`), **Ninja rope swing** (`playRopeEnabled`), **Parachute jump** (`playParachuteEnabled`), **Basketball** (`playBasketballEnabled`) | all on | | Each game on or off; off, its row on the Activities page is greyed |
+| **A game about every** (`playEveryMinutes`) | 5 min | 1 to 60 | The wait, give or take 40 %, before closeness shortens it |
+| **Friends play more often by** (`playBondBoost`) | 100 % | 0 to 300, in tens | At 100 % the best of friends play twice as often as strangers; 0: closeness does not change how often |
+| **Tag lasts** (`tagSeconds`) | 25 s | 10 to 120, in fives | Then 3.5 s puffing |
+| **Parachute comes down at** (`parachuteFallSpeed`) | 70 pt/s | 30 to 200, in fives | About ten seconds down a laptop screen |
+| **Ball keeps on each bounce** (`ballBounce`) | 60 % | 0 to 90, in fives | 0: it drops dead; 90: it bounces for a long time |
+| **Throws at the hoop each** (`basketballThrows`) | 3 | 1 to 10 | Two players take turns, so twice as many throws |
+| **Say something as a game starts and ends** (`playTalk`) | on | | The one who starts says so in its own voice; someone has the last word. With a model set up the first line is written by it, counted as **Plays** on the Costs tab; the last word is always a built-in line. Needs *Talk* on |
+
+The props (ball, hoop, parachute, hook and rope, the drop of sweat) are drawn in
+Blocky's pixel style and are the same for every species, your own imported ones too.
+A game needs room: the rope a ceiling over a floor wide enough to swing across, the
+hoop a wall rising from the end of a floor (a screen's side, or the step up to a
+taller monitor beside it). Window edges are not walked, so neither is played on them.
 
 ## Sprites tab
 
