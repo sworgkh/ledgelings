@@ -2,7 +2,7 @@
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for building, testing and the macOS/Windows
 split, and [SPEC.md](SPEC.md), which is the product. The rules below are the ones
-that are easy to forget while adding a feature. Every change keeps all three.
+that are easy to forget while adding a feature. Every change keeps all four.
 
 ## 1. Every model call is priced, and says which feature made it
 
@@ -59,6 +59,22 @@ A character is a **name and a persona** in its species' cast, plus the species'
   feet, no mouth, no curves (curves become stepped corners). Six creatures drawn with
   curves and small eyes were once sent back as "a different style".
 
+## 4. Controls say what they do
+
+Nobody should have to remember what a letter on a button means.
+
+- A control that acts is a **picture of what it does** (drawn in the game's style:
+  square pixels, flat fill, 1-pixel outline, no curves) or its words, never a bare
+  letter, symbol or abbreviation (`R`, `⌘Z`, `→`, `TS`).
+- On hover it names the action and its key: "Blur rectangle (X)", "Undo the last
+  mark (⌘Z)". Translated like any other text (`tr`, the Russian table).
+- Keys stay as shortcuts, unchanged; the picture replaces only the visible letter.
+- Mac: SwiftUI `.help(…)` in ordinary windows; in an overlay above the screen
+  saver level (the screenshot toolbar) the system tooltip opens underneath, so draw
+  the tag in the view itself, as `ShotToolbar` does. Windows: a `ToolTip` on the button.
+- A test that every control has its picture and a non-empty tooltip naming its key
+  (`ShotButtonTests`).
+
 ## Checking your work in the real app
 
 The owner judges the running app, not the diff: a change is done when it is built
@@ -111,9 +127,10 @@ with `scripts/make-app.sh`, installed and seen working.
   shows the screen (`shot Built-in Retina Display: 3024×1964 px at 2×, 412 colours in a sample`); exit 1 if
   not. Like `--paste-check`, from a terminal it borrows the terminal's permission.
 - `--shot-demo [--snapshot out.png]` takes a toolbar shot of the real screens (a rectangle, box, arrow,
-  blur, hand blur, an undo, ⌘C), checks the clipboard holds that PNG, takes the last rectangle again, and
+  blur, hand blur, an undo, the real pointer resting on the blur button for its tag, ⌘C), checks the clipboard holds that PNG, takes the last rectangle again, and
   puts the clipboard and settings back; each step with its time. Exit 1 if wrong.
-- `--shot-film out.mp4` films the screenshot tool offscreen on two simulated monitors (2× and 1×): a
+- `--shot-film out.mp4` films the screenshot tool offscreen on two simulated monitors (2× and 1×), writing the
+  toolbar beside the film as it stands (`…-toolbar.png`) and with a hover tag (`…-toolbar-tip.png`): a
   rectangle with marks and blurs, a lasso, all monitors, the last rectangle again; writes each PNG beside
   the film and prints each step (`film 7.40 taken 800×520 px, 4 marks`).
 - `--kit-images <folder>` writes the sprite kit's two pictures and the prompt (from the saved

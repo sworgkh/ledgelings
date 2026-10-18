@@ -134,7 +134,7 @@ struct ShotSwatches: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(tr("Colour %d", n + 1))
+                .help(Shot.colourTooltip(n))
             }
         }
     }

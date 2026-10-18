@@ -641,6 +641,8 @@ Pictures of the screen, marked up, in the game's style. macOS for now; Windows f
 
 **The toolbar shot** (⌃⌥S): every screen freezes as it was and dims, the cursor becomes a
 pixel crosshair, and a pixel toolbar comes up at the top of the screen under the cursor.
+Its buttons are pixel pictures of what they do; rest the pointer on one for its name and
+key ("Blur rectangle (X)"). The keys below do the same without the mouse.
 
 | Key | What it does |
 |---|---|

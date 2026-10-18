@@ -110,6 +110,7 @@ extension Strings {
         "Species": "Вид",
         "Name": "Имя",
         "Who they are": "Кто это",
+        "Take them out of the cast": "Убрать из состава",
         "Add Character": "Добавить персонажа",
         "Reset Cast": "Сбросить состав",
         "Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog.": "У каждого вида свой состав. Первое существо этого вида — его первый персонаж, второе — второй и так далее; когда состав кончается, всё начинается сначала. Сам вид тоже описывается модели, так что лягушка говорит как лягушка.",

@@ -34,6 +34,8 @@ final class ShotSession {
         self.done = done
         model = ShotModel(colour: settings.shotColour, thickness: settings.shotThickness)
         model.pickColour = { [weak settings] in settings?.shotColour = $0 }
+        model.entersCopy = settings.shotCopy || !settings.shotSave
+        model.entersSave = settings.shotSave
         model.changed = { [weak self] in self?.panels.forEach { $0.canvas.needsDisplay = true } }
         model.act = { [weak self] in self?.act($0) }
     }
@@ -234,6 +236,13 @@ final class ShotSession {
         done(.taken(image, area, action, spot: spot))
     }
 
+    /// The middle of a toolbar item on the screen, in global points; nil while the toolbar is not up.
+    func spot(of item: ShotToolbar.Item) -> CGPoint? {
+        guard let toolbar, let canvas = toolbar.superview, let window = canvas.window, let place = model.places[item] else { return nil }
+        let inWindow = canvas.convert(CGPoint(x: toolbar.frame.minX + place.midX, y: toolbar.frame.maxY - place.midY), to: nil)
+        return window.convertPoint(toScreen: inWindow)
+    }
+
     func close() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
@@ -263,6 +272,13 @@ final class ShotModel: ObservableObject {
     @Published var thickness: Int
     @Published var stage = Stage.choosing
     @Published var marks: [Shot.Mark] = []
+    /// The toolbar item the pointer rests on, whose name and key show under it.
+    @Published var hovered: ShotToolbar.Item?
+    /// Where each toolbar item stands, in the toolbar's points from its top-left.
+    var places: [ShotToolbar.Item: CGRect] = [:]
+    /// What ⏎ does, as Productivity tools › Screenshots says.
+    var entersCopy = true
+    var entersSave = false
     var area: ShotRenderer.Area?
     var drag: Drag?
     var cursor = CGPoint.zero
@@ -496,44 +512,104 @@ final class ShotCanvas: NSView {
 
 // MARK: The toolbar
 
-/// The toolbar in the game's style: pixel buttons for the areas, the marks, six
+/// The toolbar in the game's style: pixel pictures for the areas, the marks, six
 /// colour squares, undo, and the three ways out; under it a line saying what to do.
+/// Hovering a button puts a tag with its name and key on that line instead: no
+/// letters to remember, and the system's tooltips would open under the frozen screens.
 struct ShotToolbar: View {
     @ObservedObject var model: ShotModel
 
+    /// What the pointer can rest on.
+    enum Item: Hashable {
+        case button(Shot.Button), colour(Int)
+    }
+
     private static let ink = Color(cgColor: ScreenOverlay.ink)
     private static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
+    /// Every item's place, in the toolbar's own points.
+    @State private var places: [Item: CGRect] = [:]
+    @State private var width: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 ForEach(Shot.Mode.allCases, id: \.self) { mode in
-                    PixelButton(title: mode.key, small: true, chosen: model.mode == mode) { model.act(.mode(mode)) }
-                        .help(Self.title(mode))
+                    button(Shot.Button(mode), chosen: model.mode == mode) { model.act(.mode(mode)) }
                 }
                 gap
                 ForEach(Shot.Tool.allCases, id: \.self) { tool in
-                    PixelButton(title: tool.key, small: true, chosen: model.stage == .marking && model.tool == tool) { model.act(.tool(tool)) }
-                        .help(Self.title(tool))
+                    button(Shot.Button(tool), chosen: model.stage == .marking && model.tool == tool) { model.act(.tool(tool)) }
                         .opacity(model.stage == .marking ? 1 : 0.45)
                 }
                 gap
-                ShotSwatches(colour: $model.colour) { model.act(.colour($0)) }
+                HStack(spacing: 2) {
+                    ForEach(Shot.palette.indices, id: \.self) { n in
+                        let c = Shot.palette[n]
+                        Button { model.act(.colour(n)) } label: {
+                            Rectangle().fill(Color(red: Double(c.r) / 255, green: Double(c.g) / 255, blue: Double(c.b) / 255))
+                                .frame(width: 14, height: 14)
+                                .padding(2).background(PixelBox.rim)
+                                .frame(width: 30, height: 34)
+                                .background(PixelBox(style: model.colour == n ? .chosen : .raised))
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .tip(.colour(n), model)
+                    }
+                }
                 gap
-                PixelButton(title: "⌘Z", small: true) { model.act(.undo) }
+                button(.undo) { model.act(.undo) }
                     .opacity(model.marks.isEmpty ? 0.45 : 1)
                 gap
-                PixelButton(title: tr("⏎ COPY"), small: true, chosen: true) { model.act(.finish(.enter)) }
-                PixelButton(title: tr("⌘S SAVE"), small: true) { model.act(.finish(.save)) }
-                PixelButton(title: "⎋", small: true) { model.act(.cancel) }
+                button(.done, chosen: true) { model.act(.finish(.enter)) }
+                button(.save) { model.act(.finish(.save)) }
+                button(.cancel) { model.act(.cancel) }
             }
-            Text(hint)
-                .font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
-                .padding(.leading, 2)
+            ZStack(alignment: .leading) {
+                Text(hint)
+                    .font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+                    .padding(.leading, 2)
+                    .opacity(model.hovered == nil ? 1 : 0)
+                if let item = model.hovered, let place = places[item] {
+                    tag(Self.tooltip(item, model), under: place)
+                }
+            }
+            .frame(height: 22)
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
         .background(PixelBox(style: .raised))
+        .coordinateSpace(name: ShotTipPlaces.space)
+        .onPreferenceChange(ShotTipPlaces.self) { places = $0; model.places = $0 }
+        .background(GeometryReader { g in Color.clear.onAppear { width = g.size.width }.onChange(of: g.size.width) { _, w in width = w } })
         .fixedSize()
+    }
+
+    private func button(_ which: Shot.Button, chosen: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) { PixelIcon(rows: which.icon) }
+            .buttonStyle(PixelButtonStyle(small: true, chosen: chosen, square: true))
+            .tip(.button(which), model)
+    }
+
+    /// The hovered item's name and key on a little plate, under it, kept inside the toolbar.
+    private func tag(_ text: String, under place: CGRect) -> some View {
+        let label = Text(text)
+            .font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(PixelBox(style: .well))
+            .fixedSize()
+        // Left of the middle it starts under the item; right of it, it ends there.
+        let inset: CGFloat = 12
+        return HStack(spacing: 0) {
+            if place.midX < width / 2 {
+                Color.clear.frame(width: max(0, place.minX - inset))
+                label
+                Spacer(minLength: 0)
+            } else {
+                Spacer(minLength: 0)
+                label
+                Color.clear.frame(width: max(0, width - inset - place.maxX))
+            }
+        }
     }
 
     private var gap: some View { Rectangle().fill(Self.faintInk).frame(width: 2, height: 22).padding(.horizontal, 3) }
@@ -548,14 +624,16 @@ struct ShotToolbar: View {
         return tr("%@ · 1–6 COLOUR · ⌘Z UNDO · ⏎ COPY · ⌘S SAVE · ⎋ CANCEL", Self.title(model.tool).uppercased())
     }
 
-    static func title(_ mode: Shot.Mode) -> String {
-        switch mode {
-        case .rectangle: tr("Rectangle (R)")
-        case .lasso: tr("Lasso (L)")
-        case .screen: tr("The screen under the cursor (W)")
-        case .all: tr("All screens (A)")
+    /// What resting on `item` says.
+    static func tooltip(_ item: Item, _ model: ShotModel) -> String {
+        switch item {
+        case .button(let b): b.tooltip(copies: model.entersCopy, saves: model.entersSave)
+        case .colour(let n): Shot.colourTooltip(n)
         }
     }
+
+    /// Every item on the toolbar, in order.
+    static let items: [Item] = Shot.Button.allCases.map(Item.button) + Shot.palette.indices.map(Item.colour)
 
     static func title(_ tool: Shot.Tool) -> String {
         switch tool {
@@ -565,5 +643,49 @@ struct ShotToolbar: View {
         case .blur: tr("Blur")
         case .brush: tr("Freehand blur")
         }
+    }
+}
+
+/// Where each toolbar item stands, so its tag can sit under it.
+struct ShotTipPlaces: PreferenceKey {
+    static let space = "shot-toolbar"
+    static let defaultValue: [ShotToolbar.Item: CGRect] = [:]
+    static func reduce(value: inout [ShotToolbar.Item: CGRect], nextValue: () -> [ShotToolbar.Item: CGRect]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
+private extension View {
+    /// Says where this item stands and, while the pointer rests on it, that it is the one hovered.
+    func tip(_ item: ShotToolbar.Item, _ model: ShotModel) -> some View {
+        background(GeometryReader { g in
+            Color.clear.preference(key: ShotTipPlaces.self, value: [item: g.frame(in: .named(ShotTipPlaces.space))])
+        })
+        .onHover { inside in
+            if inside { model.hovered = item } else if model.hovered == item { model.hovered = nil }
+        }
+        .accessibilityLabel(ShotToolbar.tooltip(item, model))
+    }
+}
+
+/// A picture of square pixels, `#` ink and `+` faint ink, two points each: the
+/// creatures' flat, outlined look at toolbar size, light or dark mode alike, since
+/// it always sits on the toolbar's own cream.
+struct PixelIcon: View {
+    var rows: [String]
+    static let pixel: CGFloat = 2
+
+    var body: some View {
+        let w = CGFloat(rows.map(\.count).max() ?? 0), h = CGFloat(rows.count), p = Self.pixel
+        Canvas { context, _ in
+            for (y, row) in rows.enumerated() {
+                for (x, c) in row.enumerated() {
+                    let colour: CGColor? = c == "#" ? ScreenOverlay.ink : c == "+" ? ScreenOverlay.faintInk : nil
+                    guard let colour else { continue }
+                    context.fill(Path(CGRect(x: CGFloat(x) * p, y: CGFloat(y) * p, width: p, height: p)), with: .color(Color(cgColor: colour)))
+                }
+            }
+        }
+        .frame(width: w * p, height: h * p)
     }
 }

@@ -1921,6 +1921,14 @@ The geometry, stitching, blur and naming are `Shot` in the core.
   `Shot.palette` red, yellow, green, blue, white, black; the last one picked is
   `shotColour`. ⌘Z undoes the last mark. Square ends and sharp corners, nothing round.
   A drag under 4 pt (8 for an arrow) leaves no mark.
+- **The toolbar's buttons** (`Shot.Button`) are pixel pictures of what they do, never
+  letters: a dashed rectangle, a loop, a monitor, two monitors; a box, an arrow, a
+  highlighted line, a checkerboard, a brush; undo, a tick (⏎), a down-arrow into a tray
+  (⌘S), a cross (⎋). 11×11 pixels, 2 pt each, ink on the toolbar's cream. Resting the
+  pointer on one (or on a colour square) puts a tag with its name and key on the hint
+  line, under it: "Blur rectangle (X)", "Green (3)"; ⏎'s tag says what ⏎ does with the
+  settings (copy, save, or both). Drawn in the toolbar itself, since the system's
+  tooltips would open under the frozen screens.
 - **Blur** is pixelation: squares of `Shot.blurBlock` = 12 pt (at the monitor's scale)
   on a grid from the picture's top-left, each painted the average of its pixels; a
   rectangle blur covers every square it touches, cut to it; a freehand one every square
