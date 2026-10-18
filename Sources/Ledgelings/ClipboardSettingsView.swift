@@ -7,6 +7,8 @@ import SwiftUI
 struct ClipboardSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var clips: ClipBook
+    /// For the names of the creatures on screen, who could bring the picker.
+    let library: SpriteLibrary
     /// Opens Edit Snippets….
     let editSnippets: () -> Void
     @State private var trusted = ClipPaster.trusted
@@ -43,10 +45,23 @@ struct ClipboardSettingsView: View {
                 Toggle(tr("Unfold and collapse the picker"), isOn: $settings.clipAnimate)
                 SliderRow(tr("Animation speed"), value: $settings.clipAnimationSpeed, in: AppSettings.clipAnimationSpeedRange, step: 0.25, unit: "×")
                     .disabled(!settings.clipAnimate)
+                Picker(tr("Who brings it"), selection: Binding(
+                    get: { settings.clipHelperEnabled ? settings.clipHelper : Self.nobody },
+                    set: { who in
+                        settings.clipHelperEnabled = who != Self.nobody
+                        if who != Self.nobody { settings.clipHelper = who }
+                    })) {
+                    Text(tr("Whoever is nearest the middle")).tag("")
+                    ForEach(names, id: \.self) { Text($0).tag($0) }
+                    Text(tr("Nobody: it unfolds by itself")).tag(Self.nobody)
+                }
+                .disabled(!settings.clipAnimate)
+                Toggle(tr("It says a line as the sheet unfolds"), isOn: $settings.clipHelperTalks)
+                    .disabled(!settings.clipAnimate || !settings.clipHelperEnabled)
             } header: {
                 Text(tr("Pasting"))
             } footer: {
-                Text(tr("⏎ pastes the chosen item; ⌥⏎ pastes it the other way (plain or formatted). The picker collapses into the text cursor when the app says where it is. The paste never waits for the animation."))
+                Text(tr("⏎ pastes, ⌥⏎ the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits."))
             }
             .disabled(!settings.clipboardEnabled)
         } right: {
@@ -111,6 +126,20 @@ struct ClipboardSettingsView: View {
             .disabled(!settings.clipboardEnabled)
         }
         .onAppear { trusted = ClipPaster.trusted }
+    }
+
+    /// The picker's tag for no creature at all: not a name anyone can have.
+    private static let nobody = "\u{0}nobody"
+
+    /// Everyone on screen, by name, each once; a chosen one no longer there is kept in the list.
+    private var names: [String] {
+        var all: [String] = []
+        for i in 0..<settings.creatureCount {
+            let name = settings.character(forCreature: i, library: library).name
+            if !all.contains(name) { all.append(name) }
+        }
+        if !settings.clipHelper.isEmpty, !all.contains(settings.clipHelper) { all.append(settings.clipHelper) }
+        return all
     }
 
     /// The password managers excluded by default, by name, for when they are not installed here.

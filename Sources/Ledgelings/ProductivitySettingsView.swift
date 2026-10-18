@@ -23,6 +23,7 @@ struct ProductivitySettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var reminders: ReminderBook
     @ObservedObject var clips: ClipBook
+    let library: SpriteLibrary
     @ObservedObject var navigation: SettingsNavigation
     /// Deliver a reminder now.
     let send: (Reminders.Reminder) -> Void
@@ -45,7 +46,7 @@ struct ProductivitySettingsView: View {
     @ViewBuilder private func page(_ tool: ProductivityTool) -> some View {
         switch tool {
         case .reminders: RemindersSettingsView(settings: settings, reminders: reminders, send: send)
-        case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, editSnippets: editSnippets)
+        case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, library: library, editSnippets: editSnippets)
         }
     }
 }

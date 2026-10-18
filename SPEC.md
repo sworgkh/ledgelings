@@ -1812,6 +1812,36 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   first with `clipProtectedNeedsAuth`); its words are saved to the secret store 0.4 s
   after the last keystroke.
 
+#### 7.11.1 The creature who brings it
+
+With `clipAnimate` and `clipHelperEnabled` on, the picker is brought by a creature
+(`ClipHelper`):
+
+- **Who**: the free creature named `clipHelper`; else (or when it is not free) the
+  free one nearest the middle of the screen, an awake one before a sleeper. Free: not
+  busy, held, grabbing, moving house, playing or chatting, and no bubble up. Nobody
+  free, or everyone hiding: the sheet unfolds from its own middle, as with the
+  setting off. It takes off (a sleeper wakes) and is busy until it lands again.
+- **The leap**: a 0.06 s crouch (`land`), then an arc (`jump`) from where it stands to
+  its **perch** over the paper's top-left corner, `(minX − half·0.25, maxY + half·0.45)`
+  (`half` its body's half size), rising `clamp(distance·0.2, 24, 160)` pt over the
+  higher end halfway, one flip the way it travels, upright on landing. Flight
+  `clamp(0.14 + distance/6000, 0.14, 0.4) / clipAnimationSpeed` s. The creatures'
+  overlay is above the picker, so it is drawn over the paper.
+- **Holding**: on landing the sheet unfolds out of it, anchored at its top-left corner,
+  in `0.14 / clipAnimationSpeed` s, and it says one short built-in line of its own
+  (`ClipHelper.lineSets`, two per character, `anyoneLines` for one the user made) with
+  `clipHelperTalks` and talk on. No model call. The keyboard is the picker's from the
+  first moment; only the look waits for the leap.
+- **Going home**: the sheet collapses into the text cursor when it is known, else into
+  the creature's grip (the paper's top-left corner); once the collapse is over (at
+  once when there is none) it leaps back to where it stood and touches down on the
+  nearest edge. Pressing the shortcut again mid-way cuts the old trip short.
+
+`--clip-film out.mp4` films it offscreen: two rounds, the first collapsing into a text
+cursor, the second into the creature, printing each step (`film 1.00 clip Whiskers
+leaps to (245, 558) in 0.31 s`, `… holds the corner`, `… is back at (630, 28)`).
+
 `--clip-demo [--snapshot out.png]` runs it end to end on the real clipboard with a
 history, snippets and a secret of its own (all removed after, the clipboard put
 back), never pressing ⌘V, printing each step with its time (`clip 0.21 watch: skip …:
@@ -2404,6 +2434,9 @@ An error for want of a model reads as that note, never as a server refusal.
 | clipSnippetShortcutsEnabled | true | each snippet's own shortcut pastes it |
 | clipAnimate | true | the picker unfolds and collapses into the text cursor |
 | clipAnimationSpeed | 1 | 0.5–3, clamped on load; 2 is twice as fast |
+| clipHelperEnabled | true | a creature brings the picker and holds its corner (§7.11.1) |
+| clipHelper | empty | the character who brings it, by name; empty: whoever is nearest the middle |
+| clipHelperTalks | true | it says a short line of its own as the sheet unfolds (with talk on) |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7), the
 clipboard history and snippets in `clipboard.json` and `snippets.json` (§7.11),

@@ -3,7 +3,7 @@
 #   scripts/make-app.sh && open build/Ledgelings.app
 set -euo pipefail
 cd "$(dirname "$0")/.."
-VERSION="${VERSION:-0.50.0}"
+VERSION="${VERSION:-0.51.0}"
 
 swift build -c release
 APP=build/Ledgelings.app

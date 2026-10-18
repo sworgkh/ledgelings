@@ -531,7 +531,9 @@ Press **⌃⌥V** in any app (Ctrl+Alt+V on Windows): a sheet of the letter's pi
 opens in the middle of the screen you are typing on. Type to search your recent
 copies and your snippets at once, ↑↓ to choose, ⏎ to paste it where you were typing.
 **⌃⌥B** opens it with the snippets first. The sheet collapses into your text cursor as
-the words go in. Nothing you copy ever leaves the computer or reaches a model.
+the words go in. One of the creatures brings it: it leaps to the middle of the screen
+and holds the sheet by its corner, then leaps back. Nothing you copy ever leaves the
+computer or reaches a model.
 
 | Key in the picker | What it does |
 |---|---|
@@ -568,6 +570,8 @@ is megabytes). History and snippets live in `clipboard.json` and `snippets.json`
 | **Paste as plain text** (`clipPlainText`) | off | | ⌥⏎ in the picker does the other one for that paste |
 | **Unfold and collapse the picker** (`clipAnimate`) | on | | Off: it simply appears and goes |
 | **Animation speed** (`clipAnimationSpeed`) | 1× | 0.5× to 3× | The paste never waits for the animation |
+| **Who brings it** (`clipHelperEnabled`, `clipHelper`) | whoever is nearest the middle | anyone on screen by name, or *Nobody* | One of the creatures leaps from its edge to the sheet's top-left corner in about a quarter of a second, the sheet unfolds out of it, and it holds that corner while you choose. Once you pick, the sheet collapses into your text cursor (or into the creature, when the app does not say where the cursor is) and the creature leaps back to its place. Someone busy playing or talking stays put and another comes. *Nobody*: the sheet unfolds by itself |
+| **It says a line as the sheet unfolds** (`clipHelperTalks`) | on | | One short line in its own voice ("Fine. Pick one." — Blocky), when talk is on |
 
 **Shortcuts** (right):
 

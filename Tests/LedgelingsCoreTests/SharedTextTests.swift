@@ -44,6 +44,7 @@ import Testing
                                  "prompt": Revenge.prompts(for: mood)(l)] as [String: Any]) }),
             "beds": ["settle": Beds.settleSets(l), "settleAnyone": Beds.settleAnyone(l),
                      "moved": Beds.movedSets(l), "movedAnyone": Beds.movedAnyone(l)],
+            "clipHelper": ["lines": ClipHelper.lineSets(l), "anyone": ClipHelper.anyoneLines(l)],
             "plays": ["start": Plays.startSets(l), "startAnyone": Plays.startAnyone(l),
                       "done": Plays.doneSets(l), "doneAnyone": Plays.doneAnyone(l)],
             "holidays": Almanac.holidayNames[l] ?? [:],

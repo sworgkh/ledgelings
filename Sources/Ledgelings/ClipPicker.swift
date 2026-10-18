@@ -24,6 +24,10 @@ final class ClipPickerController {
     private let settings: AppSettings
     private let book: ClipBook
     private let watcher: () -> ClipWatcher?
+    /// The colony, whose creature brings the sheet; nil (as in tests) and the sheet unfolds by itself.
+    private let helper: () -> ClipHelping?
+    /// A creature is holding the sheet's corner.
+    private var helped = false
     private let editSnippets: () -> Void
     let model = ClipPickerModel()
     private var panel: ClipPanel?
@@ -39,7 +43,9 @@ final class ClipPickerController {
     /// Off in `--clip-demo` too: a script cannot press Touch ID.
     var askOwner = true
 
-    init(settings: AppSettings, book: ClipBook, watcher: @escaping () -> ClipWatcher?, editSnippets: @escaping () -> Void) {
+    init(settings: AppSettings, book: ClipBook, watcher: @escaping () -> ClipWatcher?, editSnippets: @escaping () -> Void,
+         helper: @escaping () -> ClipHelping? = { nil }) {
+        self.helper = helper
         self.settings = settings
         self.book = book
         self.watcher = watcher
@@ -83,8 +89,19 @@ final class ClipPickerController {
         panel = made
         made.makeKeyAndOrderFront(nil)
         trace?("open \(first == .recent ? "history" : "snippets") on \(screen.localizedName), \(model.rows.count) rows, caret \(caret.map { "at \(Int($0.midX)),\(Int($0.midY))" } ?? "unknown")")
+        // The keyboard is the sheet's at once; the creature's leap only delays how it looks.
+        let frame = screen.visibleFrame
+        let wait = settings.clipAnimate && settings.clipHelperEnabled
+            ? helper()?.clipHelperCome(paper: paper.offsetBy(dx: frame.minX, dy: frame.maxY - paper.maxY - paper.minY),
+                                       centre: CGPoint(x: frame.midX, y: frame.midY)) : nil
+        helped = wait != nil
+        model.anchor = helped ? .topLeading : .center
         if settings.clipAnimate {
-            withAnimation(.easeOut(duration: 0.14 / settings.clipAnimationSpeed)) { model.unfolded = true }
+            let unfold = { [weak self] in
+                guard let self, self.isUp else { return }
+                withAnimation(.easeOut(duration: ClipHelper.unfoldSeconds / self.settings.clipAnimationSpeed)) { self.model.unfolded = true }
+            }
+            if let wait { Task { @MainActor in try? await Task.sleep(for: .seconds(wait)); unfold() } } else { unfold() }
         }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             let code = Int(event.keyCode), flags = event.modifierFlags
@@ -246,15 +263,20 @@ final class ClipPickerController {
         guard let panel else { return }
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
-        let to = toCaret ? caret : nil
         let paper = model.paper.offsetBy(dx: panel.frame.minX, dy: 0)
         let onScreen = CGRect(x: paper.minX, y: panel.frame.maxY - paper.maxY, width: paper.width, height: paper.height)
+        // Into the text cursor; else into the creature's grip, the paper's top-left corner; else the middle.
+        let corner = helped ? CGRect(x: onScreen.minX, y: onScreen.maxY, width: 1, height: 1) : nil
+        let to = (toCaret ? caret : nil) ?? corner
         let picture = settings.clipAnimate ? snapshotImage() : nil
+        let seconds = ClipHelper.collapseSeconds / settings.clipAnimationSpeed
         panel.orderOut(nil)
         self.panel = nil
+        if helped { helper()?.clipHelperGoHome(after: picture == nil ? 0 : seconds) }
+        helped = false
         guard let picture else { return }
-        ClipGhost.fly(picture, from: onScreen, to: to, seconds: 0.18 / settings.clipAnimationSpeed)
-        trace?(to.map { "collapse into the caret at \(Int($0.midX)),\(Int($0.midY))" } ?? "collapse to the middle")
+        ClipGhost.fly(picture, from: onScreen, to: to, seconds: seconds)
+        trace?(to.map { "collapse into \($0 == corner ? "the creature's corner" : "the caret") at \(Int($0.midX)),\(Int($0.midY))" } ?? "collapse to the middle")
     }
 
     /// The paper as it looks now.
@@ -278,6 +300,16 @@ final class ClipPickerController {
 
 private extension CGRect {
     var area: CGFloat { isNull ? 0 : width * height }
+}
+
+/// Whoever brings the sheet and holds it by its top-left corner: the colony.
+@MainActor
+protocol ClipHelping: AnyObject {
+    /// Sends a creature to hold `paper` (global points); seconds until it is there, nil when nobody can come.
+    func clipHelperCome(paper: CGRect, centre: CGPoint) -> Double?
+    /// Back to its edge, `after` seconds from now.
+    func clipHelperGoHome(after: Double)
+    var clipHelperPerch: CGPoint? { get }
 }
 
 /// A borderless, see-through panel over the screen that takes the keyboard
@@ -390,6 +422,8 @@ final class ClipPickerModel: ObservableObject {
     @Published var checking = false
     /// The sheet is open all the way; false while it unfolds.
     @Published var unfolded = true
+    /// Where it unfolds from: its top-left corner, held by a creature, or its middle.
+    @Published var anchor = UnitPoint.center
     /// Where the paper sits in the panel, in the panel's points from its top-left.
     @Published var paper = CGRect.zero
     @Published private(set) var counts = (recent: 0, snippets: 0)
@@ -478,7 +512,7 @@ struct ClipPickerView: View {
             Color.black.opacity(0.001).onTapGesture { model.close() }
             sheet
                 .frame(width: paper.width, height: paper.height)
-                .scaleEffect(model.unfolded ? 1 : 0.06, anchor: .center)
+                .scaleEffect(model.unfolded ? 1 : 0.06, anchor: model.anchor)
                 .opacity(model.unfolded ? 1 : 0)
                 .offset(x: paper.minX, y: paper.minY)
         }

@@ -96,6 +96,9 @@ with `scripts/make-app.sh`, installed and seen working.
   history, snippets and keychain secret (removed after, the pasteboard put back), never pressing ⌘V:
   copies kept and skipped, a search, ⇥ ↓ ⏎ in the picker, a protected paste concealed and taken back,
   each step with its time (`clip 1.94 picker: would paste Wi-Fi password after 70 ms, concealed`). Exit 1 if wrong.
+- `--clip-film out.mp4` films the clipboard picker brought by a creature offscreen: the leap to the
+  sheet's corner, the unfold, a search, the collapse into a text cursor and the leap home, then a round
+  with no cursor known, printing each step (`film 1.00 clip Whiskers leaps to (245, 558) in 0.31 s`).
 - `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
   `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.

@@ -132,6 +132,8 @@ final class Colony: NSObject {
     var revengeFuse = Revenge.Fuse()
     /// The creature hanging on to the cursor right now, if any.
     var grab: Grab?
+    /// The creature bringing the clipboard picker, while it is on its way, holding it or going back.
+    var clipHelp: ClipHelp?
     /// Counts grabs, so a model's late line finds whether its grab is still on.
     var grabCount = 0
     /// The real pointer, for a grab. Nil offscreen and in tests that don't set one.
@@ -413,13 +415,14 @@ final class Colony: NSObject {
         updateTeaParty()
         updatePlay(dt: dt)
         updateMoves(dt: dt)
+        updateClipHelp(dt: dt)
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
         updateReminders(dt: dt)
         liveTogether(dt: dt)
         render()
-        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
+        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && clipHelp == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
 
     /// A sleeping colony only breathes and floats Zs: 12 fps is plenty.
