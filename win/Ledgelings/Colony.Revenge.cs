@@ -83,9 +83,10 @@ public sealed partial class Colony
         return true;
     }
 
-    /// <summary>Not while the user holds the mouse button (a drag, a carry), not mid-conversation, not while they hide.</summary>
+    /// <summary>Not while the user holds the mouse button (a drag, a carry), not mid-conversation, not while they hide,
+    /// not while the cursor is on a monitor they do not live on.</summary>
     private bool CanGrab(int i) =>
-        CurrentGrab is null && held is null && poke is null && !MouseIsDown()
+        CurrentGrab is null && held is null && poke is null && !MouseIsDown() && IsHome(PointerLocation())
         && !busy.Contains(i) && !complaining.Contains(i) && !hideout.IsActive && !hideout.IsInside(i);
 
     /// <summary>Where a creature hangs from the cursor: the arrow's tip in the top of its body.</summary>
@@ -128,6 +129,8 @@ public sealed partial class Colony
     {
         if (CurrentGrab is not { } g) return;
         if (g.Index >= creatures.Count || !creatures[g.Index].IsHeld) { LetGoOfCursor(Revenge.Release.Escape); return; }
+        // Ridden off the monitors they live on: it lets go and drops back onto the nearest home edge.
+        if (!IsHome(cursor)) { LetGoOfCursor(Revenge.Release.LeftHome); return; }
         if (Elapsed - g.Since >= Revenge.LongestHold(Settings.RevengeHoldSeconds, g.Pinned)) { LetGoOfCursor(Revenge.Release.Tired); return; }
         Struggle(cursor);
         Taunt();

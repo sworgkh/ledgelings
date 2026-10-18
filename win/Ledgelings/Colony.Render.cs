@@ -45,6 +45,7 @@ public sealed partial class Colony
         var reminder = DeliverySnapshot();
         var table = TeaTableSnapshot();
         var props = PlayProps();
+        props.AddRange(MoveProps());
         foreach (var overlay in overlays)
             overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: planted, beds: sleepers, bedCell: BedCell,
                            plane: plane, planeCell: planeCell, reminder: reminder,

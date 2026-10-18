@@ -34,6 +34,21 @@ public class SettingsTests
     }
 
     [Fact]
+    public void TheyLiveOnEveryScreenByDefaultAndAChosenMonitorIsRemembered()
+    {
+        var box = Fresh();
+        Assert.Equal(Core.HomeScreen.All, box.Settings.HomeScreenId);
+        Assert.Equal("", box.Settings.HomeScreenName);
+        box.Settings.LiveOn(new Core.HomeScreen.Monitor(@"\\?\DISPLAY#DEL4085#2", "DELL U2415 (2)", new Core.Rect(-1920, 0, 1920, 1200)));
+        var again = box.Again();
+        Assert.Equal(@"\\?\DISPLAY#DEL4085#2", again.HomeScreenId);
+        Assert.Equal("DELL U2415 (2)", again.HomeScreenName);
+        Assert.Equal(@"\\?\DISPLAY#DEL4085#2", box.Store.Get<string>("homeScreen"));      // the Mac's key
+        again.LiveOn(null);
+        Assert.Equal(Core.HomeScreen.All, box.Again().HomeScreenId);
+    }
+
+    [Fact]
     public void ChasesAreCountedAndTalkedAboutByDefaultAndAChangeIsRemembered()
     {
         var box = Fresh();

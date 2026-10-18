@@ -22,13 +22,13 @@ public sealed partial class Colony
     /// <summary>The porch: this far left of the doorway, on the floor. Jumps land here, then it is a short run in.</summary>
     private const double PorchOffset = 150;
 
-    /// <summary>The house's own bottom-right corner sits on the primary screen's bottom-right
+    /// <summary>The house's own bottom-right corner sits on the primary screen's (else the first home monitor's) bottom-right
     /// corner, so growing and shrinking happen about that corner.</summary>
     private Pt HouseCorner
     {
         get
         {
-            var frame = Desktop.Primary(monitors)?.Frame ?? new Rect(0, 0, 1000, 600);
+            var frame = (HomeMonitors.FirstOrDefault(m => m.IsPrimary) ?? HomeMonitors.FirstOrDefault())?.Frame ?? new Rect(0, 0, 1000, 600);
             // Two sheet px of margin sit right of the wall; let them hang off the screen.
             return new Pt(frame.MaxX + 2 * HouseScale, frame.MinY);
         }
@@ -48,6 +48,7 @@ public sealed partial class Colony
     {
         if (hideout.IsActive || creatures.Count == 0) return;
         EndPlay(false);
+        foreach (var i in moves.Keys.ToList()) LandNow(i);
         LetGo();
         LetGoOfCursor(Revenge.Release.Escape);
         BreakUpTea();

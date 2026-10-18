@@ -40,7 +40,7 @@ public sealed partial class Colony
                 var size = Settings.SizeForShare(sizeShares[i]) * pixelScale;
                 if (size == sizes[i]) continue;
                 sizes[i] = size;
-                creatures[i].Rehome(World(size));
+                if (!IsMoving(i)) creatures[i].Rehome(World(size));
             }
             ApplyWariness();
             ApplyRevenge();
@@ -60,24 +60,25 @@ public sealed partial class Colony
             }
         }
         finally { applying = false; }
+        // Another monitor chosen: everyone not on it moves over.
+        HomeMayHaveChanged();
         Render();
     }
 
+    /// <summary>A monitor came or went, or moved: the edges are traced afresh, and whoever is left off them
+    /// (a monitor unplugged, the chosen one back) comes down by parachute.</summary>
     private void ScreensChanged()
     {
-        LetGoOfCursor(Revenge.Release.Escape);
-        EndPlay(false);
         RebuildOverlays();
-        worlds.Clear();
-        for (int i = 0; i < creatures.Count; i++) creatures[i].Rehome(World(sizes[i]));
-        ReplantAfterScreensChanged();
+        homeWas = HomeFrames;
+        MoveHome();
         ApplySettings();      // the pixel scale may have changed with the primary monitor
     }
 
     private EdgeWorld World(double size)
     {
         if (worlds.TryGetValue(size, out var made)) return made;
-        made = new EdgeWorld(monitors.Select(m => m.Frame).ToList(), atlas.BodyHalfSize * size);
+        made = new EdgeWorld(HomeFrames, atlas.BodyHalfSize * size);
         worlds[size] = made;
         return made;
     }
@@ -158,6 +159,7 @@ public sealed partial class Colony
         SayScheduledLines();
         UpdateTeaParty();
         UpdatePlay(dt);
+        UpdateMoves(dt);
         ReleaseChatIfOver();
         foreach (var bump in meetings.Update(Parties(), Elapsed)) Bumped(bump);
         UpdatePost(dt);

@@ -115,6 +115,8 @@ public sealed partial class App : Application
             .Select(l => new TrayIcon.Item(l.Title(), () => settings.Language = l, Checked: settings.Language == l)).ToList()));
         items.Add(new TrayIcon.Item(L10n.Tr("The Cursor Is"), Children: CursorMoods.All
             .Select(m => new TrayIcon.Item(m.Title(), () => settings.CursorMood = m, Checked: settings.CursorMood == m)).ToList()));
+        // Which monitor they live on; only with two or more attached.
+        if (ScreenChoice.IsOffered) items.Add(new TrayIcon.Item(L10n.Tr("Screen"), Children: ScreenChoice.Items(settings)));
         items.Add(new TrayIcon.Item(L10n.Tr("Settings\u2026"), () => OpenSettings(null)));
         items.Add(TrayIcon.Item.Separator);
         items.Add(new TrayIcon.Item(L10n.Tr("Quit Ledgelings"), Shutdown));
