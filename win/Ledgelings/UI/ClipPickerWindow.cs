@@ -290,6 +290,9 @@ internal sealed class ClipPickerWindow : Window
 {
     private static readonly Brush ink = Frozen(40, 34, 58), softInk = Frozen(92, 86, 120), faintInk = Frozen(150, 146, 170);
     private static readonly FontFamily mono = new("Consolas");
+    /// <summary>A copy holding a protected snippet's words: the soft ink, faint on the paper, as on the Mac.</summary>
+    private static readonly Brush maskTint = MaskTint();
+    private static Brush MaskTint() { var b = new SolidColorBrush(Color.FromArgb(31, 92, 86, 120)); b.Freeze(); return b; }
     private const double RowHeight = 36;
 
     private readonly ClipPickerController controller;
@@ -476,11 +479,16 @@ internal sealed class ClipPickerWindow : Window
         if (row.Group == ClipPicker.Group.Recent && controller.Thumbnail(row.Id) is { } thumbnail) words.Children.Add(Picture(thumbnail));
         if (row.Pinned) words.Children.Add(Text("▲ ", 9, FontWeights.Heavy, PixelBox.Rim));
         if (row.Title is string title) words.Children.Add(Text(title + "  ", 12, FontWeights.Heavy, PixelBox.Rim));
-        words.Children.Add(Text(row.Text, 12, row.Title is null ? FontWeights.SemiBold : FontWeights.Normal, row.Title is null ? PixelBox.Rim : softInk));
+        words.Children.Add(Text(row.Text, 12, row.Title is null ? FontWeights.SemiBold : FontWeights.Normal, row.Title is null && !row.Masked ? PixelBox.Rim : softInk));
         panel.Children.Add(words);
         var box = new PixelBox { Look = chosen ? PixelBox.Finish.Chosen : PixelBox.Finish.Raised, Child = panel, Margin = new Thickness(0, 1, 6, 1) };
         // Unchosen rows are bare paper: only the chosen one is a box.
-        if (!chosen) { var bare = new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = Brushes.Transparent }; box.Child = null; return Hook(bare, row); }
+        if (!chosen)
+        {
+            var bare = new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = row.Masked ? maskTint : Brushes.Transparent };
+            box.Child = null;
+            return Hook(bare, row);
+        }
         return Hook(box, row);
     }
 

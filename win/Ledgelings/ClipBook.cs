@@ -6,7 +6,8 @@ namespace Ledgelings;
 /// <summary>The clipboard history and the snippets, kept in <c>clipboard.json</c> and <c>snippets.json</c> beside
 /// the chats, saved on every change: the Mac's files; a copied picture's bytes in <c>clipboard-images</c> there, deleted
 /// when its clip goes. A protected snippet's words are kept in Credential
-/// Manager, one generic credential per snippet under <c>Ledgelings Snippets/snippet.&lt;id&gt;</c>.</summary>
+/// Manager, one generic credential per snippet under <c>Ledgelings Snippets/snippet.&lt;id&gt;</c>; the book keeps a salted
+/// fingerprint of them, so a copy of those words in the history is shown masked without reading Credential Manager.</summary>
 public sealed class ClipBook
 {
     public const string SecretService = "Ledgelings Snippets";
@@ -24,6 +25,15 @@ public sealed class ClipBook
         History = Store.LoadHistory();
         Snippets = Store.LoadSnippets();
         Store.SweepImages(History);
+        FingerprintOldSecrets();
+    }
+
+    /// <summary>Protected snippets saved before fingerprints were kept get theirs, once: their words read from Credential Manager.</summary>
+    private void FingerprintOldSecrets()
+    {
+        var old = Snippets.All.Select(x => x.Snippet).Where(s => s.Protected && s.SecretHash is null).ToList();
+        if (old.Count == 0) return;
+        ChangeSnippets(b => { foreach (var s in old) b.Update(s.Sealed(secrets.Get(s.SecretAccount))); });
     }
 
     // MARK: History
@@ -125,7 +135,7 @@ public sealed class ClipBook
     public Guid AddSnippet(string title, string text, bool isProtected = false, Guid? folder = null)
     {
         var snippet = Clipboard.Snippet.Make(title, text, isProtected);
-        if (isProtected) secrets.Set(snippet.SecretAccount, text);
+        if (isProtected) { secrets.Set(snippet.SecretAccount, text); snippet = snippet.Sealed(text); }
         ChangeSnippets(b => b.Add(snippet, folder));
         return snippet.Id;
     }
@@ -133,7 +143,7 @@ public sealed class ClipBook
     /// <summary>Saves an edit. A protected snippet's words, when given, go to Credential Manager.</summary>
     public void Update(Clipboard.Snippet snippet, string? secret = null)
     {
-        if (snippet.Protected && secret is not null) secrets.Set(snippet.SecretAccount, secret);
+        if (snippet.Protected && secret is not null) { secrets.Set(snippet.SecretAccount, secret); snippet = snippet.Sealed(secret); }
         ChangeSnippets(b => b.Update(snippet));
     }
 
@@ -144,7 +154,7 @@ public sealed class ClipBook
         if (isProtected)
         {
             secrets.Set(snippet.SecretAccount, snippet.Text);
-            snippet = snippet with { Protected = true, Text = "" };
+            snippet = snippet.Sealed(snippet.Text) with { Protected = true, Text = "" };
         }
         else
         {

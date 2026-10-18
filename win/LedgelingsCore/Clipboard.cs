@@ -15,7 +15,9 @@ namespace Ledgelings.Core;
 /// limit of them, or once they are older than the days to keep. A copied picture is a clip too, labelled
 /// "Image 1280×720"; its bytes are files in <c>clipboard-images</c> beside the history, one per clipboard format
 /// it was copied as, so the JSON stays small. A protected snippet keeps no text here
-/// at all: its words live in Windows' Credential Manager, fetched only when it is pasted.
+/// at all: its words live in Windows' Credential Manager, fetched only when it is pasted; the book keeps a salted
+/// fingerprint of them, so a copy of those words in the history is shown masked, <c>PWD:Wi-Fi: [16] chars</c>, and
+/// searched by that label. It still pastes its own words.
 ///
 /// Nothing in here is ever sent anywhere: no model sees a clip or a snippet.
 /// </summary>
@@ -145,6 +147,26 @@ public static class Clipboard
         /// <summary>Its own shortcut from any app, as a virtual-key code and <see cref="ShortcutModifiers"/>; null: none.</summary>
         public int? KeyCode { get; init; }
         public int? Modifiers { get; init; }
+        /// <summary>A protected snippet's words, fingerprinted: SHA-256 of <see cref="SecretSalt"/>'s bytes and then the
+        /// words' UTF-8, so a copy of them in the history is told apart without the words on disk. The Mac's fields.</summary>
+        public string? SecretSalt { get; init; }
+        public string? SecretHash { get; init; }
+
+        /// <summary>This snippet with <paramref name="words"/> fingerprinted under a fresh salt; null words forget the fingerprint.</summary>
+        public Snippet Sealed(string? words)
+        {
+            if (string.IsNullOrEmpty(words)) return this with { SecretSalt = null, SecretHash = null };
+            var salt = System.Security.Cryptography.RandomNumberGenerator.GetBytes(16);
+            return this with { SecretSalt = Convert.ToBase64String(salt), SecretHash = Fingerprint(words, salt) };
+        }
+
+        /// <summary>Whether <paramref name="text"/> is this protected snippet's words.</summary>
+        public bool Holds(string text)
+        {
+            if (!Protected || SecretHash is null || SecretSalt is null || text.Length > LongestSecret) return false;
+            try { return Fingerprint(text, Convert.FromBase64String(SecretSalt)) == SecretHash; }
+            catch (FormatException) { return false; }
+        }
 
         public static Snippet Make(string title, string text = "", bool isProtected = false) =>
             new() { Title = title, Text = isProtected ? "" : text, Protected = isProtected };
@@ -168,6 +190,15 @@ public static class Clipboard
     /// <summary>What a protected snippet looks like until it is pasted.</summary>
     public const string Mask = "••••••••";
 
+    /// <summary>Longest words compared with protected snippets: a password is short, a page of text is not one.</summary>
+    public const int LongestSecret = 1024;
+
+    internal static string Fingerprint(string words, byte[] salt) =>
+        Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(salt.Concat(Encoding.UTF8.GetBytes(words)).ToArray()));
+
+    /// <summary>How a copy holding a protected snippet's words is shown: <c>PWD:Wi-Fi: [16] chars</c>.</summary>
+    public static string MaskLabel(string title, int length) => $"PWD:{title}: [{length}] chars";
+
     public sealed record Folder
     {
         [JsonConverter(typeof(Reminders.UpperGuidConverter))]
@@ -187,6 +218,13 @@ public static class Clipboard
 
         public Snippet? Find(Guid id) => All.FirstOrDefault(x => x.Snippet.Id == id).Snippet;
         public Folder? FolderOf(Guid id) => All.FirstOrDefault(x => x.Snippet.Id == id).Folder;
+
+        /// <summary>The protected snippet whose words <paramref name="text"/> is, if any.</summary>
+        public Snippet? SecretMatching(string text) => All.Select(x => x.Snippet).FirstOrDefault(s => s.Holds(text));
+
+        /// <summary>What the picker shows for <paramref name="clip"/>: its mask when it holds a protected snippet's words, else null.</summary>
+        public string? MaskFor(Clip clip) =>
+            clip.Kind is Kind.Text or Kind.Rich && SecretMatching(clip.Text) is { } s ? MaskLabel(s.Title, clip.Text.Length) : null;
 
         public Guid AddFolder(string title)
         {
@@ -209,7 +247,7 @@ public static class Clipboard
             foreach (var f in Folders)
             {
                 var s = f.Snippets.FindIndex(x => x.Id == snippet.Id);
-                if (s >= 0) f.Snippets[s] = snippet.Protected ? snippet with { Text = "" } : snippet;
+                if (s >= 0) f.Snippets[s] = snippet.Protected ? snippet with { Text = "" } : snippet.Sealed(null);
             }
         }
 
@@ -272,7 +310,8 @@ public static class Clipboard
     }
 
     /// <summary>Every clip and snippet holding every word of <paramref name="query"/>, in any order and any case,
-    /// accents ignored. A clip matches on its text and its app (a picture on its label, in English and as shown); a snippet on its title, its folder's title and
+    /// accents ignored. A clip matches on its text and its app (a picture on its label, in English and as shown; one
+    /// holding a protected snippet's words only on its mask); a snippet on its title, its folder's title and
     /// its words, but a protected one only on its title and folder. An empty query finds everything: the
     /// pinned clips first, then the rest newest first.</summary>
     public static Found Search(string query, History history, SnippetBook snippets)
@@ -283,7 +322,9 @@ public static class Clipboard
             var folded = Fold(haystack);
             return words.All(folded.Contains);
         }
-        var clips = history.Clips.Where(c => words.Length == 0 || Holds(string.Join(" ", c.Text, c.App ?? "", c.Kind == Kind.Image ? c.Preview(200) : ""))).ToList();
+        var clips = history.Clips.Where(c => words.Length == 0
+            || (snippets.MaskFor(c) is { } mask ? Holds(mask + " " + (c.App ?? ""))
+                : Holds(string.Join(" ", c.Text, c.App ?? "", c.Kind == Kind.Image ? c.Preview(200) : "")))).ToList();
         var ordered = clips.Where(c => c.Pinned).Concat(clips.Where(c => !c.Pinned)).ToList();
         var found = snippets.All.Where(x => words.Length == 0 || Holds(string.Join(" ", x.Snippet.Title, x.Folder.Title, x.Snippet.Protected ? "" : x.Snippet.Text)))
             .Select(x => x.Snippet).ToList();

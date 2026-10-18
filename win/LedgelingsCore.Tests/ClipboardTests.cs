@@ -463,4 +463,70 @@ public class ClipboardTests
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
     }
+
+    // MARK: Masked passwords
+
+    private static Clipboard.SnippetBook BookWithSecret(string words = "pixel-perfect-42")
+    {
+        var book = new Clipboard.SnippetBook();
+        book.Add(Snippet.Make("Wi-Fi", isProtected: true).Sealed(words));
+        book.Add(Snippet.Make("Plain", "hello there"));
+        return book;
+    }
+
+    [Fact]
+    public void ACopyOfAProtectedSnippetsWordsIsMaskedByNameAndLength()
+    {
+        var book = BookWithSecret();
+        Assert.Equal("PWD:Wi-Fi: [16] chars", book.MaskFor(new Clip { Text = "pixel-perfect-42", CopiedAt = T0 }));
+        Assert.Equal("PWD:Wi-Fi: [16] chars", book.MaskFor(new Clip { Kind = Clipboard.Kind.Rich, Text = "pixel-perfect-42", CopiedAt = T0 }));
+        Assert.Null(book.MaskFor(new Clip { Text = "pixel-perfect-43", CopiedAt = T0 }));
+        Assert.Null(book.MaskFor(new Clip { Text = "hello there", CopiedAt = T0 }));   // an ordinary snippet's words are not a secret
+        var snippet = book.All.First().Snippet;
+        Assert.True(snippet.Text == "" && !snippet.SecretHash!.Contains("pixel"));
+    }
+
+    [Fact]
+    public void TheSameWordsGetADifferentFingerprintEachTime()
+    {
+        var a = Snippet.Make("A", isProtected: true).Sealed("same");
+        var b = Snippet.Make("B", isProtected: true).Sealed("same");
+        Assert.True(a.SecretHash != b.SecretHash && a.Holds("same") && b.Holds("same"));
+        Assert.False(a.Sealed(null).Holds("same"));
+    }
+
+    [Fact]
+    public void TheFingerprintIsTheMacs()
+    {
+        // SHA-256 of the salt's bytes then the words' UTF-8, in lower-case hex.
+        var salt = new byte[16];
+        var mac = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(salt.Concat("hunter2"u8.ToArray()).ToArray()));
+        var snippet = Snippet.Make("X", isProtected: true) with { SecretSalt = Convert.ToBase64String(salt), SecretHash = mac };
+        Assert.True(snippet.Holds("hunter2"));
+    }
+
+    [Fact]
+    public void AMaskedCopyIsFoundByItsMaskNeverByItsWords()
+    {
+        var h = History("pixel-perfect-42", "pixel art");
+        h.Clips[1] = h.Clips[1] with { App = "Notepad" };
+        var book = BookWithSecret();
+        Assert.Equal(new[] { "pixel art" }, Clipboard.Search("pixel", h, book).Clips.Select(c => c.Text));
+        Assert.Equal(new[] { "pixel-perfect-42" }, Clipboard.Search("pwd wi-fi", h, book).Clips.Select(c => c.Text));
+        Assert.Equal(new[] { "pixel-perfect-42" }, Clipboard.Search("notepad", h, book).Clips.Select(c => c.Text));
+        var picker = new ClipPicker(() => (h, book));
+        picker.Refresh(selectFirst: true);
+        var masked = picker.Rows.Single(r => r.Masked);
+        Assert.Equal("PWD:Wi-Fi: [16] chars", masked.Text);
+    }
+
+    [Fact]
+    public void UnprotectingASnippetForgetsItsFingerprint()
+    {
+        var book = BookWithSecret();
+        var snippet = book.All.First().Snippet;
+        book.Update(snippet with { Protected = false, Text = "pixel-perfect-42" });
+        Assert.Null(book.All.First().Snippet.SecretHash);
+        Assert.Null(book.MaskFor(new Clip { Text = "pixel-perfect-42", CopiedAt = T0 }));
+    }
 }

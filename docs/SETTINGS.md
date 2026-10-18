@@ -628,7 +628,9 @@ has, so a big screenshot keeps its PNG and drops the bitmap; it is pasted back i
 `ExcludeClipboardContentFromMonitorProcessing` or `CanIncludeInClipboardHistory` = 0 are
 skipped. Protected snippets live in Credential Manager (`Ledgelings Snippets`), shown as
 dots until **Show…**, which asks for nothing: Windows has no fingerprint guard. A pasted
-secret is also kept out of Windows' own clipboard history (Win+V) and cloud clipboard.
+secret is also kept out of Windows' own clipboard history (Win+V) and cloud clipboard. A copy of a
+protected snippet's words in the history shows as `PWD:{Name}: [N] chars` on a faint tint, as on the
+Mac, and pastes its real words.
 
 ## Voice tab
 

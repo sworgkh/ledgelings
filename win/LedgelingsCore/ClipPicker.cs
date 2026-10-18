@@ -11,7 +11,8 @@ public sealed class ClipPicker
 
     /// <param name="Text">The words on one line, or dots for a protected snippet.</param>
     /// <param name="Detail">Where it came from and when, or the snippet's folder.</param>
-    public sealed record Row(Guid Id, Group Group, string Text, string Detail, string? Title, bool Pinned, bool Protected);
+    /// <param name="Masked">A copy of a protected snippet's words: <paramref name="Text"/> is its mask, the row a shade apart.</param>
+    public sealed record Row(Guid Id, Group Group, string Text, string Detail, string? Title, bool Pinned, bool Protected, bool Masked = false);
 
     private readonly Func<(Clipboard.History History, Clipboard.SnippetBook Snippets)> source;
 
@@ -39,7 +40,9 @@ public sealed class ClipPicker
         var (history, snippets) = source();
         var found = Clipboard.Search(Query, history, snippets);
         var at = now ?? DateTimeOffset.Now;
-        var recent = found.Clips.Select(c => new Row(c.Id, Group.Recent, c.Preview(90), Detail(c, at), null, c.Pinned, false)).ToList();
+        var recent = found.Clips.Select(c => snippets.MaskFor(c) is { } mask
+            ? new Row(c.Id, Group.Recent, mask, Detail(c, at), null, c.Pinned, false, Masked: true)
+            : new Row(c.Id, Group.Recent, c.Preview(90), Detail(c, at), null, c.Pinned, false)).ToList();
         var saved = found.Snippets.Select(s => new Row(s.Id, Group.Snippets, s.Preview(90), snippets.FolderOf(s.Id)?.Title ?? "", s.Title, false, s.Protected)).ToList();
         Rows = First == Group.Recent ? recent.Concat(saved).ToList() : saved.Concat(recent).ToList();
         Counts = (recent.Count, saved.Count);
