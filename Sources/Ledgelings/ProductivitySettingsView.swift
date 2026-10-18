@@ -6,12 +6,13 @@ import SwiftUI
 /// at the top lists every case in order; `SettingsWindowController.show(tool:)`
 /// opens the tab on one.
 enum ProductivityTool: String, CaseIterable, Hashable {
-    case reminders, clipboard
+    case reminders, clipboard, screenshots
 
     var title: String {
         switch self {
         case .reminders: tr("Reminders")
         case .clipboard: tr("Clipboard")
+        case .screenshots: tr("Screenshots")
         }
     }
 }
@@ -47,6 +48,7 @@ struct ProductivitySettingsView: View {
         switch tool {
         case .reminders: RemindersSettingsView(settings: settings, reminders: reminders, send: send)
         case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, library: library, editSnippets: editSnippets)
+        case .screenshots: ScreenshotSettingsView(settings: settings)
         }
     }
 }

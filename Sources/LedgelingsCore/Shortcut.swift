@@ -25,6 +25,12 @@ public struct Shortcut: Equatable, Sendable {
     public static let clipHistory = Shortcut(keyCode: 9, modifiers: [.control, .option])
     /// The snippets picker: Control-Option-B, beside V on the keyboard, as Clipy has ⌘⇧B beside ⌘⇧V.
     public static let clipSnippets = Shortcut(keyCode: 11, modifiers: [.control, .option])
+    /// A screenshot with the toolbar: Control-Option-S, beside the others.
+    public static let shotCapture = Shortcut(keyCode: 1, modifiers: [.control, .option])
+    /// The full screen at once: Command-Shift-8, the * key, beside the Mac's own ⌘⇧3–5.
+    public static let shotFull = Shortcut(keyCode: 28, modifiers: [.command, .shift])
+    /// The last rectangle again: Command-Shift-\.
+    public static let shotLast = Shortcut(keyCode: 42, modifiers: [.command, .shift])
 
     public var keyCode: Int
     public var modifiers: Modifiers

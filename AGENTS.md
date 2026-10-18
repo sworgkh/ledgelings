@@ -66,7 +66,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
   writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, sprites, talk, flowers, productivity, voice, costs, chats;
-  `reminders` still opens productivity, its old name; `clipboard` opens it on its Clipboard tool).
+  `reminders` still opens productivity, its old name; `clipboard` and `screenshots` open it on that tool).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
@@ -104,8 +104,18 @@ with `scripts/make-app.sh`, installed and seen working.
   sheet's corner, the unfold, a search, the collapse into a text cursor and the leap home, then a round
   with no cursor known, printing each step (`film 1.00 clip Whiskers leaps to (245, 558) in 0.31 s`).
 - `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
-  `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`),
+  `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`, `shortcut ⌃⌥S screenshot registered`,
+  `shortcut ⇧⌘8 full screen registered`, `shortcut ⇧⌘\ last rectangle registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
+- `--shot-check` prints whether this build has Screen Recording and whether each monitor's capture
+  shows the screen (`shot Built-in Retina Display: 3024×1964 px at 2×, 412 colours in a sample`); exit 1 if
+  not. Like `--paste-check`, from a terminal it borrows the terminal's permission.
+- `--shot-demo [--snapshot out.png]` takes a toolbar shot of the real screens (a rectangle, box, arrow,
+  blur, hand blur, an undo, ⌘C), checks the clipboard holds that PNG, takes the last rectangle again, and
+  puts the clipboard and settings back; each step with its time. Exit 1 if wrong.
+- `--shot-film out.mp4` films the screenshot tool offscreen on two simulated monitors (2× and 1×): a
+  rectangle with marks and blurs, a lasso, all monitors, the last rectangle again; writes each PNG beside
+  the film and prints each step (`film 7.40 taken 800×520 px, 4 marks`).
 - `--kit-images <folder>` writes the sprite kit's two pictures and the prompt (from the saved
   form) and quits; `--kit-import <picture>` imports one picture with the saved form, as
   Import… does, and prints the name, colour and idle pose it read (it adds the species).

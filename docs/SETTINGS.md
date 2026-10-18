@@ -39,6 +39,9 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Clipboard History…** (⌃⌥V from any app) | The clipboard picker on your recent copies ([Clipboard](#clipboard)) |
 | **Paste a Snippet…** (⌃⌥B from any app) | The same picker, snippets first |
 | **Edit Snippets…** | The snippet editor: folders, snippets, protected ones, import and export |
+| **Take a Screenshot…** (⌃⌥S from any app) | Freezes the screens with the screenshot toolbar ([Screenshots](#screenshots)) |
+| **Screenshot the Full Screen** (⌘⇧8, the `*` key, from any app) | All screens in one picture (or the one under the cursor), straight to the clipboard or folder |
+| **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -473,9 +476,9 @@ greyed out under a *Needs a model* note.
 ## Productivity tools tab
 
 Tools the creatures run for you rather than for themselves. A row of tools
-across the top picks one (**Reminders**, **Clipboard**); its settings fill the two
+across the top picks one (**Reminders**, **Clipboard**, **Screenshots**); its settings fill the two
 columns below. `--settings productivity` opens it (`reminders` too, its old name);
-`--settings clipboard` opens it on Clipboard.
+`--settings clipboard` opens it on Clipboard, `--settings screenshots` on Screenshots.
 
 ### Reminders
 
@@ -631,6 +634,57 @@ dots until **Show…**, which asks for nothing: Windows has no fingerprint guard
 secret is also kept out of Windows' own clipboard history (Win+V) and cloud clipboard. A copy of a
 protected snippet's words in the history shows as `PWD:{Name}: [N] chars` on a faint tint, as on the
 Mac, and pastes its real words.
+
+### Screenshots
+
+Pictures of the screen, marked up, in the game's style. macOS for now; Windows follows.
+
+**The toolbar shot** (⌃⌥S): every screen freezes as it was and dims, the cursor becomes a
+pixel crosshair, and a pixel toolbar comes up at the top of the screen under the cursor.
+
+| Key | What it does |
+|---|---|
+| `R` | Rectangle: drag an area (the default). Its size in pixels shows beside it |
+| `L` | Lasso: draw a loop; outside it the PNG is see-through |
+| `W` | The whole screen under the cursor |
+| `A` | All monitors in one picture, each at its own sharpness (a Retina screen beside a plain one keeps both as they are) |
+| `B` · `→` · `H` | Once there is an area: a box, an arrow, a translucent highlight |
+| `X` · `F` | Blur a rectangle, or blur by hand with a brush four times the line's width. The blur is big square blocks baked into the picture: what was under it cannot be read back |
+| `1`–`6` | Red, yellow, green, blue, white, black; the toolbar remembers the last one |
+| ⌘Z | Undo the last mark |
+| ⏎ | Take it: to the clipboard and/or the folder, as set below. With no area chosen, the whole screen under the cursor |
+| ⌘C · ⌘S | Copy only · save (and copy, if copying is on) |
+| ⎋ | Let go, at any step; ⌃⌥S again does the same |
+
+A toast says what happened (*Copied 1280×720*, *Saved Screenshot 2026-10-18 14.03.22.png*)
+and a creature hops up to where the toolbar was and carries a tiny picture of the shot
+back to its edge. A copy also lands in the clipboard history as a picture.
+
+**Left column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Screenshot tool** (`shotEnabled`) | on | | Off: the shortcuts are let go and the menu items hide. Needs **Screen Recording** (System Settings › Privacy & Security); until it is allowed a line here says so, with **Allow…**, and a shot only shows a toast |
+| **Capture with the toolbar** (`shotCaptureShortcut…`) | on, ⌃⌥S | | Click the keys to record others |
+| **Full screen at once** (`shotFullShortcut…`) | on, ⌘⇧8 | | ⌘⇧\* on the keyboard. Straight to the output, no toolbar |
+| **Full screen takes** (`shotFullScope`) | All screens, in one picture | or *The screen under the cursor* | With one monitor they are the same |
+| **The last rectangle again** (`shotLastShortcut…`) | on, ⌘⇧\\ | | The same screen area as the last rectangle dragged on the toolbar, straight out. Safari uses ⌘⇧\\ for its tab overview: while this is on, it is ours |
+
+A shortcut another app already holds is refused, and a red line under the shortcuts says which.
+
+**Right column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Copy to the clipboard** (`shotCopy`) | on | | As a PNG |
+| **Save to a folder** (`shotSave`) | off | | Both off: ⏎ still copies |
+| **Folder** (`shotFolder`) | `~/Desktop/Screenshots` | **Choose…**, **Show** | Made on the first save. Files are named for their time: `Screenshot 2026-10-18 14.03.22.png`, then ` (2)`… if taken |
+| **Line thickness** (`shotThickness`) | 3 pt | 1 to 8 pt | Boxes and arrows; the hand blur is four times as wide |
+| **Colour** (`shotColour`) | red | six squares | The toolbar starts on it; picking one on the toolbar changes it |
+| **Hide the creatures while capturing** (`shotHideCreatures`) | on | | Hidden from the screen and left out of the picture |
+| **A creature brings the shot home** (`shotCreatureBrings`) | on | | One hops to the toolbar's spot, picks up an 18×14-pixel picture of the shot and carries it home |
+
+The last rectangle (`shotLastRect`) is remembered across relaunches; it has no switch.
 
 ## Voice tab
 

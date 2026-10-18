@@ -379,6 +379,46 @@ final class AppSettings: ObservableObject {
     /// Why a clipboard shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var clipShortcutProblem = ""
 
+    // MARK: Screenshots
+
+    /// The screenshot tool (§7.12). Off: no screenshot shortcut is taken and the menu items go.
+    @Published var shotEnabled: Bool { didSet { save(shotEnabled, "shotEnabled") } }
+    /// Capture with the toolbar: an area, then markup.
+    @Published var shotCaptureShortcutEnabled: Bool { didSet { save(shotCaptureShortcutEnabled, "shotCaptureShortcutEnabled") } }
+    @Published var shotCaptureShortcut: Shortcut {
+        didSet { save(shotCaptureShortcut.keyCode, "shotCaptureShortcutKeyCode"); save(shotCaptureShortcut.modifiers.rawValue, "shotCaptureShortcutModifiers") }
+    }
+    /// Full screen straight to the output, no toolbar.
+    @Published var shotFullShortcutEnabled: Bool { didSet { save(shotFullShortcutEnabled, "shotFullShortcutEnabled") } }
+    @Published var shotFullShortcut: Shortcut {
+        didSet { save(shotFullShortcut.keyCode, "shotFullShortcutKeyCode"); save(shotFullShortcut.modifiers.rawValue, "shotFullShortcutModifiers") }
+    }
+    /// What the full-screen shortcut takes: every monitor in one picture, or the screen under the cursor.
+    @Published var shotFullScope: Shot.FullScope { didSet { save(shotFullScope.rawValue, "shotFullScope") } }
+    /// The last rectangle again, straight to the output.
+    @Published var shotLastShortcutEnabled: Bool { didSet { save(shotLastShortcutEnabled, "shotLastShortcutEnabled") } }
+    @Published var shotLastShortcut: Shortcut {
+        didSet { save(shotLastShortcut.keyCode, "shotLastShortcutKeyCode"); save(shotLastShortcut.modifiers.rawValue, "shotLastShortcutModifiers") }
+    }
+    /// A finished shot goes onto the clipboard as a PNG.
+    @Published var shotCopy: Bool { didSet { save(shotCopy, "shotCopy") } }
+    /// A finished shot is also saved as a PNG in `shotFolder`.
+    @Published var shotSave: Bool { didSet { save(shotSave, "shotSave") } }
+    /// Where shots are saved; `~` is the home folder. Made on the first save.
+    @Published var shotFolder: String { didSet { save(shotFolder, "shotFolder") } }
+    /// The creatures are left out of the picture and off the screen while it is taken.
+    @Published var shotHideCreatures: Bool { didSet { save(shotHideCreatures, "shotHideCreatures") } }
+    /// A creature hops to where the shot was taken and carries a tiny picture of it home.
+    @Published var shotCreatureBrings: Bool { didSet { save(shotCreatureBrings, "shotCreatureBrings") } }
+    /// Boxes and arrows, in points; the freehand blur is four times as wide.
+    @Published var shotThickness: Int { didSet { save(shotThickness, "shotThickness") } }
+    /// The last colour picked on the toolbar, an index into `Shot.palette`.
+    @Published var shotColour: Int { didSet { save(shotColour, "shotColour") } }
+    /// The last rectangle taken, "x,y,w,h" in global points, for the last-rectangle shortcut; empty until there is one.
+    @Published var shotLastRect: String { didSet { save(shotLastRect, "shotLastRect") } }
+    /// Why a screenshot shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var shotShortcutProblem = ""
+
     // MARK: Voice
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
@@ -681,6 +721,27 @@ final class AppSettings: ObservableObject {
         clipHelperEnabled = defaults.object(forKey: "clipHelperEnabled") as? Bool ?? true
         clipHelper = defaults.string(forKey: "clipHelper") ?? ""
         clipHelperTalks = defaults.object(forKey: "clipHelperTalks") as? Bool ?? true
+        shotEnabled = defaults.object(forKey: "shotEnabled") as? Bool ?? true
+        shotCaptureShortcutEnabled = defaults.object(forKey: "shotCaptureShortcutEnabled") as? Bool ?? true
+        shotCaptureShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "shotCaptureShortcutKeyCode") as? Int,
+                                       savedModifiers: defaults.object(forKey: "shotCaptureShortcutModifiers") as? Int, standard: .shotCapture)
+        shotFullShortcutEnabled = defaults.object(forKey: "shotFullShortcutEnabled") as? Bool ?? true
+        shotFullShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "shotFullShortcutKeyCode") as? Int,
+                                    savedModifiers: defaults.object(forKey: "shotFullShortcutModifiers") as? Int, standard: .shotFull)
+        shotFullScope = defaults.string(forKey: "shotFullScope").flatMap(Shot.FullScope.init(rawValue:)) ?? .allScreens
+        shotLastShortcutEnabled = defaults.object(forKey: "shotLastShortcutEnabled") as? Bool ?? true
+        shotLastShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "shotLastShortcutKeyCode") as? Int,
+                                    savedModifiers: defaults.object(forKey: "shotLastShortcutModifiers") as? Int, standard: .shotLast)
+        shotCopy = defaults.object(forKey: "shotCopy") as? Bool ?? true
+        shotSave = defaults.object(forKey: "shotSave") as? Bool ?? false
+        shotFolder = defaults.string(forKey: "shotFolder").flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 } ?? Shot.defaultFolder
+        shotHideCreatures = defaults.object(forKey: "shotHideCreatures") as? Bool ?? true
+        shotCreatureBrings = defaults.object(forKey: "shotCreatureBrings") as? Bool ?? true
+        let thickness = defaults.object(forKey: "shotThickness") as? Int ?? Shot.defaultThickness
+        shotThickness = min(max(thickness, Shot.thicknessRange.lowerBound), Shot.thicknessRange.upperBound)
+        let colour = defaults.object(forKey: "shotColour") as? Int ?? 0
+        shotColour = Shot.colourRange.contains(colour) ? colour : 0
+        shotLastRect = defaults.string(forKey: "shotLastRect") ?? ""
         followLanguage()
     }
 
