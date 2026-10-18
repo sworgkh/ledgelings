@@ -17,13 +17,20 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.24 — eight creatures with their own personalities, on every monitor,
-talking when they meet (out loud, if you like) from a hundred built-in lines or through a model of your
-choice, giving flowers, sending paper planes when it gets too quiet, keeping every
-chat and what it cost, growing little stories between the ones who live together, knowing your time of day and your holidays, rarely saying the same thing twice, going home when asked, and wearing creatures you describe to
-any chat model.
+**Status:** v0.53 — eight creatures with their own personalities, on every monitor or
+on the one you choose, talking when they meet (out loud, each in a voice of its own) from
+a hundred built-in lines or through a model of your choice, in English or Russian. They
+grow little stories from everything they have lived through together, know your time of
+day and your holidays, give each other flowers and plant them, send paper planes and
+throw your reminders at you, sit down to tea, sleep in beds of their own, play tag,
+ninja rope, parachute and basketball, and take the cursor as a friend or a nemesis,
+counting every hunt and riding it in revenge. They bring you a clipboard manager, go home
+when asked, and wear creatures you describe to any image model. Every chat is kept and
+every model call priced.
 
-**See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (50 s, no sound) shows every feature on a clean desktop. It is rendered by the app itself, `scripts/make-promo.sh`. A 78-second motion infographic of the features, with music, is made from [promo-video/](promo-video).
+**See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) is a 78-second motion infographic of the features, with music, made from [promo-video/](promo-video). The older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
+
+**Download:** the newest macOS `.pkg` and `.dmg` are on the [latest release](https://github.com/sworgkh/ledgelings/releases/latest).
 
 ## Quick start
 
@@ -47,7 +54,9 @@ app instead of running from source, see [docs/INSTALL.md](docs/INSTALL.md).
 **They walk the edges.** Each creature crawls the outline of your desktop, turns
 the corners, stops now and then, blinks. Monitors that touch are fused into one
 outline, so a creature walks from one screen onto the next along a shared floor and
-never along the seam between them. Move the cursor near one and it jumps to another
+never along the seam between them. Rather they kept to one monitor? Pick it with
+*SCREEN* in Creature Actions… (or Settings › Creatures › *Live on*): everyone on the
+other screens hops off and parachutes onto it. Move the cursor near one and it jumps to another
 edge, on any monitor. The overlay never takes a click that is not meant for a creature.
 
 **Day and night.** One clock for the colony: three minutes of day, then five of
@@ -156,18 +165,26 @@ weekday, every week). When the time comes, one of them folds it into a paper pla
 and throws it at you: it swirls to the middle of your screen, turns to face you,
 rushes at you and unfolds into a letter with your reminder, a note in the thrower's
 own voice and its signature. Click it to send it flying away. A letter that
-arrives while you are away waits for you. *Add a Reminder* in Creature Actions… (Ctrl+Alt+R anywhere on
-Windows) opens a sheet of the same pixel paper to write it on, a creature peeking
-over the edge; the list is in Settings › Productivity tools.
+arrives while you are away waits for you. *Add a Reminder* in Creature Actions… (⌘R
+there, Ctrl+Alt+R anywhere on Windows) opens a paper note of the same pixel paper to
+write it on, a creature peeking over the edge; the list is in Settings › Productivity
+tools › Reminders.
 
-**A clipboard manager.** Everything you copy is kept in a history (password managers'
-secrets never are), and texts you paste often live as snippets, in folders. Press
-**⌃⌥V** in any app: a sheet of pixel paper opens, you type to search copies and
-snippets at once, ⏎ pastes into the app you were in, and the sheet collapses into your
-text cursor. ⌘1–9, ⇥, ⌘P to pin: no mouse needed. A **protected** snippet keeps its
-words in the Keychain and is pasted only after your fingerprint. Clipy's snippets import in one
-go. Nothing copied ever leaves the computer.
-Every conversation is kept, and every call to the model is priced.
+**A clipboard manager** (macOS for now; the Windows app follows). Everything you copy
+is kept in a history (password managers' secrets never are), and texts you paste often
+live as snippets, in folders. Press **⌃⌥V** in any app for the history, **⌃⌥B** for the
+snippets: a creature leaps over with a sheet of pixel paper, you type to search copies
+and snippets at once, ⏎ pastes into the app you were in, and the sheet collapses into
+your text cursor. ⌘1–9, ⇥, ⌘P to pin: no mouse needed. A **protected** snippet keeps its
+words in the Keychain and is pasted only after **Touch ID**, never your password. Clipy's
+snippets import in one go. Nothing copied ever leaves the computer. Settings ›
+Productivity tools › Clipboard.
+
+Pasting for you means pressing ⌘V in the other app, which macOS allows only with
+**Accessibility**: System Settings › Privacy & Security › Accessibility, switch on
+Ledgelings. The app is signed ad hoc, so macOS sees every reinstalled build as a new app:
+**after each install, switch it off and on again there** (or remove it with − and press
+*Allow…* in the picker). Until then the picker only copies, and says so.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
 triangle and a mushroom come built in, each with its own cast of characters. The
@@ -176,6 +193,10 @@ with AI* fills it in with an OpenRouter key), a prompt built from it, and two pi
 to attach: Blocky's nine poses and an empty template. Paste them into an image model,
 import the picture it paints at whatever size it comes, and the app turns it into a real
 sprite sheet that blinks and takes your colours. See [docs/SPRITES.md](docs/SPRITES.md).
+
+**Every word is accounted for.** Every conversation is kept (Settings › Chats), and
+every call to a model is priced and labelled with the feature that made it (Settings ›
+Costs: today, this month, all time).
 
 **They have tea.** Now and then two who bump into each other put a little table out
 between them and sit down to tea for a few minutes, taking turns to tell each other
