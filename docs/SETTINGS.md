@@ -566,7 +566,7 @@ is megabytes). History and snippets live in `clipboard.json` and `snippets.json`
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
-| **Paste into the app I was in** (`clipAutoPaste`) | on | | Ledgelings presses ⌘V for you. On macOS that needs **Accessibility** (System Settings › Privacy & Security › Accessibility); until it is allowed, a line in the picker and here says so, with **Allow…**, and choosing only copies: *Copied. Press ⌘V to paste.* Off: always only copies |
+| **Paste into the app I was in** (`clipAutoPaste`) | on | | Ledgelings presses ⌘V for you. On macOS that needs **Accessibility** (System Settings › Privacy & Security › Accessibility); until it is allowed, a line in the picker and here says so, with **Allow…**, and choosing only copies: *Copied. Press ⌘V to paste.* **Allow…** first clears a switch an older build left on (it no longer matched), so turn Ledgelings on in the list once more; from 0.54.0 on, the grant survives updates. Off: always only copies |
 | **Paste as plain text** (`clipPlainText`) | off | | ⌥⏎ in the picker does the other one for that paste |
 | **Unfold and collapse the picker** (`clipAnimate`) | on | | Off: it simply appears and goes |
 | **Animation speed** (`clipAnimationSpeed`) | 1× | 0.5× to 3× | The paste never waits for the animation |

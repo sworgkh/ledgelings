@@ -145,6 +145,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if CommandLine.arguments.contains("--paste-check") {
+            Task { @MainActor in exit(await PasteCheck.run() ? 0 : 1) }
+            return
+        }
         if CommandLine.arguments.contains("--clip-demo") {
             let shot = CommandLine.arguments.firstIndex(of: "--snapshot").flatMap { CommandLine.arguments.indices.contains($0 + 1) ? CommandLine.arguments[$0 + 1] : nil }
             Task { @MainActor in

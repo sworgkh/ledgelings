@@ -205,8 +205,19 @@ Windows machine with `dotnet publish` and added to the same release with
 `scripts/make-app.sh` signs the app ad hoc (`SIGN_IDENTITY` names another
 identity). Do not reach for an "Apple Development" certificate: macOS 26 treats
 such an app as malware at launch unless it is Developer ID signed and notarised.
-Ad hoc costs the user one right-click > Open, and one keychain prompt per build
-for the OpenRouter key.
+Ad hoc costs the user one right-click > Open.
+
+An ad hoc signature on its own names a build by its hash, and macOS keeps a
+permission for that hash only: each rebuild lost the Accessibility grant (the
+switch in System Settings still showed on, yet picking a clip only copied). So
+the ad hoc signature carries a fixed designated requirement,
+`identifier "com.alterman.ledgelings"`, and every build is the same app to
+Accessibility. The clipboard's **Allow…** clears a grant left by an older build
+(`tccutil reset Accessibility com.alterman.ledgelings`) before asking anew.
+`--paste-check` says whether this build may press keys and presses a real ⌘V into
+a field of its own; run it with `open build/Ledgelings.app --stderr /dev/stdout
+--args --paste-check`, since a copy started from a terminal borrows the
+terminal's permission.
 
 ## Looking at the settings window from a script
 

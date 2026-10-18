@@ -104,6 +104,14 @@ enum ClipPaster {
 
     /// Asks for the Accessibility permission: macOS shows its own dialog with a way to System Settings.
     static func askForTrust() {
+        // A grant left by an older build shows as on but no longer matches: clear it, so the switch is asked anew.
+        if !trusted, let id = Bundle.main.bundleIdentifier {
+            let reset = Process()
+            reset.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+            reset.arguments = ["reset", "Accessibility", id]
+            try? reset.run()
+            reset.waitUntilExit()
+        }
         // kAXTrustedCheckOptionPrompt's own value; the constant is a global Swift 6 will not read.
         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {

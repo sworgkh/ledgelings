@@ -3,7 +3,7 @@
 #   scripts/make-app.sh && open build/Ledgelings.app
 set -euo pipefail
 cd "$(dirname "$0")/.."
-VERSION="${VERSION:-0.53.0}"
+VERSION="${VERSION:-0.54.0}"
 
 swift build -c release
 APP=build/Ledgelings.app
@@ -40,5 +40,13 @@ PLIST
 # app as malware on launch (it is neither Developer ID nor notarised). Ad hoc
 # only ever costs a right-click > Open. SIGN_IDENTITY overrides for someone
 # with a Developer ID and a notarisation step.
-codesign --force --sign "${SIGN_IDENTITY:--}" "$APP" >/dev/null
+# An ad hoc signature names the build by its hash, and macOS keeps an
+# Accessibility grant for that hash only: every rebuild silently lost it, so
+# picking a clip only copied (the switch in System Settings still showed on).
+# A fixed designated requirement makes every build the same app to the grant.
+if [ -z "${SIGN_IDENTITY:-}" ]; then
+    codesign --force --sign - -r='designated => identifier "com.alterman.ledgelings"' "$APP" >/dev/null
+else
+    codesign --force --sign "$SIGN_IDENTITY" "$APP" >/dev/null
+fi
 echo "built $APP"
