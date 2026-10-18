@@ -8,6 +8,10 @@ import Foundation
 /// whatever the limits say; the others go once there are more than `limit` of
 /// them, or once they are older than the days to keep.
 ///
+/// A copied picture is a clip too, labelled "Image 1280×720"; its bytes are files in
+/// `clipboard-images` beside the history, one per type it was copied as, so the
+/// JSON stays small. The same picture copied again moves to the top like words do.
+///
 /// A snippet marked protected keeps no text here at all: its text lives in the
 /// platform's secret store (the Mac's Keychain, Windows' Credential Manager),
 /// fetched only when it is pasted. The book and anything exported from it know
@@ -24,7 +28,28 @@ public enum Clipboard {
         case rich
         /// Files copied in Finder or Explorer: `text` holds their paths, one a line.
         case files
+        /// A picture: `text` is its label, `picture` says where its bytes are.
+        case image
     }
+
+    /// A copied picture's size and the types it was kept as, each a file beside the history.
+    public struct Picture: Codable, Equatable, Sendable {
+        public var width: Int
+        public var height: Int
+        /// Every kept type's bytes together.
+        public var bytes: Int
+        /// A fingerprint of the best type's bytes: the same picture copied again is the same clip.
+        public var digest: String
+        /// The types kept, best first ("public.png", "public.tiff"); each is a file.
+        public var types: [String]
+
+        public init(width: Int, height: Int, bytes: Int, digest: String, types: [String]) {
+            self.width = width; self.height = height; self.bytes = bytes; self.digest = digest; self.types = types
+        }
+    }
+
+    /// What an image clip is called, in English, as its `text`: "Image 1280×720".
+    public static func imageLabel(width: Int, height: Int) -> String { "Image \(width)×\(height)" }
 
     public struct Clip: Codable, Equatable, Identifiable, Sendable {
         public var id: UUID
@@ -37,11 +62,19 @@ public enum Clipboard {
         /// The app it was copied from, by name, for the picker: "Safari".
         public var app: String?
         public var pinned: Bool
+        /// An `image` clip's size and kept types.
+        public var picture: Picture?
 
         public init(id: UUID = UUID(), kind: Kind = .text, text: String, rtf: Data? = nil, copiedAt: Date,
-                    app: String? = nil, pinned: Bool = false) {
+                    app: String? = nil, pinned: Bool = false, picture: Picture? = nil) {
             self.id = id; self.kind = kind; self.text = text; self.rtf = rtf
-            self.copiedAt = copiedAt; self.app = app; self.pinned = pinned
+            self.copiedAt = copiedAt; self.app = app; self.pinned = pinned; self.picture = picture
+        }
+
+        /// A picture copied from `app`, labelled by its size.
+        public static func image(_ picture: Picture, copiedAt: Date, app: String? = nil) -> Clip {
+            Clip(kind: .image, text: Clipboard.imageLabel(width: picture.width, height: picture.height), copiedAt: copiedAt,
+                 app: app, picture: picture)
         }
 
         /// The files' paths, for a `files` clip.
@@ -49,6 +82,7 @@ public enum Clipboard {
 
         /// One line for a list: whitespace runs folded to one space, cut at `limit` characters.
         public func preview(_ limit: Int = 80) -> String {
+            if kind == .image, let picture { return Clipboard.preview(tr("Image %d×%d", picture.width, picture.height), limit) }
             if kind == .files { return Clipboard.preview(paths.map { ($0 as NSString).lastPathComponent }.joined(separator: ", "), limit) }
             return Clipboard.preview(text, limit)
         }
@@ -64,18 +98,20 @@ public enum Clipboard {
         public var clips: [Clip]
         public init(clips: [Clip] = []) { self.clips = clips }
 
-        /// A new copy: a clip at the top, or the clip with the same words moved there.
-        /// Blank text is no copy. Returns whether the history changed.
+        /// A new copy: a clip at the top, or the clip with the same words (for a picture,
+        /// the same bytes) moved there. Blank text is no copy. Returns whether the history changed.
         @discardableResult
         public mutating func add(_ clip: Clip) -> Bool {
             var clip = clip
             guard !clip.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
             if clip.text.count > Clipboard.longestClip { clip.text = String(clip.text.prefix(Clipboard.longestClip)) }
             if let rtf = clip.rtf, rtf.count > Clipboard.largestRTF { clip.rtf = nil; clip.kind = .text }
-            if let at = clips.firstIndex(where: { $0.text == clip.text && $0.kind == clip.kind }) {
+            if let at = clips.firstIndex(where: { $0.kind == clip.kind && (clip.kind == .image ? $0.picture?.digest == clip.picture?.digest : $0.text == clip.text) }) {
                 let old = clips.remove(at: at)
                 clip.id = old.id
                 clip.pinned = old.pinned
+                // Its files are under the old id, in the old types.
+                if clip.kind == .image { clip.picture = old.picture }
                 if clip.rtf == nil, old.rtf != nil, clip.kind == old.kind { clip.rtf = old.rtf }
             }
             clips.insert(clip, at: 0)
@@ -246,7 +282,8 @@ public enum Clipboard {
     }
 
     /// Every clip and snippet holding every word of `query`, in any order and any case,
-    /// accents ignored ("cafe" finds "Café"). A clip matches on its text and its app; a
+    /// accents ignored ("cafe" finds "Café"). A clip matches on its text and its app (a
+    /// picture on its label, "Image 1280×720", in English and as shown); a
     /// snippet on its title, its folder's title and its words, but a protected snippet
     /// only on its title and folder: its words are not here to search. An empty query
     /// finds everything: the pinned clips first, then the rest newest first.
@@ -256,7 +293,9 @@ public enum Clipboard {
             let folded = fold(haystack)
             return words.allSatisfy { folded.contains($0) }
         }
-        let clips = history.clips.filter { words.isEmpty || holds($0.text + " " + ($0.app ?? "")) }
+        let clips = history.clips.filter { clip in
+            words.isEmpty || holds([clip.text, clip.app ?? "", clip.kind == .image ? clip.preview(200) : ""].joined(separator: " "))
+        }
         let ordered = clips.filter(\.pinned) + clips.filter { !$0.pinned }
         let found = snippets.all.filter { folder, snippet in
             words.isEmpty || holds([snippet.title, folder.title, snippet.protected ? "" : snippet.text].joined(separator: " "))
@@ -308,14 +347,64 @@ public enum Clipboard {
         return !excluded.contains { $0.trimmingCharacters(in: .whitespaces).lowercased() == app }
     }
 
+    // MARK: Pictures
+
+    /// Picture types kept from the Mac's pasteboard, best first: the smallest that pastes everywhere leads.
+    public static let imageTypes = ["public.png", "public.jpeg", "public.tiff", "com.compuserve.gif", "public.heic", "org.webmproject.webp"]
+
+    /// Which of the types found to keep, best first in `preference`: each while all kept so far
+    /// stay within `cap` bytes, so a huge TIFF is left out while its PNG stays. Empty: none fits.
+    public static func keptImageTypes(_ found: [String: Int], cap: Int, preference: [String] = imageTypes) -> [String] {
+        var total = 0
+        return preference.filter { type in
+            guard let bytes = found[type], total + bytes <= cap else { return false }
+            total += bytes
+            return true
+        }
+    }
+
+    /// A short fingerprint of `data` (FNV-1a, 64 bits): equal bytes, equal digest.
+    public static func digest(_ data: Data) -> String {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in data { hash = (hash ^ UInt64(byte)) &* 0x100_0000_01b3 }
+        return String(format: "%016llx-%d", hash, data.count)
+    }
+
     // MARK: Files
 
-    /// `clipboard.json` and `snippets.json`, side by side in the app's folder.
+    /// `clipboard.json` and `snippets.json`, side by side in the app's folder, and the
+    /// pictures in `clipboard-images` there, a file per clip and type: `<id>.public.png`.
     public struct Store: Sendable {
         public let directory: URL
         public init(directory: URL) { self.directory = directory }
         public var historyFile: URL { directory.appendingPathComponent("clipboard.json") }
         public var snippetsFile: URL { directory.appendingPathComponent("snippets.json") }
+
+        public var imagesDirectory: URL { directory.appendingPathComponent("clipboard-images") }
+        public func imageFile(_ id: UUID, _ type: String) -> URL {
+            imagesDirectory.appendingPathComponent("\(id.uuidString).\(type.replacingOccurrences(of: "/", with: "_"))")
+        }
+
+        /// A picture's bytes, a file per type.
+        public func saveImage(_ id: UUID, _ kinds: [(type: String, data: Data)]) throws {
+            try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
+            for (type, data) in kinds { try data.write(to: imageFile(id, type), options: .atomic) }
+        }
+
+        /// An image clip's bytes in the types it was kept as, best first; empty when its files are gone.
+        public func loadImage(_ clip: Clip) -> [(type: String, data: Data)] {
+            (clip.picture?.types ?? []).compactMap { type in (try? Data(contentsOf: imageFile(clip.id, type))).map { (type, $0) } }
+        }
+
+        /// Deletes every picture file whose clip is no longer in `history`.
+        public func sweepImages(keeping history: History) {
+            let kept = Set(history.clips.filter { $0.kind == .image }.map(\.id.uuidString))
+            let files = (try? FileManager.default.contentsOfDirectory(at: imagesDirectory, includingPropertiesForKeys: nil)) ?? []
+            for file in files {
+                let id = String(file.lastPathComponent.prefix(36))
+                if !kept.contains(id) { try? FileManager.default.removeItem(at: file) }
+            }
+        }
 
         public func loadHistory() -> History { load(historyFile) ?? History() }
         public func loadSnippets() -> SnippetBook { load(snippetsFile) ?? SnippetBook() }

@@ -51,6 +51,7 @@ final class ClipPickerController {
         self.watcher = watcher
         self.editSnippets = editSnippets
         model.source = { [weak book] in (book?.history ?? .init(), book?.snippets ?? .init()) }
+        model.thumbnail = { [weak book] in book?.thumbnail(of: $0) }
         model.choose = { [weak self] row, other in self?.choose(row, otherWay: other) }
         model.close = { [weak self] in self?.close() }
         model.askTrust = { ClipPaster.askForTrust() }
@@ -190,7 +191,15 @@ final class ClipPickerController {
         switch row.group {
         case .recent:
             guard let clip = book.history.clips.first(where: { $0.id == row.id }) else { return }
-            paste(ClipPaster.Item(text: clip.text, rtf: clip.rtf, files: clip.paths), plain: plain, from: row)
+            let images = clip.kind == .image ? book.imageData(of: clip) : []
+            guard clip.kind != .image || !images.isEmpty else {
+                // Its files went missing: nothing to paste, so the copy goes too.
+                trace?("\(clip.text): its picture is gone")
+                NSSound.beep()
+                forget(row)
+                return
+            }
+            paste(ClipPaster.Item(text: clip.text, rtf: clip.rtf, files: clip.paths, images: images), plain: plain, from: row)
             book.bump(clip.id)
         case .snippets:
             guard let snippet = book.snippets.snippet(row.id) else { return }
@@ -419,6 +428,8 @@ final class ClipPickerModel: ObservableObject {
         let title: String?
         let pinned: Bool
         let protected: Bool
+        /// A picture's few pixels, drawn big and square.
+        var thumbnail: NSImage? = nil
     }
 
     @Published var query = "" { didSet { if query != oldValue { refresh(selectFirst: true) } } }
@@ -441,6 +452,7 @@ final class ClipPickerModel: ObservableObject {
     @Published private(set) var counts = (recent: 0, snippets: 0)
 
     var source: () -> (Clipboard.History, Clipboard.SnippetBook) = { (.init(), .init()) }
+    var thumbnail: (Clipboard.Clip) -> NSImage? = { _ in nil }
     var choose: (Row, Bool) -> Void = { _, _ in }
     var close: () -> Void = {}
     var askTrust: () -> Void = {}
@@ -456,7 +468,7 @@ final class ClipPickerModel: ObservableObject {
         let now = Date()
         let recent = found.clips.map { clip in
             Row(id: clip.id, group: .recent, text: clip.preview(90), detail: Self.detail(clip, now: now), title: nil,
-                pinned: clip.pinned, protected: false)
+                pinned: clip.pinned, protected: false, thumbnail: thumbnail(clip))
         }
         let saved = found.snippets.map { snippet in
             Row(id: snippet.id, group: .snippets, text: snippet.preview(90), detail: snippets.folder(of: snippet.id)?.title ?? "",
@@ -610,6 +622,7 @@ struct ClipPickerView: View {
             Text(number.map { "\($0)" } ?? " ")
                 .font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
                 .frame(width: 12)
+            if let thumbnail = row.thumbnail { Self.picture(thumbnail) }
             if row.pinned { Text("▲").font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim) }
             if let title = row.title {
                 Text(title).font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim).lineLimit(1)
@@ -628,6 +641,17 @@ struct ClipPickerView: View {
         .contentShape(Rectangle())
         .onHover { if $0 { model.selected = row.id } }
         .onTapGesture { model.choose(row, NSEvent.modifierFlags.contains(.option)) }
+    }
+
+    /// A picture's thumbnail, its few pixels drawn big, square and sharp, in a 1-pixel rim like the creatures'.
+    static func picture(_ image: NSImage) -> some View {
+        let box = CGSize(width: 40, height: rowHeight - 10)
+        let scale = min(box.width / max(image.size.width, 1), box.height / max(image.size.height, 1))
+        return Image(nsImage: image).interpolation(.none).resizable()
+            .frame(width: (image.size.width * scale).rounded(), height: (image.size.height * scale).rounded())
+            .padding(1)
+            .background(PixelBox.rim)
+            .frame(width: box.width + 2)
     }
 
     private var footer: some View {

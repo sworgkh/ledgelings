@@ -94,7 +94,7 @@ with `scripts/make-app.sh`, installed and seen working.
   which works even while the display sleeps and the live display link stops.
 - `--clip-demo [--snapshot out.png]` runs the clipboard manager on the real pasteboard with its own
   history, snippets and keychain secret (removed after, the pasteboard put back), never pressing ⌘V:
-  copies kept and skipped, a search, ⇥ ↓ ⏎ in the picker, a protected paste concealed and taken back,
+  copies kept and skipped, a picture kept as files and pasted back as the same PNG and TIFF, a search, ⇥ ↓ ⏎ in the picker, a protected paste concealed and taken back,
   each step with its time (`clip 1.94 picker: would paste Wi-Fi password after 70 ms, concealed`). Exit 1 if wrong.
 - `--paste-check` prints whether this build has Accessibility and presses a real ⌘V into a text
   field of its own (`paste ⌘V pressed, field now "…" after 327 ms`, `paste pasted for real`); exit 1

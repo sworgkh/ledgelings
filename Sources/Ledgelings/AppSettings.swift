@@ -333,6 +333,8 @@ final class AppSettings: ObservableObject {
     static let clipHistoryLimitRange = 10...2000
     /// Days a copy is kept; 0 keeps it until the limit pushes it out.
     static let clipKeepDaysRange = 0...365
+    /// The largest picture kept, in MB.
+    static let clipLargestImageRange = 1...100
     /// The clipboard manager: the history of copies, the snippets and their pickers. Off: nothing is watched, no shortcut is taken.
     @Published var clipboardEnabled: Bool { didSet { save(clipboardEnabled, "clipboardEnabled") } }
     /// Every copy goes into the history. Off: only the snippets.
@@ -345,6 +347,10 @@ final class AppSettings: ObservableObject {
     @Published var clipKeepFormatting: Bool { didSet { save(clipKeepFormatting, "clipKeepFormatting") } }
     /// Files copied in Finder are kept, as their paths, and paste back as files.
     @Published var clipKeepFiles: Bool { didSet { save(clipKeepFiles, "clipKeepFiles") } }
+    /// Copied pictures (screenshots, images from a browser or Preview) are kept and paste back as pictures.
+    @Published var clipKeepImages: Bool { didSet { save(clipKeepImages, "clipKeepImages") } }
+    /// The largest picture kept, in MB, all its types together; a bigger one is left out.
+    @Published var clipLargestImageMB: Int { didSet { save(clipLargestImageMB, "clipLargestImageMB") } }
     /// Choosing an item pastes it into the app you were in (needs Accessibility). Off: it is only copied.
     @Published var clipAutoPaste: Bool { didSet { save(clipAutoPaste, "clipAutoPaste") } }
     /// Paste the words without their formatting; ⌥⏎ in the picker does the other one.
@@ -656,6 +662,9 @@ final class AppSettings: ObservableObject {
         clipExcludedApps = defaults.stringArray(forKey: "clipExcludedApps") ?? Clipboard.defaultExcludedMacApps
         clipKeepFormatting = defaults.object(forKey: "clipKeepFormatting") as? Bool ?? true
         clipKeepFiles = defaults.object(forKey: "clipKeepFiles") as? Bool ?? true
+        clipKeepImages = defaults.object(forKey: "clipKeepImages") as? Bool ?? true
+        let largest = defaults.object(forKey: "clipLargestImageMB") as? Int ?? 20
+        clipLargestImageMB = min(max(largest, Self.clipLargestImageRange.lowerBound), Self.clipLargestImageRange.upperBound)
         clipAutoPaste = defaults.object(forKey: "clipAutoPaste") as? Bool ?? true
         clipPlainText = defaults.object(forKey: "clipPlainText") as? Bool ?? false
         // A protected snippet always asks for a fingerprint now; the old switch for it is gone.

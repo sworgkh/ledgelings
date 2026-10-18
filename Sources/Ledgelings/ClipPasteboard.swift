@@ -2,6 +2,7 @@ import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
 import Combine
+import ImageIO
 import LedgelingsCore
 
 /// Watches the Mac's pasteboard for copies and keeps them in the history.
@@ -10,9 +11,9 @@ import LedgelingsCore
 /// is read twice a second, as every clipboard manager does; reading a number
 /// costs nothing. A copy marked concealed or transient (nspasteboard.org's
 /// markers, written by password managers), one made in an excluded app, and
-/// the app's own writes are left out. Images are not kept: one screenshot is
-/// megabytes, the history is one JSON file read at launch, and the picker shows
-/// words; files are kept as their paths.
+/// the app's own writes are left out. Files are kept as their paths; a picture
+/// (a copy with no words, only image types) as files of its own beside the
+/// history, so the JSON read at launch stays small.
 @MainActor
 final class ClipWatcher {
     static let every: TimeInterval = 0.5
@@ -60,12 +61,51 @@ final class ClipWatcher {
             trace?("skip \(front?.bundleIdentifier ?? "?"): concealed, passing or excluded")
             return
         }
-        guard let clip = Self.read(pasteboard, at: now, app: front?.localizedName, settings: settings) else {
-            trace?("skip: no text")
+        if let clip = Self.read(pasteboard, at: now, app: front?.localizedName, settings: settings) {
+            book.add(clip, limit: settings.clipHistoryLimit, days: settings.clipKeepDays)
+            trace?("keep \(clip.kind.rawValue) \"\(clip.preview(40))\" from \(clip.app ?? "?")")
             return
         }
-        book.add(clip, limit: settings.clipHistoryLimit, days: settings.clipKeepDays)
-        trace?("keep \(clip.kind.rawValue) \"\(clip.preview(40))\" from \(clip.app ?? "?")")
+        switch Self.readImage(pasteboard, at: now, app: front?.localizedName, settings: settings) {
+        case .none:
+            trace?("skip: no text")
+        case .tooBig(let bytes):
+            trace?(String(format: "skip: image of %.1f MB, over %d MB", Double(bytes) / 1_048_576, settings.clipLargestImageMB))
+        case .image(let clip, let kinds):
+            book.addImage(clip, kinds, limit: settings.clipHistoryLimit, days: settings.clipKeepDays)
+            trace?("keep image \"\(clip.text)\" as \(kinds.map(\.type).joined(separator: " + ")) from \(clip.app ?? "?")")
+        }
+    }
+
+    enum ImageRead {
+        case none
+        /// A picture, but even its smallest type is over the size kept; its smallest size.
+        case tooBig(Int)
+        case image(Clipboard.Clip, [(type: String, data: Data)])
+    }
+
+    /// The copy as a picture, in every image type it came in that fits the size kept.
+    static func readImage(_ pasteboard: NSPasteboard, at now: Date, app: String?, settings: AppSettings) -> ImageRead {
+        guard settings.clipKeepImages, let item = pasteboard.pasteboardItems?.first else { return .none }
+        let found = Clipboard.imageTypes.reduce(into: [String: Data]()) { found, type in
+            found[type] = item.data(forType: NSPasteboard.PasteboardType(type))
+        }
+        guard !found.isEmpty else { return .none }
+        let kept = Clipboard.keptImageTypes(found.mapValues(\.count), cap: settings.clipLargestImageMB * 1_048_576)
+        guard let best = kept.first, let data = found[best] else { return .tooBig(found.values.map(\.count).min() ?? 0) }
+        guard let size = pixelSize(data) else { return .none }
+        let kinds = kept.compactMap { type in found[type].map { (type: type, data: $0) } }
+        let picture = Clipboard.Picture(width: size.width, height: size.height, bytes: kinds.reduce(0) { $0 + $1.data.count },
+                                        digest: Clipboard.digest(data), types: kept)
+        return .image(.image(picture, copiedAt: now, app: app), kinds)
+    }
+
+    /// A picture's size in pixels, read from its header without drawing it.
+    static func pixelSize(_ data: Data) -> (width: Int, height: Int)? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let info = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = info[kCGImagePropertyPixelWidth] as? Int, let height = info[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        return (width, height)
     }
 
     /// The copy as a clip: files (as paths), else text with its RTF beside it, else nothing.
@@ -95,6 +135,8 @@ enum ClipPaster {
         var text: String
         var rtf: Data?
         var files: [String] = []
+        /// A picture, in each type it was copied as: put back as those types, with no words.
+        var images: [(type: String, data: Data)] = []
         /// A protected snippet's words: marked concealed, so no clipboard manager keeps them,
         /// and taken off the pasteboard again once pasted.
         var secret = false
@@ -126,7 +168,8 @@ enum ClipPaster {
             pasteboard.writeObjects(item.files.map { URL(fileURLWithPath: $0) as NSURL })
         }
         let entry = NSPasteboardItem()
-        entry.setString(item.text, forType: .string)
+        for (type, data) in item.images { entry.setData(data, forType: NSPasteboard.PasteboardType(type)) }
+        if item.images.isEmpty { entry.setString(item.text, forType: .string) }
         if !plain, let rtf = item.rtf { entry.setData(rtf, forType: .rtf) }
         entry.setString("", forType: ownType)
         if item.secret { entry.setString("", forType: concealed) }

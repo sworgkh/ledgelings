@@ -14,6 +14,7 @@ extension Strings {
         "RECENT": "НЕДАВНЕЕ",
         "SNIPPETS": "ЗАГОТОВКИ",
         "FILES": "ФАЙЛЫ",
+        "Image %d×%d": "Картинка %d×%d",
         "LOCKED · %@": "ЗАЩИЩЕНО · %@",
         "now": "сейчас",
         "%d min": "%d мин",
@@ -71,9 +72,12 @@ extension Strings {
         "always": "всегда",
         "Keep formatting (rich text)": "Сохранять оформление (форматированный текст)",
         "Keep files copied in Finder": "Сохранять файлы, скопированные в Finder",
+        "Keep images": "Сохранять картинки",
+        "Largest image kept": "Самая большая картинка",
+        " MB": " МБ",
         "History": "История",
-        "Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures are not kept. Nothing copied ever leaves this Mac or reaches a model.":
-            "Каждая копия попадает в историю, новые сверху; повторное копирование поднимает её наверх. Закреплённые копии остаются, что бы ни говорили ограничения. Картинки не сохраняются. Ничто скопированное не покидает этот Mac и не попадает в модель.",
+        "Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures count as copies; one bigger than the largest size is left out. Nothing copied ever leaves this Mac or reaches a model.":
+            "Каждая копия попадает в историю, новые сверху; повторное копирование поднимает её наверх. Закреплённые копии остаются, что бы ни говорили ограничения. Картинки считаются копиями; картинка больше самого большого размера не сохраняется. Ничто скопированное не покидает этот Mac и не попадает в модель.",
         "Paste into the app I was in": "Вставлять в программу, где я был",
         "Needs Accessibility, to press ⌘V for you. Until then it only copies.": "Нужен универсальный доступ, чтобы нажимать ⌘V за тебя. А пока — только копирует.",
         "Allow…": "Разрешить…",

@@ -2,11 +2,13 @@ import AppKit
 import LedgelingsCore
 
 /// `--clip-demo`: the clipboard manager end to end on the real pasteboard, every
-/// step printed with its time. Two copies are made as if in another app and the
+/// step printed with its time. A picture is copied (PNG and TIFF) and kept as
+/// files beside the history. Two copies are made as if in another app and the
 /// watcher keeps them; one is copied again in a password manager's way and must
 /// not be kept; the history picker opens, a search narrows it, one is chosen; the
 /// snippets picker opens and a protected snippet is chosen, which must go on the
-/// pasteboard concealed, stay out of the history and leave again.
+/// pasteboard concealed, stay out of the history and leave again. Last, a search for
+/// "image" finds the picture and choosing it puts the same PNG and TIFF back.
 ///
 /// It keeps its own history and snippets in a folder of its own, its secret under
 /// a keychain service of its own that it empties at the end, and puts back what
@@ -45,11 +47,25 @@ enum ClipDemo {
             watcher.look()
             try? await Task.sleep(for: .milliseconds(100))
         }
+        let (png, tiff) = picture()
+        pasteboard.clearContents()
+        let shot = NSPasteboardItem()
+        shot.setData(png, forType: .png)
+        shot.setData(tiff, forType: .tiff)
+        pasteboard.writeObjects([shot])
+        log("copy a picture: \(png.count) bytes of PNG, \(tiff.count) of TIFF")
+        watcher.look()
+        try? await Task.sleep(for: .milliseconds(100))
+        let image = book.history.clips.first { $0.kind == .image }
+        let files = image.map { clip in clip.picture?.types.filter { FileManager.default.fileExists(atPath: book.store.imageFile(clip.id, $0).path) } ?? [] } ?? []
+        log("history: \(image.map { "\"\($0.text)\", files \(files.joined(separator: " + "))" } ?? "NO PICTURE ✗")")
+        var ok = image?.text == "Image 48×30" && files == ["public.png", "public.tiff"]
+
         await copy("Meeting notes: ship the clipboard on Friday")
         await copy("invoice #4821 for the café")
         await copy("hunter2", concealed: true)
         await copy("invoice #4821 for the café")
-        var ok = book.history.clips.map(\.text) == ["invoice #4821 for the café", "Meeting notes: ship the clipboard on Friday"]
+        ok = ok && book.history.clips.filter { $0.kind != .image }.map(\.text) == ["invoice #4821 for the café", "Meeting notes: ship the clipboard on Friday"]
         log("history: \(book.history.clips.count) clips, newest \"\(book.history.clips.first?.preview(30) ?? "-")\"\(ok ? "" : "  ✗ expected 2, deduped, no concealed")")
 
         let work = book.addFolder("Work")
@@ -93,10 +109,38 @@ enum ClipDemo {
         ok = ok && pasteboard.string(forType: .string) == "pixel-perfect-42" && types.contains(ClipPaster.concealed.rawValue)
         try? await Task.sleep(for: .milliseconds(1400))
         watcher.look()
-        let back = pasteboard.string(forType: .string)
-        log("a second later: pasteboard \"\(back ?? "-")\", secret in history \(book.history.clips.contains { $0.text == "pixel-perfect-42" })")
-        ok = ok && back == "Meeting notes: ship the clipboard on Friday" && !book.history.clips.contains { $0.text == "pixel-perfect-42" }
+        let restored = pasteboard.string(forType: .string)
+        log("a second later: pasteboard \"\(restored ?? "-")\", secret in history \(book.history.clips.contains { $0.text == "pixel-perfect-42" })")
+        ok = ok && restored == "Meeting notes: ship the clipboard on Friday" && !book.history.clips.contains { $0.text == "pixel-perfect-42" }
+
+        picker.show(.recent)
+        try? await Task.sleep(for: .milliseconds(300))
+        picker.model.query = "image"
+        log("search \"image\": \(picker.model.rows.map { "\"\($0.text)\" \($0.thumbnail.map { "thumbnail \(Int($0.size.width))×\(Int($0.size.height))" } ?? "no thumbnail")" }.joined(separator: ", "))")
+        ok = ok && picker.model.rows.count == 1 && picker.model.rows.first?.thumbnail != nil
+        _ = picker.key(36, [])
+        try? await Task.sleep(for: .milliseconds(300))
+        let back = (pasteboard.types ?? []).map(\.rawValue).filter { $0.hasPrefix("public.") }
+        let same = pasteboard.data(forType: .png) == png && pasteboard.data(forType: .tiff) == tiff
+        log("pasteboard now \(back.joined(separator: " + ")), the same bytes \(same), words \(pasteboard.string(forType: .string) == nil ? "none" : "SOME ✗")")
+        ok = ok && same && pasteboard.string(forType: .string) == nil
         log(ok ? "all well" : "SOMETHING IS WRONG")
         return ok
+    }
+
+    /// A small picture in the creatures' palette: 48×30, as PNG and as TIFF.
+    static func picture() -> (png: Data, tiff: Data) {
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 48, pixelsHigh: 30, bitsPerSample: 8, samplesPerPixel: 4,
+                                   hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSColor(red: 0.96, green: 0.95, blue: 0.9, alpha: 1).setFill()
+        CGRect(x: 0, y: 0, width: 48, height: 30).fill()
+        NSColor(red: 0.95, green: 0.6, blue: 0.2, alpha: 1).setFill()
+        CGRect(x: 8, y: 6, width: 16, height: 16).fill()
+        NSColor(red: 0.3, green: 0.55, blue: 0.85, alpha: 1).setFill()
+        CGRect(x: 28, y: 10, width: 12, height: 12).fill()
+        NSGraphicsContext.restoreGraphicsState()
+        return (rep.representation(using: .png, properties: [:])!, rep.tiffRepresentation!)
     }
 }
