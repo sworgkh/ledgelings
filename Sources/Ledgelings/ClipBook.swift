@@ -8,7 +8,9 @@ import LocalAuthentication
 /// `snippets.json` beside the chats and saved on every change; a copied picture's
 /// bytes in `clipboard-images` there, deleted when its clip goes. A protected
 /// snippet's words are kept in the login keychain, one item per snippet under
-/// the "Ledgelings Snippets" service, and read only when it is pasted or shown.
+/// the "Ledgelings Snippets" service, and read only when it is pasted or shown;
+/// the book keeps a salted fingerprint of them, so a copy of those words in the
+/// history is shown masked without reading the keychain.
 @MainActor
 final class ClipBook: ObservableObject {
     let store: Clipboard.Store
@@ -24,6 +26,19 @@ final class ClipBook: ObservableObject {
         history = store.loadHistory()
         snippets = store.loadSnippets()
         store.sweepImages(keeping: history)
+        fingerprintOldSecrets()
+    }
+
+    /// Protected snippets saved before fingerprints were kept get theirs, once: their words are read from the keychain.
+    private func fingerprintOldSecrets() {
+        let old = snippets.all.map(\.snippet).filter { $0.protected && $0.secretHash == nil }
+        guard !old.isEmpty else { return }
+        changeSnippets { book in
+            for var snippet in old {
+                snippet.seal(secrets.get(snippet.secretAccount))
+                book.update(snippet)
+            }
+        }
     }
 
     // MARK: History
@@ -113,8 +128,8 @@ final class ClipBook: ObservableObject {
     /// A snippet; a protected one's words go to the keychain, never into the book.
     @discardableResult
     func addSnippet(title: String, text: String, protected: Bool = false, to folder: UUID? = nil) -> UUID {
-        let snippet = Clipboard.Snippet(title: title, text: text, protected: protected)
-        if protected { secrets.set(text, for: snippet.secretAccount) }
+        var snippet = Clipboard.Snippet(title: title, text: text, protected: protected)
+        if protected { secrets.set(text, for: snippet.secretAccount); snippet.seal(text) }
         changeSnippets { $0.add(snippet, to: folder) }
         return snippet.id
     }
@@ -122,7 +137,8 @@ final class ClipBook: ObservableObject {
     /// Saves an edit of the snippet's title, shortcut or words. Its words, for a
     /// protected one, are written to the keychain; nil leaves them as they were.
     func update(_ snippet: Clipboard.Snippet, secret: String? = nil) {
-        if snippet.protected, let secret { secrets.set(secret, for: snippet.secretAccount) }
+        var snippet = snippet
+        if snippet.protected, let secret { secrets.set(secret, for: snippet.secretAccount); snippet.seal(secret) }
         changeSnippets { $0.update(snippet) }
     }
 
@@ -131,6 +147,7 @@ final class ClipBook: ObservableObject {
         guard var snippet = snippets.snippet(id), snippet.protected != protected else { return }
         if protected {
             secrets.set(snippet.text, for: snippet.secretAccount)
+            snippet.seal(snippet.text)
             snippet.protected = true
             snippet.text = ""
         } else {

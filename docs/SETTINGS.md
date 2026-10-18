@@ -608,7 +608,12 @@ as Clipy XML…*), the chosen one on the right: its title, its words, **Protecte
 its own shortcut. A **protected** snippet is for passwords: its words live in the
 Keychain, never in a file; it shows as dots until you press **Show…** (fingerprint first), is never kept in
 the history, and is taken off the clipboard again a second after it is pasted. An export
-leaves protected snippets' words out.
+leaves protected snippets' words out. If the same words reach the history another way
+(copied from a note or a web page), the picker shows that copy as `PWD:Wi-Fi: [16] chars`
+on a faintly tinted row, and searching finds it by "pwd" or the snippet's name, never by
+the words. It is only hidden on screen: choosing it pastes the real words at once, with no
+fingerprint. To tell copies apart without the words in a file, `snippets.json` keeps a
+salted fingerprint of each protected snippet's words.
 
 On Windows the tool is one column, in the same order, with the same keys: Ctrl+Alt+V and
 Ctrl+Alt+B, Enter and Alt+Enter, Ctrl+1–9, Ctrl+P, Delete, Ctrl+E; the tray has

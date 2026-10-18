@@ -187,6 +187,44 @@ import Testing
         #expect(book.imageData(of: clip).isEmpty, "a forgotten picture's files go")
     }
 
+    @Test func protectedWordsAreFingerprintedNeverWrittenAndOldOnesGetTheirsOnLoad() throws {
+        let dir = folder(), secrets = Secrets()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let book = ClipBook(directory: dir, secrets: secrets)
+        let id = book.addSnippet(title: "Wi-Fi", text: "pixel-perfect-42", protected: true)
+        #expect(book.snippets.mask(for: Clipboard.Clip(text: "pixel-perfect-42", copiedAt: Date())) == "PWD:Wi-Fi: [16] chars")
+        let plain = book.addSnippet(title: "Door", text: "1234")
+        book.setProtected(plain, true)
+        #expect(book.snippets.secret(matching: "1234")?.id == plain)
+        book.update(try #require(book.snippets.snippet(id)), secret: "new-password")
+        #expect(book.snippets.secret(matching: "pixel-perfect-42") == nil && book.snippets.secret(matching: "new-password")?.id == id)
+        #expect(!(try String(contentsOf: book.store.snippetsFile, encoding: .utf8)).contains("new-password"))
+
+        // A book saved before fingerprints: the first load reads the keychain once and fingerprints it.
+        var old = book.snippets
+        for (_, s) in old.all { var s = s; s.secretSalt = nil; s.secretHash = nil; old.update(s) }
+        try book.store.save(old)
+        let again = ClipBook(directory: dir, secrets: secrets)
+        #expect(again.snippets.secret(matching: "new-password")?.id == id && again.snippets.secret(matching: "1234")?.id == plain)
+    }
+
+    @Test func thePickerShowsAMaskedRowAndPastesItsRealWords() throws {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        let dir = folder()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let book = ClipBook(directory: dir, secrets: Secrets())
+        book.addSnippet(title: "Wi-Fi", text: "pixel-perfect-42", protected: true)
+        book.add(Clipboard.Clip(text: "pixel-perfect-42", copiedAt: Date()), limit: 10, days: 0)
+        book.add(Clipboard.Clip(text: "lunch", copiedAt: Date()), limit: 10, days: 0)
+        let picker = ClipPickerController(settings: AppSettings(defaults: defaults, keychain: Secrets()), book: book, watcher: { nil }, editSnippets: {})
+        picker.model.refresh(selectFirst: true)
+        let rows = picker.model.rows.filter { $0.group == .recent }
+        #expect(rows.map(\.text) == ["lunch", "PWD:Wi-Fi: [16] chars"])
+        #expect(rows.map(\.masked) == [false, true])
+    }
+
     @Test func aSecretIsWrittenConcealedAndPlainTextDropsTheFormatting() {
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }

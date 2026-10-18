@@ -63,7 +63,8 @@ final class ClipWatcher {
         }
         if let clip = Self.read(pasteboard, at: now, app: front?.localizedName, settings: settings) {
             book.add(clip, limit: settings.clipHistoryLimit, days: settings.clipKeepDays)
-            trace?("keep \(clip.kind.rawValue) \"\(clip.preview(40))\" from \(clip.app ?? "?")")
+            // A protected snippet's words never reach a log, only their mask.
+            trace?("keep \(clip.kind.rawValue) \"\(book.snippets.mask(for: clip) ?? clip.preview(40))\" from \(clip.app ?? "?")")
             return
         }
         switch Self.readImage(pasteboard, at: now, app: front?.localizedName, settings: settings) {
