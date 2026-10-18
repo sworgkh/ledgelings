@@ -38,7 +38,8 @@ extension Strings {
         "How many": "Сколько",
         "Smallest": "Самый маленький",
         "Largest": "Самый большой",
-        "Every creature gets its own size between the two. Set them equal and they all match.": "Каждое существо получает свой размер между этими двумя. Сделайте их равными — и все будут одного размера.",
+        "Every creature gets its own size between the two. Set them equal and they all match. Live on: keep them all on one monitor; choose another and they parachute over. While it is unplugged they use every screen, and go back when it returns.":
+            "Каждое существо получает свой размер между этими двумя. Сделайте их равными — и все будут одного размера. Где живут: можно поселить всех на одном мониторе; выберите другой — и они перелетят туда на парашютах. Пока он отключён, они живут на всех экранах и вернутся, когда его подключат.",
         "Colour %d": "Цвет %d",
         "Add Colour": "Добавить цвет",
         "Remove Last": "Убрать последний",

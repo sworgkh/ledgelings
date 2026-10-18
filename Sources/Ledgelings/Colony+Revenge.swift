@@ -31,9 +31,10 @@ extension Colony {
         return true
     }
 
-    /// Not while the user holds the mouse button (a drag, a carry), not mid-conversation, not while they hide.
+    /// Not while the user holds the mouse button (a drag, a carry), not mid-conversation, not while they hide,
+    /// not while the cursor is on a monitor they do not live on.
     private func canGrab(_ i: Int) -> Bool {
-        grab == nil && held == nil && poke == nil && !mouseIsDown()
+        grab == nil && held == nil && poke == nil && !mouseIsDown() && isHome(pointerLocation())
             && !busy.contains(i) && !complaining.contains(i) && !hideout.isActive && !hideout.isInside(i)
     }
 
@@ -71,6 +72,8 @@ extension Colony {
     func updateGrab(cursor: CGPoint) {
         guard let g = grab else { return }
         guard creatures.indices.contains(g.index), creatures[g.index].isHeld else { return letGoOfCursor(.escape) }
+        // Ridden off the monitors they live on: it lets go and drops back onto the nearest home edge.
+        guard isHome(cursor) else { return letGoOfCursor(.leftHome) }
         if elapsed - g.since >= Revenge.longestHold(limit: settings.revengeHoldSeconds, pinned: g.pinned) {
             return letGoOfCursor(.tired)
         }

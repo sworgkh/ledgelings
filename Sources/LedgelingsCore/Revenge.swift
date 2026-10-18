@@ -108,6 +108,8 @@ public enum Revenge {
         case tired
         /// The Escape key, or the app losing track of the screen (asleep, locked, changed, quitting).
         case escape
+        /// The cursor went onto a monitor they do not live on (`homeScreen`): it lets go there.
+        case leftHome
     }
 
     // MARK: Built-in lines

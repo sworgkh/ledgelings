@@ -8,12 +8,22 @@ import AppKit
 ///
 /// A non-activating panel, not a plain window: clicking a creature must not
 /// pull focus away from the app the user is working in.
-/// One monitor as the colony sees it: its frame in global points and its pixel scale.
+/// One monitor as the colony sees it: its frame in global points, its pixel
+/// scale, and who it is: an id that survives relaunching and re-plugging (the
+/// display's UUID), and the name the system gives it ("DELL U2415 (2)").
 struct Display: Equatable {
     var frame: CGRect
     var scale: CGFloat
-    init(frame: CGRect, scale: CGFloat) { self.frame = frame; self.scale = scale }
-    init(screen: NSScreen) { self.init(frame: screen.frame, scale: screen.backingScaleFactor) }
+    var id: String
+    var name: String
+    init(frame: CGRect, scale: CGFloat, id: String = "", name: String = "") {
+        self.frame = frame; self.scale = scale; self.id = id; self.name = name
+    }
+    init(screen: NSScreen) {
+        let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID ?? 0
+        let uuid = CGDisplayCreateUUIDFromDisplayID(number).map { CFUUIDCreateString(nil, $0.takeRetainedValue()) as String }
+        self.init(frame: screen.frame, scale: screen.backingScaleFactor, id: uuid ?? "display-\(number)", name: screen.localizedName)
+    }
     static var attached: [Display] { NSScreen.screens.map(Display.init) }
 }
 

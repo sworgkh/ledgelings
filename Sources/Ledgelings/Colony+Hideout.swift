@@ -20,10 +20,10 @@ extension Colony {
     /// The porch: this far left of the doorway, on the floor. Jumps land here, then it is a short run in.
     static let porchOffset: CGFloat = 150
 
-    /// The house's own bottom-right corner sits on the primary screen's bottom-right
+    /// The house's own bottom-right corner sits on the first home monitor's bottom-right
     /// corner, so growing and shrinking happen about that corner.
     var houseCorner: CGPoint {
-        let frame = displays.first?.frame ?? CGRect(x: 0, y: 0, width: 1000, height: 600)
+        let frame = homeDisplays.first?.frame ?? CGRect(x: 0, y: 0, width: 1000, height: 600)
         // Two sheet px of margin sit right of the wall; let them hang off the screen.
         return CGPoint(x: frame.maxX + 2 * houseScale, y: frame.minY)
     }
@@ -45,6 +45,7 @@ extension Colony {
     func hide(for seconds: Double) {
         guard !hideout.isActive, !creatures.isEmpty else { return }
         endPlay(completed: false)
+        for i in Array(moves.keys) { landNow(i) }
         letGo()
         letGoOfCursor(.escape)
         breakUpTea()

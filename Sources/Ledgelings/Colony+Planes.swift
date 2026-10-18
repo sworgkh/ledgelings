@@ -84,7 +84,7 @@ extension Colony {
     /// The plane flies over the screens only, no wingtip past an outer edge,
     /// drawn at `scale`.
     func keepOnScreen(_ plane: inout PaperPlane, scale: CGFloat) {
-        plane.sky = displays.map(\.frame)
+        plane.sky = homeFrames
         plane.margin = hypot(planeCell.width, planeCell.height) * scale / 2
     }
 

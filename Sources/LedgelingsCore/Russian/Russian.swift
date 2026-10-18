@@ -22,5 +22,6 @@ extension Strings {
         "beds": ruBeds,
         "storyline": ruStoryline,
         "play": ruPlay,
+        "screens": ruScreens,
     ]
 }

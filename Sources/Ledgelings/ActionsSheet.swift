@@ -29,6 +29,7 @@ final class ActionsController {
         model.open = { [weak self] in self?.follow($0) }
         model.hide = { [weak self] in self?.hide(minutes: $0) }
         model.play = { [weak self] in self?.play($0) }
+        model.chooseScreen = { [weak self] in self?.chooseScreen() }
     }
 
     /// Which page is showing.
@@ -82,6 +83,7 @@ final class ActionsController {
         s.playsOff = Set(Plays.Kind.allCases.filter { !settings.playEnabled || !settings.enabledPlays.contains($0) })
         s.mood = settings.cursorMood
         s.language = settings.language
+        s.screen = ScreenChoice.isOffered ? Self.screenTitle(settings) : nil
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
         guard let colony = colony() else {
             if model.state != s { model.state = s }
@@ -157,6 +159,28 @@ final class ActionsController {
         refresh()
         model.said = flipped.said(in: model.state)
         model.saidAt = Date()
+    }
+
+    /// The sheet's screen button: which monitor they live on, short enough for the row.
+    static func screenTitle(_ settings: AppSettings) -> String {
+        guard settings.homeScreen != HomeScreen.all, !ScreenChoice.isAway(settings) else { return tr("SCREEN: ALL") }
+        let name = ScreenChoice.current(settings)
+        // "Built-in Retina Display" is the laptop's own: that is all it needs to say.
+        let short = name.lowercased().hasPrefix("built-in") ? tr("BUILT-IN") : name.uppercased()
+        return tr("SCREEN: %@", short)
+    }
+
+    /// The screen button: the monitors, as the menu bar menu has them, under the pointer.
+    private func chooseScreen() {
+        model.choosingHide = false
+        let menu = ScreenChoice.menu(settings) { [weak self] monitor in
+            guard let self else { return }
+            settings.liveOn(monitor)
+            refresh()
+            model.said = ScreenChoice.said(settings)
+            model.saidAt = Date()
+        }
+        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
     }
 
     static func next<T: CaseIterable & Equatable>(after value: T) -> T {
@@ -255,6 +279,8 @@ struct ActionsState: Equatable {
     var playing = false
     var mood = CursorMood.bad
     var language = Language.english
+    /// The screen button's words; nil with one monitor, when there is nothing to choose.
+    var screen: String?
 }
 
 /// The switches under the tiles: what the menu bar menu offers besides the
@@ -433,6 +459,7 @@ final class ActionsModel: ObservableObject {
     /// The main sheet, or its Activities page.
     @Published var page = ActionsPage.main
     var play: (Plays.Kind) -> Void = { _ in }
+    var chooseScreen: () -> Void = {}
 }
 
 // MARK: The pictures
@@ -570,8 +597,21 @@ struct ActionsSheetView: View {
                     line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
                     activitiesFooter
                 } else {
-                    Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
-                        .padding(.bottom, 14)
+                    HStack(spacing: 8) {
+                        Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                        // With two monitors or more: which one they live on, chosen from a menu of their names.
+                        // Up here, small: the switches' row has no room left in Russian.
+                        if let screen = model.state.screen {
+                            Button { model.chooseScreen() } label: { Text(screen + " ▾").lineLimit(1).truncationMode(.middle) }
+                                .buttonStyle(TinyPixelButtonStyle())
+                                .frame(maxWidth: 220, alignment: .trailing)
+                        }
+                    }
+                    .frame(height: 22)
+                    .padding(.trailing, 2)
+                    .padding(.bottom, 6)            // 28 in all, as the title alone was
                     grid.padding(.bottom, 14)
                     line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
                     switches.padding(.bottom, 12)
@@ -752,6 +792,20 @@ struct PixelTileStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(PixelBox(style: configuration.isPressed ? .pressed : chosen ? .chosen : .raised))
+            .offset(y: configuration.isPressed ? ReminderNoteController.pixel : 0)
+            .contentShape(Rectangle())
+    }
+}
+
+/// A pixel button smaller than the switches', for the title line: the screen choice.
+struct TinyPixelButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 10, weight: .heavy, design: .monospaced))
+            .foregroundStyle(PixelBox.rim)
+            .padding(.horizontal, 7)
+            .frame(minHeight: 22)
+            .background(PixelBox(style: configuration.isPressed ? .pressed : .raised))
             .offset(y: configuration.isPressed ? ReminderNoteController.pixel : 0)
             .contentShape(Rectangle())
     }

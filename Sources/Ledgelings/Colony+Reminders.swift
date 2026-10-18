@@ -104,7 +104,7 @@ extension Colony {
     /// The middle of the screen the cursor is on.
     private func targetScreen() -> CGRect {
         let cursor = stage == nil ? NSEvent.mouseLocation : .zero
-        return (displays.first { $0.frame.contains(cursor) } ?? displays.first)?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        return (homeDisplays.first { $0.frame.contains(cursor) } ?? homeDisplays.first)?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
     }
 
     private func startDelivery(_ reminder: Reminders.Reminder) {

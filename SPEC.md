@@ -139,6 +139,42 @@ size (sizes come in half steps, so a handful). On any monitor change all worlds
 are rebuilt and every creature is **re-homed**: put on the nearest point of the
 nearest loop, rotation snapped, any jump abandoned, asleep stays asleep.
 
+### 2.4 The home monitors
+
+`homeScreen` names the monitor they live on, by an id that survives relaunching and
+re-plugging (macOS: the display's UUID from `CGDisplayCreateUUIDFromDisplayID`;
+Windows: the monitor's device name), with `homeScreenName` (the system's name for it,
+`DELL U2415 (2)`) kept beside it for showing while it is away. Empty means every monitor.
+The **home monitors** are the chosen one while it is attached, else **every monitor**
+(`HomeScreen.home`): not the main one, because the main one is often a laptop shut in
+a dock, and every monitor is what they did before there was a choice. The choice is
+kept while its monitor is away; plugged back in, it applies again.
+
+Only the home monitors make the edge world (§2.2), so walking, corners, jumps, games,
+tea, beds, flowers and new creatures keep to them by themselves. Besides: the paper
+planes' sky and a reminder's screen are the home monitors (§7.6, §7.7); the house
+stands on the first home monitor (§7.5); a flower not on a home edge goes, as on a
+monitor change (§7.3.1); a creature grabs the cursor only while it is on a home
+monitor, and lets go (`leftHome`) the moment it rides off one, dropping back onto
+the nearest home edge (§4.7.3). Every monitor keeps its overlay (§9), so a creature is
+drawn wherever it is, mid-move or carried by the hand onto another monitor, where it
+is let go to fall back to the nearest home edge.
+
+**Moving over.** When the home monitors change (the setting, or a monitor coming,
+going or moving), what anyone was doing across the old edges stops: the hand and the
+cursor let go, a game ends, movers still on the way land at once. Every creature whose
+centre is on a home monitor (within 1 pt) is re-homed (§2.3); every other one moves:
+woken if asleep, out of any talk or tea party, `busy` meanwhile (nothing starts with
+it, nothing picks it up). It crouches 0.25 s, then springs straight up out of the top
+of the screen it is on (launch speed 1.15 × √(2 g h) with `g` = `Plays.gravity` and
+`h` up to 3 body halves above the screen's top; 40 pt/s sideways the way it faces;
+one whole turn on the way), waits out of sight, and comes down by parachute
+(`Plays.Chute`, falling at 1.6 × `parachuteFallSpeed` or fast enough to be down in 4.5 s, whichever is quicker) from just above the top of a home monitor,
+over a random spot of its floor, 15–85 % along it. Arrivals are 0.45 s apart, in a
+random order, the first once the last to leave is gone. On a monitor that is gone it
+has nothing to spring off: it just comes down. The house coming out lands every mover
+at once.
+
 ---
 
 ## 3. The day/night clock
@@ -2065,6 +2101,8 @@ falls through to whatever is underneath.
 | The shortcut, in any app (`shortcut`: ⌃⌥L on macOS, Ctrl+Alt+L on Windows) | the actions sheet comes up; pressed while it is up, it folds away. See *The shortcut* below |
 | Opening the app again while it runs | the actions sheet comes up, with `reopenShowsActions` on |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
+| Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |
+| Menu: Screen › (two monitors or more) | the same menu |
 | Sheet: Settings (⌘, · Ctrl+, on Windows), Chats, Quit (⌘Q · Ctrl+Q) | puts the sheet away; the settings window, its Chats tab, or the app quits |
 | Sheet: Make Them Jump (J) | every creature startles |
 | Sheet: Make Someone Talk (T) | §6.5 |
@@ -2103,7 +2141,12 @@ its letter` (followed, while the shortcut is on, by ` · ⌃⌥L opens and close
 Under that, a row of small pixel buttons, the menu's switches, each worded as it stands
 and drawn pressed in while on: `TALK ON/OFF` (`talkEnabled`), `VOICE ON/OFF`
 (`voiceEnabled`), `REVENGE ON/OFF` (`revengeEnabled`), `CURSOR: <mood>` (`cursorMood`,
-each press the next mood, round again). The last row: `ACTIVITIES…` (key A), the language under its own name
+each press the next mood, round again). With two monitors or more, a smaller pixel
+button (10-point type, 22 points tall) at the right end of the title line,
+`SCREEN: ALL ▾` (`homeScreen`; the chosen monitor's name in capitals, `BUILT-IN` for
+the laptop's own, cut in the middle if long; `ALL` while the chosen one is unplugged),
+opens the Screen menu; the title line stays 28 points tall either way. It is up there
+because the switches' row is full in Russian. The last row: `ACTIVITIES…` (key A), the language under its own name
 (each press the next one), `SETTINGS`, `CHATS`, `QUIT`, and Done at the right.
 **Activities** is the sheet's one inner page, the same size: `ACTIVITIES · WHAT SHOULD
 THEY PLAY?`, then a row per game (§7.10), each a raised pixel box the width of the
@@ -2198,6 +2241,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | shortcutKeyCode / shortcutModifiers | 37 / 12 (⌃⌥L); Windows 76 / 12 (Ctrl+Alt+L) | the platform's key number, 0–127 (Windows: a virtual-key code, 1–254); modifier bits Command 1, Shift 2, Option 4, Control 8, others dropped. Without Command, Control or Option, or with a key out of range: the default |
 | reopenShowsActions | true | opening the app again while it runs brings the sheet up (§11) |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
+| homeScreen / homeScreenName | empty / empty | the monitor they live on, by its id, and its name when chosen; empty = every monitor; kept while that monitor is unplugged, when they live on all (§2.4). Creatures tab *Live on*, the sheet's `SCREEN` button, the menu's *Screen* |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
 | teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |
 | teaSipSeconds | 6 | 0–30 s, clamped on load: quiet between one story and the next |
@@ -2332,6 +2376,10 @@ rotation settles at the segment's; blinks and reopens; a distant cursor is
 ignored; a close cursor starts a jump that stays inside the screens and lands
 on another edge; squashes on landing then walks; not catchable mid-air;
 survives a monitor being unplugged; walks from one monitor onto the next;
+with one monitor chosen (§2.4) everyone off it springs out and parachutes onto it,
+busy and in the air meanwhile, and stays on it walking and jumping; a chosen monitor
+that is unplugged means every monitor and the choice is kept; the cursor is grabbed
+only on the home monitor and let go when it rides off;
 falls asleep at night with eyes shut and dozes off at staggered times; wakes
 when day breaks; a sleeper ignores the cursor; nap toggle works by day and
 persists until dawn; an awake creature cannot be picked up without `evenAwake`;

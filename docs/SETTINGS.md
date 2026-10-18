@@ -42,6 +42,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | **Chat History…** | The Chats tab |
 | *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
+| **Screen ›** | Only with two monitors or more. *All Screens*, then each monitor by name: the creatures live on that one only. The same choice as **Live on** on the Creatures tab |
 | **Language ›** | *English*, *Русский*: each under its own name, so you can find yours whatever the app speaks. Applies at once, no relaunch. The same choice as **Language** on the Creatures tab |
 | **Settings…** | The settings window |
 | **Quit** | Everyone vanishes; nothing is persisted about the hide |
@@ -75,6 +76,7 @@ stands and flips at a click; the sheet stays up.
 | **VOICE ON / OFF** | *Hear Them Talk*: bubbles read out loud |
 | **REVENGE ON / OFF** | *Cursor Revenge* |
 | **CURSOR: A MENACE** | *The Cursor Is*: each click the next of playmate, just there, menace |
+| **SCREEN: ALL ▾** (top right, on the title line) | Only with two monitors or more. A menu of *All Screens* and each monitor by name: pick one and they live there only (the button then names it, *BUILT-IN* for the laptop's own) |
 | **ENGLISH / РУССКИЙ** | The language, under its own name; each click the next |
 | **ACTIVITIES…** (A) | The sheet's inner page, below |
 | **SETTINGS** (⌘, · Ctrl+, on Windows), **CHATS** | Puts the sheet away and opens the settings window, or its Chats tab |
@@ -127,6 +129,7 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 |---|---|---|---|
 | **Language** (`language`) | the system's language if the app has it, else English | English, Русский | Menus, settings, statuses and everything the creatures say or write: built-in lines, letters, tea stories, complaints, reminders, and the prompts that ask a model for them. Applies at once. See *Languages* below |
 | **How many** | 3 | 1 to 24 | Creatures are added at the end and removed from the end, so the first ones keep their colours and characters |
+| **Live on** (`homeScreen`) | All screens | All screens, or one attached monitor by name | With more than one monitor, keep them all on one. Choose another and whoever is not on it springs up out of the top of its screen and comes down on the new one by parachute, one after another; from then on they walk, jump, play, take tea, sleep, plant and throw planes there only, the house stands there, and they grab the cursor only while it is on that monitor (riding it off, they let go). Unplug that monitor and they live on every screen; plug it back in and they go back to it. Also the **SCREEN** button on Creature Actions and the menu's **Screen ›** |
 | **Smallest** / **Largest** | 1.5× / 3× | 1× to 5× in half steps | Screen points per sprite pixel. Every creature is born with a place between the two and keeps it, so moving the sliders resizes everyone without reshuffling who is big. Set them equal and they all match. Dragging one past the other drags the other along. On Windows the scale is multiplied by the primary monitor's dpi factor |
 | **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |
 | **Day lasts** | 3 min | 0.5 to 60 | |
