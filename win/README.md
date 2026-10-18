@@ -148,7 +148,9 @@ core tests are the Swift tests line for line.
   into the creature instead. **Protected snippets** are kept in Credential Manager and shown
   as dots, but paste and **Show…** without any fingerprint or Windows Hello prompt; a pasted
   secret is kept out of Win+V history and the cloud clipboard too. A copied **picture** shows as a tiny pixel
-  thumbnail and *Image 1280×720*, and pastes back in the clipboard formats it came in.
+  thumbnail and *Image 1280×720*, and pastes back in the clipboard formats it came in. A copy
+  of a protected snippet's words shows as `PWD:{Name}: [N] chars` on a faint tint (a salted
+  fingerprint in `snippets.json` tells it apart) and pastes its real words.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.

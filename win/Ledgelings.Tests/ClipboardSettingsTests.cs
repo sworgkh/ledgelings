@@ -79,6 +79,34 @@ public class ClipboardSettingsTests
         finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
     }
 
+    [Fact]
+    public void ProtectedWordsAreFingerprintedNeverWrittenAndOldOnesGetTheirsOnLoad()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "ledgelings-clip-" + Guid.NewGuid());
+        try
+        {
+            var secrets = new MemorySecretStore();
+            var book = new ClipBook(folder, secrets);
+            var id = book.AddSnippet("Wi-Fi", "pixel-perfect-42", isProtected: true);
+            Assert.Equal("PWD:Wi-Fi: [16] chars", book.Snippets.MaskFor(new Clipboard.Clip { Text = "pixel-perfect-42" }));
+            var plain = book.AddSnippet("Door", "1234");
+            book.SetProtected(plain, true);
+            Assert.Equal(plain, book.Snippets.SecretMatching("1234")?.Id);
+            book.Update(book.Snippets.Find(id)!, "new-password");
+            Assert.Null(book.Snippets.SecretMatching("pixel-perfect-42"));
+            Assert.Equal(id, book.Snippets.SecretMatching("new-password")?.Id);
+            Assert.DoesNotContain("new-password", File.ReadAllText(book.Store.SnippetsFile));
+
+            // A book saved before fingerprints: the first load reads Credential Manager once and fingerprints it.
+            foreach (var (_, s) in book.Snippets.All.ToList()) book.Snippets.Update(s with { SecretSalt = null, SecretHash = null });
+            book.Store.Save(book.Snippets);
+            var again = new ClipBook(folder, secrets);
+            Assert.Equal(id, again.Snippets.SecretMatching("new-password")?.Id);
+            Assert.Equal(plain, again.Snippets.SecretMatching("1234")?.Id);
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
+    }
+
     /// <summary>A 48×30 PNG, the same picture as a 32-bit device-independent bitmap.</summary>
     private static (byte[] Png, byte[] Dib) Picture()
     {

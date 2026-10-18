@@ -71,7 +71,8 @@ public sealed class ClipWatcher : IDisposable
         if (Read(data, DateTimeOffset.Now, app, settings) is { } clip)
         {
             book.Add(clip, settings.ClipHistoryLimit, settings.ClipKeepDays);
-            Trace?.Invoke($"keep {clip.Kind} \"{clip.Preview(40)}\" from {clip.App ?? "?"}");
+            // A protected snippet's words never reach a log, only their mask.
+            Trace?.Invoke($"keep {clip.Kind} \"{book.Snippets.MaskFor(clip) ?? clip.Preview(40)}\" from {clip.App ?? "?"}");
             return;
         }
         switch (ReadImage(data, DateTimeOffset.Now, app, settings))
