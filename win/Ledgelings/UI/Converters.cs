@@ -9,7 +9,7 @@ public enum SettingsTab { Creatures, Actions, Chases, Play, Sprites, Talk, Flowe
 
 /// <summary>One tool on the Productivity tools tab, by its header. A new tool is a case here and a
 /// <c>TabItem</c> with the same header in the tab's <c>Tools</c> control.</summary>
-public enum ProductivityTool { Reminders }
+public enum ProductivityTool { Reminders, Clipboard }
 
 public static class SettingsTabs
 {

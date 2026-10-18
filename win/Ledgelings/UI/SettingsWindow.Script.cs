@@ -79,7 +79,7 @@ public sealed partial class SettingsWindow
 
     private async void CopyAgentPrompt_Click(object sender, RoutedEventArgs e)
     {
-        try { Clipboard.SetText(Script.AgentPrompt(CastInUse())); }
+        try { System.Windows.Clipboard.SetText(Script.AgentPrompt(CastInUse())); }
         catch (System.Runtime.InteropServices.COMException) { Flash(L10n.Tr("the clipboard is busy; try again")); return; }
         CopyAgentPrompt.Content = L10n.Tr("Copied");
         await Task.Delay(2000);

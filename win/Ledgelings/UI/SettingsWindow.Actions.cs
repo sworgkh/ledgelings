@@ -10,6 +10,11 @@ namespace Ledgelings.UI;
 /// Ctrl, Alt or Windows key held is refused with a beep.</summary>
 public sealed partial class SettingsWindow
 {
+    /// <summary>Where the keys being recorded go, and the button that shows "Press the keys…": the Actions
+    /// shortcut, or one of the clipboard's.</summary>
+    private Action<Shortcut>? recordInto;
+    private System.Windows.Controls.Button? recordingButton;
+
     private void InitActions()
     {
         PreviewKeyDown += RecordShortcut;
@@ -21,11 +26,20 @@ public sealed partial class SettingsWindow
 
     private void ShowShortcut()
     {
-        ShortcutButton.Content = settings.RecordingShortcut ? L10n.Tr("Press the keys…") : ShortcutKeys.Label(settings.Shortcut);
+        ShortcutButton.Content = settings.RecordingShortcut && recordingButton == ShortcutButton ? L10n.Tr("Press the keys…") : ShortcutKeys.Label(settings.Shortcut);
         ShortcutProblemText.Visibility = settings.ShortcutProblem.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void ShortcutButton_Click(object sender, RoutedEventArgs e) => settings.RecordingShortcut = !settings.RecordingShortcut;
+    private void ShortcutButton_Click(object sender, RoutedEventArgs e) => Record(ShortcutButton, made => settings.Shortcut = made);
+
+    /// <summary>Starts listening for keys for <paramref name="button"/>, or stops when it already is.</summary>
+    private void Record(System.Windows.Controls.Button button, Action<Shortcut> into)
+    {
+        if (settings.RecordingShortcut) { var same = recordingButton == button; settings.RecordingShortcut = false; if (same) return; }
+        recordInto = into;
+        recordingButton = button;
+        settings.RecordingShortcut = true;
+    }
 
     private void RecordShortcut(object sender, KeyEventArgs e)
     {
@@ -37,7 +51,7 @@ public sealed partial class SettingsWindow
         var made = new Shortcut(KeyInterop.VirtualKeyFromKey(key), ShortcutKeys.From(Keyboard.Modifiers));
         if (key == Key.Escape && made.Modifiers == ShortcutModifiers.None) { settings.RecordingShortcut = false; return; }
         if (!made.IsUsable) { SystemSounds.Beep.Play(); return; }
-        settings.Shortcut = made;
+        recordInto?.Invoke(made);
         settings.RecordingShortcut = false;
     }
 }

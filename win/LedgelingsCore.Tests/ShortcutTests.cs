@@ -35,4 +35,14 @@ public class ShortcutTests
         Assert.Equal("Ctrl+Alt+L", Shortcut.Standard.Label("L"));
         Assert.Equal("Ctrl+Alt+Shift+Win+", new Shortcut(0x41, Win | Shift | Alt | Ctrl).Names);
     }
+
+    [Fact]
+    public void TheClipboardShortcutsAreTheirOwnAndFallBackToThemselves()
+    {
+        Assert.Equal("Ctrl+Alt+V", Shortcut.ClipHistory.Label("V"));
+        Assert.Equal("Ctrl+Alt+B", Shortcut.ClipSnippets.Label("B"));
+        Assert.Equal(3, new[] { Shortcut.Standard.KeyCode, Shortcut.ClipHistory.KeyCode, Shortcut.ClipSnippets.KeyCode }.Distinct().Count());
+        Assert.Equal(Shortcut.ClipHistory, Shortcut.Saved(null, null, Shortcut.ClipHistory));
+        Assert.Equal(Shortcut.ClipSnippets, Shortcut.Saved(0x56, 2, Shortcut.ClipSnippets));
+    }
 }

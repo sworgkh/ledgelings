@@ -62,6 +62,7 @@ public sealed partial class App : Application
         }
         StartReminders();
         StartShortcut();
+        StartClipboard();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
 
@@ -101,6 +102,7 @@ public sealed partial class App : Application
         var keys = ShortcutTitle;
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
+        AddClipboardItems(items);
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
@@ -154,6 +156,7 @@ public sealed partial class App : Application
         if (settings is null || history is null || library is null || spend is null) return null;
         settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
+        AttachClipboard(settingsWindow);
         return settingsWindow;
     }
 
@@ -162,6 +165,7 @@ public sealed partial class App : Application
         tray?.Dispose();
         StopReminders();
         StopShortcut();
+        StopClipboard();
         colony?.Dispose();
         single?.Dispose();
         base.OnExit(e);

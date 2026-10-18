@@ -17,12 +17,20 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
 
     /// <summary>Ctrl+Alt+L, L for Ledgelings, beside Ctrl+Alt+R for a reminder: Windows itself uses neither.</summary>
     public static readonly Shortcut Standard = new(0x4C, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>The clipboard history picker: Ctrl+Alt+V. Not Ctrl+Shift+V, which Chrome, Slack and Word use to
+    /// paste without formatting, nor Win+V, Windows' own clipboard history.</summary>
+    public static readonly Shortcut ClipHistory = new(0x56, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>The snippets picker: Ctrl+Alt+B, beside V on the keyboard.</summary>
+    public static readonly Shortcut ClipSnippets = new(0x42, ShortcutModifiers.Control | ShortcutModifiers.Option);
 
     /// <summary>As it was saved, or the standard one when what was saved cannot be a shortcut.</summary>
-    public static Shortcut Saved(int? keyCode, int? modifiers)
+    public static Shortcut Saved(int? keyCode, int? modifiers) => Saved(keyCode, modifiers, Standard);
+
+    /// <summary>As it was saved, or <paramref name="standard"/> when what was saved cannot be a shortcut.</summary>
+    public static Shortcut Saved(int? keyCode, int? modifiers, Shortcut standard)
     {
-        var made = new Shortcut(keyCode ?? Standard.KeyCode, (ShortcutModifiers)(modifiers ?? (int)Standard.Modifiers) & All);
-        return made.IsUsable ? made : Standard;
+        var made = new Shortcut(keyCode ?? standard.KeyCode, (ShortcutModifiers)(modifiers ?? (int)standard.Modifiers) & All);
+        return made.IsUsable ? made : standard;
     }
 
     /// <summary>A shortcut taken from every app must not be a key someone types: it needs

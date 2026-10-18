@@ -606,6 +606,18 @@ Keychain, never in a file; it shows as dots until you press **Show…** (fingerp
 the history, and is taken off the clipboard again a second after it is pasted. An export
 leaves protected snippets' words out.
 
+On Windows the tool is one column, in the same order, with the same keys: Ctrl+Alt+V and
+Ctrl+Alt+B, Enter and Alt+Enter, Ctrl+1–9, Ctrl+P, Delete, Ctrl+E; the tray has
+**Clipboard History…**, **Paste a Snippet…** and **Edit Snippets…**. Pasting needs no
+permission: the picker takes the keyboard while it is up, then puts the window you were
+in back in front and presses Ctrl+V. *Keep files copied in Explorer* replaces *…in Finder*;
+**Never kept** lists programs by their .exe (**Add App…** picks one), KeePass, KeePassXC,
+1Password, Bitwarden and the like by default, and copies a program marks with
+`ExcludeClipboardContentFromMonitorProcessing` or `CanIncludeInClipboardHistory` = 0 are
+skipped. Protected snippets live in Credential Manager (`Ledgelings Snippets`), shown as
+dots until **Show…**, which asks for nothing: Windows has no fingerprint guard. A pasted
+secret is also kept out of Windows' own clipboard history (Win+V) and cloud clipboard.
+
 ## Voice tab
 
 The left column is how they all sound; the right column,

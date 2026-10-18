@@ -204,6 +204,9 @@ public sealed class Shared
     public Dictionary<string, string> PlayStartAnyone { get; init; } = new();
     public Dictionary<string, string[]> PlayDone { get; init; } = new();
     public string[] PlayDoneAnyone { get; init; } = Array.Empty<string>();
+    /// <summary>What the creature bringing the clipboard picker says (SPEC §7.11.1): by character, and for anyone.</summary>
+    public Dictionary<string, string[]> ClipHelperLines { get; init; } = new();
+    public string[] ClipHelperAnyone { get; init; } = Array.Empty<string>();
     /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder, spriteImage, spriteRefine, spriteRefineSystem.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
@@ -260,6 +263,7 @@ public sealed class Shared
         string[] allMoods = { "good", "neutral", "bad" };
         var beds = Get(root, "beds");
         var plays = Get(root, "plays");
+        var clipHelper = Get(root, "clipHelper");
         var playStart = Get(plays, "start");
         return new Shared
         {
@@ -298,6 +302,8 @@ public sealed class Shared
             PlayStartAnyone = Map(Get(plays, "startAnyone")),
             PlayDone = Lists(Get(plays, "done")),
             PlayDoneAnyone = List(Get(plays, "doneAnyone")),
+            ClipHelperLines = Lists(Get(clipHelper, "lines")),
+            ClipHelperAnyone = List(Get(clipHelper, "anyone")),
             RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),
             RevengeAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(revenge, m), "anyone"))),
             RevengeLastWordsByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lastWords"))),
