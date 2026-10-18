@@ -7,6 +7,8 @@ public class BedsTests
     private static readonly string Root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
 
     /// <summary>Every character of every shipped species, and Blocky's built-in cast.</summary>
+    internal static List<string> ShippedNames() => Shipped();
+
     private static List<string> Shipped()
     {
         var sprites = Path.Combine(Root, "Sources/Ledgelings/Resources/sprites");

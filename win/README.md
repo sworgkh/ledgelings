@@ -74,6 +74,8 @@ Ledgelings again; the sheet has the menu's switches, Settings and Quit.
 | Spend | `%APPDATA%\Ledgelings\spend.jsonl` |
 | Bonds and plots | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac) |
 | Reminders | `%APPDATA%\Ledgelings\reminders.json` (same format as the Mac) |
+| Clipboard history and snippets | `%APPDATA%\Ledgelings\clipboard.json`, `snippets.json` (same format as the Mac) |
+| Protected snippets' words | Credential Manager › Windows Credentials › `Ledgelings Snippets/snippet.<ID>` |
 | Kept OpenRouter voices | `%APPDATA%\Ledgelings\voices\` |
 | Saved built-in line voices | `%APPDATA%\Ledgelings\line-voices\` |
 | Imported creatures | `%APPDATA%\Ledgelings\sprites\<name>\` |
@@ -139,6 +141,13 @@ core tests are the Swift tests line for line.
 - **Steppers are sliders** (lines not repeated, story length, holiday look-ahead, throws at the hoop);
   same ranges and steps.
 - **Reveal in Finder** is **Show in Explorer**; Productivity tools › Reminders' file box has one too.
+- **The clipboard picker** takes the keyboard while it is up (Windows gives keys only to the
+  active window), then puts the window you were in back in front and presses Ctrl+V; no
+  permission is needed. The text cursor it collapses into is the one `GetGUIThreadInfo`
+  reports; Chrome and other apps that draw their own caret report none, and it collapses
+  into the creature instead. **Protected snippets** are kept in Credential Manager and shown
+  as dots, but paste and **Show…** without any fingerprint or Windows Hello prompt; a pasted
+  secret is kept out of Win+V history and the cloud clipboard too.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
@@ -190,22 +199,22 @@ win/
   LedgelingsCore/        pure logic, no Win32, one class per Swift file:
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
-                           Voices, PaperPlanes, Letters, Reminders,
+                           Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
                            Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
-                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play)
+                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
-                           TrayIcon, App (+ .Reminders, .Shortcut), GlobalHotkey, ShortcutKeys, Program
-                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play),
+                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard), GlobalHotkey, ShortcutKeys, Program
+                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard),
                            SettingsStore, LaunchAtLogin
-                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook
+                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
-                           Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (Productivity tools holds a Tools tab per tool; + .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers .Voice .Costs),
-                           ReminderNote, ActionsSheet, ColourDialog
+                           Native/Win32, Native/CredentialStore, Native/ClipboardNative
+                           UI/SettingsWindow.xaml (Productivity tools holds a Tools tab per tool; + .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
+                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), SnippetsWindow
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

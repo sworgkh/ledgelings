@@ -60,6 +60,9 @@ public sealed partial class ScreenOverlay : IDisposable
     public event Action<HandEvent>? Hand;
 
     private readonly OverlayWindow window;
+
+    /// <summary>Over every other topmost window again, without taking the keyboard.</summary>
+    public void Raise() => window.Raise();
     /// <summary>Text and bubble metrics grow with the monitor's dpi.</summary>
     private readonly float ui;
     private readonly Font bubbleFont;

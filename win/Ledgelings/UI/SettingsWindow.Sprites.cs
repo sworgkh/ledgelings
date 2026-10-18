@@ -172,7 +172,7 @@ public sealed partial class SettingsWindow
 
     private async void CopyPrompt_Click(object sender, RoutedEventArgs e)
     {
-        try { Clipboard.SetText(library.Prompt(settings.SpriteKitForm)); }
+        try { System.Windows.Clipboard.SetText(library.Prompt(settings.SpriteKitForm)); }
         catch (System.Runtime.InteropServices.COMException) { SpriteStatus.Text = L10n.Tr("the clipboard is busy; try again"); return; }
         CopyPrompt.Content = L10n.Tr("Copied");
         await Task.Delay(2000);
@@ -201,7 +201,7 @@ public sealed partial class SettingsWindow
             var files = library.SaveKitImages(Path.Combine(Path.GetTempPath(), "ledgelings-sprite-kit"));
             var list = new System.Collections.Specialized.StringCollection();
             list.AddRange(files.ToArray());
-            Clipboard.SetFileDropList(list);
+            System.Windows.Clipboard.SetFileDropList(list);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.ExternalException)
         {

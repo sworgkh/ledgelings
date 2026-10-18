@@ -1790,7 +1790,9 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   requirement (`identifier "com.alterman.ledgelings"`), so the grant survives updates.
 - **Pasting**: the item goes on the clipboard (files as file URLs; formatting unless
   `clipPlainText`, flipped by ⌥), marked as the app's own; the panel goes at once; 40 ms
-  later ⌘V (Ctrl+V) is pressed for the app that was in front. Without the permission,
+  later ⌘V (Ctrl+V) is pressed for the app that was in front. Windows gives the keyboard
+  only to the active window, so there the picker is activated, and the window that was in
+  front is put back in front just before Ctrl+V; Windows needs no permission for it. Without the permission,
   or with `clipAutoPaste` off, it is only copied and a note says *Copied. Press ⌘V to
   paste.* A pasted clip moves to the top. A protected snippet
   **always asks for a fingerprint first** on macOS: Touch ID only
@@ -1809,7 +1811,8 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
 - **The collapse**: with `clipAnimate`, the sheet unfolds from the middle in
   `0.14 / clipAnimationSpeed` s; on closing, a picture of it shrinks into the text
   cursor (macOS: `AXSelectedTextRange` → `AXBoundsForRange` on the focused element;
-  Windows: UI Automation's caret, else `GetGUIThreadInfo`) or, when that is unknown or
+  Windows: the caret `GetGUIThreadInfo` reports; apps that draw their own, such as
+  Chrome, report none) or, when that is unknown or
   nothing was pasted, into the middle, in `0.18 / clipAnimationSpeed` s, in a window of
   its own: the paste never waits for it.
 - **Shortcuts**, from any app (§11): `clipHistoryShortcut` (⌃⌥V; Ctrl+Alt+V) opens
@@ -1821,8 +1824,8 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   up, down, File › Import Clipy Snippets… / Export as Clipy XML…), the chosen one on
   the right: a folder's name; a snippet's title, Protected, its own shortcut (record,
   clear) and its words. A protected snippet shows dots until **Show…** (Touch ID
-  first on macOS, as for pasting); its words are saved to the secret store 0.4 s
-  after the last keystroke.
+  first on macOS, as for pasting; nothing to pass on Windows); its words are saved to
+  the secret store 0.4 s after the last keystroke (on Windows, when the field is left).
 
 #### 7.11.1 The creature who brings it
 

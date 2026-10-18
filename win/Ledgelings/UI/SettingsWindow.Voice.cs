@@ -172,7 +172,7 @@ public sealed partial class SettingsWindow
 
     private void CopySetup_Click(object sender, RoutedEventArgs e)
     {
-        try { Clipboard.SetText(KokoroSetup); }
+        try { System.Windows.Clipboard.SetText(KokoroSetup); }
         catch (System.Runtime.InteropServices.ExternalException) { LocalCheckStatus.Text = L10n.Tr("the clipboard is busy; try again"); return; }
         LocalCheckStatus.Text = L10n.Tr("copied; paste it into PowerShell, wait for \"Uvicorn running\", then Check");
     }

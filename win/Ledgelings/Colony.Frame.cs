@@ -160,13 +160,14 @@ public sealed partial class Colony
         UpdateTeaParty();
         UpdatePlay(dt);
         UpdateMoves(dt);
+        UpdateClipHelp(dt);
         ReleaseChatIfOver();
         foreach (var bump in meetings.Update(Parties(), Elapsed)) Bumped(bump);
         UpdatePost(dt);
         UpdateReminders(dt);
         LiveTogether(dt);
         Render();
-        SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && CurrentGrab is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
+        SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && CurrentGrab is null && clipHelp is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
     }
 
     // Feature steps, each implemented in its own partial file (Colony.Complaints, .Garden, .TeaParty,

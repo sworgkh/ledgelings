@@ -938,6 +938,88 @@
             </StackPanel>
           </ScrollViewer>
         </TabItem>
+        <TabItem ui:Tr.Header="Clipboard">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12">
+              <CheckBox ui:Tr.Content="Clipboard manager" IsChecked="{Binding ClipboardEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+              <StackPanel IsEnabled="{Binding ClipboardEnabled}">
+                <GroupBox ui:Tr.Header="History">
+                  <StackPanel>
+                    <CheckBox ui:Tr.Content="Keep a history of what is copied" IsChecked="{Binding ClipHistoryEnabled, Mode=TwoWay}"/>
+                    <DockPanel Margin="0,6,0,4">
+                      <TextBlock ui:Tr.Text="Copies kept" Style="{StaticResource RowLabel}"/>
+                      <TextBlock Style="{StaticResource RowValue}" Text="{Binding ClipHistoryLimit}"/>
+                      <Slider Minimum="10" Maximum="2000" TickFrequency="10" Value="{Binding ClipHistoryLimit, Mode=TwoWay}"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,4">
+                      <TextBlock ui:Tr.Text="Kept for" Style="{StaticResource RowLabel}"/>
+                      <TextBlock x:Name="ClipKeepDaysValue" Style="{StaticResource RowValue}"/>
+                      <Slider Minimum="0" Maximum="365" TickFrequency="1" Value="{Binding ClipKeepDays, Mode=TwoWay}"/>
+                    </DockPanel>
+                    <CheckBox ui:Tr.Content="Keep formatting (rich text)" IsChecked="{Binding ClipKeepFormatting, Mode=TwoWay}"/>
+                    <CheckBox ui:Tr.Content="Keep files copied in Explorer" IsChecked="{Binding ClipKeepFiles, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures are not kept. Nothing copied ever leaves this PC or reaches a model."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="Pasting">
+                  <StackPanel>
+                    <CheckBox ui:Tr.Content="Paste into the app I was in" IsChecked="{Binding ClipAutoPaste, Mode=TwoWay}"/>
+                    <CheckBox ui:Tr.Content="Paste as plain text" IsChecked="{Binding ClipPlainText, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <CheckBox ui:Tr.Content="Unfold and collapse the picker" IsChecked="{Binding ClipAnimate, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <DockPanel Margin="0,6,0,4" IsEnabled="{Binding ClipAnimate}">
+                      <TextBlock ui:Tr.Text="Animation speed" Style="{StaticResource RowLabel}"/>
+                      <TextBlock Style="{StaticResource RowValue}" Text="{Binding ClipAnimationSpeed, StringFormat={}{0:0.##}×}"/>
+                      <Slider Minimum="0.5" Maximum="3" TickFrequency="0.25" IsSnapToTickEnabled="True" Value="{Binding ClipAnimationSpeed, Mode=TwoWay}"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,4" IsEnabled="{Binding ClipAnimate}">
+                      <TextBlock ui:Tr.Text="Who brings it" Style="{StaticResource RowLabel}"/>
+                      <ComboBox x:Name="ClipHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="ClipHelper_Changed" Width="240" HorizontalAlignment="Left"/>
+                    </DockPanel>
+                    <CheckBox ui:Tr.Content="It says a line as the sheet unfolds" IsChecked="{Binding ClipHelperTalks, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Enter pastes, Alt+Enter the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="Shortcuts">
+                  <StackPanel>
+                    <DockPanel Margin="0,2">
+                      <CheckBox ui:Tr.Content="History picker" IsChecked="{Binding ClipHistoryShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
+                      <Button x:Name="ClipHistoryShortcutButton" Click="ClipShortcutButton_Click" Tag="history" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding ClipHistoryShortcutEnabled}"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,2">
+                      <CheckBox ui:Tr.Content="Snippets picker" IsChecked="{Binding ClipSnippetsShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
+                      <Button x:Name="ClipSnippetsShortcutButton" Click="ClipShortcutButton_Click" Tag="snippets" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding ClipSnippetsShortcutEnabled}"/>
+                    </DockPanel>
+                    <CheckBox ui:Tr.Content="A snippet's own shortcut pastes it at once" IsChecked="{Binding ClipSnippetShortcutsEnabled, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <TextBlock x:Name="ClipShortcutProblemText" Text="{Binding ClipShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, Ctrl+1–9 for the first nine, Tab between the groups, Ctrl+P to pin, Delete to forget a copy, Esc to close."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="Snippets">
+                  <StackPanel>
+                    <DockPanel>
+                      <Button ui:Tr.Content="Edit Snippets…" Click="EditSnippets_Click" DockPanel.Dock="Left"/>
+                      <TextBlock x:Name="ClipSnippetCount" Foreground="Gray" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A protected snippet's words live in Windows Credential Manager, never in a file: shown as dots, kept out of the history and taken off the clipboard a second after pasting."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="Never kept">
+                  <StackPanel>
+                    <ListBox x:Name="ClipExcludedList" Height="96"/>
+                    <DockPanel Margin="0,6,0,0">
+                      <Button x:Name="ClipClearHistory" DockPanel.Dock="Right" Click="ClipClearHistory_Click"/>
+                      <StackPanel Orientation="Horizontal">
+                        <Button ui:Tr.Content="Add App…" Click="ClipAddApp_Click" Margin="0,0,8,0"/>
+                        <Button ui:Tr.Content="Remove" Click="ClipRemoveApp_Click"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Nothing copied in these apps is kept, nor anything a password manager marks as secret. Clear History keeps pinned copies."/>
+                  </StackPanel>
+                </GroupBox>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
       </TabControl>
     </TabItem>
     <TabItem ui:Tr.Header="Voice">

@@ -73,6 +73,9 @@ public sealed class OverlayWindow : IDisposable
             Win32.SWP_NOACTIVATE | Win32.SWP_SHOWWINDOW);
     }
 
+    /// <summary>Over every other topmost window again (a picker that came up later), without taking the keyboard.</summary>
+    public void Raise() => Win32.SetWindowPos(Hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
+
     /// <summary>Push the surface to the screen. Only <paramref name="dirty"/> is copied, except the
     /// first time, when the whole window must be handed over.</summary>
     public void Present(IReadOnlyList<Rectangle> dirty)
