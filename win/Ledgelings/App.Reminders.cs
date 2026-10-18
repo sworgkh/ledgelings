@@ -36,19 +36,19 @@ public sealed partial class App
             var text = next.Text.Length > 40 ? next.Text[..40] : next.Text;
             items.Add(new TrayIcon.Item("   " + L10n.Tr("Next: %@, %@", text, Reminders.When(next.Time, DateTimeOffset.Now))
                 + (settings.RemindersEnabled ? "" : " " + L10n.Tr("(off)")),
-                () => OpenSettings(SettingsTab.Reminders)));
+                () => OpenSettings(ProductivityTool.Reminders)));
         }
     }
 
-    /// <summary>The paper note, or the Reminders tab with the paper note turned off.</summary>
+    /// <summary>The paper note, or Productivity tools › Reminders with the paper note turned off.</summary>
     private void AddAReminder()
     {
         if (settings is null || reminders is null) return;
         if (settings.ReminderPaperNote) ReminderNote.ShowNote(reminders, colony?.NoteKeeper());
-        else OpenSettings(SettingsTab.Reminders);
+        else OpenSettings(ProductivityTool.Reminders);
     }
 
-    /// <summary>The settings window's Reminders tab, handed its book once.</summary>
+    /// <summary>The settings window's Reminders tool, handed its book once.</summary>
     private void AttachReminders(SettingsWindow window)
     {
         if (reminders is null || ReferenceEquals(remindersShownIn, window)) return;

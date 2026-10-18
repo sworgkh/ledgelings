@@ -138,7 +138,7 @@ core tests are the Swift tests line for line.
   so there is nothing to save the user from by reading it late.
 - **Steppers are sliders** (lines not repeated, story length, holiday look-ahead, throws at the hoop);
   same ranges and steps.
-- **Reveal in Finder** is **Show in Explorer**; the Reminders tab's file box has one too.
+- **Reveal in Finder** is **Show in Explorer**; Productivity tools › Reminders' file box has one too.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
@@ -204,7 +204,7 @@ win/
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore
-                           UI/SettingsWindow.xaml (+ .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers .Voice .Costs),
+                           UI/SettingsWindow.xaml (Productivity tools holds a Tools tab per tool; + .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Flowers .Voice .Costs),
                            ReminderNote, ActionsSheet, ColourDialog
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests

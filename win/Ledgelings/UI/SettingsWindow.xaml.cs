@@ -66,11 +66,19 @@ public sealed partial class SettingsWindow : Window
         Closing += (_, e) => { e.Cancel = true; Hide(); };      // the window is reused; the app lives in the tray
     }
 
+    /// <summary>Bring the window up on Productivity tools, on one tool.</summary>
+    public void Show(ProductivityTool tool)
+    {
+        if (Tools.Items.OfType<TabItem>().FirstOrDefault(i => Tr.GetHeader(i) == tool.ToString()) is TabItem item)
+            Tools.SelectedItem = item;
+        Show(SettingsTab.Productivity);
+    }
+
     /// <summary>Bring the window up, on the given tab if asked.</summary>
     public void Show(SettingsTab? tab)
     {
         // By header, not position: tabs are added feature by feature.
-        if (tab is SettingsTab t && Tabs.Items.OfType<TabItem>().FirstOrDefault(i => Tr.GetHeader(i) == t.ToString()) is TabItem item)
+        if (tab is SettingsTab t && Tabs.Items.OfType<TabItem>().FirstOrDefault(i => Tr.GetHeader(i) == SettingsTabs.Header(t)) is TabItem item)
             Tabs.SelectedItem = item;
         if (!IsVisible) Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;

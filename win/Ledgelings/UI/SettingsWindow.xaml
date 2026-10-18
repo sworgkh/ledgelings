@@ -856,83 +856,89 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
-    <TabItem ui:Tr.Header="Reminders">
-      <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="12">
-          <GroupBox ui:Tr.Header="New reminder">
-            <StackPanel>
-              <DockPanel Margin="0,4">
-                <TextBlock ui:Tr.Text="Remind me to" Style="{StaticResource RowLabel}"/>
-                <Grid>
-                  <TextBox x:Name="ReminderText" KeyDown="ReminderText_KeyDown" TextChanged="ReminderText_Changed"/>
-                  <TextBlock x:Name="ReminderHint" ui:Tr.Text="Stretch, call mom, stand-up…" Foreground="Gray" IsHitTestVisible="False" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                </Grid>
-              </DockPanel>
-              <DockPanel Margin="0,4">
-                <TextBlock ui:Tr.Text="When" Style="{StaticResource RowLabel}"/>
-                <TextBox x:Name="ReminderClock" DockPanel.Dock="Right" Width="60" Margin="8,0,0,0" LostFocus="ReminderClock_LostFocus" ui:Tr.ToolTip="Time, 24-hour: 14:30"/>
-                <DatePicker x:Name="ReminderDay" SelectedDateChanged="ReminderDay_Changed"/>
-              </DockPanel>
-              <DockPanel Margin="0,4">
-                <TextBlock ui:Tr.Text="Repeat" Style="{StaticResource RowLabel}"/>
-                <ComboBox x:Name="ReminderRepeat" DisplayMemberPath="Title"/>
-              </DockPanel>
-              <DockPanel Margin="0,6,0,0">
-                <Button x:Name="AddReminder" DockPanel.Dock="Right" ui:Tr.Content="Add Reminder" Click="AddReminder_Click" IsEnabled="False"/>
-                <StackPanel Orientation="Horizontal">
-                  <Button ui:Tr.Content="In 5 min" Tag="5" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
-                  <Button ui:Tr.Content="In 30 min" Tag="30" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
-                  <Button ui:Tr.Content="In 1 hour" Tag="60" Click="ReminderSoon_Click"/>
+    <!-- Productivity tools: things the creatures do for you. One tab per tool in Tools,
+         its header the ProductivityTool name; a new tool adds a TabItem here and a case there. -->
+    <TabItem ui:Tr.Header="Productivity tools">
+      <TabControl x:Name="Tools" Margin="0,6,0,0">
+        <TabItem ui:Tr.Header="Reminders">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12">
+              <GroupBox ui:Tr.Header="New reminder">
+                <StackPanel>
+                  <DockPanel Margin="0,4">
+                    <TextBlock ui:Tr.Text="Remind me to" Style="{StaticResource RowLabel}"/>
+                    <Grid>
+                      <TextBox x:Name="ReminderText" KeyDown="ReminderText_KeyDown" TextChanged="ReminderText_Changed"/>
+                      <TextBlock x:Name="ReminderHint" ui:Tr.Text="Stretch, call mom, stand-up…" Foreground="Gray" IsHitTestVisible="False" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                    </Grid>
+                  </DockPanel>
+                  <DockPanel Margin="0,4">
+                    <TextBlock ui:Tr.Text="When" Style="{StaticResource RowLabel}"/>
+                    <TextBox x:Name="ReminderClock" DockPanel.Dock="Right" Width="60" Margin="8,0,0,0" LostFocus="ReminderClock_LostFocus" ui:Tr.ToolTip="Time, 24-hour: 14:30"/>
+                    <DatePicker x:Name="ReminderDay" SelectedDateChanged="ReminderDay_Changed"/>
+                  </DockPanel>
+                  <DockPanel Margin="0,4">
+                    <TextBlock ui:Tr.Text="Repeat" Style="{StaticResource RowLabel}"/>
+                    <ComboBox x:Name="ReminderRepeat" DisplayMemberPath="Title"/>
+                  </DockPanel>
+                  <DockPanel Margin="0,6,0,0">
+                    <Button x:Name="AddReminder" DockPanel.Dock="Right" ui:Tr.Content="Add Reminder" Click="AddReminder_Click" IsEnabled="False"/>
+                    <StackPanel Orientation="Horizontal">
+                      <Button ui:Tr.Content="In 5 min" Tag="5" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
+                      <Button ui:Tr.Content="In 30 min" Tag="30" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
+                      <Button ui:Tr.Content="In 1 hour" Tag="60" Click="ReminderSoon_Click"/>
+                    </StackPanel>
+                  </DockPanel>
+                  <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."/>
                 </StackPanel>
-              </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."/>
+              </GroupBox>
+              <GroupBox ui:Tr.Header="Delivery">
+                <StackPanel>
+                  <CheckBox ui:Tr.Content="Reminders arrive by paper plane" IsChecked="{Binding RemindersEnabled, Mode=TwoWay}"/>
+                  <DockPanel Margin="0,6,0,4">
+                    <TextBlock ui:Tr.Text="Letter stays open" Style="{StaticResource RowLabel}"/>
+                    <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding ReminderLetterSeconds}" ui:Tr.Unit=" s"/>
+                    <Slider Minimum="10" Maximum="600" TickFrequency="10" Value="{Binding ReminderLetterSeconds, Mode=TwoWay}"/>
+                  </DockPanel>
+                  <CheckBox ui:Tr.Content="The thrower reads its note out loud" IsChecked="{Binding ReminderReadAloud, Mode=TwoWay}"/>
+                  <CheckBox ui:Tr.Content="Add a Reminder… opens a paper note" IsChecked="{Binding ReminderPaperNote, Mode=TwoWay}" Margin="0,4,0,0"/>
+                  <Button ui:Tr.Content="Send a Test Letter" Click="TestLetter_Click" HorizontalAlignment="Right" Margin="0,6,0,0"/>
+                  <TextBlock x:Name="ReminderFooter" Style="{StaticResource Footer}"/>
+                </StackPanel>
+              </GroupBox>
+              <GroupBox ui:Tr.Header="Your reminders">
+                <StackPanel>
+                  <TextBlock x:Name="NoReminders" ui:Tr.Text="No reminders yet." Foreground="Gray"/>
+                  <ItemsControl x:Name="ReminderList">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <DockPanel Margin="0,4">
+                          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderSend_Click"><Run ui:Tr.Text="Send Now"/></Hyperlink></TextBlock>
+                            <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderDelete_Click"><Run ui:Tr.Text="Delete"/></Hyperlink></TextBlock>
+                          </StackPanel>
+                          <StackPanel Opacity="{Binding Opacity}">
+                            <TextBlock Text="{Binding Text}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding When}" FontSize="11" Foreground="Gray"/>
+                          </StackPanel>
+                        </DockPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Sent one-off reminders stay here, greyed, until you clear them."/>
+                </StackPanel>
+              </GroupBox>
+              <GroupBox ui:Tr.Header="The file">
+                <DockPanel>
+                  <Button x:Name="ClearSent" DockPanel.Dock="Right" ui:Tr.Content="Clear Sent" Click="ClearSent_Click" Margin="8,0,0,0"/>
+                  <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealReminders_Click" Margin="8,0,0,0"/>
+                  <TextBox x:Name="RemindersPath" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+                </DockPanel>
+              </GroupBox>
             </StackPanel>
-          </GroupBox>
-          <GroupBox ui:Tr.Header="Delivery">
-            <StackPanel>
-              <CheckBox ui:Tr.Content="Reminders arrive by paper plane" IsChecked="{Binding RemindersEnabled, Mode=TwoWay}"/>
-              <DockPanel Margin="0,6,0,4">
-                <TextBlock ui:Tr.Text="Letter stays open" Style="{StaticResource RowLabel}"/>
-                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding ReminderLetterSeconds}" ui:Tr.Unit=" s"/>
-                <Slider Minimum="10" Maximum="600" TickFrequency="10" Value="{Binding ReminderLetterSeconds, Mode=TwoWay}"/>
-              </DockPanel>
-              <CheckBox ui:Tr.Content="The thrower reads its note out loud" IsChecked="{Binding ReminderReadAloud, Mode=TwoWay}"/>
-              <CheckBox ui:Tr.Content="Add a Reminder… opens a paper note" IsChecked="{Binding ReminderPaperNote, Mode=TwoWay}" Margin="0,4,0,0"/>
-              <Button ui:Tr.Content="Send a Test Letter" Click="TestLetter_Click" HorizontalAlignment="Right" Margin="0,6,0,0"/>
-              <TextBlock x:Name="ReminderFooter" Style="{StaticResource Footer}"/>
-            </StackPanel>
-          </GroupBox>
-          <GroupBox ui:Tr.Header="Your reminders">
-            <StackPanel>
-              <TextBlock x:Name="NoReminders" ui:Tr.Text="No reminders yet." Foreground="Gray"/>
-              <ItemsControl x:Name="ReminderList">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <DockPanel Margin="0,4">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderSend_Click"><Run ui:Tr.Text="Send Now"/></Hyperlink></TextBlock>
-                        <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderDelete_Click"><Run ui:Tr.Text="Delete"/></Hyperlink></TextBlock>
-                      </StackPanel>
-                      <StackPanel Opacity="{Binding Opacity}">
-                        <TextBlock Text="{Binding Text}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                        <TextBlock Text="{Binding When}" FontSize="11" Foreground="Gray"/>
-                      </StackPanel>
-                    </DockPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Sent one-off reminders stay here, greyed, until you clear them."/>
-            </StackPanel>
-          </GroupBox>
-          <GroupBox ui:Tr.Header="The file">
-            <DockPanel>
-              <Button x:Name="ClearSent" DockPanel.Dock="Right" ui:Tr.Content="Clear Sent" Click="ClearSent_Click" Margin="8,0,0,0"/>
-              <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealReminders_Click" Margin="8,0,0,0"/>
-              <TextBox x:Name="RemindersPath" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
-            </DockPanel>
-          </GroupBox>
-        </StackPanel>
-      </ScrollViewer>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
     </TabItem>
     <TabItem ui:Tr.Header="Voice">
       <ScrollViewer VerticalScrollBarVisibility="Auto">

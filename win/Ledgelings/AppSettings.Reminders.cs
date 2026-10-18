@@ -29,6 +29,6 @@ public sealed partial class AppSettings
     }
     /// <summary>With voice on, the creature who threw it reads its note out loud as the letter opens.</summary>
     public bool ReminderReadAloud { get => reminderReadAloud; set => Put(ref reminderReadAloud, value, "reminderReadAloud"); }
-    /// <summary>Add a Reminder… opens a sheet of the letter's paper to write on. Off: it opens the Reminders tab.</summary>
+    /// <summary>Add a Reminder… opens a sheet of the letter's paper to write on. Off: it opens Productivity tools › Reminders.</summary>
     public bool ReminderPaperNote { get => reminderPaperNote; set => Put(ref reminderPaperNote, value, "reminderPaperNote"); }
 }
