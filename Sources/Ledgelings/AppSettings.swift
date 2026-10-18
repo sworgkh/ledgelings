@@ -366,6 +366,12 @@ final class AppSettings: ObservableObject {
     /// The picker unfolds and collapses into where the words go. Off: it simply appears and goes.
     @Published var clipAnimate: Bool { didSet { save(clipAnimate, "clipAnimate") } }
     @Published var clipAnimationSpeed: Double { didSet { save(clipAnimationSpeed, "clipAnimationSpeed") } }
+    /// A creature leaps to the middle of the screen with the picker and holds it by a corner.
+    @Published var clipHelperEnabled: Bool { didSet { save(clipHelperEnabled, "clipHelperEnabled") } }
+    /// Which character brings it, by name; empty: whoever is nearest the middle of the screen.
+    @Published var clipHelper: String { didSet { save(clipHelper, "clipHelper") } }
+    /// It says a short line of its own as the sheet unfolds (with talk on).
+    @Published var clipHelperTalks: Bool { didSet { save(clipHelperTalks, "clipHelperTalks") } }
     /// Why a clipboard shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var clipShortcutProblem = ""
 
@@ -665,6 +671,9 @@ final class AppSettings: ObservableObject {
         clipSnippetShortcutsEnabled = defaults.object(forKey: "clipSnippetShortcutsEnabled") as? Bool ?? true
         clipAnimate = defaults.object(forKey: "clipAnimate") as? Bool ?? true
         clipAnimationSpeed = clamp("clipAnimationSpeed", 1, Self.clipAnimationSpeedRange)
+        clipHelperEnabled = defaults.object(forKey: "clipHelperEnabled") as? Bool ?? true
+        clipHelper = defaults.string(forKey: "clipHelper") ?? ""
+        clipHelperTalks = defaults.object(forKey: "clipHelperTalks") as? Bool ?? true
         followLanguage()
     }
 

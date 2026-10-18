@@ -53,7 +53,7 @@ struct SettingsView: View {
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)
             CalendarSettingsView(settings: settings).tabItem { Text(tr("Calendar")) }.tag(SettingsTab.calendar)
-            ProductivitySettingsView(settings: settings, reminders: reminders, clips: clips, navigation: navigation, send: send, editSnippets: editSnippets).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
+            ProductivitySettingsView(settings: settings, reminders: reminders, clips: clips, library: library, navigation: navigation, send: send, editSnippets: editSnippets).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text(tr("Voice")) }.tag(SettingsTab.voice)
             CostsSettingsView(spend: spend).tabItem { Text(tr("Costs")) }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text(tr("Chats")) }.tag(SettingsTab.chats)

@@ -202,6 +202,122 @@
       "Прямо тут. Моя кровать — {bed}. Всем спокойной ночи."
     ]
   },
+  "clipHelper" : {
+    "anyone" : [
+      "Вот. Выбирай.",
+      "Держу, выбирай."
+    ],
+    "lines" : {
+      "Blocky" : [
+        "Ладно. Выбирай.",
+        "Курсор, не дёргайся."
+      ],
+      "Blorp" : [
+        "Блорп! Бумажки!",
+        "Шлюп. Выбирай."
+      ],
+      "Boo" : [
+        "БУ! ...выбирай.",
+        "Жуткие бумажки!"
+      ],
+      "Cap" : [
+        "В моё время всё записывали.",
+        "В моё время была копирка."
+      ],
+      "Croak" : [
+        "Сухие бумаги. Быстрее.",
+        "Ворчу. Выбирай."
+      ],
+      "Delta" : [
+        "Новое с прошлого раза.",
+        "Что-то изменилось. Выбирай."
+      ],
+      "Dot" : [
+        "Я уже тут. Давай.",
+        "Самый быстрый листок."
+      ],
+      "Glitch" : [
+        "Выбирай выбирай одну.",
+        "Вирусов нет. Наверное."
+      ],
+      "Goop" : [
+        "Хорошие бумажки!",
+        "Липко! Выбирай."
+      ],
+      "Hopper" : [
+        "Лучший прыжок в мире!",
+        "Бум! Достал!"
+      ],
+      "Mittens" : [
+        "Муррр... тёплые бумажки.",
+        "Мрр. Выбери хорошую."
+      ],
+      "Morel" : [
+        "Не спеша... выбирай.",
+        "Сыро и тихо. Выбирай."
+      ],
+      "Mortimer" : [
+        "Выбирай с умом, юнец.",
+        "А, старые бумаги."
+      ],
+      "Mossy" : [
+        "Тихий пруд всё хранит.",
+        "Не спеши. Выбирай."
+      ],
+      "Pip" : [
+        "Ой, а какую?!",
+        "Выбирай-выбирай-выбирай!"
+      ],
+      "Puddle" : [
+        "Осторожно, не пролей.",
+        "Скорее, пока не высох."
+      ],
+      "Puff" : [
+        "Хи! Споры! Шучу. Выбирай.",
+        "Ой, сколько всего!"
+      ],
+      "Ruth" : [
+        "Разложено, новые сверху.",
+        "Всё посчитано. Выбирай."
+      ],
+      "Sheet" : [
+        "Формально я парю.",
+        "Бумага на бумаге."
+      ],
+      "Sir Pounce" : [
+        "Охота на слова!",
+        "Хватай одну!"
+      ],
+      "Spike" : [
+        "Укажи на одну.",
+        "Острый выбор, пожалуйста."
+      ],
+      "Sprocket" : [
+        "Свежесмазанные бумаги!",
+        "Всё подтянуто. Выбирай."
+      ],
+      "Unit 7" : [
+        "Окно выбора в сети. 100%.",
+        "Пункты загружены. Выбери 1."
+      ],
+      "Wedge" : [
+        "Спокойно. Выбирай.",
+        "Не опрокинусь. Выбирай."
+      ],
+      "Whiskers" : [
+        "Не то чтобы мне было дело. Выбирай.",
+        "Хм. Вот эту?"
+      ],
+      "Wisp" : [
+        "Слова, что сюда приплыли.",
+        "Старые копии, как старые мониторы."
+      ],
+      "Zed" : [
+        "*зевает* ...выбирай.",
+        "Мм. Вот. Спать хочу."
+      ]
+    }
+  },
   "complaints" : {
     "anyone" : [
       "Эй! Уже {times}-й раз подряд. Оставь меня в покое!",
@@ -2864,7 +2980,7 @@
     "+ Snippet" : "+ Заготовка",
     "<describe your creature here>" : "<опишите здесь своё существо>",
     "⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE" : "⏎ ВСТАВИТЬ  ⌥⏎ %@  ⌘1–9 ВЫБОР  ⇥ ГРУППА  ⌘P ЗАКРЕПИТЬ  ⌫ ЗАБЫТЬ  ⌘E ПРАВКА  ⎋ ЗАКРЫТЬ",
-    "⏎ pastes the chosen item; ⌥⏎ pastes it the other way (plain or formatted). The picker collapses into the text cursor when the app says where it is. The paste never waits for the animation." : "⏎ вставляет выбранное; ⌥⏎ — наоборот (без оформления или с ним). Окно сворачивается в текстовый курсор, если программа сообщает, где он. Вставка никогда не ждёт анимацию.",
+    "⏎ pastes, ⌥⏎ the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits." : "⏎ вставляет, ⌥⏎ — наоборот (без оформления или с ним). Существо приносит лист и держит за уголок; лист сворачивается в курсор, существо прыгает обратно. Вставка не ждёт.",
     "$%.2f in · $%.2f out per M" : "$%.2f вход · $%.2f выход за млн",
     "$%.2f per M chars" : "$%.2f за млн символов",
     "1 H" : "1 Ч",
@@ -3189,6 +3305,7 @@
     "in daylight" : "засветло",
     "Installed" : "Установленные",
     "It is %@'s most hunted day on record." : "Для %@ это самый беспокойный день за всё время.",
+    "It says a line as the sheet unfolds" : "Говорит реплику, когда лист разворачивается",
     "Jewish" : "Иудейский",
     "Jewish holidays" : "Еврейские праздники",
     "Just there" : "Просто есть",
@@ -3282,6 +3399,7 @@
     "Nobody on screen right now." : "Сейчас на экране никого нет.",
     "nobody on screen to test with" : "на экране нет никого, чтобы проверить",
     "Nobody talks: %@." : "Никто не говорит: %@.",
+    "Nobody: it unfolds by itself" : "Никто: лист разворачивается сам",
     "none planted" : "ничего не посажено",
     "none yet; this is their first" : "пока не было; эта — первая",
     "not available here; use the installed Ledgelings.app" : "здесь недоступно; используйте установленный Ledgelings.app",
@@ -3652,12 +3770,14 @@
     "When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday." : "Когда придёт время, одно из существ сложит напоминание в бумажный самолётик и бросит в вас. Уже прошедшее время доставляется сразу. Повторяющиеся напоминания сохраняют время суток; «по будням» пропускает субботу и воскресенье.",
     "where nobody is" : "там, где никого нет",
     "Which games" : "Какие игры",
+    "Who brings it" : "Кто приносит",
     "Who is speaking (system prompt)" : "Кто говорит (системный промпт)",
     "Who lives with whom" : "Кто с кем живёт",
     "Who plants where" : "Кто где сажает",
     "Who sleeps where" : "Кто где спит",
     "Who they are" : "Кто это",
     "who they are, how they sound" : "какой он, как звучит",
+    "Whoever is nearest the middle" : "Тот, кто ближе к середине",
     "Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays on the Costs tab); otherwise, and for the last word, built-in lines. Needs Talk on." : "Кто начинает игру, объявляет об этом своим голосом, а когда она кончается, за кем-то последнее слово. Если на вкладке «Разговоры» настроена модель, первую реплику пишет она (учитывается как «Игры» на вкладке «Расходы»); иначе, и для последнего слова, — встроенные реплики. Нужны включённые разговоры.",
     "Wistful and poetic. Remembers monitors that are gone." : "Задумчивое и поэтичное. Помнит мониторы, которых больше нет.",
     "With a model, the note is written for the moment (Costs › Reminders)." : "С моделью записка пишется к моменту (Расходы › Напоминания).",

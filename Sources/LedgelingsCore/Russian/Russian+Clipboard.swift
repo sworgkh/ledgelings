@@ -76,8 +76,12 @@ extension Strings {
         "Unfold and collapse the picker": "Разворачивать и сворачивать окно выбора",
         "Animation speed": "Скорость анимации",
         "Pasting": "Вставка",
-        "⏎ pastes the chosen item; ⌥⏎ pastes it the other way (plain or formatted). The picker collapses into the text cursor when the app says where it is. The paste never waits for the animation.":
-            "⏎ вставляет выбранное; ⌥⏎ — наоборот (без оформления или с ним). Окно сворачивается в текстовый курсор, если программа сообщает, где он. Вставка никогда не ждёт анимацию.",
+        "⏎ pastes, ⌥⏎ the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits.":
+            "⏎ вставляет, ⌥⏎ — наоборот (без оформления или с ним). Существо приносит лист и держит за уголок; лист сворачивается в курсор, существо прыгает обратно. Вставка не ждёт.",
+        "Who brings it": "Кто приносит",
+        "Whoever is nearest the middle": "Тот, кто ближе к середине",
+        "Nobody: it unfolds by itself": "Никто: лист разворачивается сам",
+        "It says a line as the sheet unfolds": "Говорит реплику, когда лист разворачивается",
         "History picker": "Окно истории",
         "Snippets picker": "Окно заготовок",
         "A snippet's own shortcut pastes it at once": "Собственное сочетание заготовки сразу вставляет её",

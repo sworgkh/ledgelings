@@ -26,7 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var clipWatcher: ClipWatcher?
     private var clipShortcuts: ClipShortcuts?
     private lazy var picker = ClipPickerController(settings: settings, book: clips, watcher: { [weak self] in self?.clipWatcher },
-                                                   editSnippets: { [weak self] in self?.snippetsWindow.show() })
+                                                   editSnippets: { [weak self] in self?.snippetsWindow.show() },
+                                                   helper: { [weak self] in self?.colony })
     private lazy var snippetsWindow = SnippetsWindowController(settings: settings, book: clips)
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
@@ -130,6 +131,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 do { try await ScreensFilm.run(output: URL(fileURLWithPath: out)) }
                 catch { FileHandle.standardError.write(Data("Ledgelings screens film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
+        if let at = CommandLine.arguments.firstIndex(of: "--clip-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/clipboard.mp4"
+            Task { @MainActor in
+                do { try await ClipFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings clip film: \(error)\n".utf8)); exit(1) }
                 exit(0)
             }
             return
