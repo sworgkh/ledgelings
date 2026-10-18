@@ -45,15 +45,22 @@ enum ShotDemo {
         return Set(bytes).count
     }
 
-    static func run(settings: AppSettings, controller: ShotController, snapshot: URL?) async -> Bool {
+    /// The settings the demo changes: put back after, and a key that was not saved before is removed again.
+    static let touched = ["shotCopy", "shotSave", "shotLastRect", "shotCreatureBrings", "shotColour"]
+
+    static func run(settings: AppSettings, controller: ShotController, snapshot: URL?, defaults: UserDefaults = .standard) async -> Bool {
         let start = Date()
         func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "shot %5.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
         let board = ClipPaster.saved()
-        let kept = (copy: settings.shotCopy, save: settings.shotSave, last: settings.shotLastRect, brings: settings.shotCreatureBrings)
+        let kept = (copy: settings.shotCopy, save: settings.shotSave, last: settings.shotLastRect, brings: settings.shotCreatureBrings,
+                    colour: settings.shotColour)
+        let unsaved = touched.filter { defaults.object(forKey: $0) == nil }
         defer {
             ClipPaster.restore(board)
             settings.shotCopy = kept.copy; settings.shotSave = kept.save; settings.shotLastRect = kept.last
-            settings.shotCreatureBrings = kept.brings
+            settings.shotCreatureBrings = kept.brings; settings.shotColour = kept.colour
+            // Putting a value back saves it; one that was never saved goes again, so the default still decides.
+            unsaved.forEach(defaults.removeObject(forKey:))
             log("clipboard and settings put back")
         }
         settings.shotCopy = true; settings.shotSave = false
