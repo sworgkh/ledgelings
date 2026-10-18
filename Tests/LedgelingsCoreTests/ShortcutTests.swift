@@ -26,4 +26,11 @@ import Testing
         #expect(Shortcut.standard.label(key: "L") == "⌃⌥L")
         #expect(Shortcut(keyCode: 0, modifiers: [.command, .shift, .option, .control]).symbols == "⌃⌥⇧⌘")
     }
+
+    @Test func theClipboardShortcutsAreTheirOwnAndFallBackToThemselves() {
+        #expect(Shortcut.clipHistory.label(key: "V") == "⌃⌥V" && Shortcut.clipSnippets.label(key: "B") == "⌃⌥B")
+        #expect(Set([Shortcut.standard.keyCode, Shortcut.clipHistory.keyCode, Shortcut.clipSnippets.keyCode]).count == 3)
+        #expect(Shortcut(savedKeyCode: nil, savedModifiers: nil, standard: .clipHistory) == .clipHistory)
+        #expect(Shortcut(savedKeyCode: 9, savedModifiers: 2, standard: .clipSnippets) == .clipSnippets)
+    }
 }

@@ -4,50 +4,87 @@ import Combine
 import LedgelingsCore
 import SwiftUI
 
-/// The shortcut that works in every app: the way to the creatures when the menu
-/// bar has no room for the icon, which on a notched Mac is often. Registered
-/// with Carbon's hot keys, the one system-wide way that asks for no permission.
-/// It follows the settings: off, changed, or let go while a new one is recorded.
+/// Every shortcut the app takes from all apps, under one Carbon handler: the
+/// Creature Actions shortcut, the clipboard pickers', each snippet's own. Each is
+/// told apart by its hot key id, so a press reaches only its own action.
 @MainActor
-final class GlobalShortcut {
-    private let settings: AppSettings
-    private let pressed: () -> Void
-    private var hotKey: EventHotKeyRef?
+final class HotKeys {
+    static let shared = HotKeys()
     private var handler: EventHandlerRef?
-    private var following: AnyCancellable?
+    private var held: [UInt32: EventHotKeyRef] = [:]
+    private var actions: [UInt32: () -> Void] = [:]
+    private var lastID: UInt32 = 0
 
-    init(settings: AppSettings, pressed: @escaping () -> Void) {
-        self.settings = settings
-        self.pressed = pressed
+    private init() {
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        InstallEventHandler(GetApplicationEventTarget(), { _, _, context in
-            guard let context else { return noErr }
-            let me = Unmanaged<GlobalShortcut>.fromOpaque(context).takeUnretainedValue()
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
+            var id = EventHotKeyID()
+            guard let event, GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                               nil, MemoryLayout<EventHotKeyID>.size, nil, &id) == noErr else { return noErr }
             // Carbon calls on the main thread, in the middle of its own event; what
             // the press opens (a menu tracks in its own loop) waits until it is done.
-            DispatchQueue.main.async { me.pressed() }
+            DispatchQueue.main.async { MainActor.assumeIsolated { HotKeys.shared.actions[id.id]?() } }
             return noErr
-        }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &handler)
-        following = Publishers.CombineLatest3(settings.$shortcutEnabled, settings.$shortcut, settings.$recordingShortcut)
-            .sink { [weak self] enabled, shortcut, recording in self?.hold(enabled && !recording ? shortcut : nil) }
+        }, 1, &spec, nil, &handler)
     }
 
-    /// Lets go of the old shortcut and takes the new one, or none.
-    private func hold(_ shortcut: Shortcut?) {
-        if let hotKey { UnregisterEventHotKey(hotKey) }
-        hotKey = nil
-        var problem = ""
-        if let shortcut {
-            // "LDGL", so the system can tell our hot key from another app's.
-            let id = EventHotKeyID(signature: 0x4C44_474C, id: 1)
-            let status = RegisterEventHotKey(UInt32(shortcut.keyCode), Self.carbon(shortcut.modifiers), id,
-                                             GetApplicationEventTarget(), 0, &hotKey)
-            if status != noErr {
-                hotKey = nil
-                problem = tr("macOS would not take %@: it is already taken. Record another.", Self.label(shortcut))
+    /// A number of its own for a new shortcut.
+    func newID() -> UInt32 {
+        lastID += 1
+        return lastID
+    }
+
+    /// Lets go of what `id` held and takes `shortcut`, or nothing. False when the
+    /// system refused it: another app, or another of ours, has it already.
+    @discardableResult
+    func hold(_ id: UInt32, _ shortcut: Shortcut?, pressed: @escaping () -> Void) -> Bool {
+        if let old = held.removeValue(forKey: id) { UnregisterEventHotKey(old) }
+        actions[id] = pressed
+        guard let shortcut else { return true }
+        var ref: EventHotKeyRef?
+        // "LDGL", so the system can tell our hot keys from another app's.
+        let status = RegisterEventHotKey(UInt32(shortcut.keyCode), GlobalShortcut.carbon(shortcut.modifiers),
+                                         EventHotKeyID(signature: 0x4C44_474C, id: id), GetApplicationEventTarget(), 0, &ref)
+        guard status == noErr, let ref else { return false }
+        held[id] = ref
+        return true
+    }
+
+    func release(_ id: UInt32) {
+        if let old = held.removeValue(forKey: id) { UnregisterEventHotKey(old) }
+        actions[id] = nil
+    }
+}
+
+/// One shortcut that works in every app, following the settings: off, changed, or
+/// let go while any shortcut is being recorded. The Creature Actions one is the
+/// way to the creatures when the menu bar has no room for the icon, which on a
+/// notched Mac is often. Carbon's hot keys are the one system-wide way that asks
+/// for no permission.
+@MainActor
+final class GlobalShortcut {
+    private let id = HotKeys.shared.newID()
+    private var following: AnyCancellable?
+
+    /// Creature Actions' shortcut: `shortcutEnabled` and `shortcut`, its trouble in `shortcutProblem`.
+    convenience init(settings: AppSettings, pressed: @escaping () -> Void) {
+        self.init(settings: settings, enabled: settings.$shortcutEnabled, shortcut: settings.$shortcut,
+                  problem: { [weak settings] in if settings?.shortcutProblem != $0 { settings?.shortcutProblem = $0 } }, pressed: pressed)
+    }
+
+    init(settings: AppSettings, enabled: some Publisher<Bool, Never>, shortcut: some Publisher<Shortcut, Never>,
+         problem: @escaping (String) -> Void, pressed: @escaping () -> Void) {
+        following = Publishers.CombineLatest3(enabled, shortcut, settings.$recordingShortcut)
+            .sink { [id] enabled, shortcut, recording in
+                let wanted = enabled && !recording ? shortcut : nil
+                let taken = HotKeys.shared.hold(id, wanted, pressed: pressed)
+                problem(taken ? "" : tr("macOS would not take %@: it is already taken. Record another.", Self.label(shortcut)))
             }
-        }
-        if settings.shortcutProblem != problem { settings.shortcutProblem = problem }
+    }
+
+    deinit {
+        let id = id
+        MainActor.assumeIsolated { HotKeys.shared.release(id) }
     }
 
     static func carbon(_ modifiers: Shortcut.Modifiers) -> UInt32 {
@@ -103,29 +140,38 @@ final class GlobalShortcut {
     static func label(_ shortcut: Shortcut) -> String { shortcut.label(key: keyName(shortcut.keyCode)) }
 }
 
-/// The shortcut as a button: click it and the next keys pressed become the
+/// A shortcut as a button: click it and the next keys pressed become the
 /// shortcut. Escape, or a second click, keeps the old one. A key with no
-/// Command, Control or Option held is refused with a beep.
+/// Command, Control or Option held is refused with a beep. Every shortcut is let
+/// go while one is recorded, so the keys reach the recorder.
 struct ShortcutRecorder: View {
     @ObservedObject var settings: AppSettings
+    /// Which shortcut it records; Creature Actions' when not given.
+    var shortcut: Binding<Shortcut>?
+    /// Or one that may be none at all, as a snippet's own.
+    var optional: Binding<Shortcut?>?
     @State private var monitor: Any?
+    @State private var recording = false
+
+    private var current: Shortcut? { optional.map(\.wrappedValue) ?? shortcut?.wrappedValue ?? settings.shortcut }
 
     var body: some View {
-        Button(settings.recordingShortcut ? tr("Press the keys…") : GlobalShortcut.label(settings.shortcut)) {
-            settings.recordingShortcut ? stop() : start()
+        Button(recording ? tr("Press the keys…") : current.map(GlobalShortcut.label) ?? tr("Record Shortcut")) {
+            recording ? stop() : start()
         }
         .monospacedDigit()
         .onDisappear(perform: stop)
     }
 
     private func start() {
+        recording = true
         settings.recordingShortcut = true
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let made = Shortcut(keyCode: Int(event.keyCode), modifiers: GlobalShortcut.modifiers(event.modifierFlags))
             if made.keyCode == kVK_Escape, made.modifiers.isEmpty {
                 stop()
             } else if made.isUsable {
-                settings.shortcut = made
+                if let optional { optional.wrappedValue = made } else if let shortcut { shortcut.wrappedValue = made } else { settings.shortcut = made }
                 stop()
             } else {
                 NSSound.beep()
@@ -137,6 +183,7 @@ struct ShortcutRecorder: View {
     private func stop() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
+        recording = false
         if settings.recordingShortcut { settings.recordingShortcut = false }
     }
 }

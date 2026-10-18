@@ -327,6 +327,48 @@ final class AppSettings: ObservableObject {
     /// Add a Reminder… opens a sheet of the letter's paper to write on. Off: it opens the Reminders tab.
     @Published var reminderPaperNote: Bool { didSet { save(reminderPaperNote, "reminderPaperNote") } }
 
+    // MARK: Clipboard
+
+    /// Copies kept in the history; pinned ones come on top of these.
+    static let clipHistoryLimitRange = 10...2000
+    /// Days a copy is kept; 0 keeps it until the limit pushes it out.
+    static let clipKeepDaysRange = 0...365
+    /// The clipboard manager: the history of copies, the snippets and their pickers. Off: nothing is watched, no shortcut is taken.
+    @Published var clipboardEnabled: Bool { didSet { save(clipboardEnabled, "clipboardEnabled") } }
+    /// Every copy goes into the history. Off: only the snippets.
+    @Published var clipHistoryEnabled: Bool { didSet { save(clipHistoryEnabled, "clipHistoryEnabled") } }
+    @Published var clipHistoryLimit: Int { didSet { save(clipHistoryLimit, "clipHistoryLimit") } }
+    @Published var clipKeepDays: Int { didSet { save(clipKeepDays, "clipKeepDays") } }
+    /// Apps, by bundle id, whose copies are never kept: password managers to begin with.
+    @Published var clipExcludedApps: [String] { didSet { save(clipExcludedApps, "clipExcludedApps") } }
+    /// A copy's formatting (RTF) is kept beside its words.
+    @Published var clipKeepFormatting: Bool { didSet { save(clipKeepFormatting, "clipKeepFormatting") } }
+    /// Files copied in Finder are kept, as their paths, and paste back as files.
+    @Published var clipKeepFiles: Bool { didSet { save(clipKeepFiles, "clipKeepFiles") } }
+    /// Choosing an item pastes it into the app you were in (needs Accessibility). Off: it is only copied.
+    @Published var clipAutoPaste: Bool { didSet { save(clipAutoPaste, "clipAutoPaste") } }
+    /// Paste the words without their formatting; ⌥⏎ in the picker does the other one.
+    @Published var clipPlainText: Bool { didSet { save(clipPlainText, "clipPlainText") } }
+    /// Touch ID or the login password before a protected snippet is pasted or shown.
+    @Published var clipProtectedNeedsAuth: Bool { didSet { save(clipProtectedNeedsAuth, "clipProtectedNeedsAuth") } }
+    @Published var clipHistoryShortcutEnabled: Bool { didSet { save(clipHistoryShortcutEnabled, "clipHistoryShortcutEnabled") } }
+    @Published var clipHistoryShortcut: Shortcut {
+        didSet { save(clipHistoryShortcut.keyCode, "clipHistoryShortcutKeyCode"); save(clipHistoryShortcut.modifiers.rawValue, "clipHistoryShortcutModifiers") }
+    }
+    @Published var clipSnippetsShortcutEnabled: Bool { didSet { save(clipSnippetsShortcutEnabled, "clipSnippetsShortcutEnabled") } }
+    @Published var clipSnippetsShortcut: Shortcut {
+        didSet { save(clipSnippetsShortcut.keyCode, "clipSnippetsShortcutKeyCode"); save(clipSnippetsShortcut.modifiers.rawValue, "clipSnippetsShortcutModifiers") }
+    }
+    /// A snippet given its own shortcut pastes at once when it is pressed.
+    @Published var clipSnippetShortcutsEnabled: Bool { didSet { save(clipSnippetShortcutsEnabled, "clipSnippetShortcutsEnabled") } }
+    /// How fast the picker unfolds and collapses: 2 is twice as fast. The paste itself never waits for it.
+    static let clipAnimationSpeedRange = 0.5...3.0
+    /// The picker unfolds and collapses into where the words go. Off: it simply appears and goes.
+    @Published var clipAnimate: Bool { didSet { save(clipAnimate, "clipAnimate") } }
+    @Published var clipAnimationSpeed: Double { didSet { save(clipAnimationSpeed, "clipAnimationSpeed") } }
+    /// Why a clipboard shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var clipShortcutProblem = ""
+
     // MARK: Voice
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
@@ -600,6 +642,29 @@ final class AppSettings: ObservableObject {
         reminderReadAloud = defaults.object(forKey: "reminderReadAloud") as? Bool ?? true
         // On: writing a reminder should feel like the game that delivers it.
         reminderPaperNote = defaults.object(forKey: "reminderPaperNote") as? Bool ?? true
+        clipboardEnabled = defaults.object(forKey: "clipboardEnabled") as? Bool ?? true
+        clipHistoryEnabled = defaults.object(forKey: "clipHistoryEnabled") as? Bool ?? true
+        // 200 copies and a month: a working week's worth to search through, small enough to load at once.
+        let clipLimit = defaults.object(forKey: "clipHistoryLimit") as? Int ?? 200
+        clipHistoryLimit = min(max(clipLimit, Self.clipHistoryLimitRange.lowerBound), Self.clipHistoryLimitRange.upperBound)
+        let keepDays = defaults.object(forKey: "clipKeepDays") as? Int ?? 30
+        clipKeepDays = min(max(keepDays, Self.clipKeepDaysRange.lowerBound), Self.clipKeepDaysRange.upperBound)
+        clipExcludedApps = defaults.stringArray(forKey: "clipExcludedApps") ?? Clipboard.defaultExcludedMacApps
+        clipKeepFormatting = defaults.object(forKey: "clipKeepFormatting") as? Bool ?? true
+        clipKeepFiles = defaults.object(forKey: "clipKeepFiles") as? Bool ?? true
+        clipAutoPaste = defaults.object(forKey: "clipAutoPaste") as? Bool ?? true
+        clipPlainText = defaults.object(forKey: "clipPlainText") as? Bool ?? false
+        // On: a protected snippet is a password, and a password should ask before it is typed.
+        clipProtectedNeedsAuth = defaults.object(forKey: "clipProtectedNeedsAuth") as? Bool ?? true
+        clipHistoryShortcutEnabled = defaults.object(forKey: "clipHistoryShortcutEnabled") as? Bool ?? true
+        clipHistoryShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "clipHistoryShortcutKeyCode") as? Int,
+                                       savedModifiers: defaults.object(forKey: "clipHistoryShortcutModifiers") as? Int, standard: .clipHistory)
+        clipSnippetsShortcutEnabled = defaults.object(forKey: "clipSnippetsShortcutEnabled") as? Bool ?? true
+        clipSnippetsShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "clipSnippetsShortcutKeyCode") as? Int,
+                                        savedModifiers: defaults.object(forKey: "clipSnippetsShortcutModifiers") as? Int, standard: .clipSnippets)
+        clipSnippetShortcutsEnabled = defaults.object(forKey: "clipSnippetShortcutsEnabled") as? Bool ?? true
+        clipAnimate = defaults.object(forKey: "clipAnimate") as? Bool ?? true
+        clipAnimationSpeed = clamp("clipAnimationSpeed", 1, Self.clipAnimationSpeedRange)
         followLanguage()
     }
 

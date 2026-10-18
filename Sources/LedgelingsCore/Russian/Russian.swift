@@ -23,5 +23,6 @@ extension Strings {
         "storyline": ruStoryline,
         "play": ruPlay,
         "screens": ruScreens,
+        "clipboard": ruClipboard,
     ]
 }

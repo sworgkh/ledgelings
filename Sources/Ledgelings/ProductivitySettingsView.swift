@@ -6,11 +6,12 @@ import SwiftUI
 /// at the top lists every case in order; `SettingsWindowController.show(tool:)`
 /// opens the tab on one.
 enum ProductivityTool: String, CaseIterable, Hashable {
-    case reminders
+    case reminders, clipboard
 
     var title: String {
         switch self {
         case .reminders: tr("Reminders")
+        case .clipboard: tr("Clipboard")
         }
     }
 }
@@ -21,9 +22,12 @@ enum ProductivityTool: String, CaseIterable, Hashable {
 struct ProductivitySettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var reminders: ReminderBook
+    @ObservedObject var clips: ClipBook
     @ObservedObject var navigation: SettingsNavigation
     /// Deliver a reminder now.
     let send: (Reminders.Reminder) -> Void
+    /// Opens Edit Snippets….
+    var editSnippets: () -> Void = {}
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,6 +45,7 @@ struct ProductivitySettingsView: View {
     @ViewBuilder private func page(_ tool: ProductivityTool) -> some View {
         switch tool {
         case .reminders: RemindersSettingsView(settings: settings, reminders: reminders, send: send)
+        case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, editSnippets: editSnippets)
         }
     }
 }
