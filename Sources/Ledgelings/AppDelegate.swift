@@ -14,13 +14,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let beds = BedBook()
     private lazy var voice = Voice(settings: settings, spend: spend, history: history)
     private lazy var settingsWindow = SettingsWindowController(
-        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice,
+        settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, clips: clips,
         send: { [weak self] in self?.colony?.deliverNow($0) },
-        clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 })
+        clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 },
+        editSnippets: { [weak self] in self?.snippetsWindow.show() })
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private lazy var actions = ActionsController(settings: settings, colony: { [weak self] in self?.colony },
                                                  addReminder: { [weak self] in self?.openReminders() },
                                                  open: { [weak self] in self?.follow($0) })
+    private let clips = ClipBook()
+    private var clipWatcher: ClipWatcher?
+    private var clipShortcuts: ClipShortcuts?
+    private lazy var picker = ClipPickerController(settings: settings, book: clips, watcher: { [weak self] in self?.clipWatcher },
+                                                   editSnippets: { [weak self] in self?.snippetsWindow.show() })
+    private lazy var snippetsWindow = SnippetsWindowController(settings: settings, book: clips)
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
     private var shortcutShown: AnyCancellable?
@@ -127,6 +134,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if CommandLine.arguments.contains("--clip-demo") {
+            let shot = CommandLine.arguments.firstIndex(of: "--snapshot").flatMap { CommandLine.arguments.indices.contains($0 + 1) ? CommandLine.arguments[$0 + 1] : nil }
+            Task { @MainActor in
+                exit(await ClipDemo.run(settings: settings, snapshot: shot.map { URL(fileURLWithPath: $0) }) ? 0 : 1)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--tea-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/tea.mp4"
@@ -148,6 +162,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         installStatusItem()
+        clipWatcher = ClipWatcher(settings: settings, book: clips)
+        clipShortcuts = ClipShortcuts(settings: settings, book: clips, open: { [weak self] in self?.clipShortcutPressed($0) },
+                                      paste: { [weak self] in self?.picker.pasteNow($0) })
         shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
         shortcutShown = Publishers.CombineLatest(settings.$shortcutEnabled, settings.$shortcut)
             .sink { [weak self] enabled, shortcut in self?.showShortcutInMenu(enabled ? shortcut : nil) }
@@ -156,6 +173,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let label = GlobalShortcut.label(settings.shortcut)
             let state = !settings.shortcutEnabled ? "off" : settings.shortcutProblem.isEmpty ? "registered" : "refused: \(settings.shortcutProblem)"
             FileHandle.standardError.write(Data("shortcut \(label) \(state)\n".utf8))
+            for (name, on, key) in [("history", settings.clipHistoryShortcutEnabled, settings.clipHistoryShortcut),
+                                    ("snippets", settings.clipSnippetsShortcutEnabled, settings.clipSnippetsShortcut)] {
+                let clipState = !settings.clipboardEnabled || !on ? "off" : settings.clipShortcutProblem.isEmpty ? "registered" : "refused: \(settings.clipShortcutProblem)"
+                FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(key)) \(name) \(clipState)\n".utf8))
+            }
             Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
         }
         // `--converse`: one conversation, every line and voice cue on stderr with
@@ -309,7 +331,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--settings [creatures|actions|chases|beds|play|sprites|talk|flowers|bonds|calendar|productivity|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? SettingsTab.named(CommandLine.arguments[at + 1]) : nil)
+            let name = CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : ""
+            // `clipboard` is Productivity tools on its Clipboard tool.
+            if name == "clipboard" { settingsWindow.show(tool: .clipboard) } else { settingsWindow.show(tab: SettingsTab.named(name)) }
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
                 let out = URL(fileURLWithPath: CommandLine.arguments[shot + 1])
@@ -329,6 +353,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let cursorMoodItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     /// Which monitor they live on; only with two or more attached.
     private let screenItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let clipHistoryItem = NSMenuItem(title: "", action: #selector(openClipHistory), keyEquivalent: "")
+    private let clipSnippetsItem = NSMenuItem(title: "", action: #selector(openClipSnippets), keyEquivalent: "")
+    private let editSnippetsItem = NSMenuItem(title: "", action: #selector(openSnippetsEditor), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -345,6 +372,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(activitiesItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
+        for item in [clipHistoryItem, clipSnippetsItem, editSnippetsItem] {
+            item.target = self
+            menu.addItem(item)
+        }
         voiceItem.target = self
         menu.addItem(voiceItem)
         revengeItem.target = self
@@ -395,6 +426,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         settingsItem.title = tr("Settings…")
         languageItem.title = tr("Language")
         quitItem.title = tr("Quit Ledgelings")
+        clipHistoryItem.title = tr("Clipboard History…")
+        clipSnippetsItem.title = tr("Paste a Snippet…")
+        editSnippetsItem.title = tr("Edit Snippets…")
+        for (item, shortcut, on) in [(clipHistoryItem, settings.clipHistoryShortcut, settings.clipHistoryShortcutEnabled),
+                                     (clipSnippetsItem, settings.clipSnippetsShortcut, settings.clipSnippetsShortcutEnabled)] {
+            item.isHidden = !settings.clipboardEnabled
+            let key = GlobalShortcut.keyName(shortcut.keyCode).lowercased()
+            item.keyEquivalent = on && key.count == 1 ? key : ""
+            item.keyEquivalentModifierMask = GlobalShortcut.flags(shortcut.modifiers)
+        }
+        editSnippetsItem.isHidden = !settings.clipboardEnabled
         for choice in languageItem.submenu?.items ?? [] {
             choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
         }
@@ -450,6 +492,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func openActions() { actions.show() }
+    @objc private func openClipHistory() { picker.show(.recent) }
+    @objc private func openClipSnippets() { picker.show(.snippets) }
+    @objc private func openSnippetsEditor() { snippetsWindow.show() }
+
+    /// A clipboard shortcut from any app: its picker up, or switched, or away.
+    private func clipShortcutPressed(_ group: ClipPickerModel.Group) {
+        picker.toggle(group)
+        if CommandLine.arguments.contains("--shortcut") {
+            FileHandle.standardError.write(Data("shortcut pressed: \(group == .recent ? "history" : "snippets") picker \(picker.isUp ? "up" : "away")\n".utf8))
+            Task { @MainActor in try? await Task.sleep(for: .seconds(2)); exit(0) }
+        }
+    }
 
     /// The shortcut from any app: the sheet comes up, or goes away if it is up.
     private func shortcutPressed() {

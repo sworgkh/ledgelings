@@ -20,6 +20,11 @@ public struct Shortcut: Equatable, Sendable {
     public static let keyCodes = 0...127
     /// Control-Option-L, L for Ledgelings: free in the system and in the common window managers.
     public static let standard = Shortcut(keyCode: 37, modifiers: [.control, .option])
+    /// The clipboard history picker: Control-Option-V. Not ⌘⇧V, which Chrome, Slack and
+    /// Google Docs use to paste without formatting, nor ⌥⇧⌘V, the Mac's own Paste and Match Style.
+    public static let clipHistory = Shortcut(keyCode: 9, modifiers: [.control, .option])
+    /// The snippets picker: Control-Option-B, beside V on the keyboard, as Clipy has ⌘⇧B beside ⌘⇧V.
+    public static let clipSnippets = Shortcut(keyCode: 11, modifiers: [.control, .option])
 
     public var keyCode: Int
     public var modifiers: Modifiers
@@ -30,10 +35,10 @@ public struct Shortcut: Equatable, Sendable {
     }
 
     /// As it was saved, or the standard one when what was saved cannot be a shortcut.
-    public init(savedKeyCode: Int?, savedModifiers: Int?) {
-        let made = Shortcut(keyCode: savedKeyCode ?? Self.standard.keyCode,
-                            modifiers: Modifiers(rawValue: savedModifiers ?? Self.standard.modifiers.rawValue).intersection(.all))
-        self = made.isUsable ? made : Self.standard
+    public init(savedKeyCode: Int?, savedModifiers: Int?, standard: Shortcut = Self.standard) {
+        let made = Shortcut(keyCode: savedKeyCode ?? standard.keyCode,
+                            modifiers: Modifiers(rawValue: savedModifiers ?? standard.modifiers.rawValue).intersection(.all))
+        self = made.isUsable ? made : standard
     }
 
     /// A shortcut taken from every app must not be a key someone types: it needs

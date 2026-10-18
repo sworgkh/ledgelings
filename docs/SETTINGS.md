@@ -36,6 +36,9 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 |---|---|
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
 | *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens *Productivity tools › Reminders* |
+| **Clipboard History…** (⌃⌥V from any app) | The clipboard picker on your recent copies ([Clipboard](#clipboard)) |
+| **Paste a Snippet…** (⌃⌥B from any app) | The same picker, snippets first |
+| **Edit Snippets…** | The snippet editor: folders, snippets, protected ones, import and export |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -470,8 +473,9 @@ greyed out under a *Needs a model* note.
 ## Productivity tools tab
 
 Tools the creatures run for you rather than for themselves. A row of tools
-across the top picks one (today only **Reminders**); its settings fill the two
-columns below. `--settings productivity` opens it (`reminders` too, its old name).
+across the top picks one (**Reminders**, **Clipboard**); its settings fill the two
+columns below. `--settings productivity` opens it (`reminders` too, its old name);
+`--settings clipboard` opens it on Clipboard.
 
 ### Reminders
 
@@ -518,6 +522,80 @@ With a model chosen on the Talk tab, the thrower's note is written for the momen
 while the plane is in the air (one short call, Costs › Reminders); with the built-in
 lines every character has two notes of its own. A letter late by more than two
 minutes says so: *REMINDER · for Today 14:30*. Every letter is also in the Chats tab.
+
+### Clipboard
+
+A clipboard manager like Clipy, drawn like the game. Everything you copy goes into
+a history; texts you paste often live as **snippets**; one picker searches both.
+Press **⌃⌥V** in any app (Ctrl+Alt+V on Windows): a sheet of the letter's pixel paper
+opens in the middle of the screen you are typing on. Type to search your recent
+copies and your snippets at once, ↑↓ to choose, ⏎ to paste it where you were typing.
+**⌃⌥B** opens it with the snippets first. The sheet collapses into your text cursor as
+the words go in. Nothing you copy ever leaves the computer or reaches a model.
+
+| Key in the picker | What it does |
+|---|---|
+| typing | Searches copies and snippets together: every word, any order, accents ignored |
+| ↑ ↓ (⌃N ⌃P), PageUp PageDown | Choose |
+| ⏎ / ⌥⏎ | Paste / paste the other way (plain text or with its formatting) |
+| ⌘1 – ⌘9 | Paste the row with that number |
+| ⇥ | Jump between **Recent** and **Snippets** |
+| ⌘P | Pin a copy: it stays whatever the limits say, and sits on top |
+| ⌫ (with nothing typed), ⌘⌫ | Forget a copy. Snippets are only deleted in Edit Snippets |
+| ⌘E | Edit Snippets |
+| ⎋, or a click off the paper | Close, nothing pasted |
+
+**History** (left):
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Clipboard manager** (`clipboardEnabled`) | on | | Off: nothing is watched, the clipboard shortcuts are let go, the menu items hide |
+| **Keep a history of what is copied** (`clipHistoryEnabled`) | on | | Off: only snippets |
+| **Copies kept** (`clipHistoryLimit`) | 200 | 10 to 2000 | Pinned copies come on top of these |
+| **Kept for** (`clipKeepDays`) | 30 d | 0 to 365 d | *always* at 0: only the limit pushes copies out |
+| **Keep formatting (rich text)** (`clipKeepFormatting`) | on | | The copy's formatting is kept beside its words and pasted back |
+| **Keep files copied in Finder** (`clipKeepFiles`) | on | | Kept as their paths; pasted back as files |
+
+Copying the same thing again moves it to the top. Pictures are not kept (one screenshot
+is megabytes). History and snippets live in `clipboard.json` and `snippets.json` in
+`~/Library/Application Support/Ledgelings`.
+
+**Pasting** (left):
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Paste into the app I was in** (`clipAutoPaste`) | on | | Ledgelings presses ⌘V for you. On macOS that needs **Accessibility** (System Settings › Privacy & Security › Accessibility); until it is allowed, a line in the picker and here says so, with **Allow…**, and choosing only copies: *Copied. Press ⌘V to paste.* Off: always only copies |
+| **Paste as plain text** (`clipPlainText`) | off | | ⌥⏎ in the picker does the other one for that paste |
+| **Unfold and collapse the picker** (`clipAnimate`) | on | | Off: it simply appears and goes |
+| **Animation speed** (`clipAnimationSpeed`) | 1× | 0.5× to 3× | The paste never waits for the animation |
+
+**Shortcuts** (right):
+
+| Setting | Default | Notes |
+|---|---|---|
+| **History picker** (`clipHistoryShortcut…`) | on, ⌃⌥V | Click the keys to record others, as on the Actions tab. Not ⌘⇧V: Chrome, Slack and Google Docs use that to paste without formatting |
+| **Snippets picker** (`clipSnippetsShortcut…`) | on, ⌃⌥B | |
+| **A snippet's own shortcut pastes it at once** (`clipSnippetShortcutsEnabled`) | on | Give a snippet its own keys in Edit Snippets; pressing them pastes it with no picker |
+
+A shortcut another app already holds is refused, and the line under the shortcuts says which.
+
+**Snippets** (right): how many there are, **Edit Snippets…**, and **Touch ID before
+pasting a protected snippet** (`clipProtectedNeedsAuth`, on): Touch ID or your login
+password first, every time one is pasted or shown.
+
+**Never kept** (right): apps whose copies are never kept (`clipExcludedApps`): 1Password,
+Bitwarden, KeePassXC, Keychain Access, Passwords, LastPass, Dashlane, Enpass and
+Strongbox to begin with. **Add App…**, **Remove ▾**, and **Clear History (n)**, which
+keeps pinned copies. Anything a password manager marks as secret on the clipboard is
+never kept either, whichever app it came from.
+
+**Edit Snippets…** is a window of its own: folders and snippets on the left (**+ Folder**,
+**+ Snippet**, delete, move up and down, **File ›** *Import Clipy Snippets…* and *Export
+as Clipy XML…*), the chosen one on the right: its title, its words, **Protected**, and
+its own shortcut. A **protected** snippet is for passwords: its words live in the
+Keychain, never in a file; it shows as dots until you press **Show…**, is never kept in
+the history, and is taken off the clipboard again a second after it is pasted. An export
+leaves protected snippets' words out.
 
 ## Voice tab
 

@@ -159,6 +159,14 @@ own voice and its signature. Click it to send it flying away. A letter that
 arrives while you are away waits for you. *Add a Reminder* in Creature Actions… (Ctrl+Alt+R anywhere on
 Windows) opens a sheet of the same pixel paper to write it on, a creature peeking
 over the edge; the list is in Settings › Productivity tools.
+
+**A clipboard manager.** Everything you copy is kept in a history (password managers'
+secrets never are), and texts you paste often live as snippets, in folders. Press
+**⌃⌥V** in any app: a sheet of pixel paper opens, you type to search copies and
+snippets at once, ⏎ pastes into the app you were in, and the sheet collapses into your
+text cursor. ⌘1–9, ⇥, ⌘P to pin: no mouse needed. A **protected** snippet keeps its
+words in the Keychain and asks Touch ID before pasting. Clipy's snippets import in one
+go. Nothing copied ever leaves the computer.
 Every conversation is kept, and every call to the model is priced.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a

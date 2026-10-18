@@ -66,7 +66,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
   writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, sprites, talk, flowers, productivity, voice, costs, chats;
-  `reminders` still opens productivity, its old name).
+  `reminders` still opens productivity, its old name; `clipboard` opens it on its Clipboard tool).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
@@ -92,7 +92,12 @@ with `scripts/make-app.sh`, installed and seen working.
   then quits once the pair walks on; `--tea-film out.mp4` films a one-minute party
   offscreen (built-in lines, or a local server named by `LEDGELINGS_TEA_SERVER`),
   which works even while the display sleeps and the live display link stops.
-- `--shortcut` says whether the system took the shortcut from any app (`shortcut ⌃⌥L registered`),
+- `--clip-demo [--snapshot out.png]` runs the clipboard manager on the real pasteboard with its own
+  history, snippets and keychain secret (removed after, the pasteboard put back), never pressing ⌘V:
+  copies kept and skipped, a search, ⇥ ↓ ⏎ in the picker, a protected paste concealed and taken back,
+  each step with its time (`clip 1.94 picker: would paste Wi-Fi password after 70 ms, concealed`). Exit 1 if wrong.
+- `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
+  `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
 - `--kit-images <folder>` writes the sprite kit's two pictures and the prompt (from the saved
   form) and quits; `--kit-import <picture>` imports one picture with the saved form, as

@@ -33,8 +33,11 @@ struct SettingsView: View {
     @ObservedObject var beds: BedBook
     @ObservedObject var voice: Voice
     @ObservedObject var navigation: SettingsNavigation
+    @ObservedObject var clips: ClipBook
     /// Deliver a reminder now.
     let send: (Reminders.Reminder) -> Void
+    /// Opens Edit Snippets….
+    var editSnippets: () -> Void = {}
     /// Pull up every planted flower; returns how many there were.
     var clearGarden: () -> Int = { 0 }
 
@@ -50,7 +53,7 @@ struct SettingsView: View {
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)
             CalendarSettingsView(settings: settings).tabItem { Text(tr("Calendar")) }.tag(SettingsTab.calendar)
-            ProductivitySettingsView(settings: settings, reminders: reminders, navigation: navigation, send: send).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
+            ProductivitySettingsView(settings: settings, reminders: reminders, clips: clips, navigation: navigation, send: send, editSnippets: editSnippets).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text(tr("Voice")) }.tag(SettingsTab.voice)
             CostsSettingsView(spend: spend).tabItem { Text(tr("Costs")) }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text(tr("Chats")) }.tag(SettingsTab.chats)
@@ -293,12 +296,16 @@ final class SettingsWindowController {
     private let voice: Voice
     private let send: (Reminders.Reminder) -> Void
     private let clearGarden: () -> Int
+    private let clips: ClipBook
+    private let editSnippets: () -> Void
     private let navigation = SettingsNavigation()
     private var retitle: AnyCancellable?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
-         reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, send: @escaping (Reminders.Reminder) -> Void,
-         clearGarden: @escaping () -> Int = { 0 }) {
+         reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, clips: ClipBook, send: @escaping (Reminders.Reminder) -> Void,
+         clearGarden: @escaping () -> Int = { 0 }, editSnippets: @escaping () -> Void = {}) {
+        self.clips = clips
+        self.editSnippets = editSnippets
         self.settings = settings
         self.history = history
         self.library = library
@@ -321,7 +328,7 @@ final class SettingsWindowController {
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, send: send, clearGarden: clearGarden))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }
