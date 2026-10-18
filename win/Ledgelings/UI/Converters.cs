@@ -5,7 +5,17 @@ using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-public enum SettingsTab { Creatures, Actions, Chases, Play, Sprites, Talk, Flowers, Bonds, Calendar, Reminders, Voice, Costs, Chats }
+public enum SettingsTab { Creatures, Actions, Chases, Play, Sprites, Talk, Flowers, Bonds, Calendar, Productivity, Voice, Costs, Chats }
+
+/// <summary>One tool on the Productivity tools tab, by its header. A new tool is a case here and a
+/// <c>TabItem</c> with the same header in the tab's <c>Tools</c> control.</summary>
+public enum ProductivityTool { Reminders }
+
+public static class SettingsTabs
+{
+    /// <summary>The tab's header: its name, but Productivity tools is two words.</summary>
+    public static string Header(SettingsTab tab) => tab == SettingsTab.Productivity ? "Productivity tools" : tab.ToString();
+}
 
 /// <summary>Fills a TextBlock with a chat line: the speaker in bold, then the text with the
 /// model's *marks* shown as italic and bold runs. <c>ui:StyledLine.Line="{Binding}"</c>.</summary>

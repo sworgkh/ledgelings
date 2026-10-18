@@ -144,12 +144,17 @@ public sealed partial class App : Application
         return Math.Max(60, (eight - DateTime.Now).TotalSeconds);
     }
 
-    private void OpenSettings(SettingsTab? tab)
+    private void OpenSettings(SettingsTab? tab) => EnsureSettingsWindow()?.Show(tab);
+
+    private void OpenSettings(ProductivityTool tool) => EnsureSettingsWindow()?.Show(tool);
+
+    /// <summary>The one settings window, made on first use.</summary>
+    private SettingsWindow? EnsureSettingsWindow()
     {
-        if (settings is null || history is null || library is null || spend is null) return;
+        if (settings is null || history is null || library is null || spend is null) return null;
         settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
-        settingsWindow.Show(tab);
+        return settingsWindow;
     }
 
     protected override void OnExit(ExitEventArgs e)
