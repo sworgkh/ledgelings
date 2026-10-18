@@ -121,7 +121,7 @@ extension Colony {
 
     /// The monitors changed: a flower no longer standing on an edge goes.
     func replantAfterScreensChanged() {
-        let outline = EdgeWorld(screens: displays.map(\.frame), inset: 0)
+        let outline = EdgeWorld(screens: homeFrames, inset: 0)
         garden.keep { bed in outline.loops.contains { $0.nearest(to: bed.floor).distance < 2 } }
     }
 

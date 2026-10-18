@@ -59,10 +59,15 @@ struct SettingsView: View {
                 }
                 SliderRow(tr("Smallest"), value: $settings.minSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
                 SliderRow(tr("Largest"), value: $settings.maxSize, in: AppSettings.sizeRange, step: AppSettings.sizeStep, unit: "×")
+                Picker(tr("Live on"), selection: screenBinding) {
+                    Text(tr("All screens")).tag(HomeScreen.all)
+                    ForEach(ScreenChoice.attached, id: \.id) { Text(verbatim: $0.name).tag($0.id) }
+                    if ScreenChoice.isAway(settings) { Text(tr("%@ (unplugged)", settings.homeScreenName)).tag(settings.homeScreen) }
+                }
             } header: {
                 Text(tr("Creatures"))
             } footer: {
-                Text(tr("Every creature gets its own size between the two. Set them equal and they all match."))
+                Text(tr("Every creature gets its own size between the two. Set them equal and they all match. Live on: keep them all on one monitor; choose another and they parachute over. While it is unplugged they use every screen, and go back when it returns."))
             }
 
             Section {
@@ -149,6 +154,14 @@ struct SettingsView: View {
 
     @State private var startsAtLogin = false
     @State private var loginStatus = tr("not checked")
+
+    /// The chosen monitor by id; picking one saves its name with it.
+    private var screenBinding: Binding<String> {
+        Binding(get: { settings.homeScreen }, set: { id in
+            guard id != settings.homeScreen else { return }
+            settings.liveOn(ScreenChoice.attached.first { $0.id == id })
+        })
+    }
 
     private func colorBinding(_ index: Int) -> Binding<Color> {
         Binding(

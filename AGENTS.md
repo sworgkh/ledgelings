@@ -75,6 +75,12 @@ with `scripts/make-app.sh`, installed and seen working.
 - `--play-film out.mp4 [tag|rope|parachute|basketball]` films each game (or one) offscreen with
   four creatures, the first two old friends, and prints each step with its time
   (`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`, `play tag over after 7 touches`).
+- `--screens` prints every monitor (id, name, frame, `home`), the choice, the colony's bounds and
+  where each creature is; `--screens all|N` also makes the choice live (N = monitor number left to
+  right, from 1; saved like the menu does), prints every step of the move (`move Blocky hops off DELL U2415 (1)`,
+  `… comes down at 812`, `… lands at (812, 37)`) and the state once they have landed. Exit 1 if anyone is left off.
+- `--screens-film out.mp4` films two simulated monitors side by side offscreen: everyone moves to the
+  right one, then the left, then all screens again, printing each step.
 - `--actions --activities --snapshot out.png` writes the Creature Actions sheet's Activities page.
 - `--grab` makes the first creature grab the real cursor now and prints each step
   with its time (`grab Blocky`, `let go Blocky: shaken`), then quits once it lets go.

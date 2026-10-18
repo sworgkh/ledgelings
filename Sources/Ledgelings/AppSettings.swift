@@ -20,6 +20,11 @@ final class AppSettings: ObservableObject {
         }
     }
     @Published var creatureCount: Int { didSet { save(creatureCount, "creatureCount") } }
+    /// The monitor the creatures live on, by its id (`HomeScreen`, the display's UUID); empty: every monitor.
+    /// Kept while that monitor is unplugged (they live on all meanwhile) and applied again when it is back.
+    @Published var homeScreen: String { didSet { save(homeScreen, "homeScreen") } }
+    /// That monitor's name when it was chosen, to show while it is away.
+    @Published var homeScreenName: String { didSet { save(homeScreenName, "homeScreenName") } }
     /// Names of the sprite sheets in use; creature i wears species i, wrapping round.
     @Published var species: [String] { didSet { save(species, "species") } }
     /// Creature number i wears colour i, wrapping round when there are more creatures than colours.
@@ -402,6 +407,8 @@ final class AppSettings: ObservableObject {
         let language = defaults.string(forKey: "language").flatMap(Language.init(rawValue:)) ?? Language.preferred()
         self.language = language
         creatureCount = min(max(count, Self.countRange.lowerBound), Self.countRange.upperBound)
+        homeScreen = defaults.string(forKey: "homeScreen") ?? HomeScreen.all
+        homeScreenName = defaults.string(forKey: "homeScreenName") ?? ""
         species = defaults.stringArray(forKey: "species") ?? ["blocky"]
         let saved = (defaults.stringArray(forKey: "colors") ?? []).filter { RGB(hex: $0) != nil }
         colors = saved.isEmpty ? Self.defaultColors : saved
@@ -727,6 +734,12 @@ final class AppSettings: ObservableObject {
 
     func color(forCreature index: Int) -> RGB {
         RGB(hex: colors[index % max(colors.count, 1)]) ?? RGB(hex: Self.defaultColors[0])!
+    }
+
+    /// Live on `monitor` only, or on every monitor (nil).
+    func liveOn(_ monitor: HomeScreen.Monitor?) {
+        homeScreenName = monitor?.name ?? ""
+        homeScreen = monitor?.id ?? HomeScreen.all
     }
 
     private func save(_ value: Any, _ key: String) { defaults.set(value, forKey: key) }

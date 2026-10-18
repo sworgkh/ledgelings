@@ -357,10 +357,12 @@ public struct Creature: Sendable {
 
     /// Leave the edge for a game: from now on the game puts it where it goes
     /// (`carry`) until it comes down (`touchDown`). Not asleep, not in the hand.
-    /// Returns whether it did.
+    /// Returns whether it did. `waking`: a sleeper too, woken for it (moving to
+    /// another monitor); a game never wakes anyone.
     @discardableResult
-    public mutating func takeOff() -> Bool {
-        guard !isHeld, !looksAsleep else { return false }
+    public mutating func takeOff(waking: Bool = false) -> Bool {
+        guard !isHeld, waking || !looksAsleep else { return false }
+        sleepsThroughLanding = false
         isNapping = false
         waitsAfterLanding = false
         if !isPlaying { enter(.playing) }

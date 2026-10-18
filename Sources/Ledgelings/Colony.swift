@@ -62,8 +62,14 @@ final class Colony: NSObject {
     var overlays: [ScreenOverlay] = []
     var rng = SystemRandomNumberGenerator()
     /// The virtual display when rendering offscreen; nil when live on the monitors.
-    let stage: Display?
-    var displays: [Display] { stage.map { [$0] } ?? Display.attached }
+    let stage: [Display]?
+    /// Every monitor, each with its overlay: a creature is drawn wherever it is.
+    /// The ones they live on are `homeDisplays` (`Colony+Screens`).
+    var displays: [Display] { stage ?? Display.attached }
+    /// The home monitors' frames when the edges were last traced, to notice a change.
+    var homeWas: [CGRect] = []
+    /// Creatures moving over to the home monitors, by index.
+    var moves: [Int: Move] = [:]
 
     var link: CADisplayLink?
     var lastTick: CFTimeInterval?
@@ -206,10 +212,11 @@ final class Colony: NSObject {
     var secondsLeftInPhase: Double { clock.remaining(at: elapsed) }
 
     /// `stage`: draw for this one virtual display, offscreen, stepped by hand
-    /// (the promo). Nil means the attached monitors, live.
+    /// (the promo); `stages` for several side by side (`--screens-film`). Nil
+    /// means the attached monitors, live.
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger,
          bonds: BondBook? = nil, reminders: ReminderBook? = nil, hunts: HuntBook? = nil, beds: BedBook? = nil,
-         stage: Display? = nil) throws {
+         stage: Display? = nil, stages: [Display]? = nil) throws {
         self.settings = settings
         self.history = history
         self.library = library
@@ -218,7 +225,7 @@ final class Colony: NSObject {
         self.reminders = reminders ?? ReminderBook(directory: spend.ledger.directory)
         self.hunts = hunts ?? HuntBook(directory: spend.ledger.directory)
         self.beds = beds ?? BedBook(directory: spend.ledger.directory)
-        self.stage = stage
+        self.stage = stages ?? stage.map { [$0] }
         atlas = try SpriteAtlas(named: "blocky")
         let zzz = try SpriteAtlas(named: "zzz")
         zFrames = zzz.frames()
@@ -245,6 +252,7 @@ final class Colony: NSObject {
         super.init()
 
         rebuildOverlays()
+        homeWas = homeFrames
         applySettings()
         // `objectWillChange` fires BEFORE the value lands, so read it a turn later.
         settings.objectWillChange.receive(on: RunLoop.main)
@@ -299,8 +307,10 @@ final class Colony: NSObject {
             let size = settings.size(forShare: sizeShares[i])
             guard size != sizes[i] else { continue }
             sizes[i] = size
-            creatures[i].rehome(to: world(forSize: size))
+            if !isMoving(i) { creatures[i].rehome(to: world(forSize: size)) }
         }
+        // Another monitor chosen: everyone not on it moves over.
+        homeMayHaveChanged()
         // Size, mood and the Chases tab all set how far off a creature jumps.
         for i in creatures.indices { beWary(i) }
 
@@ -316,19 +326,17 @@ final class Colony: NSObject {
         render()
     }
 
+    /// A monitor came or went, or moved: the edges are traced afresh, and whoever
+    /// is left off them (a monitor unplugged, the chosen one back) comes down by parachute.
     @objc func screensChanged() {
-        letGoOfCursor(.escape)
-        endPlay(completed: false)
         rebuildOverlays()
-        worlds.removeAll()
-        for i in creatures.indices { creatures[i].rehome(to: world(forSize: sizes[i])) }
-        replantAfterScreensChanged()
-        render()
+        homeWas = homeFrames
+        moveHome()
     }
 
     func world(forSize size: Double) -> EdgeWorld {
         if let made = worlds[size] { return made }
-        let made = EdgeWorld(screens: displays.map(\.frame), inset: atlas.bodyHalfSize * CGFloat(size))
+        let made = EdgeWorld(screens: homeFrames, inset: atlas.bodyHalfSize * CGFloat(size))
         worlds[size] = made
         return made
     }
@@ -404,6 +412,7 @@ final class Colony: NSObject {
         sayScheduledLines()
         updateTeaParty()
         updatePlay(dt: dt)
+        updateMoves(dt: dt)
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
@@ -448,7 +457,7 @@ final class Colony: NSObject {
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
         let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
-        let props = playProps()
+        let props = playProps() + moveProps()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,

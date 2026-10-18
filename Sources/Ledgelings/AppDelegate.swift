@@ -117,6 +117,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--screens-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/screens.mp4"
+            Task { @MainActor in
+                do { try await ScreensFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings screens film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--tea-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/tea.mp4"
@@ -162,6 +172,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 for _ in 0..<900 where !colony.busy.isEmpty || !colony.chats.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
                 colony.trace?("pair let go")
                 exit(0)
+            }
+        }
+        // `--screens [all|N]`: every monitor, the choice and where each creature is, on stderr.
+        // With `all` or a monitor's number (left to right, from 1) the choice is made live
+        // (saved, as the menu would), every step of the move is printed, and it all again once they have landed.
+        if let at = CommandLine.arguments.firstIndex(of: "--screens"), let colony {
+            let args = CommandLine.arguments, start = Date()
+            func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "screens %6.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
+            colony.trace = { if $0.hasPrefix("move") || $0.hasPrefix("screens") || $0.hasPrefix("let go") { log($0) } }
+            let pick = args.indices.contains(at + 1) ? args[at + 1] : nil
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                colony.describeScreens().forEach(log)
+                guard let pick else { exit(0) }
+                let choices = ScreenChoice.attached
+                if pick == "all" { settings.liveOn(nil) }
+                else if let n = Int(pick), choices.indices.contains(n - 1) { settings.liveOn(choices[n - 1]) }
+                else { log("no screen \(pick): all, or 1 to \(choices.count)"); exit(2) }
+                try? await Task.sleep(for: .seconds(0.5))
+                for _ in 0..<300 where !colony.moves.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
+                try? await Task.sleep(for: .seconds(1))
+                colony.describeScreens().forEach(log)
+                exit(colony.creatures.allSatisfy { colony.isHome($0.position, slack: 1) } ? 0 : 1)
             }
         }
         // `--grab`: the first creature grabs the cursor now; every step on stderr
@@ -295,6 +328,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let settingsItem = NSMenuItem(title: "", action: #selector(openSettings), keyEquivalent: ",")
     private let languageItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let cursorMoodItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    /// Which monitor they live on; only with two or more attached.
+    private let screenItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -341,6 +376,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         cursorMoodItem.submenu = moods
         menu.addItem(cursorMoodItem)
+        menu.addItem(screenItem)
         settingsItem.target = self
         menu.addItem(settingsItem)
         menu.addItem(.separator())
@@ -364,6 +400,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
         }
         cursorMoodItem.title = tr("The Cursor Is")
+        screenItem.title = tr("Screen")
+        screenItem.isHidden = !ScreenChoice.isOffered
+        if ScreenChoice.isOffered {
+            screenItem.submenu = ScreenChoice.menu(settings) { [weak self] in self?.settings.liveOn($0) }
+        }
         for choice in cursorMoodItem.submenu?.items ?? [] {
             let mood = (choice.representedObject as? String).flatMap(CursorMood.init(rawValue:))
             choice.title = mood?.title ?? ""
