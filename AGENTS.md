@@ -96,6 +96,10 @@ with `scripts/make-app.sh`, installed and seen working.
   history, snippets and keychain secret (removed after, the pasteboard put back), never pressing ⌘V:
   copies kept and skipped, a search, ⇥ ↓ ⏎ in the picker, a protected paste concealed and taken back,
   each step with its time (`clip 1.94 picker: would paste Wi-Fi password after 70 ms, concealed`). Exit 1 if wrong.
+- `--paste-check` prints whether this build has Accessibility and presses a real ⌘V into a text
+  field of its own (`paste ⌘V pressed, field now "…" after 327 ms`, `paste pasted for real`); exit 1
+  if nothing landed. Started from a terminal it borrows the terminal's permission: to see the app's
+  own, `open build/Ledgelings.app --stderr /dev/stdout --args --paste-check`.
 - `--clip-film out.mp4` films the clipboard picker brought by a creature offscreen: the leap to the
   sheet's corner, the unfold, a search, the collapse into a text cursor and the leap home, then a round
   with no cursor known, printing each step (`film 1.00 clip Whiskers leaps to (245, 558) in 0.31 s`).

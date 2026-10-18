@@ -1785,7 +1785,9 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   clip; ⌫ with the field empty (or ⌘⌫, or ⌦ with it empty) forgets a clip, never a
   snippet; ⌘E opens Edit Snippets; ⎋ or a click off the paper closes. Hover selects,
   click pastes. With `clipAutoPaste` on and no Accessibility permission, a line says
-  so with an **Allow…** button.
+  so with an **Allow…** button, which first clears a grant an older build left behind
+  (shown on, no longer matching) and then asks. Builds carry a fixed designated
+  requirement (`identifier "com.alterman.ledgelings"`), so the grant survives updates.
 - **Pasting**: the item goes on the clipboard (files as file URLs; formatting unless
   `clipPlainText`, flipped by ⌥), marked as the app's own; the panel goes at once; 40 ms
   later ⌘V (Ctrl+V) is pressed for the app that was in front. Without the permission,
