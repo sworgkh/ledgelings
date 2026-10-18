@@ -53,7 +53,12 @@
                 <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding MaxSize}" ui:Tr.Unit="×"/>
                 <Slider Minimum="1" Maximum="5" TickFrequency="0.5" Value="{Binding MaxSize, Mode=TwoWay}"/>
               </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every creature gets its own size between the two. Set them equal and they all match. On a high-dpi monitor the sizes scale with it, so 3× is the same size as on a Mac."/>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="Live on" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ScreenBox" DisplayMemberPath="Title" SelectedValuePath="Id" Width="220" HorizontalAlignment="Left"
+                          SelectionChanged="ScreenBox_Changed" DropDownOpened="ScreenBox_Opened"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every creature gets its own size between the two. Set them equal and they all match. On a high-dpi monitor the sizes scale with it, so 3× is the same size as on a Mac. Live on: keep them all on one monitor; choose another and they parachute over. While it is unplugged they use every screen, and go back when it returns."/>
             </StackPanel>
           </GroupBox>
           <GroupBox ui:Tr.Header="Colours">

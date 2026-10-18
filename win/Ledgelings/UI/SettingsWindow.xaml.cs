@@ -18,6 +18,9 @@ public sealed partial class SettingsWindow : Window
     private sealed record ColourRow(int Index, string Hex, Brush Brush);
     private sealed record LanguageChoice(Language Language, string Title);
     private sealed record CursorMoodChoice(CursorMood Mood, string Title);
+    private sealed record ScreenOption(string Id, string Title);
+    /// <summary>Filling the screen list: its selection changing then is not the user's choice.</summary>
+    private bool showingScreens;
 
     public SettingsWindow(AppSettings settings, ChatHistory history, SpriteLibrary library, SpendLedger spend)
     {
@@ -28,6 +31,7 @@ public sealed partial class SettingsWindow : Window
         InitializeComponent();
         LanguageBox.ItemsSource = Languages.All.Select(l => new LanguageChoice(l, l.Title())).ToList();
         ShowCursorMoods();
+        ShowScreens();
         DataContext = settings;
         settings.PropertyChanged += (_, e) =>
         {
@@ -38,6 +42,7 @@ public sealed partial class SettingsWindow : Window
             if (e.PropertyName is nameof(AppSettings.Script)) RefreshScriptStatus();
             if (e.PropertyName is "Casts") RefreshCast();
             if (e.PropertyName is nameof(AppSettings.Language)) ShowLanguage();
+            if (e.PropertyName is nameof(AppSettings.HomeScreenId)) ShowScreens();
             if (e.PropertyName is nameof(AppSettings.Shortcut) or nameof(AppSettings.RecordingShortcut) or nameof(AppSettings.ShortcutProblem) or nameof(AppSettings.Language)) ShowShortcut();
         };
         InitActions();
@@ -93,6 +98,27 @@ public sealed partial class SettingsWindow : Window
         CursorMoodBox.SelectedValue = settings.CursorMood;
     }
 
+    /// <summary>All screens, each attached monitor by name, and the chosen one while it is unplugged; the choice kept.
+    /// Listed afresh each time it opens, so a monitor plugged in meanwhile is there.</summary>
+    private void ShowScreens()
+    {
+        showingScreens = true;
+        var options = new List<ScreenOption> { new(HomeScreen.All, L10n.Tr("All screens")) };
+        options.AddRange(ScreenChoice.Attached().Select(m => new ScreenOption(m.Id, m.Name)));
+        if (ScreenChoice.IsAway(settings)) options.Add(new(settings.HomeScreenId, L10n.Tr("%@ (unplugged)", settings.HomeScreenName)));
+        ScreenBox.ItemsSource = options;
+        ScreenBox.SelectedValue = settings.HomeScreenId;
+        showingScreens = false;
+    }
+
+    private void ScreenBox_Opened(object? sender, EventArgs e) => ShowScreens();
+
+    private void ScreenBox_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (showingScreens || ScreenBox.SelectedValue is not string id || id == settings.HomeScreenId) return;
+        settings.LiveOn(ScreenChoice.Attached().FirstOrDefault(m => m.Id == id));
+    }
+
     /// <summary>A new language while the window is open: every label, footer and list again, in it.
     /// The app has chosen it already (<see cref="Languages.Choose"/> runs first, from the launch).</summary>
     private void ShowLanguage()
@@ -100,6 +126,7 @@ public sealed partial class SettingsWindow : Window
         Tr.Refresh();
         ShowFooters();
         ShowCursorMoods();
+        ShowScreens();
         LmStatus.Text = OrStatus.Text = LocalCheckStatus.Text = L10n.Tr("not checked");
         LoginStatus.Text = LaunchAtLogin.Status;
         RefreshBrain();

@@ -100,6 +100,7 @@ public sealed partial class Colony : IDisposable
         dayNight = new DayNight(settings.DayMinutes * 60, settings.NightMinutes * 60);
 
         RebuildOverlays();
+        homeWas = HomeFrames;
         ApplySettings();
         settings.Changed += ApplySettings;
         library.Changed += () => { frameCache.Clear(); ApplySettings(); };

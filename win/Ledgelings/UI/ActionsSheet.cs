@@ -214,6 +214,8 @@ public sealed class ActionsSheet : Window
     private readonly Action<ActionsLink> follow;
     private readonly Func<string> shortcut;
     private readonly List<(ActionsSwitch Switch, PixelButton Button)> switches = new();
+    /// <summary>Which monitor they live on, at the right of the title line; hidden with one monitor.</summary>
+    private PixelButton? screenButton;
     private readonly Grid root = new() { Width = SheetWidth, Height = SheetHeight };
     private readonly List<(ActionsTile Tile, PixelButton Button, TextBlock Title, TextBlock Detail)> tiles = new();
     private readonly List<(Plays.Kind Kind, PixelButton Button, TextBlock Detail)> rows = new();
@@ -362,11 +364,22 @@ public sealed class ActionsSheet : Window
             Margin = new Thickness(33, Headroom + 27, 33, 0), Width = SheetWidth - 66,
             HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
         };
-        sheet.Children.Add(new TextBlock
+        // The title line, and at its right end, with two monitors or more, which one they live on: a smaller
+        // button than the switches', up here because the switches' row is full in Russian. 28 tall either way.
+        var head = new Grid { Height = 22, Margin = new Thickness(0, 0, 0, 6) };
+        head.Children.Add(new TextBlock
         {
             Text = keeper is string name ? L10n.Tr("WHAT SHOULD THEY DO? · %@ IS WAITING", name.ToUpperInvariant()) : L10n.Tr("WHAT SHOULD THEY DO?"),
-            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 14),
+            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center,
         });
+        screenButton = new PixelButton
+        {
+            Small = true, FontSize = 10, MinHeight = 22, Padding = new Thickness(7, 0, 7, 0), MaxWidth = 220,
+            HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 2, 0),
+        };
+        screenButton.Click += (_, _) => ChooseScreen();
+        head.Children.Add(screenButton);
+        sheet.Children.Add(head);
         var grid = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
         for (int r = 0; r < ActionsTiles.All.Count; r += 4)
         {
@@ -399,6 +412,22 @@ public sealed class ActionsSheet : Window
         footer.Children.Add(done);
         sheet.Children.Add(footer);
         return sheet;
+    }
+
+    /// <summary>The screen button: the monitors, as the tray menu has them, under the pointer.</summary>
+    private void ChooseScreen()
+    {
+        if (folding || screenButton is null) return;
+        choosingHide = false;
+        var menu = new ContextMenu { PlacementTarget = screenButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        foreach (var item in ScreenChoice.Items(settings, after: () => { Refresh(); message = ScreenChoice.Said(settings); saidAt = DateTime.Now; Refresh(); }))
+        {
+            if (item.IsSeparator) { menu.Items.Add(new Separator()); continue; }
+            var entry = new MenuItem { Header = item.Text, IsChecked = item.Checked, IsEnabled = item.Enabled };
+            if (item.Action is { } act) entry.Click += (_, _) => act();
+            menu.Items.Add(entry);
+        }
+        menu.IsOpen = true;
     }
 
     private PixelButton Switch(ActionsSwitch flipped)
@@ -500,6 +529,14 @@ public sealed class ActionsSheet : Window
         {
             button.Content = flipped.Title(state);
             button.Chosen = flipped.IsOn(state);
+        }
+        if (screenButton is not null)
+        {
+            var offered = ScreenChoice.IsOffered;
+            screenButton.Visibility = offered ? Visibility.Visible : Visibility.Collapsed;
+            var words = offered ? ScreenChoice.SheetTitle(settings) + " \u25BE" : "";
+            if (offered && (screenButton.Content as TextBlock)?.Text != words)
+                screenButton.Content = new TextBlock { Text = words, TextTrimming = TextTrimming.CharacterEllipsis };
         }
         if (state.Hiding) choosingHide = false;
         if (saidAt is DateTime at && (DateTime.Now - at).TotalSeconds > 5) { message = ""; saidAt = null; }

@@ -151,7 +151,7 @@ public sealed partial class Colony
     private Rect TargetScreen()
     {
         var cursor = Desktop.Cursor();
-        return (monitors.FirstOrDefault(m => m.Frame.Contains(cursor)) ?? monitors.FirstOrDefault())?.Frame ?? new Rect(0, -900, 1440, 900);
+        return (HomeMonitors.FirstOrDefault(m => m.Frame.Contains(cursor)) ?? HomeMonitors.FirstOrDefault())?.Frame ?? new Rect(0, -900, 1440, 900);
     }
 
     private void StartDelivery(Reminders.Reminder reminder)

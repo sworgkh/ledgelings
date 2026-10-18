@@ -132,7 +132,7 @@ public sealed partial class Colony
     private void KeepOnScreen(PaperPlane plane, double scale)
     {
         _ = PlaneFrames;
-        plane.Sky = monitors.Select(m => m.Frame).ToList();
+        plane.Sky = HomeFrames;
         plane.Margin = Math.Sqrt(planeCell.Width * planeCell.Width + planeCell.Height * planeCell.Height) * scale / 2;
     }
 

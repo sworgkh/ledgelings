@@ -389,10 +389,12 @@ public sealed class Creature
     // MARK: Playing
 
     /// <summary>Leave the edge for a game: from now on the game puts it where it goes (<see cref="Carry"/>)
-    /// until it comes down (<see cref="TouchDown"/>). Not asleep, not in the hand. Returns whether it did.</summary>
-    public bool TakeOff()
+    /// until it comes down (<see cref="TouchDown"/>). Not asleep, not in the hand. Returns whether it did.
+    /// <paramref name="waking"/>: a sleeper too, woken for it (moving to another monitor); a game never wakes anyone.</summary>
+    public bool TakeOff(bool waking = false)
     {
-        if (IsHeld || LooksAsleep) return false;
+        if (IsHeld || (!waking && LooksAsleep)) return false;
+        sleepsThroughLanding = false;
         IsNapping = false;
         waitsAfterLanding = false;
         if (!IsPlaying) Enter(new Mode.Playing());

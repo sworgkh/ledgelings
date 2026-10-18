@@ -17,7 +17,8 @@ creatures from the sprite kit, planting flowers where each character likes (the
 Flowers tab), complaints when pushed around, tea parties, voices (Windows' own,
 OpenRouter or a local speech server), the Costs tab, every character's own bed at a place it learns (the Beds tab), and
 the plays: tag, a ninja rope, a parachute jump and basketball, more often between friends (the Play tab, and the
-Activities page of Creature Actions).
+Activities page of Creature Actions), and keeping them all to one monitor (the `SCREEN` button on Creature
+Actions, the tray's *Screen*, *Live on* on the Creatures tab), the rest parachuting over.
 
 ## Stack
 
@@ -174,13 +175,13 @@ core tests are the Swift tests line for line.
 ## Not on Windows
 
 - **The films and the promo video** (`--garden-film`, `--tea-film`, `--bed-film`,
-  `--play-film`, the reminder film, `scripts/make-promo.sh`): they render offscreen
+  `--play-film`, `--screens-film`, the reminder film, `scripts/make-promo.sh`): they render offscreen
   with the Mac's video APIs.
-- **The command-line checks** (`--settings … --snapshot`, `--actions --activities`, `--say`, `--cast`,
+- **The command-line checks** (`--settings … --snapshot`, `--actions --activities`, `--screens`, `--say`, `--cast`,
   `--converse`, `--tea`, `--plot`, `--remind`, `--note`). A Windows colony always
   opens real overlay windows, so the Mac's colony-level tests (`ColonyTalkTests`)
-  are not ported either (nor the Mac's colony-level play tests in `PlaySettingsTests`);
-  the core tests are, `PlaysTests` among them.
+  are not ported either (nor the Mac's colony-level play tests in `PlaySettingsTests`, nor
+  `HomeScreenSettingsTests` beyond its settings test); the core tests are, `PlaysTests` and `HomeScreenTests` among them.
 
 ## Layout
 

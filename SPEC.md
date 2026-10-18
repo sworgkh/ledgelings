@@ -143,8 +143,13 @@ nearest loop, rotation snapped, any jump abandoned, asleep stays asleep.
 
 `homeScreen` names the monitor they live on, by an id that survives relaunching and
 re-plugging (macOS: the display's UUID from `CGDisplayCreateUUIDFromDisplayID`;
-Windows: the monitor's device name), with `homeScreenName` (the system's name for it,
-`DELL U2415 (2)`) kept beside it for showing while it is away. Empty means every monitor.
+Windows: the monitor's device interface path from `EnumDisplayDevices` with
+`EDD_GET_DEVICE_INTERFACE_NAME`, which names the monitor's make and the port it is on,
+else the GDI device name `\\.\DISPLAY2`), with `homeScreenName` (the system's name for
+it: on macOS `DELL U2415 (2)`; on Windows the monitor's model, or `Display 2` when Windows
+only knows it as a generic monitor, two of one model numbered `(1)`, `(2)` left to right)
+kept beside it for showing while it is away. On Windows the sheet's button shows the
+name as it is (no `BUILT-IN` shortening). Empty means every monitor.
 The **home monitors** are the chosen one while it is attached, else **every monitor**
 (`HomeScreen.home`): not the main one, because the main one is often a laptop shut in
 a dock, and every monitor is what they did before there was a choice. The choice is

@@ -117,6 +117,8 @@ public static partial class Revenge
         Tired,
         /// <summary>The Escape key, or the app losing track of the screen (locked, asleep, changed, quitting).</summary>
         Escape,
+        /// <summary>The cursor went onto a monitor they do not live on (<c>homeScreen</c>): it lets go there.</summary>
+        LeftHome,
     }
 
     // Built-in lines

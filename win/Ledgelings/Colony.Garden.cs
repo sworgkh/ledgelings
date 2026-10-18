@@ -145,7 +145,7 @@ public sealed partial class Colony
     /// <summary>The monitors changed: a flower no longer standing on an edge goes.</summary>
     private void ReplantAfterScreensChanged()
     {
-        var outline = new EdgeWorld(monitors.Select(m => m.Frame).ToList(), 0);
+        var outline = new EdgeWorld(HomeFrames, 0);
         garden.Keep(bed => outline.Loops.Any(l => l.Nearest(bed.Floor).Distance < 2));
     }
 
