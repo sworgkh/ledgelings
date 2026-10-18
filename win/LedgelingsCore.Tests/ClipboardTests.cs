@@ -341,4 +341,126 @@ public class ClipboardTests
         Assert.Equal("a < b & \"c\"", back.Folders[0].Snippets[0].Text);
         Assert.Equal("", back.Folders[0].Snippets[1].Text);
     }
+
+    // MARK: Pictures
+
+    private static Clipboard.Picture Picture(string digest, int w = 1280, int h = 720) =>
+        new() { Width = w, Height = h, Bytes = 10, Digest = digest, Types = new() { "PNG" } };
+
+    [Fact]
+    public void APictureIsLabelledBySizeAndTheSamePictureMovesUp()
+    {
+        var h = History("a");
+        h.Add(Clip.FromPicture(Picture("one"), T0.AddSeconds(1), "Snipping Tool"));
+        h.Add(Clip.FromPicture(Picture("two"), T0.AddSeconds(2)));
+        Assert.Equal(3, h.Clips.Count);   // two different pictures of the same size are two clips
+        Assert.True(h.Clips[1].Text == "Image 1280×720" && h.Clips[1].Kind == Clipboard.Kind.Image);
+        var first = h.Clips[1].Id;
+        h.TogglePin(first);
+        h.Add(Clip.FromPicture(Picture("one") with { Types = new() { "PNG", "DeviceIndependentBitmap" } }, T0.AddSeconds(3)));
+        Assert.Equal(3, h.Clips.Count);
+        Assert.True(h.Clips[0].Id == first && h.Clips[0].Pinned);       // the same bytes: the same clip, its pin kept
+        Assert.Equal(new[] { "PNG" }, h.Clips[0].Picture!.Types);         // its files are the ones first kept
+    }
+
+    [Fact]
+    public void APictureIsFoundByImageAndByItsApp()
+    {
+        var h = History("a picture of a cat");
+        h.Add(Clip.FromPicture(Picture("p", 64, 40), T0.AddSeconds(1), "Snipping Tool"));
+        Languages.With(Language.English, () =>
+        {
+            Assert.Equal(new[] { "Image 64×40" }, Clipboard.Search("image", h, new()).Clips.Select(c => c.Text));
+            Assert.Single(Clipboard.Search("snipping 64", h, new()).Clips);
+            Assert.Equal("Image 64×40", h.Clips[0].Preview());
+        });
+        Languages.With(Language.Russian, () =>
+        {
+            Assert.Equal("Картинка 64×40", h.Clips[0].Preview());
+            Assert.Single(Clipboard.Search("картинка", h, new()).Clips);
+            Assert.Single(Clipboard.Search("image", h, new()).Clips);    // the English word still finds it
+        });
+    }
+
+    [Fact]
+    public void PicturesCountInTheLimit()
+    {
+        var h = History("a", "b");
+        h.Add(Clip.FromPicture(Picture("p"), T0.AddSeconds(5)));
+        h.Prune(2, 0, T0);
+        Assert.Equal(new[] { "Image 1280×720", "b" }, h.Clips.Select(c => c.Text));
+    }
+
+    [Fact]
+    public void TheFormatsKeptFitTheCapBestFirst()
+    {
+        var found = new Dictionary<string, int> { ["PNG"] = 3_000_000, ["DeviceIndependentBitmap"] = 40_000_000, ["GIF"] = 1_000_000 };
+        Assert.Equal(new[] { "PNG", "GIF" }, Clipboard.KeptImageTypes(found, 20_000_000));
+        Assert.Equal(new[] { "PNG", "GIF", "DeviceIndependentBitmap" }, Clipboard.KeptImageTypes(found, 50_000_000));
+        Assert.Equal(new[] { "GIF" }, Clipboard.KeptImageTypes(found, 1_500_000));
+        Assert.Empty(Clipboard.KeptImageTypes(found, 500_000));
+    }
+
+    [Fact]
+    public void TheDigestTellsBytesApartAndMatchesTheMac()
+    {
+        Assert.Equal(Clipboard.Digest(new byte[] { 1, 2, 3 }), Clipboard.Digest(new byte[] { 1, 2, 3 }));
+        Assert.NotEqual(Clipboard.Digest(new byte[] { 1, 2, 3 }), Clipboard.Digest(new byte[] { 1, 2, 4 }));
+        Assert.Equal("cbf29ce484222325-0", Clipboard.Digest(Array.Empty<byte>()));
+    }
+
+    [Fact]
+    public void ThePixelSizeIsReadFromEachFormatsHeader()
+    {
+        var png = new byte[24];
+        new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G' }.CopyTo(png, 0);
+        png[19] = 48; png[23] = 30;
+        Assert.Equal((48, 30), Clipboard.PixelSize("PNG", png));
+        var dib = new byte[40];
+        BitConverter.GetBytes(40).CopyTo(dib, 0); BitConverter.GetBytes(1280).CopyTo(dib, 4); BitConverter.GetBytes(-720).CopyTo(dib, 8);
+        Assert.Equal((1280, 720), Clipboard.PixelSize("DeviceIndependentBitmap", dib));   // a top-down bitmap's height is negative
+        var gif = new byte[] { (byte)'G', (byte)'I', (byte)'F', (byte)'8', (byte)'9', (byte)'a', 64, 0, 40, 0 };
+        Assert.Equal((64, 40), Clipboard.PixelSize("GIF", gif));
+        var jpeg = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0, 4, 0, 0, 0xFF, 0xC0, 0, 11, 8, 0, 30, 0, 48, 3, 0, 0, 0 };
+        Assert.Equal((48, 30), Clipboard.PixelSize("JFIF", jpeg));
+        Assert.Null(Clipboard.PixelSize("PNG", new byte[3]));
+    }
+
+    [Fact]
+    public void ABitmapGetsAFileHeaderWithItsPixelsOffset()
+    {
+        var dib = new byte[40 + 4 * 4];
+        BitConverter.GetBytes(40).CopyTo(dib, 0); BitConverter.GetBytes(2).CopyTo(dib, 4); BitConverter.GetBytes(2).CopyTo(dib, 8);
+        BitConverter.GetBytes((ushort)32).CopyTo(dib, 14);
+        var bmp = Clipboard.DibAsBmp(dib);
+        Assert.True(bmp[0] == 'B' && bmp[1] == 'M' && BitConverter.ToInt32(bmp, 2) == bmp.Length && BitConverter.ToInt32(bmp, 10) == 54);
+        BitConverter.GetBytes((ushort)8).CopyTo(dib, 14);
+        Assert.Equal(14 + 40 + 256 * 4, BitConverter.ToInt32(Clipboard.DibAsBmp(dib), 10));   // an 8-bit bitmap's palette comes first
+    }
+
+    [Fact]
+    public void PicturesAreFilesBesideTheHistoryAndGoWithTheirClip()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "clip-images-" + Guid.NewGuid());
+        try
+        {
+            var store = new Clipboard.Store(dir);
+            var h = new Clipboard.History();
+            var clip = Clip.FromPicture(new Clipboard.Picture { Width = 2, Height = 2, Bytes = 6, Digest = "d", Types = new() { "PNG", "DeviceIndependentBitmap" } }, T0);
+            h.Add(clip);
+            store.SaveImage(clip.Id, new[] { ("PNG", new byte[] { 1, 2 }), ("DeviceIndependentBitmap", new byte[] { 3, 4, 5, 6 }) });
+            store.Save(h);
+            var read = store.LoadImage(store.LoadHistory().Clips[0]);
+            Assert.Equal(new[] { "PNG", "DeviceIndependentBitmap" }, read.Select(r => r.Type));
+            Assert.Equal(new byte[] { 3, 4, 5, 6 }, read[1].Data);
+            Assert.Contains("\"kind\": \"image\"", File.ReadAllText(store.HistoryFile));
+            store.SweepImages(h);
+            Assert.Equal(2, store.LoadImage(clip).Count);   // a kept clip keeps its files
+            h.Remove(clip.Id);
+            store.SweepImages(h);
+            Assert.Empty(store.LoadImage(clip));
+            Assert.Empty(Directory.GetFiles(store.ImagesDirectory));
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+    }
 }

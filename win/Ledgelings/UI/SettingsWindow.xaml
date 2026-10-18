@@ -958,7 +958,13 @@
                     </DockPanel>
                     <CheckBox ui:Tr.Content="Keep formatting (rich text)" IsChecked="{Binding ClipKeepFormatting, Mode=TwoWay}"/>
                     <CheckBox ui:Tr.Content="Keep files copied in Explorer" IsChecked="{Binding ClipKeepFiles, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures are not kept. Nothing copied ever leaves this PC or reaches a model."/>
+                    <CheckBox ui:Tr.Content="Keep images" IsChecked="{Binding ClipKeepImages, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <DockPanel Margin="0,4" IsEnabled="{Binding ClipKeepImages}">
+                      <TextBlock ui:Tr.Text="Largest image kept" Style="{StaticResource RowLabel}"/>
+                      <TextBlock x:Name="ClipLargestImageValue" Style="{StaticResource RowValue}"/>
+                      <Slider Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ClipLargestImageMB, Mode=TwoWay}"/>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures count as copies; one bigger than the largest size is left out. Nothing copied ever leaves this PC or reaches a model."/>
                   </StackPanel>
                 </GroupBox>
                 <GroupBox ui:Tr.Header="Pasting">
