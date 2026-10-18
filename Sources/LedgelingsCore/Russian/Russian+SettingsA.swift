@@ -9,6 +9,8 @@ extension Strings {
         "Bonds": "Отношения",
         "Calendar": "Календарь",
         "Reminders": "Напоминания",
+        "Productivity tools": "Инструменты",
+        "Tool": "Инструмент",
         "Voice": "Голос",
         "Costs": "Расходы",
         "Chats": "Чаты",

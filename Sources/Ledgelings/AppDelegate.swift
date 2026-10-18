@@ -307,10 +307,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--settings [creatures|actions|chases|beds|play|sprites|talk|bonds|calendar|reminders|voice|costs|chats]`: open the window at launch, for looking at it from a script.
+        // `--settings [creatures|actions|chases|beds|play|sprites|talk|flowers|bonds|calendar|productivity|voice|costs|chats]`: open the window at launch, for looking at it from a script.
         if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "reminders": .reminders, "voice": .voice, "costs": .costs, "chats": .chats]
-            settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? tabs[CommandLine.arguments[at + 1]] : nil)
+            settingsWindow.show(tab: CommandLine.arguments.indices.contains(at + 1) ? SettingsTab.named(CommandLine.arguments[at + 1]) : nil)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
                 let out = URL(fileURLWithPath: CommandLine.arguments[shot + 1])
@@ -509,7 +508,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationWillTerminate(_ notification: Notification) { colony?.letGoOfCursor(.escape) }
     @objc private func openSettings() { settingsWindow.show() }
     @objc private func openChats() { settingsWindow.show(tab: .chats) }
-    @objc private func openReminders() { settings.reminderPaperNote ? note.show() : settingsWindow.show(tab: .reminders) }
-    @objc private func openReminderList() { settingsWindow.show(tab: .reminders) }
+    @objc private func openReminders() { settings.reminderPaperNote ? note.show() : settingsWindow.show(tool: .reminders) }
+    @objc private func openReminderList() { settingsWindow.show(tool: .reminders) }
     @objc private func openSpend() { settingsWindow.show(tab: .costs) }
 }

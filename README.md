@@ -158,7 +158,7 @@ rushes at you and unfolds into a letter with your reminder, a note in the throwe
 own voice and its signature. Click it to send it flying away. A letter that
 arrives while you are away waits for you. *Add a Reminder* in Creature Actions… (Ctrl+Alt+R anywhere on
 Windows) opens a sheet of the same pixel paper to write it on, a creature peeking
-over the edge; the list is in Settings › Reminders.
+over the edge; the list is in Settings › Productivity tools.
 Every conversation is kept, and every call to the model is priced.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a

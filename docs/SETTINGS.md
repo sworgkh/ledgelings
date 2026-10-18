@@ -2,7 +2,7 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Thirteen tabs: **Creatures**, **Actions**, **Chases**, **Beds**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Reminders**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. Thirteen tabs: **Creatures**, **Actions**, **Chases**, **Beds**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Productivity tools**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
 
 ## Without a model
 
@@ -35,7 +35,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | Item | What it does |
 |---|---|
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
-| *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens the Reminders tab |
+| *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens *Productivity tools › Reminders* |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -60,7 +60,7 @@ what the last press did (*A paper plane goes up.*, *No plane: nobody free…*).
 | **Make Someone Talk** | T | A random awake creature says something to the nearest one |
 | **Have a Tea Party** | E | The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Greyed while tea parties are off or one is on |
 | **Send a Paper Plane** | P | One free creature throws a paper plane to another now, whatever the setting below says. Greyed while one is in the air |
-| **Add a Reminder** | R | Puts the sheet away and opens the paper note (below); with *Add a Reminder… opens a paper note* off, the Reminders tab. On Windows, Ctrl+Alt+R from anywhere |
+| **Add a Reminder** | R | Puts the sheet away and opens the paper note (below); with *Add a Reminder… opens a paper note* off, *Productivity tools › Reminders*. On Windows, Ctrl+Alt+R from anywhere |
 | **Hide Them for a While** | H | A row comes up under the tiles: 5, 15, 30 minutes; 1, 2, 4 hours; till 08:00 tomorrow. Pick one and everyone goes into the house. While they are away the tile reads **Bring Them Back**, with the time left, and ends it early |
 | **Put Them to Sleep** / **Wake Them Up** | S | Skips to the next dusk or dawn; the tile shows how long until it would come anyway. Greyed when the night is 0 |
 | **Clear N Flowers** | F | Pulls up every flower the creatures planted, at once ([Flowers tab](#flowers-tab)). Greyed while none are planted |
@@ -467,7 +467,13 @@ block about it (`{holiday}` is its name). They know a holiday only on the day, a
 nothing of the clock or the date, so those two boxes and *Mention a holiday* are
 greyed out under a *Needs a model* note.
 
-## Reminders tab
+## Productivity tools tab
+
+Tools the creatures run for you rather than for themselves. A row of tools
+across the top picks one (today only **Reminders**); its settings fill the two
+columns below. `--settings productivity` opens it (`reminders` too, its old name).
+
+### Reminders
 
 Things you want to be reminded of. When the time comes, a free creature stops,
 folds the reminder into a paper plane and throws it at you: the plane swirls to the

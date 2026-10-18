@@ -5,7 +5,7 @@ import SwiftUI
 /// Add a Reminder… as the game draws it: a sheet of the letter's pixel paper
 /// with a creature peeking over the top edge. You write what to be reminded of,
 /// step the day and the time with pixel arrows, pick a repeat, and fold it
-/// into a plane. The Reminders tab keeps the list and the delivery settings.
+/// into a plane. Productivity tools › Reminders keeps the list and the delivery settings.
 @MainActor
 final class ReminderNoteController {
     /// The sheet, in points; the paper is drawn at `pixel` points per paper pixel.
