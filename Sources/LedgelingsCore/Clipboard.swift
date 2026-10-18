@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// The clipboard manager: what was copied lately (the history) and the texts the
@@ -15,7 +16,9 @@ import Foundation
 /// A snippet marked protected keeps no text here at all: its text lives in the
 /// platform's secret store (the Mac's Keychain, Windows' Credential Manager),
 /// fetched only when it is pasted. The book and anything exported from it know
-/// its title and nothing else.
+/// its title and a salted fingerprint of its words, nothing else. A copy in the
+/// history with exactly those words is shown masked, `PWD:Wi-Fi: [16] chars`,
+/// and searched by that label; it still pastes its own words.
 ///
 /// Nothing in here is ever sent anywhere: no model sees a clip or a snippet.
 public enum Clipboard {
@@ -153,11 +156,30 @@ public enum Clipboard {
         /// Its own shortcut from any app, as the platform's key number and `Shortcut.Modifiers`; nil: none.
         public var keyCode: Int?
         public var modifiers: Int?
+        /// A protected snippet's words, fingerprinted: SHA-256 of `secretSalt`'s bytes and then the words',
+        /// so a copy of them in the history is told apart without the words themselves on disk.
+        public var secretSalt: String?
+        public var secretHash: String?
 
         public init(id: UUID = UUID(), title: String, text: String = "", protected: Bool = false,
                     keyCode: Int? = nil, modifiers: Int? = nil) {
             self.id = id; self.title = title; self.text = protected ? "" : text; self.protected = protected
             self.keyCode = keyCode; self.modifiers = modifiers
+        }
+
+        /// Fingerprints `words` with a fresh salt, for a protected snippet; nil words forget the fingerprint.
+        public mutating func seal(_ words: String?) {
+            guard let words, !words.isEmpty else { secretSalt = nil; secretHash = nil; return }
+            let salt = Data((0..<16).map { _ in UInt8.random(in: .min ... .max) })
+            secretSalt = salt.base64EncodedString()
+            secretHash = Clipboard.fingerprint(words, salt: salt)
+        }
+
+        /// Whether `text` is this protected snippet's words.
+        public func holds(_ text: String) -> Bool {
+            guard protected, let secretHash, let secretSalt, let salt = Data(base64Encoded: secretSalt),
+                  text.count <= Clipboard.longestSecret else { return false }
+            return Clipboard.fingerprint(text, salt: salt) == secretHash
         }
 
         /// Its own shortcut, when it has a usable one.
@@ -181,6 +203,16 @@ public enum Clipboard {
 
     /// What a protected snippet looks like until it is pasted.
     public static let mask = "••••••••"
+
+    /// Longest words compared with protected snippets: a password is short, a page of text is not one.
+    public static let longestSecret = 1024
+
+    static func fingerprint(_ words: String, salt: Data) -> String {
+        SHA256.hash(data: salt + Data(words.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// How a copy holding a protected snippet's words is shown: `PWD:Wi-Fi: [16] chars`.
+    public static func maskLabel(_ title: String, length: Int) -> String { "PWD:\(title): [\(length)] chars" }
 
     public struct Folder: Codable, Equatable, Identifiable, Sendable {
         public var id: UUID
@@ -206,6 +238,17 @@ public enum Clipboard {
 
         public func folder(of id: UUID) -> Folder? { all.first { $0.snippet.id == id }?.folder }
 
+        /// The protected snippet whose words `text` is, if any.
+        public func secret(matching text: String) -> Snippet? {
+            all.lazy.map(\.snippet).first { $0.holds(text) }
+        }
+
+        /// What the picker shows for `clip`: its mask when it holds a protected snippet's words, else nil.
+        public func mask(for clip: Clip) -> String? {
+            guard clip.kind == .text || clip.kind == .rich, let snippet = secret(matching: clip.text) else { return nil }
+            return Clipboard.maskLabel(snippet.title, length: clip.text.count)
+        }
+
         @discardableResult
         public mutating func addFolder(_ title: String) -> UUID {
             let folder = Folder(title: title)
@@ -226,7 +269,7 @@ public enum Clipboard {
             for f in folders.indices {
                 if let s = folders[f].snippets.firstIndex(where: { $0.id == snippet.id }) {
                     var kept = snippet
-                    if kept.protected { kept.text = "" }
+                    if kept.protected { kept.text = "" } else { kept.seal(nil) }
                     folders[f].snippets[s] = kept
                 }
             }
@@ -283,7 +326,8 @@ public enum Clipboard {
 
     /// Every clip and snippet holding every word of `query`, in any order and any case,
     /// accents ignored ("cafe" finds "Café"). A clip matches on its text and its app (a
-    /// picture on its label, "Image 1280×720", in English and as shown); a
+    /// picture on its label, "Image 1280×720", in English and as shown; one holding a
+    /// protected snippet's words only on its mask, `PWD:Wi-Fi: [16] chars`); a
     /// snippet on its title, its folder's title and its words, but a protected snippet
     /// only on its title and folder: its words are not here to search. An empty query
     /// finds everything: the pinned clips first, then the rest newest first.
@@ -294,7 +338,9 @@ public enum Clipboard {
             return words.allSatisfy { folded.contains($0) }
         }
         let clips = history.clips.filter { clip in
-            words.isEmpty || holds([clip.text, clip.app ?? "", clip.kind == .image ? clip.preview(200) : ""].joined(separator: " "))
+            if words.isEmpty { return true }
+            if let mask = snippets.mask(for: clip) { return holds(mask + " " + (clip.app ?? "")) }
+            return holds([clip.text, clip.app ?? "", clip.kind == .image ? clip.preview(200) : ""].joined(separator: " "))
         }
         let ordered = clips.filter(\.pinned) + clips.filter { !$0.pinned }
         let found = snippets.all.filter { folder, snippet in

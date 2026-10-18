@@ -8,12 +8,14 @@ import LedgelingsCore
 /// not be kept; the history picker opens, a search narrows it, one is chosen; the
 /// snippets picker opens and a protected snippet is chosen, which must go on the
 /// pasteboard concealed, stay out of the history and leave again. Last, a search for
-/// "image" finds the picture and choosing it puts the same PNG and TIFF back.
+/// "image" finds the picture and choosing it puts the same PNG and TIFF back. Then the
+/// Wi-Fi password is copied the ordinary way, as from a note: it is kept, but shown
+/// and found only as `PWD:Wi-Fi password: [16] chars`, and choosing it pastes the words.
 ///
 /// It keeps its own history and snippets in a folder of its own, its secret under
 /// a keychain service of its own that it empties at the end, and puts back what
 /// was on the pasteboard. It never presses ⌘V. `--snapshot out.png` writes the
-/// history picker as it looks after the search.
+/// history picker as it looks after the search, and `out.masked.png` with the masked copy.
 @MainActor
 enum ClipDemo {
     static func run(settings: AppSettings, snapshot: URL?) async -> Bool {
@@ -124,6 +126,30 @@ enum ClipDemo {
         let same = pasteboard.data(forType: .png) == png && pasteboard.data(forType: .tiff) == tiff
         log("pasteboard now \(back.joined(separator: " + ")), the same bytes \(same), words \(pasteboard.string(forType: .string) == nil ? "none" : "SOME ✗")")
         ok = ok && same && pasteboard.string(forType: .string) == nil
+
+        pasteboard.clearContents()
+        pasteboard.setString("pixel-perfect-42", forType: .string)
+        log("copy the Wi-Fi password, unmarked, as from a note")
+        watcher.look()
+        picker.show(.recent)
+        try? await Task.sleep(for: .milliseconds(300))
+        picker.model.query = "pixel"
+        let byWords = picker.model.rows.filter { $0.group == .recent }.count
+        picker.model.query = "pwd wi-fi"
+        let masked = picker.model.rows.first { $0.group == .recent }
+        log("search \"pixel\": \(byWords) copies; \"pwd wi-fi\": \(masked.map { "\"\($0.text)\"\($0.masked ? ", tinted" : "")" } ?? "nothing")")
+        ok = ok && byWords == 0 && masked?.text == "PWD:Wi-Fi password: [16] chars" && masked?.masked == true
+        if let snapshot {
+            picker.model.query = ""
+            try? await Task.sleep(for: .milliseconds(300))
+            let masked = snapshot.deletingPathExtension().appendingPathExtension("masked.png")
+            do { try picker.snapshot(to: masked); log("snapshot \(masked.path)") } catch { log("snapshot failed: \(error)") }
+        }
+        if let masked { picker.choose(masked) }
+        try? await Task.sleep(for: .milliseconds(300))
+        let words = pasteboard.string(forType: .string) == "pixel-perfect-42"
+        log("pasteboard now the real words \(words), concealed \(pasteboard.types?.contains(ClipPaster.concealed) == true)")
+        ok = ok && words
         log(ok ? "all well" : "SOMETHING IS WRONG")
         return ok
     }

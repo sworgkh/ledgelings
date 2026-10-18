@@ -159,6 +159,55 @@ import Testing
         #expect(h.clips[0].text == "hi" && h.clips[0].picture == nil)
     }
 
+    // MARK: Masked passwords
+
+    func bookWithSecret(_ words: String = "pixel-perfect-42") -> Clipboard.SnippetBook {
+        var book = Clipboard.SnippetBook()
+        var secret = Clipboard.Snippet(title: "Wi-Fi", protected: true)
+        secret.seal(words)
+        book.add(secret)
+        book.add(Clipboard.Snippet(title: "Plain", text: "hello there"))
+        return book
+    }
+
+    @Test func aCopyOfAProtectedSnippetsWordsIsMaskedByNameAndLength() throws {
+        let book = bookWithSecret()
+        #expect(book.mask(for: Clip(text: "pixel-perfect-42", copiedAt: t0)) == "PWD:Wi-Fi: [16] chars")
+        #expect(book.mask(for: Clip(kind: .rich, text: "pixel-perfect-42", rtf: Data(), copiedAt: t0)) == "PWD:Wi-Fi: [16] chars")
+        #expect(book.mask(for: Clip(text: "pixel-perfect-43", copiedAt: t0)) == nil)
+        #expect(book.mask(for: Clip(text: "hello there", copiedAt: t0)) == nil, "an ordinary snippet's words are not a secret")
+        let snippet = try #require(book.all.first?.snippet)
+        #expect(snippet.text.isEmpty && snippet.secretHash?.contains("pixel") == false)
+    }
+
+    @Test func theSameWordsGetADifferentFingerprintEachTime() {
+        var a = Clipboard.Snippet(title: "A", protected: true), b = Clipboard.Snippet(title: "B", protected: true)
+        a.seal("same"); b.seal("same")
+        #expect(a.secretHash != b.secretHash && a.holds("same") && b.holds("same"))
+        a.seal(nil)
+        #expect(a.secretHash == nil && !a.holds("same"))
+    }
+
+    @Test func aMaskedCopyIsFoundByItsMaskNeverByItsWords() {
+        var h = history(["pixel-perfect-42", "pixel art"])
+        h.clips[1].app = "Notes"
+        let book = bookWithSecret()
+        #expect(Clipboard.search("pixel", history: h, snippets: book).clips.map(\.text) == ["pixel art"])
+        #expect(Clipboard.search("pwd wi-fi", history: h, snippets: book).clips.map(\.text) == ["pixel-perfect-42"])
+        #expect(Clipboard.search("notes", history: h, snippets: book).clips.map(\.text) == ["pixel-perfect-42"])
+        #expect(Clipboard.search("", history: h, snippets: book).clips.count == 2)
+    }
+
+    @Test func unprotectingASnippetForgetsItsFingerprint() throws {
+        var book = bookWithSecret()
+        var snippet = try #require(book.all.first?.snippet)
+        snippet.protected = false
+        snippet.text = "pixel-perfect-42"
+        book.update(snippet)
+        #expect(book.all.first?.snippet.secretHash == nil)
+        #expect(book.mask(for: Clip(text: "pixel-perfect-42", copiedAt: t0)) == nil)
+    }
+
     @Test func removeTakesOneClip() {
         var h = history(["a", "b"])
         h.remove(h.clips[0].id)

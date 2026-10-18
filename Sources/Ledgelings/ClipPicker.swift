@@ -430,6 +430,8 @@ final class ClipPickerModel: ObservableObject {
         let protected: Bool
         /// A picture's few pixels, drawn big and square.
         var thumbnail: NSImage? = nil
+        /// A copy of a protected snippet's words: `text` is its mask, the row a shade apart.
+        var masked = false
     }
 
     @Published var query = "" { didSet { if query != oldValue { refresh(selectFirst: true) } } }
@@ -467,8 +469,9 @@ final class ClipPickerModel: ObservableObject {
         let found = Clipboard.search(query, history: history, snippets: snippets)
         let now = Date()
         let recent = found.clips.map { clip in
-            Row(id: clip.id, group: .recent, text: clip.preview(90), detail: Self.detail(clip, now: now), title: nil,
-                pinned: clip.pinned, protected: false, thumbnail: thumbnail(clip))
+            let mask = snippets.mask(for: clip)
+            return Row(id: clip.id, group: .recent, text: mask ?? clip.preview(90), detail: Self.detail(clip, now: now), title: nil,
+                       pinned: clip.pinned, protected: false, thumbnail: thumbnail(clip), masked: mask != nil)
         }
         let saved = found.snippets.map { snippet in
             Row(id: snippet.id, group: .snippets, text: snippet.preview(90), detail: snippets.folder(of: snippet.id)?.title ?? "",
@@ -528,6 +531,8 @@ struct ClipPickerView: View {
     private static let softInk = Color(cgColor: ScreenOverlay.softInk)
     private static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
     private static let rowHeight: CGFloat = 36
+    /// A copy holding a protected snippet's words: the ink's own violet, faint on the paper.
+    static let maskTint = Color(cgColor: ScreenOverlay.softInk).opacity(0.12)
 
     var body: some View {
         let paper = model.paper
@@ -629,7 +634,7 @@ struct ClipPickerView: View {
                     .layoutPriority(1)
             }
             Text(row.text).font(.system(size: 12, weight: row.title == nil ? .semibold : .regular, design: .monospaced))
-                .foregroundStyle(row.title == nil ? PixelBox.rim : Self.softInk).lineLimit(1).truncationMode(.tail)
+                .foregroundStyle(row.title == nil && !row.masked ? PixelBox.rim : Self.softInk).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 6)
             Text(row.protected ? tr("LOCKED · %@", row.detail) : row.detail)
                 .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
@@ -637,7 +642,9 @@ struct ClipPickerView: View {
         }
         .padding(.horizontal, 9)
         .frame(height: Self.rowHeight)
-        .background { if chosen { PixelBox(style: .chosen) } }
+        .background {
+            if chosen { PixelBox(style: .chosen) } else if row.masked { Rectangle().fill(Self.maskTint) }
+        }
         .contentShape(Rectangle())
         .onHover { if $0 { model.selected = row.id } }
         .onTapGesture { model.choose(row, NSEvent.modifierFlags.contains(.option)) }

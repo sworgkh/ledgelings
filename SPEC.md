@@ -1774,7 +1774,18 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   the platform's secret store under the account `snippet.<id>` (macOS: the login
   keychain, service `Ledgelings Snippets`; Windows: Credential Manager). Protecting
   moves the words there; unprotecting brings them back; deleting a snippet or its
-  folder deletes the secret too.
+  folder deletes the secret too. The file keeps a fingerprint instead
+  (`secretSalt`: 16 random bytes in base64, fresh each time the words are set;
+  `secretHash`: SHA-256 of those bytes then the words' UTF-8, hex), made when the
+  words are set, and once at load for a protected snippet saved before there were
+  fingerprints (its words read from the secret store then).
+- **Masked copies**: a history clip of kind `text` or `rich` whose words (up to 1024
+  characters) are a protected snippet's is shown in the picker as
+  `PWD:<title>: [<characters>] chars`, in the ink's soft violet on a faint violet
+  tint (softInk at 12 %), and searched by that label and its app only, never by its
+  words; the watcher's trace prints the label too. Display only: the clip keeps its
+  words, and choosing it pastes them like any other copy, with no secret store
+  lookup and no fingerprint.
 - **Clipy's XML**: `<folders><folder><title/><snippets><snippet><title/><content/>`
   comes in as folders added after the user's; an export writes the same, a protected
   snippet with its title and empty content.
