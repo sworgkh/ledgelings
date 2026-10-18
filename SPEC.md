@@ -1884,6 +1884,75 @@ back), never pressing ⌘V, printing each step with its time (`clip 0.21 watch: 
 concealed, passing or excluded`, `clip 1.94 picker: would paste Wi-Fi password after
 70 ms, concealed`) and exiting 1 if anything was wrong.
 
+### 7.12 Screenshots
+
+A screenshot tool in the game's style (Settings › Productivity tools › Screenshots),
+macOS first (Windows to follow). Pictures only, never video; nothing is sent anywhere.
+The geometry, stitching, blur and naming are `Shot` in the core.
+
+- **Capture**: every monitor at its own pixel size, without the cursor (macOS:
+  ScreenCaptureKit, which needs **Screen Recording**; refused, a toast says so and macOS is
+  asked). With `shotHideCreatures` the creatures' overlay windows are left out of the
+  capture and hidden while the screens are frozen; they come back when the shot is done.
+- **Shortcuts**, from any app (§11): `shotCaptureShortcut` (⌃⌥S) freezes every monitor —
+  each shows its captured picture, dimmed 42 % outside the area — with a pixel crosshair
+  and the **toolbar** at the top of the screen under the cursor (`Shot.toolbarOrigin`:
+  centred on the cursor, 8 pt from the sides, 32 pt from the top); pressed again, it lets
+  go. `shotFullShortcut` (⌘⇧8, the `*` key) takes the full screen straight to the output,
+  no toolbar: every monitor stitched (`shotFullScope` = `allScreens`, with two or more) or
+  the one under the cursor. `shotLastShortcut` (⌘⇧\) takes the **last rectangle** again
+  straight to the output (`shotLastRect`, saved as `x,y,w,h` in global points whenever a
+  rectangle dragged on the toolbar is taken; cut to the monitor holding most of it; none
+  yet, or its monitor gone, and it opens the toolbar). Each is a menu item too.
+- **Areas** (toolbar keys): `R` rectangle (the default; a drag of at least 4×4 pt, cut to
+  the monitor it started on), `L` lasso (a freehand loop, points 2 pt apart, at least
+  three around 16 pt²; the picture is its bounds and outside the loop is transparent),
+  `W` the whole screen under the cursor, `A` all monitors. ⏎ with nothing chosen takes the
+  screen under the cursor. Picking R or L again starts over (marks gone).
+- **All monitors** (`Shot.stitch`): each monitor's pixels are kept 1:1, never resized.
+  A monitor starts right after every monitor wholly to its left and right under every one
+  wholly above it; with none, as far in as its offset in the arrangement at its own scale.
+  Gaps are transparent. So a 1× monitor beside a 2× one is half as tall in the picture
+  and no two overlap.
+- **Marks**, once there is an area: `B` box (an outline `shotThickness` points thick,
+  inside the drag), `→` arrow (a shaft and a filled head `max(4·t, 10)` long, at most 60 %
+  of the arrow, 0.6 of that each side), `H` highlight (filled, 35 % opaque), `X` blur
+  rectangle, `F` freehand blur (a stroke `4 × shotThickness` wide). Colours `1`–`6`:
+  `Shot.palette` red, yellow, green, blue, white, black; the last one picked is
+  `shotColour`. ⌘Z undoes the last mark. Square ends and sharp corners, nothing round.
+  A drag under 4 pt (8 for an arrow) leaves no mark.
+- **Blur** is pixelation: squares of `Shot.blurBlock` = 12 pt (at the monitor's scale)
+  on a grid from the picture's top-left, each painted the average of its pixels; a
+  rectangle blur covers every square it touches, cut to it; a freehand one every square
+  whose middle is within half the stroke (plus half a square) of it. It is baked into the
+  picture over whatever is under it by then, marks included, so the words cannot be read
+  back. On screen it shows as the frozen picture in the same squares.
+- **Marks in the picture** (`Shot.Mapping`): points map to pixels at the scale of the
+  monitor a mark starts on; lengths times that scale.
+- **Finishing**: ⏎ copies (`shotCopy`) and saves (`shotSave`) as set, copying anyway when
+  both are off; ⌘C only copies; ⌘S saves, and copies with `shotCopy`; ⎋ lets go at any
+  step. The full-screen and last-rectangle shortcuts finish as ⏎ does. Copying puts the
+  PNG on the clipboard (`public.png`), where the clipboard history keeps it as a picture
+  (§7.11). Saving writes `Screenshot yyyy-MM-dd HH.mm.ss.png` (local time) into
+  `shotFolder` (`~` is home; made when missing), with ` (2)`, ` (3)`… while the name is
+  taken. A toast on the pixel plate says `Copied 1280×720`, `Saved <name>` or both, or why
+  it could not save.
+- **The creature** (`shotCreatureBrings`): the free creature nearest the toolbar's spot
+  (as §7.11.1 chooses) leaps there (the clipboard helper's leap at speed 1), picks the
+  picture up for 0.25 s, leaps home holding an 18×14-pixel thumbnail (the shot squeezed
+  inside a 1-pixel dark rim, held out like a letter), touches down and walks on holding
+  it 2 s more. No line, no model call.
+
+`--shot-check` prints whether this build has Screen Recording and whether each monitor's
+capture shows the screen (exit 1 if not). `--shot-demo [--snapshot out.png]` does a
+toolbar shot on the real screens — a rectangle, a box, an arrow, a blur, a freehand blur, a
+highlight undone, ⌘C — checks the clipboard holds that PNG, then takes the last rectangle
+again; the clipboard and settings are put back; exit 1 if wrong. `--shot-film out.mp4`
+films it offscreen on two simulated monitors (2× and 1×): a rectangle with a box, an
+arrow, a blur and a freehand blur; a lasso with a highlight; all monitors; the last
+rectangle again; each picture written beside the film (`out-rectangle.png`, …) and every
+step printed (`film 7.40 taken 800×520 px, 4 marks`, `film 7.40 shot Whiskers hops to (300, 294)`).
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -2261,6 +2330,8 @@ falls through to whatever is underneath.
 | Opening the app again while it runs | the actions sheet comes up, with `reopenShowsActions` on |
 | The clipboard shortcuts, in any app (`clipHistoryShortcut` ⌃⌥V, `clipSnippetsShortcut` ⌃⌥B; Ctrl+Alt+V, Ctrl+Alt+B on Windows) | the clipboard picker on the history or the snippets (§7.11); the same keys again close it |
 | Menu: Clipboard History…, Paste a Snippet…, Edit Snippets… (with `clipboardEnabled`) | the picker on either group, or the snippet editor (§7.11) |
+| The screenshot shortcuts, in any app (`shotCaptureShortcut` ⌃⌥S, `shotFullShortcut` ⌘⇧8, `shotLastShortcut` ⌘⇧\; macOS) | a shot with the toolbar (again: let go), the full screen, or the last rectangle (§7.12) |
+| Menu: Take a Screenshot…, Screenshot the Full Screen, Screenshot the Last Rectangle (with `shotEnabled`) | the same three (§7.12) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
 | Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |
 | Menu: Screen › (two monitors or more) | the same menu |
@@ -2474,6 +2545,18 @@ An error for want of a model reads as that note, never as a server refusal.
 | clipHelperEnabled | true | a creature brings the picker and holds its corner (§7.11.1) |
 | clipHelper | empty | the character who brings it, by name; empty: whoever is nearest the middle |
 | clipHelperTalks | true | it says a short line of its own as the sheet unfolds (with talk on) |
+| shotEnabled | true | the screenshot tool (§7.12); off, no screenshot shortcut is taken and its menu items hide |
+| shotCaptureShortcutEnabled / shotCaptureShortcutKeyCode / shotCaptureShortcutModifiers | true / S / ⌃⌥ | a shot with the toolbar, as `shortcut` |
+| shotFullShortcutEnabled / shotFullShortcutKeyCode / shotFullShortcutModifiers | true / 8 / ⌘⇧ | the full screen straight to the output |
+| shotFullScope | `allScreens` | `allScreens` (stitched) or `screenUnderCursor`; an unknown value reads as `allScreens` |
+| shotLastShortcutEnabled / shotLastShortcutKeyCode / shotLastShortcutModifiers | true / \ / ⌘⇧ | the last rectangle again, straight to the output |
+| shotCopy / shotSave | true / false | where ⏎ sends a shot: the clipboard as PNG, a file in `shotFolder`; both off copies |
+| shotFolder | `~/Desktop/Screenshots` | `~` is home; empty reads as the default; made on the first save |
+| shotHideCreatures | true | the creatures are left out of the picture and hidden while the screens are frozen |
+| shotCreatureBrings | true | a creature hops to the toolbar's spot and carries a tiny picture home |
+| shotThickness | 3 | 1–8 pt, clamped on load: boxes and arrows; the freehand blur is 4× |
+| shotColour | 0 | 0–5, the last colour picked (`Shot.palette`); out of range reads as 0 |
+| shotLastRect | empty | `x,y,w,h` in global points: the last rectangle taken from the toolbar |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7), the
 clipboard history and snippets in `clipboard.json` and `snippets.json` (§7.11),
@@ -2499,7 +2582,7 @@ running plot with its part or the last plot, Forget), then the file with Reveal
 in Finder and Forget All. **Calendar**: on the left the time-of-day and date
 toggles, one toggle per faith and the look-ahead stepper; on the right the
 almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
-holidays in the next 60 days. **Productivity tools**: a segmented row of tools at the top (`ProductivityTool`, today only Reminders), the chosen tool's two columns below; `--settings productivity` (or the old `reminders`) opens it. Its **Reminders**: on the left a new reminder (text,
+holidays in the next 60 days. **Productivity tools**: a segmented row of tools at the top (`ProductivityTool`: Reminders, Clipboard, Screenshots), the chosen tool's two columns below; `--settings productivity` (or the old `reminders`) opens it. Its **Reminders**: on the left a new reminder (text,
 date and time, repeat, In 5 min / In 30 min / In 1 hour, Add Reminder), then
 the delivery toggle, letter slider, read-aloud toggle, paper-note toggle and Send a Test Letter; on
 the right every reminder, waiting ones by time then sent ones greyed, each with

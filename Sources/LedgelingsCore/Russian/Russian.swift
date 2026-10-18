@@ -24,5 +24,6 @@ extension Strings {
         "play": ruPlay,
         "screens": ruScreens,
         "clipboard": ruClipboard,
+        "screenshots": ruScreenshots,
     ]
 }

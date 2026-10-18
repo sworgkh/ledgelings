@@ -241,6 +241,12 @@ final class ScreenOverlay {
 
     func close() { window?.close() }
 
+    /// Its window's number, for leaving it out of a screenshot.
+    var windowID: CGWindowID? { window.map { CGWindowID($0.windowNumber) } }
+
+    /// Out of sight while a screenshot is taken, and back after.
+    func setHidden(_ hidden: Bool) { window?.alphaValue = hidden ? 0 : 1 }
+
     /// Clickable only while there is something under the cursor worth clicking.
     func setClickable(_ clickable: Bool) {
         guard let window else { return }
