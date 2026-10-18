@@ -4,7 +4,8 @@ using Ledgelings.Native;
 namespace Ledgelings;
 
 /// <summary>The clipboard history and the snippets, kept in <c>clipboard.json</c> and <c>snippets.json</c> beside
-/// the chats, saved on every change: the Mac's files. A protected snippet's words are kept in Credential
+/// the chats, saved on every change: the Mac's files; a copied picture's bytes in <c>clipboard-images</c> there, deleted
+/// when its clip goes. A protected snippet's words are kept in Credential
 /// Manager, one generic credential per snippet under <c>Ledgelings Snippets/snippet.&lt;id&gt;</c>.</summary>
 public sealed class ClipBook
 {
@@ -22,15 +23,72 @@ public sealed class ClipBook
         this.secrets = secrets ?? new CredentialStore(SecretService);
         History = Store.LoadHistory();
         Snippets = Store.LoadSnippets();
+        Store.SweepImages(History);
     }
 
     // MARK: History
 
     public void ChangeHistory(Action<Clipboard.History> edit)
     {
+        var pictures = Pictures();
         edit(History);
         try { Store.Save(History); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Complain(e); }
+        // A picture pruned, forgotten or cleared takes its files with it.
+        var left = Pictures();
+        if (!pictures.IsSubsetOf(left))
+        {
+            Store.SweepImages(History);
+            foreach (var id in thumbnails.Keys.Where(id => !left.Contains(id)).ToList()) thumbnails.Remove(id);
+        }
         Changed?.Invoke();
+    }
+
+    private HashSet<Guid> Pictures() => History.Clips.Where(c => c.Kind == Clipboard.Kind.Image).Select(c => c.Id).ToHashSet();
+
+    /// <summary>A copied picture: its bytes written beside the history (unless the same picture is there already, which
+    /// only moves to the top), then the clip, then the limits.</summary>
+    public void AddImage(Clipboard.Clip clip, IReadOnlyList<(string Type, byte[] Data)> kinds, int limit, int days)
+    {
+        if (!History.Clips.Any(c => c.Kind == Clipboard.Kind.Image && c.Picture?.Digest == clip.Picture?.Digest))
+        {
+            try { Store.SaveImage(clip.Id, kinds); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Complain(e); return; }
+        }
+        Add(clip, limit, days);
+    }
+
+    /// <summary>A picture clip's bytes, in the formats it was copied as.</summary>
+    public List<(string Type, byte[] Data)> ImageData(Clipboard.Clip clip) => Store.LoadImage(clip);
+
+    private readonly Dictionary<Guid, System.Windows.Media.Imaging.BitmapSource> thumbnails = new();
+    /// <summary>Longest side of a picture's thumbnail, in pixels: drawn twice as big, square pixels.</summary>
+    public const int ThumbnailPixels = 20;
+
+    /// <summary>A picture clip's thumbnail, a few pixels across, made once from its best file.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? Thumbnail(Clipboard.Clip clip)
+    {
+        if (clip.Kind != Clipboard.Kind.Image || clip.Picture is not { Types.Count: > 0 } picture) return null;
+        if (thumbnails.TryGetValue(clip.Id, out var made)) return made;
+        try
+        {
+            var type = picture.Types[0];
+            var bytes = File.ReadAllBytes(Store.ImageFile(clip.Id, type));
+            if (type == "DeviceIndependentBitmap") bytes = Clipboard.DibAsBmp(bytes);
+            var image = new System.Windows.Media.Imaging.BitmapImage();
+            image.BeginInit();
+            image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            image.StreamSource = new MemoryStream(bytes);
+            if (picture.Width >= picture.Height) image.DecodePixelWidth = Math.Min(ThumbnailPixels, Math.Max(picture.Width, 1));
+            else image.DecodePixelHeight = Math.Min(ThumbnailPixels, Math.Max(picture.Height, 1));
+            image.EndInit();
+            image.Freeze();
+            return thumbnails[clip.Id] = image;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException or InvalidOperationException
+                                      or System.IO.FileFormatException)
+        {
+            return null;
+        }
     }
 
     /// <summary>A new copy, then the limits applied.</summary>

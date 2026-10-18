@@ -27,7 +27,7 @@ public sealed partial class SettingsWindow
         book.Changed += () => Dispatcher.BeginInvoke(ShowClipboard);
         settings.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(AppSettings.ClipKeepDays) or nameof(AppSettings.ClipExcludedApps) or nameof(AppSettings.ClipHistoryShortcut)
+            if (e.PropertyName is nameof(AppSettings.ClipKeepDays) or nameof(AppSettings.ClipLargestImageMB) or nameof(AppSettings.ClipExcludedApps) or nameof(AppSettings.ClipHistoryShortcut)
                 or nameof(AppSettings.ClipSnippetsShortcut) or nameof(AppSettings.RecordingShortcut) or nameof(AppSettings.ClipShortcutProblem)
                 or nameof(AppSettings.ClipHelper) or nameof(AppSettings.ClipHelperEnabled) or nameof(AppSettings.Language))
                 ShowClipboard();
@@ -40,6 +40,7 @@ public sealed partial class SettingsWindow
     {
         if (clipBook is null) return;
         ClipKeepDaysValue.Text = settings.ClipKeepDays == 0 ? L10n.Tr("always") : settings.ClipKeepDays + L10n.Tr(" d");
+        ClipLargestImageValue.Text = settings.ClipLargestImageMB + L10n.Tr(" MB");
         string Label(Button button, Shortcut shortcut) =>
             settings.RecordingShortcut && recordingButton == button ? L10n.Tr("Press the keys…") : ShortcutKeys.Label(shortcut);
         ClipHistoryShortcutButton.Content = Label(ClipHistoryShortcutButton, settings.ClipHistoryShortcut);

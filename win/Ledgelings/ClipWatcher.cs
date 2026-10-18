@@ -12,7 +12,8 @@ namespace Ledgelings;
 /// clipboard changes (<c>WM_CLIPBOARDUPDATE</c>), so nothing is polled. A copy marked not for keeping
 /// (<c>ExcludeClipboardContentFromMonitorProcessing</c>, <c>Clipboard Viewer Ignore</c>, or
 /// <c>CanIncludeInClipboardHistory</c> set to 0, as password managers write), one made by an excluded app, and
-/// the app's own writes are left out. Images are not kept, as on the Mac; files are kept as their paths.
+/// the app's own writes are left out. Files are kept as their paths; a picture (a copy with no words, only image
+/// formats) as files of its own beside the history, as on the Mac.
 /// </summary>
 public sealed class ClipWatcher : IDisposable
 {
@@ -66,13 +67,58 @@ public sealed class ClipWatcher : IDisposable
             Trace?.Invoke($"skip {process ?? "?"}: concealed, passing or excluded");
             return;
         }
-        if (Read(data, DateTimeOffset.Now, ClipboardNative.AppTitle(owner) ?? process, settings) is not { } clip)
+        var app = ClipboardNative.AppTitle(owner) ?? process;
+        if (Read(data, DateTimeOffset.Now, app, settings) is { } clip)
         {
-            Trace?.Invoke("skip: no text");
+            book.Add(clip, settings.ClipHistoryLimit, settings.ClipKeepDays);
+            Trace?.Invoke($"keep {clip.Kind} \"{clip.Preview(40)}\" from {clip.App ?? "?"}");
             return;
         }
-        book.Add(clip, settings.ClipHistoryLimit, settings.ClipKeepDays);
-        Trace?.Invoke($"keep {clip.Kind} \"{clip.Preview(40)}\" from {clip.App ?? "?"}");
+        switch (ReadImage(data, DateTimeOffset.Now, app, settings))
+        {
+            case ImageRead.Image(var picture, var kinds):
+                book.AddImage(picture, kinds, settings.ClipHistoryLimit, settings.ClipKeepDays);
+                Trace?.Invoke($"keep image \"{picture.Text}\" as {string.Join(" + ", kinds.Select(k => k.Type))} from {picture.App ?? "?"}");
+                break;
+            case ImageRead.TooBig(var bytes):
+                Trace?.Invoke($"skip: image of {bytes / 1_048_576.0:F1} MB, over {settings.ClipLargestImageMB} MB");
+                break;
+            default:
+                Trace?.Invoke("skip: no text");
+                break;
+        }
+    }
+
+    public abstract record ImageRead
+    {
+        public sealed record None : ImageRead;
+        /// <summary>A picture, but even its smallest format is over the size kept; its smallest size.</summary>
+        public sealed record TooBig(int Bytes) : ImageRead;
+        public sealed record Image(Clipboard.Clip Clip, IReadOnlyList<(string Type, byte[] Data)> Kinds) : ImageRead;
+    }
+
+    /// <summary>The copy as a picture, in every image format it came in that fits the size kept.</summary>
+    public static ImageRead ReadImage(IDataObject data, DateTimeOffset now, string? app, AppSettings settings)
+    {
+        if (!settings.ClipKeepImages) return new ImageRead.None();
+        var found = new Dictionary<string, byte[]>();
+        try
+        {
+            foreach (var format in Clipboard.WindowsImageFormats)
+                if (data.GetDataPresent(format, false) && data.GetData(format, false) is MemoryStream stream && stream.Length > 0)
+                    found[format] = stream.ToArray();
+        }
+        catch (Exception e) when (e is COMException or ExternalException or OutOfMemoryException) { }
+        if (found.Count == 0) return new ImageRead.None();
+        var kept = Clipboard.KeptImageTypes(found.ToDictionary(f => f.Key, f => f.Value.Length), settings.ClipLargestImageMB * 1_048_576L);
+        if (kept.Count == 0) return new ImageRead.TooBig(found.Values.Min(v => v.Length));
+        if (Clipboard.PixelSize(kept[0], found[kept[0]]) is not var (width, height) || width <= 0 || height <= 0) return new ImageRead.None();
+        var kinds = kept.Select(type => (type, found[type])).ToList();
+        var picture = new Clipboard.Picture
+        {
+            Width = width, Height = height, Bytes = kinds.Sum(k => k.Item2.Length), Digest = Clipboard.Digest(found[kept[0]]), Types = kept,
+        };
+        return new ImageRead.Image(Clipboard.Clip.FromPicture(picture, now, app), kinds);
     }
 
     /// <summary><c>CanIncludeInClipboardHistory</c> = 0: the app asked to be left out of every history.</summary>
@@ -120,7 +166,9 @@ public static class ClipPaster
     /// <summary>Marks our own writes, so the watcher (and other clipboard managers) know where they came from.</summary>
     public const string OwnFormat = "Ledgelings.Paste";
 
-    public sealed record Item(string Text, byte[]? Rtf = null, IReadOnlyList<string>? Files = null, bool Secret = false);
+    /// <param name="Images">A picture, in each format it was copied as: put back as those formats, with no words.</param>
+    public sealed record Item(string Text, byte[]? Rtf = null, IReadOnlyList<string>? Files = null, bool Secret = false,
+                              IReadOnlyList<(string Type, byte[] Data)>? Images = null);
 
     /// <summary>The clipboard is shared and often busy for a moment: a few tries, then nothing.</summary>
     public static T? Retry<T>(Func<T> read) where T : class
@@ -143,7 +191,8 @@ public static class ClipPaster
     {
         var data = new DataObject();
         if (item.Files is { Count: > 0 } files) data.SetData(DataFormats.FileDrop, files.ToArray());
-        data.SetData(DataFormats.UnicodeText, item.Text);
+        foreach (var (type, bytes) in item.Images ?? Array.Empty<(string, byte[])>()) data.SetData(type, new MemoryStream(bytes), false);
+        if (item.Images is not { Count: > 0 }) data.SetData(DataFormats.UnicodeText, item.Text);
         if (!plain && item.Rtf is { } rtf) data.SetData(DataFormats.Rtf, System.Text.Encoding.UTF8.GetString(rtf));
         data.SetData(OwnFormat, "1");
         if (item.Secret)

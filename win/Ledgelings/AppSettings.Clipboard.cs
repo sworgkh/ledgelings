@@ -10,11 +10,12 @@ public sealed partial class AppSettings
     public const int ClipHistoryLimitMin = 10, ClipHistoryLimitMax = 2000;
     public const int ClipKeepDaysMin = 0, ClipKeepDaysMax = 365;
     public const double ClipAnimationSpeedMin = 0.5, ClipAnimationSpeedMax = 3;
+    public const int ClipLargestImageMin = 1, ClipLargestImageMax = 100;
 
-    private bool clipboardEnabled, clipHistoryEnabled, clipKeepFormatting, clipKeepFiles, clipAutoPaste, clipPlainText;
+    private bool clipboardEnabled, clipHistoryEnabled, clipKeepFormatting, clipKeepFiles, clipKeepImages, clipAutoPaste, clipPlainText;
     private bool clipHistoryShortcutEnabled, clipSnippetsShortcutEnabled, clipSnippetShortcutsEnabled;
     private bool clipAnimate, clipHelperEnabled, clipHelperTalks;
-    private int clipHistoryLimit, clipKeepDays;
+    private int clipHistoryLimit, clipKeepDays, clipLargestImageMB;
     private double clipAnimationSpeed;
     private IReadOnlyList<string> clipExcludedApps = Array.Empty<string>();
     private Shortcut clipHistoryShortcut, clipSnippetsShortcut;
@@ -30,6 +31,9 @@ public sealed partial class AppSettings
         clipExcludedApps = store.Get<List<string>>("clipExcludedApps") ?? Clipboard.DefaultExcludedWindowsApps.ToList();
         clipKeepFormatting = store.Get<bool?>("clipKeepFormatting") ?? true;
         clipKeepFiles = store.Get<bool?>("clipKeepFiles") ?? true;
+        clipKeepImages = store.Get<bool?>("clipKeepImages") ?? true;
+        // 20 MB: a full-screen 4K screenshot as PNG, with room; a bigger copy is rarely one to paste again.
+        clipLargestImageMB = Math.Clamp(store.Get<int?>("clipLargestImageMB") ?? 20, ClipLargestImageMin, ClipLargestImageMax);
         clipAutoPaste = store.Get<bool?>("clipAutoPaste") ?? true;
         clipPlainText = store.Get<bool?>("clipPlainText") ?? false;
         clipHistoryShortcutEnabled = store.Get<bool?>("clipHistoryShortcutEnabled") ?? true;
@@ -57,6 +61,14 @@ public sealed partial class AppSettings
     public bool ClipKeepFormatting { get => clipKeepFormatting; set => Put(ref clipKeepFormatting, value, "clipKeepFormatting"); }
     /// <summary>Files copied in Explorer are kept, as their paths, and paste back as files.</summary>
     public bool ClipKeepFiles { get => clipKeepFiles; set => Put(ref clipKeepFiles, value, "clipKeepFiles"); }
+    /// <summary>Copied pictures (screenshots, images from a browser) are kept and paste back as pictures.</summary>
+    public bool ClipKeepImages { get => clipKeepImages; set => Put(ref clipKeepImages, value, "clipKeepImages"); }
+    /// <summary>The largest picture kept, in MB, all its formats together; a bigger one is left out.</summary>
+    public int ClipLargestImageMB
+    {
+        get => clipLargestImageMB;
+        set => Put(ref clipLargestImageMB, Math.Clamp(value, ClipLargestImageMin, ClipLargestImageMax), "clipLargestImageMB");
+    }
     /// <summary>Choosing an item pastes it into the app you were in (Ctrl+V pressed for you). Off: it is only copied.</summary>
     public bool ClipAutoPaste { get => clipAutoPaste; set => Put(ref clipAutoPaste, value, "clipAutoPaste"); }
     /// <summary>Paste the words without their formatting; Alt+Enter in the picker does the other one.</summary>

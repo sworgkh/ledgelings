@@ -615,6 +615,9 @@ Ctrl+Alt+B, Enter and Alt+Enter, Ctrl+1–9, Ctrl+P, Delete, Ctrl+E; the tray ha
 **Clipboard History…**, **Paste a Snippet…** and **Edit Snippets…**. Pasting needs no
 permission: the picker takes the keyboard while it is up, then puts the window you were
 in back in front and presses Ctrl+V. *Keep files copied in Explorer* replaces *…in Finder*;
+**Keep images** keeps a picture in the clipboard formats it came in that fit the cap, best first: PNG (Snipping
+Tool, browsers, Office), JPEG, GIF, and the bitmap (`DeviceIndependentBitmap`) every picture on Windows' clipboard
+has, so a big screenshot keeps its PNG and drops the bitmap; it is pasted back in those formats;
 **Never kept** lists programs by their .exe (**Add App…** picks one), KeePass, KeePassXC,
 1Password, Bitwarden and the like by default, and copies a program marks with
 `ExcludeClipboardContentFromMonitorProcessing` or `CanIncludeInClipboardHistory` = 0 are

@@ -12,7 +12,9 @@ namespace Ledgelings.Core;
 ///
 /// The history is newest first. Copying the same text again moves its clip to the top instead of adding a
 /// second one. Pinned clips stay whatever the limits say; the others go once there are more than the
-/// limit of them, or once they are older than the days to keep. A protected snippet keeps no text here
+/// limit of them, or once they are older than the days to keep. A copied picture is a clip too, labelled
+/// "Image 1280×720"; its bytes are files in <c>clipboard-images</c> beside the history, one per clipboard format
+/// it was copied as, so the JSON stays small. A protected snippet keeps no text here
 /// at all: its words live in Windows' Credential Manager, fetched only when it is pasted.
 ///
 /// Nothing in here is ever sent anywhere: no model sees a clip or a snippet.
@@ -22,7 +24,23 @@ public static class Clipboard
     // MARK: Clips
 
     [JsonConverter(typeof(KindConverter))]
-    public enum Kind { Text, Rich, Files }
+    public enum Kind { Text, Rich, Files, Image }
+
+    /// <summary>A copied picture's size and the formats it was kept as, each a file beside the history.</summary>
+    public sealed record Picture
+    {
+        public int Width { get; init; }
+        public int Height { get; init; }
+        /// <summary>Every kept format's bytes together.</summary>
+        public int Bytes { get; init; }
+        /// <summary>A fingerprint of the best format's bytes: the same picture copied again is the same clip.</summary>
+        public string Digest { get; init; } = "";
+        /// <summary>The formats kept, best first ("PNG", "DeviceIndependentBitmap"); each is a file.</summary>
+        public List<string> Types { get; init; } = new();
+    }
+
+    /// <summary>What an image clip is called, in English, as its text: "Image 1280×720".</summary>
+    public static string ImageLabel(int width, int height) => $"Image {width}×{height}";
 
     public sealed record Clip
     {
@@ -37,14 +55,23 @@ public static class Clipboard
         /// <summary>The app it was copied from, by name, for the picker.</summary>
         public string? App { get; init; }
         public bool Pinned { get; init; }
+        /// <summary>An image clip's size and kept formats.</summary>
+        public Picture? Picture { get; init; }
+
+        /// <summary>A picture copied from <paramref name="app"/>, labelled by its size.</summary>
+        public static Clip FromPicture(Picture picture, DateTimeOffset copiedAt, string? app = null) =>
+            new() { Kind = Kind.Image, Text = ImageLabel(picture.Width, picture.Height), CopiedAt = copiedAt, App = app, Picture = picture };
 
         [JsonIgnore]
         public IReadOnlyList<string> Paths => Kind == Kind.Files ? Text.Split('\n', StringSplitOptions.RemoveEmptyEntries) : Array.Empty<string>();
 
         /// <summary>One line for a list: whitespace runs folded to one space, cut at <paramref name="limit"/> characters.</summary>
-        public string Preview(int limit = 80) => Kind == Kind.Files
-            ? Clipboard.Preview(string.Join(", ", Paths.Select(LastComponent)), limit)
-            : Clipboard.Preview(Text, limit);
+        public string Preview(int limit = 80) => Kind switch
+        {
+            Kind.Files => Clipboard.Preview(string.Join(", ", Paths.Select(LastComponent)), limit),
+            Kind.Image when Picture is { } p => Clipboard.Preview(L10n.Tr("Image %d×%d", p.Width, p.Height), limit),
+            _ => Clipboard.Preview(Text, limit),
+        };
 
         private static string LastComponent(string path) => path.TrimEnd('/', '\\').Split('/', '\\').Last();
     }
@@ -59,18 +86,21 @@ public static class Clipboard
         /// <summary>Newest first.</summary>
         public List<Clip> Clips { get; set; } = new();
 
-        /// <summary>A new copy: a clip at the top, or the clip with the same words moved there. Blank text is no copy.</summary>
+        /// <summary>A new copy: a clip at the top, or the clip with the same words (for a picture, the same bytes) moved
+        /// there. Blank text is no copy.</summary>
         public bool Add(Clip clip)
         {
             if (string.IsNullOrWhiteSpace(clip.Text)) return false;
             if (clip.Text.Length > LongestClip) clip = clip with { Text = clip.Text[..LongestClip] };
             if (clip.Rtf is { Length: > LargestRtf }) clip = clip with { Rtf = null, Kind = Kind.Text };
-            var at = Clips.FindIndex(c => c.Text == clip.Text && c.Kind == clip.Kind);
+            var at = Clips.FindIndex(c => c.Kind == clip.Kind && (clip.Kind == Kind.Image ? c.Picture?.Digest == clip.Picture?.Digest : c.Text == clip.Text));
             if (at >= 0)
             {
                 var old = Clips[at];
                 Clips.RemoveAt(at);
                 clip = clip with { Id = old.Id, Pinned = old.Pinned, Rtf = clip.Rtf ?? (clip.Kind == old.Kind ? old.Rtf : null) };
+                // Its files are under the old id, in the old formats.
+                if (clip.Kind == Kind.Image) clip = clip with { Picture = old.Picture };
             }
             Clips.Insert(0, clip);
             return true;
@@ -242,7 +272,7 @@ public static class Clipboard
     }
 
     /// <summary>Every clip and snippet holding every word of <paramref name="query"/>, in any order and any case,
-    /// accents ignored. A clip matches on its text and its app; a snippet on its title, its folder's title and
+    /// accents ignored. A clip matches on its text and its app (a picture on its label, in English and as shown); a snippet on its title, its folder's title and
     /// its words, but a protected one only on its title and folder. An empty query finds everything: the
     /// pinned clips first, then the rest newest first.</summary>
     public static Found Search(string query, History history, SnippetBook snippets)
@@ -253,7 +283,7 @@ public static class Clipboard
             var folded = Fold(haystack);
             return words.All(folded.Contains);
         }
-        var clips = history.Clips.Where(c => words.Length == 0 || Holds(c.Text + " " + (c.App ?? ""))).ToList();
+        var clips = history.Clips.Where(c => words.Length == 0 || Holds(string.Join(" ", c.Text, c.App ?? "", c.Kind == Kind.Image ? c.Preview(200) : ""))).ToList();
         var ordered = clips.Where(c => c.Pinned).Concat(clips.Where(c => !c.Pinned)).ToList();
         var found = snippets.All.Where(x => words.Length == 0 || Holds(string.Join(" ", x.Snippet.Title, x.Folder.Title, x.Snippet.Protected ? "" : x.Snippet.Text)))
             .Select(x => x.Snippet).ToList();
@@ -317,15 +347,128 @@ public static class Clipboard
         return !excluded.Any(e => string.Equals(e.Trim(), app, StringComparison.OrdinalIgnoreCase));
     }
 
+    // MARK: Pictures
+
+    /// <summary>Clipboard formats a picture is kept in, best first: PNG (Snipping Tool, browsers, Office), JPEG and GIF as
+    /// some apps write them, and the device-independent bitmap every picture on Windows' clipboard has.</summary>
+    public static readonly IReadOnlyList<string> WindowsImageFormats = new[] { "PNG", "JFIF", "GIF", "DeviceIndependentBitmap" };
+
+    /// <summary>Which of the formats found to keep, best first in <paramref name="preference"/>: each while all kept so far
+    /// stay within <paramref name="cap"/> bytes, so a huge bitmap is left out while its PNG stays. Empty: none fits.</summary>
+    public static List<string> KeptImageTypes(IReadOnlyDictionary<string, int> found, long cap, IEnumerable<string>? preference = null)
+    {
+        long total = 0;
+        var kept = new List<string>();
+        foreach (var type in preference ?? WindowsImageFormats)
+        {
+            if (!found.TryGetValue(type, out var bytes) || total + bytes > cap) continue;
+            total += bytes;
+            kept.Add(type);
+        }
+        return kept;
+    }
+
+    /// <summary>A short fingerprint of <paramref name="data"/> (FNV-1a, 64 bits), as the Mac writes it.</summary>
+    public static string Digest(byte[] data)
+    {
+        var hash = 0xcbf29ce484222325UL;
+        foreach (var b in data) hash = (hash ^ b) * 0x100000001b3UL;
+        return $"{hash:x16}-{data.Length}";
+    }
+
+    /// <summary>A picture's size in pixels from its header: PNG, a device-independent bitmap, GIF or JPEG; null when unreadable.</summary>
+    public static (int Width, int Height)? PixelSize(string format, byte[] b)
+    {
+        static int Be(byte[] b, int i) => (b[i] << 24) | (b[i + 1] << 16) | (b[i + 2] << 8) | b[i + 3];
+        switch (format)
+        {
+            case "PNG" when b.Length >= 24 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G':
+                return (Be(b, 16), Be(b, 20));
+            case "DeviceIndependentBitmap" when b.Length >= 12:
+                return BitConverter.ToInt32(b, 0) == 12
+                    ? (BitConverter.ToUInt16(b, 4), BitConverter.ToUInt16(b, 6))
+                    : (BitConverter.ToInt32(b, 4), Math.Abs(BitConverter.ToInt32(b, 8)));
+            case "GIF" when b.Length >= 10 && b[0] == 'G' && b[1] == 'I' && b[2] == 'F':
+                return (BitConverter.ToUInt16(b, 6), BitConverter.ToUInt16(b, 8));
+            case "JFIF" when b.Length >= 4 && b[0] == 0xFF && b[1] == 0xD8:
+                // Walk the markers to the first start-of-frame, which holds the height and width.
+                for (var i = 2; i + 9 < b.Length;)
+                {
+                    if (b[i] != 0xFF) return null;
+                    var marker = b[i + 1];
+                    var length = (b[i + 2] << 8) | b[i + 3];
+                    if (marker is >= 0xC0 and <= 0xCF and not 0xC4 and not 0xC8 and not 0xCC)
+                        return ((b[i + 7] << 8) | b[i + 8], (b[i + 5] << 8) | b[i + 6]);
+                    i += 2 + length;
+                }
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>A device-independent bitmap as a .bmp file: the 14-byte file header in front, so a decoder reads it.</summary>
+    public static byte[] DibAsBmp(byte[] dib)
+    {
+        var headerSize = BitConverter.ToInt32(dib, 0);
+        var bitCount = headerSize == 12 ? BitConverter.ToUInt16(dib, 10) : BitConverter.ToUInt16(dib, 14);
+        var compression = headerSize >= 40 ? BitConverter.ToInt32(dib, 16) : 0;
+        var used = headerSize >= 40 ? BitConverter.ToInt32(dib, 32) : 0;
+        var colours = used > 0 ? used : bitCount <= 8 ? 1 << bitCount : 0;
+        var masks = headerSize == 40 && compression is 3 or 6 ? (compression == 3 ? 12 : 16) : 0;
+        var offset = 14 + headerSize + masks + colours * (headerSize == 12 ? 3 : 4);
+        var bmp = new byte[14 + dib.Length];
+        bmp[0] = (byte)'B'; bmp[1] = (byte)'M';
+        BitConverter.GetBytes(bmp.Length).CopyTo(bmp, 2);
+        BitConverter.GetBytes(offset).CopyTo(bmp, 10);
+        dib.CopyTo(bmp, 14);
+        return bmp;
+    }
+
     // MARK: Files
 
-    /// <summary><c>clipboard.json</c> and <c>snippets.json</c>, side by side, in the Mac's format.</summary>
+    /// <summary><c>clipboard.json</c> and <c>snippets.json</c>, side by side, in the Mac's format, and the pictures in
+    /// <c>clipboard-images</c> there, a file per clip and format: <c>&lt;id&gt;.PNG</c>.</summary>
     public sealed class Store
     {
         public string Directory { get; }
         public Store(string directory) { Directory = directory; }
         public string HistoryFile => Path.Combine(Directory, "clipboard.json");
         public string SnippetsFile => Path.Combine(Directory, "snippets.json");
+        public string ImagesDirectory => Path.Combine(Directory, "clipboard-images");
+        public string ImageFile(Guid id, string type) => Path.Combine(ImagesDirectory, id.ToString("D").ToUpperInvariant() + "." + type);
+
+        /// <summary>A picture's bytes, a file per format.</summary>
+        public void SaveImage(Guid id, IEnumerable<(string Type, byte[] Data)> kinds)
+        {
+            System.IO.Directory.CreateDirectory(ImagesDirectory);
+            foreach (var (type, data) in kinds) System.IO.File.WriteAllBytes(ImageFile(id, type), data);
+        }
+
+        /// <summary>An image clip's bytes in the formats it was kept as, best first; empty when its files are gone.</summary>
+        public List<(string Type, byte[] Data)> LoadImage(Clip clip)
+        {
+            var read = new List<(string, byte[])>();
+            foreach (var type in clip.Picture?.Types ?? new())
+            {
+                try { read.Add((type, System.IO.File.ReadAllBytes(ImageFile(clip.Id, type)))); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            }
+            return read;
+        }
+
+        /// <summary>Deletes every picture file whose clip is no longer in <paramref name="history"/>.</summary>
+        public void SweepImages(History history)
+        {
+            if (!System.IO.Directory.Exists(ImagesDirectory)) return;
+            var kept = history.Clips.Where(c => c.Kind == Kind.Image).Select(c => c.Id.ToString("D").ToUpperInvariant()).ToHashSet();
+            foreach (var file in System.IO.Directory.GetFiles(ImagesDirectory))
+            {
+                var name = Path.GetFileName(file);
+                if (name.Length < 36 || !kept.Contains(name[..36]))
+                    try { System.IO.File.Delete(file); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            }
+        }
 
         private static readonly JsonSerializerOptions options = new()
         {
@@ -361,11 +504,12 @@ public static class Clipboard
         {
             "rich" => Kind.Rich,
             "files" => Kind.Files,
+            "image" => Kind.Image,
             _ => Kind.Text,
         };
 
         public override void Write(Utf8JsonWriter writer, Kind value, JsonSerializerOptions options) =>
-            writer.WriteStringValue(value switch { Kind.Rich => "rich", Kind.Files => "files", _ => "text" });
+            writer.WriteStringValue(value switch { Kind.Rich => "rich", Kind.Files => "files", Kind.Image => "image", _ => "text" });
     }
 
     // MARK: Clipy's XML

@@ -1754,7 +1754,9 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
 - **Pictures**: a clip of kind `image`, its `text` the label `Image <w>×<h>` (shown
   translated), its `picture` the pixel size, the bytes, a digest (FNV-1a of the best
   type's bytes) and the types kept. Each type is kept, best first, while all kept so far
-  stay within `clipLargestImageMB`; none fits, nothing is kept. The bytes are files in
+  stay within `clipLargestImageMB`; none fits, nothing is kept. Windows keeps its clipboard
+  formats instead (`Clipboard.WindowsImageFormats`: `PNG`, `JFIF`, `GIF`,
+  `DeviceIndependentBitmap`), the size read from each one's header. The bytes are files in
   `clipboard-images/<id>.<type>` beside `clipboard.json`, never in it, and go when their
   clip goes (and any left over at launch). The same digest again moves that clip up. The
   picker shows a thumbnail 20 pixels across, drawn twice as big with square pixels in a

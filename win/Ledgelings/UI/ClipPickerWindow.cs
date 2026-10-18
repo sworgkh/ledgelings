@@ -188,13 +188,26 @@ public sealed class ClipPickerController
         if (row.Group == ClipPicker.Group.Recent)
         {
             if (book.History.Clips.FirstOrDefault(c => c.Id == row.Id) is not { } clip) return;
-            Paste(new ClipPaster.Item(clip.Text, clip.Rtf, clip.Paths), plain, row);
+            var images = clip.Kind == Clipboard.Kind.Image ? book.ImageData(clip) : null;
+            if (images is { Count: 0 })
+            {
+                // Its files went missing: nothing to paste, so the copy goes too.
+                Trace?.Invoke(clip.Text + ": its picture is gone");
+                System.Media.SystemSounds.Beep.Play();
+                Forget(row);
+                return;
+            }
+            Paste(new ClipPaster.Item(clip.Text, clip.Rtf, clip.Paths, Images: images), plain, row);
             book.Bump(clip.Id);
             return;
         }
         if (book.Snippets.Find(row.Id) is not { } snippet) return;
         Paste(new ClipPaster.Item(book.Words(snippet), Secret: snippet.Protected), plain: true, row);
     }
+
+    /// <summary>A recent copy's thumbnail, when it is a picture.</summary>
+    internal BitmapSource? Thumbnail(Guid id) =>
+        book.History.Clips.FirstOrDefault(c => c.Id == id) is { Kind: Clipboard.Kind.Image } clip ? book.Thumbnail(clip) : null;
 
     /// <summary>Pastes a snippet straight from its own shortcut, with no picker.</summary>
     public void PasteNow(Clipboard.Snippet snippet)
@@ -460,6 +473,7 @@ internal sealed class ClipPickerWindow : Window
         DockPanel.SetDock(detail, Dock.Right);
         panel.Children.Add(detail);
         var words = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        if (row.Group == ClipPicker.Group.Recent && controller.Thumbnail(row.Id) is { } thumbnail) words.Children.Add(Picture(thumbnail));
         if (row.Pinned) words.Children.Add(Text("▲ ", 9, FontWeights.Heavy, PixelBox.Rim));
         if (row.Title is string title) words.Children.Add(Text(title + "  ", 12, FontWeights.Heavy, PixelBox.Rim));
         words.Children.Add(Text(row.Text, 12, row.Title is null ? FontWeights.SemiBold : FontWeights.Normal, row.Title is null ? PixelBox.Rim : softInk));
@@ -468,6 +482,22 @@ internal sealed class ClipPickerWindow : Window
         // Unchosen rows are bare paper: only the chosen one is a box.
         if (!chosen) { var bare = new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = Brushes.Transparent }; box.Child = null; return Hook(bare, row); }
         return Hook(box, row);
+    }
+
+    /// <summary>A picture's thumbnail, its few pixels drawn big, square and sharp, in a 1-pixel rim like the creatures'.</summary>
+    private static FrameworkElement Picture(BitmapSource thumbnail)
+    {
+        const double boxWidth = 40, boxHeight = RowHeight - 10;
+        var scale = Math.Min(boxWidth / Math.Max(thumbnail.PixelWidth, 1), boxHeight / Math.Max(thumbnail.PixelHeight, 1));
+        var image = new Image
+        {
+            Source = thumbnail, Stretch = Stretch.Fill,
+            Width = Math.Round(thumbnail.PixelWidth * scale), Height = Math.Round(thumbnail.PixelHeight * scale),
+        };
+        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
+        var rim = new Border { Child = image, BorderBrush = PixelBox.Rim, BorderThickness = new Thickness(1),
+                              HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+        return new Border { Child = rim, Width = boxWidth + 2, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
     }
 
     private FrameworkElement Hook(FrameworkElement element, ClipPicker.Row row)

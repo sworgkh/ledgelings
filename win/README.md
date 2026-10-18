@@ -74,7 +74,7 @@ Ledgelings again; the sheet has the menu's switches, Settings and Quit.
 | Spend | `%APPDATA%\Ledgelings\spend.jsonl` |
 | Bonds and plots | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac) |
 | Reminders | `%APPDATA%\Ledgelings\reminders.json` (same format as the Mac) |
-| Clipboard history and snippets | `%APPDATA%\Ledgelings\clipboard.json`, `snippets.json` (same format as the Mac) |
+| Clipboard history and snippets | `%APPDATA%\Ledgelings\clipboard.json`, `snippets.json` (same format as the Mac); copied pictures in `clipboard-images\` beside them |
 | Protected snippets' words | Credential Manager › Windows Credentials › `Ledgelings Snippets/snippet.<ID>` |
 | Kept OpenRouter voices | `%APPDATA%\Ledgelings\voices\` |
 | Saved built-in line voices | `%APPDATA%\Ledgelings\line-voices\` |
@@ -147,7 +147,8 @@ core tests are the Swift tests line for line.
   reports; Chrome and other apps that draw their own caret report none, and it collapses
   into the creature instead. **Protected snippets** are kept in Credential Manager and shown
   as dots, but paste and **Show…** without any fingerprint or Windows Hello prompt; a pasted
-  secret is kept out of Win+V history and the cloud clipboard too.
+  secret is kept out of Win+V history and the cloud clipboard too. A copied **picture** shows as a tiny pixel
+  thumbnail and *Image 1280×720*, and pastes back in the clipboard formats it came in.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
