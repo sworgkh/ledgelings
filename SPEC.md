@@ -1749,8 +1749,16 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   `Clipboard Viewer Ignore`, or `CanIncludeInClipboardHistory` = 0), when the front
   app is in `clipExcludedApps` (bundle id or process name, without case), or when the
   app wrote it itself. Files are kept with `clipKeepFiles`; else text, with its RTF
-  when `clipKeepFormatting`. Images are not kept: one screenshot is megabytes, the
-  history is one file read at launch, and the picker shows words.
+  when `clipKeepFormatting`; with no words but an image type (`Clipboard.imageTypes`:
+  PNG, JPEG, TIFF, GIF, HEIC, WebP, best first) and `clipKeepImages`, a **picture**.
+- **Pictures**: a clip of kind `image`, its `text` the label `Image <w>×<h>` (shown
+  translated), its `picture` the pixel size, the bytes, a digest (FNV-1a of the best
+  type's bytes) and the types kept. Each type is kept, best first, while all kept so far
+  stay within `clipLargestImageMB`; none fits, nothing is kept. The bytes are files in
+  `clipboard-images/<id>.<type>` beside `clipboard.json`, never in it, and go when their
+  clip goes (and any left over at launch). The same digest again moves that clip up. The
+  picker shows a thumbnail 20 pixels across, drawn twice as big with square pixels in a
+  1-pixel rim, and choosing it writes every kept type back, with no words.
 - **Adding**: blank text is no copy. Text past 100 000 characters is cut there; RTF
   past 512 KB is dropped (the clip becomes `text`). The same words and kind already
   there move to the top with the new time, keeping their id and pin. Then the history
@@ -2441,6 +2449,8 @@ An error for want of a model reads as that note, never as a server refusal.
 | clipKeepDays | 30 | 0–365, clamped on load; 0 keeps them until the limit pushes them out |
 | clipExcludedApps | the password managers in `Clipboard.defaultExcludedMacApps` / `…WindowsApps` | bundle ids (macOS) or process names (Windows) whose copies are never kept |
 | clipKeepFormatting / clipKeepFiles | true / true | keep RTF beside the words; keep copied files as paths |
+| clipKeepImages | true | keep copied pictures as files beside the history (§7.11) |
+| clipLargestImageMB | 20 | 1–100, clamped on load: the largest picture kept, all its types together |
 | clipAutoPaste | true | press ⌘V (Ctrl+V) for the app in front; off, only copy |
 | clipPlainText | false | paste without formatting; ⌥⏎ does the other |
 | clipHistoryShortcutEnabled / clipHistoryShortcutKeyCode / clipHistoryShortcutModifiers | true / V / ⌃⌥ (Ctrl+Alt) | the history picker's shortcut, as `shortcut` |

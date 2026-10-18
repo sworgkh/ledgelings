@@ -74,6 +74,91 @@ import Testing
         #expect(h.clips.isEmpty)
     }
 
+    // MARK: Pictures
+
+    func picture(_ digest: String, _ w: Int = 1280, _ h: Int = 720) -> Clipboard.Picture {
+        Clipboard.Picture(width: w, height: h, bytes: 10, digest: digest, types: ["public.png"])
+    }
+
+    @Test func aPictureIsLabelledBySizeAndTheSamePictureMovesUp() {
+        var h = history(["a"])
+        h.add(.image(picture("one"), copiedAt: t0.addingTimeInterval(1), app: "Preview"))
+        h.add(.image(picture("two"), copiedAt: t0.addingTimeInterval(2)))
+        #expect(h.clips.count == 3, "two different pictures of the same size are two clips")
+        #expect(h.clips[1].text == "Image 1280×720" && h.clips[1].kind == .image)
+        let first = h.clips[1].id
+        h.togglePin(first)
+        var again = picture("one")
+        again.types = ["public.png", "public.tiff"]
+        h.add(.image(again, copiedAt: t0.addingTimeInterval(3)))
+        #expect(h.clips.count == 3)
+        #expect(h.clips[0].id == first && h.clips[0].pinned, "the same bytes: the same clip, its pin kept")
+        #expect(h.clips[0].picture?.types == ["public.png"], "its files are the ones first kept")
+    }
+
+    @Test func aPictureIsFoundByImageAndByItsApp() {
+        var h = history(["a picture of a cat"])
+        h.add(.image(picture("p", 64, 40), copiedAt: t0.addingTimeInterval(1), app: "Preview"))
+        Language.$override.withValue(.english) {
+            #expect(Clipboard.search("image", history: h, snippets: .init()).clips.map(\.text) == ["Image 64×40"])
+            #expect(Clipboard.search("preview 64", history: h, snippets: .init()).clips.count == 1)
+            #expect(h.clips[0].preview() == "Image 64×40")
+        }
+        Language.$override.withValue(.russian) {
+            #expect(h.clips[0].preview() == "Картинка 64×40")
+            #expect(Clipboard.search("картинка", history: h, snippets: .init()).clips.count == 1)
+            #expect(Clipboard.search("image", history: h, snippets: .init()).clips.count == 1, "the English word still finds it")
+        }
+    }
+
+    @Test func picturesCountInTheLimit() {
+        var h = history(["a", "b"])
+        h.add(.image(picture("p"), copiedAt: t0.addingTimeInterval(5)))
+        h.prune(limit: 2, days: 0, now: t0)
+        #expect(h.clips.map(\.text) == ["Image 1280×720", "b"])
+    }
+
+    @Test func theTypesKeptFitTheCapBestFirst() {
+        let found = ["public.png": 3_000_000, "public.tiff": 40_000_000, "public.jpeg": 1_000_000]
+        #expect(Clipboard.keptImageTypes(found, cap: 20_000_000) == ["public.png", "public.jpeg"])
+        #expect(Clipboard.keptImageTypes(found, cap: 50_000_000) == ["public.png", "public.jpeg", "public.tiff"])
+        #expect(Clipboard.keptImageTypes(found, cap: 1_500_000) == ["public.jpeg"])
+        #expect(Clipboard.keptImageTypes(found, cap: 500_000).isEmpty)
+    }
+
+    @Test func theDigestTellsBytesApart() {
+        #expect(Clipboard.digest(Data([1, 2, 3])) == Clipboard.digest(Data([1, 2, 3])))
+        #expect(Clipboard.digest(Data([1, 2, 3])) != Clipboard.digest(Data([1, 2, 4])))
+    }
+
+    @Test func picturesAreFilesBesideTheHistoryAndGoWithTheirClip() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("clip-images-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = Clipboard.Store(directory: dir)
+        var h = Clipboard.History()
+        let clip = Clip.image(Clipboard.Picture(width: 2, height: 2, bytes: 6, digest: "d", types: ["public.png", "public.tiff"]), copiedAt: t0)
+        h.add(clip)
+        try store.saveImage(clip.id, [("public.png", Data([1, 2])), ("public.tiff", Data([3, 4, 5, 6]))])
+        try store.save(h)
+        let read = store.loadImage(store.loadHistory().clips[0])
+        #expect(read.map(\.type) == ["public.png", "public.tiff"] && read.map(\.data) == [Data([1, 2]), Data([3, 4, 5, 6])])
+        #expect(!(try String(contentsOf: store.historyFile, encoding: .utf8)).contains("AQI="), "no bytes in the JSON")
+        store.sweepImages(keeping: h)
+        #expect(store.loadImage(clip).count == 2, "a kept clip keeps its files")
+        h.remove(clip.id)
+        store.sweepImages(keeping: h)
+        #expect(store.loadImage(clip).isEmpty)
+        #expect((try FileManager.default.contentsOfDirectory(atPath: store.imagesDirectory.path)).isEmpty)
+    }
+
+    @Test func anOldHistoryWithNoPicturesStillReads() throws {
+        let json = #"{"clips":[{"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","kind":"text","text":"hi","copiedAt":"2027-01-01T00:00:00Z","pinned":false}]}"#
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let h = try decoder.decode(Clipboard.History.self, from: Data(json.utf8))
+        #expect(h.clips[0].text == "hi" && h.clips[0].picture == nil)
+    }
+
     @Test func removeTakesOneClip() {
         var h = history(["a", "b"])
         h.remove(h.clips[0].id)

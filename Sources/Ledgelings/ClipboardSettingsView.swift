@@ -2,8 +2,8 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-/// Settings › Productivity tools › Clipboard: the history and pasting on the
-/// left, the shortcuts, the snippets and the apps never watched on the right.
+/// Settings › Productivity tools › Clipboard: the history and the shortcuts on the
+/// left, pasting, the snippets and the apps never watched on the right.
 struct ClipboardSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var clips: ClipBook
@@ -25,13 +25,42 @@ struct ClipboardSettingsView: View {
                           unit: tr(" d"), zero: tr("always"))
                 Toggle(tr("Keep formatting (rich text)"), isOn: $settings.clipKeepFormatting)
                 Toggle(tr("Keep files copied in Finder"), isOn: $settings.clipKeepFiles)
+                Toggle(tr("Keep images"), isOn: $settings.clipKeepImages)
+                SliderRow(tr("Largest image kept"), value: Binding(get: { Double(settings.clipLargestImageMB) }, set: { settings.clipLargestImageMB = Int($0) }),
+                          in: Double(AppSettings.clipLargestImageRange.lowerBound)...Double(AppSettings.clipLargestImageRange.upperBound), step: 1,
+                          unit: tr(" MB"))
+                    .disabled(!settings.clipKeepImages)
             } header: {
                 Text(tr("History"))
             } footer: {
-                Text(tr("Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures are not kept. Nothing copied ever leaves this Mac or reaches a model."))
+                Text(tr("Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures count as copies; one bigger than the largest size is left out. Nothing copied ever leaves this Mac or reaches a model."))
             }
             .disabled(!settings.clipboardEnabled)
 
+            Section {
+                LabeledContent(tr("History picker")) {
+                    HStack {
+                        Toggle("", isOn: $settings.clipHistoryShortcutEnabled).labelsHidden()
+                        ShortcutRecorder(settings: settings, shortcut: $settings.clipHistoryShortcut)
+                    }
+                }
+                LabeledContent(tr("Snippets picker")) {
+                    HStack {
+                        Toggle("", isOn: $settings.clipSnippetsShortcutEnabled).labelsHidden()
+                        ShortcutRecorder(settings: settings, shortcut: $settings.clipSnippetsShortcut)
+                    }
+                }
+                Toggle(tr("A snippet's own shortcut pastes it at once"), isOn: $settings.clipSnippetShortcutsEnabled)
+                if !settings.clipShortcutProblem.isEmpty {
+                    Text(settings.clipShortcutProblem).foregroundStyle(.red)
+                }
+            } header: {
+                Text(tr("Shortcuts"))
+            } footer: {
+                Text(tr("They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, ⌘1–9 for the first nine, ⇥ between the groups, ⌘P to pin, ⌫ to forget a copy, ⎋ to close."))
+            }
+            .disabled(!settings.clipboardEnabled)
+        } right: {
             Section {
                 Toggle(tr("Paste into the app I was in"), isOn: $settings.clipAutoPaste)
                 if settings.clipAutoPaste && !trusted {
@@ -64,31 +93,6 @@ struct ClipboardSettingsView: View {
                 Text(tr("⏎ pastes, ⌥⏎ the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits."))
             }
             .disabled(!settings.clipboardEnabled)
-        } right: {
-            Section {
-                LabeledContent(tr("History picker")) {
-                    HStack {
-                        Toggle("", isOn: $settings.clipHistoryShortcutEnabled).labelsHidden()
-                        ShortcutRecorder(settings: settings, shortcut: $settings.clipHistoryShortcut)
-                    }
-                }
-                LabeledContent(tr("Snippets picker")) {
-                    HStack {
-                        Toggle("", isOn: $settings.clipSnippetsShortcutEnabled).labelsHidden()
-                        ShortcutRecorder(settings: settings, shortcut: $settings.clipSnippetsShortcut)
-                    }
-                }
-                Toggle(tr("A snippet's own shortcut pastes it at once"), isOn: $settings.clipSnippetShortcutsEnabled)
-                if !settings.clipShortcutProblem.isEmpty {
-                    Text(settings.clipShortcutProblem).foregroundStyle(.red)
-                }
-            } header: {
-                Text(tr("Shortcuts"))
-            } footer: {
-                Text(tr("They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, ⌘1–9 for the first nine, ⇥ between the groups, ⌘P to pin, ⌫ to forget a copy, ⎋ to close."))
-            }
-            .disabled(!settings.clipboardEnabled)
-
             Section {
                 HStack {
                     Text(trCount(clips.snippets.all.count, "snippet", "snippets"))

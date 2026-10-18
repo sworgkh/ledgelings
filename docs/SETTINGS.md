@@ -557,12 +557,26 @@ computer or reaches a model.
 | **Kept for** (`clipKeepDays`) | 30 d | 0 to 365 d | *always* at 0: only the limit pushes copies out |
 | **Keep formatting (rich text)** (`clipKeepFormatting`) | on | | The copy's formatting is kept beside its words and pasted back |
 | **Keep files copied in Finder** (`clipKeepFiles`) | on | | Kept as their paths; pasted back as files |
+| **Keep images** (`clipKeepImages`) | on | | Screenshots to the clipboard, images copied from a browser or Preview. Shown in the picker as a tiny pixel thumbnail and *Image 1280×720* with the app; searching "image" or the app's name finds them. Pasted back as the same picture, in the types it was copied as. Each one counts as one copy in **Copies kept** |
+| **Largest image kept** (`clipLargestImageMB`) | 20 MB | 1 to 100 MB | All of a picture's types together. A type that would go over is left out (a huge TIFF goes, its PNG stays); a picture none of whose types fits is not kept |
 
-Copying the same thing again moves it to the top. Pictures are not kept (one screenshot
-is megabytes). History and snippets live in `clipboard.json` and `snippets.json` in
-`~/Library/Application Support/Ledgelings`.
+Copying the same thing again moves it to the top; for a picture, the same bytes. A copy
+with words and a picture of them (cells from Numbers or Excel) is kept as words. History
+and snippets live in `clipboard.json` and `snippets.json` in
+`~/Library/Application Support/Ledgelings`; pictures in `clipboard-images` there, one file
+per clip and type, deleted when their copy is forgotten, cleared or pushed out.
 
-**Pasting** (left):
+**Shortcuts** (left):
+
+| Setting | Default | Notes |
+|---|---|---|
+| **History picker** (`clipHistoryShortcut…`) | on, ⌃⌥V | Click the keys to record others, as on the Actions tab. Not ⌘⇧V: Chrome, Slack and Google Docs use that to paste without formatting |
+| **Snippets picker** (`clipSnippetsShortcut…`) | on, ⌃⌥B | |
+| **A snippet's own shortcut pastes it at once** (`clipSnippetShortcutsEnabled`) | on | Give a snippet its own keys in Edit Snippets; pressing them pastes it with no picker |
+
+A shortcut another app already holds is refused, and the line under the shortcuts says which.
+
+**Pasting** (right):
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
@@ -572,16 +586,6 @@ is megabytes). History and snippets live in `clipboard.json` and `snippets.json`
 | **Animation speed** (`clipAnimationSpeed`) | 1× | 0.5× to 3× | The paste never waits for the animation |
 | **Who brings it** (`clipHelperEnabled`, `clipHelper`) | whoever is nearest the middle | anyone on screen by name, or *Nobody* | One of the creatures leaps from its edge to the sheet's top-left corner in about a quarter of a second, the sheet unfolds out of it, and it holds that corner while you choose. Once you pick, the sheet collapses into your text cursor (or into the creature, when the app does not say where the cursor is) and the creature leaps back to its place. Someone busy playing or talking stays put and another comes. *Nobody*: the sheet unfolds by itself |
 | **It says a line as the sheet unfolds** (`clipHelperTalks`) | on | | One short line in its own voice ("Fine. Pick one." — Blocky), when talk is on |
-
-**Shortcuts** (right):
-
-| Setting | Default | Notes |
-|---|---|---|
-| **History picker** (`clipHistoryShortcut…`) | on, ⌃⌥V | Click the keys to record others, as on the Actions tab. Not ⌘⇧V: Chrome, Slack and Google Docs use that to paste without formatting |
-| **Snippets picker** (`clipSnippetsShortcut…`) | on, ⌃⌥B | |
-| **A snippet's own shortcut pastes it at once** (`clipSnippetShortcutsEnabled`) | on | Give a snippet its own keys in Edit Snippets; pressing them pastes it with no picker |
-
-A shortcut another app already holds is refused, and the line under the shortcuts says which.
 
 **Snippets** (right): how many there are and **Edit Snippets…**. A protected snippet
 always asks for your **fingerprint** before it is pasted or shown: Touch ID only, never

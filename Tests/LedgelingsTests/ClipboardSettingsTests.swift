@@ -28,6 +28,7 @@ import Testing
         #expect(s.clipboardEnabled && s.clipHistoryEnabled && s.clipKeepFormatting && s.clipKeepFiles && s.clipAutoPaste)
         #expect(!s.clipPlainText && s.clipAnimate && s.clipSnippetShortcutsEnabled)
         #expect(s.clipHistoryLimit == 200 && s.clipKeepDays == 30 && s.clipAnimationSpeed == 1)
+        #expect(s.clipKeepImages && s.clipLargestImageMB == 20)
         #expect(s.clipHistoryShortcutEnabled && s.clipHistoryShortcut == .clipHistory)
         #expect(s.clipSnippetsShortcutEnabled && s.clipSnippetsShortcut == .clipSnippets)
         #expect(s.clipExcludedApps == Clipboard.defaultExcludedMacApps)
@@ -35,6 +36,7 @@ import Testing
         s.clipAutoPaste = false; s.clipPlainText = true; s.clipAnimate = false
         s.clipSnippetShortcutsEnabled = false; s.clipHistoryShortcutEnabled = false; s.clipSnippetsShortcutEnabled = false
         s.clipHistoryLimit = 50; s.clipKeepDays = 0; s.clipAnimationSpeed = 2
+        s.clipKeepImages = false; s.clipLargestImageMB = 5
         s.clipHistoryShortcut = Shortcut(keyCode: 9, modifiers: [.command, .shift])
         s.clipSnippetsShortcut = Shortcut(keyCode: 1, modifiers: [.control])
         s.clipExcludedApps = ["com.example.vault"]
@@ -43,13 +45,16 @@ import Testing
         #expect(!again.clipAutoPaste && again.clipPlainText && !again.clipAnimate)
         #expect(!again.clipSnippetShortcutsEnabled && !again.clipHistoryShortcutEnabled && !again.clipSnippetsShortcutEnabled)
         #expect(again.clipHistoryLimit == 50 && again.clipKeepDays == 0 && again.clipAnimationSpeed == 2)
+        #expect(!again.clipKeepImages && again.clipLargestImageMB == 5)
         #expect(again.clipHistoryShortcut == Shortcut(keyCode: 9, modifiers: [.command, .shift]))
         #expect(again.clipSnippetsShortcut == Shortcut(keyCode: 1, modifiers: [.control]))
         #expect(again.clipExcludedApps == ["com.example.vault"])
         defaults.set(5, forKey: "clipHistoryLimit"); defaults.set(9999, forKey: "clipKeepDays"); defaults.set(10.0, forKey: "clipAnimationSpeed")
+        defaults.set(500, forKey: "clipLargestImageMB")
         defaults.set(Shortcut.Modifiers.shift.rawValue, forKey: "clipHistoryShortcutModifiers")
         let clamped = AppSettings(defaults: defaults, keychain: Secrets())
         #expect(clamped.clipHistoryLimit == 10 && clamped.clipKeepDays == 365 && clamped.clipAnimationSpeed == 3, "clamped on load")
+        #expect(clamped.clipLargestImageMB == 100, "clamped on load")
         #expect(clamped.clipHistoryShortcut == .clipHistory, "a shortcut with no Command, Control or Option is the standard one")
     }
 
@@ -126,6 +131,60 @@ import Testing
         ClipPaster.put(ClipPaster.Item(text: "pasted"), plain: true, on: board); watcher.ownWrite(); watcher.look()
         write("second"); watcher.look()
         #expect(book.history.clips.map(\.text) == ["second", "first"])
+    }
+
+    @Test func aCopiedPictureIsKeptAsFilesThumbnailedPastedBackAndForgotten() throws {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        let dir = folder()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let settings = AppSettings(defaults: defaults, keychain: Secrets())
+        let book = ClipBook(directory: dir, secrets: Secrets())
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        let watcher = ClipWatcher(settings: settings, book: book, pasteboard: board)
+        let (png, tiff) = ClipDemo.picture()
+        func copy(words: String? = nil) {
+            board.clearContents()
+            let item = NSPasteboardItem()
+            item.setData(png, forType: .png)
+            item.setData(tiff, forType: .tiff)
+            if let words { item.setString(words, forType: .string) }
+            board.writeObjects([item])
+            watcher.look()
+        }
+        copy()
+        let clip = try #require(book.history.clips.first)
+        #expect(clip.kind == .image && clip.text == "Image 48×30" && clip.picture?.types == ["public.png", "public.tiff"])
+        #expect(book.imageData(of: clip).map(\.data) == [png, tiff])
+        let thumbnail = try #require(book.thumbnail(of: clip))
+        #expect(max(thumbnail.size.width, thumbnail.size.height) == CGFloat(ClipBook.thumbnailPixels))
+        copy()
+        #expect(book.history.clips.count == 1, "the same picture again is the same clip")
+
+        ClipPaster.put(ClipPaster.Item(text: clip.text, images: book.imageData(of: clip)), plain: false, on: board)
+        watcher.ownWrite()
+        #expect(board.data(forType: .png) == png && board.data(forType: .tiff) == tiff && board.string(forType: .string) == nil)
+
+        copy(words: "a table from Numbers")
+        #expect(book.history.clips.first?.kind == .text, "words with a picture of them are words")
+        settings.clipLargestImageMB = 1
+        let big = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 800, pixelsHigh: 800, bitsPerSample: 8, samplesPerPixel: 4,
+                                   hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        board.clearContents()
+        board.setData(big.tiffRepresentation!, forType: .tiff)
+        watcher.look()
+        #expect(book.history.clips.count == 2, "a TIFF over the cap is left out")
+        settings.clipKeepImages = false
+        settings.clipLargestImageMB = 20
+        board.clearContents()
+        board.setData(big.tiffRepresentation!, forType: .tiff)
+        watcher.look()
+        #expect(book.history.clips.count == 2, "pictures off: none kept")
+
+        book.remove(clip.id)
+        #expect(book.imageData(of: clip).isEmpty, "a forgotten picture's files go")
     }
 
     @Test func aSecretIsWrittenConcealedAndPlainTextDropsTheFormatting() {

@@ -1,10 +1,12 @@
 import AppKit
 import Combine
+import ImageIO
 import LedgelingsCore
 import LocalAuthentication
 
 /// The clipboard history and the snippets, kept in `clipboard.json` and
-/// `snippets.json` beside the chats and saved on every change. A protected
+/// `snippets.json` beside the chats and saved on every change; a copied picture's
+/// bytes in `clipboard-images` there, deleted when its clip goes. A protected
 /// snippet's words are kept in the login keychain, one item per snippet under
 /// the "Ledgelings Snippets" service, and read only when it is pasted or shown.
 @MainActor
@@ -21,13 +23,25 @@ final class ClipBook: ObservableObject {
         self.secrets = secrets
         history = store.loadHistory()
         snippets = store.loadSnippets()
+        store.sweepImages(keeping: history)
     }
 
     // MARK: History
 
     func changeHistory(_ edit: (inout Clipboard.History) -> Void) {
+        let pictures = Self.pictures(history)
         edit(&history)
         do { try store.save(history) } catch { Self.complain(error) }
+        // A picture pruned, forgotten or cleared takes its files with it.
+        let left = Self.pictures(history)
+        if !pictures.isSubset(of: left) {
+            store.sweepImages(keeping: history)
+            thumbnails = thumbnails.filter { left.contains($0.key) }
+        }
+    }
+
+    private static func pictures(_ history: Clipboard.History) -> Set<UUID> {
+        Set(history.clips.filter { $0.kind == .image }.map(\.id))
     }
 
     /// A new copy, then the limits applied.
@@ -36,6 +50,39 @@ final class ClipBook: ObservableObject {
             $0.add(clip)
             $0.prune(limit: limit, days: days, now: clip.copiedAt)
         }
+    }
+
+    /// A copied picture: its bytes written beside the history (unless the same picture
+    /// is there already, which only moves to the top), then the clip, then the limits.
+    func addImage(_ clip: Clipboard.Clip, _ kinds: [(type: String, data: Data)], limit: Int, days: Int) {
+        let known = history.clips.contains { $0.kind == .image && $0.picture?.digest == clip.picture?.digest }
+        if !known {
+            do { try store.saveImage(clip.id, kinds) } catch { Self.complain(error); return }
+        }
+        add(clip, limit: limit, days: days)
+    }
+
+    /// A picture clip's bytes, in the types it was copied as.
+    func imageData(of clip: Clipboard.Clip) -> [(type: String, data: Data)] { store.loadImage(clip) }
+
+    private var thumbnails: [UUID: NSImage] = [:]
+    /// Longest side of a picture's thumbnail, in pixels: drawn twice as big, square pixels.
+    static let thumbnailPixels = 20
+
+    /// A picture clip's thumbnail, a few pixels across, made once from its file.
+    func thumbnail(of clip: Clipboard.Clip) -> NSImage? {
+        guard clip.kind == .image else { return nil }
+        if let made = thumbnails[clip.id] { return made }
+        guard let type = clip.picture?.types.first,
+              let source = CGImageSourceCreateWithURL(store.imageFile(clip.id, type) as CFURL, nil),
+              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                  kCGImageSourceCreateThumbnailFromImageAlways: true,
+                  kCGImageSourceThumbnailMaxPixelSize: Self.thumbnailPixels,
+                  kCGImageSourceCreateThumbnailWithTransform: true,
+              ] as CFDictionary) else { return nil }
+        let made = NSImage(cgImage: image, size: CGSize(width: image.width, height: image.height))
+        thumbnails[clip.id] = made
+        return made
     }
 
     /// A clip pasted from the picker goes back to the top, as copying it again would.
