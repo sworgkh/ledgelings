@@ -1420,7 +1420,7 @@ answered.
 
 ### 7.7 Reminders
 
-The user sets reminders (Settings › Reminders); when one comes due, a creature
+The user sets reminders (Settings › Productivity tools › Reminders); when one comes due, a creature
 throws it at the user as a paper plane that opens into a letter in the middle of
 the screen.
 
@@ -1447,7 +1447,7 @@ the screen.
   (±1 day, `Reminders.day`) and a time stepper (`Reminders.step`, ±15 minutes to the
   next quarter hour); In 5 min / 30 min / 1 hour, Tomorrow 9:00; the four repeats.
   Return adds it (empty text: nothing) and the sheet shrinks up and fades; Esc closes
-  it. Off, ⌘R opens Settings › Reminders. `--note [--snapshot file.png]` opens it.
+  it. Off, ⌘R opens Settings › Productivity tools › Reminders. `--note [--snapshot file.png]` opens it.
 - **The thrower**: any creature free for mail (§7.6), not the one a plane is
   flying to, chosen at random; after 3 s with nobody free (or at once while the
   house is out), any creature on screen and not held, awake ones first. It stops
@@ -2114,8 +2114,8 @@ falls through to whatever is underneath.
 | Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
 | Sheet: Clear N Flowers (F) | pulls up every planted flower (§7.3.1); greyed while none are planted |
 | Sheet: Send a Paper Plane (P) | a plane goes up now if two creatures are free (§7.6); greyed while one is in the air |
-| Sheet: Add a Reminder (R) | puts the sheet away; the paper note (§7.7), or with `reminderPaperNote` off the settings window on the Reminders tab |
-| Menu: `Next: <text>, <when>` | shown while a reminder waits (with `(off)` when reminders are off); the Reminders tab |
+| Sheet: Add a Reminder (R) | puts the sheet away; the paper note (§7.7), or with `reminderPaperNote` off the settings window on Productivity tools › Reminders |
+| Menu: `Next: <text>, <when>` | shown while a reminder waits (with `(off)` when reminders are off); Productivity tools › Reminders |
 | Click a reminder's open letter | folds it away (§7.7) |
 | Sheet: Put Them to Sleep / Wake Them Up (S) | skip to the next phase; shows `dusk in m:ss` / `dawn in m:ss`; greyed when night = 0 |
 | Sheet: Activities… (A) | the sheet's inner page, the games (below) |
@@ -2299,7 +2299,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | remindersEnabled | true | reminders are delivered (§7.7); off, what comes due waits |
 | reminderLetterSeconds | 60 | 10–600, clamped on load: seconds the letter stays open while the user is at the computer |
 | reminderReadAloud | true | with voice on, the thrower reads its note out loud |
-| reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, the Reminders tab |
+| reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, Productivity tools › Reminders |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7),
 the hunt counts in `hunts.json` (§4.7.2), and the favourite sleeping places in
@@ -2324,7 +2324,7 @@ running plot with its part or the last plot, Forget), then the file with Reveal
 in Finder and Forget All. **Calendar**: on the left the time-of-day and date
 toggles, one toggle per faith and the look-ahead stepper; on the right the
 almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
-holidays in the next 60 days. **Reminders**: on the left a new reminder (text,
+holidays in the next 60 days. **Productivity tools**: a segmented row of tools at the top (`ProductivityTool`, today only Reminders), the chosen tool's two columns below; `--settings productivity` (or the old `reminders`) opens it. Its **Reminders**: on the left a new reminder (text,
 date and time, repeat, In 5 min / In 30 min / In 1 hour, Add Reminder), then
 the delivery toggle, letter slider, read-aloud toggle, paper-note toggle and Send a Test Letter; on
 the right every reminder, waiting ones by time then sent ones greyed, each with

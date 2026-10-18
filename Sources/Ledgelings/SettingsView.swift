@@ -3,12 +3,23 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable { case creatures, actions, chases, beds, play, sprites, talk, flowers, bonds, calendar, reminders, voice, costs, chats }
+enum SettingsTab: Hashable {
+    case creatures, actions, chases, beds, play, sprites, talk, flowers, bonds, calendar, productivity, voice, costs, chats
+
+    /// The tab a script names after `--settings`. `reminders`, the old name of
+    /// Productivity tools, still opens it, on its first tool: Reminders.
+    static func named(_ name: String) -> SettingsTab? {
+        let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "productivity": .productivity, "reminders": .productivity, "voice": .voice, "costs": .costs, "chats": .chats]
+        return tabs[name]
+    }
+}
 
 /// Which tab the window shows; the menu can point it at one.
 @MainActor
 final class SettingsNavigation: ObservableObject {
     @Published var tab: SettingsTab = .creatures
+    /// Which tool the Productivity tools tab shows.
+    @Published var tool: ProductivityTool = .reminders
 }
 
 struct SettingsView: View {
@@ -39,7 +50,7 @@ struct SettingsView: View {
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)
             CalendarSettingsView(settings: settings).tabItem { Text(tr("Calendar")) }.tag(SettingsTab.calendar)
-            RemindersSettingsView(settings: settings, reminders: reminders, send: send).tabItem { Text(tr("Reminders")) }.tag(SettingsTab.reminders)
+            ProductivitySettingsView(settings: settings, reminders: reminders, navigation: navigation, send: send).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text(tr("Voice")) }.tag(SettingsTab.voice)
             CostsSettingsView(spend: spend).tabItem { Text(tr("Costs")) }.tag(SettingsTab.costs)
             ChatHistoryView(history: history).tabItem { Text(tr("Chats")) }.tag(SettingsTab.chats)
@@ -299,6 +310,12 @@ final class SettingsWindowController {
         self.voice = voice
         self.send = send
         self.clearGarden = clearGarden
+    }
+
+    /// The Productivity tools tab, on one tool.
+    func show(tool: ProductivityTool) {
+        navigation.tool = tool
+        show(tab: .productivity)
     }
 
     func show(tab: SettingsTab? = nil) {

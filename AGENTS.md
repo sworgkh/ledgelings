@@ -30,9 +30,12 @@ Nothing the creatures do is hard-wired if someone could want it otherwise.
   how loud), in `AppSettings`: `@Published`, saved on change, clamped to its range
   on load, with a default that is chosen, not accidental.
 - Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Play, Sprites, Talk, Flowers,
-  Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice and
+  Productivity tools, Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice and
   Costs did). Two columns; a tab fits a laptop screen without scrolling. A footer
   says what the setting does in plain words.
+- A tool that works for the owner rather than being creature behaviour (reminders,
+  a clipboard) is a section of Productivity tools: a `ProductivityTool` case, its
+  `title`, and its view in `ProductivitySettingsView.page`.
 - Something toggled often (voice on/off) also gets a menu item.
 - Documented in `docs/SETTINGS.md` (the table: setting, default, range, notes) and
   in SPEC §12's settings table, with the key name.
@@ -62,7 +65,8 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
-  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, sprites, talk, flowers, voice, costs, chats).
+  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, sprites, talk, flowers, productivity, voice, costs, chats;
+  `reminders` still opens productivity, its old name).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its

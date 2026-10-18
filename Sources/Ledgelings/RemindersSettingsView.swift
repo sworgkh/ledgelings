@@ -1,7 +1,7 @@
 import LedgelingsCore
 import SwiftUI
 
-/// Settings › Reminders: a new reminder and how they are delivered on the left,
+/// Settings › Productivity tools › Reminders: a new reminder and how they are delivered on the left,
 /// every reminder on the right.
 struct RemindersSettingsView: View {
     @ObservedObject var settings: AppSettings
