@@ -85,9 +85,7 @@ enum ClipDemo {
         picker.model.query = "wifi"
         picker.model.query = "wi-fi"
         log("search \"wi-fi\": \(picker.model.rows.map { "\($0.title ?? "") \($0.text)" }.joined(separator: ", "))")
-        if settings.clipProtectedNeedsAuth {
-            log("protected snippets ask for Touch ID here; a script cannot press it, so the demo pastes without")
-        }
+        log("protected snippets always ask for a fingerprint; a script has no finger, so the demo pastes without")
         _ = picker.key(36, [])
         try? await Task.sleep(for: .milliseconds(200))
         let types = pasteboard.types?.map(\.rawValue) ?? []

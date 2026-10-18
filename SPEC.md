@@ -1790,8 +1790,18 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   `clipPlainText`, flipped by ⌥), marked as the app's own; the panel goes at once; 40 ms
   later ⌘V (Ctrl+V) is pressed for the app that was in front. Without the permission,
   or with `clipAutoPaste` off, it is only copied and a note says *Copied. Press ⌘V to
-  paste.* A pasted clip moves to the top. A protected snippet asks Touch ID or the
-  login password first when `clipProtectedNeedsAuth` (the paper stays up meanwhile),
+  paste.* A pasted clip moves to the top. A protected snippet
+  **always asks for a fingerprint first** on macOS: Touch ID only
+  (`.deviceOwnerAuthenticationWithBiometrics`), never the login password instead, with no
+  setting to turn it off (the paper stays up meanwhile, *Touch the fingerprint sensor…*).
+  No Touch ID to ask — no sensor, the lid closed, no finger enrolled, or locked after
+  five failed tries (macOS then wants the login password once, by locking and unlocking
+  the Mac) — it is refused with a line saying why, in the picker, or as a note when it
+  came from the snippet's own shortcut. A wrong finger or Cancel pastes nothing. (The
+  keychain item cannot be bound to Touch ID itself, `.biometryCurrentSet`, until the app
+  has a Developer ID: an ad-hoc signed app gets errSecMissingEntitlement.) **Windows has no
+  biometric guard**: no Windows Hello prompt and no setting; a protected snippet there is
+  still kept in Credential Manager and masked. Either way it
   is written with the concealed marker, and one second after pasting the clipboard
   gets back what was on it before.
 - **The collapse**: with `clipAnimate`, the sheet unfolds from the middle in
@@ -1809,7 +1819,7 @@ searches both. Nothing copied or kept is ever sent to a model or the network.
   up, down, File › Import Clipy Snippets… / Export as Clipy XML…), the chosen one on
   the right: a folder's name; a snippet's title, Protected, its own shortcut (record,
   clear) and its words. A protected snippet shows dots until **Show…** (Touch ID
-  first with `clipProtectedNeedsAuth`); its words are saved to the secret store 0.4 s
+  first on macOS, as for pasting); its words are saved to the secret store 0.4 s
   after the last keystroke.
 
 #### 7.11.1 The creature who brings it
@@ -2428,7 +2438,6 @@ An error for want of a model reads as that note, never as a server refusal.
 | clipKeepFormatting / clipKeepFiles | true / true | keep RTF beside the words; keep copied files as paths |
 | clipAutoPaste | true | press ⌘V (Ctrl+V) for the app in front; off, only copy |
 | clipPlainText | false | paste without formatting; ⌥⏎ does the other |
-| clipProtectedNeedsAuth | true | Touch ID / Windows Hello or the password before a protected snippet is pasted or shown |
 | clipHistoryShortcutEnabled / clipHistoryShortcutKeyCode / clipHistoryShortcutModifiers | true / V / ⌃⌥ (Ctrl+Alt) | the history picker's shortcut, as `shortcut` |
 | clipSnippetsShortcutEnabled / clipSnippetsShortcutKeyCode / clipSnippetsShortcutModifiers | true / B / ⌃⌥ (Ctrl+Alt) | the snippets picker's shortcut |
 | clipSnippetShortcutsEnabled | true | each snippet's own shortcut pastes it |

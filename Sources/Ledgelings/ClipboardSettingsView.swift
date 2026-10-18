@@ -95,11 +95,10 @@ struct ClipboardSettingsView: View {
                     Spacer()
                     Button(tr("Edit Snippets…"), action: editSnippets)
                 }
-                Toggle(tr("Touch ID before pasting a protected snippet"), isOn: $settings.clipProtectedNeedsAuth)
             } header: {
                 Text(tr("Snippets"))
             } footer: {
-                Text(tr("A protected snippet's words live in the Keychain, never in a file: shown as dots, kept out of the history and taken off the clipboard a second after pasting."))
+                Text(tr("A protected snippet's words live in the Keychain, never in a file: shown as dots, pasted or shown only after your fingerprint (Touch ID, no password instead), kept out of the history and taken off the clipboard a second after pasting."))
             }
             .disabled(!settings.clipboardEnabled)
 

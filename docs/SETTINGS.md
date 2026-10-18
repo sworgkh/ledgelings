@@ -583,9 +583,14 @@ is megabytes). History and snippets live in `clipboard.json` and `snippets.json`
 
 A shortcut another app already holds is refused, and the line under the shortcuts says which.
 
-**Snippets** (right): how many there are, **Edit Snippets…**, and **Touch ID before
-pasting a protected snippet** (`clipProtectedNeedsAuth`, on): Touch ID or your login
-password first, every time one is pasted or shown.
+**Snippets** (right): how many there are and **Edit Snippets…**. A protected snippet
+always asks for your **fingerprint** before it is pasted or shown: Touch ID only, never
+your password instead, and there is no switch to turn that off. Without Touch ID to ask
+(no sensor, the lid closed with no Magic Keyboard with Touch ID, no finger set up, or
+locked after five wrong tries) it is refused, and a line says why; after a lockout, lock
+the Mac and unlock it with your password once, and Touch ID works again. On Windows there
+is no fingerprint check: protected snippets are still kept in Credential Manager and
+shown as dots.
 
 **Never kept** (right): apps whose copies are never kept (`clipExcludedApps`): 1Password,
 Bitwarden, KeePassXC, Keychain Access, Passwords, LastPass, Dashlane, Enpass and
@@ -597,7 +602,7 @@ never kept either, whichever app it came from.
 **+ Snippet**, delete, move up and down, **File ›** *Import Clipy Snippets…* and *Export
 as Clipy XML…*), the chosen one on the right: its title, its words, **Protected**, and
 its own shortcut. A **protected** snippet is for passwords: its words live in the
-Keychain, never in a file; it shows as dots until you press **Show…**, is never kept in
+Keychain, never in a file; it shows as dots until you press **Show…** (fingerprint first), is never kept in
 the history, and is taken off the clipboard again a second after it is pasted. An export
 leaves protected snippets' words out.
 

@@ -40,7 +40,7 @@ final class ClipPickerController {
     var trace: ((String) -> Void)?
     /// Off in `--clip-demo`, which must not press ⌘V into whatever app is in front.
     var pressKeys = true
-    /// Off in `--clip-demo` too: a script cannot press Touch ID.
+    /// Off in `--clip-demo` only: a script has no finger for Touch ID.
     var askOwner = true
 
     init(settings: AppSettings, book: ClipBook, watcher: @escaping () -> ClipWatcher?, editSnippets: @escaping () -> Void,
@@ -75,6 +75,7 @@ final class ClipPickerController {
         let screen = Self.screen(caret: caret)
         model.first = first
         model.query = ""
+        model.refusal = ""
         model.needsTrust = settings.clipAutoPaste && !ClipPaster.trusted
         model.plainFirst = settings.clipPlainText
         model.refresh(selectFirst: true)
@@ -197,19 +198,28 @@ final class ClipPickerController {
                 paste(ClipPaster.Item(text: snippet.text), plain: true, from: row)
                 return
             }
-            guard settings.clipProtectedNeedsAuth, askOwner else {
+            guard askOwner else {
                 paste(ClipPaster.Item(text: book.words(of: snippet), secret: true), plain: true, from: row)
                 return
             }
             // Touch ID's sheet comes up over the paper; the paste waits for it, the picker stays.
             model.checking = true
+            model.refusal = ""
             // From the picker, closing it meanwhile cancels; from the snippet's own shortcut there is none.
             let fromPicker = isUp
             Task { @MainActor in
-                let ok = await OwnerCheck.confirm(tr("paste the protected snippet “%@”", snippet.title))
+                let answer = await OwnerCheck.fingerprint(tr("paste the protected snippet “%@”", snippet.title))
                 model.checking = false
-                guard ok, isUp == fromPicker else { trace?("protected \(snippet.title): not confirmed"); return }
-                paste(ClipPaster.Item(text: book.words(of: snippet), secret: true), plain: true, from: row)
+                switch answer {
+                case .yes:
+                    guard isUp == fromPicker else { return }
+                    paste(ClipPaster.Item(text: book.words(of: snippet), secret: true), plain: true, from: row)
+                case .no:
+                    trace?("protected \(snippet.title): no fingerprint")
+                case .unavailable(let why):
+                    trace?("protected \(snippet.title): refused, \(why)")
+                    if isUp { model.refusal = why } else { ClipToast.show(why, near: caret) }
+                }
             }
         }
     }
@@ -420,6 +430,8 @@ final class ClipPickerModel: ObservableObject {
     @Published var plainFirst = false
     /// Waiting for Touch ID.
     @Published var checking = false
+    /// Why a protected snippet was refused: no Touch ID to ask. Empty while all is well.
+    @Published var refusal = ""
     /// The sheet is open all the way; false while it unfolds.
     @Published var unfolded = true
     /// Where it unfolds from: its top-left corner, held by a creature, or its middle.
@@ -628,7 +640,11 @@ struct ClipPickerView: View {
                     PixelButton(title: tr("ALLOW…"), small: true, action: model.askTrust)
                 }
             }
-            Text(model.checking ? tr("Waiting for Touch ID or your password…")
+            if !model.refusal.isEmpty {
+                Text(model.refusal).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text(model.checking ? tr("Touch the fingerprint sensor…")
                  : tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN")))
                 .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
                 .lineLimit(1).minimumScaleFactor(0.7)
