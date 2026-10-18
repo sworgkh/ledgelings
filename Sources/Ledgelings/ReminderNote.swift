@@ -158,8 +158,9 @@ struct ReminderNoteView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 label(tr("WHEN")).frame(width: 62, alignment: .leading)
-                stepper(Reminders.day(time, now: Date()), width: 150, back: { shift(days: -1) }, on: { shift(days: 1) })
-                stepper(Reminders.clock(time), width: 128, back: { time = Reminders.step(time, by: -15) }, on: { time = Reminders.step(time, by: 15) })
+                stepper(Reminders.day(time, now: Date()), width: 150, tips: (tr("The day before"), tr("The day after")),
+                        back: { shift(days: -1) }, on: { shift(days: 1) })
+                stepper(Reminders.clock(time), width: 128, tips: (tr("15 minutes earlier"), tr("15 minutes later")), back: { time = Reminders.step(time, by: -15) }, on: { time = Reminders.step(time, by: 15) })
                 if time <= Date() {
                     Text(tr("past: it comes\nstraight away")).font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Self.faintInk)
@@ -175,14 +176,14 @@ struct ReminderNoteView: View {
         }
     }
 
-    private func stepper(_ value: String, width: CGFloat, back: @escaping () -> Void, on: @escaping () -> Void) -> some View {
+    private func stepper(_ value: String, width: CGFloat, tips: (back: String, on: String), back: @escaping () -> Void, on: @escaping () -> Void) -> some View {
         HStack(spacing: 4) {
-            PixelButton(title: "◀", small: true, action: back)
+            PixelButton(title: "◀", small: true, action: back).help(tips.back)
             Text(value).font(.system(size: 15, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
                 .monospacedDigit()
                 .frame(width: width - 60, height: 30)
                 .background(PixelBox(style: .well))
-            PixelButton(title: "▶", small: true, action: on)
+            PixelButton(title: "▶", small: true, action: on).help(tips.on)
         }
     }
 
@@ -325,14 +326,16 @@ struct PixelButton: View {
 struct PixelButtonStyle: ButtonStyle {
     var small: Bool
     var chosen: Bool
+    /// A square button for a pixel picture rather than words.
+    var square = false
 
     func makeBody(configuration: Configuration) -> some View {
         let px = ReminderNoteController.pixel
         configuration.label
             .font(.system(size: small ? 11 : 13, weight: .heavy, design: .monospaced))
             .foregroundStyle(PixelBox.rim)
-            .padding(.horizontal, small ? 9 : 14)
-            .frame(minWidth: small ? 30 : 0, minHeight: small ? 30 : 38)
+            .padding(.horizontal, square ? 0 : small ? 9 : 14)
+            .frame(minWidth: square ? 34 : small ? 30 : 0, minHeight: square ? 34 : small ? 30 : 38)
             .background(PixelBox(style: configuration.isPressed ? .pressed : chosen ? .chosen : .raised))
             .offset(y: configuration.isPressed ? px : 0)
             .contentShape(Rectangle())

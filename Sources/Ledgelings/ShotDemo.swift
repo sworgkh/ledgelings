@@ -106,6 +106,22 @@ enum ShotDemo {
         expect(session.model.marks.count == 5, "five marks drawn (\(session.model.marks.count))")
         session.act(.undo)
         expect(session.model.marks.count == 4, "⌘Z took the highlight back")
+        // The real pointer rests on the blur button: its tag says its name and key.
+        if let spot = session.spot(of: .button(.blur)), let top = NSScreen.screens.first?.frame.maxY {
+            let back = NSEvent.mouseLocation
+            func move(_ p: CGPoint) {
+                CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: p.x, y: top - p.y), mouseButton: .left)?.post(tap: .cghidEventTap)
+            }
+            move(spot)
+            try? await Task.sleep(for: .milliseconds(500))
+            expect(session.model.hovered == .button(.blur),
+                   "the pointer on the blur button shows \"\(ShotToolbar.tooltip(.button(.blur), session.model))\" (\(session.model.hovered.map { "\($0)" } ?? "nothing"))")
+            move(back)
+            try? await Task.sleep(for: .milliseconds(300))
+            expect(session.model.hovered == nil, "the tag goes when the pointer leaves")
+        } else {
+            expect(false, "the blur button is on the screen")
+        }
         if let snapshot, let (image, _) = session.picture(), let png = ShotRenderer.png(image) { try? png.write(to: snapshot); log("snapshot \(snapshot.path)") }
         session.act(.finish(.copy))
         try? await Task.sleep(for: .milliseconds(400))

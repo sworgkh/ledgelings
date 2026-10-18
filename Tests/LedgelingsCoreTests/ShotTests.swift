@@ -183,3 +183,35 @@ import Testing
         #expect(!Shot.Mark.brush([.zero], width: 12).isTiny)
     }
 }
+
+@Suite struct ShotButtonTests {
+    @Test func everyToolbarButtonHasAPictureAndATooltip() {
+        for button in Shot.Button.allCases {
+            #expect(button.icon.count == 11, "\(button)")
+            #expect(button.icon.allSatisfy { $0.count == 11 }, "\(button)")
+            #expect(button.icon.joined().contains("#"), "\(button) is blank")
+            #expect(button.icon.joined().allSatisfy { "#+.".contains($0) }, "\(button)")
+            #expect(!button.tooltip().isEmpty, "\(button)")
+            #expect(button.tooltip().contains(button.key), "\(button)'s tooltip names its key \(button.key)")
+        }
+        for n in Shot.palette.indices {
+            #expect(Shot.colourTooltip(n).contains("(\(n + 1))"))
+        }
+    }
+
+    @Test func noTwoButtonsLookAlike() {
+        let pictures = Shot.Button.allCases.map { $0.icon.joined() }
+        #expect(Set(pictures).count == pictures.count)
+    }
+
+    @Test func everyModeAndToolHasItsButton() {
+        #expect(Set(Shot.Mode.allCases.map(Shot.Button.init)).count == Shot.Mode.allCases.count)
+        #expect(Set(Shot.Tool.allCases.map(Shot.Button.init)).count == Shot.Tool.allCases.count)
+    }
+
+    @Test func enterSaysWhatItDoes() {
+        #expect(Shot.Button.done.tooltip(copies: true, saves: false).contains("⌘C"))
+        #expect(Shot.Button.done.tooltip(copies: false, saves: true) != Shot.Button.done.tooltip(copies: true, saves: false))
+        #expect(Shot.Button.done.tooltip(copies: true, saves: true) != Shot.Button.done.tooltip(copies: false, saves: true))
+    }
+}

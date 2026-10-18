@@ -58,6 +58,7 @@ struct TalkSettingsView: View {
                             TextField(tr("Name"), text: member(i, \.name)).font(.headline)
                             Button(role: .destructive) { var c = cast; c.remove(at: i); setCast(c) } label: { Image(systemName: "minus.circle") }
                                 .buttonStyle(.borderless).disabled(cast.count <= 1)
+                                .help(tr("Take them out of the cast"))
                         }
                         TextField(tr("Who they are"), text: member(i, \.persona), axis: .vertical).lineLimit(2...4)
                     }

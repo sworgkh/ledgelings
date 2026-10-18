@@ -97,7 +97,7 @@ enum ShotFilm {
             }
             if let session, session.isUp {
                 let m = session.model
-                let key = "\(m.mode)\(m.tool)\(m.colour)\(m.stage)\(m.marks.isEmpty)"
+                let key = "\(m.mode)\(m.tool)\(m.colour)\(m.stage)\(m.marks.isEmpty)\(String(describing: m.hovered))"
                 if key != toolbarKey {
                     toolbarKey = key
                     let image = try await picture(ShotToolbar(model: m))
@@ -186,6 +186,15 @@ enum ShotFilm {
         s.act(.tool(.brush))
         try await drag(s, CGPoint(x: 100, y: 164), CGPoint(x: 380, y: 160), seconds: 0.9) { u in CGPoint(x: 100 + 280 * u, y: 161 + 3 * sin(u * 9)) }
         try await wait(0.6)
+        // The toolbar as it stands, then resting on a button or two: each one's name and key.
+        write(try await picture(ShotToolbar(model: s.model)), "toolbar")
+        for item: ShotToolbar.Item in [.button(.blur), .button(.done), .colour(2)] {
+            s.model.hovered = item
+            log("hover \(ShotToolbar.tooltip(item, s.model))")
+            try await wait(0.8)
+        }
+        write(try await picture(ShotToolbar(model: s.model)), "toolbar-tip")
+        s.model.hovered = nil
         log("⏎: copy")
         s.act(.finish(.enter))
         settings.shotLastRect = Shot.save(CGRect(x: 70, y: 70, width: 400, height: 260))

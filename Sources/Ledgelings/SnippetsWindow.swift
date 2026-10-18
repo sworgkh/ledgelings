@@ -81,7 +81,9 @@ struct SnippetsView: View {
                 .disabled(selected == nil)
                 .help(tr("Delete the folder or snippet; a folder goes with everything in it"))
             Button { if let selected { book.move(selected, by: -1) } } label: { Image(systemName: "arrow.up") }.disabled(selected == nil)
+                .help(tr("Move it up"))
             Button { if let selected { book.move(selected, by: 1) } } label: { Image(systemName: "arrow.down") }.disabled(selected == nil)
+                .help(tr("Move it down"))
             Spacer()
             Menu(tr("File")) {
                 Button(tr("Import Clipy Snippets…"), action: importClipy)

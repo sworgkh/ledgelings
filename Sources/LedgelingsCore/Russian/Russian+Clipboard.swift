@@ -52,6 +52,8 @@ extension Strings {
         "Exported.": "Экспортировано.",
         "Choose a snippet, or add one with + Snippet.": "Выбери заготовку или добавь новую кнопкой «+ Заготовка».",
         "Choose the XML file Clipy's Snippets editor exported.": "Выбери XML-файл, который экспортировал редактор заготовок Clipy.",
+        "Move it up": "Переместить выше",
+        "Move it down": "Переместить ниже",
         "Delete the folder or snippet; a folder goes with everything in it": "Удалить папку или заготовку; папка удаляется со всем содержимым",
         "Paste them from any app with %@: type to search, ⏎ to paste.": "Вставляй их из любой программы сочетанием %@: набери для поиска, ⏎ — вставить.",
         "Protected snippets are exported with their titles only.": "Защищённые заготовки экспортируются только с названиями.",
