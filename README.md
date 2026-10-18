@@ -165,7 +165,7 @@ secrets never are), and texts you paste often live as snippets, in folders. Pres
 **⌃⌥V** in any app: a sheet of pixel paper opens, you type to search copies and
 snippets at once, ⏎ pastes into the app you were in, and the sheet collapses into your
 text cursor. ⌘1–9, ⇥, ⌘P to pin: no mouse needed. A **protected** snippet keeps its
-words in the Keychain and asks Touch ID before pasting. Clipy's snippets import in one
+words in the Keychain and is pasted only after your fingerprint. Clipy's snippets import in one
 go. Nothing copied ever leaves the computer.
 Every conversation is kept, and every call to the model is priced.
 

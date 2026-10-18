@@ -349,8 +349,6 @@ final class AppSettings: ObservableObject {
     @Published var clipAutoPaste: Bool { didSet { save(clipAutoPaste, "clipAutoPaste") } }
     /// Paste the words without their formatting; ⌥⏎ in the picker does the other one.
     @Published var clipPlainText: Bool { didSet { save(clipPlainText, "clipPlainText") } }
-    /// Touch ID or the login password before a protected snippet is pasted or shown.
-    @Published var clipProtectedNeedsAuth: Bool { didSet { save(clipProtectedNeedsAuth, "clipProtectedNeedsAuth") } }
     @Published var clipHistoryShortcutEnabled: Bool { didSet { save(clipHistoryShortcutEnabled, "clipHistoryShortcutEnabled") } }
     @Published var clipHistoryShortcut: Shortcut {
         didSet { save(clipHistoryShortcut.keyCode, "clipHistoryShortcutKeyCode"); save(clipHistoryShortcut.modifiers.rawValue, "clipHistoryShortcutModifiers") }
@@ -660,8 +658,8 @@ final class AppSettings: ObservableObject {
         clipKeepFiles = defaults.object(forKey: "clipKeepFiles") as? Bool ?? true
         clipAutoPaste = defaults.object(forKey: "clipAutoPaste") as? Bool ?? true
         clipPlainText = defaults.object(forKey: "clipPlainText") as? Bool ?? false
-        // On: a protected snippet is a password, and a password should ask before it is typed.
-        clipProtectedNeedsAuth = defaults.object(forKey: "clipProtectedNeedsAuth") as? Bool ?? true
+        // A protected snippet always asks for a fingerprint now; the old switch for it is gone.
+        defaults.removeObject(forKey: "clipProtectedNeedsAuth")
         clipHistoryShortcutEnabled = defaults.object(forKey: "clipHistoryShortcutEnabled") as? Bool ?? true
         clipHistoryShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "clipHistoryShortcutKeyCode") as? Int,
                                        savedModifiers: defaults.object(forKey: "clipHistoryShortcutModifiers") as? Int, standard: .clipHistory)

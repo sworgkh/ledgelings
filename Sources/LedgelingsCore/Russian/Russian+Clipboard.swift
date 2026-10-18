@@ -24,7 +24,6 @@ extension Strings {
         "To paste for you, Ledgelings needs Accessibility (System Settings › Privacy & Security). Until then it copies; you press ⌘V.":
             "Чтобы вставлять за тебя, Ledgelings нужен доступ к универсальному доступу (Системные настройки › Конфиденциальность и безопасность). А пока он копирует, а ⌘V нажимаешь ты.",
         "ALLOW…": "РАЗРЕШИТЬ…",
-        "Waiting for Touch ID or your password…": "Ждём Touch ID или пароль…",
         "⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE":
             "⏎ ВСТАВИТЬ  ⌥⏎ %@  ⌘1–9 ВЫБОР  ⇥ ГРУППА  ⌘P ЗАКРЕПИТЬ  ⌫ ЗАБЫТЬ  ⌘E ПРАВКА  ⎋ ЗАКРЫТЬ",
         "PLAIN": "БЕЗ ОФОРМЛЕНИЯ",
@@ -55,9 +54,15 @@ extension Strings {
         "Delete the folder or snippet; a folder goes with everything in it": "Удалить папку или заготовку; папка удаляется со всем содержимым",
         "Paste them from any app with %@: type to search, ⏎ to paste.": "Вставляй их из любой программы сочетанием %@: набери для поиска, ⏎ — вставить.",
         "Protected snippets are exported with their titles only.": "Защищённые заготовки экспортируются только с названиями.",
-        "Protected: kept in the Keychain, shown as dots, asks before pasting": "Защищённая: хранится в Связке ключей, показывается точками, спрашивает перед вставкой",
         "That file is not Clipy's snippets XML.": "Это не XML заготовок Clipy.",
         // Settings
+        "A protected snippet's words live in the Keychain, never in a file: shown as dots, pasted or shown only after your fingerprint (Touch ID, no password instead), kept out of the history and taken off the clipboard a second after pasting.":
+            "Текст защищённой заготовки живёт в Связке ключей, никогда в файле: показывается точками, вставляется и показывается только после отпечатка пальца (Touch ID, пароль вместо него не подойдёт), не попадает в историю и убирается из буфера через секунду после вставки.",
+        "Touch the fingerprint sensor…": "Приложи палец к датчику Touch ID…",
+        "Protected: kept in the Keychain, shown as dots, pasted only after your fingerprint": "Защищённая: хранится в Связке ключей, показывается точками, вставляется только после отпечатка пальца",
+        "No fingerprint is set up. Add one in System Settings › Touch ID & Password to paste protected snippets.": "Отпечаток пальца не настроен. Добавь его в Системных настройках › Touch ID и пароль, чтобы вставлять защищённые заготовки.",
+        "Touch ID is locked after too many tries. Lock the Mac and unlock it with your password, then try again.": "Touch ID заблокирован после слишком многих попыток. Заблокируй Mac и разблокируй его паролем, потом попробуй снова.",
+        "Touch ID is not available (no sensor, or the lid is closed), so protected snippets cannot be pasted.": "Touch ID недоступен (нет датчика или крышка закрыта), поэтому защищённые заготовки не вставить.",
         "Clipboard manager": "Менеджер буфера обмена",
         "Keep a history of what is copied": "Хранить историю скопированного",
         "Copies kept": "Сколько копий хранить",
@@ -88,9 +93,6 @@ extension Strings {
         "Shortcuts": "Сочетания клавиш",
         "They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, ⌘1–9 for the first nine, ⇥ between the groups, ⌘P to pin, ⌫ to forget a copy, ⎋ to close.":
             "Работают в любой программе. В окне выбора: набирай для поиска сразу по копиям и заготовкам, ↑↓ — выбор, ⌘1–9 — первые девять, ⇥ — между группами, ⌘P — закрепить, ⌫ — забыть копию, ⎋ — закрыть.",
-        "Touch ID before pasting a protected snippet": "Touch ID перед вставкой защищённой заготовки",
-        "A protected snippet's words live in the Keychain, never in a file: shown as dots, kept out of the history and taken off the clipboard a second after pasting.":
-            "Текст защищённой заготовки живёт в Связке ключей, никогда в файле: показывается точками, не попадает в историю и убирается из буфера через секунду после вставки.",
         "No app.": "Ни одной программы.",
         "Add App…": "Добавить программу…",
         "Remove": "Убрать",

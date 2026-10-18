@@ -128,16 +128,44 @@ final class ClipBook: ObservableObject {
     }
 }
 
-/// Touch ID, or the login password, before a protected snippet is pasted or shown.
+/// A fingerprint before a protected snippet is pasted or shown, every time, with no
+/// way round it: Touch ID only (`.deviceOwnerAuthenticationWithBiometrics`), never
+/// the login password instead. No Touch ID to ask (no sensor, the lid closed, no
+/// finger enrolled, locked after too many tries): it is refused, saying why.
+///
+/// The keychain item itself cannot be bound to Touch ID (`.biometryCurrentSet`) yet:
+/// an ad-hoc signed app gets errSecMissingEntitlement (-34018) for any item with an
+/// access control, so that waits for a Developer ID and its entitlements.
 enum OwnerCheck {
-    /// True when the owner proved it is them, or when there is no way to ask (no
-    /// password set at all), which the keychain's own lock still covers.
-    static func confirm(_ reason: String) async -> Bool {
+    enum Answer: Equatable {
+        case yes
+        /// Cancelled, or the wrong finger.
+        case no
+        /// Touch ID cannot be asked now; the words say why, for the user.
+        case unavailable(String)
+    }
+
+    static func fingerprint(_ reason: String) async -> Answer {
         let context = LAContext()
         var problem: NSError?
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &problem) else {
-            return problem?.code == LAError.passcodeNotSet.rawValue
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &problem) else {
+            return .unavailable(why(problem?.code))
         }
-        return (try? await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)) ?? false
+        do {
+            return try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) ? .yes : .no
+        } catch let error as LAError where error.code == .biometryLockout {
+            return .unavailable(why(error.code.rawValue))
+        } catch {
+            return .no
+        }
+    }
+
+    /// Why Touch ID cannot be asked, in plain words.
+    static func why(_ code: Int?) -> String {
+        switch code.flatMap(LAError.Code.init(rawValue:)) {
+        case .biometryNotEnrolled: tr("No fingerprint is set up. Add one in System Settings › Touch ID & Password to paste protected snippets.")
+        case .biometryLockout: tr("Touch ID is locked after too many tries. Lock the Mac and unlock it with your password, then try again.")
+        default: tr("Touch ID is not available (no sensor, or the lid is closed), so protected snippets cannot be pasted.")
+        }
     }
 }

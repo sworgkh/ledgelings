@@ -139,13 +139,15 @@ struct SnippetEditor: View {
     @State private var text = ""
     /// A protected snippet's words, shown after Show.
     @State private var revealed = false
+    /// Why Show… was refused: no Touch ID to ask.
+    @State private var refusal = ""
     @State private var saving: Task<Void, Never>?
 
     var body: some View {
         Form {
             TextField(tr("Title"), text: $title)
                 .onChange(of: title) { _, _ in save() }
-            Toggle(tr("Protected: kept in the Keychain, shown as dots, asks before pasting"), isOn: Binding(
+            Toggle(tr("Protected: kept in the Keychain, shown as dots, pasted only after your fingerprint"), isOn: Binding(
                 get: { book.snippets.snippet(snippet.id)?.protected ?? false },
                 set: { on in
                     saveNow()
@@ -170,6 +172,7 @@ struct SnippetEditor: View {
                         Button(tr("Show…"), action: reveal)
                     }
                 }
+                if !refusal.isEmpty { Text(refusal).foregroundStyle(.red) }
             } else {
                 TextEditor(text: $text)
                     .font(.body.monospaced())
@@ -196,7 +199,12 @@ struct SnippetEditor: View {
 
     private func reveal() {
         Task { @MainActor in
-            if settings.clipProtectedNeedsAuth, !(await OwnerCheck.confirm(tr("show the protected snippet “%@”", current.title))) { return }
+            switch await OwnerCheck.fingerprint(tr("show the protected snippet “%@”", current.title)) {
+            case .yes: break
+            case .no: return
+            case .unavailable(let why): refusal = why; return
+            }
+            refusal = ""
             text = book.words(of: current)
             revealed = true
         }
