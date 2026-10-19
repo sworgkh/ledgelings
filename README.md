@@ -17,15 +17,15 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.53 — eight creatures with their own personalities, on every monitor or
+**Status:** v0.57 — eight creatures with their own personalities, on every monitor or
 on the one you choose, talking when they meet (out loud, each in a voice of its own) from
 a hundred built-in lines or through a model of your choice, in English or Russian. They
 grow little stories from everything they have lived through together, know your time of
 day and your holidays, give each other flowers and plant them, send paper planes and
 throw your reminders at you, sit down to tea, sleep in beds of their own, play tag,
 ninja rope, parachute and basketball, and take the cursor as a friend or a nemesis,
-counting every hunt and riding it in revenge. They bring you a clipboard manager, go home
-when asked, and wear creatures you describe to any image model. Every chat is kept and
+counting every hunt and riding it in revenge. They bring you a clipboard manager and a
+screenshot tool, go home when asked, and wear creatures you describe to any image model. Every chat is kept and
 every model call priced.
 
 **See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) is a 78-second motion infographic of the features, with music, made from [promo-video/](promo-video). The older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
@@ -170,21 +170,33 @@ there, Ctrl+Alt+R anywhere on Windows) opens a paper note of the same pixel pape
 write it on, a creature peeking over the edge; the list is in Settings › Productivity
 tools › Reminders.
 
-**A clipboard manager** (macOS for now; the Windows app follows). Everything you copy
-is kept in a history (password managers' secrets never are), and texts you paste often
-live as snippets, in folders. Press **⌃⌥V** in any app for the history, **⌃⌥B** for the
-snippets: a creature leaps over with a sheet of pixel paper, you type to search copies
-and snippets at once, ⏎ pastes into the app you were in, and the sheet collapses into
-your text cursor. ⌘1–9, ⇥, ⌘P to pin: no mouse needed. A **protected** snippet keeps its
-words in the Keychain and is pasted only after **Touch ID**, never your password. Clipy's
-snippets import in one go. Nothing copied ever leaves the computer. Settings ›
-Productivity tools › Clipboard.
+**A clipboard manager.** Everything you copy is kept in a history, pictures too
+(screenshots, *Copy Image*, Preview), each shown as a little pixel thumbnail; password
+managers' secrets never are. Texts you paste often live as snippets, in folders. Press
+**⌃⌥V** in any app for the history, **⌃⌥B** for the snippets: a creature leaps over with
+a sheet of pixel paper, you type to search copies and snippets at once, ⏎ pastes into the
+app you were in, and the sheet collapses into your text cursor. ⌘1–9, ⇥, ⌘P to pin: no
+mouse needed. A **protected** snippet keeps its words in the Keychain and is pasted only
+after **Touch ID**; a copy of those words in the history is shown only as
+`PWD:{Name}: [N] chars` on a faint tint. Clipy's snippets import in one go. Nothing
+copied ever leaves the computer. Settings › Productivity tools › Clipboard. On Windows
+the same, with Ctrl+Alt+V / Ctrl+Alt+B, protected snippets in Credential Manager and no
+fingerprint step.
 
 Pasting for you means pressing ⌘V in the other app, which macOS allows only with
-**Accessibility**: System Settings › Privacy & Security › Accessibility, switch on
-Ledgelings. The app is signed ad hoc, so macOS sees every reinstalled build as a new app:
-**after each install, switch it off and on again there** (or remove it with − and press
-*Allow…* in the picker). Until then the picker only copies, and says so.
+**Accessibility**: press *Allow…* in Productivity tools › Clipboard and switch on
+Ledgelings in System Settings › Privacy & Security › Accessibility. Since v0.54 the
+grant survives reinstalls. Until it is given the picker only copies, and says so.
+
+**Screenshots** (macOS for now). **⌃⌥S** freezes every screen under a tiny pixel
+toolbar: a rectangle, a freehand lasso, the screen under the cursor or all monitors as
+one image; then boxes, arrows, a highlight, and a blur (pixel blocks, so the text cannot
+be read back) by rectangle or by brush, in six colours. Every button is an icon that
+names itself and its key on hover. ⏎ copies the PNG, ⌘S also saves it to
+~/Desktop/Screenshots. **⌘⇧8** takes the full screen at once, **⌘⇧\\** the last
+rectangle again; all shortcuts and the folder are in Settings › Productivity tools ›
+Screenshots. A creature carries the shot home. It needs **Screen Recording**: *Allow…*
+on that tab.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
 triangle and a mushroom come built in, each with its own cast of characters. The
