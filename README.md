@@ -25,8 +25,8 @@ day and your holidays, give each other flowers and plant them, send paper planes
 throw your reminders at you, sit down to tea, sleep in beds of their own, play tag,
 ninja rope, parachute and basketball, and take the cursor as a friend or a nemesis,
 counting every hunt and riding it in revenge. They bring you a clipboard manager and a
-screenshot tool, go home when asked, and wear creatures you describe to any image model. Every chat is kept and
-every model call priced.
+screenshot tool, go home when asked, and wear creatures you describe to any image model.
+Every chat is kept and every model call priced.
 
 **See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) is a 78-second motion infographic of the features, with music, made from [promo-video/](promo-video). The older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
 
