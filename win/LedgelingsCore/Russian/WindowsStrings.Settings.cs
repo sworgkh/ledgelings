@@ -7,7 +7,6 @@ public static partial class WindowsStrings
     {
         ["Blue"] = "Синий",
         ["Cancel"] = "Отмена",
-        ["Colour"] = "Цвет",
         ["Green"] = "Зелёный",
         ["Hex"] = "Код",
         ["OK"] = "ОК",

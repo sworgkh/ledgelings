@@ -282,7 +282,8 @@ public class PlaysTests
     [Fact]
     public void EveryCharacterHasALineForEveryGameAndTwoForTheEndInEveryLanguage()
     {
-        var swift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+Lines.swift"));
+        var swift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+Lines.swift"))
+            + File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+BallLines.swift"));
         var names = Shipped();
         Assert.Equal(27, names.Count);
         foreach (var language in Languages.All)
@@ -301,7 +302,7 @@ public class PlaysTests
             foreach (var (name, lines) in start)
                 foreach (var (kind, line) in lines)
                 {
-                    var english = Plays.EnglishStartLines[name][kind];
+                    var english = Plays.EnglishStart[name][kind];
                     Assert.True(line.Contains("{other}") == english.Contains("{other}"), $"{name} {kind} {language}");
                     Assert.True(kind != "tag" || line.Contains("{other}"), $"{name} {language}");
                 }
@@ -319,6 +320,52 @@ public class PlaysTests
             Assert.Contains("{" + p + "}", Shared.PromptIn(Language.Russian, "play", ""));
         }
         Assert.NotEqual(Plays.EnglishLineSystemPrompt, Shared.PromptIn(Language.Russian, "playSystem", Plays.EnglishLineSystemPrompt));
+    }
+
+    [Fact]
+    public void EveryCharacterCheersInItsOwnVoiceAtEveryBigMoment()
+    {
+        var swift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+BallLines.swift"));
+        var moments = Enum.GetValues<Plays.Moment>();
+        foreach (var language in Languages.All)
+        {
+            var cheers = Plays.CheerLinesIn(language);
+            foreach (var name in Shipped())
+                foreach (var moment in moments)
+                {
+                    Assert.False(string.IsNullOrEmpty(cheers[name].GetValueOrDefault(moment.Raw())), $"{name} {moment} {language}");
+                    if (language == Language.English) Assert.Contains("\"" + cheers[name][moment.Raw()] + "\"", swift);    // word for word
+                }
+            foreach (var moment in moments) Assert.True(Plays.CheerAnyoneIn(language).ContainsKey(moment.Raw()));
+        }
+        Assert.NotEqual(Plays.CheerLinesIn(Language.English)["Zed"]["goal"], Plays.CheerLinesIn(Language.Russian)["Zed"]["goal"]);   // from ru.json
+        Languages.With(Language.English, () =>
+        {
+            Assert.Contains("100%", Plays.CheerLine("Unit 7", Plays.Moment.Goal));                    // Unit 7 in numbers
+            Assert.Contains("lie down", Plays.CheerLine("Zed", Plays.Moment.Goal));                   // Zed sleepy
+            Assert.StartsWith("Goal. Don't cheer.", Plays.CheerLine("Blocky", Plays.Moment.Goal));    // Blocky grumpy-proud
+            Assert.Equal(Plays.EnglishCheerAnyone["homeRun"], Plays.CheerLine("Nobody Made", Plays.Moment.HomeRun));
+            Assert.Contains("Pass to me", Plays.StartLine("Pip", Plays.Kind.Soccer, ""));
+        });
+        foreach (var p in Plays.CheerPlaceholders)
+        {
+            Assert.Contains("{" + p + "}", Plays.EnglishCheerPrompt);
+            Assert.Contains("{" + p + "}", Shared.PromptIn(Language.Russian, "playCheer", ""));
+        }
+        // The prompt word for word too: the Swift literal with its line continuations joined.
+        var literal = System.Text.RegularExpressions.Regex.Match(swift.Replace("\r", ""), "englishCheerPrompt = \"\"\"\n(.*?)\n    \"\"\"",
+            System.Text.RegularExpressions.RegexOptions.Singleline).Groups[1].Value;
+        var prompt = string.Join("\n", literal.Split('\n').Select(l => l.StartsWith("    ") ? l[4..] : l)).Replace("\\\n", "");
+        Assert.Equal(prompt, Plays.EnglishCheerPrompt.Replace("\r", ""));
+        Assert.True(Plays.Moment.Goal.AsksTheModel() && Plays.Moment.HomeRun.AsksTheModel() && !Plays.Moment.Oops.AsksTheModel());
+    }
+
+    [Fact]
+    public void WhatTheBallGamesLinesCostIsCountedUnderTheirOwnPurpose()
+    {
+        var records = new[] { new Spend.Record(DateTime.UtcNow, "OpenRouter", "m", new Spend.Usage(150, 15, 0.0006), Spend.Purpose.BallGames) };
+        var s = Spend.Summarise(records, DateTime.UtcNow);
+        Languages.With(Language.English, () => Assert.Equal(0.0006, s.ByPurpose.First(p => p.Purpose == "Soccer and baseball").Total.Cost));
     }
 
     [Fact]

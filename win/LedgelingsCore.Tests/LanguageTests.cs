@@ -68,7 +68,7 @@ public class LanguageTests
         Assert.Null(Shared.In(Language.English));
         Assert.True(ru.Strings.Count > 500);
         Assert.Contains("[flower]", ru.Script);
-        Assert.Equal(18, ru.Prompts.Count);
+        Assert.Equal(19, ru.Prompts.Count);
         Assert.Contains("Blocky", ru.LetterVoices.Keys);
         Assert.NotEmpty(ru.TeaStories["Blocky"]);
         Assert.NotEmpty(ru.Holidays);

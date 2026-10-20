@@ -27,6 +27,10 @@ public sealed partial class Colony
         public Plays.Rope? Rope;
         public Plays.Chute? Chute;
         public Court? Court;
+        public Plays.Pitch? Pitch;
+        public Plays.Soccer? Soccer;
+        public Plays.Baseball? Baseball;
+        public BallGame? BallGame;
         /// <summary>Where the players are going before it starts: leaping to a floor or the ceiling.</summary>
         public Dictionary<int, EdgeWorld.Spot> Reaching = new();
     }
@@ -110,9 +114,10 @@ public sealed partial class Colony
     }
 
     /// <summary>Start a game now: <paramref name="kind"/>, or one chosen for whoever is free (<see cref="Plays.Choose"/>).
-    /// The Actions sheet asks for one by kind; tag then takes the closest pair on one outline, and basketball the
-    /// initiator's closest friend if it has one.</summary>
-    public bool StartPlay(Plays.Kind? kind, int? chosen = null)
+    /// The Actions sheet asks for one by kind; tag then takes the closest pair on one outline, basketball the
+    /// initiator's closest friend if it has one, and a ball game everyone free, closest friends first, up to its
+    /// most players (or <paramref name="count"/>).</summary>
+    public bool StartPlay(Plays.Kind? kind, int? chosen = null, int? count = null)
     {
         if (play is not null || hideout.IsActive) return false;
         var free = Enumerable.Range(0, creatures.Count).Where(FreeToPlay).ToList();
@@ -142,6 +147,11 @@ public sealed partial class Colony
                     tries.Add((Plays.Kind.Basketball, friends.Count > 0 ? new[] { initiator, friends.MaxBy(p => p.Closeness).Index } : new[] { initiator }));
                     break;
                 }
+                case Plays.Kind.Soccer:
+                case Plays.Kind.Baseball:
+                    tries.Add((asked, Plays.Joining(initiator, Crowd(initiator),
+                        count ?? (Settings.BallGamePlayers.TryGetValue(asked, out var most) ? most : 6))));
+                    break;
                 default:
                     tries.Add((asked, new[] { initiator }));
                     break;
@@ -149,6 +159,10 @@ public sealed partial class Colony
         }
         else
         {
+            // A ball game for everyone free, now and then, if one is due.
+            if (Plays.ChooseTeamGame(initiator, Crowd(initiator), BallGamesDue, Settings.BallGamePlayers, rng) is { } team
+                && Begin(team.Kind, team.Players))
+                return true;
             if (Plays.Choose(initiator, Partners(initiator), Settings.EnabledPlays, rng) is not { } pick) return false;
             tries.Add((pick.Kind, pick.Players));
             // No room for that one here: a game alone that fits instead.
@@ -226,15 +240,22 @@ public sealed partial class Colony
                     session.Reaching[i] = SpotOn(f, f.From + (f.To - f.From) * rng.Range(0.3, 0.7), i);
                 break;
             }
+            case Plays.Kind.Soccer:
+                if (!BeginSoccer(session)) return false;
+                break;
+            case Plays.Kind.Baseball:
+                if (!BeginBaseball(session)) return false;
+                break;
         }
         foreach (var p in players) busy.Add(p);
         foreach (var (i, to) in session.Reaching) creatures[i].Leap(to);
-        foreach (var i in players.Where(i => !session.Reaching.ContainsKey(i))) creatures[i].StandStill(double.PositiveInfinity);
+        foreach (var i in players.Where(i => !session.Reaching.ContainsKey(i) && !creatures[i].IsPlaying)) creatures[i].StandStill(double.PositiveInfinity);
         play = session;
         var names = players.Select(p => CharacterFor(p).Name).ToList();
-        TalkStatus = names.Count == 2 ? L10n.Tr("%@ and %@: %@", names[0], names[1], kind.Title()) : L10n.Tr("%@: %@", names[0], kind.Title());
+        TalkStatus = names.Count == 2 ? L10n.Tr("%@ and %@: %@", names[0], names[1], kind.Title()) : L10n.Tr("%@: %@", string.Join(", ", names), kind.Title());
         Trace?.Invoke($"play {kind.Raw()} {string.Join(" & ", names)}{(session.Reaching.Count == 0 ? "" : " (getting there)")}");
-        if (session.Reaching.Count == 0) Started();
+        if (kind == Plays.Kind.Baseball) StartLine(session);
+        else if (session.Reaching.Count == 0) Started();
         return true;
     }
 
@@ -290,6 +311,9 @@ public sealed partial class Colony
                 creatures[i].TakeOff();
                 session.Chute = new Plays.Chute(creatures[i].Position, below.Y, below.From, below.To, Settings.ParachuteFallSpeed);
                 break;
+            case Plays.Kind.Soccer:
+                if (!StartSoccer(session)) { EndPlay(false); return; }
+                break;
         }
         StartLine(session);
     }
@@ -323,6 +347,8 @@ public sealed partial class Colony
             case Plays.Kind.Rope: RunRope(session, dt); break;
             case Plays.Kind.Parachute: RunChute(session, dt); break;
             case Plays.Kind.Basketball: RunBasketball(session, dt); break;
+            case Plays.Kind.Soccer: RunSoccer(session, dt); break;
+            case Plays.Kind.Baseball: RunBaseball(session, dt); break;
         }
     }
 
@@ -522,7 +548,12 @@ public sealed partial class Colony
     {
         s.Now = PlaySession.Stage.Ending;
         s.Until = Elapsed + EndPause;
-        if (s.Players.Length == 2) Shared(s.Players[0], s.Players[1], Core.Bonds.MomentKind.Play, s.Kind.Raw());
+        if (s.Kind.IsTeamGame())
+        {
+            // Playing together brings them closer: teammates, or everyone in a small game.
+            foreach (var (a, b) in BallGamePairs(s)) Shared(a, b, Core.Bonds.MomentKind.Play, s.Kind.Raw());
+        }
+        else if (s.Players.Length == 2) Shared(s.Players[0], s.Players[1], Core.Bonds.MomentKind.Play, s.Kind.Raw());
         DoneLine(speaker, s);
     }
 
@@ -538,6 +569,13 @@ public sealed partial class Colony
             if (creatures[i].IsRunning) creatures[i].StandStill(0.6);
         }
         foreach (var p in s.Players) busy.Remove(p);
+        if (s.Kind.IsTeamGame())
+        {
+            ballGameEnded[s.Kind] = Elapsed;
+            // The final score stays up a moment, fading.
+            if (BallGameProps(s).FirstOrDefault(p => p.Size is not null && p.Position == s.BallGame?.BoardAt) is { } board)
+                fadingBoard = (board, Elapsed + BoardShown);
+        }
         NextPlayAt = Elapsed + Plays.Wait(Settings.PlayEveryMinutes, Settings.PlayBondBoost, ClosestPairOnScreen(), rng);
         if (!completed) Trace?.Invoke($"play {s.Kind.Raw()} broken off");
         Trace?.Invoke($"play {s.Kind.Raw()} done");
@@ -561,7 +599,7 @@ public sealed partial class Colony
         if (!PlayCanTalk) return;
         var i = s.Players[0];
         var me = CharacterFor(i);
-        var other = s.Players.Length > 1 ? CharacterFor(s.Players[1]).Name : "";
+        var other = string.Join(", ", s.Players.Skip(1).Take(4).Select(p => CharacterFor(p).Name));
         var builtIn = Plays.StartLine(me.Name, s.Kind, other);
         var situation = PlaySituation(s);
         var service = Settings.Brain != BrainKind.Script ? Settings.ChatClient() : null;
@@ -575,10 +613,10 @@ public sealed partial class Colony
             ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Persona(me.Persona),
             ["play"] = s.Kind.Title(), ["others"] = other.Length == 0 ? "" : L10n.Tr(" with %@", other), ["situation"] = situation,
         };
-        _ = StartLineByModel(service, s.Serial, i, me.Name, builtIn, situation, vars);
+        _ = StartLineByModel(service, s.Kind, s.Serial, i, me.Name, builtIn, situation, vars);
     }
 
-    private async Task StartLineByModel(ChatClient service, int serial, int i, string name, string builtIn, string situation,
+    private async Task StartLineByModel(ChatClient service, Plays.Kind kind, int serial, int i, string name, string builtIn, string situation,
                                         Dictionary<string, string> vars)
     {
         var line = "";
@@ -592,7 +630,8 @@ public sealed partial class Colony
                 if (service.Kind == ChatClient.Provider.LmStudio) usage.Cost = 0;       // a local model is free
                 cost = usage.Cost;
                 tokens = usage.PromptTokens + usage.CompletionTokens;
-                Spend.Record(service.Kind, service.Model, usage, Core.Spend.Purpose.Plays);
+                Spend.Record(service.Kind, service.Model, usage,
+                             kind.IsTeamGame() ? Core.Spend.Purpose.BallGames : Core.Spend.Purpose.Plays);
             }
             line = Banter.CleanLine(answer.Text, name, cut: answer.Cut);
         }
@@ -634,8 +673,14 @@ public sealed partial class Colony
     /// <summary>The props of the game going on, in global points.</summary>
     internal List<PropSnapshot> PlayProps()
     {
+        var fading = new List<PropSnapshot>();
+        if (fadingBoard is { } f)
+        {
+            if (Elapsed > f.Until) fadingBoard = null;
+            else fading.Add(f.Prop with { Opacity = (float)Math.Min(1, (f.Until - Elapsed) / 1.2) });
+        }
         var props = new List<PropSnapshot>();
-        if (play is not PlaySession s) return props;
+        if (play is not PlaySession s) return fading;
         Bitmap? Image(string animation, double time = 0) => playFrames.Frame(animation, time);
         static Vec Up(double rotation) => new(-Math.Sin(rotation), Math.Cos(rotation));
         switch (s.Kind)
@@ -704,7 +749,12 @@ public sealed partial class Colony
                 }
                 break;
             }
+            case Plays.Kind.Soccer:
+            case Plays.Kind.Baseball:
+                props.AddRange(BallGameProps(s));
+                break;
         }
+        props.AddRange(fading);
         return props;
     }
 }

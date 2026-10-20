@@ -16,7 +16,7 @@ public static class ActionIcons
 
     private static Dictionary<Ledgelings.Core.Plays.Kind, Bitmap>? games;
 
-    /// <summary>Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop.</summary>
+    /// <summary>Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop, the net, the bat.</summary>
     public static Bitmap? Game(Ledgelings.Core.Plays.Kind kind) => (games ??= MakeGames()).GetValueOrDefault(kind);
 
     private static Dictionary<Ledgelings.Core.Plays.Kind, Bitmap> MakeGames()
@@ -33,6 +33,8 @@ public static class ActionIcons
         Put(Ledgelings.Core.Plays.Kind.Rope, props?.Frame("hook", 0));
         Put(Ledgelings.Core.Plays.Kind.Parachute, props?.Frame("chute", 0));
         Put(Ledgelings.Core.Plays.Kind.Basketball, props?.Frame("hoop", 0));
+        Put(Ledgelings.Core.Plays.Kind.Soccer, props?.Frame("net", 0));
+        Put(Ledgelings.Core.Plays.Kind.Baseball, props?.Frame("bat", 0));
         return made;
     }
 

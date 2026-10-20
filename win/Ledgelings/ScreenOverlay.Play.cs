@@ -6,8 +6,9 @@ namespace Ledgelings;
 /// <summary>One of a game's props (<c>Colony.Play</c>), in GLOBAL coordinates: drawn about its middle.</summary>
 /// <param name="Scale">Screen points per sprite pixel.</param>
 /// <param name="InFront">Over the creatures (the ball), rather than behind them (the hoop, the rope).</param>
+/// <param name="Size">Its own size in sheet pixels, when it is not one cell of the props sheet (a scoreboard).</param>
 public sealed record PropSnapshot(Bitmap? Image, Pt Position, double Rotation, double Scale,
-                                  bool Mirrored = false, float Opacity = 1, bool InFront = false);
+                                  bool Mirrored = false, float Opacity = 1, bool InFront = false, Size? Size = null);
 
 /// <summary>The games' props: the rope's links and its hook, the parachute, the hoop and the ball, a drop of sweat.</summary>
 public sealed partial class ScreenOverlay
@@ -18,7 +19,8 @@ public sealed partial class ScreenOverlay
         foreach (var prop in props)
         {
             if (prop.InFront != inFront || prop.Image is not Bitmap image || prop.Scale <= 0 || prop.Opacity <= 0) continue;
-            var reach = Math.Max(cell.Width, cell.Height) * prop.Scale;
+            var size = prop.Size ?? cell;
+            var reach = Math.Max(size.Width, size.Height) * prop.Scale;
             if (!Monitor.Frame.InsetBy(-reach, -reach).Contains(prop.Position)) continue;
             var centre = ToWindow(prop.Position);
             var radius = (int)Math.Ceiling(reach + 2);

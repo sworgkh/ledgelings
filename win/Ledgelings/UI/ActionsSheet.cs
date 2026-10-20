@@ -97,6 +97,8 @@ public static class Activities
         Plays.Kind.Tag => L10n.Tr("CATCH ME IF YOU CAN"),
         Plays.Kind.Rope => L10n.Tr("NINJA ROPE"),
         Plays.Kind.Parachute => L10n.Tr("PARACHUTE"),
+        Plays.Kind.Soccer => L10n.Tr("SOCCER"),
+        Plays.Kind.Baseball => L10n.Tr("BASEBALL"),
         _ => L10n.Tr("BASKETBALL"),
     };
 
@@ -105,6 +107,8 @@ public static class Activities
         Plays.Kind.Tag => L10n.Tr("Two friends chase each other round the edges. A touch, and the other one is it."),
         Plays.Kind.Rope => L10n.Tr("A hook into the ceiling, a big swing over the floor, a somersault down."),
         Plays.Kind.Parachute => L10n.Tr("Up to the ceiling, then down slowly under a little parachute."),
+        Plays.Kind.Soccer => L10n.Tr("Everyone free, on the widest floor: alone, one-on-one, one goal for three, teams of friends."),
+        Plays.Kind.Baseball => L10n.Tr("Bases on the screen's edges, hit, catch and run by hopping edge to edge."),
         _ => L10n.Tr("A hoop on the wall and a few throws; two friends take turns."),
     };
 
@@ -113,6 +117,8 @@ public static class Activities
         Plays.Kind.Tag => System.Windows.Input.Key.C,
         Plays.Kind.Rope => System.Windows.Input.Key.W,
         Plays.Kind.Parachute => System.Windows.Input.Key.U,
+        Plays.Kind.Soccer => System.Windows.Input.Key.G,
+        Plays.Kind.Baseball => System.Windows.Input.Key.I,
         _ => System.Windows.Input.Key.B,
     };
 
@@ -637,10 +643,11 @@ public sealed class ActionsSheet : Window
         sheet.Children.Add(new TextBlock
         {
             Text = L10n.Tr("ACTIVITIES · WHAT SHOULD THEY PLAY?"),
-            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 14),
+            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
         });
-        var list = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
-        foreach (var kind in Plays.AllKinds) list.Children.Add(ActivityRow(kind, list.Children.Count == 0 ? 0 : 8));
+        // Six rows still leave room for the line and the buttons under them.
+        var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+        foreach (var kind in Plays.AllKinds) list.Children.Add(ActivityRow(kind, list.Children.Count == 0 ? 0 : 5));
         sheet.Children.Add(list);
         sheet.Children.Add(line);
         var left = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
@@ -659,14 +666,14 @@ public sealed class ActionsSheet : Window
 
     private PixelButton ActivityRow(Plays.Kind kind, double top)
     {
-        var face = new Grid { Width = SheetWidth - 66, Height = 58 };
+        var face = new Grid { Width = SheetWidth - 66, Height = 52 };
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(76) });
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var holder = new Grid { Width = 64, Height = 46, Margin = new Thickness(12, 0, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+        var holder = new Grid { Width = 64, Height = 40, Margin = new Thickness(12, 0, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
         if (ActionIcons.Game(kind) is System.Drawing.Bitmap picture)
         {
-            var scale = Math.Max(1, Math.Floor(Math.Min(64.0 / picture.Width, 46.0 / picture.Height)));
+            var scale = Math.Max(1, Math.Floor(Math.Min(64.0 / picture.Width, 40.0 / picture.Height)));
             var image = new Image
             {
                 Source = Bitmaps.ToSource(picture), Width = picture.Width * scale, Height = picture.Height * scale, Stretch = Stretch.Fill,

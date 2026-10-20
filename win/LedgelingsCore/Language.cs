@@ -204,6 +204,9 @@ public sealed class Shared
     public Dictionary<string, string> PlayStartAnyone { get; init; } = new();
     public Dictionary<string, string[]> PlayDone { get; init; } = new();
     public string[] PlayDoneAnyone { get; init; } = Array.Empty<string>();
+    /// <summary>The ball games' big moments (goal, homeRun, oops, wander): by character, and for anyone.</summary>
+    public Dictionary<string, Dictionary<string, string>> PlayCheer { get; init; } = new();
+    public Dictionary<string, string> PlayCheerAnyone { get; init; } = new();
     /// <summary>What the creature bringing the clipboard picker says (SPEC §7.11.1): by character, and for anyone.</summary>
     public Dictionary<string, string[]> ClipHelperLines { get; init; } = new();
     public string[] ClipHelperAnyone { get; init; } = Array.Empty<string>();
@@ -265,6 +268,7 @@ public sealed class Shared
         var plays = Get(root, "plays");
         var clipHelper = Get(root, "clipHelper");
         var playStart = Get(plays, "start");
+        var playCheer = Get(plays, "cheer");
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -302,6 +306,8 @@ public sealed class Shared
             PlayStartAnyone = Map(Get(plays, "startAnyone")),
             PlayDone = Lists(Get(plays, "done")),
             PlayDoneAnyone = List(Get(plays, "doneAnyone")),
+            PlayCheer = playCheer.ValueKind == JsonValueKind.Object ? playCheer.EnumerateObject().ToDictionary(p => p.Name, p => Map(p.Value)) : new(),
+            PlayCheerAnyone = Map(Get(plays, "cheerAnyone")),
             ClipHelperLines = Lists(Get(clipHelper, "lines")),
             ClipHelperAnyone = List(Get(clipHelper, "anyone")),
             RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),
