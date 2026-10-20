@@ -103,6 +103,8 @@ struct PropSnapshot {
     var opacity: Float = 1
     /// Over the creatures (the ball), rather than behind them (the hoop, the rope).
     var inFront = false
+    /// Its own size in sheet pixels, when it is not one cell of the props sheet (a scoreboard).
+    var size: CGSize?
 }
 
 /// A flower planted in the edge, in GLOBAL coordinates.
@@ -528,13 +530,14 @@ final class ScreenOverlay {
                 continue
             }
             let prop = props[k]
-            let reach = max(cell.width, cell.height) * prop.scale
+            let size = prop.size ?? cell
+            let reach = max(size.width, size.height) * prop.scale
             let here = display.frame.insetBy(dx: -reach, dy: -reach).contains(prop.position)
             if layer.isHidden == here { layer.isHidden = !here }
             guard here else { continue }
             if (layer.contents as AnyObject?) !== image { layer.contents = image }
             layer.zPosition = prop.inFront ? 2 : -0.5
-            layer.bounds = CGRect(x: 0, y: 0, width: cell.width * prop.scale, height: cell.height * prop.scale)
+            layer.bounds = CGRect(x: 0, y: 0, width: size.width * prop.scale, height: size.height * prop.scale)
             layer.position = CGPoint(x: prop.position.x - origin.x, y: prop.position.y - origin.y)
             layer.transform = CATransform3DScale(CATransform3DMakeRotation(prop.rotation, 0, 0, 1), prop.mirrored ? -1 : 1, 1, 1)
             layer.opacity = prop.opacity

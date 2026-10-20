@@ -1,6 +1,8 @@
 """play — the props the creatures play with: a basketball, the hoop it is
-thrown at, a parachute, a grappling hook and the links of its rope, and a
-drop of sweat for whoever is out of breath after a game of tag.
+thrown at, a parachute, a grappling hook and the links of its rope, a drop of
+sweat for whoever is out of breath after a game of tag; a soccer ball and the
+little net it is shot into; a baseball, its bat, and the bases (one with a
+pennant for a ghost runner standing on it).
 
 Each prop is a glyph of material letters; the painter shades every patch of
 one material the way the creature's body is shaded (a light line along the
@@ -15,6 +17,11 @@ the app, which keeps the numbers below in step (`Plays.Props`):
   last column, its rim runs along `RIM_ROW` from `RIM_FROM` to `RIM_TO`;
 - the parachute's strings end on the cell's bottom row, in the middle, where
   the creature's head is;
+- the net stands on the cell's bottom row against a wall to its RIGHT: its
+  front post's outer column is `NET_MOUTH`, its crossbar's top row `NET_BAR`
+  (the app's `Plays.Soccer.Net`);
+- a base's bag lies on rows `BASE_ROW`..`BASE_ROW + 2`, so the app lays it flat
+  on an edge;
 - everything else is centred.
 """
 
@@ -35,10 +42,13 @@ ROPE = (190, 140, 80)
 BLUE = (110, 180, 240)
 STRING = (92, 86, 120)
 NET = (200, 200, 212)
+PATCH = (62, 62, 74)
+WOOD = (182, 122, 64)
+STITCH = (206, 58, 52)
 
-MATERIALS = {"o": ORANGE, "w": WHITE, "r": RED, "g": GREY, "n": ROPE, "b": BLUE}
+MATERIALS = {"o": ORANGE, "w": WHITE, "r": RED, "g": GREY, "n": ROPE, "b": BLUE, "d": PATCH, "t": WOOD}
 # Lines with no outline round them, drawn after the shading.
-THREADS = {"k": STRING, "z": NET}
+THREADS = {"k": STRING, "z": NET, "q": STITCH}
 # A seam on the ball: the ball's own outline colour, inside it.
 SEAM = "x"
 
@@ -151,6 +161,80 @@ DROP = [
 ]
 
 
+# The soccer ball: white with dark patches, turning in two frames.
+SOCCER = [
+    [
+        "..wwww..",
+        ".wwddww.",
+        "wwddddww",
+        "dwwddwwd",
+        "ddwwwwdd",
+        "wwwddwww",
+        ".wwddww.",
+        "..wwww..",
+    ],
+    [
+        "..wddw..",
+        ".wwwwww.",
+        "dwwwwwwd",
+        "ddwddwdd",
+        "dwwddwwd",
+        "wwwwwwww",
+        ".ddwwdd.",
+        "..wwww..",
+    ],
+]
+
+# The net: a white post and crossbar facing left, the net behind them back to the wall.
+NET_W, NET_H = 16, 24
+
+
+def net() -> list[str]:
+    rows = [["."] * NET_W for _ in range(NET_H)]
+    for y in range(NET_H):
+        for x in (0, 1):
+            rows[y][x] = "w"
+    for x in range(NET_W):
+        for y in (0, 1):
+            rows[y][x] = "w"
+    for y in range(2, NET_H):
+        for x in range(3, NET_W):
+            # An open mesh: a thread every third pixel each way, and the back.
+            if x % 3 == 0 or y % 3 == 2 or x == NET_W - 1:
+                rows[y][x] = "z"
+    return ["".join(r) for r in rows]
+
+
+BASEBALL = [
+    ".wwww.",
+    "wwwwww",
+    "wwwwww",
+    "wwwwww",
+    "wwwwww",
+    ".wwww.",
+]
+BASEBALL_STITCHES = [(1, 1), (1, 2), (1, 3), (1, 4), (4, 1), (4, 2), (4, 3), (4, 4)]
+
+# The bat, standing up: barrel at the top, a thin handle, a knob at the bottom.
+BAT = [".t."] + ["ttt"] * 9 + [".t."] * 5 + ["ttt"]
+
+BASE = ["wwwwwwwwww"] * 3
+BASE_W = len(BASE[0])
+
+
+def base(taken: bool) -> list[str]:
+    """The bag; taken, a pennant on a stick rises from its left end."""
+    if not taken:
+        return BASE
+    rows = [["."] * BASE_W for _ in range(9)]
+    for y in range(9):
+        rows[y][1] = "k"
+    for y in range(3):
+        for x in range(2, 2 + 4 - y):
+            rows[y][x] = "r"
+    return ["".join(r) for r in rows] + BASE
+
+
 def line(x0: int, y0: int, x1: int, y1: int) -> list[tuple[int, int]]:
     """A straight run of pixels, stepped, from one end to the other."""
     points, dx, dy = [], abs(x1 - x0), -abs(y1 - y0)
@@ -228,7 +312,15 @@ HOOP_X, HOOP_Y = CELL_W - 1 - HOOP_W, 2
 # Where the parachute's glyph sits: strings ending on the bottom row, centred.
 CHUTE_X, CHUTE_Y = (CELL_W - CHUTE_W) // 2, CELL_H - CHUTE_H
 
+# Where the net's glyph sits: on the bottom row, its back against the right edge.
+NET_X, NET_Y = CELL_W - NET_W, CELL_H - NET_H
+# Where a base's bag sits: centred, its three rows from BASE_ROW.
+BASE_ROW = 13
+BASE_X = (CELL_W - BASE_W) // 2
+
 # What the app needs, in cell pixels from the cell's top-left.
+NET_MOUTH = NET_X
+NET_BAR = NET_Y
 RIM_ROW = HOOP_Y + RIM_GLYPH_ROW
 RIM_FROM = HOOP_X + RIM_GLYPH_FROM
 RIM_TO = HOOP_X + RIM_GLYPH_TO
@@ -248,6 +340,21 @@ def paint_pose(img: Image.Image, cx: int, cy: int, pose: str) -> None:
         paint_glyph(img, cx, cy, ROPE_LINK, *centred(ROPE_LINK))
     elif pose == "drop":
         paint_glyph(img, cx, cy, DROP, *centred(DROP))
+    elif pose in ("soccer-0", "soccer-1"):
+        glyph = SOCCER[int(pose[-1])]
+        paint_glyph(img, cx, cy, glyph, *centred(glyph))
+    elif pose == "net":
+        paint_glyph(img, cx, cy, net(), NET_X, NET_Y)
+    elif pose == "baseball":
+        paint_glyph(img, cx, cy, BASEBALL, *centred(BASEBALL))
+        ox, oy = centred(BASEBALL)
+        for x, y in BASEBALL_STITCHES:
+            img.putpixel((cx + ox + x, cy + oy + y), STITCH)
+    elif pose == "bat":
+        paint_glyph(img, cx, cy, BAT, *centred(BAT))
+    elif pose in ("base", "base-taken"):
+        glyph = base(pose == "base-taken")
+        paint_glyph(img, cx, cy, glyph, BASE_X, BASE_ROW + 3 - len(glyph))
     else:
         raise ValueError(f"the play painter cannot draw {pose!r}")
 

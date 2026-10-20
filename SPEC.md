@@ -1667,6 +1667,8 @@ each other enabled solo game is tried in turn.
 | rope (`playRopeEnabled`) | 1 | a floor under a ceiling | Leaps to the floor under it first if not on one. A swing: aim 0.5 s, fire the hook 0.3 s to the ceiling (the screen's top edge) ahead, reel up 0.55 s, swing, let go, fly, land (below) |
 | parachute (`playParachuteEnabled`) | 1 | a ceiling ≥ 120 pt long over a floor ≥ 200 pt below | Leaps to the ceiling (over itself if there is one, at 15–85 % of its length), hangs 0.8 s upside down, drops 0.4 s turning upright (`y = y0 − g t²/2`), the canopy opens over 0.4 s slowing it to `parachuteFallSpeed`, floats down swaying ±16 pt over 2.6 s (tilting ±0.14 rad), lands, the canopy folds away over 0.7 s |
 | basketball (`playBasketballEnabled`) | 1, or 2 friends taking turns | a floor ≥ 260 pt with a wall rising from an end | A hoop on the wall further from the initiator; `basketballThrows` throws each |
+| soccer (`playSoccerEnabled`) | 1 to `soccerPlayers` | the widest floor ≥ 300 pt | Below, **Ball games** |
+| baseball (`playBaseballEnabled`) | 1 to `baseballPlayers` | home on a floor ≥ 420 pt, three other edges ≥ 80 pt | Below, **Ball games** |
 
 **Rope.** Planned from the creature's centre `P` on a floor running `[a, b]`, under a
 ceiling at `Y` (the screen edge): `H = Y − P.y`, rope length `L = H − 2.5 · half size`
@@ -1697,6 +1699,84 @@ going down within `half-width − 0.4 · radius` of its middle (stars at the rim
 net swishes 0.5 s). It fades 0.5 s after it rests or 5 s after the throw; then the
 next throw, the players alternating. The one who scored most has the last word.
 
+**Ball games** (`Plays+Teams`, `Plays+Soccer`, `Plays+Baseball`; `Colony+BallGames`). When a
+game is due, before `choose`, `chooseTeamGame` may pick soccer or baseball among those
+due (on, and `soccerEveryMinutes` / `baseballEveryMinutes` since that one last ended),
+with chance `min(0.75, 0.3 + 0.1 · crowd)`, the crowd being every other free creature on
+any loop. Players: the initiator, then the crowd closest first, at most the game's
+`…Players`. Line-ups by count (`Lineup`): soccer 1 `solo`, 2 `duel`, 3 `keeper`, 4+
+`teams`; baseball 1 `solo`, 2 `duel`, 3–5 `rotation` (each its own side), 6+ `teams`.
+Teams (`split`): of every split into halves (the starter's side the bigger when odd) the
+one with the most closeness inside the sides. From six a soccer side's keeper is its
+member with the least closeness to the rest (`keeper`).
+
+*Soccer.* The pitch (`Pitch.choose`): the widest floor of the initiator's world (the
+lower when as wide), its screen ends: at a wall half a body beyond the walking line,
+at a step down half a body before it. Everyone leaps to a spot spread over 20–80 % of
+it, then they are carried (`playing`) for the match. Nets (`net`, mouth column 16, bar
+row 4 of the 32×28 cell) stand on the floor at the ends (one, at the right, for `solo`
+and `keeper`); the goal line is 16 sheet pixels in, the bar 24 high. Physics at 1/120 s,
+`g = 1400`: the ball (radius 4 px) bounces off the floor keeping half its speed (rolls
+with `e^{−1.1 t}`), off the bar, off a wall behind a goal; over a net it drops back; past
+an end with no wall it falls off (`out`), and the nearest player of the other side runs
+there, holds it up 0.8 s and throws it in toward the middle. Players run at 150 pt/s
+× U(0.88, 1.12). The one at the ball dribbles (taps it ahead), passes when pressed to a
+mate further on (2/s), shoots from U(140, 360) pt (12 % kick the air and spin round, a
+`whiff`) aiming 0.15–1.25 of the bar's height at 400–600 pt/s. The nearest outfield
+player of each side chases; a chaser beside the holder slides in and takes it (0.8/s;
+the other staggers 0.5 s). Mates run ahead, defenders sit between ball and goal. A
+keeper stays before its goal and dives at a shot coming in within 0.6 s, reading it
+right 55 % of the time; touching the ball in a dive saves it. A ball dropping over a
+player's head is headed (down at the goal within 260 pt). `solo` starts with
+keepy-uppy (4–9 touches, a fumble 10 % a touch after 3), and after each goal carries the
+ball back to 35 % and juggles again. After a goal (2.8 s, the scorer jumping) everyone
+lines up in their own half, the side that let it in kicking off; in `keeper` the keeper
+changes in turn. With 3+, 45 % of matches have one player wander to the far end for
+6–9 s and come back. It ends at `soccerGoals` (a side's, or a player's in `solo` and
+`keeper`) or after `soccerMinutes`, then 2.6 s of the winners jumping.
+
+*Baseball.* The field (`Field.choose`) in the initiator's world: home where it stands if
+its edge is a level one ≥ 420 pt, else on the widest floor, kept to 12–88 % of the edge;
+the mound 45 % of the edge further on; bases at the middles of the three other edges
+(≥ 80 pt) that are furthest from home and each other (the least pairwise distance the
+largest), ordered counter-clockwise from home. Fielders wait 70 pt along from the
+bases. Everyone is carried for the whole game and hops edge to edge
+(`hopTime = clamp(0.35 + d/1300, 0.45, 1.3)` s, an arc bulging into the screen). A pitch:
+0.6 s wind-up, 0.6 s to the bat; alone, the batter tosses it up (0.9 s). The swing is a
+hit with `0.34 + 0.22 · closeness(batter, pitcher) + 0.06 · mood ± 0.08` (alone 0.6), a foul
+with 0.2, else a miss; `mood` is 0.5, 0 or −0.4 for a good, neutral or bad cursor mood.
+Misses are strikes, fouls strikes below two, three is out. A hit is a home run with
+`0.13 + 0.08 · closeness + 0.04 · mood`: out over the top (HOME RUN!, six fireworks over
+1.5 s), every runner home and the batter hops round every base. Otherwise the ball flies
+to a random edge point at least 260 pt from home, under `g = 700` in the highest arc of
+1.7–0.8 s that stays inside the outlines (else a straight line). The fielder who can hop
+there first goes; there in time, it catches it 72 % (out), or drops it (+0.8 s). Else it
+picks it up 0.3 s after both have landed and throws at 900 pt/s to where the batter is
+going: the batter goes on to each next base while it would get there more than
+`courage` U(−0.3, 0.5) s before the throw, safe if it arrives first, out at that base if
+not; reaching home is a run. The runners already on base move up as many bases as the
+batter got safely, scoring past third. A turn at bat ends at two outs (`teams` three) or
+three runs (`teams` five); an inning is every side batting once; `baseballInnings`
+innings, alone 4 practice swings each. The next batter is the next of its side not on a
+base; when there is none, the runner furthest round leaves a ghost (a `base-taken`
+pennant) that runs on as it would, and hops home.
+
+*Drawn:* nets, the soccer ball (`soccer`, two frames), bases flat on their edges (16 −
+14 sheet pixels in), the bat at the batter's hands swinging through 2.3 rad, the
+baseball; a scoreboard (`PixelText`: Verdana Bold 8 px, unsmoothed, 1-px dark outline,
+on a plate with a light top-left and a dark bottom-right line) under the screen's top
+(baseball 110 pt lower, clear of a ceiling base), fading over 3 s after; GOAL! and HOME
+RUN! (13 px, no plate) for 1.8 s, popping up, kept on screen.
+
+*Words:* the start line (priced as `ballGames`); at a goal and a home run the scorer's
+line (`Plays+BallLines`, `cheerSets`, per character: `goal`, `homeRun`, `oops`, `wander`;
+Russian in `Plays+BallRussian`), with a model one call `Plays.lineSystemPrompt` +
+`cheerPrompt` (`{speaker}`, `{speakerKind}`, `{speakerPersona}`, `{play}`, `{moment}`,
+`{score}`, `{situation}`), purpose `ballGames`; an `oops` (a whiff, a dropped catch, a
+strike-out) and a wander are built in, once a game per creature and not within 5 s of
+another line. *Their story:* teammates (or everyone, in a game without teams) each get a
+`play` moment.
+
 **Breaking off.** A player picked up, startled into a jump, asleep or chatting; the
 house coming out; play turned off; the screens changing; a player removed: the game
 ends at once, anyone in the air drops to the nearest edge, everyone stands 0.6 s and
@@ -1726,9 +1806,11 @@ canopy (`chute`) over the head at `size · open`, turned with the creature (its 
 floats that much higher); the hoop and ball; a sweat `drop` after tag. Props are drawn
 behind the creatures, the ball in front.
 
-`--play-film out.mp4 [tag|rope|parachute|basketball]` films each game (or one)
+`--play-film out.mp4 [tag|rope|parachute|basketball|soccer|baseball]` films each game (or one)
 offscreen with four creatures, the first two old friends, printing each step
-(`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`).
+(`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`). Soccer or
+baseball alone is played four times among five creatures, by 1, 2, 3 and 5
+(`play soccer Unit 7 scores 0-2`, `play baseball Unit 7 runs to second`).
 
 ### 7.11 The clipboard
 
@@ -2354,7 +2436,7 @@ falls through to whatever is underneath.
 | Click a reminder's open letter | folds it away (§7.7) |
 | Sheet: Put Them to Sleep / Wake Them Up (S) | skip to the next phase; shows `dusk in m:ss` / `dawn in m:ss`; greyed when night = 0 |
 | Sheet: Activities… (A) | the sheet's inner page, the games (below) |
-| Activities: Catch Me If You Can (C), Ninja Rope (W), Parachute (U), Basketball (B) | that game now (§7.10): tag with the closest pair on one outline; basketball with the starter's closest friend, if it has one. Greyed, saying why, while play or that game is off, while a game is on, and while they hide |
+| Activities: Catch Me If You Can (C), Ninja Rope (W), Parachute (U), Basketball (B), Soccer (G), Baseball (I) | that game now (§7.10): tag with the closest pair on one outline; basketball with the starter's closest friend, if it has one; soccer and baseball with everyone free, closest friends first, up to the game's most. Greyed, saying why, while play or that game is off, while a game is on, and while they hide |
 | Activities: Back (← or Esc), Play On/Off, Done | back to the sheet; `playEnabled`; the sheet put away |
 | Menu: Activities… | the sheet, opened on its Activities page |
 | Sheet: Hide Them for a While / Bring Them Back (H) | a row of durations comes up under the tiles (§7.5); while hiding the tile shows `m:ss left` and ends it early |
@@ -2466,6 +2548,12 @@ An error for want of a model reads as that note, never as a server refusal.
 | ballBounce | 60 | 0–90 %, clamped on load: share of its speed the ball keeps on a bounce |
 | basketballThrows | 3 | 1–10, clamped on load: throws each player has |
 | playTalk | true | a start line and a last word for each game; needs `talkEnabled` |
+| playSoccerEnabled, playBaseballEnabled | true | each ball game on or off |
+| soccerEveryMinutes, baseballEveryMinutes | 20 | 2–240 min, clamped on load: the least time after one ends before it may be picked again |
+| soccerMinutes | 2 | 0.5–10 min, clamped on load: a match's most |
+| soccerGoals | 3 | 1–10, clamped on load: goals that win |
+| baseballInnings | 2 | 1–9, clamped on load |
+| soccerPlayers, baseballPlayers | 6 | 1–10, clamped on load: the most who join |
 | revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |

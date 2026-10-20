@@ -164,6 +164,9 @@ extension EdgeWorld {
     /// Every ceiling, for somewhere to jump up to.
     public var ceilings: [Level] { levels(rightwards: false) }
 
+    /// Every floor, for somewhere to play on.
+    public var floors: [Level] { levels(rightwards: true) }
+
     /// The walls going up from either end of a floor; a step down at an end is no wall.
     public func walls(of floor: Level) -> [Wall] {
         let loop = loops[floor.loop], n = loop.segmentCount

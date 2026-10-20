@@ -274,6 +274,35 @@ import Testing
         for p in Plays.placeholders where p != "others" { #expect(Plays.englishLinePrompt.contains("{\(p)}") && Plays.russianLinePrompt.contains("{\(p)}")) }
     }
 
+    @Test func everyCharacterCheersInItsOwnVoiceAtEveryBigMoment() {
+        for language in Language.allCases {
+            for name in BedsTests.shipped {
+                for moment in Plays.Moment.allCases {
+                    #expect(Plays.cheerSets(language)[name]?[moment.rawValue]?.isEmpty == false, "\(name) \(moment) \(language)")
+                }
+            }
+            for moment in Plays.Moment.allCases { #expect(Plays.cheerAnyone(language)[moment.rawValue] != nil) }
+        }
+        Language.$override.withValue(.english) {
+            #expect(Plays.cheerLine(by: "Unit 7", .goal).contains("100%"), "Unit 7 in numbers")
+            #expect(Plays.cheerLine(by: "Zed", .goal).contains("lie down"), "Zed sleepy")
+            #expect(Plays.cheerLine(by: "Blocky", .goal).hasPrefix("Goal. Don't cheer."), "Blocky grumpy-proud")
+            #expect(Plays.cheerLine(by: "Nobody Made", .homeRun) == Plays.englishCheerAnyone["homeRun"])
+            #expect(Plays.startLine(by: "Pip", .soccer, other: "").contains("Pass to me"))
+        }
+        for p in Plays.cheerPlaceholders { #expect(Plays.englishCheerPrompt.contains("{\(p)}") && Plays.russianCheerPrompt.contains("{\(p)}"), "\(p)") }
+        #expect(Plays.Moment.goal.asksTheModel && Plays.Moment.homeRun.asksTheModel && !Plays.Moment.oops.asksTheModel)
+    }
+
+    @Test func whatTheBallGamesLinesCostIsCountedUnderTheirOwnPurpose() {
+        let usage = Spend.Usage(promptTokens: 150, completionTokens: 15, cost: 0.0006)
+        let records = [Spend.Record(time: Date(), provider: "OpenRouter", model: "m", usage: usage, purpose: .ballGames)]
+        let s = Spend.summarise(records, now: Date())
+        Language.$override.withValue(.english) {
+            #expect(s.byPurpose.first { $0.purpose == "Soccer and baseball" }?.total.cost == 0.0006)
+        }
+    }
+
     @Test func aGameIsAMomentOfTheirStory() {
         var book = Bonds.Book()
         let now = Date()

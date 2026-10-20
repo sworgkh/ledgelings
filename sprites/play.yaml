@@ -1,10 +1,12 @@
 # play — the props of the creatures' games: a basketball spinning in two
 # frames, the hoop it is thrown at (and its net swishing), a parachute, a
-# grappling hook and the links of its rope, and a drop of sweat for whoever is
-# out of breath after tag. Props, not poses: every species, an imported one
-# too, plays with the same ones. Blocky's rules throughout: flat patches, a 1px
-# outline in a dark tint of the colour beside it, a light line top-left, a
-# shade line bottom-right, no curves.
+# grappling hook and the links of its rope, a drop of sweat for whoever is
+# out of breath after tag; a soccer ball turning in two frames and its net; a
+# baseball, a bat, and a base (with a pennant when a ghost runner holds it).
+# Props, not poses: every species, an imported one too, plays with the same
+# ones. Blocky's rules throughout: flat patches, a 1px outline in a dark tint
+# of the colour beside it, a light line top-left, a shade line bottom-right,
+# no curves.
 #
 #   python -m spritetool build sprites/play.yaml
 
@@ -25,7 +27,9 @@ painter: play
 style: >-
   pixel art, flat colour, 1px outline in a dark tint of each patch's colour,
   playground props: an orange basketball, a hoop on a white board, a red and
-  white parachute, a grey grappling hook, rope, a blue drop of sweat
+  white parachute, a grey grappling hook, rope, a blue drop of sweat, a white
+  soccer ball with dark patches, a white goal with its net, a baseball with red
+  stitches, a wooden bat, a white base bag
 
 poses:
   - {name: ball-0, prompt: an orange basketball, seams in a cross}
@@ -36,6 +40,13 @@ poses:
   - {name: hook, prompt: a grey grappling hook, three prongs up}
   - {name: rope, prompt: one link of a brown rope}
   - {name: drop, prompt: a small blue drop of sweat}
+  - {name: soccer-0, prompt: a white soccer ball with dark patches}
+  - {name: soccer-1, prompt: the same ball turned, the patches moved round}
+  - {name: net, prompt: a little soccer goal from the side, its post and crossbar on the left, the net back to a wall on the right}
+  - {name: baseball, prompt: a white baseball with red stitches}
+  - {name: bat, prompt: a wooden baseball bat standing up, barrel at the top}
+  - {name: base, prompt: a flat white base bag}
+  - {name: base-taken, prompt: the same base with a little red pennant on a stick}
 
 animations:
   ball: {frames: [ball-0, ball-1], fps: 8, loop: true}
@@ -45,3 +56,9 @@ animations:
   hook: {frames: [hook], fps: 1, loop: true}
   rope: {frames: [rope], fps: 1, loop: true}
   drop: {frames: [drop], fps: 1, loop: true}
+  soccer: {frames: [soccer-0, soccer-1], fps: 8, loop: true}
+  net: {frames: [net], fps: 1, loop: true}
+  baseball: {frames: [baseball], fps: 1, loop: true}
+  bat: {frames: [bat], fps: 1, loop: true}
+  base: {frames: [base], fps: 1, loop: true}
+  base-taken: {frames: [base-taken], fps: 1, loop: true}
