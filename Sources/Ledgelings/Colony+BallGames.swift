@@ -423,6 +423,7 @@ extension Colony {
         let image = pixelText(text, PixelText.board)
         let size = image.map { CGSize(width: $0.width, height: $0.height) } ?? .zero
         let boardScale = max(2, (scale * 0.8).rounded())
-        return PropSnapshot(image: image, position: at ?? .zero, rotation: 0, scale: boardScale, inFront: true, size: size)
+        // Behind the creatures and their bubbles: a line said near the top stays readable.
+        return PropSnapshot(image: image, position: at ?? .zero, rotation: 0, scale: boardScale, size: size)
     }
 }
