@@ -3,15 +3,16 @@ namespace Ledgelings.Core;
 /// <summary>
 /// Plays (SPEC §7.10): now and then a creature stops walking and plays, the way the worms in Worms
 /// fool about between turns, with nobody hurt. Tag round the edges, a swing on a ninja rope, a
-/// parachute jump from the ceiling, a few throws at a hoop on a wall. Closer pairs play more often,
+/// parachute jump from the ceiling, a few throws at a hoop on a wall; and soccer and baseball for a crowd
+/// (<c>Plays.Soccer.cs</c>, <c>Plays.Baseball.cs</c>). Closer pairs play more often,
 /// and only friends play together. Everything here is pure: the colony asks each game where the
 /// creature and the props are, frame by frame. The macOS app's <c>Plays.swift</c>.
 /// </summary>
 public static partial class Plays
 {
-    public enum Kind { Tag, Rope, Parachute, Basketball }
+    public enum Kind { Tag, Rope, Parachute, Basketball, Soccer, Baseball }
 
-    public static readonly IReadOnlyList<Kind> AllKinds = new[] { Kind.Tag, Kind.Rope, Kind.Parachute, Kind.Basketball };
+    public static readonly IReadOnlyList<Kind> AllKinds = new[] { Kind.Tag, Kind.Rope, Kind.Parachute, Kind.Basketball, Kind.Soccer, Kind.Baseball };
 
     /// <summary>"tag", "basketball": as the Mac writes it into a storyline moment.</summary>
     public static string Raw(this Kind kind) => kind.ToString().ToLowerInvariant();
@@ -22,7 +23,9 @@ public static partial class Plays
     public static bool NeedsPair(this Kind kind) => kind == Kind.Tag;
     /// <summary>Can be played by two: tag, and turns at the hoop.</summary>
     public static bool CanPair(this Kind kind) => kind is Kind.Tag or Kind.Basketball;
-    public static bool CanSolo(this Kind kind) => !kind.NeedsPair();
+    /// <summary>Played by however many are free, one to a crowd: soccer and baseball.</summary>
+    public static bool IsTeamGame(this Kind kind) => kind is Kind.Soccer or Kind.Baseball;
+    public static bool CanSolo(this Kind kind) => !kind.NeedsPair() && !kind.IsTeamGame();
 
     /// <summary>In words, for a prompt and a storyline: "a game of catch me if you can".</summary>
     public static string Title(this Kind kind) => kind switch
@@ -30,6 +33,8 @@ public static partial class Plays
         Kind.Tag => L10n.Tr("a game of catch me if you can"),
         Kind.Rope => L10n.Tr("a swing on a ninja rope"),
         Kind.Parachute => L10n.Tr("a parachute jump from the ceiling"),
+        Kind.Soccer => L10n.Tr("a game of soccer"),
+        Kind.Baseball => L10n.Tr("a game of baseball"),
         _ => L10n.Tr("a game of basketball"),
     };
 
@@ -608,14 +613,28 @@ public static partial class Plays
 
     // MARK: Words
 
+    /// <summary>Each character's English start lines for the first games and the ball games, in one table.
+    /// Made on first use: the two tables are in other files, whose statics may not be set yet.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> EnglishStart => englishStart ??=
+        EnglishStartLines.ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<string, string>)kv.Value
+            .Concat(EnglishBallStartLines.TryGetValue(kv.Key, out var ball) ? ball : new Dictionary<string, string>())
+            .ToDictionary(p => p.Key, p => p.Value));
+
+    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>? englishStart;
+
+    public static IReadOnlyDictionary<string, string> EnglishAllStartAnyone => englishAllStartAnyone ??=
+        EnglishStartAnyone.Concat(EnglishBallStartAnyone).ToDictionary(p => p.Key, p => p.Value);
+
+    private static IReadOnlyDictionary<string, string>? englishAllStartAnyone;
+
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> StartLinesIn(Language l) =>
         Shared.In(l)?.PlayStart is { Count: > 0 } t
-            ? EnglishStartLines.ToDictionary(kv => kv.Key, kv => t.TryGetValue(kv.Key, out var mine) && mine.Count > 0
+            ? EnglishStart.ToDictionary(kv => kv.Key, kv => t.TryGetValue(kv.Key, out var mine) && mine.Count > 0
                 ? (IReadOnlyDictionary<string, string>)mine : kv.Value)
-            : EnglishStartLines;
+            : EnglishStart;
 
     public static IReadOnlyDictionary<string, string> StartAnyoneIn(Language l) =>
-        Shared.In(l)?.PlayStartAnyone is { Count: > 0 } t ? t : EnglishStartAnyone;
+        Shared.In(l)?.PlayStartAnyone is { Count: > 0 } t ? t : EnglishAllStartAnyone;
 
     public static IReadOnlyDictionary<string, string[]> DoneLinesIn(Language l) =>
         Translated.Lists(Shared.In(l)?.PlayDone, EnglishDoneLines, t => t);

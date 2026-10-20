@@ -9,4 +9,8 @@
     <!-- The Mac app's Russian, exported by its SharedTextTests: one source for both apps' words. -->
     <EmbeddedResource Include="..\..\Sources\LedgelingsCore\l10n\*.json" LogicalName="l10n.%(Filename)%(Extension)" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The ball games' tests set a match's phase and its ball, as the Mac's @testable tests do. -->
+    <InternalsVisibleTo Include="LedgelingsCore.Tests" />
+  </ItemGroup>
 </Project>

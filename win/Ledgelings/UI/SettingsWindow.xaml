@@ -381,7 +381,9 @@
               <CheckBox ui:Tr.Content="Ninja rope swing" IsChecked="{Binding PlayRopeEnabled, Mode=TwoWay}"/>
               <CheckBox ui:Tr.Content="Parachute jump" IsChecked="{Binding PlayParachuteEnabled, Mode=TwoWay}"/>
               <CheckBox ui:Tr.Content="Basketball (alone, or two taking turns)" IsChecked="{Binding PlayBasketballEnabled, Mode=TwoWay}"/>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Tag is for two: they chase each other round the edges, and a touch makes the other one &quot;it&quot;. The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Off, a game is never played, and its row on the Activities page is greyed."/>
+              <CheckBox ui:Tr.Content="Soccer (anyone free, in teams)" IsChecked="{Binding PlaySoccerEnabled, Mode=TwoWay}"/>
+              <CheckBox ui:Tr.Content="Baseball (anyone free, round every edge)" IsChecked="{Binding PlayBaseballEnabled, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Tag is for two: they chase each other round the edges, and a touch makes the other one &quot;it&quot;. The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer and baseball are for whoever is free, and have a tab of their own: Ball games. Off, a game is never played, and its row on the Activities page is greyed."/>
             </StackPanel>
           </GroupBox>
           <GroupBox ui:Tr.Header="How often" IsEnabled="{Binding PlayEnabled}">
@@ -427,12 +429,86 @@
           <GroupBox ui:Tr.Header="Talking about it" IsEnabled="{Binding PlayEnabled}">
             <StackPanel>
               <CheckBox ui:Tr.Content="Say something as a game starts and ends" IsChecked="{Binding PlayTalk, Mode=TwoWay}"/>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays on the Costs tab); otherwise, and for the last word, built-in lines. Needs Talk on."/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays, or Soccer and baseball, on the Costs tab), and a goal's or a home run's cheer too; otherwise, and for the last word, built-in lines. Needs Talk on."/>
             </StackPanel>
           </GroupBox>
           <GroupBox ui:Tr.Header="The props">
             <StackPanel>
               <ItemsControl x:Name="PropList">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Image Source="{Binding}" Width="64" Height="56" Margin="0,4,18,4" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Drawn like the creatures, and the same for every species, your own imported ones too."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Ball games">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Soccer" IsEnabled="{Binding PlayEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Soccer (anyone free, in teams)" IsChecked="{Binding PlaySoccerEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Soccer at most every" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding SoccerEveryMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="2" Maximum="240" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SoccerEveryMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="A match lasts up to" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding SoccerMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="0.5" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding SoccerMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Goals to win" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding SoccerGoals}"/>
+                <Slider Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SoccerGoals, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Soccer players at most" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding SoccerPlayers}"/>
+                <Slider Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SoccerPlayers, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="On the widest floor there is, a little net at each end. One plays keepy-uppy and shoots at an empty goal; two have a goal each; three share one goal and take turns in it; four or more split into teams of friends, a keeper each from six. First to the goals, or the best score when time is up."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Baseball" IsEnabled="{Binding PlayEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Baseball (anyone free, round every edge)" IsChecked="{Binding PlayBaseballEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Baseball at most every" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BaseballEveryMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="2" Maximum="240" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding BaseballEveryMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Innings" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BaseballInnings}"/>
+                <Slider Minimum="1" Maximum="9" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding BaseballInnings, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Baseball players at most" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding BaseballPlayers}"/>
+                <Slider Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding BaseballPlayers, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Home where the batter stands, the bases on the three edges furthest apart, the pitcher on the batter's floor. One practises; two to five bat in turn, a runner who must bat again leaving a pennant on its base; six or more play as two teams. Out over the top of the screen is a home run."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Who plays">
+            <StackPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Whoever is free joins, closest friends first, up to the most set here; playing together brings them closer. A ball game may come up only this many minutes after the last one ended. A scoreboard sits at the top of the screen while it lasts. Their lines come with Say something on the Play tab."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The props">
+            <StackPanel>
+              <ItemsControl x:Name="BallPropList">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>

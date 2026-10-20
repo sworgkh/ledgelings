@@ -207,6 +207,9 @@ public sealed class EdgeWorld : IEquatable<EdgeWorld>
     /// <summary>Every ceiling, for somewhere to jump up to.</summary>
     public IReadOnlyList<Level> Ceilings => Levels(false);
 
+    /// <summary>Every floor, for somewhere to play on.</summary>
+    public IReadOnlyList<Level> Floors => Levels(true);
+
     /// <summary>The walls going up from either end of a floor; a step down at an end is no wall.</summary>
     public IReadOnlyList<Wall> Walls(Level floor)
     {
