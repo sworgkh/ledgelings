@@ -17,13 +17,13 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.57 — eight creatures with their own personalities, on every monitor or
+**Status:** v0.58 — eight creatures with their own personalities, on every monitor or
 on the one you choose, talking when they meet (out loud, each in a voice of its own) from
 a hundred built-in lines or through a model of your choice, in English or Russian. They
 grow little stories from everything they have lived through together, know your time of
 day and your holidays, give each other flowers and plant them, send paper planes and
 throw your reminders at you, sit down to tea, sleep in beds of their own, play tag,
-ninja rope, parachute and basketball, and take the cursor as a friend or a nemesis,
+ninja rope, parachute, basketball, soccer and baseball, and take the cursor as a friend or a nemesis,
 counting every hunt and riding it in revenge. They bring you a clipboard manager and a
 screenshot tool, go home when asked, and wear creatures you describe to any image model.
 Every chat is kept and every model call priced.
@@ -93,6 +93,15 @@ the ceiling and floats down under a little parachute, and one hangs a hoop on th
 and shoots some baskets (friends take turns). A line from whoever starts it, in its
 own voice, and a game two played goes into their story. Settings › Play; *Activities…*
 in the menu to start one now.
+
+**Ball games.** They pick the widest edge for a soccer pitch and play as teams, best
+friends on one side: one alone juggles and shoots at the end of the edge, two go one on
+one, three share one goal with a keeper who changes after every goal, six or more get a
+keeper each. Baseball is played across the whole screen: home and the three bases on
+window edges far apart, runners hopping edge to edge, fielders leaping for the catch,
+and a ball out of the top of the screen is a home run with fireworks. Tackles take the
+ball, never the player. Each celebrates and grumbles in its own voice, a pixel
+scoreboard keeps count. Settings › Ball games; both are in *Activities…*.
 
 **Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, Ctrl+Alt+L on Windows, or opening
 the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
