@@ -29,9 +29,9 @@ Nothing the creatures do is hard-wired if someone could want it otherwise.
 - An on/off toggle, and every number a person might tune (how often, how long,
   how loud), in `AppSettings`: `@Published`, saved on change, clamped to its range
   on load, with a default that is chosen, not accidental.
-- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Play, Sprites, Talk, Flowers,
-  Productivity tools, Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice and
-  Costs did). Two columns; a tab fits a laptop screen without scrolling. A footer
+- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Play, Ball games, Sprites, Talk, Flowers,
+  Productivity tools, Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice,
+  Costs and Ball games did). Two columns; a tab fits a laptop screen without scrolling. A footer
   says what the setting does in plain words.
 - A tool that works for the owner rather than being creature behaviour (reminders,
   a clipboard) is a section of Productivity tools: a `ProductivityTool` case, its
@@ -81,7 +81,7 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
-  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, sprites, talk, flowers, productivity, voice, costs, chats;
+  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, ballgames, sprites, talk, flowers, productivity, voice, costs, chats;
   `reminders` still opens productivity, its old name; `clipboard` and `screenshots` open it on that tool).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
@@ -92,9 +92,11 @@ with `scripts/make-app.sh`, installed and seen working.
 - `--bed-film out.mp4` films one creature of each species offscreen from nightfall until all
   are asleep in their beds, then drags one bed to the ceiling, printing each step
   (`bed Blocky walks to crate (floor)`, `bed Morel moved …`).
-- `--play-film out.mp4 [tag|rope|parachute|basketball]` films each game (or one) offscreen with
+- `--play-film out.mp4 [tag|rope|parachute|basketball|soccer|baseball]` films each game (or one) offscreen with
   four creatures, the first two old friends, and prints each step with its time
-  (`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`, `play tag over after 7 touches`).
+  (`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`, `play tag over after 7 touches`);
+  soccer or baseball alone is played by 1, 2, 3 and 5 creatures in turn (`play soccer Unit 7 scores 0-2`,
+  `play baseball Unit 7 runs to second`).
 - `--screens` prints every monitor (id, name, frame, `home`), the choice, the colony's bounds and
   where each creature is; `--screens all|N` also makes the choice live (N = monitor number left to
   right, from 1; saved like the menu does), prints every step of the move (`move Blocky hops off DELL U2415 (1)`,

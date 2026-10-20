@@ -268,6 +268,27 @@ else starts with the players until it is over.
 - **Basketball**: it hangs a hoop on the wall at the end of its floor and throws a few
   times; the ball bounces off the floor, the board and the rim, and sometimes goes in
   (stars, and the net swishes). Two friends take turns.
+- **Soccer**: whoever is free, closest friends first, on the widest floor there is,
+  a little net at each end. One plays keepy-uppy and shoots at an empty goal; two
+  have a goal each; three play one goal, a keeper and two attackers, the keeper
+  changing after every goal; four or more split into two teams of friends, with a
+  keeper each from six. They dribble, pass, slide in to steal the ball (nobody is
+  knocked down), head it, dive to save; a ball over the bar bounces off the wall
+  behind, or, where the floor just ends, falls off and is thrown back in. GOAL! and
+  the scorer's own cheer.
+- **Baseball**: on every edge: home where the batter stands, the bases on the three
+  edges furthest apart (on one screen the right wall, the ceiling and the left
+  wall), the pitcher on the batter's floor. Hit, foul or miss (friends pitch kinder
+  balls, a playful cursor helps), the ball arcs to some edge, fielders hop edge to
+  edge to catch it or throw it in, the batter hops base to base as far as it dares.
+  Out through the top of the screen: HOME RUN! and fireworks. One takes practice
+  swings and fetches the ball itself; two to five bat in turn (a runner who must bat
+  again leaves a pennant on its base, a ghost runner); six or more play two teams.
+  A turn at bat ends at two outs (three for teams) or three runs (five for teams).
+
+A scoreboard in pixel letters sits at the top of the screen while a ball game lasts
+and fades a few seconds after. Ball-game lines (a goal, a home run, a silly miss,
+wandering off mid-game) are in each character's own voice.
 
 Close friends play more: the wait between games shrinks with how close the closest
 pair on screen is (their shared talks, tea parties, flowers, planes, games), and only
@@ -285,13 +306,29 @@ so their next story can bring it up.
 | **Parachute comes down at** (`parachuteFallSpeed`) | 70 pt/s | 30 to 200, in fives | About ten seconds down a laptop screen |
 | **Ball keeps on each bounce** (`ballBounce`) | 60 % | 0 to 90, in fives | 0: it drops dead; 90: it bounces for a long time |
 | **Throws at the hoop each** (`basketballThrows`) | 3 | 1 to 10 | Two players take turns, so twice as many throws |
-| **Say something as a game starts and ends** (`playTalk`) | on | | The one who starts says so in its own voice; someone has the last word. With a model set up the first line is written by it, counted as **Plays** on the Costs tab; the last word is always a built-in line. Needs *Talk* on |
+| **Say something as a game starts and ends** (`playTalk`) | on | | The one who starts says so in its own voice; someone has the last word. With a model set up the first line is written by it, counted as **Plays** (or **Soccer and baseball**) on the Costs tab, and so is a goal's or a home run's cheer; the last word and the small moments are built-in lines. Needs *Talk* on |
 
 The props (ball, hoop, parachute, hook and rope, the drop of sweat) are drawn in
 Blocky's pixel style and are the same for every species, your own imported ones too.
 A game needs room: the rope a ceiling over a floor wide enough to swing across, the
 hoop a wall rising from the end of a floor (a screen's side, or the step up to a
 taller monitor beside it). Window edges are not walked, so neither is played on them.
+
+
+## Ball games tab
+
+Soccer and baseball (described under Play above) in detail: soccer on the left,
+baseball on the right. Each is switched on or off on the Play tab too, with the other
+games.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Soccer (anyone free, in teams)** (`playSoccerEnabled`), **Baseball (anyone free, round every edge)** (`playBaseballEnabled`) | on | | Each ball game on or off; also on the Activities page (*SOCCER*, key G; *BASEBALL*, key I) |
+| **Soccer at most every** (`soccerEveryMinutes`), **Baseball at most every** (`baseballEveryMinutes`) | 20 min | 2 to 240 | A ball game may be picked only this long after the last one ended; when one is due the chance is 30 % alone, up to 75 % with a crowd free |
+| **A match lasts up to** (`soccerMinutes`) | 2 min | 0.5 to 10, in halves | Or until someone has **Goals to win** |
+| **Goals to win** (`soccerGoals`) | 3 | 1 to 10 | A side's goals; for one alone or three at one goal, a player's |
+| **Innings** (`baseballInnings`) | 2 | 1 to 9 | Each side bats once an inning; alone, 4 practice swings an inning |
+| **Soccer players at most** (`soccerPlayers`), **Baseball players at most** (`baseballPlayers`) | 6 | 1 to 10 | Who joins: the one who starts it, then the closest friends, then anyone free |
 
 ## Sprites tab
 

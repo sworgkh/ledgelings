@@ -350,6 +350,8 @@ extension Plays.Kind {
         case .rope: tr("NINJA ROPE")
         case .parachute: tr("PARACHUTE")
         case .basketball: tr("BASKETBALL")
+        case .soccer: tr("SOCCER")
+        case .baseball: tr("BASEBALL")
         }
     }
 
@@ -359,6 +361,8 @@ extension Plays.Kind {
         case .rope: tr("A hook into the ceiling, a big swing over the floor, a somersault down.")
         case .parachute: tr("Up to the ceiling, then down slowly under a little parachute.")
         case .basketball: tr("A hoop on the wall and a few throws; two friends take turns.")
+        case .soccer: tr("Everyone free, on the widest floor: alone, one-on-one, one goal for three, teams of friends.")
+        case .baseball: tr("Bases on the screen's edges, hit, catch and run by hopping edge to edge.")
         }
     }
 
@@ -368,6 +372,8 @@ extension Plays.Kind {
         case .rope: "w"
         case .parachute: "u"
         case .basketball: "b"
+        case .soccer: "g"
+        case .baseball: "i"
         }
     }
 
@@ -484,7 +490,7 @@ enum ActionIcons {
         return made.compactMapValues { trimmed($0) }
     }()
 
-    /// Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop.
+    /// Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop, the net, the bat.
     static let games: [Plays.Kind: CGImage] = {
         var made: [Plays.Kind: CGImage] = [:]
         let props = (try? SpriteAtlas(named: "play"))?.frames()
@@ -492,6 +498,8 @@ enum ActionIcons {
         made[.rope] = props?.frame(animation: "hook", time: 0)
         made[.parachute] = props?.frame(animation: "chute", time: 0)
         made[.basketball] = props?.frame(animation: "hoop", time: 0)
+        made[.soccer] = props?.frame(animation: "net", time: 0)
+        made[.baseball] = props?.frame(animation: "bat", time: 0)
         return made.compactMapValues { trimmed($0) }
     }()
 
@@ -592,9 +600,9 @@ struct ActionsSheetView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if model.page == .activities {
                     Text(tr("ACTIVITIES · WHAT SHOULD THEY PLAY?")).font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Self.faintInk).padding(.bottom, 14)
-                    activities.padding(.bottom, 14)
-                    line.frame(height: 30, alignment: .leading).padding(.bottom, 12)
+                        .foregroundStyle(Self.faintInk).padding(.bottom, 10)
+                    activities.padding(.bottom, 8)
+                    line.frame(height: 30, alignment: .leading).padding(.bottom, 6)
                     activitiesFooter
                 } else {
                     HStack(spacing: 8) {
@@ -730,7 +738,8 @@ struct ActionsSheetView: View {
 extension ActionsSheetView {
     /// The Activities page: a row per game, its picture, name and what happens, and Play Now.
     var activities: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // Six rows still leave room for the line and the buttons under them.
+        VStack(alignment: .leading, spacing: 5) {
             ForEach(Plays.Kind.allCases, id: \.self) { activityRow($0) }
         }
     }
@@ -739,8 +748,8 @@ extension ActionsSheetView {
         let s = model.state, why = kind.activityDetail(in: s)
         return Button { model.play(kind) } label: {
             HStack(spacing: 12) {
-                activityPicture(ActionIcons.games[kind]).frame(width: 64, height: 46)
-                VStack(alignment: .leading, spacing: 3) {
+                activityPicture(ActionIcons.games[kind]).frame(width: 64, height: 40)
+                VStack(alignment: .leading, spacing: 2) {
                     Text(kind.activityTitle).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
                     Text(kind.activityLine).font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Color(cgColor: ScreenOverlay.softInk)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
@@ -753,7 +762,7 @@ extension ActionsSheetView {
                 }
             }
             .padding(.horizontal, 12)
-            .frame(width: ActionsController.size.width - 66, height: 58, alignment: .leading)
+            .frame(width: ActionsController.size.width - 66, height: 52, alignment: .leading)
         }
         .buttonStyle(PixelTileStyle(chosen: false))
         .keyboardShortcut(KeyEquivalent(kind.activityKey), modifiers: [])
@@ -763,7 +772,7 @@ extension ActionsSheetView {
 
     @ViewBuilder private func activityPicture(_ image: CGImage?) -> some View {
         if let image {
-            let scale = max(1, min(64 / CGFloat(image.width), 46 / CGFloat(image.height)).rounded(.down))
+            let scale = max(1, min(64 / CGFloat(image.width), 40 / CGFloat(image.height)).rounded(.down))
             Image(decorative: image, scale: 1).resizable().interpolation(.none)
                 .frame(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
         }

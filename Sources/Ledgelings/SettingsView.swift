@@ -4,12 +4,12 @@ import LedgelingsCore
 import SwiftUI
 
 enum SettingsTab: Hashable {
-    case creatures, actions, chases, beds, play, sprites, talk, flowers, bonds, calendar, productivity, voice, costs, chats
+    case creatures, actions, chases, beds, play, ballGames, sprites, talk, flowers, bonds, calendar, productivity, voice, costs, chats
 
     /// The tab a script names after `--settings`. `reminders`, the old name of
     /// Productivity tools, still opens it, on its first tool: Reminders.
     static func named(_ name: String) -> SettingsTab? {
-        let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "productivity": .productivity, "reminders": .productivity, "voice": .voice, "costs": .costs, "chats": .chats]
+        let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "ballgames": .ballGames, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "productivity": .productivity, "reminders": .productivity, "voice": .voice, "costs": .costs, "chats": .chats]
         return tabs[name]
     }
 }
@@ -48,6 +48,7 @@ struct SettingsView: View {
             ChasesSettingsView(settings: settings, library: library, hunts: hunts).tabItem { Text(tr("Chases")) }.tag(SettingsTab.chases)
             BedsSettingsView(settings: settings, library: library, beds: beds).tabItem { Text(tr("Beds")) }.tag(SettingsTab.beds)
             PlaySettingsView(settings: settings).tabItem { Text(tr("Play")) }.tag(SettingsTab.play)
+            BallGamesSettingsView(settings: settings).tabItem { Text(tr("Ball games")) }.tag(SettingsTab.ballGames)
             SpritesSettingsView(settings: settings, library: library, spend: spend).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)

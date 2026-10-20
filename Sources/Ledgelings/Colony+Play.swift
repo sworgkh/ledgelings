@@ -21,6 +21,10 @@ extension Colony {
         var rope: Plays.Rope?
         var chute: Plays.Chute?
         var court: Court?
+        var pitch: Plays.Pitch?
+        var soccer: Plays.Soccer?
+        var baseball: Plays.Baseball?
+        var ballGame: BallGame?
         /// Where the players are going before it starts: leaping to a floor or the ceiling.
         var reaching: [Int: EdgeWorld.Spot] = [:]
 
@@ -97,9 +101,11 @@ extension Colony {
 
     /// Start a game now: `kind`, or one chosen for whoever is free (`Plays.choose`).
     /// The Actions sheet asks for one by kind; tag then takes the closest pair
-    /// on one outline, and basketball the initiator's closest friend if it has one.
+    /// on one outline, basketball the initiator's closest friend if it has one,
+    /// and a ball game everyone free, closest friends first, up to its most
+    /// players (or `count`, as the film asks).
     @discardableResult
-    func startPlay(_ kind: Plays.Kind?, by chosen: Int? = nil) -> Bool {
+    func startPlay(_ kind: Plays.Kind?, by chosen: Int? = nil, count: Int? = nil) -> Bool {
         guard play == nil, !hideout.isActive else { return false }
         let free = creatures.indices.filter(freeToPlay)
         guard let first = chosen.flatMap({ free.contains($0) ? $0 : nil }) ?? free.randomElement(using: &rng) else { talkStatus = tr("nobody is free to play"); return false }
@@ -120,8 +126,15 @@ extension Colony {
                 tries = [(.basketball, [first] + (friend.map { [$0.index] } ?? []))]
             case .rope, .parachute:
                 tries = [(kind, [first])]
+            case .soccer, .baseball:
+                tries = [(kind, Plays.joining(initiator: first, crowd: crowd(of: first), max: count ?? settings.ballGamePlayers[kind] ?? 6))]
             }
         } else {
+            // A ball game for everyone free, now and then, if one is due.
+            if let team = Plays.chooseTeamGame(initiator: first, crowd: crowd(of: first), enabled: ballGamesDue,
+                                               maxPlayers: settings.ballGamePlayers, using: &rng), begin(team.kind, team.players) {
+                return true
+            }
             guard let chosen = Plays.choose(initiator: first, others: partners(of: first), enabled: settings.enabledPlays, using: &rng) else { return false }
             tries = [(chosen.kind, chosen.players)]
             // No room for that one here: a game alone that fits instead.
@@ -143,7 +156,7 @@ extension Colony {
         creatures[i].world.floor(under: creatures[i].position)
     }
 
-    private func spot(on level: EdgeWorld.Level, x: CGFloat, for i: Int) -> EdgeWorld.Spot {
+    func spot(on level: EdgeWorld.Level, x: CGFloat, for i: Int) -> EdgeWorld.Spot {
         let w = creatures[i].world
         let clamped = min(max(x, level.span.lowerBound), level.span.upperBound)
         return EdgeWorld.Spot(loop: level.loop, t: w.loops[level.loop].nearest(to: CGPoint(x: clamped, y: level.y)).t)
@@ -187,15 +200,19 @@ extension Colony {
                 let f = court.floor
                 session.reaching[i] = spot(on: f, x: f.span.lowerBound + (f.span.upperBound - f.span.lowerBound) * .random(in: 0.3...0.7, using: &rng), for: i)
             }
+        case .soccer:
+            guard beginSoccer(&session) else { return false }
+        case .baseball:
+            guard beginBaseball(&session) else { return false }
         }
         busy.formUnion(players)
         for (i, to) in session.reaching { creatures[i].leap(to: to) }
-        for i in players where session.reaching[i] == nil { creatures[i].standStill(for: .infinity) }
+        for i in players where session.reaching[i] == nil && !creatures[i].isPlaying { creatures[i].standStill(for: .infinity) }
         play = session
         let names = players.map { character(forCreature: $0).name }
-        talkStatus = names.count == 2 ? tr("%@ and %@: %@", names[0], names[1], kind.title) : tr("%@: %@", names[0], kind.title)
+        talkStatus = names.count == 2 ? tr("%@ and %@: %@", names[0], names[1], kind.title) : tr("%@: %@", names.joined(separator: ", "), kind.title)
         trace?("play \(kind.rawValue) \(names.joined(separator: " & "))\(session.reaching.isEmpty ? "" : " (getting there)")")
-        if session.reaching.isEmpty { started() }
+        if kind == .baseball { startLine(session) } else if session.reaching.isEmpty { started() }
         return true
     }
 
@@ -242,7 +259,9 @@ extension Colony {
             creatures[i].takeOff()
             session.chute = Plays.Chute(from: creatures[i].position, floorY: floor.y, floor: floor.span,
                                         fallSpeed: CGFloat(settings.parachuteFallSpeed))
-        case .tag, .basketball:
+        case .soccer:
+            guard startSoccer(&session) else { return endPlay(completed: false) }
+        case .tag, .basketball, .baseball:
             break
         }
         play = session
@@ -279,6 +298,8 @@ extension Colony {
         case .rope: runRope(&session, dt: dt)
         case .parachute: runChute(&session, dt: dt)
         case .basketball: runBasketball(&session, dt: dt)
+        case .soccer: runSoccer(&session, dt: dt)
+        case .baseball: runBaseball(&session, dt: dt)
         }
         if play?.serial == session.serial { play = session }
     }
@@ -448,9 +469,14 @@ extension Colony {
     // MARK: Ending
 
     /// The game is over and went well: the last word, its place in their story, then let go.
-    private func wrapUp(_ s: inout PlaySession, speaker: Int) {
+    func wrapUp(_ s: inout PlaySession, speaker: Int) {
         s.stage = .ending(until: elapsed + Self.endPause)
-        if s.players.count == 2 { shared(s.players[0], s.players[1], .play, detail: s.kind.rawValue) }
+        if s.kind.isTeamGame {
+            // Playing together brings them closer: teammates, or everyone in a small game.
+            for (a, b) in ballGamePairs(s) { shared(a, b, .play, detail: s.kind.rawValue) }
+        } else if s.players.count == 2 {
+            shared(s.players[0], s.players[1], .play, detail: s.kind.rawValue)
+        }
         doneLine(by: speaker, s)
     }
 
@@ -464,6 +490,13 @@ extension Colony {
             if creatures[i].isRunning { creatures[i].standStill(for: 0.6) }
         }
         busy.subtract(s.players)
+        if s.kind.isTeamGame {
+            ballGameEnded[s.kind] = elapsed
+            // The final score stays up a moment, fading.
+            if let board = ballGameProps(s).first(where: { $0.size != nil && $0.position == s.ballGame?.boardAt }) {
+                fadingBoard = (board, elapsed + Self.boardShown)
+            }
+        }
         nextPlayAt = elapsed + Plays.wait(everyMinutes: settings.playEveryMinutes, boost: settings.playBondBoost,
                                           closeness: closestPairOnScreen(), using: &rng)
         if !completed { trace?("play \(s.kind.rawValue) broken off") }
@@ -485,7 +518,7 @@ extension Colony {
     private func startLine(_ s: PlaySession) {
         guard playCanTalk else { return }
         let i = s.players[0], me = character(forCreature: i)
-        let other = s.players.count > 1 ? character(forCreature: s.players[1]).name : ""
+        let other = s.players.dropFirst().prefix(4).map { character(forCreature: $0).name }.joined(separator: ", ")
         let builtIn = Plays.startLine(by: me.name, s.kind, other: other)
         let situation = playSituation(s)
         guard settings.brain != .script, let service = settings.chatClient() else {
@@ -503,7 +536,8 @@ extension Colony {
                     if service.provider == .lmStudio { usage.cost = 0 }       // a local model is free
                     cost = usage.cost
                     tokens = usage.promptTokens + usage.completionTokens
-                    self?.spend.record(provider: service.provider, model: service.model, usage: usage, purpose: .plays)
+                    self?.spend.record(provider: service.provider, model: service.model, usage: usage,
+                                       purpose: s.kind.isTeamGame ? .ballGames : .plays)
                 }
                 line = Banter.cleanLine(answer.text, speaker: me.name, cut: answer.cut)
             } catch {
@@ -544,7 +578,15 @@ extension Colony {
 
     /// The props of the game going on, in global points.
     func playProps() -> [PropSnapshot] {
-        guard let s = play else { return [] }
+        var fading: [PropSnapshot] = []
+        if let f = fadingBoard {
+            if elapsed > f.until { fadingBoard = nil } else {
+                var board = f.prop
+                board.opacity = Float(min(1, (f.until - elapsed) / 1.2))
+                fading = [board]
+            }
+        }
+        guard let s = play else { return fading }
         var props: [PropSnapshot] = []
         func image(_ animation: String, _ time: Double = 0) -> CGImage? { playFrames.frame(animation: animation, time: time) }
         func up(_ rotation: Double) -> CGVector { CGVector(dx: -sin(rotation), dy: cos(rotation)) }
@@ -601,7 +643,9 @@ extension Colony {
                 props.append(PropSnapshot(image: image("ball", abs(ball.turn) / (.pi / 4) / 8), position: ball.position,
                                           rotation: 0, scale: court.scale, opacity: fade, inFront: true))
             }
+        case .soccer, .baseball:
+            props += ballGameProps(s)
         }
-        return props
+        return props + fading
     }
 }

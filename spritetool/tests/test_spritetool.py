@@ -316,3 +316,30 @@ def test_the_play_props_sit_where_the_app_expects_them_in_blocky_rules():
     assert cell("ball-0").tobytes() != cell("ball-1").tobytes()
     for pose in names:
         assert cell(pose).getchannel("A").getbbox(), pose
+
+
+def test_the_net_and_the_bases_sit_where_the_app_expects_them():
+    from spritetool.painters import play as painter
+
+    recipe = load_recipe(PLAY)
+    sheet = key_out(get_painter("play")(recipe), recipe.background, recipe.tolerance)
+    names = [p for p, _ in recipe.poses]
+
+    def cell(pose):
+        x, y, w, h = recipe.cell_rect(names.index(pose), 0)
+        return sheet.crop((x, y, x + w, y + h))
+
+    # The net stands on the bottom row against the wall to its right; its post and bar
+    # where the app's Plays.Soccer.Net says (mouth column 16, bar row 4), drawn with an outline.
+    net = cell("net")
+    left, top, right, bottom = net.getchannel("A").getbbox()
+    assert (right, bottom) == (painter.CELL_W, painter.CELL_H)
+    assert (painter.NET_MOUTH, painter.NET_BAR) == (16, 4)
+    assert net.getpixel((painter.NET_MOUTH - 1, painter.NET_BAR + 10))[:3] == painter.outline(painter.WHITE)
+    assert net.getpixel((painter.NET_MOUTH, painter.NET_BAR + 10))[:3] in (painter.WHITE, painter.light(painter.WHITE))
+    # The bases lie on the same rows, taken or not; the pennant rises above.
+    base, taken = cell("base"), cell("base-taken")
+    assert base.getchannel("A").getbbox()[3] == taken.getchannel("A").getbbox()[3] == painter.BASE_ROW + 4
+    assert taken.getchannel("A").getbbox()[1] < base.getchannel("A").getbbox()[1]
+    # Two soccer frames, so the ball turns.
+    assert cell("soccer-0").tobytes() != cell("soccer-1").tobytes()

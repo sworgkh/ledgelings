@@ -166,6 +166,14 @@ final class Colony: NSObject {
     var playEveryWas = 0.0
     /// Counts games, so a model's late line finds whether its game is still on.
     var playCount = 0
+    /// When each ball game last ended, on the colony's clock: each may start only every so often.
+    var ballGameEnded: [Plays.Kind: Double] = [:]
+    /// The scoreboard of the ball game just over, fading out until `until`.
+    var fadingBoard: (prop: PropSnapshot, until: Double)?
+    /// When the last line of a ball game was said: small moments keep quiet if one was just said.
+    var lastBallLine = -100.0
+    /// Pixel text drawn once per wording (`PixelText`).
+    var pixelTexts: [String: CGImage] = [:]
     /// The house they hide in when asked to go away for a while.
     var hideout = Hideout()
     /// Creatures shrinking into the doorway, and creatures growing out of it, by when they started.

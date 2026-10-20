@@ -61,6 +61,48 @@
       "y": 0,
       "w": 32,
       "h": 28
+    },
+    "soccer-0": {
+      "x": 256,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "soccer-1": {
+      "x": 288,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "net": {
+      "x": 320,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "baseball": {
+      "x": 352,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "bat": {
+      "x": 384,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "base": {
+      "x": 416,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "base-taken": {
+      "x": 448,
+      "y": 0,
+      "w": 32,
+      "h": 28
     }
   },
   "animations": {
@@ -110,6 +152,49 @@
     "drop": {
       "frames": [
         "drop"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "soccer": {
+      "frames": [
+        "soccer-0",
+        "soccer-1"
+      ],
+      "fps": 8.0,
+      "loop": true
+    },
+    "net": {
+      "frames": [
+        "net"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "baseball": {
+      "frames": [
+        "baseball"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "bat": {
+      "frames": [
+        "bat"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "base": {
+      "frames": [
+        "base"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "base-taken": {
+      "frames": [
+        "base-taken"
       ],
       "fps": 1.0,
       "loop": true

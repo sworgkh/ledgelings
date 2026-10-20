@@ -247,6 +247,33 @@ final class AppSettings: ObservableObject {
     /// A line as a game starts and once it is over, in the character's own voice.
     @Published var playTalk: Bool { didSet { save(playTalk, "playTalk") } }
 
+    /// The fewest minutes between two matches of soccer, or two games of baseball.
+    static let ballGameEveryRange = 2.0...240.0
+    /// Minutes a soccer match lasts at most.
+    static let soccerMinutesRange = 0.5...10.0
+    /// Goals that win a soccer match.
+    static let soccerGoalsRange = 1...10
+    /// Innings in a game of baseball.
+    static let baseballInningsRange = 1...9
+    /// The most who join a soccer match or a baseball game.
+    static let ballPlayersRange = Plays.teamPlayersRange
+    /// Soccer on the widest floor, for however many are free (Plays+Soccer).
+    @Published var playSoccerEnabled: Bool { didSet { save(playSoccerEnabled, "playSoccerEnabled") } }
+    @Published var soccerEveryMinutes: Double { didSet { save(soccerEveryMinutes, "soccerEveryMinutes") } }
+    @Published var soccerMinutes: Double { didSet { save(soccerMinutes, "soccerMinutes") } }
+    @Published var soccerGoals: Int { didSet { save(soccerGoals, "soccerGoals") } }
+    @Published var soccerPlayers: Int { didSet { save(soccerPlayers, "soccerPlayers") } }
+    /// Baseball across every edge, for however many are free (Plays+Baseball).
+    @Published var playBaseballEnabled: Bool { didSet { save(playBaseballEnabled, "playBaseballEnabled") } }
+    @Published var baseballEveryMinutes: Double { didSet { save(baseballEveryMinutes, "baseballEveryMinutes") } }
+    @Published var baseballInnings: Int { didSet { save(baseballInnings, "baseballInnings") } }
+    @Published var baseballPlayers: Int { didSet { save(baseballPlayers, "baseballPlayers") } }
+
+    /// The most who may join `kind`, a ball game.
+    var ballGamePlayers: [Plays.Kind: Int] { [.soccer: soccerPlayers, .baseball: baseballPlayers] }
+    /// The fewest minutes between two of `kind`, a ball game.
+    func ballGameEvery(_ kind: Plays.Kind) -> Double { kind == .baseball ? baseballEveryMinutes : soccerEveryMinutes }
+
     /// The games switched on, whether or not play itself is.
     var enabledPlays: Set<Plays.Kind> {
         var on: Set<Plays.Kind> = []
@@ -254,6 +281,8 @@ final class AppSettings: ObservableObject {
         if playRopeEnabled { on.insert(.rope) }
         if playParachuteEnabled { on.insert(.parachute) }
         if playBasketballEnabled { on.insert(.basketball) }
+        if playSoccerEnabled { on.insert(.soccer) }
+        if playBaseballEnabled { on.insert(.baseball) }
         return on
     }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
@@ -627,6 +656,26 @@ final class AppSettings: ObservableObject {
         let throwsEach = defaults.object(forKey: "basketballThrows") as? Int ?? 3
         basketballThrows = min(max(throwsEach, Self.basketballThrowsRange.lowerBound), Self.basketballThrowsRange.upperBound)
         playTalk = defaults.object(forKey: "playTalk") as? Bool ?? true
+        playSoccerEnabled = defaults.object(forKey: "playSoccerEnabled") as? Bool ?? true
+        playBaseballEnabled = defaults.object(forKey: "playBaseballEnabled") as? Bool ?? true
+        // 20 minutes: a match is a big event, a few times a working day, not every other game.
+        let soccerEvery = defaults.object(forKey: "soccerEveryMinutes") as? Double ?? 20
+        soccerEveryMinutes = min(max(soccerEvery, Self.ballGameEveryRange.lowerBound), Self.ballGameEveryRange.upperBound)
+        let baseballEvery = defaults.object(forKey: "baseballEveryMinutes") as? Double ?? 20
+        baseballEveryMinutes = min(max(baseballEvery, Self.ballGameEveryRange.lowerBound), Self.ballGameEveryRange.upperBound)
+        // Two minutes, or first to three: long enough for a few goals, short enough to watch to the end.
+        let matchLength = defaults.object(forKey: "soccerMinutes") as? Double ?? 2
+        soccerMinutes = min(max(matchLength, Self.soccerMinutesRange.lowerBound), Self.soccerMinutesRange.upperBound)
+        let goals = defaults.object(forKey: "soccerGoals") as? Int ?? 3
+        soccerGoals = min(max(goals, Self.soccerGoalsRange.lowerBound), Self.soccerGoalsRange.upperBound)
+        // Two innings: two to four minutes for a crowd.
+        let innings = defaults.object(forKey: "baseballInnings") as? Int ?? 2
+        baseballInnings = min(max(innings, Self.baseballInningsRange.lowerBound), Self.baseballInningsRange.upperBound)
+        // Six: three a side, a keeper each, and still room to run.
+        let soccerJoin = defaults.object(forKey: "soccerPlayers") as? Int ?? 6
+        soccerPlayers = min(max(soccerJoin, Self.ballPlayersRange.lowerBound), Self.ballPlayersRange.upperBound)
+        let baseballJoin = defaults.object(forKey: "baseballPlayers") as? Int ?? 6
+        baseballPlayers = min(max(baseballJoin, Self.ballPlayersRange.lowerBound), Self.ballPlayersRange.upperBound)
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
         // Before species existed, one cast served everyone: it was blocky's.
         if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {

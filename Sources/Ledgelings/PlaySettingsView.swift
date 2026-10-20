@@ -7,7 +7,7 @@ struct PlaySettingsView: View {
     @ObservedObject var settings: AppSettings
 
     /// The props, cut once.
-    private static let props: SpriteAtlas.Frames? = (try? SpriteAtlas(named: "play"))?.frames()
+    static let props: SpriteAtlas.Frames? = (try? SpriteAtlas(named: "play"))?.frames()
 
     var body: some View {
         TwoColumns {
@@ -24,10 +24,12 @@ struct PlaySettingsView: View {
                 Toggle(tr("Ninja rope swing"), isOn: $settings.playRopeEnabled)
                 Toggle(tr("Parachute jump"), isOn: $settings.playParachuteEnabled)
                 Toggle(tr("Basketball (alone, or two taking turns)"), isOn: $settings.playBasketballEnabled)
+                Toggle(tr("Soccer (anyone free, in teams)"), isOn: $settings.playSoccerEnabled)
+                Toggle(tr("Baseball (anyone free, round every edge)"), isOn: $settings.playBaseballEnabled)
             } header: {
                 Text(tr("Which games"))
             } footer: {
-                Text(tr("Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Off, a game is never played, and its row on the Activities page is greyed."))
+                Text(tr("Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer and baseball are for whoever is free, and have a tab of their own: Ball games. Off, a game is never played, and its row on the Activities page is greyed."))
             }
             .disabled(!settings.playEnabled)
 
@@ -60,7 +62,7 @@ struct PlaySettingsView: View {
             } header: {
                 Text(tr("Talking about it"))
             } footer: {
-                Text(tr("Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays on the Costs tab); otherwise, and for the last word, built-in lines. Needs Talk on."))
+                Text(tr("Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays, or Soccer and baseball, on the Costs tab), and a goal's or a home run's cheer too; otherwise, and for the last word, built-in lines. Needs Talk on."))
             }
             .disabled(!settings.playEnabled)
 
@@ -76,7 +78,7 @@ struct PlaySettingsView: View {
         }
     }
 
-    @ViewBuilder private func picture(_ animation: String) -> some View {
+    @ViewBuilder func picture(_ animation: String) -> some View {
         if let image = Self.props?.frame(animation: animation, time: 0).flatMap(ActionIcons.trimmed) {
             Image(decorative: image, scale: 0.5).interpolation(.none)
         }

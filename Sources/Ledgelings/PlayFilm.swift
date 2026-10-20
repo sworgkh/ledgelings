@@ -3,11 +3,13 @@ import QuartzCore
 import LedgelingsCore
 
 /// Every game played once (or just one), filmed offscreen with four creatures
-/// of different species: tag, the rope, the parachute and basketball, one
-/// after another, every step printed with its time. The first two are made
-/// friends first, so they take turns at the hoop.
+/// of different species: tag, the rope, the parachute, basketball, soccer and
+/// baseball, one after another, every step printed with its time. The first
+/// two are made friends first, so they take turns at the hoop and play on one
+/// side. Soccer or baseball alone is played four times, with five creatures
+/// about: by one, two, three and all five.
 ///
-///     Ledgelings --play-film build/play.mp4 [tag|rope|parachute|basketball]
+///     Ledgelings --play-film build/play.mp4 [tag|rope|parachute|basketball|soccer|baseball]
 @MainActor
 enum PlayFilm {
     static func run(output: URL, only: Plays.Kind?) async throws {
@@ -18,13 +20,16 @@ enum PlayFilm {
         defaults.removePersistentDomain(forName: name)
         defer { defaults.removePersistentDomain(forName: name) }
         let settings = AppSettings(defaults: defaults, keychain: Keychain(service: name))
-        settings.species = ["blocky", "robot", "frog", "ghost"]
-        settings.creatureCount = 4
+        let crowd = only?.isTeamGame == true
+        settings.species = ["blocky", "robot", "frog", "ghost"] + (crowd ? ["slime"] : [])
+        settings.creatureCount = crowd ? 5 : 4
         settings.minSize = 2.5; settings.maxSize = 2.5
         settings.brain = .script
         settings.planesEnabled = false
         settings.teaPartiesEnabled = false
         settings.dayMinutes = 30; settings.nightMinutes = 30
+        // Short matches, to see each one through.
+        settings.soccerMinutes = 1; settings.soccerGoals = 2; settings.baseballInnings = 1
         let colony = try Colony(settings: settings, history: ChatHistory(directory: scratch.appendingPathComponent("chats")),
                                 library: SpriteLibrary(directory: scratch.appendingPathComponent("sprites")),
                                 spend: SpendLedger(directory: scratch),
@@ -47,26 +52,27 @@ enum PlayFilm {
         let recorder = try Promo.Recorder(url: output, layer: stage.canvas,
                                           size: CGSize(width: Promo.size.width * Promo.scale, height: Promo.size.height * Promo.scale), fps: Promo.fps)
         let away = CGPoint(x: -500, y: -500)
-        var queue = only.map { [$0] } ?? Plays.Kind.allCases
+        var queue: [(kind: Plays.Kind, count: Int?)] = crowd ? [1, 2, 3, 5].map { (only!, $0) }
+            : (only.map { [$0] } ?? Plays.Kind.allCases).map { ($0, nil) }
         var frame = 0, idleSince: Double?, startedAt: Double?
         var played: [String] = []
-        while frame < Promo.fps * 300 {
+        while frame < Promo.fps * 1500 {
             let t = Double(frame) / Double(Promo.fps)
             if colony.play == nil {
                 if startedAt != nil { startedAt = nil; idleSince = t }
                 // A beat between games, then the next.
                 if let next = queue.first, t >= (idleSince ?? 1) + 1.5 {
                     // The friends play tag and basketball together; the others swing and jump.
-                    let by: [Plays.Kind: Int] = [.tag: 0, .rope: 2, .parachute: 3, .basketball: 0]
+                    let by: [Plays.Kind: Int] = [.tag: 0, .rope: 2, .parachute: 3, .basketball: 0, .soccer: 0, .baseball: 0]
                     // In a transaction of its own: a line said outside one would open an implicit
                     // transaction that holds back every frame after it.
                     CATransaction.begin(); CATransaction.setDisableActions(true)
-                    let began = colony.startPlay(next, by: by[next])
+                    let began = colony.startPlay(next.kind, by: by[next.kind], count: next.count)
                     CATransaction.commit()
                     if began {
-                        queue.removeFirst(); played.append(next.rawValue); startedAt = t
+                        queue.removeFirst(); played.append(next.kind.rawValue + (next.count.map { " (\($0))" } ?? "")); startedAt = t
                     } else if t - (idleSince ?? 0) > 20 {
-                        FileHandle.standardError.write(Data("play: \(next.rawValue) never started: \(colony.talkStatus)\n".utf8))
+                        FileHandle.standardError.write(Data("play: \(next.kind.rawValue) never started: \(colony.talkStatus)\n".utf8))
                         queue.removeFirst()
                     }
                 }
