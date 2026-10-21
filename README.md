@@ -17,16 +17,17 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.58 — eight creatures with their own personalities, on every monitor or
-on the one you choose, talking when they meet (out loud, each in a voice of its own) from
-a hundred built-in lines or through a model of your choice, in English or Russian. They
-grow little stories from everything they have lived through together, know your time of
-day and your holidays, give each other flowers and plant them, send paper planes and
-throw your reminders at you, sit down to tea, sleep in beds of their own, play tag,
-ninja rope, parachute, basketball, soccer and baseball, and take the cursor as a friend or a nemesis,
-counting every hunt and riding it in revenge. They bring you a clipboard manager and a
-screenshot tool, go home when asked, and wear creatures you describe to any image model.
-Every chat is kept and every model call priced.
+**Status:** v0.59 — eight creatures with their own personalities, on every monitor or on
+the one you choose, talking when they meet (out loud, each in a voice of its own) from a
+hundred built-in lines or through a model of your choice, in English or Russian. They do
+what they talk about, remember each other, grow little stories from everything they have
+lived through together, know your time of day and your holidays, give each other flowers
+and plant them, send paper planes and throw your reminders at you, sit down to tea,
+sleep in beds of their own, play tag, ninja rope, parachute, basketball, soccer and
+baseball, and take the cursor as a friend or a nemesis, counting every hunt and riding
+it in revenge. They bring you a clipboard manager and a screenshot tool, go home when
+asked, and wear creatures you describe to any image model. Every chat is kept and every
+model call priced.
 
 **See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) is a 78-second motion infographic of the features, with music, made from [promo-video/](promo-video). The older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
 
@@ -102,6 +103,17 @@ window edges far apart, runners hopping edge to edge, fielders leaping for the c
 and a ball out of the top of the screen is a home run with fireworks. Tackles take the
 ball, never the player. Each celebrates and grumbles in its own voice, a pixel
 scoreboard keeps count. Settings › Ball games; both are in *Activities…*.
+
+**They do what they say, and remember.** A letter that asks "soccer?" gets a written yes
+or no, and a yes walks them to the pitch: from talk and letters they can invite each other
+to a game or tea, accept or decline, bring a flower, write back, visit, follow or go to
+sleep. Games played go into each pair's record and the day they talk about ("lost 2–3
+to Zed this morning"). Every pair keeps a small long-term memory (a few dated facts, a
+line per day, their games), condensed at nightfall and sent to the model only in a
+budgeted few lines, so it stays cheap. It can start from the last two weeks of their
+chat log on your computer. Watch friendships form in the **Relationships** window; every
+limit and budget is in Settings › Relationships, and *Deeds from Talk* in the menu turns
+the doing off.
 
 **Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, Ctrl+Alt+L on Windows, or opening
 the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
