@@ -18,6 +18,9 @@ public sealed partial class Colony
     /// when the one before has been up a while. Written to the log up front.</summary>
     private bool Recite(int speaker, int listener, string? flower, string situation)
     {
+        var options = DeedOptions(speaker, listener, letter: false);
+        if (flower is null && BuiltInInvitation(speaker, listener, options) is Deeds.Offer offer)
+            return ReciteInvitation(offer, speaker, listener, options, situation);
         Script script;
         try { script = Script.Parse(Settings.Script); }
         catch (Script.ParseException e) { TalkStatus = L10n.Tr("the built-in lines: %@", e.Message); return false; }
@@ -37,6 +40,33 @@ public sealed partial class Colony
                     Text: Script.Fill(line, mine ? a.Name : b.Name, mine ? b.Name : a.Name, flower, holiday),
                     BuiltIn: true);
         }).ToList();
+        return SayBuiltIn(lines, speaker, listener, situation);
+    }
+
+    /// <summary>A built-in invitation and its answer, in each one's own words; the deed
+    /// follows as a model's would.</summary>
+    private bool ReciteInvitation(Deeds.Offer offer, int speaker, int listener, Deeds.Options options, string situation)
+    {
+        string a = Name(speaker), b = Name(listener);
+        var yes = BuiltInYes(listener, speaker);
+        var lines = new List<(int Who, string Text, bool BuiltIn)>
+        {
+            (speaker, Deeds.InviteLine(a, b, offer), true),
+            (listener, Deeds.AnswerLine(b, a, offer, yes), true),
+        };
+        if (!SayBuiltIn(lines, speaker, listener, situation)) return false;
+        Took(new Deeds.Tagged("", Deeds.Deed.Invite(offer)), speaker, listener, options, byLetter: false);
+        Took(new Deeds.Tagged("", yes ? Deeds.Deed.Accept : Deeds.Deed.Decline), listener, speaker,
+             DeedOptions(listener, speaker, letter: false), byLetter: false);
+        return true;
+    }
+
+    /// <summary>Say built-in <paramref name="lines"/> between the two: logged up front, counted in their
+    /// story, then each line when the one before has been up a while.</summary>
+    private bool SayBuiltIn(List<(int Who, string Text, bool BuiltIn)> lines, int speaker, int listener, string situation)
+    {
+        var a = CharacterFor(speaker);
+        var b = CharacterFor(listener);
         busy.Add(speaker); busy.Add(listener);
         var said = lines.Select(l => new ChatLog.Line(CharacterFor(l.Who).Name, l.Text)).ToList();
         History.Record(new ChatLog.Exchange

@@ -70,6 +70,18 @@ public static partial class Bonds
         public DateTimeOffset? Met { get; set; }
         /// <summary>Their past in the chat log, from before moments were kept, has been read in.</summary>
         public bool Seeded { get; set; }
+        /// <summary>What they remember of each other for weeks: a promise, a debt, a rivalry, newest last.</summary>
+        public List<Fact> Facts { get; set; } = new();
+        /// <summary>One entry per day they shared anything, oldest first: counts, games, a line.</summary>
+        public List<DayEntry> Days { get; set; } = new();
+        /// <summary>Games one of them won against the other, by <c>"kind|winner"</c>; <c>"kind|="</c> for a draw.</summary>
+        public Dictionary<string, int> Record { get; set; } = new();
+        /// <summary>When the model last wrote their memory down (the diary, or the seed).</summary>
+        public DateTimeOffset? DiaryAt { get; set; }
+        /// <summary>When their memory was last read in from the chat log (the seed).</summary>
+        public DateTimeOffset? MemorySeeded { get; set; }
+        /// <summary>What their memory has cost, US dollars, when the server said.</summary>
+        public double? MemoryCost { get; set; }
 
         public Bond() { }
         public Bond(IEnumerable<string> names) { Names = names.ToList(); }
@@ -78,7 +90,10 @@ public static partial class Bonds
             && o.Talks == Talks && o.Summary == Summary && Equals(o.Plot, Plot) && o.LastPlot == LastPlot && o.Plots == Plots
             && o.Recent.SequenceEqual(Recent) && o.LastAsked == LastAsked && o.Cost == Cost
             && o.Chronicle == Chronicle && o.Moments.SequenceEqual(Moments) && o.Met == Met && o.Seeded == Seeded
-            && o.Tally.Count == Tally.Count && Tally.All(kv => o.Tally.TryGetValue(kv.Key, out var n) && n == kv.Value);
+            && SameCounts(o.Tally, Tally) && o.Facts.SequenceEqual(Facts) && o.Days.SequenceEqual(Days) && SameCounts(o.Record, Record)
+            && o.DiaryAt == DiaryAt && o.MemorySeeded == MemorySeeded && o.MemoryCost == MemoryCost;
+        internal static bool SameCounts(IReadOnlyDictionary<string, int> a, IReadOnlyDictionary<string, int> b) =>
+            a.Count == b.Count && a.All(kv => b.TryGetValue(kv.Key, out var n) && n == kv.Value);
         public override int GetHashCode() => HashCode.Combine(string.Join(" & ", Names), Together);
     }
 
@@ -183,13 +198,14 @@ public static partial class Bonds
         /// <summary>Forget one pair.</summary>
         public void Forget(string key) => Bonds.Remove(key);
 
-        /// <summary>Start one pair's storyline over: no chronicle, no moments, no stories,
+        /// <summary>Start one pair's storyline over: no chronicle, no moments, no stories, no memory,
         /// as if they had only just met, though their time together stays. The chat
         /// log is not read back in again.</summary>
         public void ResetStory(string key)
         {
             if (!Bonds.TryGetValue(key, out var bond)) return;
             bond.Chronicle = null; bond.Moments = new(); bond.Tally = new(); bond.Met = null; bond.Seeded = true;
+            bond.Facts = new(); bond.Days = new(); bond.Record = new(); bond.DiaryAt = null; bond.MemorySeeded = null;
             bond.Summary = null; bond.Plot = null; bond.LastPlot = null; bond.Plots = 0; bond.Recent = new(); bond.LastAsked = null;
         }
 

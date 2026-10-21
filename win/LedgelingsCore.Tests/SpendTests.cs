@@ -82,11 +82,12 @@ public class SpendTests
     [Fact]
     public void AllTheMacsPurposesAreHereWithTheirWords()
     {
-        Assert.Equal(new[] { "talk", "planes", "voice", "casting", "plots", "reminders", "complaints", "teaParties", "revenge", "creatureRefine", "plays", "ballGames" },
+        Assert.Equal(new[] { "talk", "planes", "voice", "casting", "plots", "reminders", "complaints", "teaParties", "revenge", "creatureRefine", "plays", "ballGames", "memory", "memorySeed" },
             Enum.GetValues<Spend.Purpose>().Select(p => p.Raw()));
         Assert.Equal("Tea parties", Spend.PurposeTitle("teaParties"));
         Assert.Equal("Revenge", Spend.PurposeTitle("revenge"));
         Languages.With(Language.English, () => Assert.Equal("Soccer and baseball", Spend.PurposeTitle("ballGames")));
+        Languages.With(Language.English, () => Assert.Equal("Memory: reading the past", Spend.PurposeTitle("memorySeed")));
         var line = System.Text.Json.JsonSerializer.Serialize(new Spend.Record(Noon, "OpenRouter", "m", new Spend.Usage(1, 1, 0), Spend.Purpose.TeaParties), JsonLines.Options);
         Assert.Contains("\"purpose\":\"teaParties\"", line);
     }

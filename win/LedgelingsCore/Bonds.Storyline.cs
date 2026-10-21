@@ -32,14 +32,26 @@ public static partial class Bonds
         public string Kind { get; set; } = MomentKind.Talk;
         /// <summary>Who did it: the first to speak, the giver, the thrower, the grabber.</summary>
         public string Who { get; set; } = "";
-        /// <summary>The first line said, the flower given, the note sent; null for a grab.</summary>
+        /// <summary>The first line said, the flower given, the note sent, the game played (<see cref="Plays.Kind"/>); null for a grab.</summary>
         public string? Detail { get; set; }
+        /// <summary>A game's score as its board showed it: "3-2".</summary>
+        public string? Score { get; set; }
+        /// <summary>A game's winners; empty for a draw, null when the game has no winner (the rope).</summary>
+        public List<string>? Winners { get; set; }
+        /// <summary>Who asked for it: the one whose invitation started the game.</summary>
+        public string? Asked { get; set; }
 
         public Moment() { }
-        public Moment(DateTimeOffset time, string kind, string who, string? detail = null)
+        public Moment(DateTimeOffset time, string kind, string who, string? detail = null,
+                      string? score = null, IEnumerable<string>? winners = null, string? asked = null)
         {
             Time = time; Kind = kind; Who = who; Detail = detail;
+            Score = score; Winners = winners?.ToList(); Asked = asked;
         }
+
+        public bool Equals(Moment? o) => o is not null && o.Time == Time && o.Kind == Kind && o.Who == Who && o.Detail == Detail
+            && o.Score == Score && o.Asked == Asked && (o.Winners is null ? Winners is null : Winners is not null && o.Winners.SequenceEqual(Winners));
+        public override int GetHashCode() => HashCode.Combine(Time, Kind, Who, Detail);
     }
 
     /// <summary>Moments kept per pair between stories; the prompt shows the last few of them.</summary>
@@ -66,6 +78,7 @@ public static partial class Bonds
                 bond.Moments = bond.Moments.Append(moment).TakeLast(MomentsKept).ToList();
                 bond.Tally[moment.Kind] = bond.Tally.GetValueOrDefault(moment.Kind) + 1;
                 if (bond.Met is not DateTimeOffset met || moment.Time < met) bond.Met = moment.Time;
+                Keep(moment, bond);
             });
         }
 
@@ -143,7 +156,9 @@ public static partial class Bonds
             MomentKind.Flower => L10n.Tr("%1$@ gave %2$@ a %3$@", moment.Who, other, Gifts.Name(moment.Detail ?? "")),
             MomentKind.Plane => L10n.Tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.Who, other, said),
             MomentKind.Grab => L10n.Tr("%1$@ grabbed the cursor while %2$@ looked on", moment.Who, other),
-            MomentKind.Play => L10n.Tr("%1$@ and %2$@ played: %3$@", moment.Who, other, Plays.Name(moment.Detail)),
+            MomentKind.Play => Result(moment) is string r
+                ? L10n.Tr("%1$@ and %2$@ played: %3$@", moment.Who, other, Plays.Name(moment.Detail)) + " (" + r + ")"
+                : L10n.Tr("%1$@ and %2$@ played: %3$@", moment.Who, other, Plays.Name(moment.Detail)),
             _ => L10n.Tr("%1$@ and %2$@ talked; %1$@ said: \"%3$@\"", moment.Who, other, said),
         };
     }

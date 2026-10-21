@@ -37,6 +37,9 @@ public sealed partial class Colony
         public string Model = "";
         public double? Cost;
         public int? Tokens;
+        /// <summary>The deed the note carries, and what was offered when it was written.</summary>
+        public Deeds.Tagged? Deed;
+        public Deeds.Options? Options;
     }
 
     /// <summary>Someone who just read a letter owes its sender one answer.</summary>
@@ -111,7 +114,7 @@ public sealed partial class Colony
 
     /// <summary>The throw itself: a short stop facing the catcher, then the plane, in
     /// weather of its own. <paramref name="answering"/>: the note this plane answers, if any.</summary>
-    private void ThrowPlane(int from, int to, string? answering)
+    internal void ThrowPlane(int from, int to, string? answering)
     {
         creatures[from].Meet(Facing(from, to), 0.9);
         var inward = creatures[from].Loop.Inward(creatures[from].Segment);
@@ -165,7 +168,8 @@ public sealed partial class Colony
             ["line"] = answering ?? "",
         };
         var system = Settings.SystemPrompt;
-        string aSide = Relationship(from, to), bSide = Relationship(to, from);
+        var options = DeedOptions(from, to, letter: true);
+        string aSide = Side(from, to, options), bSide = Relationship(to, from);
         List<string> aLately = History.Memory.Recent(a.Name), bLately = History.Memory.Recent(b.Name);
         airmail!.Writing = true;
         airmail.Provider = service.ProviderTitle;
@@ -187,13 +191,15 @@ public sealed partial class Colony
         async Task Write()
         {
             string? note = null, musing = null;
+            Deeds.Tagged? tagged = null;
             try
             {
                 await service.CheckModel();
                 var written = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, aSide), aLately),
                                                  Banter.Render(prompt, vars).Trim());
                 Charge(written);
-                var line = Banter.CleanLine(written.Text, a.Name, cut: written.Cut);
+                tagged = Deeds.Split(written.Text);
+                var line = Banter.CleanLine(tagged.Text, a.Name, cut: written.Cut);
                 if (line.Length > 0)
                 {
                     note = line;
@@ -204,7 +210,7 @@ public sealed partial class Colony
                     var thought = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, bSide), bLately),
                                                      Banter.Render(Letters.MusingPrompt, vars));
                     Charge(thought);
-                    var said = Banter.CleanLine(thought.Text, b.Name, cut: thought.Cut);
+                    var said = Banter.CleanLine(Deeds.Split(thought.Text).Text, b.Name, cut: thought.Cut);
                     if (said.Length > 0) musing = said;
                 }
             }
@@ -216,6 +222,7 @@ public sealed partial class Colony
             if (airmail is not { } mail || mail.Id != id) return;
             mail.Note = note;
             mail.Musing = musing;
+            if (note is not null) { mail.Deed = tagged; mail.Options = options; }
             mail.Writing = false;
             var priced = used.Where(u => u.Cost is not null).Select(u => u.Cost!.Value).ToList();
             mail.Cost = priced.Count == 0 ? null : priced.Sum();
@@ -317,11 +324,33 @@ public sealed partial class Colony
         int from = mail.Plane.From, to = mail.Plane.To;
         string a = CharacterFor(from).Name, b = CharacterFor(to).Name;
         bool modelWrote = mail.Note is not null, modelMused = mail.Musing is not null;
-        var note = mail.Note ?? HuntLineInstead(from) ?? (mail.IsReply ? Letters.Reply(a, b, rng, History.Memory) : Letters.Note(a, b, rng, History.Memory));
+        // Without a model, now and then a letter invites, and the answer to an
+        // invitation by letter says yes or no, in the writer's own words.
+        string? builtIn = null;
+        if (!modelWrote && Settings.TalkEnabled)
+        {
+            var options = DeedOptions(from, to, letter: true);
+            if (mail.IsReply && options.Answering is { ByLetter: true } invitation)
+            {
+                var yes = BuiltInYes(from, to);
+                builtIn = Deeds.AnswerLine(a, b, invitation.Offer, yes);
+                mail.Deed = new Deeds.Tagged("", yes ? Deeds.Deed.Accept : Deeds.Deed.Decline);
+                mail.Options = options;
+            }
+            else if (!mail.IsReply && BuiltInInvitation(from, to, options) is Deeds.Offer offer)
+            {
+                builtIn = Deeds.InviteLine(a, b, offer);
+                mail.Deed = new Deeds.Tagged("", Deeds.Deed.Invite(offer));
+                mail.Options = options;
+            }
+        }
+        var note = mail.Note ?? builtIn ?? HuntLineInstead(from) ?? (mail.IsReply ? Letters.Reply(a, b, rng, History.Memory) : Letters.Note(a, b, rng, History.Memory));
         var musing = mail.Musing ?? Letters.Musing(b, a, rng, History.Memory);
         mail.Note = note;
         mail.Musing = musing;
         Shared(from, to, Core.Bonds.MomentKind.Plane, note);
+        // The letter is read: what it does happens now (an invitation waits for the answer).
+        if (mail.Deed is { } deed && mail.Options is { } offered) Took(deed, from, to, offered, byLetter: true);
         if (!Settings.TalkEnabled) return new Airmail.Phase.Reading(Elapsed, Elapsed + 3, true);
 
         var read = Letters.Reading(note, a);

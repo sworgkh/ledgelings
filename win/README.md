@@ -18,7 +18,13 @@ Flowers tab), complaints when pushed around, tea parties, voices (Windows' own,
 OpenRouter or a local speech server), the Costs tab, every character's own bed at a place it learns (the Beds tab), and
 the plays: tag, a ninja rope, a parachute jump and basketball, more often between friends (the Play tab, and the
 Activities page of Creature Actions), soccer and baseball for whoever is free, with a scoreboard (the Ball games tab), and keeping them all to one monitor (the `SCREEN` button on Creature
-Actions, the tray's *Screen*, *Live on* on the Creatures tab), the rest parachuting over.
+Actions, the tray's *Screen*, *Live on* on the Creatures tab), the rest parachuting over;
+conversations that act: deeds from talk (a line or a letter may end in `DO:`, so "soccer?" answered "yes" starts the
+match, from a closed list checked against what is possible and the owner's limits; the built-in lines invite and answer
+in each character's own words; the tray's *Deeds from Talk*), games in their day (each game's score, winners and who
+asked for it, for every pair of players), and long-term memory between pairs (facts, a games record, a line a day, the
+block every prompt carries within its token budget, the nightly diary, and the seed that reads the chat log's past in),
+all on the Relationships tab, with every pair's memory in the *Relationships…* window.
 
 ## Stack
 
@@ -72,7 +78,7 @@ Ledgelings again; the sheet has the menu's switches, Settings and Quit.
 | Settings | `%APPDATA%\Ledgelings\settings.json` |
 | Chats | `%APPDATA%\Ledgelings\chats\YYYY-MM-DD.jsonl` (same format as the Mac) |
 | Spend | `%APPDATA%\Ledgelings\spend.jsonl` |
-| Bonds and plots | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac) |
+| Bonds, plots and memory | `%APPDATA%\Ledgelings\bonds.json` (same format as the Mac); the seed copies it to `bonds.before-seed.json` first |
 | Reminders | `%APPDATA%\Ledgelings\reminders.json` (same format as the Mac) |
 | Clipboard history and snippets | `%APPDATA%\Ledgelings\clipboard.json`, `snippets.json` (same format as the Mac); copied pictures in `clipboard-images\` beside them |
 | Protected snippets' words | Credential Manager › Windows Credentials › `Ledgelings Snippets/snippet.<ID>` |
@@ -190,9 +196,10 @@ core tests are the Swift tests line for line.
   `--play-film`, `--screens-film`, the reminder film, `scripts/make-promo.sh`): they render offscreen
   with the Mac's video APIs.
 - **The command-line checks** (`--settings … --snapshot`, `--actions --activities`, `--screens`, `--say`, `--cast`,
-  `--converse`, `--tea`, `--plot`, `--remind`, `--note`). A Windows colony always
+  `--converse` (and `--converse --invite`), `--tea`, `--plot`, `--remind`, `--note`, `--memory`, `--memory-seed`, `--diary`,
+  `--relationships --snapshot`, `--invite-film`); the seed runs from the Relationships tab, its log on the console. A Windows colony always
   opens real overlay windows, so the Mac's colony-level tests (`ColonyTalkTests`)
-  are not ported either (nor the Mac's colony-level play tests in `PlaySettingsTests`, nor
+  are not ported either (nor the Mac's colony-level play tests in `PlaySettingsTests` and `RelationshipsSettingsTests`, nor
   `HomeScreenSettingsTests` beyond its settings test); the core tests are, `PlaysTests` and `HomeScreenTests` among them.
 
 ## Layout
@@ -203,21 +210,22 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines)
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines),
+                           Deeds (+ .Lines), Bonds (+ .Storyline .Memory .Seed)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
-                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard)
+                                     .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard .Deeds .Memory)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
                            TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard), GlobalHotkey, ShortcutKeys, Program
-                           AppSettings (+ .Talk .Bonds .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard),
+                           AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore, Native/ClipboardNative
-                           UI/SettingsWindow.xaml (Productivity tools holds a Tools tab per tool; + .Sprites .Talk .Script .Cast .Chats .Bonds .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
-                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), SnippetsWindow
+                           UI/SettingsWindow.xaml (Productivity tools holds a Tools tab per tool; + .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
+                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), SnippetsWindow, RelationshipsWindow
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

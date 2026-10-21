@@ -159,6 +159,8 @@ public static class L10n
 public sealed class Shared
 {
     public sealed record LetterVoice(string[] Topics, string[] Notes, string[] Musings, string[] Replies);
+    /// <summary>A character's built-in invitation and its yes and no (SPEC §6.5.2.2).</summary>
+    public sealed record DeedVoice(string Invite, string Yes, string No);
 
     public Dictionary<string, string> Strings { get; init; } = new();
     public string Script { get; init; } = "";
@@ -210,7 +212,11 @@ public sealed class Shared
     /// <summary>What the creature bringing the clipboard picker says (SPEC §7.11.1): by character, and for anyone.</summary>
     public Dictionary<string, string[]> ClipHelperLines { get; init; } = new();
     public string[] ClipHelperAnyone { get; init; } = Array.Empty<string>();
-    /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder, spriteImage, spriteRefine, spriteRefineSystem.</summary>
+    /// <summary>The deeds' built-in lines (<c>deeds</c>): by character, and for anyone; null where there are none.</summary>
+    public Dictionary<string, DeedVoice> DeedVoices { get; init; } = new();
+    public DeedVoice? DeedsAnyone { get; init; }
+    /// <summary>Keys: system, line, reply, plot, plotSystem, planeNote, planeReply, planeMusing, teaSystem, teaStory, teaReply, complaint, reminder, spriteImage, spriteRefine, spriteRefineSystem,
+    /// play, playSystem, playCheer, deedMenu, deedAnswer, deedNote, diary, diarySystem, seed.</summary>
     public Dictionary<string, string> Prompts { get; init; } = new();
 
     private static readonly Dictionary<Language, Shared?> loaded = new();
@@ -250,6 +256,9 @@ public sealed class Shared
         static Dictionary<string, string[]> Lists(JsonElement e) => e.ValueKind == JsonValueKind.Object
             ? e.EnumerateObject().ToDictionary(p => p.Name, p => List(p.Value)) : new();
         static JsonElement Get(JsonElement e, string name) => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) ? v : default;
+        static DeedVoice? Deed(JsonElement e) => e.ValueKind == JsonValueKind.Object
+            ? new(Str(Get(e, "invite")), Str(Get(e, "yes")), Str(Get(e, "no"))) : null;
+        static string Str(JsonElement e) => e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : "";
         static LetterVoice Letter(JsonElement e) => new(List(Get(e, "topics")), List(Get(e, "notes")), List(Get(e, "musings")), List(Get(e, "replies")));
 
         var letters = Get(root, "letters");
@@ -269,6 +278,8 @@ public sealed class Shared
         var clipHelper = Get(root, "clipHelper");
         var playStart = Get(plays, "start");
         var playCheer = Get(plays, "cheer");
+        var deeds = Get(root, "deeds");
+        var deedVoices = Get(deeds, "voices");
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -308,6 +319,9 @@ public sealed class Shared
             PlayDoneAnyone = List(Get(plays, "doneAnyone")),
             PlayCheer = playCheer.ValueKind == JsonValueKind.Object ? playCheer.EnumerateObject().ToDictionary(p => p.Name, p => Map(p.Value)) : new(),
             PlayCheerAnyone = Map(Get(plays, "cheerAnyone")),
+            DeedVoices = deedVoices.ValueKind == JsonValueKind.Object
+                ? deedVoices.EnumerateObject().Where(p => Deed(p.Value) is not null).ToDictionary(p => p.Name, p => Deed(p.Value)!) : new(),
+            DeedsAnyone = Deed(Get(deeds, "anyone")),
             ClipHelperLines = Lists(Get(clipHelper, "lines")),
             ClipHelperAnyone = List(Get(clipHelper, "anyone")),
             RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),

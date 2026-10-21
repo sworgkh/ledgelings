@@ -5,7 +5,7 @@ using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-public enum SettingsTab { Creatures, Actions, Chases, Play, BallGames, Sprites, Talk, Flowers, Bonds, Calendar, Productivity, Voice, Costs, Chats }
+public enum SettingsTab { Creatures, Actions, Chases, Play, BallGames, Sprites, Talk, Flowers, Bonds, Relationships, Calendar, Productivity, Voice, Costs, Chats }
 
 /// <summary>One tool on the Productivity tools tab, by its header. A new tool is a case here and a
 /// <c>TabItem</c> with the same header in the tab's <c>Tools</c> control.</summary>
