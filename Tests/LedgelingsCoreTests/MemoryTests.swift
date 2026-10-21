@@ -37,7 +37,7 @@ import Testing
         #expect(book.bond("Blocky", "Boo")!.facts.isEmpty, "0 keeps none")
     }
 
-    @Test func theMemoryBlockStaysWithinItsBudgetAndDropsTheStoryFirst() {
+    @Test func theMemoryBlockStaysWithinItsBudgetAndKeepsTheStoryFirst() {
         var book = Bonds.Book()
         book.note("Blocky", "Boo", game(.soccer, at: day, winners: ["Boo"], score: "2-3"))
         book.remember("Blocky", "Boo", "Boo owes Blocky a sunflower", source: "note", at: day, keep: 5)
@@ -52,8 +52,14 @@ import Testing
             let cut = Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: budget, now: day)
             #expect(Bonds.tokens(cut) <= budget, "\(budget): \(cut)")
         }
+        // Over budget the story stays (its newest sentences), then the newest facts, then the days.
+        let tiny = Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: 16, now: day)
+        #expect(tiny == "Your story so far: They guard the garden together now.", "\(tiny)")
         let small = Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: 30, now: day)
-        #expect(small.contains("Today together") && !small.contains("Your story"), "today stays, the story goes")
+        #expect(small.hasPrefix("Your story so far: They argued") && !small.contains("You remember"), "the story before the facts: \(small)")
+        let middling = Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: 60, now: day)
+        #expect(middling.contains("Your story so far: They met") && middling.contains("You remember")
+                && !middling.contains("first met"), "how they met gives way first: \(middling)")
         #expect(Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: 0, now: day).isEmpty)
         // Never half a sentence of their story, and one full stop after a fact.
         for budget in 30...120 {

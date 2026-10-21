@@ -361,7 +361,7 @@ final class AppSettings: ObservableObject {
 
     // MARK: Memory
 
-    static let memoryTokensRange = 0...1000
+    static let memoryTokensRange = 0...2000
     static let memoryFactsRange = 0...20
     static let memoryDaysRange = 0...365
     static let diaryEveryRange = 1.0...48.0
@@ -818,7 +818,13 @@ final class AppSettings: ObservableObject {
         deedFollow = defaults.object(forKey: "deedFollow") as? Bool ?? true
         deedSleep = defaults.object(forKey: "deedSleep") as? Bool ?? true
         memoryEnabled = defaults.object(forKey: "memoryEnabled") as? Bool ?? true
-        // 150 tokens: today, five facts and the record, with room for some of their story.
+        // 600 tokens: the busiest pair's whole story, five facts, today and yesterday, in Russian.
+        // The old default, 150, cut the story; a saved 150 moves to the new one once, a value
+        // chosen by hand stays.
+        if defaults.object(forKey: "memoryTokens") as? Int == Bonds.oldMemoryTokens, !defaults.bool(forKey: "memoryTokensMoved") {
+            defaults.set(Bonds.memoryTokens, forKey: "memoryTokens")
+        }
+        defaults.set(true, forKey: "memoryTokensMoved")
         memoryTokens = clampInt("memoryTokens", Bonds.memoryTokens, Self.memoryTokensRange)
         memoryFacts = clampInt("memoryFacts", Bonds.memoryFacts, Self.memoryFactsRange)
         // Two months of timeline: enough to see a friendship grow, a few KB a pair.

@@ -11,8 +11,8 @@ import Foundation
 /// window); a prompt gets only today and yesterday.
 ///
 /// `memory` builds the block a prompt carries, cut to a budget in tokens:
-/// what happened today goes in first, then the facts, the record, yesterday,
-/// and the chronicle last, trimmed sentence by sentence. Nothing here calls a
+/// the chronicle goes in first (its newest whole sentences), then the facts,
+/// today, yesterday, the record, and how they met. Nothing here calls a
 /// model: the **diary** (`diaryPrompt`, `parseDiary`) is the app's one call a
 /// pair, at the colony's nightfall, that rewrites the chronicle and the facts
 /// and writes the day's line. Without a model the counts and results still
@@ -43,8 +43,11 @@ extension Bonds {
     public static let memoryFacts = 5
     /// Days of timeline kept by default.
     public static let memoryDays = 60
-    /// Tokens of memory a prompt carries by default.
-    public static let memoryTokens = 150
+    /// Tokens of memory a prompt carries by default: room for a full story, five
+    /// facts, today and yesterday in Russian (558 for the busiest pair in October 2026).
+    public static let memoryTokens = 600
+    /// The default before 0.59.1, moved to the new one once if still set.
+    public static let oldMemoryTokens = 150
 
     /// A rough count of tokens: a token is about four bytes of UTF-8, which is
     /// cautious for Russian, where a letter takes two.
@@ -136,9 +139,11 @@ extension Bonds {
 
     // MARK: What a prompt carries
 
-    /// What `speaker` remembers of `other`, at most `budget` tokens: what they did
-    /// today, the facts, their games, yesterday, how they met and their story,
-    /// in that order of need. Empty for strangers or a budget of 0.
+    /// What `speaker` remembers of `other`, at most `budget` tokens. Over budget
+    /// it gives way in this order: their story (its newest whole sentences) is kept
+    /// first, then the facts newest first, today, yesterday, their games, and how
+    /// they met last. Written in the order met, story, games, facts, yesterday,
+    /// today. Empty for strangers or a budget of 0.
     public static func memory(_ bond: Bond?, speaker: String, other: String, budget: Int, now: Date = Date()) -> String {
         guard let bond, budget > 0 else { return "" }
         let today = dayKey(now)
@@ -151,35 +156,31 @@ extension Bonds {
             parts[place] = text
             used += tokens(text) + 1
         }
-        let todays = bond.days.first { $0.day == today }
-        take(todays.map { tr("Today together: %@.", dayLine($0)) }, at: 6)
+        if let chronicle = bond.chronicle, !chronicle.isEmpty {
+            // As many of the story's newest whole sentences as there is room for; a
+            // sentence cut short says nothing, so none is sent rather than half of one.
+            var kept: [String] = []
+            for sentence in sentences(chronicle).reversed() {
+                guard fits(tr("Your story so far: %@", ([sentence] + kept).joined(separator: " "))) else { break }
+                kept.insert(sentence, at: 0)
+            }
+            if !kept.isEmpty { take(tr("Your story so far: %@", kept.joined(separator: " ")), at: 2) }
+        }
         // The facts, newest first, as many as fit.
         var remembered: [String] = []
         for fact in bond.facts.reversed() {
             // A fact's own full stop would make two with the one the list ends with.
             let bare = fact.text.trimmingCharacters(in: CharacterSet(charactersIn: ".;· ").union(.whitespaces))
             let text = fact.source == "diary" || fact.source == "seed" ? bare : bare + " (" + day(fact.time) + ")"
-            let all = tr("You remember: %@.", (remembered + [text]).joined(separator: " · "))
-            guard fits(all) else { break }
+            guard fits(tr("You remember: %@.", (remembered + [text]).joined(separator: " · "))) else { break }
             remembered.append(text)
         }
         if !remembered.isEmpty { take(tr("You remember: %@.", remembered.joined(separator: " · ")), at: 4) }
-        take(recordLine(bond).map { tr("Games between you: %@.", $0) }, at: 3)
+        take(bond.days.first { $0.day == today }.map { tr("Today together: %@.", dayLine($0)) }, at: 6)
         take(bond.days.first { $0.day == yesterday }.map { tr("Yesterday: %@.", $0.line ?? dayLine($0)) }, at: 5)
+        take(recordLine(bond).map { tr("Games between you: %@.", $0) }, at: 3)
         if let met = bond.met, !bond.tally.isEmpty {
             take(tr("You and %@ first met on %@; all told: %@.", other, day(met), tallied(bond.tally)), at: 1)
-        }
-        if let chronicle = bond.chronicle, !chronicle.isEmpty {
-            // As many of the story's newest whole sentences as there is room for; a
-            // sentence cut short says nothing, so none is sent rather than half of one.
-            let room = budget - used - 1
-            var kept: [String] = []
-            for sentence in sentences(chronicle).reversed() {
-                let text = tr("Your story so far: %@", ([sentence] + kept).joined(separator: " "))
-                guard tokens(text) <= room else { break }
-                kept.insert(sentence, at: 0)
-            }
-            if !kept.isEmpty { take(tr("Your story so far: %@", kept.joined(separator: " ")), at: 2) }
         }
         return parts.keys.sorted().compactMap { parts[$0] }.joined(separator: " ")
     }
