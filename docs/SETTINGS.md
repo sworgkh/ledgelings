@@ -485,6 +485,62 @@ under each conversation that played part of it.
 To place the story yourself in the talk prompt, write `{relationship}` in *Who is
 speaking* on the Talk tab; without it, the story is added at the end.
 
+## Relationships tab
+
+What creatures say can turn into what they do, and every pair keeps a small
+long-term memory of the other. Settings on the left are **deeds**, on the right
+**memory**; **Open Relationships** (also *Relationships…* in the menu) shows each
+pair's memory: how close they have grown day by day, their story, what they
+remember, their games, a line a day, and exactly what each carries into a conversation.
+
+**Deeds.** A line or a letter may end in a deed the prompt offered: a letter "soccer?"
+answered "yes" starts the match with both of them (and anyone else free, for soccer and
+baseball); a "no" is remembered. The prompt only offers what is possible right now
+(no games at night, no second tea party), so anything else, and anything over the
+limits, is simply not done. With the built-in lines each character invites and answers
+in its own words. Deeds make no calls of their own; they add about 40 tokens to a line.
+*Deeds from Talk* in the menu turns them on and off.
+
+**Memory.** Every conversation, letter and tea party carries what the two remember:
+today, their facts (a promise, a debt, a rivalry), their games record, yesterday and
+their story so far, cut to the budget. At the colony's nightfall the model writes each
+active pair's memory down (*the diary*: one call a pair, Costs › Long-term memory). **Their
+past** reads the chat log of the last days into every pair's memory once (one call a pair,
+Costs › Memory: reading the past); **Check First** says what would be sent and sends
+nothing; `bonds.json` is copied to `bonds.before-seed.json` first. Only the creatures'
+own lines and what kind of moment each was are sent.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **What they say can turn into what they do** | on | | `deedsEnabled`; off: lines carry no menu and tags are ignored |
+| **Invite to a game / Invite to tea / Give a flower / Send a letter / Walk over to someone / Follow someone / Go to sleep** | all on | | `deedGames` `deedTea` `deedFlower` `deedLetter` `deedVisit` `deedFollow` `deedSleep`: which deeds may be offered |
+| **After a deed, the next waits** | 4 min | 0 to 60 min | `deedGapMinutes`; 0: no wait |
+| **Most deeds an hour** | 8 | 0 to 120 | `deedsPerHour`; 0: no limit |
+| **Same pair, same deed again after** | 20 min | 0 to 240 min | `deedPairGapMinutes`; 0: no wait. Whatever is set, the same two never do two deeds within 15 s |
+| **An invitation stays open** | 10 min | 1 to 60 min | `inviteOpenMinutes` |
+| **A yes waits for both to be free** | 3 min | 0.5 to 15 min | `deedWaitMinutes`; then it is remembered as never got to |
+| **Following lasts** | 30 s | 5 to 300 s | `followSeconds` |
+| **Built-in letters and talks that invite** | 20 % | 0 to 100 % | `builtInInviteShare` |
+| **Built-in answers that say yes** | 65 % | 0 to 100 % | `builtInAcceptChance`; close friends more often, strangers less |
+| **Pairs remember each other** | on | | `memoryEnabled` |
+| **Memory sent with each line** | 150 tokens | 0 to 1000 | `memoryTokens`; 0: none |
+| **Facts kept per pair** | 5 | 0 to 20 | `memoryFacts` |
+| **Days of timeline kept** | 60 | 0 to 365 | `memoryDays`; for you to read, only today and yesterday are sent |
+| **The model may note facts as it speaks** | on | | `memoryNotes`: a line may add `NOTE:` |
+| **Each knows what it did today** | on | | `dayContextEnabled` |
+| **Things from today it mentions** | 4 | 0 to 10 | `dayContextItems` |
+| **At nightfall the model writes their memory down** | on | | `diaryEnabled` |
+| **A pair's memory at most every** | 8 h | 1 to 48 h | `diaryEveryHours` |
+| **Pairs a night** | 8 | 0 to 50 | `diaryPairsPerNight` |
+| **Days read back** | 14 | 1 to 60 | `seedDays` |
+| **Lines shown per pair** | 40 | 5 to 200 | `seedLines`; about 2 500 tokens a pair at 40 |
+
+Flags: `--invite-film out.mp4 [soccer|tag|basketball|baseball|tea]` films a letter
+invitation, the yes and the game offscreen; `--converse --invite soccer` opens a real
+conversation with that invitation and waits for the deed; `--memory [name]` prints every
+pair's memory and the block each carries; `--memory-seed [--dry-run]` reads the past in;
+`--diary` writes every due pair's diary now; `--relationships --snapshot out.png`.
+
 ## Calendar tab
 
 The creatures know your day: the time on your Mac's clock, the date, and the

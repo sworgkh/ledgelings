@@ -25,5 +25,6 @@ extension Strings {
         "screens": ruScreens,
         "clipboard": ruClipboard,
         "screenshots": ruScreenshots,
+        "relationships": ruRelationships,
     ]
 }

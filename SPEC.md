@@ -905,6 +905,107 @@ moments, empty tally, `seeded` false).
   moments, tally, `met`, summary, plot, last plot, plots and recent go; time
   together, talks and cost stay; `seeded` = true so the log is not read back in.
 
+#### 6.5.2.2 Deeds: what is said turns into what is done
+
+- **The list** (closed): `invite <game>` (tag, basketball, soccer, baseball: the games
+  two or more play; `play <game>` and a bare game name mean the same), `invite tea`,
+  `accept`, `decline`, `flower`, `letter`, `visit <name>`, `follow`, `sleep`, `none`.
+- **The tag.** A creature's line may end with `DO: <deed>`, and a fact with
+  `NOTE: <≤12 words>`. `Deeds.split` takes every tag off the line wherever it is (own
+  line, end of line, in brackets or stars, after `</think>` only) before the line is
+  cleaned (§6.3), so neither reaches a bubble, a voice or the chat log. Read
+  case-blind, with a few Russian words (`футбол`, `чай`, `да`, `нет`); unknown → ignored,
+  traced `deed ignored`.
+- **The offer.** Each talk opener, talk answer and letter (note or reply) gets, after
+  its relationship context, a menu of only what is possible now (`Deeds.Options`):
+  games if `deedGames`, play on, day, no game running (ball games only when due,
+  §7.10); tea if `deedTea`, tea parties on, none running; face to face also `flower`
+  (no flower in flight, the other wears none), `letter` (planes on), `follow`, `visit`
+  (the three nearest awake others); in a letter only invitations and `visit <reader>`;
+  `sleep` at night only. Nothing on offer while an invitation is already out between
+  the two, or the limits below refuse it. An open invitation to the speaker adds
+  "{inviter} has invited you to {offer}. End with DO: accept or DO: decline". Built-in
+  menu texts in English and Russian, the tags always Latin. About 40 tokens a line.
+- **Checking and the limits.** A deed must be in what was offered (`Deeds.check`) and
+  within `Deeds.Ledger`: `deedGapMinutes` after any deed, `deedsPerHour` (0 = none), the
+  same pair and deed again after `deedPairGapMinutes`; 0 turns each off. A loop guard
+  that no setting turns off: the same pair never does two deeds within 15 s.
+  `accept`/`decline` are never held back. Refusals are traced (`deed refused: … not
+  offered`), never shown.
+- **Doing it.** An invitation is kept (`from`, `to`, offer, time, by letter) for
+  `inviteOpenMinutes`; the answer comes in the other's reply line, or in the letter
+  written back (§7.6). `accept` agrees the deed, led by the inviter; `decline` leaves a
+  fact ("Zed said no to Unit 7's invitation: tea together"). Agreed deeds and a
+  speaker's own deeds wait up to `deedWaitMinutes` for both to be free, then run
+  through the existing doors: a game `startPlay(kind, with: [inviter, invited])` (a
+  ball game fills up with everyone free, the invited first; when the two are not on
+  one outline the invited leaps over once and they try again), tea (sit down if on one
+  edge, else the guest leaps over as Have a Tea Party does), a flower (`gifts.give`, a
+  flower moment), a letter (a plane from the speaker), a visit (walk the short way to
+  them, leap if on another loop; they bump and meet as anyone does), follow (trail
+  them for `followSeconds`), sleep (a nap now). A game started by a deed carries
+  `askedBy`. A lapsed invitation by letter, or an agreed deed never done, leaves a
+  fact. Deeds make no calls of their own: nothing new in Costs.
+- **Without a model.** A built-in talk (not a flower's) or letter is an invitation
+  `builtInInviteShare` % of the time, to a rematch of the game the inviter last lost to
+  the other if it is offered, else any offered game or tea; the line is the
+  character's own (`Deeds+Lines`, `{reader}` `{game}`, e.g. Unit 7: "Blocky. Proposal:
+  Soccer. My odds of winning: 61%. Accept?"), and so is the answer, yes with
+  probability `builtInAcceptChance`/100 × (0.75 + 0.5 × closeness), capped at 1. A built-in
+  reply letter answers an invitation by letter in the same way. Then the same deed path.
+
+#### 6.5.2.3 Games in their day, and long-term memory
+
+- **A game's result.** When a game ends well (§7.10) every pair of its players gets a
+  `play` moment (teammates and opponents alike) with `score` (the board's), `winners`
+  (the side with most points; empty for a draw; absent for the rope, the parachute,
+  tag, or a game played alone) and `asked` (whose invitation started it). Tag's
+  score is its touches. Described "Blocky and Boo played: a game of soccer (won by Boo,
+  2-3; Boo asked for it)".
+- **Per pair**, beside §6.5.2.1: `facts` (≤ `memoryFacts`, each `{text, time,
+  source}`: `note`, `deed`, `diary`, `seed`; a fact already kept, case-blind, is not
+  added twice; the oldest goes), `days` (one per user calendar day they shared
+  anything: counts by moment kind, each game as "Soccer: won by Boo, 2-3", the diary's
+  line; ≤ `memoryDays` days kept), `record` (`kind|winner` → wins, `kind|=` → draws,
+  only when exactly one of the two won), `diaryAt`, `memorySeeded`, `memoryCost`. All
+  optional in `bonds.json`: an older file loads.
+- **What a prompt carries** (memory on): after the bond and plot (§6.5.2), the pair's
+  block `Bonds.memory`, at most `memoryTokens` tokens (estimated as UTF-8 bytes / 4),
+  filled by need: today together → facts newest first (as many as fit; note/deed facts
+  dated "(20 Oct)") → games record → yesterday's line → how they met and all told → the
+  chronicle trimmed from its oldest sentences; written in the order met, story,
+  games, facts, yesterday, today. Then, with `dayContextEnabled`, the speaker's day so
+  far over every pair, talks left out, a game told once with everyone, newest first, at
+  most `dayContextItems`: "Your day so far: played a game of soccer with Boo, Zed at
+  10:40 (won by Boo, Zed, 2-3); got a poppy from Boo at 11:05." Talk, letters and tea
+  rounds all carry it.
+- **The diary.** Checked every 30 s; at the colony's nightfall (night begins, not on
+  launch), with memory, `diaryEnabled` and a model: every pair with moments newer than
+  `diaryAt` and `diaryAt` at least `diaryEveryHours` ago, most new moments first, at
+  most `diaryPairsPerNight`, gets one call (`Bonds.diaryPrompts`, max 1200 tokens,
+  reasoning low, purpose `memory`, recorded whatever comes back): names, kinds, personas,
+  bond, chronicle, facts, record, moments since, and up to 6 of today's lines between
+  them. The answer: `STORY:` (the chronicle, trimmed to `storyWords`), `FACT:` lines (or
+  `·`-separated; the whole list replaces the old facts, capped), `DAY: 2026-10-20: …`
+  (a line without a date is today's). Built-in lines: no diary; days and records still
+  count, facts come from deeds and games.
+- **The seed.** Relationships tab › Read the Past In, or `--memory-seed`: every pair
+  with ≥ 3 shared conversations in the chat log over the last `seedDays` days. Per pair a
+  digest: day by day the counts, each conversation classed by its situation in either
+  language (paper plane, tea, a flower, else talk; tea rounds within 15 min are one
+  party), and about `seedLines` lines spread evenly over the days, letters first, then
+  each party's first round, flowers, talks. Situations are never sent (they hold the
+  user's clock, holidays and cursor counts), nor reminders, clipboard or screenshots.
+  The days' counts are merged in (the larger of the two, so a second run counts nothing
+  twice); with a model one call a pair (`Bonds.seedPrompts`, purpose `memorySeed`) and
+  its answer is written as a diary's, every `DAY:` with its date. `bonds.json` is copied
+  to `bonds.before-seed.json` first. Check First / `--dry-run` prints what would be sent
+  and its size, touches no key and changes nothing.
+- **Seeing it.** Relationships… (menu, and the tab's button): every pair closest first
+  with a bar a day of how much they shared (last 30); the chosen pair's bond, story,
+  facts, games, day by day newest first, and exactly the block each carries into a
+  conversation, with its tokens and what their memory cost.
+
 ### 6.5.3 Not repeating themselves
 
 Each character remembers its last `lineMemory` lines (default 12, 0 = off),
@@ -2599,6 +2700,28 @@ An error for want of a model reads as that note, never as a server refusal.
 | storylinesEnabled | true | each new plot grows from the pair's whole history: chronicle + moments (§6.5.2) |
 | storyWords | 80 | 30–200 in steps of 10, clamped on load: words the chronicle is kept to |
 | storyMoments | 8 | 2–20, clamped on load: moments since the last plot the prompt lists one by one; older ones are folded into the chronicle first |
+| deedsEnabled | true | what is said can turn into deeds (§6.5.2.2); also the menu's "Deeds from Talk" |
+| deedGames / deedTea / deedFlower / deedLetter / deedVisit / deedFollow / deedSleep | true | which deeds may be offered |
+| deedGapMinutes | 4 | 0–60, clamped on load; 0 = no wait: after a deed, the next anywhere waits this long |
+| deedsPerHour | 8 | 0–120, clamped on load; 0 = no limit |
+| deedPairGapMinutes | 20 | 0–240, clamped on load; 0 = no wait: the same pair, the same deed again |
+| inviteOpenMinutes | 10 | 1–60, clamped on load: an invitation waits this long for its answer |
+| deedWaitMinutes | 3 | 0.5–15, clamped on load: an agreed deed waits this long for both to be free |
+| followSeconds | 30 | 5–300, clamped on load |
+| builtInInviteShare | 20 | 0–100 %, clamped on load: built-in talks and letters that invite |
+| builtInAcceptChance | 65 | 0–100 %, clamped on load: built-in answers that say yes, before closeness |
+| memoryEnabled | true | pairs carry their memory into prompts (§6.5.2.3) |
+| memoryTokens | 150 | 0–1000, clamped on load; 0 = none sent |
+| memoryFacts | 5 | 0–20, clamped on load: facts kept per pair |
+| memoryDays | 60 | 0–365, clamped on load: days of timeline kept |
+| memoryNotes | true | the model may write facts down (`NOTE:`) |
+| diaryEnabled | true | the nightfall diary call (§6.5.2.3) |
+| diaryEveryHours | 8 | 1–48, clamped on load: a pair's diary at most this often |
+| diaryPairsPerNight | 8 | 0–50, clamped on load |
+| dayContextEnabled | true | each knows its day so far |
+| dayContextItems | 4 | 0–10, clamped on load |
+| seedDays | 14 | 1–60, clamped on load: how far back the seed reads |
+| seedLines | 40 | 5–200, clamped on load: lines per pair shown to the model |
 | voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
 | voiceEngine | system | system, openRouter, local |
 | voicePerCharacter | true | |

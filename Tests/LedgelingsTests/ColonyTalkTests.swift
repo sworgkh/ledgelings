@@ -21,6 +21,8 @@ import Testing
             settings = AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore())
             settings.creatureCount = 2
             settings.brain = .script
+            // These tests are about the script's own lines: no built-in invitation in their place.
+            settings.builtInInviteShare = 0
             history = ChatHistory(directory: dir.appendingPathComponent("chats"))
             colony = try Colony(settings: settings, history: history,
                                 library: SpriteLibrary(directory: dir.appendingPathComponent("sprites")),

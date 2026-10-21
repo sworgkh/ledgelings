@@ -17,7 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, clips: clips,
         send: { [weak self] in self?.colony?.deliverNow($0) },
         clearGarden: { [weak self] in self?.colony?.clearGarden() ?? 0 },
-        editSnippets: { [weak self] in self?.snippetsWindow.show() })
+        editSnippets: { [weak self] in self?.snippetsWindow.show() },
+        openRelationships: { [weak self] in self?.relationshipsWindow.show() },
+        seedMemory: { [weak self] dryRun in await self?.seedMemory(dryRun: dryRun) ?? "" })
+    private lazy var relationshipsWindow = RelationshipsWindowController(settings: settings, bonds: bonds)
     private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private lazy var actions = ActionsController(settings: settings, colony: { [weak self] in self?.colony },
                                                  addReminder: { [weak self] in self?.openReminders() },
@@ -40,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let voiceItem = NSMenuItem(title: "", action: #selector(toggleVoice), keyEquivalent: "v")
     private let revengeItem = NSMenuItem(title: "", action: #selector(toggleRevenge), keyEquivalent: "")
     private let activitiesItem = NSMenuItem(title: "", action: #selector(openActivities), keyEquivalent: "")
+    private let deedsItem = NSMenuItem(title: "", action: #selector(toggleDeeds), keyEquivalent: "")
+    private let relationshipsItem = NSMenuItem(title: "", action: #selector(openRelationships), keyEquivalent: "")
     private let pointer = SystemPointer()
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
 
@@ -112,6 +117,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 do { try await BedFilm.run(output: URL(fileURLWithPath: out)) }
                 catch { FileHandle.standardError.write(Data("Ledgelings bed film: \(error)\n".utf8)); exit(1) }
                 exit(0)
+            }
+            return
+        }
+        if let at = CommandLine.arguments.firstIndex(of: "--invite-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/invite.mp4"
+            let offer = args.indices.contains(at + 2) ? Deeds.Offer(word: args[at + 2]) : nil
+            Task { @MainActor in
+                do { try await InviteFilm.run(output: URL(fileURLWithPath: out), offer: offer ?? .game(.soccer)); exit(0) }
+                catch { FileHandle.standardError.write(Data("invite film: \(error)\n".utf8)); exit(1) }
             }
             return
         }
@@ -229,18 +244,57 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--converse`: one conversation, every line and voice cue on stderr with
         // the time since it started, then quit once the pair is let go.
+        // `--invite soccer|tag|basketball|baseball|tea`: it opens with that
+        // invitation, and runs on until what was agreed has started (or lapsed).
         if CommandLine.arguments.contains("--converse"), let colony {
-            let start = Date()
+            let start = Date(), args = CommandLine.arguments
             colony.trace = { line in
                 FileHandle.standardError.write(Data(String(format: "converse %6.2f  %@\n", Date().timeIntervalSince(start), line).utf8))
             }
+            let invite = args.firstIndex(of: "--invite").flatMap { args.indices.contains($0 + 1) ? Deeds.Offer(word: args[$0 + 1]) : nil }
+            colony.forcedOffer = invite
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 colony.talkNow()
                 try? await Task.sleep(for: .seconds(1))
                 for _ in 0..<900 where !colony.busy.isEmpty || !colony.chats.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
                 colony.trace?("pair let go")
+                if invite != nil {
+                    for _ in 0..<1800 where !colony.agreed.isEmpty || colony.play != nil || colony.teaParty != nil || colony.teaInvite != nil {
+                        try? await Task.sleep(for: .seconds(0.1))
+                    }
+                    colony.trace?("deeds done")
+                }
                 exit(0)
+            }
+        }
+        // `--memory [name]`: every pair's memory (or those with `name`), as the
+        // Relationships window and a prompt see it, on stderr; then quit.
+        if let at = CommandLine.arguments.firstIndex(of: "--memory"), let colony {
+            let args = CommandLine.arguments
+            let only = args.indices.contains(at + 1) && !args[at + 1].hasPrefix("--") ? args[at + 1] : nil
+            colony.memoryDump(only: only).forEach { FileHandle.standardError.write(Data(($0 + "\n").utf8)) }
+            exit(0)
+        }
+        // `--memory-seed [--dry-run]`: read the last `seedDays` days of the chat log
+        // into the pairs' memory, every step on stderr; the dry run sends and changes nothing.
+        if CommandLine.arguments.contains("--memory-seed"), let colony {
+            let dry = CommandLine.arguments.contains("--dry-run")
+            Task { @MainActor in
+                let report = await colony.seedMemory(dryRun: dry) { FileHandle.standardError.write(Data(($0 + "\n").utf8)) }
+                if !dry { colony.memoryDump().forEach { FileHandle.standardError.write(Data(($0 + "\n").utf8)) } }
+                exit(report.pairs.isEmpty ? 1 : 0)
+            }
+        }
+        // `--diary`: every pair with something new gets its diary now, whatever the
+        // hour; what the model wrote on stderr, then quit.
+        if CommandLine.arguments.contains("--diary"), let colony {
+            colony.trace = { if $0.hasPrefix("memory") { FileHandle.standardError.write(Data(($0 + "\n").utf8)) } }
+            Task { @MainActor in
+                let n = colony.writeDiaries(force: true)
+                colony.trace?("memory: \(n) pairs asked")
+                for _ in 0..<1200 where !colony.writingMemory.isEmpty { try? await Task.sleep(for: .seconds(0.1)) }
+                exit(n == 0 ? 1 : 0)
             }
         }
         // `--screens [all|N]`: every monitor, the choice and where each creature is, on stderr.
@@ -365,6 +419,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         // `--actions [--activities]`: the Creature Actions sheet (on its Activities page); `--snapshot <file.png>` with it writes it to a file and quits.
+        // `--relationships [--snapshot out.png]`: the Relationships window, written to a PNG.
+        if CommandLine.arguments.contains("--relationships") {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                relationshipsWindow.show()
+                guard let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) else { return }
+                try? await Task.sleep(for: .seconds(2))
+                do { try relationshipsWindow.snapshot(to: URL(fileURLWithPath: CommandLine.arguments[shot + 1])) } catch { FileHandle.standardError.write(Data("Ledgelings snapshot: \(error)\n".utf8)) }
+                exit(0)
+            }
+        }
         if CommandLine.arguments.contains("--actions") {
             let actions = actions
             Task { @MainActor in
@@ -432,11 +497,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(voiceItem)
         revengeItem.target = self
         menu.addItem(revengeItem)
+        deedsItem.target = self
+        menu.addItem(deedsItem)
 
         talkStatusItem.isEnabled = false
         menu.addItem(talkStatusItem)
         chatsItem.target = self
         menu.addItem(chatsItem)
+        relationshipsItem.target = self
+        menu.addItem(relationshipsItem)
         spendItem.target = self
         menu.addItem(spendItem)
         // Each language under its own name, so whoever cannot read the current one still finds theirs.
@@ -475,6 +544,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         revengeItem.title = tr("Cursor Revenge")
         activitiesItem.title = tr("Activities…")
         chatsItem.title = tr("Chat History…")
+        deedsItem.title = tr("Deeds from Talk")
+        relationshipsItem.title = tr("Relationships…")
         settingsItem.title = tr("Settings…")
         languageItem.title = tr("Language")
         quitItem.title = tr("Quit Ledgelings")
@@ -525,6 +596,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if settings.nightMinutes == 0 { phaseItem.title = tr("Always day — night is set to 0") }
         voiceItem.state = settings.voiceEnabled ? .on : .off
         revengeItem.state = settings.revengeEnabled ? .on : .off
+        deedsItem.state = settings.deedsEnabled ? .on : .off
         if let next = reminders.book.upcoming {
             nextReminderItem.title = "   " + tr("Next: %@, %@", String(next.text.prefix(40)), Reminders.when(next.time, now: Date()))
                 + (settings.remindersEnabled ? "" : " " + tr("(off)"))
@@ -555,6 +627,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func openActions() { actions.show() }
+    @objc private func toggleDeeds() { settings.deedsEnabled.toggle() }
+    @objc private func openRelationships() { relationshipsWindow.show() }
+
+    /// The seed, from the Relationships tab: its log in a line for the tab.
+    private func seedMemory(dryRun: Bool) async -> String {
+        guard let colony else { return tr("The creatures are not on screen.") }
+        let report = await colony.seedMemory(dryRun: dryRun) { FileHandle.standardError.write(Data(($0 + "\n").utf8)) }
+        return dryRun ? tr("%@ to read, about %@ tokens to send. Nothing was sent.", trCount(report.pairs.count, "pair", "pairs"), "\(report.tokens)")
+                      : tr("%@ read in. See them in Relationships….", trCount(report.pairs.count, "pair", "pairs"))
+    }
     @objc private func openClipHistory() { picker.show(.recent) }
     @objc private func openClipSnippets() { picker.show(.snippets) }
     @objc private func openSnippetsEditor() { snippetsWindow.show() }

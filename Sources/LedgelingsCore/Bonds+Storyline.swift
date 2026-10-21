@@ -24,8 +24,16 @@ extension Bonds {
         public var who: String
         /// The first line said, the flower given, the note sent, the game played (`Plays.Kind`); nil for a grab.
         public var detail: String?
-        public init(time: Date, kind: Kind, who: String, detail: String? = nil) {
+        /// A game's score as its board showed it: "3-2".
+        public var score: String?
+        /// A game's winners; empty for a draw, nil when the game has no winner (the rope).
+        public var winners: [String]?
+        /// Who asked for it: the one whose invitation started the game.
+        public var asked: String?
+        public init(time: Date, kind: Kind, who: String, detail: String? = nil,
+                    score: String? = nil, winners: [String]? = nil, asked: String? = nil) {
             self.time = time; self.kind = kind; self.who = who; self.detail = detail
+            self.score = score; self.winners = winners; self.asked = asked
         }
     }
 
@@ -55,6 +63,7 @@ extension Bonds.Book {
             bond.moments = Array((bond.moments + [moment]).suffix(Bonds.momentsKept))
             bond.tally[moment.kind.rawValue, default: 0] += 1
             if bond.met.map({ moment.time < $0 }) ?? true { bond.met = moment.time }
+            Bonds.keep(moment, in: &bond)
         }
     }
 
@@ -136,7 +145,9 @@ extension Bonds {
         case .flower: return tr("%1$@ gave %2$@ a %3$@", moment.who, other, Gifts.name(of: moment.detail ?? ""))
         case .plane: return tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.who, other, said)
         case .grab: return tr("%1$@ grabbed the cursor while %2$@ looked on", moment.who, other)
-        case .play: return tr("%1$@ and %2$@ played: %3$@", moment.who, other, Plays.name(of: moment.detail))
+        case .play:
+            let played = tr("%1$@ and %2$@ played: %3$@", moment.who, other, Plays.name(of: moment.detail))
+            return result(moment).map { played + " (" + $0 + ")" } ?? played
         }
     }
 

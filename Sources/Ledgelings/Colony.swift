@@ -183,6 +183,23 @@ final class Colony: NSObject {
     var scheduled: [ScheduledLine] = []
     /// The script conversations used lately, oldest first, so the same one is not heard twice running.
     var recentLines: [Int] = []
+    /// Invitations waiting for their answer (`Deeds`).
+    var invitations: [Deeds.Invitation] = []
+    /// Deeds agreed on, waiting for both to be free.
+    var agreed: [AgreedDeed] = []
+    /// The deeds done lately, against the owner's limits.
+    var deedLedger = Deeds.Ledger()
+    /// Who follows whom, until when; who is walking over to whom.
+    var following: [Int: (leader: Int, until: Double)] = [:]
+    var visiting: [Int: (host: Int, until: Double)] = [:]
+    /// The next conversation or letter opens with this invitation (`--converse --invite`, the film).
+    var forcedOffer: Deeds.Offer?
+    /// The next built-in answer to an invitation is this, whatever chance says (the film).
+    var forcedAnswer: Bool?
+    /// Pairs whose memory the model is writing now.
+    var writingMemory: Set<String> = []
+    var nextMemoryCheck = 0.0
+    var wasNight = false
     /// The paper plane in the air, or being read; one at a time.
     var airmail: Airmail?
     /// How many planes have gone up, so a late model answer finds the right one.
@@ -430,6 +447,8 @@ final class Colony: NSObject {
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
+        updateDeeds()
+        updateMemory()
         updateReminders(dt: dt)
         liveTogether(dt: dt)
         render()
