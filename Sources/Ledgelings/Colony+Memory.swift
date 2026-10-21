@@ -191,7 +191,8 @@ extension Colony {
             for day in bond.days.suffix(7) { out.append("memory \(key): day \(day.day): \(day.line ?? Bonds.dayLine(day))") }
             for (x, y) in [(bond.names[0], bond.names[1]), (bond.names[1], bond.names[0])] {
                 let block = Bonds.memory(bond, speaker: x, other: y, budget: settings.memoryTokens)
-                out.append("memory \(key): \(x) remembers (\(Bonds.tokens(block)) of \(settings.memoryTokens) tokens): \(block)")
+                let all = Bonds.tokens(Bonds.memory(bond, speaker: x, other: y, budget: 100_000))
+                out.append("memory \(key): \(x) remembers (\(Bonds.tokens(block)) of \(settings.memoryTokens) tokens; all of it \(all)): \(block)")
             }
         }
         return out

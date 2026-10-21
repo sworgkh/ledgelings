@@ -971,10 +971,14 @@ moments, empty tally, `seeded` false).
   optional in `bonds.json`: an older file loads.
 - **What a prompt carries** (memory on): after the bond and plot (§6.5.2), the pair's
   block `Bonds.memory`, at most `memoryTokens` tokens (estimated as UTF-8 bytes / 4),
-  filled by need: today together → facts newest first (as many as fit; note/deed facts
-  dated "(20 Oct)") → games record → yesterday's line → how they met and all told → the
-  chronicle trimmed from its oldest sentences; written in the order met, story,
-  games, facts, yesterday, today. Then, with `dayContextEnabled`, the speaker's day so
+  filled by need: the chronicle, its newest whole sentences (trimmed from its oldest)
+  → facts newest first (as many as fit; note/deed facts dated "(20 Oct)") → today
+  together → yesterday's line → games record → how they met and all told; written in
+  the order met, story, games, facts, yesterday, today. The default 600 holds the
+  busiest pair's all (558 tokens in Russian, October 2026); `--memory` prints each
+  block as "(473 of 600 tokens; all of it 527)". Cost: the block rides on every line,
+  about 2 cents a day at some 430 lines with Claude Haiku (derived from the spend log),
+  under 1 cent at the old 150. Then, with `dayContextEnabled`, the speaker's day so
   far over every pair, talks left out, a game told once with everyone, newest first, at
   most `dayContextItems`: "Your day so far: played a game of soccer with Boo, Zed at
   10:40 (won by Boo, Zed, 2-3); got a poppy from Boo at 11:05." Talk, letters and tea
@@ -2711,7 +2715,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | builtInInviteShare | 20 | 0–100 %, clamped on load: built-in talks and letters that invite |
 | builtInAcceptChance | 65 | 0–100 %, clamped on load: built-in answers that say yes, before closeness |
 | memoryEnabled | true | pairs carry their memory into prompts (§6.5.2.3) |
-| memoryTokens | 150 | 0–1000, clamped on load; 0 = none sent |
+| memoryTokens | 600 | 0–2000, clamped on load; 0 = none sent. A saved 150 (the default before 0.59.1) moves to 600 once (`memoryTokensMoved`) |
 | memoryFacts | 5 | 0–20, clamped on load: facts kept per pair |
 | memoryDays | 60 | 0–365, clamped on load: days of timeline kept |
 | memoryNotes | true | the model may write facts down (`NOTE:`) |

@@ -502,8 +502,8 @@ in its own words. Deeds make no calls of their own; they add about 40 tokens to 
 *Deeds from Talk* in the menu turns them on and off.
 
 **Memory.** Every conversation, letter and tea party carries what the two remember:
-today, their facts (a promise, a debt, a rivalry), their games record, yesterday and
-their story so far, cut to the budget. At the colony's nightfall the model writes each
+their story so far, their facts (a promise, a debt, a rivalry), today, yesterday and
+their games record, cut to the budget in that order. At the colony's nightfall the model writes each
 active pair's memory down (*the diary*: one call a pair, Costs › Long-term memory). **Their
 past** reads the chat log of the last days into every pair's memory once (one call a pair,
 Costs › Memory: reading the past); **Check First** says what would be sent and sends
@@ -523,7 +523,7 @@ own lines and what kind of moment each was are sent.
 | **Built-in letters and talks that invite** | 20 % | 0 to 100 % | `builtInInviteShare` |
 | **Built-in answers that say yes** | 65 % | 0 to 100 % | `builtInAcceptChance`; close friends more often, strangers less |
 | **Pairs remember each other** | on | | `memoryEnabled` |
-| **Memory sent with each line** | 150 tokens | 0 to 1000 | `memoryTokens`; 0: none |
+| **Memory sent with each line** | 600 tokens | 0 to 2000 | `memoryTokens`; 0: none. 600 holds the busiest pair's whole story, five facts, today and yesterday in Russian (558 tokens in October 2026). Over the budget their story stays first, then the newest facts, then today, yesterday, their games and how they met. Each line carries it: with Claude Haiku about 2 cents a day for some 430 lines, against under 1 cent at 150. A 150 saved by an older version moves to 600 once; anything else you chose stays |
 | **Facts kept per pair** | 5 | 0 to 20 | `memoryFacts` |
 | **Days of timeline kept** | 60 | 0 to 365 | `memoryDays`; for you to read, only today and yesterday are sent |
 | **The model may note facts as it speaks** | on | | `memoryNotes`: a line may add `NOTE:` |

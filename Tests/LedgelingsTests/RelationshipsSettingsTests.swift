@@ -19,7 +19,7 @@ import Testing
         #expect(s.deedsEnabled && s.deedGames && s.deedTea && s.deedFlower && s.deedLetter && s.deedVisit && s.deedFollow && s.deedSleep)
         #expect(s.deedGapMinutes == 4 && s.deedsPerHour == 8 && s.deedPairGapMinutes == 20 && s.inviteOpenMinutes == 10)
         #expect(s.deedWaitMinutes == 3 && s.builtInInviteShare == 20 && s.builtInAcceptChance == 65 && s.followSeconds == 30)
-        #expect(s.memoryEnabled && s.memoryTokens == 150 && s.memoryFacts == 5 && s.memoryDays == 60 && s.memoryNotes)
+        #expect(s.memoryEnabled && s.memoryTokens == 600 && s.memoryFacts == 5 && s.memoryDays == 60 && s.memoryNotes)
         #expect(s.diaryEnabled && s.diaryEveryHours == 8 && s.diaryPairsPerNight == 8 && s.dayContextEnabled && s.dayContextItems == 4)
         #expect(s.seedDays == 14 && s.seedLines == 40)
         #expect(s.deedLimits == Deeds.Limits(gap: 240, perHour: 8, pairGap: 1200))
@@ -45,8 +45,23 @@ import Testing
         let clamped = AppSettings(defaults: defaults, keychain: Keychain(service: name))
         #expect(clamped.deedGapMinutes == 0 && clamped.deedPairGapMinutes == 240 && clamped.inviteOpenMinutes == 1 && clamped.deedWaitMinutes == 15)
         #expect(clamped.builtInInviteShare == 100 && clamped.followSeconds == 5 && clamped.diaryEveryHours == 1)
-        #expect(clamped.deedsPerHour == 120 && clamped.memoryTokens == 1000 && clamped.memoryFacts == 0 && clamped.memoryDays == 365)
+        #expect(clamped.deedsPerHour == 120 && clamped.memoryTokens == 2000 && clamped.memoryFacts == 0 && clamped.memoryDays == 365)
         #expect(clamped.diaryPairsPerNight == 50 && clamped.dayContextItems == 10 && clamped.seedDays == 1 && clamped.seedLines == 5)
+    }
+
+    @Test func theOldDefaultMovesToTheNewOnceAndAChosenValueStays() {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(150, forKey: "memoryTokens")
+        #expect(AppSettings(defaults: defaults, keychain: Keychain(service: name)).memoryTokens == 600)
+        // Chosen by hand after the move, 150 stays.
+        AppSettings(defaults: defaults, keychain: Keychain(service: name)).memoryTokens = 150
+        #expect(AppSettings(defaults: defaults, keychain: Keychain(service: name)).memoryTokens == 150)
+        // Any other saved value was the owner's choice and is never moved.
+        defaults.removePersistentDomain(forName: name)
+        defaults.set(300, forKey: "memoryTokens")
+        #expect(AppSettings(defaults: defaults, keychain: Keychain(service: name)).memoryTokens == 300)
     }
 
     @Test func theTabIsNamedForScripts() {

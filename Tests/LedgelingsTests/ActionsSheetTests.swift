@@ -86,4 +86,19 @@ import Testing
         #expect(ActionsController.next(after: CursorMood.allCases.last!) == CursorMood.allCases.first!)
         #expect(ActionsController.next(after: Language.english) == .russian && ActionsController.next(after: Language.russian) == .english)
     }
+
+    @Test func everyGameRowAndButtonOnTheActivitiesPageSaysWhatItDoesAndItsKey() {
+        for kind in Plays.Kind.allCases {
+            #expect(kind.activityTip.hasPrefix("Start now: ") && kind.activityTip.hasSuffix("(\(String(kind.activityKey).uppercased()))"), "\(kind.activityTip)")
+        }
+        #expect(ActionsPage.backTip.contains("(←)") && ActionsPage.doneTip.contains("(Return)") && !ActionsPage.gamesTip.isEmpty)
+    }
+
+    @MainActor @Test func theActivitiesPageFitsTheSheetWithItsButtonsWhereTheSheetsOwnAre() {
+        // Under the title (24), with 8 + 6 around the line: the rows, the line and the gap to the buttons
+        // get what the main page's tiles, line and switches leave its footer, 350 points.
+        let rows = CGFloat(Plays.Kind.allCases.count) * ActionsSheetView.activityRow
+            + CGFloat(Plays.Kind.allCases.count - 1) * ActionsSheetView.activityGap
+        #expect(rows + ActionsSheetView.activityLineHeight + ActionsSheetView.activitiesFooterGap <= 350, "\(rows)")
+    }
 }

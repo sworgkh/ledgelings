@@ -339,7 +339,14 @@ enum ActionsLink: CaseIterable {
 }
 
 /// The sheet has one inner page: the games, listed (`Plays`).
-enum ActionsPage { case main, activities }
+enum ActionsPage {
+    case main, activities
+
+    /// What the Activities page's buttons say on hover, with their keys.
+    static var backTip: String { tr("Back to the sheet (←)") }
+    static var gamesTip: String { tr("Turn games on or off") }
+    static var doneTip: String { tr("Put the sheet away (Return)") }
+}
 
 /// A game as a row of the Activities page: what it is called, a line on what
 /// happens, and the key that plays it.
@@ -376,6 +383,9 @@ extension Plays.Kind {
         case .baseball: "i"
         }
     }
+
+    /// What its row says on hover: "Start now: a game of soccer (G)".
+    var activityTip: String { tr("Start now: %@ (%@)", title, String(activityKey).uppercased()) }
 
     /// Why Play Now is greyed, or nil when it is not.
     func activityDetail(in s: ActionsState) -> String? {
@@ -602,7 +612,7 @@ struct ActionsSheetView: View {
                     Text(tr("ACTIVITIES · WHAT SHOULD THEY PLAY?")).font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(Self.faintInk).padding(.bottom, 10)
                     activities.padding(.bottom, 8)
-                    line.frame(height: 30, alignment: .leading).padding(.bottom, 6)
+                    line.frame(height: Self.activityLineHeight, alignment: .leading).padding(.bottom, 6)
                     activitiesFooter
                 } else {
                     HStack(spacing: 8) {
@@ -736,10 +746,15 @@ struct ActionsSheetView: View {
 }
 
 extension ActionsSheetView {
+    static let activityRow: CGFloat = 50
+    static let activityGap: CGFloat = 3
+    static let activityLineHeight: CGFloat = 24
+    static let activitiesFooterGap: CGFloat = 11
+
     /// The Activities page: a row per game, its picture, name and what happens, and Play Now.
     var activities: some View {
-        // Six rows still leave room for the line and the buttons under them.
-        VStack(alignment: .leading, spacing: 5) {
+        // Six rows of 50 leave room for the line, and the buttons sit where the sheet's own do.
+        VStack(alignment: .leading, spacing: Self.activityGap) {
             ForEach(Plays.Kind.allCases, id: \.self) { activityRow($0) }
         }
     }
@@ -762,10 +777,11 @@ extension ActionsSheetView {
                 }
             }
             .padding(.horizontal, 12)
-            .frame(width: ActionsController.size.width - 66, height: 52, alignment: .leading)
+            .frame(width: ActionsController.size.width - 66, height: Self.activityRow, alignment: .leading)
         }
         .buttonStyle(PixelTileStyle(chosen: false))
         .keyboardShortcut(KeyEquivalent(kind.activityKey), modifiers: [])
+        .help(kind.activityTip)
         .disabled(why != nil)
         .opacity(why == nil ? 1 : 0.45)
     }
@@ -783,13 +799,16 @@ extension ActionsSheetView {
         HStack(spacing: 6) {
             PixelButton(title: tr("BACK"), small: true) { model.page = .main }
                 .keyboardShortcut(.leftArrow, modifiers: [])
+                .help(ActionsPage.backTip)
             PixelButton(title: ActionsSwitch.play.title(in: model.state), small: true, chosen: ActionsSwitch.play.isOn(in: model.state)) { model.flip(.play) }
                 .lineLimit(1).fixedSize()
+                .help(ActionsPage.gamesTip)
             Spacer()
             PixelButton(title: tr("DONE"), action: done)
                 .keyboardShortcut(.return, modifiers: [])
+                .help(ActionsPage.doneTip)
         }
-        .padding(.top, 40)
+        .padding(.top, Self.activitiesFooterGap)
         .padding(.trailing, 24)
     }
 }
