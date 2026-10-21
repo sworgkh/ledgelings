@@ -33,6 +33,8 @@ public sealed partial class Colony
         public BallGame? BallGame;
         /// <summary>Where the players are going before it starts: leaping to a floor or the ceiling.</summary>
         public Dictionary<int, EdgeWorld.Spot> Reaching = new();
+        /// <summary>Whose invitation started it, for the players' memory.</summary>
+        public string? AskedBy;
     }
 
     /// <summary>The hoop on its wall, the ball, and whose throw it is.</summary>
@@ -174,6 +176,24 @@ public sealed partial class Colony
         foreach (var (k, players) in tries) if (Begin(k, players)) return true;
         if (kind is not null) TalkStatus = L10n.Tr("no room to play that here");
         return false;
+    }
+
+    /// <summary>Start <paramref name="kind"/> with these two because they agreed to (<see cref="Deeds"/>): a ball game
+    /// takes everyone else free too, the invited one first. <paramref name="asked"/>: whose
+    /// invitation it was, for their memory.</summary>
+    public bool StartPlay(Plays.Kind kind, int[] pair, string? asked)
+    {
+        if (play is not null || hideout.IsActive || pair.Length != 2 || !pair.All(FreeToPlay)) return false;
+        var players = pair;
+        if (kind.IsTeamGame())
+        {
+            var crowd = new List<(int Index, double Closeness)> { (pair[1], 2.0) };
+            crowd.AddRange(Crowd(pair[0]).Where(c => c.Index != pair[1]));
+            players = Plays.Joining(pair[0], crowd, Settings.BallGamePlayers.TryGetValue(kind, out var most) ? most : 6);
+        }
+        if (!Begin(kind, players)) return false;
+        play!.AskedBy = asked;
+        return true;
     }
 
     // MARK: Starting
@@ -548,13 +568,52 @@ public sealed partial class Colony
     {
         s.Now = PlaySession.Stage.Ending;
         s.Until = Elapsed + EndPause;
-        if (s.Kind.IsTeamGame())
-        {
-            // Playing together brings them closer: teammates, or everyone in a small game.
-            foreach (var (a, b) in BallGamePairs(s)) Shared(a, b, Core.Bonds.MomentKind.Play, s.Kind.Raw());
-        }
-        else if (s.Players.Length == 2) Shared(s.Players[0], s.Players[1], Core.Bonds.MomentKind.Play, s.Kind.Raw());
+        // Everyone who played together lived it together: teammates, and the
+        // other side too, with how it ended and whose idea it was.
+        var (score, winners) = GameResult(s);
+        Trace?.Invoke($"play {s.Kind.Raw()} result: {score ?? "-"}, won by {(winners is null ? "-" : winners.Count == 0 ? "nobody (a draw)" : string.Join(", ", winners))}");
+        for (int a = 0; a < s.Players.Length; a++)
+            for (int b = a + 1; b < s.Players.Length; b++)
+                Shared(s.Players[a], s.Players[b], Core.Bonds.MomentKind.Play, s.Kind.Raw(), score, winners, s.AskedBy);
         DoneLine(speaker, s);
+    }
+
+    /// <summary>How the game ended: the board's score and who won (empty for a draw, null
+    /// for a game with no winner, as the rope, or one played alone).</summary>
+    private (string? Score, List<string>? Winners) GameResult(PlaySession s)
+    {
+        List<string>? Won(List<(int[] Players, int Points)> sides)
+        {
+            if (sides.Count < 2) return null;
+            var best = sides.Max(x => x.Points);
+            var top = sides.Where(x => x.Points == best).ToList();
+            return top.Count > 1 ? new List<string>() : top[0].Players.Select(Name).ToList();
+        }
+        switch (s.Kind)
+        {
+            case Plays.Kind.Tag:
+                return (s.Tag is { } tag ? L10n.TrCount(tag.Touches, "touch", "touches") : null, null);
+            case Plays.Kind.Rope:
+            case Plays.Kind.Parachute:
+                return (null, null);
+            case Plays.Kind.Basketball:
+            {
+                if (s.Court is not { } court) return (null, null);
+                var sides = s.Players.Select(p => (new[] { p }, court.Made.GetValueOrDefault(p))).ToList();
+                return (string.Join("-", sides.Select(x => x.Item2)), Won(sides));
+            }
+            case Plays.Kind.Soccer:
+                if (s.Soccer is not { } m) return (null, null);
+                return (SoccerScore(m), m.Lineup == Plays.Lineup.Solo ? null : m.Winners.Select(Name).OrderBy(n => n, StringComparer.Ordinal).ToList());
+            default:
+            {
+                if (s.Baseball is not { } g || g.Lineup == Plays.Lineup.Solo) return (s.Baseball is { } solo ? BaseballScore(solo) : null, null);
+                var sides = g.Lineup == Plays.Lineup.Rotation
+                    ? s.Players.Select(p => (new[] { p }, g.RunsBy.GetValueOrDefault(p))).ToList()
+                    : Enumerable.Range(0, g.Sides.Count).Select(k => (g.Sides[k], k < g.SideRuns.Length ? g.SideRuns[k] : 0)).ToList();
+                return (BaseballScore(g), Won(sides));
+            }
+        }
     }
 
     /// <summary>Let everyone go: down from the air, off the spot they waited on, out of <c>busy</c>.</summary>

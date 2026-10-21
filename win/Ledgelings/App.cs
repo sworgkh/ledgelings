@@ -106,9 +106,11 @@ public sealed partial class App : Application
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
+        items.Add(new TrayIcon.Item(L10n.Tr("Deeds from Talk"), () => settings.DeedsEnabled = !settings.DeedsEnabled, Checked: settings.DeedsEnabled));
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
         items.Add(new TrayIcon.Item(L10n.Tr("Chat History\u2026"), () => OpenSettings(SettingsTab.Chats)));
+        items.Add(new TrayIcon.Item(L10n.Tr("Relationships\u2026"), OpenRelationships));
         var s = spend.Summary;
         if (s.AllTime.Calls > 0)
             items.Add(new TrayIcon.Item(L10n.Tr("Spent: %@ today, %@ this month", Spend.Label(s.Today.Cost), Spend.Label(s.Month.Cost)), () => OpenSettings(SettingsTab.Costs)));
@@ -139,6 +141,23 @@ public sealed partial class App : Application
         ActionsSheet.ShowSheet(settings, colony, AddAReminder, Follow, () => ShortcutTitle, ActionsPage.Activities);
     }
 
+    /// <summary>Every pair's memory, to read (Relationships…).</summary>
+    private void OpenRelationships()
+    {
+        if (colony is null || settings is null) return;
+        RelationshipsWindow.ShowWindow(settings, colony.Bonds);
+    }
+
+    /// <summary>The seed, from the Relationships tab: its log on the console, a line for the tab.</summary>
+    private async Task<string> SeedMemory(bool dryRun)
+    {
+        if (colony is null) return L10n.Tr("The creatures are not on screen.");
+        var report = await colony.SeedMemory(dryRun, line => Console.Error.WriteLine(line));
+        return dryRun
+            ? L10n.Tr("%@ to read, about %@ tokens to send. Nothing was sent.", L10n.TrCount(report.Pairs.Count, "pair", "pairs"), report.Tokens)
+            : L10n.Tr("%@ read in. See them in Relationships….", L10n.TrCount(report.Pairs.Count, "pair", "pairs"));
+    }
+
     /// <summary>Seconds until 08:00 tomorrow, local time.</summary>
     public static double SecondsUntilTomorrowMorning()
     {
@@ -154,7 +173,7 @@ public sealed partial class App : Application
     private SettingsWindow? EnsureSettingsWindow()
     {
         if (settings is null || history is null || library is null || spend is null) return null;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, SeedMemory = SeedMemory, OpenRelationships = OpenRelationships, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
         AttachClipboard(settingsWindow);
         return settingsWindow;

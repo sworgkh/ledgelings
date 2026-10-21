@@ -30,13 +30,21 @@ public sealed partial class Colony
         Bonds.Change(book => book.LiveTogether(seconds, names));
     }
 
-    /// <summary>What goes into creature <paramref name="i"/>'s prompt about <paramref name="j"/>. Empty when plots are off,
-    /// or the two have no bond or story yet.</summary>
+    /// <summary>What goes into creature <paramref name="i"/>'s prompt about <paramref name="j"/>: the bond and the story
+    /// running between them (with plots on), what they remember of each other and
+    /// what <paramref name="i"/> did today (with memory on), within the owner's token budget.
+    /// Empty for strangers with nothing on.</summary>
     private string Relationship(int i, int j)
     {
-        if (!Settings.PlotsEnabled) return "";
         string a = CharacterFor(i).Name, b = CharacterFor(j).Name;
-        return Core.Bonds.Context(Bonds.Bond(a, b), a, b);
+        var parts = new List<string>();
+        if (Settings.PlotsEnabled) parts.Add(Core.Bonds.Context(Bonds.Bond(a, b), a, b));
+        if (Settings.MemoryEnabled)
+        {
+            parts.Add(Core.Bonds.Memory(Bonds.Bond(a, b), a, b, Settings.MemoryTokens));
+            if (Settings.DayContextEnabled) parts.Add(Core.Bonds.DaySoFar(a, Bonds.Book, Settings.DayContextItems));
+        }
+        return string.Join(" ", parts.Where(p => p.Length > 0));
     }
 
     /// <summary>The story running between two creatures, for the chat log: "part 2 of 6: …".</summary>
@@ -57,11 +65,12 @@ public sealed partial class Colony
 
     /// <summary>Something two creatures lived through together that is not a conversation
     /// (a flower, a paper plane, a cursor grab), for their storyline.</summary>
-    internal void Shared(int i, int j, string kind, string? detail = null)
+    internal void Shared(int i, int j, string kind, string? detail = null,
+                         string? score = null, IEnumerable<string>? winners = null, string? asked = null)
     {
         if (i < 0 || j < 0 || i >= creatures.Count || j >= creatures.Count || i == j) return;
         string a = CharacterFor(i).Name, b = CharacterFor(j).Name;
-        Bonds.Change(book => book.Note(a, b, new Core.Bonds.Moment(DateTimeOffset.Now, kind, a, detail)));
+        Bonds.Change(book => book.Note(a, b, new Core.Bonds.Moment(DateTimeOffset.Now, kind, a, detail, score, winners, asked)));
     }
 
     /// <summary>The pair's past from before moments were kept, read from the chat log once.</summary>

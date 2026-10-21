@@ -21,8 +21,11 @@ public sealed partial class Colony
         };
         string system = Settings.SystemPrompt, linePrompt = Settings.LinePrompt, replyPrompt = Settings.ReplyPrompt;
         var bubbleSeconds = Settings.BubbleSeconds;
-        // How the two get on, and the story between them, from each one's side.
-        string aSide = Relationship(speaker, listener), bSide = Relationship(listener, speaker);
+        // How the two get on, the story between them and what they remember, from
+        // the opener's side, with the deeds it may take; the answer's side is put
+        // together once the opening line is in, so it can answer an invitation.
+        var aOptions = DeedOptions(speaker, listener, letter: false);
+        var aSide = Side(speaker, listener, aOptions);
         // What each said lately, so the model says something new.
         List<string> aLately = History.Memory.Recent(a.Name), bLately = History.Memory.Recent(b.Name);
         var plot = PlotLabel(speaker, listener);
@@ -60,11 +63,15 @@ public sealed partial class Colony
             var opening = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, aSide), aLately),
                                              Banter.Render(linePrompt, vars));
             Charge(opening);
-            var first = Banter.CleanLine(opening.Text, a.Name, cut: opening.Cut);
+            var opened = Deeds.Split(opening.Text);
+            var first = Banter.CleanLine(opened.Text, a.Name, cut: opening.Cut);
             if (first.Length == 0) { TalkStatus = L10n.Tr("the model sent an empty line"); fallBack = true; return; }
             var firstSaid = Say(first, speaker);
             spoken.Add(new ChatLog.Line(a.Name, first));
             TalkStatus = $"{a.Name}: {first}";
+            Took(opened, speaker, listener, aOptions, byLetter: false);
+            var bOptions = DeedOptions(listener, speaker, letter: false);
+            var bSide = Side(listener, speaker, bOptions);
 
             // Swap seats for the answer.
             vars["speaker"] = b.Name; vars["speakerKind"] = Banter.Spoken(bKind); vars["speakerPersona"] = Banter.Persona(b.Persona);
@@ -73,7 +80,8 @@ public sealed partial class Colony
             var answer = await service.Line(LineMemory.WithRecent(Core.Bonds.WithRelationship(system, vars, bSide), bLately),
                                             Banter.Render(replyPrompt, vars));
             Charge(answer);
-            var reply = Banter.CleanLine(answer.Text, b.Name, cut: answer.Cut);
+            var answered = Deeds.Split(answer.Text);
+            var reply = Banter.CleanLine(answered.Text, b.Name, cut: answer.Cut);
             if (reply.Length == 0) { await Said(firstSaid); return; }
             if (IsVoiced)
             {
@@ -90,6 +98,7 @@ public sealed partial class Colony
             var replySaid = Say(reply, listener);
             spoken.Add(new ChatLog.Line(b.Name, reply));
             TalkStatus = $"{b.Name}: {reply}";
+            Took(answered, listener, speaker, bOptions, byLetter: false);
             await Said(replySaid);          // the pair stays face to face until it is said
         }
         catch (Exception e)          // any error, as the Mac catches: the pair still says built-in lines

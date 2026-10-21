@@ -45,6 +45,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         nightMinutes = Math.Max(0, this.store.Get<double?>("nightMinutes") ?? 5);
         LoadTalk();
         LoadBonds();
+        LoadRelationships();
         LoadCalendar();
         LoadPatience();
         LoadHunts();

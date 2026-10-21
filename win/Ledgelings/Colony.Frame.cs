@@ -164,6 +164,8 @@ public sealed partial class Colony
         ReleaseChatIfOver();
         foreach (var bump in meetings.Update(Parties(), Elapsed)) Bumped(bump);
         UpdatePost(dt);
+        UpdateDeeds();
+        UpdateMemory();
         UpdateReminders(dt);
         LiveTogether(dt);
         Render();

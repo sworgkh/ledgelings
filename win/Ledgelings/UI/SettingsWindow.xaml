@@ -884,6 +884,157 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Relationships">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <!-- Two columns, as the Mac's: deeds on the left, memory on the right. Each row's label sits over its slider, so a column has room. -->
+        <Grid Margin="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid.Resources>
+            <Style x:Key="Over" TargetType="TextBlock">
+              <Setter Property="TextWrapping" Value="Wrap"/>
+              <Setter Property="Margin" Value="0,6,0,0"/>
+            </Style>
+            <Style x:Key="Shown" TargetType="TextBlock">
+              <Setter Property="Width" Value="64"/>
+              <Setter Property="TextAlignment" Value="Right"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="DockPanel.Dock" Value="Right"/>
+            </Style>
+          </Grid.Resources>
+          <StackPanel Grid.Column="0">
+            <GroupBox ui:Tr.Header="Deeds from talk">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="What they say can turn into what they do" IsChecked="{Binding DeedsEnabled, Mode=TwoWay}"/>
+                <UniformGrid Columns="2" Margin="0,6,0,0" IsEnabled="{Binding DeedsEnabled}">
+                  <CheckBox ui:Tr.Content="Invite to a game" IsChecked="{Binding DeedGames, Mode=TwoWay}" Margin="0,2"/>
+                  <CheckBox ui:Tr.Content="Invite to tea" IsChecked="{Binding DeedTea, Mode=TwoWay}" Margin="0,2"/>
+                  <CheckBox ui:Tr.Content="Give a flower" IsChecked="{Binding DeedFlower, Mode=TwoWay}" Margin="0,2"/>
+                  <CheckBox ui:Tr.Content="Send a letter" IsChecked="{Binding DeedLetter, Mode=TwoWay}" Margin="0,2"/>
+                  <CheckBox ui:Tr.Content="Walk over to someone" IsChecked="{Binding DeedVisit, Mode=TwoWay}" Margin="0,2"/>
+                  <CheckBox ui:Tr.Content="Follow someone" IsChecked="{Binding DeedFollow, Mode=TwoWay}" Margin="0,2"/>
+                  <CheckBox ui:Tr.Content="Go to sleep" IsChecked="{Binding DeedSleep, Mode=TwoWay}" Margin="0,2"/>
+                </UniformGrid>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A line or a letter may end in a deed: &quot;soccer?&quot; answered &quot;yes&quot; starts the match. Each prompt offers only what is possible right now, and anything else is ignored. About 40 more tokens a line."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="How often" IsEnabled="{Binding DeedsEnabled}">
+              <StackPanel>
+                <TextBlock ui:Tr.Text="After a deed, the next waits" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding DeedGapMinutes}" ui:Tr.Unit=" min" ui:Tr.Zero="no wait"/>
+                  <Slider Minimum="0" Maximum="60" TickFrequency="0.5" Value="{Binding DeedGapMinutes, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Most deeds an hour" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding DeedsPerHour}" ui:Tr.Zero="no limit"/>
+                  <Slider Minimum="0" Maximum="120" TickFrequency="1" Value="{Binding DeedsPerHour, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Same pair, same deed again after" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding DeedPairGapMinutes}" ui:Tr.Unit=" min" ui:Tr.Zero="no wait"/>
+                  <Slider Minimum="0" Maximum="240" TickFrequency="1" Value="{Binding DeedPairGapMinutes, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="An invitation stays open" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding InviteOpenMinutes}" ui:Tr.Unit=" min"/>
+                  <Slider Minimum="1" Maximum="60" TickFrequency="1" Value="{Binding InviteOpenMinutes, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="A yes waits for both to be free" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding DeedWaitMinutes}" ui:Tr.Unit=" min"/>
+                  <Slider Minimum="0.5" Maximum="15" TickFrequency="0.5" Value="{Binding DeedWaitMinutes, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Following lasts" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding FollowSeconds}" ui:Tr.Unit=" s"/>
+                  <Slider Minimum="5" Maximum="300" TickFrequency="5" Value="{Binding FollowSeconds, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Built-in letters and talks that invite" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding BuiltInInviteShare}" ui:Tr.Unit="%"/>
+                  <Slider Minimum="0" Maximum="100" TickFrequency="5" Value="{Binding BuiltInInviteShare, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Built-in answers that say yes" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding BuiltInAcceptChance}" ui:Tr.Unit="%"/>
+                  <Slider Minimum="0" Maximum="100" TickFrequency="5" Value="{Binding BuiltInAcceptChance, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Zero turns a limit off; the same two never do two things within 15 seconds. Without a model each character invites and answers in its own words, close friends saying yes more often."/>
+              </StackPanel>
+            </GroupBox>
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+            <GroupBox ui:Tr.Header="Long-term memory">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="Pairs remember each other" IsChecked="{Binding MemoryEnabled, Mode=TwoWay}"/>
+                <TextBlock ui:Tr.Text="Memory sent with each line" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" Width="90" ui:Tr.Value="{Binding MemoryTokens}" ui:Tr.Unit=" tokens" ui:Tr.Zero="none"/>
+                  <Slider Minimum="0" Maximum="1000" TickFrequency="10" Value="{Binding MemoryTokens, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Facts kept per pair" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding MemoryFacts}"/>
+                  <Slider Minimum="0" Maximum="20" TickFrequency="1" Value="{Binding MemoryFacts, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Days of timeline kept" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding MemoryDays}"/>
+                  <Slider Minimum="0" Maximum="365" TickFrequency="1" Value="{Binding MemoryDays, Mode=TwoWay}"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="The model may note facts as it speaks" IsChecked="{Binding MemoryNotes, Mode=TwoWay}" Margin="0,8,0,0"/>
+                <CheckBox ui:Tr.Content="Each knows what it did today" IsChecked="{Binding DayContextEnabled, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <TextBlock ui:Tr.Text="Things from today it mentions" Style="{StaticResource Over}" IsEnabled="{Binding DayContextEnabled}"/>
+                <DockPanel IsEnabled="{Binding DayContextEnabled}">
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding DayContextItems}"/>
+                  <Slider Minimum="0" Maximum="10" TickFrequency="1" Value="{Binding DayContextItems, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every conversation, letter and tea party carries what the two remember, cut to the tokens set here. The timeline is for you; only today and yesterday are sent."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="The diary" IsEnabled="{Binding MemoryEnabled}">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="At nightfall the model writes their memory down" IsChecked="{Binding DiaryEnabled, Mode=TwoWay}"/>
+                <TextBlock ui:Tr.Text="A pair's memory at most every" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" ui:Tr.Value="{Binding DiaryEveryHours}" ui:Tr.Unit=" h"/>
+                  <Slider Minimum="1" Maximum="48" TickFrequency="1" Value="{Binding DiaryEveryHours, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Pairs a night" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding DiaryPairsPerNight}"/>
+                  <Slider Minimum="0" Maximum="50" TickFrequency="1" Value="{Binding DiaryPairsPerNight, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="One call a pair (Costs › Long-term memory): their story, the facts that still matter, the day in a line. Without a model days are counted and facts come from deeds and games."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Their past" IsEnabled="{Binding MemoryEnabled}">
+              <StackPanel>
+                <TextBlock ui:Tr.Text="Days read back" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding SeedDays}"/>
+                  <Slider Minimum="1" Maximum="60" TickFrequency="1" Value="{Binding SeedDays, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Lines shown per pair" Style="{StaticResource Over}"/>
+                <DockPanel>
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding SeedLines}"/>
+                  <Slider Minimum="5" Maximum="200" TickFrequency="5" Value="{Binding SeedLines, Mode=TwoWay}"/>
+                </DockPanel>
+                <WrapPanel Margin="0,8,0,0">
+                  <Button x:Name="SeedCheck" ui:Tr.Content="Check First" Click="SeedCheck_Click" Margin="0,0,6,4" Padding="8,2"/>
+                  <Button x:Name="SeedRead" ui:Tr.Content="Read the Past In" Click="SeedRead_Click" Margin="0,0,6,4" Padding="8,2"/>
+                  <Button ui:Tr.Content="Open Relationships" Click="OpenRelationships_Click" Margin="0,0,0,4" Padding="8,2"/>
+                </WrapPanel>
+                <TextBlock x:Name="SeedNews" FontSize="11" Foreground="Gray" TextWrapping="Wrap" Visibility="Collapsed"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Builds each pair's memory from what they said on this PC, one call a pair (Costs › Memory: reading the past); only their own lines are sent. Check First sends nothing. bonds.json is copied first."/>
+              </StackPanel>
+            </GroupBox>
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Calendar">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">
