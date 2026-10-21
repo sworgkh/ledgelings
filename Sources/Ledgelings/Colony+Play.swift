@@ -27,6 +27,8 @@ extension Colony {
         var ballGame: BallGame?
         /// Where the players are going before it starts: leaping to a floor or the ceiling.
         var reaching: [Int: EdgeWorld.Spot] = [:]
+        /// Whose invitation started it, for the players' memory.
+        var askedBy: String?
 
         enum Stage: Equatable {
             /// Getting to where the game is played.
@@ -145,6 +147,22 @@ extension Colony {
         for (k, players) in tries where begin(k, players) { return true }
         if kind != nil { talkStatus = tr("no room to play that here") }
         return false
+    }
+
+    /// Start `kind` with these two because they agreed to (`Deeds`): a ball game
+    /// takes everyone else free too, the invited one first. `asked`: whose
+    /// invitation it was, for their memory.
+    @discardableResult
+    func startPlay(_ kind: Plays.Kind, with pair: [Int], asked: String?) -> Bool {
+        guard play == nil, !hideout.isActive, pair.count == 2, pair.allSatisfy(freeToPlay) else { return false }
+        var players = pair
+        if kind.isTeamGame {
+            let crowd = [(index: pair[1], closeness: 2.0)] + crowd(of: pair[0]).filter { $0.index != pair[1] }
+            players = Plays.joining(initiator: pair[0], crowd: crowd, max: settings.ballGamePlayers[kind] ?? 6)
+        }
+        guard begin(kind, players) else { return false }
+        play?.askedBy = asked
+        return true
     }
 
     // MARK: Starting
@@ -471,13 +489,45 @@ extension Colony {
     /// The game is over and went well: the last word, its place in their story, then let go.
     func wrapUp(_ s: inout PlaySession, speaker: Int) {
         s.stage = .ending(until: elapsed + Self.endPause)
-        if s.kind.isTeamGame {
-            // Playing together brings them closer: teammates, or everyone in a small game.
-            for (a, b) in ballGamePairs(s) { shared(a, b, .play, detail: s.kind.rawValue) }
-        } else if s.players.count == 2 {
-            shared(s.players[0], s.players[1], .play, detail: s.kind.rawValue)
+        // Everyone who played together lived it together: teammates, and the
+        // other side too, with how it ended and whose idea it was.
+        let (score, winners) = gameResult(s)
+        trace?("play \(s.kind.rawValue) result: \(score ?? "-"), won by \(winners.map { $0.isEmpty ? "nobody (a draw)" : $0.joined(separator: ", ") } ?? "-")")
+        for a in s.players.indices {
+            for b in s.players.indices where b > a {
+                shared(s.players[a], s.players[b], .play, detail: s.kind.rawValue, score: score, winners: winners, asked: s.askedBy)
+            }
         }
         doneLine(by: speaker, s)
+    }
+
+    /// How the game ended: the board's score and who won (empty for a draw, nil
+    /// for a game with no winner, as the rope, or one played alone).
+    func gameResult(_ s: PlaySession) -> (score: String?, winners: [String]?) {
+        func won(_ sides: [(players: [Int], points: Int)]) -> [String]? {
+            guard sides.count >= 2, let best = sides.map(\.points).max() else { return nil }
+            let top = sides.filter { $0.points == best }
+            return top.count > 1 ? [] : top[0].players.map(name)
+        }
+        switch s.kind {
+        case .tag:
+            return (s.tag.map { trCount($0.touches, "touch", "touches") }, nil)
+        case .rope, .parachute:
+            return (nil, nil)
+        case .basketball:
+            guard let court = s.court else { return (nil, nil) }
+            let sides = s.players.map { (players: [$0], points: court.made[$0, default: 0]) }
+            return (sides.map { "\($0.points)" }.joined(separator: "-"), won(sides))
+        case .soccer:
+            guard let m = s.soccer else { return (nil, nil) }
+            return (soccerScore(m), m.lineup == .solo ? nil : m.winners.map(name).sorted())
+        case .baseball:
+            guard let g = s.baseball, g.lineup != .solo else { return (s.baseball.map(baseballScore), nil) }
+            let sides: [(players: [Int], points: Int)] = g.lineup == .rotation
+                ? s.players.map { ([$0], g.runsBy[$0, default: 0]) }
+                : g.sides.indices.map { (g.sides[$0], g.sideRuns.indices.contains($0) ? g.sideRuns[$0] : 0) }
+            return (baseballScore(g), won(sides))
+        }
     }
 
     /// Let everyone go: down from the air, off the spot they waited on, out of `busy`.

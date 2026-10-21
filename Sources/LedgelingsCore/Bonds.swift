@@ -61,6 +61,18 @@ public enum Bonds {
         public var met: Date?
         /// Their past in the chat log, from before moments were kept, has been read in.
         public var seeded = false
+        /// What they remember of each other for weeks: a promise, a debt, a rivalry, newest last.
+        public var facts: [Fact] = []
+        /// One entry per day they shared anything, oldest first: counts, games, a line.
+        public var days: [Day] = []
+        /// Games one of them won against the other, by `"kind|winner"`; `"kind|="` for a draw.
+        public var record: [String: Int] = [:]
+        /// When the model last wrote their memory down (the diary, or the seed).
+        public var diaryAt: Date?
+        /// When their memory was last read in from the chat log (`--memory-seed`).
+        public var memorySeeded: Date?
+        /// What their memory has cost, US dollars, when the server said.
+        public var memoryCost: Double?
 
         public init(names: [String]) { self.names = names }
 
@@ -82,6 +94,12 @@ public enum Bonds {
             tally = try c.decodeIfPresent([String: Int].self, forKey: .tally) ?? [:]
             met = try c.decodeIfPresent(Date.self, forKey: .met)
             seeded = try c.decodeIfPresent(Bool.self, forKey: .seeded) ?? false
+            facts = try c.decodeIfPresent([Fact].self, forKey: .facts) ?? []
+            days = try c.decodeIfPresent([Day].self, forKey: .days) ?? []
+            record = try c.decodeIfPresent([String: Int].self, forKey: .record) ?? [:]
+            diaryAt = try c.decodeIfPresent(Date.self, forKey: .diaryAt)
+            memorySeeded = try c.decodeIfPresent(Date.self, forKey: .memorySeeded)
+            memoryCost = try c.decodeIfPresent(Double.self, forKey: .memoryCost)
         }
     }
 
@@ -184,6 +202,7 @@ public enum Bonds {
         public mutating func resetStory(_ key: String) {
             guard var bond = bonds[key] else { return }
             bond.chronicle = nil; bond.moments = []; bond.tally = [:]; bond.met = nil; bond.seeded = true
+            bond.facts = []; bond.days = []; bond.record = [:]; bond.diaryAt = nil; bond.memorySeeded = nil
             bond.summary = nil; bond.plot = nil; bond.lastPlot = nil; bond.plots = 0; bond.recent = []; bond.lastAsked = nil
             bonds[key] = bond
         }

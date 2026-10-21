@@ -18,12 +18,19 @@ extension Colony {
         bonds.change { $0.liveTogether(seconds, names: names) }
     }
 
-    /// What goes into creature `i`'s prompt about `j`. Empty when plots are off,
-    /// or the two have no bond or story yet.
+    /// What goes into creature `i`'s prompt about `j`: the bond and the story
+    /// running between them (with plots on), what they remember of each other and
+    /// what `i` did today (with memory on), within the owner's token budget.
+    /// Empty for strangers with nothing on.
     func relationship(of i: Int, with j: Int) -> String {
-        guard settings.plotsEnabled else { return "" }
         let a = character(forCreature: i).name, b = character(forCreature: j).name
-        return Bonds.context(bonds.bond(a, b), speaker: a, other: b)
+        var parts: [String] = []
+        if settings.plotsEnabled { parts.append(Bonds.context(bonds.bond(a, b), speaker: a, other: b)) }
+        if settings.memoryEnabled {
+            parts.append(Bonds.memory(bonds.bond(a, b), speaker: a, other: b, budget: settings.memoryTokens))
+            if settings.dayContextEnabled { parts.append(Bonds.daySoFar(of: a, in: bonds.book, items: settings.dayContextItems)) }
+        }
+        return parts.filter { !$0.isEmpty }.joined(separator: " ")
     }
 
     /// The story running between two creatures, for the chat log: "part 2 of 6: …".
@@ -43,10 +50,11 @@ extension Colony {
 
     /// Something two creatures lived through together that is not a conversation
     /// (a flower, a paper plane, a cursor grab), for their storyline.
-    func shared(_ i: Int, _ j: Int, _ kind: Bonds.Moment.Kind, detail: String? = nil) {
+    func shared(_ i: Int, _ j: Int, _ kind: Bonds.Moment.Kind, detail: String? = nil,
+                score: String? = nil, winners: [String]? = nil, asked: String? = nil) {
         guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
         let a = character(forCreature: i).name, b = character(forCreature: j).name
-        bonds.change { $0.note(a, b, Bonds.Moment(time: Date(), kind: kind, who: a, detail: detail)) }
+        bonds.change { $0.note(a, b, Bonds.Moment(time: Date(), kind: kind, who: a, detail: detail, score: score, winners: winners, asked: asked)) }
     }
 
     /// The pair's past from before moments were kept, read from the chat log once.

@@ -48,6 +48,8 @@ import Testing
             "plays": ["start": Plays.startSets(l), "startAnyone": Plays.startAnyone(l),
                       "done": Plays.doneSets(l), "doneAnyone": Plays.doneAnyone(l),
                       "cheer": Plays.cheerSets(l), "cheerAnyone": Plays.cheerAnyone(l)],
+            "deeds": ["voices": Deeds.voiceSets(l).mapValues { ["invite": $0.invite, "yes": $0.yes, "no": $0.no] },
+                      "anyone": ["invite": Deeds.anyones(l).invite, "yes": Deeds.anyones(l).yes, "no": Deeds.anyones(l).no]],
             "holidays": Almanac.holidayNames[l] ?? [:],
             "flowers": Gifts.names(l),
             "prompts": [
@@ -58,6 +60,8 @@ import Testing
                 "complaint": Complaints.prompts(l), "reminder": Reminders.notePrompts(l),
                 "spriteImage": SpriteKit.imagePrompts(l), "spriteRefine": SpriteKit.refinePrompts(l),
                 "spriteRefineSystem": SpriteKit.refineSystems(l),
+                "deedMenu": Deeds.menuTexts(l), "deedAnswer": Deeds.answerTexts(l), "deedNote": Deeds.noteTexts(l),
+                "diary": Bonds.diaryPrompts(l), "diarySystem": Bonds.diarySystemPrompts(l), "seed": Bonds.seedPrompts(l),
                 "play": Plays.linePrompts(l), "playSystem": Plays.lineSystemPrompts(l), "playCheer": Plays.cheerPrompts(l),
             ],
         ]

@@ -91,8 +91,11 @@ extension Colony {
                     "situation": situation, "line": ""]
         let system = settings.systemPrompt, linePrompt = settings.linePrompt, replyPrompt = settings.replyPrompt
         let bubbleSeconds = settings.bubbleSeconds
-        // How the two get on, and the story between them, from each one's side.
-        let aSide = relationship(of: speaker, with: listener), bSide = relationship(of: listener, with: speaker)
+        // How the two get on, the story between them and what they remember, from
+        // the opener's side, with the deeds it may take; the answer's side is put
+        // together once the opening line is in, so it can answer an invitation.
+        let aOptions = deedOptions(speaker, with: listener, letter: false)
+        let aSide = side(of: speaker, with: listener, aOptions)
         // What each said lately, so the model says something new.
         let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
         let plot = plotLabel(speaker, listener)
@@ -142,11 +145,15 @@ extension Colony {
                                                       user: Banter.render(linePrompt, vars))
                 guard let self else { return }
                 charge(opening)
-                let first = Banter.cleanLine(opening.text, speaker: a.name, cut: opening.cut)
+                let opened = Deeds.split(opening.text)
+                let first = Banter.cleanLine(opened.text, speaker: a.name, cut: opening.cut)
                 guard !first.isEmpty else { talkStatus = tr("the model sent an empty line"); fallBack = true; return }
                 let firstSaid = say(first, from: speaker)
                 spoken.append(ChatLog.Line(speaker: a.name, text: first))
                 talkStatus = "\(a.name): \(first)"
+                took(opened, by: speaker, to: listener, options: aOptions, byLetter: false)
+                let bOptions = deedOptions(listener, with: speaker, letter: false)
+                let bSide = side(of: listener, with: speaker, bOptions)
 
                 // Swap seats for the answer.
                 vars["speaker"] = b.name; vars["speakerKind"] = Banter.spoken(bKind); vars["speakerPersona"] = Banter.persona(b.persona)
@@ -155,7 +162,8 @@ extension Colony {
                 let answer = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                      user: Banter.render(replyPrompt, vars))
                 charge(answer)
-                let reply = Banter.cleanLine(answer.text, speaker: b.name, cut: answer.cut)
+                let answered = Deeds.split(answer.text)
+                let reply = Banter.cleanLine(answered.text, speaker: b.name, cut: answer.cut)
                 guard !reply.isEmpty else { await said(firstSaid); return }
                 if isVoiced {
                     // Out loud, the answer comes a beat after the first line ends, its
@@ -169,6 +177,7 @@ extension Colony {
                 let replySaid = say(reply, from: listener)
                 spoken.append(ChatLog.Line(speaker: b.name, text: reply))
                 talkStatus = "\(b.name): \(reply)"
+                took(answered, by: listener, to: speaker, options: bOptions, byLetter: false)
                 await said(replySaid)          // the pair stays face to face until it is said
             } catch {
                 self?.talkStatus = "\(error)"
@@ -194,6 +203,10 @@ extension Colony {
     /// Say a conversation from the script: the first line now, each next one
     /// when the one before has been up a while. Written to the log up front.
     private func recite(from speaker: Int, to listener: Int, flower: String?, situation: String) -> Bool {
+        let options = deedOptions(speaker, with: listener, letter: false)
+        if flower == nil, let offer = builtInInvitation(speaker, to: listener, options) {
+            return reciteInvitation(offer, from: speaker, to: listener, options: options, situation: situation)
+        }
         let script: Script
         do { script = try Script.parse(settings.script) } catch { talkStatus = tr("the built-in lines: %@", "\(error)"); return false }
         var moment: Set<String> = [isNight ? "night" : "day"]
@@ -214,6 +227,29 @@ extension Colony {
                                       flower: flower, holiday: holiday),
                     builtIn: true)
         }
+        return sayBuiltIn(lines, from: speaker, to: listener, situation: situation)
+    }
+
+    /// A built-in invitation and its answer, in each one's own words; the deed
+    /// follows as a model's would.
+    private func reciteInvitation(_ offer: Deeds.Offer, from speaker: Int, to listener: Int,
+                                  options: Deeds.Options, situation: String) -> Bool {
+        let a = name(speaker), b = name(listener)
+        let yes = builtInYes(listener, to: speaker)
+        let lines = [(who: speaker, text: Deeds.inviteLine(by: a, to: b, offer), builtIn: true),
+                     (who: listener, text: Deeds.answerLine(by: b, to: a, offer, yes: yes), builtIn: true)]
+        guard sayBuiltIn(lines, from: speaker, to: listener, situation: situation) else { return false }
+        took(Deeds.Tagged(text: "", deed: .invite(offer)), by: speaker, to: listener, options: options, byLetter: false)
+        took(Deeds.Tagged(text: "", deed: yes ? .accept : .decline), by: listener, to: speaker,
+             options: deedOptions(listener, with: speaker, letter: false), byLetter: false)
+        return true
+    }
+
+    /// Say built-in `lines` between the two: logged up front, counted in their
+    /// story, then each line when the one before has been up a while.
+    private func sayBuiltIn(_ lines: [(who: Int, text: String, builtIn: Bool)], from speaker: Int, to listener: Int,
+                            situation: String) -> Bool {
+        let a = character(forCreature: speaker), b = character(forCreature: listener)
         busy.formUnion([speaker, listener])
         let said = lines.map { ChatLog.Line(speaker: character(forCreature: $0.who).name, text: $0.text) }
         history.record(ChatLog.Exchange(time: Date(), situation: situation, provider: AppSettings.Brain.script.title, model: "",

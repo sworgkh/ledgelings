@@ -29,7 +29,7 @@ Nothing the creatures do is hard-wired if someone could want it otherwise.
 - An on/off toggle, and every number a person might tune (how often, how long,
   how loud), in `AppSettings`: `@Published`, saved on change, clamped to its range
   on load, with a default that is chosen, not accidental.
-- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Play, Ball games, Sprites, Talk, Flowers,
+- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Play, Ball games, Sprites, Talk, Flowers, Bonds, Relationships,
   Productivity tools, Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice,
   Costs and Ball games did). Two columns; a tab fits a laptop screen without scrolling. A footer
   says what the setting does in plain words.
@@ -81,12 +81,20 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
-  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, ballgames, sprites, talk, flowers, productivity, voice, costs, chats;
+  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, ballgames, sprites, talk, flowers, bonds, relationships, productivity, voice, costs, chats;
   `reminders` still opens productivity, its old name; `clipboard` and `screenshots` open it on that tool).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
   time, then quits once the pair is let go: the way to measure dialogue timing.
+  `--converse --invite soccer` opens it with that invitation and waits for the deed
+  (`deed Blocky asks Boo: soccer`, `deed Boo accepts soccer from Blocky`, `deed Blocky & Boo start: invite soccer`).
+- `--invite-film out.mp4 [soccer|tag|basketball|baseball|tea]` films a letter invitation offscreen, the
+  letter written back yes and the game played, printing each step and what the pair remembers of it.
+- `--memory [name]` prints every pair's memory (bond, story, facts, games, last days) and the block each
+  carries into a prompt, with its tokens; `--memory-seed [--dry-run]` reads the last `seedDays` of the chat
+  log into it (the dry run sends nothing, touches no key, changes nothing); `--diary` writes every due
+  pair's diary now; `--relationships --snapshot out.png` writes the Relationships window.
 - `--garden-film out.mp4` hands five creatures a flower each and films them offscreen
   until all have planted, printing who planted what and why (`plant Blocky poppy floor`).
 - `--bed-film out.mp4` films one creature of each species offscreen from nightfall until all

@@ -33,6 +33,9 @@ extension Colony {
         var model = ""
         var cost: Double?
         var tokens: Int?
+        /// The deed the note carries, and what was offered when it was written.
+        var deed: Deeds.Tagged?
+        var options: Deeds.Options?
     }
 
     /// Someone who just read a letter owes its sender one answer.
@@ -69,7 +72,7 @@ extension Colony {
 
     /// The throw itself: a short stop facing the catcher, then the plane, in
     /// weather of its own. `answering`: the note this plane answers, if any.
-    private func throwPlane(from: Int, to: Int, answering note: String?) {
+    func throwPlane(from: Int, to: Int, answering note: String?) {
         creatures[from].meet(facing: facing(from, toward: to), for: 0.9)
         let inward = creatures[from].loop.inward(ofSegment: creatures[from].segment)
         planeCount += 1
@@ -111,7 +114,8 @@ extension Colony {
                     "situation": [almanac, huntSentence([from, to])].filter { !$0.isEmpty }.joined(separator: " "),
                     "line": answering ?? ""]
         let system = settings.systemPrompt
-        let aSide = relationship(of: from, with: to), bSide = relationship(of: to, with: from)
+        let options = deedOptions(from, with: to, letter: true)
+        let aSide = side(of: from, with: to, options), bSide = relationship(of: to, with: from)
         let aLately = history.memory.recent(of: a.name), bLately = history.memory.recent(of: b.name)
         airmail?.writing = true
         airmail?.provider = service.provider.title
@@ -128,13 +132,14 @@ extension Colony {
             spend.record(provider: service.provider, model: service.model, usage: usage, purpose: .planes)
         }
         Task { [weak self] in
-            var note: String?, musing: String?
+            var note: String?, musing: String?, tagged: Deeds.Tagged?
             do {
                 try await service.checkModel()
                 let written = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: aSide), aLately),
                                                       user: Banter.render(prompt, vars).trimmingCharacters(in: .whitespacesAndNewlines))
                 charge(written)
-                let line = Banter.cleanLine(written.text, speaker: a.name, cut: written.cut)
+                tagged = Deeds.split(written.text)
+                let line = Banter.cleanLine(tagged?.text ?? written.text, speaker: a.name, cut: written.cut)
                 if !line.isEmpty {
                     note = line
                     // Swap seats: now the reader thinks.
@@ -144,7 +149,7 @@ extension Colony {
                     let thought = try await service.line(system: LineMemory.withRecent(Bonds.withRelationship(system, vars, context: bSide), bLately),
                                                           user: Banter.render(Letters.musingPrompt, vars))
                     charge(thought)
-                    let said = Banter.cleanLine(thought.text, speaker: b.name, cut: thought.cut)
+                    let said = Banter.cleanLine(Deeds.split(thought.text).text, speaker: b.name, cut: thought.cut)
                     if !said.isEmpty { musing = said }
                 }
             } catch {
@@ -154,6 +159,7 @@ extension Colony {
             guard let self, airmail?.id == id else { return }
             airmail?.note = note
             airmail?.musing = musing
+            if note != nil { airmail?.deed = tagged; airmail?.options = options }
             airmail?.writing = false
             let priced = used.compactMap(\.cost)
             airmail?.cost = priced.isEmpty ? nil : priced.reduce(0, +)
@@ -245,12 +251,30 @@ extension Colony {
         let from = mail.plane.from, to = mail.plane.to
         let a = character(forCreature: from).name, b = character(forCreature: to).name
         let modelWrote = mail.note != nil, modelMused = mail.musing != nil
-        let note = mail.note ?? huntLineInstead(from) ?? (mail.isReply ? Letters.reply(by: a, to: b, memory: history.memory, using: &rng)
+        // Without a model, now and then a letter invites, and the answer to an
+        // invitation by letter says yes or no, in the writer's own words.
+        var builtIn: String?
+        if !modelWrote, settings.talkEnabled {
+            let options = deedOptions(from, with: to, letter: true)
+            if mail.isReply, let invitation = options.answering, invitation.byLetter {
+                let yes = builtInYes(from, to: to)
+                builtIn = Deeds.answerLine(by: a, to: b, invitation.offer, yes: yes)
+                mail.deed = Deeds.Tagged(text: "", deed: yes ? .accept : .decline)
+                mail.options = options
+            } else if !mail.isReply, let offer = builtInInvitation(from, to: to, options) {
+                builtIn = Deeds.inviteLine(by: a, to: b, offer)
+                mail.deed = Deeds.Tagged(text: "", deed: .invite(offer))
+                mail.options = options
+            }
+        }
+        let note = mail.note ?? builtIn ?? huntLineInstead(from) ?? (mail.isReply ? Letters.reply(by: a, to: b, memory: history.memory, using: &rng)
                                     : Letters.note(by: a, to: b, memory: history.memory, using: &rng))
         let musing = mail.musing ?? Letters.musing(by: b, from: a, memory: history.memory, using: &rng)
         mail.note = note
         mail.musing = musing
         shared(from, to, .plane, detail: note)
+        // The letter is read: what it does happens now (an invitation waits for the answer).
+        if let deed = mail.deed, let options = mail.options { took(deed, by: from, to: to, options: options, byLetter: true) }
         guard settings.talkEnabled else { return .reading(musingAt: elapsed, doneAt: elapsed + 3, musingSaid: true) }
 
         let read = Letters.reading(note, from: a)

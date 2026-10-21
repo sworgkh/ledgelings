@@ -4,12 +4,12 @@ import LedgelingsCore
 import SwiftUI
 
 enum SettingsTab: Hashable {
-    case creatures, actions, chases, beds, play, ballGames, sprites, talk, flowers, bonds, calendar, productivity, voice, costs, chats
+    case creatures, actions, chases, beds, play, ballGames, sprites, talk, flowers, bonds, relationships, calendar, productivity, voice, costs, chats
 
     /// The tab a script names after `--settings`. `reminders`, the old name of
     /// Productivity tools, still opens it, on its first tool: Reminders.
     static func named(_ name: String) -> SettingsTab? {
-        let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "ballgames": .ballGames, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "calendar": .calendar, "productivity": .productivity, "reminders": .productivity, "voice": .voice, "costs": .costs, "chats": .chats]
+        let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "ballgames": .ballGames, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "relationships": .relationships, "calendar": .calendar, "productivity": .productivity, "reminders": .productivity, "voice": .voice, "costs": .costs, "chats": .chats]
         return tabs[name]
     }
 }
@@ -40,6 +40,10 @@ struct SettingsView: View {
     var editSnippets: () -> Void = {}
     /// Pull up every planted flower; returns how many there were.
     var clearGarden: () -> Int = { 0 }
+    /// Opens the Relationships window.
+    var openRelationships: () -> Void = {}
+    /// Reads the chat log into the pairs' memory; returns what it did.
+    var seedMemory: (Bool) async -> String = { _ in "" }
 
     var body: some View {
         TabView(selection: $navigation.tab) {
@@ -53,6 +57,8 @@ struct SettingsView: View {
             TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
             FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
             BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)
+            RelationshipsSettingsView(settings: settings, bonds: bonds, open: openRelationships, seed: seedMemory)
+                .tabItem { Text(tr("Relationships")) }.tag(SettingsTab.relationships)
             CalendarSettingsView(settings: settings).tabItem { Text(tr("Calendar")) }.tag(SettingsTab.calendar)
             ProductivitySettingsView(settings: settings, reminders: reminders, clips: clips, library: library, navigation: navigation, send: send, editSnippets: editSnippets).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
             VoiceSettingsView(settings: settings, voice: voice).tabItem { Text(tr("Voice")) }.tag(SettingsTab.voice)
@@ -299,12 +305,17 @@ final class SettingsWindowController {
     private let clearGarden: () -> Int
     private let clips: ClipBook
     private let editSnippets: () -> Void
+    private let openRelationships: () -> Void
+    private let seedMemory: (Bool) async -> String
     private let navigation = SettingsNavigation()
     private var retitle: AnyCancellable?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
          reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, clips: ClipBook, send: @escaping (Reminders.Reminder) -> Void,
-         clearGarden: @escaping () -> Int = { 0 }, editSnippets: @escaping () -> Void = {}) {
+         clearGarden: @escaping () -> Int = { 0 }, editSnippets: @escaping () -> Void = {},
+         openRelationships: @escaping () -> Void = {}, seedMemory: @escaping (Bool) async -> String = { _ in "" }) {
+        self.openRelationships = openRelationships
+        self.seedMemory = seedMemory
         self.clips = clips
         self.editSnippets = editSnippets
         self.settings = settings
@@ -329,7 +340,7 @@ final class SettingsWindowController {
     func show(tab: SettingsTab? = nil) {
         if let tab { navigation.tab = tab }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }

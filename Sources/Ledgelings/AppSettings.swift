@@ -319,6 +319,74 @@ final class AppSettings: ObservableObject {
     /// How much history a new story is told with; nil when storylines are off.
     var storyTelling: Bonds.Telling? { storylinesEnabled ? Bonds.Telling(words: storyWords, moments: storyMoments) : nil }
 
+    // MARK: Deeds
+
+    /// Minutes the colony waits after one deed before another may start; 0: no wait.
+    static let deedGapRange = 0.0...60.0
+    /// Deeds started in an hour; 0: no limit.
+    static let deedsPerHourRange = 0...120
+    /// Minutes before the same pair takes the same deed again; 0: no wait.
+    static let deedPairGapRange = 0.0...240.0
+    /// Minutes an invitation stays open for its answer.
+    static let inviteOpenRange = 1.0...60.0
+    /// Minutes an agreed deed waits for both to be free.
+    static let deedWaitRange = 0.5...15.0
+    /// Percent of built-in letters and talks that invite; percent chance a built-in answer is yes.
+    static let percentRange = 0.0...100.0
+    /// Seconds one creature follows another.
+    static let followSecondsRange = 5.0...300.0
+    /// What creatures say can turn into what they do: a letter "soccer?" answered
+    /// "yes" starts the match (`Deeds`).
+    @Published var deedsEnabled: Bool { didSet { save(deedsEnabled, "deedsEnabled") } }
+    @Published var deedGapMinutes: Double { didSet { save(deedGapMinutes, "deedGapMinutes") } }
+    @Published var deedsPerHour: Int { didSet { save(deedsPerHour, "deedsPerHour") } }
+    @Published var deedPairGapMinutes: Double { didSet { save(deedPairGapMinutes, "deedPairGapMinutes") } }
+    @Published var inviteOpenMinutes: Double { didSet { save(inviteOpenMinutes, "inviteOpenMinutes") } }
+    @Published var deedWaitMinutes: Double { didSet { save(deedWaitMinutes, "deedWaitMinutes") } }
+    @Published var builtInInviteShare: Double { didSet { save(builtInInviteShare, "builtInInviteShare") } }
+    @Published var builtInAcceptChance: Double { didSet { save(builtInAcceptChance, "builtInAcceptChance") } }
+    @Published var followSeconds: Double { didSet { save(followSeconds, "followSeconds") } }
+    /// Which deeds may be offered.
+    @Published var deedGames: Bool { didSet { save(deedGames, "deedGames") } }
+    @Published var deedTea: Bool { didSet { save(deedTea, "deedTea") } }
+    @Published var deedFlower: Bool { didSet { save(deedFlower, "deedFlower") } }
+    @Published var deedLetter: Bool { didSet { save(deedLetter, "deedLetter") } }
+    @Published var deedVisit: Bool { didSet { save(deedVisit, "deedVisit") } }
+    @Published var deedFollow: Bool { didSet { save(deedFollow, "deedFollow") } }
+    @Published var deedSleep: Bool { didSet { save(deedSleep, "deedSleep") } }
+
+    var deedLimits: Deeds.Limits {
+        Deeds.Limits(gap: deedGapMinutes * 60, perHour: deedsPerHour, pairGap: deedPairGapMinutes * 60)
+    }
+
+    // MARK: Memory
+
+    static let memoryTokensRange = 0...1000
+    static let memoryFactsRange = 0...20
+    static let memoryDaysRange = 0...365
+    static let diaryEveryRange = 1.0...48.0
+    static let diaryPairsRange = 0...50
+    static let dayContextItemsRange = 0...10
+    static let seedDaysRange = 1...60
+    static let seedLinesRange = 5...200
+    /// Pairs remember each other in every conversation: facts, games, their days, their story.
+    @Published var memoryEnabled: Bool { didSet { save(memoryEnabled, "memoryEnabled") } }
+    @Published var memoryTokens: Int { didSet { save(memoryTokens, "memoryTokens") } }
+    @Published var memoryFacts: Int { didSet { save(memoryFacts, "memoryFacts") } }
+    @Published var memoryDays: Int { didSet { save(memoryDays, "memoryDays") } }
+    /// The model may write a fact down as it speaks (`NOTE:`).
+    @Published var memoryNotes: Bool { didSet { save(memoryNotes, "memoryNotes") } }
+    /// At the colony's nightfall the model condenses a pair's memory: one call per pair.
+    @Published var diaryEnabled: Bool { didSet { save(diaryEnabled, "diaryEnabled") } }
+    @Published var diaryEveryHours: Double { didSet { save(diaryEveryHours, "diaryEveryHours") } }
+    @Published var diaryPairsPerNight: Int { didSet { save(diaryPairsPerNight, "diaryPairsPerNight") } }
+    /// Each creature knows what it did today (games, tea, flowers, letters).
+    @Published var dayContextEnabled: Bool { didSet { save(dayContextEnabled, "dayContextEnabled") } }
+    @Published var dayContextItems: Int { didSet { save(dayContextItems, "dayContextItems") } }
+    /// How far back the seed reads the chat log, and how many lines it shows the model per pair.
+    @Published var seedDays: Int { didSet { save(seedDays, "seedDays") } }
+    @Published var seedLines: Int { didSet { save(seedLines, "seedLines") } }
+
     // MARK: Calendar
 
     /// Days before a holiday that the creatures start mentioning it.
@@ -699,6 +767,9 @@ final class AppSettings: ObservableObject {
         func clamp(_ key: String, _ fallback: Double, _ range: ClosedRange<Double>) -> Double {
             min(max(defaults.object(forKey: key) as? Double ?? fallback, range.lowerBound), range.upperBound)
         }
+        func clampInt(_ key: String, _ fallback: Int, _ range: ClosedRange<Int>) -> Int {
+            min(max(defaults.object(forKey: key) as? Int ?? fallback, range.lowerBound), range.upperBound)
+        }
         voiceSpeed = clamp("voiceSpeed", 1, Self.voiceSpeedRange)
         voicePitch = clamp("voicePitch", 1, Self.voicePitchRange)
         voiceVolume = clamp("voiceVolume", 0.8, 0...1)
@@ -727,6 +798,41 @@ final class AppSettings: ObservableObject {
         storyWords = min(max(words, Self.storyWordsRange.lowerBound), Self.storyWordsRange.upperBound)
         let moments = defaults.object(forKey: "storyMoments") as? Int ?? Bonds.storyMoments
         storyMoments = min(max(moments, Self.storyMomentsRange.lowerBound), Self.storyMomentsRange.upperBound)
+        deedsEnabled = defaults.object(forKey: "deedsEnabled") as? Bool ?? true
+        // Four minutes and eight an hour: something happens now and then, not after every line.
+        deedGapMinutes = clamp("deedGapMinutes", 4, Self.deedGapRange)
+        deedsPerHour = clampInt("deedsPerHour", 8, Self.deedsPerHourRange)
+        // Twenty minutes: the same two do not play soccer twice in a row.
+        deedPairGapMinutes = clamp("deedPairGapMinutes", 20, Self.deedPairGapRange)
+        inviteOpenMinutes = clamp("inviteOpenMinutes", 10, Self.inviteOpenRange)
+        deedWaitMinutes = clamp("deedWaitMinutes", 3, Self.deedWaitRange)
+        // One built-in letter or talk in five invites; most invitations are taken up.
+        builtInInviteShare = clamp("builtInInviteShare", 20, Self.percentRange)
+        builtInAcceptChance = clamp("builtInAcceptChance", 65, Self.percentRange)
+        followSeconds = clamp("followSeconds", 30, Self.followSecondsRange)
+        deedGames = defaults.object(forKey: "deedGames") as? Bool ?? true
+        deedTea = defaults.object(forKey: "deedTea") as? Bool ?? true
+        deedFlower = defaults.object(forKey: "deedFlower") as? Bool ?? true
+        deedLetter = defaults.object(forKey: "deedLetter") as? Bool ?? true
+        deedVisit = defaults.object(forKey: "deedVisit") as? Bool ?? true
+        deedFollow = defaults.object(forKey: "deedFollow") as? Bool ?? true
+        deedSleep = defaults.object(forKey: "deedSleep") as? Bool ?? true
+        memoryEnabled = defaults.object(forKey: "memoryEnabled") as? Bool ?? true
+        // 150 tokens: today, five facts and the record, with room for some of their story.
+        memoryTokens = clampInt("memoryTokens", Bonds.memoryTokens, Self.memoryTokensRange)
+        memoryFacts = clampInt("memoryFacts", Bonds.memoryFacts, Self.memoryFactsRange)
+        // Two months of timeline: enough to see a friendship grow, a few KB a pair.
+        memoryDays = clampInt("memoryDays", Bonds.memoryDays, Self.memoryDaysRange)
+        memoryNotes = defaults.object(forKey: "memoryNotes") as? Bool ?? true
+        diaryEnabled = defaults.object(forKey: "diaryEnabled") as? Bool ?? true
+        // Eight hours: a pair's memory is written down about twice a working day.
+        diaryEveryHours = clamp("diaryEveryHours", 8, Self.diaryEveryRange)
+        diaryPairsPerNight = clampInt("diaryPairsPerNight", 8, Self.diaryPairsRange)
+        dayContextEnabled = defaults.object(forKey: "dayContextEnabled") as? Bool ?? true
+        dayContextItems = clampInt("dayContextItems", 4, Self.dayContextItemsRange)
+        // Two weeks, forty lines a pair: about 2 500 tokens a pair, a fraction of a cent.
+        seedDays = clampInt("seedDays", 14, Self.seedDaysRange)
+        seedLines = clampInt("seedLines", 40, Self.seedLinesRange)
         knowsTimeOfDay = defaults.object(forKey: "knowsTimeOfDay") as? Bool ?? true
         knowsDate = defaults.object(forKey: "knowsDate") as? Bool ?? true
         jewishHolidays = defaults.object(forKey: "jewishHolidays") as? Bool ?? true
