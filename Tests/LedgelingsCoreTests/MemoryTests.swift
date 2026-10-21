@@ -55,6 +55,17 @@ import Testing
         let small = Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: 30, now: day)
         #expect(small.contains("Today together") && !small.contains("Your story"), "today stays, the story goes")
         #expect(Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: 0, now: day).isEmpty)
+        // Never half a sentence of their story, and one full stop after a fact.
+        for budget in 30...120 {
+            let cut = Bonds.memory(bond, speaker: "Blocky", other: "Boo", budget: budget, now: day)
+            #expect(!cut.contains("…") && !cut.contains(".."), "\(budget): \(cut)")
+            if let story = cut.range(of: "Your story so far: ") {
+                #expect(cut[story.upperBound...].hasPrefix("They"), "starts on a whole sentence: \(cut)")
+            }
+        }
+        var dotted = Bonds.Book()
+        dotted.remember("A", "B", "A owes B a poppy.", source: "seed", keep: 5)
+        #expect(Bonds.memory(dotted.bond("A", "B"), speaker: "A", other: "B", budget: 100) == "You remember: A owes B a poppy.")
         #expect(Bonds.memory(nil, speaker: "Blocky", other: "Boo", budget: 150).isEmpty)
     }
 

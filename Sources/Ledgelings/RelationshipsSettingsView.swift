@@ -78,12 +78,9 @@ struct RelationshipsSettingsView: View {
 
             Section {
                 Toggle(tr("At nightfall the model writes their memory down"), isOn: $settings.diaryEnabled)
-                HStack(spacing: 24) {
-                    SliderRow(tr("A pair's memory at most every"), value: $settings.diaryEveryHours, in: AppSettings.diaryEveryRange, step: 1, unit: tr(" h"))
-                    Stepper(value: $settings.diaryPairsPerNight, in: AppSettings.diaryPairsRange) {
-                        LabeledContent(tr("Pairs a night"), value: "\(settings.diaryPairsPerNight)")
-                    }
-                    .fixedSize()
+                SliderRow(tr("A pair's memory at most every"), value: $settings.diaryEveryHours, in: AppSettings.diaryEveryRange, step: 1, unit: tr(" h"))
+                Stepper(value: $settings.diaryPairsPerNight, in: AppSettings.diaryPairsRange) {
+                    LabeledContent(tr("Pairs a night"), value: "\(settings.diaryPairsPerNight)")
                 }
             } header: {
                 Text(tr("The diary"))
@@ -95,7 +92,7 @@ struct RelationshipsSettingsView: View {
             Section {
                 HStack(spacing: 24) {
                     Stepper(value: $settings.seedDays, in: AppSettings.seedDaysRange) {
-                        LabeledContent(tr("Read the chat log back"), value: trCount(settings.seedDays, "day", "days"))
+                        LabeledContent(tr("Days read back"), value: "\(settings.seedDays)")
                     }
                     Stepper(value: $settings.seedLines, in: AppSettings.seedLinesRange, step: 5) {
                         LabeledContent(tr("Lines shown per pair"), value: "\(settings.seedLines)")

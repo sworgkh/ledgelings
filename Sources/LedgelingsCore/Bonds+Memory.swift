@@ -156,7 +156,9 @@ extension Bonds {
         // The facts, newest first, as many as fit.
         var remembered: [String] = []
         for fact in bond.facts.reversed() {
-            let text = fact.source == "diary" || fact.source == "seed" ? fact.text : fact.text + " (" + day(fact.time) + ")"
+            // A fact's own full stop would make two with the one the list ends with.
+            let bare = fact.text.trimmingCharacters(in: CharacterSet(charactersIn: ".;· ").union(.whitespaces))
+            let text = fact.source == "diary" || fact.source == "seed" ? bare : bare + " (" + day(fact.time) + ")"
             let all = tr("You remember: %@.", (remembered + [text]).joined(separator: " · "))
             guard fits(all) else { break }
             remembered.append(text)
@@ -168,14 +170,16 @@ extension Bonds {
             take(tr("You and %@ first met on %@; all told: %@.", other, day(met), tallied(bond.tally)), at: 1)
         }
         if let chronicle = bond.chronicle, !chronicle.isEmpty {
-            // As much of the story as is left room for, newest sentences kept.
+            // As many of the story's newest whole sentences as there is room for; a
+            // sentence cut short says nothing, so none is sent rather than half of one.
             let room = budget - used - 1
-            var words = chronicle.split(whereSeparator: \.isWhitespace).count
-            while words > 0 {
-                let text = tr("Your story so far: %@", trimmed(chronicle, words: words))
-                if tokens(text) <= room { take(text, at: 2); break }
-                words -= max(1, words / 6)
+            var kept: [String] = []
+            for sentence in sentences(chronicle).reversed() {
+                let text = tr("Your story so far: %@", ([sentence] + kept).joined(separator: " "))
+                guard tokens(text) <= room else { break }
+                kept.insert(sentence, at: 0)
             }
+            if !kept.isEmpty { take(tr("Your story so far: %@", kept.joined(separator: " ")), at: 2) }
         }
         return parts.keys.sorted().compactMap { parts[$0] }.joined(separator: " ")
     }

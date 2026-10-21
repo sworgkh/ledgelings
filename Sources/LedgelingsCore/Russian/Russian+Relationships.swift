@@ -65,7 +65,7 @@ extension Strings {
         "Built-in letters and talks that invite": "Встроенные письма и разговоры с приглашением",
         "no wait": "сразу",
         "At nightfall the model writes their memory down": "С наступлением ночи модель записывает их память",
-        "Read the chat log back": "Читать журнал разговоров за",
+        "Days read back": "Дней назад",
         "only just met": "только познакомились",
         "Zero turns a limit off; the same two never do two things within 15 seconds. Without a model each character invites and answers in its own words, close friends saying yes more often.":
             "Ноль отключает ограничение; одни и те же двое не делают двух дел за 15 секунд. Без модели каждый персонаж зовёт и отвечает своими словами, близкие друзья соглашаются чаще.",

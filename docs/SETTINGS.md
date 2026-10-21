@@ -532,7 +532,7 @@ own lines and what kind of moment each was are sent.
 | **At nightfall the model writes their memory down** | on | | `diaryEnabled` |
 | **A pair's memory at most every** | 8 h | 1 to 48 h | `diaryEveryHours` |
 | **Pairs a night** | 8 | 0 to 50 | `diaryPairsPerNight` |
-| **Read the chat log back** | 14 days | 1 to 60 | `seedDays` |
+| **Days read back** | 14 | 1 to 60 | `seedDays` |
 | **Lines shown per pair** | 40 | 5 to 200 | `seedLines`; about 2 500 tokens a pair at 40 |
 
 Flags: `--invite-film out.mp4 [soccer|tag|basketball|baseball|tea]` films a letter
