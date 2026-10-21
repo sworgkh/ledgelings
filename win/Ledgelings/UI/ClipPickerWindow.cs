@@ -481,15 +481,11 @@ internal sealed class ClipPickerWindow : Window
         if (row.Title is string title) words.Children.Add(Text(title + "  ", 12, FontWeights.Heavy, PixelBox.Rim));
         words.Children.Add(Text(row.Text, 12, row.Title is null ? FontWeights.SemiBold : FontWeights.Normal, row.Title is null && !row.Masked ? PixelBox.Rim : softInk));
         panel.Children.Add(words);
-        var box = new PixelBox { Look = chosen ? PixelBox.Finish.Chosen : PixelBox.Finish.Raised, Child = panel, Margin = new Thickness(0, 1, 6, 1) };
-        // Unchosen rows are bare paper: only the chosen one is a box.
+        // Unchosen rows are bare paper: only the chosen one is a box. The panel gets one parent only:
+        // WPF throws if it is handed to a second before the first lets go.
         if (!chosen)
-        {
-            var bare = new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = row.Masked ? maskTint : Brushes.Transparent };
-            box.Child = null;
-            return Hook(bare, row);
-        }
-        return Hook(box, row);
+            return Hook(new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = row.Masked ? maskTint : Brushes.Transparent }, row);
+        return Hook(new PixelBox { Look = PixelBox.Finish.Chosen, Child = panel, Margin = new Thickness(0, 1, 6, 1) }, row);
     }
 
     /// <summary>A picture's thumbnail, its few pixels drawn big, square and sharp, in a 1-pixel rim like the creatures'.</summary>

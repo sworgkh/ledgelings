@@ -160,6 +160,33 @@ public class ClipboardSettingsTests
         finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
     });
 
+    [Fact]
+    public void ThePickerDrawsMoreThanOneRow() => OnSta(() =>
+    {
+        // Each unchosen row once had its panel handed to two parents, which WPF refuses: the app
+        // closed the moment the picker opened with two or more copies or snippets.
+        var folder = Path.Combine(Path.GetTempPath(), "ledgelings-clip-" + Guid.NewGuid());
+        try
+        {
+            var settings = new AppSettings(new MemorySettingsStore(), new MemorySecretStore());
+            var book = new ClipBook(folder, new MemorySecretStore());
+            book.AddSnippet("Signature", "Best regards");
+            book.AddSnippet("Address", "12 Café Street");
+            book.AddSnippet("Phone", "555-0100");
+            var controller = new ClipPickerController(settings, book, () => null, () => { });
+            var model = new ClipPicker(() => (book.History, book.Snippets)) { First = ClipPicker.Group.Snippets };
+            model.Search("");
+            model.Refresh(selectFirst: true);
+            Assert.Equal(3, model.Rows.Count);
+            var window = new ClipPickerWindow(controller, model, settings, Desktop.Primary(Desktop.Monitors())!);
+            window.Redraw(scroll: false);
+            model.Step(1);
+            window.Redraw(scroll: false);                                      // and again with another chosen
+            window.Close();
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
+    });
+
     private static void OnSta(Action body)
     {
         Exception? failed = null;

@@ -167,7 +167,7 @@ public class ClipboardTests
         var book = new Clipboard.SnippetBook();
         var work = book.AddFolder("Work");
         book.Add(Snippet.Make("Signature", "Best regards, Evgeny"), work);
-        book.Add(Snippet.Make("Bank PIN", "4321", isProtected: true), work);
+        book.Add(Snippet.Make("Bank PIN", "wxyz-4321", isProtected: true), work);
         var home = book.AddFolder("Home");
         book.Add(Snippet.Make("Address", "12 Café Street"), home);
         return book;
@@ -204,7 +204,7 @@ public class ClipboardTests
         Assert.Equal(new[] { "Signature" }, Clipboard.Search("regards", new(), Book()).Snippets.Select(s => s.Title));
         Assert.Equal(new[] { "Address" }, Clipboard.Search("home", new(), Book()).Snippets.Select(s => s.Title));
         Assert.Equal(new[] { "Bank PIN" }, Clipboard.Search("pin", new(), Book()).Snippets.Select(s => s.Title));
-        Assert.Empty(Clipboard.Search("4321", new(), Book()).Snippets);
+        Assert.Empty(Clipboard.Search("wxyz-4321", new(), Book()).Snippets);
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public class ClipboardTests
             Assert.Equal(h.Clips[0].Rtf, back.Clips[0].Rtf);
             Assert.Equal(b.All.Select(x => (x.Snippet.Id, x.Snippet.Title)), store.LoadSnippets().All.Select(x => (x.Snippet.Id, x.Snippet.Title)));
             var json = File.ReadAllText(store.SnippetsFile);
-            Assert.DoesNotContain("4321", json);
+            Assert.DoesNotContain("wxyz-4321", json);
             Assert.Contains("\"kind\": \"rich\"", File.ReadAllText(store.HistoryFile));
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
@@ -334,7 +334,7 @@ public class ClipboardTests
         var b = Book();
         b.Folders[0].Snippets[0] = b.Folders[0].Snippets[0] with { Text = "a < b & \"c\"" };
         var xml = Clipboard.ExportClipy(b);
-        Assert.DoesNotContain("4321", xml);
+        Assert.DoesNotContain("wxyz-4321", xml);
         var back = Clipboard.ImportClipy(xml);
         Assert.Equal(b.Folders.Select(f => f.Title), back.Folders.Select(f => f.Title));
         Assert.Equal(b.All.Select(x => x.Snippet.Title), back.All.Select(x => x.Snippet.Title));

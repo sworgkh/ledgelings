@@ -282,7 +282,7 @@ import Testing
         var book = Clipboard.SnippetBook()
         let work = book.addFolder("Work")
         book.add(Clipboard.Snippet(title: "Signature", text: "Best regards, Evgeny"), to: work)
-        book.add(Clipboard.Snippet(title: "Bank PIN", text: "4321", protected: true), to: work)
+        book.add(Clipboard.Snippet(title: "Bank PIN", text: "wxyz-4321", protected: true), to: work)
         let home = book.addFolder("Home")
         book.add(Clipboard.Snippet(title: "Address", text: "12 Café Street"), to: home)
         return book
@@ -312,7 +312,7 @@ import Testing
         #expect(Clipboard.search("regards", history: .init(), snippets: book()).snippets.map(\.title) == ["Signature"])
         #expect(Clipboard.search("home", history: .init(), snippets: book()).snippets.map(\.title) == ["Address"])
         #expect(Clipboard.search("pin", history: .init(), snippets: book()).snippets.map(\.title) == ["Bank PIN"])
-        #expect(Clipboard.search("4321", history: .init(), snippets: book()).snippets.isEmpty)
+        #expect(Clipboard.search("wxyz-4321", history: .init(), snippets: book()).snippets.isEmpty)
     }
 
     @Test func anEmptyQueryFindsEverythingPinnedFirst() {
@@ -353,7 +353,7 @@ import Testing
         #expect(store.loadHistory() == h)
         #expect(store.loadSnippets() == b)
         let json = try String(contentsOf: store.snippetsFile, encoding: .utf8)
-        #expect(!json.contains("4321"))
+        #expect(!json.contains("wxyz-4321"))
     }
 
     @Test func aMissingOrBrokenFileIsAnEmptyHistory() throws {
@@ -400,7 +400,7 @@ import Testing
         var b = book()
         b.folders[0].snippets[0].text = "a < b & \"c\""
         let data = Clipboard.exportClipy(b)
-        #expect(!String(decoding: data, as: UTF8.self).contains("4321"))
+        #expect(!String(decoding: data, as: UTF8.self).contains("wxyz-4321"))
         let back = try Clipboard.importClipy(data)
         #expect(back.folders.map(\.title) == b.folders.map(\.title))
         #expect(back.all.map(\.snippet.title) == b.all.map(\.snippet.title))
