@@ -972,7 +972,7 @@
                 <TextBlock ui:Tr.Text="Memory sent with each line" Style="{StaticResource Over}"/>
                 <DockPanel>
                   <TextBlock Style="{StaticResource Shown}" Width="90" ui:Tr.Value="{Binding MemoryTokens}" ui:Tr.Unit=" tokens" ui:Tr.Zero="none"/>
-                  <Slider Minimum="0" Maximum="1000" TickFrequency="10" Value="{Binding MemoryTokens, Mode=TwoWay}"/>
+                  <Slider Minimum="0" Maximum="2000" TickFrequency="10" Value="{Binding MemoryTokens, Mode=TwoWay}"/>
                 </DockPanel>
                 <TextBlock ui:Tr.Text="Facts kept per pair" Style="{StaticResource Over}"/>
                 <DockPanel>

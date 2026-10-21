@@ -29,7 +29,7 @@ public sealed partial class AppSettings
 
     // MARK: Memory
 
-    public const int MemoryTokensMin = 0, MemoryTokensMax = 1000;
+    public const int MemoryTokensMin = 0, MemoryTokensMax = 2000;
     public const int MemoryFactsMin = 0, MemoryFactsMax = 20;
     public const int MemoryDaysMin = 0, MemoryDaysMax = 365;
     public const double DiaryEveryMin = 1, DiaryEveryMax = 48;
@@ -64,7 +64,14 @@ public sealed partial class AppSettings
         deedFollow = store.Get<bool?>("deedFollow") ?? true;
         deedSleep = store.Get<bool?>("deedSleep") ?? true;
         memoryEnabled = store.Get<bool?>("memoryEnabled") ?? true;
-        // 150 tokens: today, five facts and the record, with room for some of their story.
+        // 600 tokens: the busiest pair's whole story, five facts, today and yesterday, in Russian.
+        // The old default, 150, cut the story; a saved 150 moves to the new one once, a value
+        // chosen by hand stays.
+        if (store.Get<bool?>("memoryTokensMoved") != true)
+        {
+            if (store.Get<int?>("memoryTokens") == Bonds.OldMemoryTokens) store.Set("memoryTokens", Bonds.MemoryTokens);
+            store.Set("memoryTokensMoved", true);
+        }
         memoryTokens = Math.Clamp(store.Get<int?>("memoryTokens") ?? Bonds.MemoryTokens, MemoryTokensMin, MemoryTokensMax);
         memoryFacts = Math.Clamp(store.Get<int?>("memoryFacts") ?? Bonds.MemoryFacts, MemoryFactsMin, MemoryFactsMax);
         // Two months of timeline: enough to see a friendship grow, a few KB a pair.

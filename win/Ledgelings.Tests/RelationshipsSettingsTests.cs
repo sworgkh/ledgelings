@@ -9,6 +9,22 @@ namespace Ledgelings.Tests;
 public class RelationshipsSettingsTests
 {
     [Fact]
+    public void TheOldDefaultMovesToTheNewOnceAndAChosenValueStays()
+    {
+        var store = new MemorySettingsStore();
+        var secrets = new MemorySecretStore();
+        store.Set("memoryTokens", 150);
+        Assert.Equal(600, new AppSettings(store, secrets).MemoryTokens);
+        // Chosen by hand after the move, 150 stays.
+        new AppSettings(store, secrets).MemoryTokens = 150;
+        Assert.Equal(150, new AppSettings(store, secrets).MemoryTokens);
+        // Any other saved value was the owner's choice and is never moved.
+        var other = new MemorySettingsStore();
+        other.Set("memoryTokens", 300);
+        Assert.Equal(300, new AppSettings(other, secrets).MemoryTokens);
+    }
+
+    [Fact]
     public void TheDefaultsAndAChangeSurviveARelaunchAndAreClamped()
     {
         var store = new MemorySettingsStore();
@@ -17,7 +33,7 @@ public class RelationshipsSettingsTests
         Assert.True(s.DeedsEnabled && s.DeedGames && s.DeedTea && s.DeedFlower && s.DeedLetter && s.DeedVisit && s.DeedFollow && s.DeedSleep);
         Assert.True(s.DeedGapMinutes == 4 && s.DeedsPerHour == 8 && s.DeedPairGapMinutes == 20 && s.InviteOpenMinutes == 10);
         Assert.True(s.DeedWaitMinutes == 3 && s.BuiltInInviteShare == 20 && s.BuiltInAcceptChance == 65 && s.FollowSeconds == 30);
-        Assert.True(s.MemoryEnabled && s.MemoryTokens == 150 && s.MemoryFacts == 5 && s.MemoryDays == 60 && s.MemoryNotes);
+        Assert.True(s.MemoryEnabled && s.MemoryTokens == 600 && s.MemoryFacts == 5 && s.MemoryDays == 60 && s.MemoryNotes);
         Assert.True(s.DiaryEnabled && s.DiaryEveryHours == 8 && s.DiaryPairsPerNight == 8 && s.DayContextEnabled && s.DayContextItems == 4);
         Assert.True(s.SeedDays == 14 && s.SeedLines == 40);
         Assert.Equal(new Deeds.Limits(240, 8, 1200), s.DeedLimits);
@@ -43,7 +59,7 @@ public class RelationshipsSettingsTests
         var clamped = new AppSettings(store, secrets);
         Assert.True(clamped.DeedGapMinutes == 0 && clamped.DeedPairGapMinutes == 240 && clamped.InviteOpenMinutes == 1 && clamped.DeedWaitMinutes == 15);      // clamped on load
         Assert.True(clamped.BuiltInInviteShare == 100 && clamped.FollowSeconds == 5 && clamped.DiaryEveryHours == 1);
-        Assert.True(clamped.DeedsPerHour == 120 && clamped.MemoryTokens == 1000 && clamped.MemoryFacts == 0 && clamped.MemoryDays == 365);
+        Assert.True(clamped.DeedsPerHour == 120 && clamped.MemoryTokens == 2000 && clamped.MemoryFacts == 0 && clamped.MemoryDays == 365);
         Assert.True(clamped.DiaryPairsPerNight == 50 && clamped.DayContextItems == 10 && clamped.SeedDays == 1 && clamped.SeedLines == 5);
     }
 
