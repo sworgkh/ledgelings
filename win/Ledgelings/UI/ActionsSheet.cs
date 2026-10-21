@@ -89,6 +89,14 @@ public static class ActionsLinks
 /// <summary>The sheet has one inner page: the games, listed (<see cref="Plays"/>).</summary>
 public enum ActionsPage { Main, Activities }
 
+/// <summary>What the Activities page's buttons say on hover, with their keys.</summary>
+public static class ActivitiesTips
+{
+    public static string Back => L10n.Tr("Back to the sheet (←)");
+    public static string Games => L10n.Tr("Turn games on or off");
+    public static string Done => L10n.Tr("Put the sheet away (Return)");
+}
+
 /// <summary>A game as a row of the Activities page: what it is called, a line on what happens, and the key that plays it.</summary>
 public static class Activities
 {
@@ -121,6 +129,9 @@ public static class Activities
         Plays.Kind.Baseball => System.Windows.Input.Key.I,
         _ => System.Windows.Input.Key.B,
     };
+
+    /// <summary>What its row says on hover: "Start now: a game of soccer (G)".</summary>
+    public static string ActivityTip(this Plays.Kind kind) => L10n.Tr("Start now: %@ (%@)", kind.Title(), kind.ActivityKey().ToString());
 
     /// <summary>Why Play Now is greyed, or null when it is not.</summary>
     public static string? ActivityDetail(this Plays.Kind kind, ActionsState s) =>
@@ -203,6 +214,8 @@ public sealed class ActionsSheet : Window
 {
     public const double SheetWidth = 564, SheetHeight = 548;
     private const double Headroom = 54, TileWidth = 114, TileHeight = 126, Gap = 10;
+    /// <summary>Six rows of 50 leave room for the line, and the buttons sit where the sheet's own do.</summary>
+    public const double ActivityRowHeight = 50, ActivityGap = 3, ActivityLineHeight = 24, ActivitiesFooterGap = 11;
 
     /// <summary>What the hide row offers, in minutes; null means "until tomorrow at eight". In the current language.</summary>
     public static IReadOnlyList<(string Title, double? Minutes)> HideChoices => new (string, double?)[]
@@ -370,6 +383,8 @@ public sealed class ActionsSheet : Window
             Margin = new Thickness(33, Headroom + 27, 33, 0), Width = SheetWidth - 66,
             HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
         };
+        line.Height = 30;
+        line.Margin = new Thickness(0, 0, 0, 12);
         // The title line, and at its right end, with two monitors or more, which one they live on: a smaller
         // button than the switches', up here because the switches' row is full in Russian. 28 tall either way.
         var head = new Grid { Height = 22, Margin = new Thickness(0, 0, 0, 6) };
@@ -645,19 +660,22 @@ public sealed class ActionsSheet : Window
             Text = L10n.Tr("ACTIVITIES · WHAT SHOULD THEY PLAY?"),
             FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
         });
-        // Six rows still leave room for the line and the buttons under them.
         var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
-        foreach (var kind in Plays.AllKinds) list.Children.Add(ActivityRow(kind, list.Children.Count == 0 ? 0 : 5));
+        foreach (var kind in Plays.AllKinds) list.Children.Add(ActivityRow(kind, list.Children.Count == 0 ? 0 : ActivityGap));
         sheet.Children.Add(list);
+        line.Height = ActivityLineHeight;
+        line.Margin = new Thickness(0, 0, 0, 6);
         sheet.Children.Add(line);
         var left = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
-        var back = new PixelButton { Content = L10n.Tr("BACK"), Small = true, Margin = new Thickness(0, 0, 6, 0) };
+        var back = new PixelButton { Content = L10n.Tr("BACK"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Back };
         back.Click += (_, _) => GoTo(ActionsPage.Main);
         left.Children.Add(back);
-        left.Children.Add(Switch(ActionsSwitch.Play));
-        var done = new PixelButton { Content = L10n.Tr("DONE"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0) };
+        var games = Switch(ActionsSwitch.Play);
+        games.ToolTip = ActivitiesTips.Games;
+        left.Children.Add(games);
+        var done = new PixelButton { Content = L10n.Tr("DONE"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0), ToolTip = ActivitiesTips.Done };
         done.Click += (_, _) => Close();
-        var footer = new Grid { Margin = new Thickness(0, 40, 0, 0) };
+        var footer = new Grid { Margin = new Thickness(0, ActivitiesFooterGap, 0, 0) };
         footer.Children.Add(left);
         footer.Children.Add(done);
         sheet.Children.Add(footer);
@@ -666,7 +684,7 @@ public sealed class ActionsSheet : Window
 
     private PixelButton ActivityRow(Plays.Kind kind, double top)
     {
-        var face = new Grid { Width = SheetWidth - 66, Height = 52 };
+        var face = new Grid { Width = SheetWidth - 66, Height = ActivityRowHeight };
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(76) });
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -706,7 +724,7 @@ public sealed class ActionsSheet : Window
         right.Children.Add(detail);
         Grid.SetColumn(right, 2);
         face.Children.Add(right);
-        var button = new PixelButton { Content = face, Padding = new Thickness(0), Margin = new Thickness(0, top, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+        var button = new PixelButton { Content = face, Padding = new Thickness(0), Margin = new Thickness(0, top, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, ToolTip = kind.ActivityTip() };
         button.Click += (_, _) => Play(kind);
         rows.Add((kind, button, detail));
         return button;

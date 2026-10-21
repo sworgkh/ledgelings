@@ -78,4 +78,25 @@ public class ActionsSheetTests
         ActionsSheet.PutAway();
         Assert.False(ActionsSheet.IsUp);
     }
+
+    [Fact]
+    public void EveryGameRowAndButtonOnTheActivitiesPageSaysWhatItDoesAndItsKey()
+    {
+        Languages.With(Language.English, () =>
+        {
+            foreach (var kind in Plays.AllKinds)
+                Assert.True(kind.ActivityTip().StartsWith("Start now: ", StringComparison.Ordinal) && kind.ActivityTip().EndsWith($"({kind.ActivityKey()})", StringComparison.Ordinal), kind.ActivityTip());
+            Assert.True(ActivitiesTips.Back.Contains("(←)") && ActivitiesTips.Done.Contains("(Return)") && ActivitiesTips.Games.Length > 0);
+        });
+    }
+
+    [Fact]
+    public void TheActivitiesPageFitsTheSheetWithItsButtonsWhereTheSheetsOwnAre()
+    {
+        // Under the title (24), with 8 + 6 around the line: the rows, the line and the gap to the buttons
+        // get what the main page's tiles, line and switches leave its footer, 350 points.
+        var n = Plays.AllKinds.Count();
+        var rows = n * ActionsSheet.ActivityRowHeight + (n - 1) * ActionsSheet.ActivityGap;
+        Assert.True(rows + ActionsSheet.ActivityLineHeight + ActionsSheet.ActivitiesFooterGap <= 350, $"{rows}");
+    }
 }

@@ -65,8 +65,13 @@ public class MemoryTests
                 var cut = Bonds.Memory(bond, "Blocky", "Boo", budget, Day);
                 Assert.True(Bonds.Tokens(cut) <= budget, $"{budget}: {cut}");
             }
+            // Over budget the story stays (its newest sentences), then the newest facts, then the days.
+            Assert.Equal("Your story so far: They guard the garden together now.", Bonds.Memory(bond, "Blocky", "Boo", 16, Day));
             var small = Bonds.Memory(bond, "Blocky", "Boo", 30, Day);
-            Assert.True(small.Contains("Today together") && !small.Contains("Your story"), "today stays, the story goes");
+            Assert.True(small.StartsWith("Your story so far: They argued", StringComparison.Ordinal) && !small.Contains("You remember"), $"the story before the facts: {small}");
+            var middling = Bonds.Memory(bond, "Blocky", "Boo", 60, Day);
+            Assert.True(middling.Contains("Your story so far: They met") && middling.Contains("You remember") && !middling.Contains("first met"),
+                $"how they met gives way first: {middling}");
             Assert.Empty(Bonds.Memory(bond, "Blocky", "Boo", 0, Day));
             // Never half a sentence of their story, and one full stop after a fact.
             for (int budget = 30; budget <= 120; budget++)

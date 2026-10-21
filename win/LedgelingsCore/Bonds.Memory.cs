@@ -53,8 +53,11 @@ public static partial class Bonds
     public const int MemoryFacts = 5;
     /// <summary>Days of timeline kept by default.</summary>
     public const int MemoryDays = 60;
-    /// <summary>Tokens of memory a prompt carries by default.</summary>
-    public const int MemoryTokens = 150;
+    /// <summary>Tokens of memory a prompt carries by default: room for a full story, five
+    /// facts, today and yesterday in Russian (558 for the busiest pair in October 2026).</summary>
+    public const int MemoryTokens = 600;
+    /// <summary>The default before 0.59.1, moved to the new one once if still set.</summary>
+    public const int OldMemoryTokens = 150;
 
     /// <summary>A rough count of tokens: a token is about four bytes of UTF-8, which is
     /// cautious for Russian, where a letter takes two.</summary>
@@ -164,9 +167,10 @@ public static partial class Bonds
 
     // MARK: What a prompt carries
 
-    /// <summary>What <paramref name="speaker"/> remembers of <paramref name="other"/>, at most <paramref name="budget"/> tokens: what they did
-    /// today, the facts, their games, yesterday, how they met and their story,
-    /// in that order of need. Empty for strangers or a budget of 0.</summary>
+    /// <summary>What <paramref name="speaker"/> remembers of <paramref name="other"/>, at most <paramref name="budget"/> tokens.
+    /// Over budget it gives way in this order: their story (its newest whole sentences) is kept
+    /// first, then the facts newest first, today, yesterday, their games, and how they met last.
+    /// Written in the order met, story, games, facts, yesterday, today. Empty for strangers or a budget of 0.</summary>
     public static string Memory(Bond? bond, string speaker, string other, int budget, DateTimeOffset? at = null)
     {
         if (bond is null || budget <= 0) return "";
@@ -182,8 +186,18 @@ public static partial class Bonds
             parts[place] = text;
             used += Tokens(text) + 1;
         }
-        var todays = bond.Days.FirstOrDefault(d => d.Day == today);
-        Take(todays is null ? null : L10n.Tr("Today together: %@.", DayLine(todays)), 6);
+        if (bond.Chronicle is string chronicle && chronicle.Length > 0)
+        {
+            // As many of the story's newest whole sentences as there is room for; a
+            // sentence cut short says nothing, so none is sent rather than half of one.
+            var kept = new List<string>();
+            foreach (var sentence in Enumerable.Reverse(Sentences(chronicle)))
+            {
+                if (!Fits(L10n.Tr("Your story so far: %@", string.Join(" ", kept.Prepend(sentence))))) break;
+                kept.Insert(0, sentence);
+            }
+            if (kept.Count > 0) Take(L10n.Tr("Your story so far: %@", string.Join(" ", kept)), 2);
+        }
         // The facts, newest first, as many as fit.
         var remembered = new List<string>();
         foreach (var fact in Enumerable.Reverse(bond.Facts))
@@ -191,30 +205,17 @@ public static partial class Bonds
             // A fact's own full stop would make two with the one the list ends with.
             var bare = fact.Text.Trim('.', ';', '·', ' ', '\t');
             var text = fact.Source is "diary" or "seed" ? bare : bare + " (" + Day(fact.Time) + ")";
-            var all = L10n.Tr("You remember: %@.", string.Join(" · ", remembered.Append(text)));
-            if (!Fits(all)) break;
+            if (!Fits(L10n.Tr("You remember: %@.", string.Join(" · ", remembered.Append(text))))) break;
             remembered.Add(text);
         }
         if (remembered.Count > 0) Take(L10n.Tr("You remember: %@.", string.Join(" · ", remembered)), 4);
-        Take(RecordLine(bond) is string record ? L10n.Tr("Games between you: %@.", record) : null, 3);
+        var todays = bond.Days.FirstOrDefault(d => d.Day == today);
+        Take(todays is null ? null : L10n.Tr("Today together: %@.", DayLine(todays)), 6);
         var yesterdays = bond.Days.FirstOrDefault(d => d.Day == yesterday);
         Take(yesterdays is null ? null : L10n.Tr("Yesterday: %@.", yesterdays.Line ?? DayLine(yesterdays)), 5);
+        Take(RecordLine(bond) is string record ? L10n.Tr("Games between you: %@.", record) : null, 3);
         if (bond.Met is DateTimeOffset met && bond.Tally.Count > 0)
             Take(L10n.Tr("You and %@ first met on %@; all told: %@.", other, Day(met), Tallied(bond.Tally)), 1);
-        if (bond.Chronicle is string chronicle && chronicle.Length > 0)
-        {
-            // As many of the story's newest whole sentences as there is room for; a
-            // sentence cut short says nothing, so none is sent rather than half of one.
-            var room = budget - used - 1;
-            var kept = new List<string>();
-            foreach (var sentence in Enumerable.Reverse(Sentences(chronicle)))
-            {
-                var text = L10n.Tr("Your story so far: %@", string.Join(" ", kept.Prepend(sentence)));
-                if (Tokens(text) > room) break;
-                kept.Insert(0, sentence);
-            }
-            if (kept.Count > 0) Take(L10n.Tr("Your story so far: %@", string.Join(" ", kept)), 2);
-        }
         return string.Join(" ", parts.Values);
     }
 

@@ -233,7 +233,8 @@ public sealed partial class Colony
             foreach (var (x, y) in new[] { (bond.Names[0], bond.Names[1]), (bond.Names[1], bond.Names[0]) })
             {
                 var block = Core.Bonds.Memory(bond, x, y, Settings.MemoryTokens);
-                output.Add($"memory {key}: {x} remembers ({Core.Bonds.Tokens(block)} of {Settings.MemoryTokens} tokens): {block}");
+                var all = Core.Bonds.Tokens(Core.Bonds.Memory(bond, x, y, 100_000));
+                output.Add($"memory {key}: {x} remembers ({Core.Bonds.Tokens(block)} of {Settings.MemoryTokens} tokens; all of it {all}): {block}");
             }
         }
         return output;
