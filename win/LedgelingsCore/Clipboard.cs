@@ -564,8 +564,15 @@ public static class Clipboard
 
     public static SnippetBook ImportClipy(string xml)
     {
+        // Through XmlReader, not LoadXml: it turns \r\n into \n as the XML spec and the Mac's parser do,
+        // so a file saved with Windows line ends brings in the same snippets.
         var doc = new XmlDocument();
-        try { doc.LoadXml(xml); } catch (XmlException) { throw new NotClipyXmlException(); }
+        try
+        {
+            using var reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore });
+            doc.Load(reader);
+        }
+        catch (XmlException) { throw new NotClipyXmlException(); }
         if (doc.DocumentElement is not { Name: "folders" } root) throw new NotClipyXmlException();
         var book = new SnippetBook();
         foreach (var folderNode in root.ChildNodes.OfType<XmlElement>().Where(e => e.Name == "folder"))

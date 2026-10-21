@@ -20,6 +20,10 @@
     <ProjectReference Include="..\LedgelingsCore\LedgelingsCore.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The app tests draw windows that are the app's own business, such as the clipboard picker. -->
+    <InternalsVisibleTo Include="Ledgelings.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Windows' own voices (SAPI) for the Voice tab's built-in engine. -->
     <PackageReference Include="System.Speech" Version="10.0.12" />
   </ItemGroup>
