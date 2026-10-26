@@ -10,7 +10,7 @@ const PROMPT = "Paint me a new creature for a pixel-art desktop toy.";
 export const Kit: React.FC = () => {
   const f = useCurrentFrame();
   const typed = PROMPT.slice(0, Math.max(0, Math.floor((f - 70) * 1.4)));
-  const arrow = interpolate(f, [110, 130], [0, 1], clamp);
+  const arrow = interpolate(f, [24, 40], [0, 1], clamp);
   return (
     <Backdrop>
       <Headline
@@ -82,7 +82,7 @@ export const Kit: React.FC = () => {
         x={1070}
         y={400}
         width={760}
-        at={124}
+        at={30}
         caption="SETTINGS › SPRITES"
         colour={C.teal}
       />

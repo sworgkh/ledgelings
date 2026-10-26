@@ -36,7 +36,7 @@ const Throw: React.FC<{ from: number; to: number; at: number }> = ({
   );
 };
 
-/** A letter opened on the screen: the words, and who wrote it. */
+/** A letter opened beside the screen it was thrown on: the words, and who wrote it. */
 const Letter: React.FC<{
   at: number;
   until: number;
@@ -44,7 +44,8 @@ const Letter: React.FC<{
   by: string;
   colour: string;
   x: number;
-}> = ({ at, until, text, by, colour, x }) => {
+  y: number;
+}> = ({ at, until, text, by, colour, x, y }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   if (f < at || f > until + 10) return null;
@@ -59,7 +60,7 @@ const Letter: React.FC<{
       style={{
         position: "absolute",
         left: x,
-        top: 70,
+        top: y,
         width: 560,
         padding: "26px 30px",
         background: C.paper,
@@ -119,24 +120,26 @@ export const Deeds: React.FC = () => {
           pose={walk > 0 && walk < 1 ? "walk" : "idle"}
         />
         <Throw from={BLOCKY} to={UNIT7} at={ASK} />
-        <Letter
-          at={ASK + 30}
-          until={ANSWER - 6}
-          x={380}
-          text="Unit 7. Soccer. Bottom edge. Unless you're scared of losing."
-          by="BLOCKY"
-          colour={C.orange}
-        />
         <Throw from={UNIT7} to={BLOCKY} at={ANSWER} />
-        <Letter
-          at={ANSWER + 30}
-          until={210}
-          x={60}
-          text="Accepted, Blocky. Soccer. Recalculating odds: 63%."
-          by="UNIT 7"
-          colour={C.teal}
-        />
       </Monitor>
+      <Letter
+        at={ASK + 30}
+        until={ANSWER - 6}
+        x={1220}
+        y={420}
+        text="Unit 7. Soccer. Bottom edge. Unless you're scared of losing."
+        by="BLOCKY"
+        colour={C.orange}
+      />
+      <Letter
+        at={ANSWER + 30}
+        until={192}
+        x={1220}
+        y={420}
+        text="Accepted, Blocky. Soccer. Recalculating odds: 63%."
+        by="UNIT 7"
+        colour={C.teal}
+      />
       <Still
         src="invite-goal.png"
         size={[1280, 720]}

@@ -47,7 +47,7 @@ export const ClipShot: React.FC = () => (
       x={850}
       y={350}
       width={960}
-      at={70}
+      at={36}
       caption="⌃⌥S  SCREENSHOT"
       colour={C.teal}
     />
@@ -57,7 +57,7 @@ export const ClipShot: React.FC = () => (
       x={1030}
       y={530}
       width={600}
-      at={100}
+      at={60}
       colour={C.yellow}
       angle={-1.5}
     />
