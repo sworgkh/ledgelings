@@ -22,9 +22,12 @@
     "typescript": "5.9.3"
   },
   "scripts": {
-    "dev": "npm run assets && remotion studio",
+    "dev": "npm run assets && npm run music:v2 && remotion studio",
     "assets": "${PYTHON:-python3} scripts/export-sprites.py && ${PYTHON:-python3} scripts/make-music.py 78.7",
+    "music:v2": "${PYTHON:-python3} scripts/make-music.py 84.5 v2",
     "render": "npm run assets && remotion render Promo out/ledgelings-promo.mp4 --crf=18",
+    "render:v2": "npm run assets && npm run music:v2 && remotion render PromoV2 out/ledgelings-promo-v2.mp4 --crf=18",
+    "stills:v2": "scripts/capture-stills.sh",
     "lint": "eslint src && tsc"
   },
   "sideEffects": [

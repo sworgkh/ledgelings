@@ -24,7 +24,12 @@ const PARADE: Species[] = [
   "mushroom",
 ];
 
-export const Outro: React.FC = () => {
+/** The parade home under the name. PromoV2 passes its own lines; the first
+ *  promo plays it with the defaults. */
+export const Outro: React.FC<{ line?: string; sub?: string }> = ({
+  line = "Tiny friends for the edges of your screen.",
+  sub = "…and when you ask, they all go home.",
+}) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   const title = spring({
@@ -95,7 +100,7 @@ export const Outro: React.FC = () => {
             opacity: rise(44),
           }}
         >
-          Tiny friends for the edges of your screen.
+          {line}
         </div>
         <div
           style={{
@@ -106,7 +111,7 @@ export const Outro: React.FC = () => {
             opacity: rise(70),
           }}
         >
-          …and when you ask, they all go home.
+          {sub}
         </div>
         <div
           style={{
