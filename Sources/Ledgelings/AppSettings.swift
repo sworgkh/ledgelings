@@ -516,6 +516,33 @@ final class AppSettings: ObservableObject {
     /// Why a screenshot shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var shotShortcutProblem = ""
 
+    // MARK: Dictation
+
+    /// Dictation (§7.13). Off: no dictation shortcut is taken and the menu item goes.
+    @Published var dictationEnabled: Bool { didSet { save(dictationEnabled, "dictationEnabled") } }
+    @Published var dictationShortcutEnabled: Bool { didSet { save(dictationShortcutEnabled, "dictationShortcutEnabled") } }
+    @Published var dictationShortcut: Shortcut {
+        didSet { save(dictationShortcut.keyCode, "dictationShortcutKeyCode"); save(dictationShortcut.modifiers.rawValue, "dictationShortcutModifiers") }
+    }
+    /// Record only while the shortcut is held down; let go and it is written down. Off: press to start, press again to stop.
+    @Published var dictationHoldToTalk: Bool { didSet { save(dictationHoldToTalk, "dictationHoldToTalk") } }
+    /// The OpenRouter model that listens (one that takes audio in).
+    @Published var dictationModel: String { didSet { save(dictationModel, "dictationModel") } }
+    /// The language it is spoken in, or `auto` for the model to hear.
+    @Published var dictationLanguage: Dictation.Spoken { didSet { save(dictationLanguage.rawValue, "dictationLanguage") } }
+    /// Leave out filler words and stutters, add punctuation; in the same call.
+    @Published var dictationCleanUp: Bool { didSet { save(dictationCleanUp, "dictationCleanUp") } }
+    /// The longest recording, in seconds; at the end it stops by itself and is written down.
+    @Published var dictationMaxSeconds: Int { didSet { save(dictationMaxSeconds, "dictationMaxSeconds") } }
+    /// The words are also pasted into the app that was in front (needs Accessibility).
+    @Published var dictationPaste: Bool { didSet { save(dictationPaste, "dictationPaste") } }
+    /// A creature leaps to the middle of the screen with a microphone while it listens.
+    @Published var dictationCreature: Bool { didSet { save(dictationCreature, "dictationCreature") } }
+    /// Which character holds the microphone, by name; empty: any free one, by chance.
+    @Published var dictationHelper: String { didSet { save(dictationHelper, "dictationHelper") } }
+    /// Why the dictation shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var dictationShortcutProblem = ""
+
     // MARK: Voice
 
     /// Who reads the lines out loud: the Mac's own voices, or a speech model on OpenRouter.
@@ -903,6 +930,19 @@ final class AppSettings: ObservableObject {
         let colour = defaults.object(forKey: "shotColour") as? Int ?? 0
         shotColour = Shot.colourRange.contains(colour) ? colour : 0
         shotLastRect = defaults.string(forKey: "shotLastRect") ?? ""
+        dictationEnabled = defaults.object(forKey: "dictationEnabled") as? Bool ?? true
+        dictationShortcutEnabled = defaults.object(forKey: "dictationShortcutEnabled") as? Bool ?? true
+        dictationShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "dictationShortcutKeyCode") as? Int,
+                                     savedModifiers: defaults.object(forKey: "dictationShortcutModifiers") as? Int, standard: .dictation)
+        dictationHoldToTalk = defaults.object(forKey: "dictationHoldToTalk") as? Bool ?? false
+        dictationModel = defaults.string(forKey: "dictationModel").flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 } ?? Dictation.defaultModel
+        dictationLanguage = defaults.string(forKey: "dictationLanguage").flatMap(Dictation.Spoken.init(rawValue:)) ?? .auto
+        dictationCleanUp = defaults.object(forKey: "dictationCleanUp") as? Bool ?? true
+        let longest = defaults.object(forKey: "dictationMaxSeconds") as? Int ?? Dictation.defaultMaxSeconds
+        dictationMaxSeconds = min(max(longest, Dictation.maxSecondsRange.lowerBound), Dictation.maxSecondsRange.upperBound)
+        dictationPaste = defaults.object(forKey: "dictationPaste") as? Bool ?? false
+        dictationCreature = defaults.object(forKey: "dictationCreature") as? Bool ?? true
+        dictationHelper = defaults.string(forKey: "dictationHelper") ?? ""
         followLanguage()
     }
 

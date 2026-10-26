@@ -18,7 +18,7 @@ public enum Spend {
     /// Which feature made a call. Every model call is recorded with one, so the
     /// Costs tab can say what each feature costs, not just each model.
     public enum Purpose: String, CaseIterable, Codable, Sendable {
-        case talk, planes, voice, casting, plots, reminders, complaints, teaParties, revenge, creatureRefine, plays, ballGames, memory, memorySeed
+        case talk, planes, voice, casting, plots, reminders, complaints, teaParties, revenge, creatureRefine, plays, ballGames, memory, memorySeed, dictation
 
         public var title: String {
             switch self {
@@ -36,6 +36,7 @@ public enum Spend {
             case .ballGames: tr("Soccer and baseball")
             case .memory: tr("Long-term memory")
             case .memorySeed: tr("Memory: reading the past")
+            case .dictation: tr("Dictation")
             }
         }
 

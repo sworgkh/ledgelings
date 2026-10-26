@@ -33,6 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                    helper: { [weak self] in self?.colony })
     private lazy var snippetsWindow = SnippetsWindowController(settings: settings, book: clips)
     private lazy var shots = ShotController(settings: settings, colony: { [weak self] in self?.colony })
+    private lazy var dictation = DictationController(settings: settings, spend: spend, clips: clips, colony: { [weak self] in self?.colony },
+                                                     watcher: { [weak self] in self?.clipWatcher })
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
     private var shortcutShown: AnyCancellable?
@@ -171,6 +173,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--dictate-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/dictation.mp4"
+            Task { @MainActor in
+                do { try await DictationFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings dictate film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
+        if CommandLine.arguments.contains("--mic-check") {
+            Task { @MainActor in exit(await DictationDemo.check() ? 0 : 1) }
+            return
+        }
         if CommandLine.arguments.contains("--shot-check") {
             Task { @MainActor in exit(await ShotDemo.check() ? 0 : 1) }
             return
@@ -212,6 +228,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                       paste: { [weak self] in self?.picker.pasteNow($0) })
         shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
         shots.takeShortcuts { [weak self] in self?.shotShortcutPressed($0) }
+        dictation.takeShortcut { [weak self] in self?.dictationShortcutPressed() }
         shortcutShown = Publishers.CombineLatest(settings.$shortcutEnabled, settings.$shortcut)
             .sink { [weak self] enabled, shortcut in self?.showShortcutInMenu(enabled ? shortcut : nil) }
         // `--shortcut`: says on stderr whether the system took the shortcut, then each press; quits after the first.
@@ -231,6 +248,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let shotState = !settings.shotEnabled || !on ? "off" : problem.isEmpty ? "registered" : "refused: \(problem)"
                 FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(key)) \(name) \(shotState)\n".utf8))
             }
+            let dictationState = !settings.dictationEnabled || !settings.dictationShortcutEnabled ? "off"
+                : settings.dictationShortcutProblem.isEmpty ? "registered" : "refused: \(settings.dictationShortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.dictationShortcut)) dictation \(dictationState)\n".utf8))
             Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
         }
         // `--shot-demo [--snapshot out.png]`: a shot of the real screen with marks, the clipboard put back after.
@@ -240,6 +260,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 exit(await ShotDemo.run(settings: settings, controller: shots, snapshot: shot.map { URL(fileURLWithPath: $0) }) ? 0 : 1)
+            }
+        }
+        // `--dictate-demo [--model id]`: a line the Mac says, through the real call, onto the clipboard; put back after.
+        if CommandLine.arguments.contains("--dictate-demo") {
+            let args = CommandLine.arguments
+            let model = args.firstIndex(of: "--model").flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil }
+            let dictation = dictation, clips = clips
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                exit(await DictationDemo.run(settings: settings, controller: dictation, clips: clips, model: model) ? 0 : 1)
             }
         }
         // `--converse`: one conversation, every line and voice cue on stderr with
@@ -447,6 +477,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // `clipboard` and `screenshots` are Productivity tools on that tool.
             if name == "clipboard" { settingsWindow.show(tool: .clipboard) }
             else if name == "screenshots" { settingsWindow.show(tool: .screenshots) }
+            else if name == "dictation" { settingsWindow.show(tool: .dictation) }
             else { settingsWindow.show(tab: SettingsTab.named(name)) }
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
@@ -473,6 +504,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let shotItem = NSMenuItem(title: "", action: #selector(takeShot), keyEquivalent: "")
     private let shotFullItem = NSMenuItem(title: "", action: #selector(takeFullShot), keyEquivalent: "")
     private let shotLastItem = NSMenuItem(title: "", action: #selector(takeLastShot), keyEquivalent: "")
+    private let dictationItem = NSMenuItem(title: "", action: #selector(dictate), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -489,7 +521,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(activitiesItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
-        for item in [clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem] {
+        for item in [clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem] {
             item.target = self
             menu.addItem(item)
         }
@@ -571,6 +603,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.keyEquivalent = on && key.count == 1 ? key : ""
             item.keyEquivalentModifierMask = GlobalShortcut.flags(shortcut.modifiers)
         }
+        dictationItem.title = dictation.isRecording ? tr("Stop Dictating") : tr("Dictate")
+        dictationItem.isHidden = !settings.dictationEnabled
+        let dictationKey = GlobalShortcut.keyName(settings.dictationShortcut.keyCode).lowercased()
+        dictationItem.keyEquivalent = settings.dictationShortcutEnabled && dictationKey.count == 1 ? dictationKey : ""
+        dictationItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.dictationShortcut.modifiers)
         for choice in languageItem.submenu?.items ?? [] {
             choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
         }
@@ -644,6 +681,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func takeShot() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); shots.withToolbar() } }
     @objc private func takeFullShot() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); shots.fullScreen() } }
     @objc private func takeLastShot() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); shots.lastRectangle() } }
+
+    // From the menu: once it has closed, so the app in front is the one dictated into.
+    @objc private func dictate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); dictation.press() } }
+
+    /// The dictation shortcut from any app, for `--shortcut`: said, then quit once it has listened and written.
+    private func dictationShortcutPressed() {
+        guard CommandLine.arguments.contains("--shortcut") else { return }
+        FileHandle.standardError.write(Data("shortcut pressed: dictation \(dictation.isRecording ? "stops" : "starts")\n".utf8))
+        Task { @MainActor in try? await Task.sleep(for: .seconds(2)); while dictation.isBusy { try? await Task.sleep(for: .seconds(0.2)) }; exit(0) }
+    }
 
     /// A screenshot shortcut from any app, for `--shortcut`: said, then quit once the shot is done with.
     private func shotShortcutPressed(_ name: String) {

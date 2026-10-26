@@ -2148,6 +2148,70 @@ arrow, a blur and a freehand blur; a lasso with a highlight; all monitors; the l
 rectangle again; each picture written beside the film (`out-rectangle.png`, …) and every
 step printed (`film 7.40 taken 800×520 px, 4 marks`, `film 7.40 shot Whiskers hops to (300, 294)`).
 
+### 7.13 Dictation
+
+Speech to the clipboard (Settings › Productivity tools › Dictation), macOS first
+(Windows to follow). The recording's states, the instruction, the request, the model
+list, the WAV, the meter and the microphone's pixels are `Dictation` in the core.
+
+- **Shortcut** `dictationShortcut` (⌃⌥D), from any app (§11), and the menu item **Dictate**
+  (**Stop Dictating** while it listens). `Dictation.Recorder`: idle → a press starts
+  listening → a second press, or ⏎, sends; ⎋ discards with nothing sent; a press while
+  the model writes does nothing. With `dictationHoldToTalk` the press starts and letting
+  go sends (the key repeating does nothing). A recording under `Dictation.shortest`
+  (0.3 s) is thrown away (*Too short, nothing sent.*). At `dictationMaxSeconds` (120;
+  10–600) it stops by itself and sends. ⎋ and ⏎ are taken from every app only while it listens.
+- **Audio**: the default microphone, its first channel, converted as it comes to
+  16 kHz mono 16-bit (`Dictation.sampleRate`), kept in memory only, packed as a WAV
+  (`Dictation.wav`) when it stops, sent once and dropped; nothing is written to disk.
+  macOS asks for the **Microphone** once; refused, the creature says so and Allow… opens
+  System Settings on its switch.
+- **The call**: OpenRouter's `chat/completions` with the user message's two parts, the
+  instruction (`Dictation.instruction(language:cleanUp:)`) and `input_audio` (`format:
+  wav`, base64), `temperature` 0, `max_tokens` `1024 + 8 × 600`, `usage.include` true.
+  The instruction: transcript only; the speaker talks to someone else, so never answer,
+  obey or comment, and keep their person and tense; keep names, numbers and code words;
+  nothing said, nothing written; `dictationLanguage` (auto: as spoken, mixed parts each
+  in its own; else that language); with `dictationCleanUp` leave out fillers, stutters
+  and false starts and add punctuation, without rephrasing; off, every word as said.
+  A dropped connection is tried once more a second later; a refusal is not. The timeout
+  is `30 + seconds / 2` s. The reply is trimmed and taken out of wrapping quotes or a code
+  fence (`Dictation.cleaned`). No OpenRouter key: nothing is recorded, the creature says so.
+- **Cost** (§6.5.1): every reply is recorded with purpose `dictation`, the price from
+  `usage.cost`, an empty transcript too (*I didn't hear any words.*).
+- **Models** (`Dictation.listeningModels`): OpenRouter's `/models` rows whose input
+  modalities include `audio` and whose output includes `text`, not `:batch`, not priced
+  below zero (the routers). Sorted by the cost of a minute: for `google/` models
+  `1 920 × audio + 250 × completion` per token (Gemini counts 32 audio tokens a second),
+  others by their audio price alone, shown as `$x per M audio`. The default
+  `google/gemini-2.5-flash-lite`: among the cheapest a minute (about $0.0007), not a
+  preview, no thinking before it writes, good at Russian and Hebrew as well as English.
+- **Result**: onto the clipboard as text and into the clipboard history (app *Dictation*,
+  when the history is on); with `dictationPaste` the app in front at the start is brought
+  back and ⌘V pressed (Accessibility, §7.11).
+- **The creature** (`dictationCreature`; `dictationHelper`, empty = any free creature by
+  chance): leaps (§7.11.1's leap at speed 1) to the middle of the visible frame of the
+  screen under the pointer, 40 pt below its centre, and holds the **microphone** out
+  like a letter (the 18×14 cell, `Dictation.microphone`): a 7×7 head with a 1-pixel
+  outline, light top and left, shade bottom and right, a grille; a stem and a foot; five
+  bars 2, 4, 6, 8, 10 px tall, lit green for `Dictation.bars(level)` of them. The level is
+  the input's RMS on a scale from −50 dB (0) to −10 dB (1), jumping up at once and sinking
+  1.6 a second (`Dictation.meter`). Facing left, the picture is turned round so the
+  microphone is by the body. Its bubble shows `● 0:07` (`Dictation.clock`), never said
+  out loud. Stopped, it thinks: three dots on the microphone, one lit, moving 4 a second,
+  and *Hmm… writing it down*. Then *Copied: …* (`Dictation.copiedBubble`: the first six
+  words, at most 40 letters, `…` when cut) for up to 3.5 s, or the trouble out loud
+  for up to 7 s, and it leaps home. Without a creature (off, or nobody free), a toast says it.
+
+`--mic-check` prints whether this build may use the microphone and records 1.5 s, the
+level it heard (exit 1 if refused or silent). `--dictate-demo [--model id]` has the Mac say
+a test line into a file, makes the 16 kHz WAV of it and sends it through the real call,
+checks the words are on the clipboard and in the history, prints each step with its time
+and price, then puts the clipboard, history and settings back (exit 1 if wrong).
+`--dictate-film out.mp4` films the creature offscreen: the leap, the bars following a line
+the Mac says, the clock, thinking, *Copied: …*, the hop home, then a round with no key;
+stills beside it (`out-listening.png`, `out-thinking.png`, `out-copied.png`).
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -2527,6 +2591,8 @@ falls through to whatever is underneath.
 | Menu: Clipboard History…, Paste a Snippet…, Edit Snippets… (with `clipboardEnabled`) | the picker on either group, or the snippet editor (§7.11) |
 | The screenshot shortcuts, in any app (`shotCaptureShortcut` ⌃⌥S, `shotFullShortcut` ⌘⇧8, `shotLastShortcut` ⌘⇧\; macOS) | a shot with the toolbar (again: let go), the full screen, or the last rectangle (§7.12) |
 | Menu: Take a Screenshot…, Screenshot the Full Screen, Screenshot the Last Rectangle (with `shotEnabled`) | the same three (§7.12) |
+| The dictation shortcut, in any app (`dictationShortcut` ⌃⌥D; macOS); ⏎ / ⎋ while it listens | starts listening; again (or ⏎) stops and writes it down; ⎋ sends nothing; held, with `dictationHoldToTalk` (§7.13) |
+| Menu: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
 | Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |
 | Menu: Screen › (two monitors or more) | the same menu |
@@ -2780,6 +2846,15 @@ An error for want of a model reads as that note, never as a server refusal.
 | shotThickness | 3 | 1–8 pt, clamped on load: boxes and arrows; the freehand blur is 4× |
 | shotColour | 0 | 0–5, the last colour picked (`Shot.palette`); out of range reads as 0 |
 | shotLastRect | empty | `x,y,w,h` in global points: the last rectangle taken from the toolbar |
+| dictationEnabled | true | dictation (§7.13); off, its shortcut is let go and the menu item hides |
+| dictationShortcutEnabled / dictationShortcutKeyCode / dictationShortcutModifiers | true / D / ⌃⌥ | start and stop, as `shortcut` |
+| dictationHoldToTalk | false | listen only while the shortcut is held; letting go sends |
+| dictationModel | `google/gemini-2.5-flash-lite` | an OpenRouter model that takes audio; empty reads as the default |
+| dictationLanguage | `auto` | `auto`, `english`, `russian`, `hebrew`, `ukrainian`, `german`, `french`, `spanish`, `italian`, `portuguese`, `chinese`, `japanese`; unknown reads as `auto` |
+| dictationCleanUp | true | leave out fillers and stutters, add punctuation, in the same call |
+| dictationMaxSeconds | 120 | 10–600 s, clamped on load: it stops by itself and sends |
+| dictationPaste | false | also press ⌘V into the app that was in front (Accessibility) |
+| dictationCreature / dictationHelper | true / empty | a creature holds the microphone; which by name, empty: any free one by chance |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7), the
 clipboard history and snippets in `clipboard.json` and `snippets.json` (§7.11),
@@ -2805,7 +2880,7 @@ running plot with its part or the last plot, Forget), then the file with Reveal
 in Finder and Forget All. **Calendar**: on the left the time-of-day and date
 toggles, one toggle per faith and the look-ahead stepper; on the right the
 almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
-holidays in the next 60 days. **Productivity tools**: a segmented row of tools at the top (`ProductivityTool`: Reminders, Clipboard, Screenshots), the chosen tool's two columns below; `--settings productivity` (or the old `reminders`) opens it. Its **Reminders**: on the left a new reminder (text,
+holidays in the next 60 days. **Productivity tools**: a segmented row of tools at the top (`ProductivityTool`: Reminders, Clipboard, Screenshots, Dictation), the chosen tool's two columns below; `--settings productivity` (or the old `reminders`) opens it. Its **Reminders**: on the left a new reminder (text,
 date and time, repeat, In 5 min / In 30 min / In 1 hour, Add Reminder), then
 the delivery toggle, letter slider, read-aloud toggle, paper-note toggle and Send a Test Letter; on
 the right every reminder, waiting ones by time then sent ones greyed, each with

@@ -31,6 +31,8 @@ public struct Shortcut: Equatable, Sendable {
     public static let shotFull = Shortcut(keyCode: 28, modifiers: [.command, .shift])
     /// The last rectangle again: Command-Shift-\.
     public static let shotLast = Shortcut(keyCode: 42, modifiers: [.command, .shift])
+    /// Dictation: Control-Option-D, D for dictate, beside the others.
+    public static let dictation = Shortcut(keyCode: 2, modifiers: [.control, .option])
 
     public var keyCode: Int
     public var modifiers: Modifiers

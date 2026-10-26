@@ -136,6 +136,8 @@ final class Colony: NSObject {
     var clipHelp: ClipHelp?
     /// The creature carrying a screenshot's tiny picture home, while it hops there and back.
     var shotCarry: ShotCarry?
+    /// The creature holding the dictation microphone, while it leaps there, listens, thinks, tells and goes back.
+    var dictationHelp: DictationHelp?
     /// Counts grabs, so a model's late line finds whether its grab is still on.
     var grabCount = 0
     /// The real pointer, for a grab. Nil offscreen and in tests that don't set one.
@@ -444,6 +446,7 @@ final class Colony: NSObject {
         updateMoves(dt: dt)
         updateClipHelp(dt: dt)
         updateShotCarry(dt: dt)
+        updateDictationHelp(dt: dt)
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)
@@ -452,7 +455,7 @@ final class Colony: NSObject {
         updateReminders(dt: dt)
         liveTogether(dt: dt)
         render()
-        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && clipHelp == nil && shotCarry == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
+        setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && clipHelp == nil && shotCarry == nil && dictationHelp == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
 
     /// A sleeping colony only breathes and floats Zs: 12 fps is plenty.
@@ -483,7 +486,7 @@ final class Colony: NSObject {
                 hat: gifts.hat(of: i).flatMap { flowerFrames.frame(animation: $0, time: 0) },
                 hidden: hideout.isInside(i),
                 shrink: shrink,
-                letter: letterImage(for: i) ?? shotThumbnail(for: i),
+                letter: letterImage(for: i) ?? shotThumbnail(for: i) ?? dictationMicrophone(for: i),
                 bubbleLift: playBubbleLift(of: i)
             )
         }
