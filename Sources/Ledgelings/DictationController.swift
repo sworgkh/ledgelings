@@ -98,6 +98,7 @@ final class DictationController {
 
     private func begin() {
         front = NSWorkspace.shared.frontmostApplication
+        settings.retryOpenRouterKey()
         let key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
         guard !key.isEmpty else { recorder.done(); fail(.noKey); return }
         switch DictationRecorder.permission {
