@@ -14,7 +14,7 @@ struct PlaySettingsView: View {
             Section {
                 Toggle(tr("They play now and then"), isOn: $settings.playEnabled)
             } header: {
-                Text(tr("Playing"))
+                SettingsHeader("Playing")
             } footer: {
                 Text(tr("Now and then a creature stops walking and plays, the way the worms in Worms fool about between turns, with nobody hurt. One game at a time, never in the middle of a talk, a tea party, a flower, a plane, a grab or sleep; the players are left alone until it is over."))
             }
@@ -27,7 +27,7 @@ struct PlaySettingsView: View {
                 Toggle(tr("Soccer (anyone free, in teams)"), isOn: $settings.playSoccerEnabled)
                 Toggle(tr("Baseball (anyone free, round every edge)"), isOn: $settings.playBaseballEnabled)
             } header: {
-                Text(tr("Which games"))
+                SettingsHeader("Which games")
             } footer: {
                 Text(tr("Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer and baseball are for whoever is free, and have a tab of their own: Ball games. Off, a game is never played, and its row on the Activities page is greyed."))
             }
@@ -37,7 +37,7 @@ struct PlaySettingsView: View {
                 SliderRow(tr("A game about every"), value: $settings.playEveryMinutes, in: AppSettings.playEveryRange, step: 1, unit: tr(" min"))
                 SliderRow(tr("Friends play more often by"), value: $settings.playBondBoost, in: AppSettings.playBondBoostRange, step: 10, unit: "%")
             } header: {
-                Text(tr("How often"))
+                SettingsHeader("How often")
             } footer: {
                 Text(tr("The wait between games is this many minutes, give or take, shortened by how close the closest pair on screen is: at 100 % the best of friends play twice as often. Close pairs (who have shared a few talks, tea parties, flowers) play tag and take turns at the hoop; strangers play alone."))
             }
@@ -51,7 +51,7 @@ struct PlaySettingsView: View {
                     LabeledContent(tr("Throws at the hoop each"), value: "\(settings.basketballThrows)")
                 }
             } header: {
-                Text(tr("How the games go"))
+                SettingsHeader("How the games go")
             } footer: {
                 Text(tr("After tag both stand puffing for a few seconds. The parachute sways as it comes down; slower is longer to watch. The ball bounces off the floor, the board and the rim; at 0 % it drops dead. About half the throws are aimed true; the rest fall short or bang off the board."))
             }
@@ -60,7 +60,7 @@ struct PlaySettingsView: View {
             Section {
                 Toggle(tr("Say something as a game starts and ends"), isOn: $settings.playTalk)
             } header: {
-                Text(tr("Talking about it"))
+                SettingsHeader("Talking about it")
             } footer: {
                 Text(tr("Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays, or Soccer and baseball, on the Costs tab), and a goal's or a home run's cheer too; otherwise, and for the last word, built-in lines. Needs Talk on."))
             }
@@ -71,7 +71,7 @@ struct PlaySettingsView: View {
                     ForEach(["ball", "hoop", "chute", "hook", "drop"], id: \.self) { picture($0) }
                 }
             } header: {
-                Text(tr("The props"))
+                SettingsHeader("The props")
             } footer: {
                 Text(tr("Drawn like the creatures, and the same for every species, your own imported ones too."))
             }

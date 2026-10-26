@@ -29,7 +29,7 @@ struct SpritesSettingsView: View {
                     Text(status).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                 }
             } header: {
-                Text(tr("Creatures"))
+                SettingsHeader("Creatures")
             } footer: {
                 Text(tr("Click a creature to put it in the colony or take it out. Creature 1 wears the first one chosen, creature 2 the second, and so on, starting over when they run out. New ones come from the sprite kit. Imported creatures live in %@.", library.directory.path))
             }
@@ -75,7 +75,7 @@ struct SpritesSettingsView: View {
             .textFieldStyle(.roundedBorder)
             .labelsHidden()
         } header: {
-            Text(tr("Sprite kit: the new creature"))
+            SettingsHeader("Sprite kit: the new creature")
         } footer: {
             Text(tr("Anything empty is the model's to choose. On import the name, colour and characters come from here; the picture gives only the looks.")
                  + " " + (canRefine
@@ -152,7 +152,7 @@ struct SpritesSettingsView: View {
                 Spacer()
             }
         } header: {
-            Text(tr("Ask an image model"))
+            SettingsHeader("Ask an image model")
         } footer: {
             Text(tr("Give an image model (ChatGPT, Gemini…) the prompt and both pictures, in order: 1 the poses to copy, 2 the sheet to paint on. Import… what it paints, at any size; a text sheet (.txt) imports too."))
         }

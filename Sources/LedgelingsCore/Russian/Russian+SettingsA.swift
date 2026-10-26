@@ -1,16 +1,28 @@
 extension Strings {
-    /// The settings window's tabs, Creatures, Talk, Voice, Costs and Chats.
+    /// The settings window's pages, Creatures, Talk, Voice, Costs and Chats.
     static let ruSettingsA: [String: String] = [
         // Tabs
         "Creatures": "Существа",
         "Sprites": "Спрайты",
         "Talk": "Разговоры",
         "Flowers": "Цветы",
-        "Bonds": "Отношения",
+        "Bonds": "Сюжеты",
         "Calendar": "Календарь",
         "Reminders": "Напоминания",
+        // The Windows app's tools tab, until it gets the sidebar too
         "Productivity tools": "Инструменты",
         "Tool": "Инструмент",
+        // The sidebar's groups, and its search
+        "Creatures & world": "Существа и мир",
+        "Games": "Игры и погони",
+        "Talk & friends": "Разговоры и дружба",
+        "Tools": "Инструменты",
+        "Money & history": "Деньги и история",
+        "Search settings": "Поиск в настройках",
+        "Search every setting (⌘F); ⏎ opens the first place": "Поиск по всем настройкам (⌘F); ⏎ открывает первое место",
+        "Clear the search (⎋)": "Очистить поиск (⎋)",
+        "Nothing found.": "Ничего не найдено.",
+        "place|places": "место|места|мест",
         "Voice": "Голос",
         "Costs": "Расходы",
         "Chats": "Чаты",
@@ -119,7 +131,7 @@ extension Strings {
         "Reply": "Ответ",
         "Reset Prompts": "Сбросить промпты",
         "Prompts": "Промпты",
-        "Placeholders: %@. {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.": "Подстановки: %@. {situation} пишет само приложение: ваше время, дата и праздники (вкладка «Календарь»), день или ночь в колонии и где находится каждое существо. {line} — только что сказанное, для ответа. {relationship} — как эти двое ладят и их общая история (вкладка «Отношения»); если её нет в промпте, она добавляется в конец.",
+        "Placeholders: %@. {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.": "Подстановки: %@. {situation} пишет само приложение: ваше время, дата и праздники (вкладка «Календарь»), день или ночь в колонии и где находится каждое существо. {line} — только что сказанное, для ответа. {relationship} — как эти двое ладят и их общая история (вкладка «Сюжеты»); если её нет в промпте, она добавляется в конец.",
         "No model, no server, no key: the creatures say these lines. The format is explained at the top of the text. \"Copy Agent Prompt\" puts a request on the clipboard that any chat model answers with more blocks in this format, ready to paste here.": "Без модели, сервера и ключа: существа говорят эти реплики. Формат объяснён в начале текста. «Скопировать промпт для агента» кладёт в буфер обмена запрос, на который любая чат-модель ответит новыми блоками в этом формате — их можно сразу вставить сюда.",
         "LM Studio's local server, started with `lms server start` or from its Developer tab. The model must be one it has installed; \"Check\" lists them. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence.": "Локальный сервер LM Studio, запускается командой `lms server start` или на его вкладке Developer. Модель должна быть установлена в LM Studio; «Проверить» покажет список. «Место на реплику» — токенов на реплику вместе с размышлениями; если их мало, думающая модель обрывается на полуслове.",
         "OpenRouter runs on the internet and charges per word. Make a key at openrouter.ai/keys, ideally with a spending limit; it is kept in your keychain. \"Check\" confirms the key and lists models. \"Room for each line\": tokens per line, thinking included; too few and a thinking model stops mid-sentence.": "OpenRouter работает в интернете и берёт плату за каждое слово. Создайте ключ на openrouter.ai/keys, лучше с лимитом расходов; он хранится в вашей связке ключей. «Проверить» подтвердит ключ и покажет модели. «Место на реплику» — токенов на реплику вместе с размышлениями; если их мало, думающая модель обрывается на полуслове.",
@@ -210,7 +222,7 @@ extension Strings {
         "Spent": "Потрачено",
         "Nothing yet.": "Пока ничего.",
         "By feature": "По функциям",
-        "Talk is the meetings and pokes (two calls a conversation); paper planes the notes and the catcher's thought; voice every line said by a paid speech model; voice casting each Cast with Model; relationship plots one call per story a pair gets (Bonds tab). Calls from before features were labelled are counted apart.": "Разговоры — это встречи и тычки (два вызова на разговор); бумажные самолётики — записки и мысли поймавшего; голос — каждая реплика, сказанная платной речевой моделью; подбор голоса — каждое «Подобрать моделью»; сюжеты отношений — один вызов на каждую историю пары (вкладка «Отношения»). Вызовы из времён, когда функции ещё не помечались, считаются отдельно.",
+        "Talk is the meetings and pokes (two calls a conversation); paper planes the notes and the catcher's thought; voice every line said by a paid speech model; voice casting each Cast with Model; relationship plots one call per story a pair gets (Bonds tab). Calls from before features were labelled are counted apart.": "Разговоры — это встречи и тычки (два вызова на разговор); бумажные самолётики — записки и мысли поймавшего; голос — каждая реплика, сказанная платной речевой моделью; подбор голоса — каждое «Подобрать моделью»; сюжеты отношений — один вызов на каждую историю пары (вкладка «Сюжеты»). Вызовы из времён, когда функции ещё не помечались, считаются отдельно.",
         "By model": "По моделям",
         "No calls yet.": "Вызовов пока не было.",
         "Latest calls": "Последние вызовы",

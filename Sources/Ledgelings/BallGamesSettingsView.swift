@@ -20,7 +20,7 @@ struct BallGamesSettingsView: View {
                     LabeledContent(tr("Soccer players at most"), value: "\(settings.soccerPlayers)")
                 }
             } header: {
-                Text(tr("Soccer"))
+                SettingsHeader("Soccer")
             } footer: {
                 Text(tr("On the widest floor there is, a little net at each end. One plays keepy-uppy and shoots at an empty goal; two have a goal each; three share one goal and take turns in it; four or more split into teams of friends, a keeper each from six. First to the goals, or the best score when time is up."))
             }
@@ -31,7 +31,7 @@ struct BallGamesSettingsView: View {
                     ForEach(["soccer", "net", "bat", "baseball", "base", "base-taken"], id: \.self) { picture($0) }
                 }
             } header: {
-                Text(tr("The props"))
+                SettingsHeader("The props")
             } footer: {
                 Text(tr("Drawn like the creatures, and the same for every species, your own imported ones too."))
             }
@@ -46,7 +46,7 @@ struct BallGamesSettingsView: View {
                     LabeledContent(tr("Baseball players at most"), value: "\(settings.baseballPlayers)")
                 }
             } header: {
-                Text(tr("Baseball"))
+                SettingsHeader("Baseball")
             } footer: {
                 Text(tr("Home where the batter stands, the bases on the three edges furthest apart, the pitcher on the batter's floor. One practises; two to five bat in turn, a runner who must bat again leaving a pennant on its base; six or more play as two teams. Out over the top of the screen is a home run."))
             }
@@ -56,7 +56,7 @@ struct BallGamesSettingsView: View {
                 Text(tr("Whoever is free joins, closest friends first, up to the most set here; playing together brings them closer. A ball game may come up only this many minutes after the last one ended. A scoreboard sits at the top of the screen while it lasts. Their lines come with Say something on the Play tab."))
                     .foregroundStyle(.secondary)
             } header: {
-                Text(tr("Who plays"))
+                SettingsHeader("Who plays")
             }
         }
     }

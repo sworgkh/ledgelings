@@ -225,8 +225,10 @@ terminal's permission.
 build/Ledgelings.app/Contents/MacOS/Ledgelings --settings talk --snapshot /tmp/talk.png
 ```
 
-opens the settings window at that tab (`creatures`, `sprites`, `talk` or
-`chats`), writes it to the file two seconds later and quits. The app draws the
+opens the settings window at that page (any page's name in lower case:
+`creatures`, `ballgames`, `clipboard`, `chats`…; the old `productivity` opens
+Reminders), writes it to the file two seconds later and quits. `--settings-search
+pitch` instead opens it with "pitch" searched and the first place found open. The app draws the
 window itself, so no screen-recording permission is involved. Leave out
 `--snapshot` to just open the window at launch.
 

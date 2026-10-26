@@ -22,7 +22,7 @@ struct CostsSettingsView: View {
                     row(tr("All time"), s.allTime)
                 }
             } header: {
-                Text(tr("Spent"))
+                SettingsHeader("Spent")
             } footer: {
                 Text(footer(spend.summary))
             }
@@ -33,7 +33,7 @@ struct CostsSettingsView: View {
                     LabeledContent(p.purpose) { Text(total(p.total)).foregroundStyle(.secondary).monospacedDigit() }
                 }
             } header: {
-                Text(tr("By feature"))
+                SettingsHeader("By feature")
             } footer: {
                 Text(tr("Talk is the meetings and pokes (two calls a conversation); paper planes the notes and the catcher's thought; voice every line said by a paid speech model; voice casting each Cast with Model; relationship plots one call per story a pair gets (Bonds tab). Calls from before features were labelled are counted apart."))
             }
@@ -44,14 +44,14 @@ struct CostsSettingsView: View {
                         .font(.callout)
                 }
             } header: {
-                Text(tr("By model"))
+                SettingsHeader("By model")
             }
         } right: {
             Section {
                 if spend.recent.isEmpty { Text(tr("No calls yet.")).foregroundStyle(.secondary) }
                 ForEach(spend.recent.indices, id: \.self) { i in call(spend.recent[i]) }
             } header: {
-                Text(tr("Latest calls"))
+                SettingsHeader("Latest calls")
             } footer: {
                 Text(tr("The last %d, newest first.", SpendLedger.recentCount))
             }
@@ -64,7 +64,7 @@ struct CostsSettingsView: View {
                     Button(tr("Reveal in Finder")) { spend.revealInFinder() }
                 }
             } header: {
-                Text(tr("The file"))
+                SettingsHeader("The file")
             } footer: {
                 Text(tr("spend.jsonl, one JSON line per call: time, provider, model, feature, tokens and cost. Plain text on purpose."))
             }

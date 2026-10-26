@@ -38,7 +38,7 @@ struct DictationSettingsView: View {
                     LabeledContent(tr("Microphone")) { Text(DictationRecorder.microphoneName ?? tr("none found")) }
                 }
             } header: {
-                Text(tr("Dictation"))
+                SettingsHeader("Dictation")
             } footer: {
                 Text(tr("Press the shortcut and speak; press it again (or ⏎) and the words land on the clipboard and in the clipboard history. ⎋ lets it go and sends nothing. The sound is kept in memory only and never saved."))
             }
@@ -57,7 +57,7 @@ struct DictationSettingsView: View {
                     Text(settings.dictationShortcutProblem).foregroundStyle(.red)
                 }
             } header: {
-                Text(tr("Shortcut"))
+                SettingsHeader("Shortcut")
             } footer: {
                 Text(tr("It works in every app. Holding to talk, it listens while the keys are down and writes it down when you let go. At the longest length it stops by itself and sends what it heard."))
             }
@@ -73,7 +73,7 @@ struct DictationSettingsView: View {
                 }
                 Toggle(tr("Tidy it up"), isOn: $settings.dictationCleanUp)
             } header: {
-                Text(tr("Writing it down"))
+                SettingsHeader("Writing it down")
             } footer: {
                 Text(tr("OpenRouter's models that listen to sound, cheapest first; each recording is priced in Settings › Costs as Dictation. Tidying leaves out um and uh, stutters and false starts, and adds punctuation, in the same call."))
             }
@@ -99,7 +99,7 @@ struct DictationSettingsView: View {
                     Text(tr("Nobody: a note says how it went")).tag(Self.nobody)
                 }
             } header: {
-                Text(tr("The words and the creature"))
+                SettingsHeader("The words and the creature")
             } footer: {
                 Text(tr("A creature leaps to the middle of the screen holding a microphone whose bars follow your voice, the clock over its head; it thinks while the words are written, says the first of them and hops home."))
             }

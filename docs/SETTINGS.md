@@ -2,7 +2,14 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. Thirteen tabs: **Creatures**, **Actions**, **Chases**, **Beds**, **Sprites**, **Talk**, **Flowers**, **Bonds**, **Calendar**, **Productivity tools**, **Voice**, **Costs**, **Chats**, each in two columns so a tab fits on one screen.
+Settings…*. On the Mac a sidebar lists nineteen pages under five headings: *Creatures &
+world* (**Creatures**, **Actions**, **Sprites**, **Beds**, **Flowers**, **Calendar**), *Games* (**Chases**, **Play**,
+**Ball games**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Reminders**,
+**Clipboard**, **Screenshots**, **Dictation**) and *Money & history* (**Costs**, **Chats**); each page is two
+columns that fit on one screen. The search box at its top (⌘F) finds any setting by the words
+of its label, its section or its footer, in Russian or English: click a place (⏎ for the first)
+and its page opens with the section lit up; ⎋ clears it. On Windows the same pages are still
+tabs, the tools under one *Productivity tools* tab.
 
 ## Without a model
 
@@ -35,7 +42,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | Item | What it does |
 |---|---|
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
-| *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens *Productivity tools › Reminders* |
+| *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens *Tools › Reminders* |
 | **Clipboard History…** (⌃⌥V from any app) | The clipboard picker on your recent copies ([Clipboard](#clipboard)) |
 | **Paste a Snippet…** (⌃⌥B from any app) | The same picker, snippets first |
 | **Edit Snippets…** | The snippet editor: folders, snippets, protected ones, import and export |
@@ -67,7 +74,7 @@ what the last press did (*A paper plane goes up.*, *No plane: nobody free…*).
 | **Make Someone Talk** | T | A random awake creature says something to the nearest one |
 | **Have a Tea Party** | E | The closest two awake creatures on the same edge sit down to tea now; if nobody shares an edge, one jumps over to another first. Greyed while tea parties are off or one is on |
 | **Send a Paper Plane** | P | One free creature throws a paper plane to another now, whatever the setting below says. Greyed while one is in the air |
-| **Add a Reminder** | R | Puts the sheet away and opens the paper note (below); with *Add a Reminder… opens a paper note* off, *Productivity tools › Reminders*. On Windows, Ctrl+Alt+R from anywhere |
+| **Add a Reminder** | R | Puts the sheet away and opens the paper note (below); with *Add a Reminder… opens a paper note* off, *Tools › Reminders*. On Windows, Ctrl+Alt+R from anywhere |
 | **Hide Them for a While** | H | A row comes up under the tiles: 5, 15, 30 minutes; 1, 2, 4 hours; till 08:00 tomorrow. Pick one and everyone goes into the house. While they are away the tile reads **Bring Them Back**, with the time left, and ends it early |
 | **Put Them to Sleep** / **Wake Them Up** | S | Skips to the next dusk or dawn; the tile shows how long until it would come anyway. Greyed when the night is 0 |
 | **Clear N Flowers** | F | Pulls up every flower the creatures planted, at once ([Flowers tab](#flowers-tab)). Greyed while none are planted |
@@ -567,13 +574,13 @@ block about it (`{holiday}` is its name). They know a holiday only on the day, a
 nothing of the clock or the date, so those two boxes and *Mention a holiday* are
 greyed out under a *Needs a model* note.
 
-## Productivity tools tab
+## Tools
 
-Tools the creatures run for you rather than for themselves. A row of tools
-across the top picks one (**Reminders**, **Clipboard**, **Screenshots**, **Dictation**); its settings fill the two
-columns below. `--settings productivity` opens it (`reminders` too, its old name);
-`--settings clipboard` opens it on Clipboard, `--settings screenshots` on Screenshots,
-`--settings dictation` on Dictation.
+Tools the creatures run for you rather than for themselves, a page each under the
+sidebar's *Tools* heading: **Reminders**, **Clipboard**, **Screenshots**, **Dictation**.
+`--settings reminders` opens the first (`productivity` too, the old tab's name);
+`--settings clipboard`, `--settings screenshots`, `--settings dictation` the others.
+On Windows they are still one *Productivity tools* tab with a row of tools across the top.
 
 ### Reminders
 

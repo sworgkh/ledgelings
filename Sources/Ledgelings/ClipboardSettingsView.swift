@@ -31,7 +31,7 @@ struct ClipboardSettingsView: View {
                           unit: tr(" MB"))
                     .disabled(!settings.clipKeepImages)
             } header: {
-                Text(tr("History"))
+                SettingsHeader("History")
             } footer: {
                 Text(tr("Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures count as copies; one bigger than the largest size is left out. Nothing copied ever leaves this Mac or reaches a model."))
             }
@@ -55,7 +55,7 @@ struct ClipboardSettingsView: View {
                     Text(settings.clipShortcutProblem).foregroundStyle(.red)
                 }
             } header: {
-                Text(tr("Shortcuts"))
+                SettingsHeader("Shortcuts")
             } footer: {
                 Text(tr("They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, ⌘1–9 for the first nine, ⇥ between the groups, ⌘P to pin, ⌫ to forget a copy, ⎋ to close."))
             }
@@ -88,7 +88,7 @@ struct ClipboardSettingsView: View {
                 Toggle(tr("It says a line as the sheet unfolds"), isOn: $settings.clipHelperTalks)
                     .disabled(!settings.clipAnimate || !settings.clipHelperEnabled)
             } header: {
-                Text(tr("Pasting"))
+                SettingsHeader("Pasting")
             } footer: {
                 Text(tr("⏎ pastes, ⌥⏎ the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits."))
             }
@@ -100,7 +100,7 @@ struct ClipboardSettingsView: View {
                     Button(tr("Edit Snippets…"), action: editSnippets)
                 }
             } header: {
-                Text(tr("Snippets"))
+                SettingsHeader("Snippets")
             } footer: {
                 Text(tr("A protected snippet's words live in the Keychain, never in a file: shown as dots, pasted or shown only after your fingerprint (Touch ID, no password instead), kept out of the history and taken off the clipboard a second after pasting."))
             }
@@ -122,7 +122,7 @@ struct ClipboardSettingsView: View {
                     Button(tr("Clear History (%d)", clips.history.clips.filter { !$0.pinned }.count)) { clips.clearHistory() }
                 }
             } header: {
-                Text(tr("Never kept"))
+                SettingsHeader("Never kept")
             } footer: {
                 Text(tr("Nothing copied in these apps is kept, nor anything a password manager marks as secret. Clear History keeps pinned copies."))
             }

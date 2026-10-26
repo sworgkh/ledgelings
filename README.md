@@ -200,12 +200,12 @@ app you were in, and the sheet collapses into your text cursor. ⌘1–9, ⇥, �
 mouse needed. A **protected** snippet keeps its words in the Keychain and is pasted only
 after **Touch ID**; a copy of those words in the history is shown only as
 `PWD:{Name}: [N] chars` on a faint tint. Clipy's snippets import in one go. Nothing
-copied ever leaves the computer. Settings › Productivity tools › Clipboard. On Windows
+copied ever leaves the computer. Settings › Tools › Clipboard. On Windows
 the same, with Ctrl+Alt+V / Ctrl+Alt+B, protected snippets in Credential Manager and no
 fingerprint step.
 
 Pasting for you means pressing ⌘V in the other app, which macOS allows only with
-**Accessibility**: press *Allow…* in Productivity tools › Clipboard and switch on
+**Accessibility**: press *Allow…* in Tools › Clipboard and switch on
 Ledgelings in System Settings › Privacy & Security › Accessibility. Since v0.54 the
 grant survives reinstalls. Until it is given the picker only copies, and says so.
 
@@ -215,7 +215,7 @@ one image; then boxes, arrows, a highlight, and a blur (pixel blocks, so the tex
 be read back) by rectangle or by brush, in six colours. Every button is an icon that
 names itself and its key on hover. ⏎ copies the PNG, ⌘S also saves it to
 ~/Desktop/Screenshots. **⌘⇧8** takes the full screen at once, **⌘⇧\\** the last
-rectangle again; all shortcuts and the folder are in Settings › Productivity tools ›
+rectangle again; all shortcuts and the folder are in Settings › Tools ›
 Screenshots. A creature carries the shot home. It needs **Screen Recording**: *Allow…*
 on that tab.
 
@@ -226,7 +226,7 @@ only while the keys are down. An OpenRouter audio model (by default Gemini 2.5 F
 about $0.0007 a minute) writes it down, leaving out the ums and false starts, and the text
 lands on the clipboard and in its history, or is pasted straight into the app you were in.
 The recording stays in memory and is never saved. Model, language, shortcut and longest
-recording are in Settings › Productivity tools › Dictation, with *Allow…* for the
+recording are in Settings › Tools › Dictation, with *Allow…* for the
 microphone.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a

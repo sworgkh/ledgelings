@@ -50,7 +50,7 @@ private struct CharacterVoicesSection: View {
             if !settings.hasModel { NeedsModelNote() }
             if let allNote { Text(allNote).font(.caption).foregroundStyle(.secondary) }
         } header: {
-            Text(tr("Characters"))
+            SettingsHeader("Characters")
         } footer: {
             Text(tr("The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends."))
         }
@@ -227,7 +227,7 @@ struct VoiceSection: View {
             }
             LabeledContent(tr("Status")) { Text(voice.status).foregroundStyle(.secondary).textSelection(.enabled) }
         } header: {
-            Text(tr("Voice"))
+            SettingsHeader("Voice")
         } footer: {
             Text(footer)
         }

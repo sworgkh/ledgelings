@@ -471,14 +471,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        // `--settings [creatures|actions|chases|beds|play|sprites|talk|flowers|bonds|calendar|productivity|voice|costs|chats]`: open the window at launch, for looking at it from a script.
-        if let at = CommandLine.arguments.firstIndex(of: "--settings") {
-            let name = CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : ""
-            // `clipboard` and `screenshots` are Productivity tools on that tool.
-            if name == "clipboard" { settingsWindow.show(tool: .clipboard) }
-            else if name == "screenshots" { settingsWindow.show(tool: .screenshots) }
-            else if name == "dictation" { settingsWindow.show(tool: .dictation) }
-            else { settingsWindow.show(tab: SettingsTab.named(name)) }
+        // `--settings <page>` (any `SettingsPage`, or the old `productivity`): open the window at launch, for
+        // looking at it from a script. `--settings-search <words>` opens it with them in the search box.
+        let search = CommandLine.arguments.firstIndex(of: "--settings-search").flatMap { CommandLine.arguments.indices.contains($0 + 1) ? CommandLine.arguments[$0 + 1] : nil }
+        if let at = CommandLine.arguments.firstIndex(of: "--settings") ?? CommandLine.arguments.firstIndex(of: "--settings-search") {
+            let name = CommandLine.arguments[at] == "--settings" && CommandLine.arguments.indices.contains(at + 1) ? CommandLine.arguments[at + 1] : ""
+            settingsWindow.show(SettingsPage.named(name), search: search)
             // `--snapshot <file.png>` with it: write the window to a file two seconds later and quit.
             if let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) {
                 let out = URL(fileURLWithPath: CommandLine.arguments[shot + 1])
@@ -764,8 +762,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationWillTerminate(_ notification: Notification) { colony?.letGoOfCursor(.escape) }
     @objc private func openSettings() { settingsWindow.show() }
-    @objc private func openChats() { settingsWindow.show(tab: .chats) }
-    @objc private func openReminders() { settings.reminderPaperNote ? note.show() : settingsWindow.show(tool: .reminders) }
-    @objc private func openReminderList() { settingsWindow.show(tool: .reminders) }
-    @objc private func openSpend() { settingsWindow.show(tab: .costs) }
+    @objc private func openChats() { settingsWindow.show(.chats) }
+    @objc private func openReminders() { settings.reminderPaperNote ? note.show() : settingsWindow.show(.reminders) }
+    @objc private func openReminderList() { settingsWindow.show(.reminders) }
+    @objc private func openSpend() { settingsWindow.show(.costs) }
 }

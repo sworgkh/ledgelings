@@ -3,23 +3,30 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-enum SettingsTab: Hashable {
-    case creatures, actions, chases, beds, play, ballGames, sprites, talk, flowers, bonds, relationships, calendar, productivity, voice, costs, chats
-
-    /// The tab a script names after `--settings`. `reminders`, the old name of
-    /// Productivity tools, still opens it, on its first tool: Reminders.
-    static func named(_ name: String) -> SettingsTab? {
-        let tabs: [String: SettingsTab] = ["creatures": .creatures, "actions": .actions, "chases": .chases, "beds": .beds, "play": .play, "ballgames": .ballGames, "sprites": .sprites, "talk": .talk, "flowers": .flowers, "bonds": .bonds, "relationships": .relationships, "calendar": .calendar, "productivity": .productivity, "reminders": .productivity, "voice": .voice, "costs": .costs, "chats": .chats]
-        return tabs[name]
-    }
-}
-
-/// Which tab the window shows; the menu can point it at one.
+/// Which page the window shows, what the search box holds, and which section
+/// a search just landed on; the menu and the scripts point it at a page.
 @MainActor
 final class SettingsNavigation: ObservableObject {
-    @Published var tab: SettingsTab = .creatures
-    /// Which tool the Productivity tools tab shows.
-    @Published var tool: ProductivityTool = .reminders
+    @Published var page: SettingsPage = .creatures
+    @Published var query = ""
+    /// The heading of the section to scroll to and light up, for a moment.
+    @Published var flash: String?
+    private var unflash: Task<Void, Never>?
+
+    /// Opens a search's hit: its page, scrolled to its section, which flashes gold.
+    func open(_ hit: SettingsIndex.Hit) {
+        page = hit.page
+        unflash?.cancel()
+        flash = nil
+        guard !hit.section.isEmpty else { return }
+        // A turn later, once the page is drawn and its headings can be found.
+        unflash = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(50))
+            self?.flash = hit.section
+            try? await Task.sleep(for: .seconds(SettingsHeader.flashSeconds))
+            if !Task.isCancelled { self?.flash = nil }
+        }
+    }
 }
 
 struct SettingsView: View {
@@ -46,30 +53,56 @@ struct SettingsView: View {
     var seedMemory: (Bool) async -> String = { _ in "" }
 
     var body: some View {
-        TabView(selection: $navigation.tab) {
-            creaturesTab.tabItem { Text(tr("Creatures")) }.tag(SettingsTab.creatures)
-            ActionsSettingsView(settings: settings).tabItem { Text(tr("Actions")) }.tag(SettingsTab.actions)
-            ChasesSettingsView(settings: settings, library: library, hunts: hunts).tabItem { Text(tr("Chases")) }.tag(SettingsTab.chases)
-            BedsSettingsView(settings: settings, library: library, beds: beds).tabItem { Text(tr("Beds")) }.tag(SettingsTab.beds)
-            PlaySettingsView(settings: settings).tabItem { Text(tr("Play")) }.tag(SettingsTab.play)
-            BallGamesSettingsView(settings: settings).tabItem { Text(tr("Ball games")) }.tag(SettingsTab.ballGames)
-            SpritesSettingsView(settings: settings, library: library, spend: spend).tabItem { Text(tr("Sprites")) }.tag(SettingsTab.sprites)
-            TalkSettingsView(settings: settings, library: library, voice: voice).tabItem { Text(tr("Talk")) }.tag(SettingsTab.talk)
-            FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden).tabItem { Text(tr("Flowers")) }.tag(SettingsTab.flowers)
-            BondsSettingsView(settings: settings, bonds: bonds).tabItem { Text(tr("Bonds")) }.tag(SettingsTab.bonds)
-            RelationshipsSettingsView(settings: settings, bonds: bonds, open: openRelationships, seed: seedMemory)
-                .tabItem { Text(tr("Relationships")) }.tag(SettingsTab.relationships)
-            CalendarSettingsView(settings: settings).tabItem { Text(tr("Calendar")) }.tag(SettingsTab.calendar)
-            ProductivitySettingsView(settings: settings, reminders: reminders, clips: clips, library: library, navigation: navigation, send: send, editSnippets: editSnippets).tabItem { Text(tr("Productivity tools")) }.tag(SettingsTab.productivity)
-            VoiceSettingsView(settings: settings, voice: voice).tabItem { Text(tr("Voice")) }.tag(SettingsTab.voice)
-            CostsSettingsView(spend: spend).tabItem { Text(tr("Costs")) }.tag(SettingsTab.costs)
-            ChatHistoryView(history: history).tabItem { Text(tr("Chats")) }.tag(SettingsTab.chats)
+        HStack(spacing: 0) {
+            SettingsSidebar(navigation: navigation)
+                .frame(width: SettingsSidebar.width)
+            Divider()
+            VStack(alignment: .leading, spacing: 0) {
+                // One line, so the page keeps the room the tabs used to take.
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(navigation.page.title).font(.title3.weight(.bold))
+                    Text(navigation.page.group.title.uppercased())
+                        .font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+                page(navigation.page)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            // Drawn, not left to the window, so a snapshot shows it too.
+            .background(Color(nsColor: .windowBackgroundColor))
+            .environment(\.settingsFlash, navigation.flash)
         }
         .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
         // Every title is looked up as it is drawn: a new language draws the window anew.
         .id(settings.language)
         // Dates and numbers too, whatever the system speaks.
         .environment(\.locale, Locale(identifier: settings.language.code))
+    }
+
+    /// One page's own view; a new page is a `SettingsPage` case and a line here.
+    @ViewBuilder private func page(_ page: SettingsPage) -> some View {
+        switch page {
+        case .creatures: creaturesTab
+        case .actions: ActionsSettingsView(settings: settings)
+        case .sprites: SpritesSettingsView(settings: settings, library: library, spend: spend)
+        case .beds: BedsSettingsView(settings: settings, library: library, beds: beds)
+        case .flowers: FlowersSettingsView(settings: settings, library: library, clearGarden: clearGarden)
+        case .calendar: CalendarSettingsView(settings: settings)
+        case .chases: ChasesSettingsView(settings: settings, library: library, hunts: hunts)
+        case .play: PlaySettingsView(settings: settings)
+        case .ballGames: BallGamesSettingsView(settings: settings)
+        case .talk: TalkSettingsView(settings: settings, library: library, voice: voice)
+        case .voice: VoiceSettingsView(settings: settings, voice: voice)
+        case .bonds: BondsSettingsView(settings: settings, bonds: bonds)
+        case .relationships: RelationshipsSettingsView(settings: settings, bonds: bonds, open: openRelationships, seed: seedMemory)
+        case .reminders: RemindersSettingsView(settings: settings, reminders: reminders, send: send)
+        case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, library: library, editSnippets: editSnippets)
+        case .screenshots: ScreenshotSettingsView(settings: settings)
+        case .dictation: DictationSettingsView(settings: settings, library: library)
+        case .costs: CostsSettingsView(spend: spend)
+        case .chats: ChatHistoryView(history: history)
+        }
     }
 
     private var creaturesTab: some View {
@@ -86,7 +119,7 @@ struct SettingsView: View {
                     if ScreenChoice.isAway(settings) { Text(tr("%@ (unplugged)", settings.homeScreenName)).tag(settings.homeScreen) }
                 }
             } header: {
-                Text(tr("Creatures"))
+                SettingsHeader("Creatures")
             } footer: {
                 Text(tr("Every creature gets its own size between the two. Set them equal and they all match. Live on: keep them all on one monitor; choose another and they parachute over. While it is unplugged they use every screen, and go back when it returns."))
             }
@@ -107,7 +140,7 @@ struct SettingsView: View {
                     Button(tr("Reset")) { settings.colors = AppSettings.defaultColors }
                 }
             } header: {
-                Text(tr("Colours"))
+                SettingsHeader("Colours")
             } footer: {
                 Text(tr("Creature 1 wears the first colour, creature 2 the second, and so on, starting over when the colours run out."))
             }
@@ -121,7 +154,7 @@ struct SettingsView: View {
                 SliderRow(tr("Sip between stories"), value: $settings.teaSipSeconds, in: AppSettings.teaSipRange, step: 1, unit: tr(" s"))
                     .disabled(!settings.teaPartiesEnabled)
             } header: {
-                Text(tr("Tea parties"))
+                SettingsHeader("Tea parties")
             } footer: {
                 Text(tr("Now and then two creatures who bump into each other put a little table out between them and sit down to tea, taking turns to tell each other stories from their lives. One party at a time. With talk off they just sip."))
             }
@@ -130,7 +163,7 @@ struct SettingsView: View {
                 SliderRow(tr("Day lasts"), value: $settings.dayMinutes, in: 0.5...60, step: 0.5, unit: tr(" min"))
                 SliderRow(tr("Night lasts"), value: $settings.nightMinutes, in: 0...60, step: 0.5, unit: tr(" min"), zero: tr("never"))
             } header: {
-                Text(tr("Day and night"))
+                SettingsHeader("Day and night")
             } footer: {
                 Text(tr("They walk by day and sleep by night. Set the night to 0 and they never sleep. A cursor still startles a sleeper awake."))
             }
@@ -147,7 +180,7 @@ struct SettingsView: View {
                 SliderRow(tr("Calms down after"), value: $settings.complainCalmSeconds, in: AppSettings.complainCalmRange, step: 5, unit: tr(" s"))
                     .disabled(!settings.complainEnabled)
             } header: {
-                Text(tr("The cursor"))
+                SettingsHeader("The cursor")
             } footer: {
                 Text(tr("A playmate: a chase is a game of tag. Just there: they hop aside. A menace: a grudge. Chase one too often in a row and it says so in its own voice."))
             }
@@ -165,7 +198,7 @@ struct SettingsView: View {
                     }
                 LabeledContent(tr("Status")) { Text(loginStatus).foregroundStyle(.secondary) }
             } header: {
-                Text(tr("Language and startup"))
+                SettingsHeader("Language and startup")
             } footer: {
                 Text(tr("Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the system's Login Items."))
             }
@@ -227,7 +260,18 @@ struct SettingsColumn<Content: View>: View {
     @ViewBuilder let content: () -> Content
     @State private var moreBelow = false
 
+    @Environment(\.settingsFlash) private var flash
+
     var body: some View {
+        ScrollViewReader { proxy in
+            form.onChange(of: flash) { _, heading in
+                guard let heading else { return }
+                withAnimation(.easeInOut(duration: 0.25)) { proxy.scrollTo(heading, anchor: .top) }
+            }
+        }
+    }
+
+    private var form: some View {
         Form { content() }
             .formStyle(.grouped)
             .contentMargins(.bottom, 56, for: .scrollContent)
@@ -289,8 +333,9 @@ struct SliderRow: View {
 
 @MainActor
 final class SettingsWindowController {
-    /// Wide enough for two columns, tall enough that a tab needs no scrolling on a laptop screen.
-    static let size = CGSize(width: 1100, height: 760)
+    /// The sidebar and two columns of about 530 each; tall enough that a page needs no
+    /// scrolling, and both fit a 1280×800 laptop screen.
+    static let size = CGSize(width: 1280, height: 760)
     private var window: NSWindow?
     private let settings: AppSettings
     private let history: ChatHistory
@@ -331,14 +376,14 @@ final class SettingsWindowController {
         self.clearGarden = clearGarden
     }
 
-    /// The Productivity tools tab, on one tool.
-    func show(tool: ProductivityTool) {
-        navigation.tool = tool
-        show(tab: .productivity)
-    }
-
-    func show(tab: SettingsTab? = nil) {
-        if let tab { navigation.tab = tab }
+    /// Opens the window, on `page` when one is named; with `search`, those words are in
+    /// the search box and its first place is open, its section lit up.
+    func show(_ page: SettingsPage? = nil, search: String? = nil) {
+        if let page { navigation.page = page }
+        if let search {
+            navigation.query = search
+            if let first = SettingsIndex.search(search).first { navigation.open(first) }
+        }
         if window == nil {
             let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory))
             let made = NSWindow(contentViewController: hosting)

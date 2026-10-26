@@ -17,7 +17,7 @@ struct CalendarSettingsView: View {
                 Toggle(tr("They know the day of the week and the date"), isOn: $settings.knowsDate)
                     .disabled(!settings.hasModel)
             } header: {
-                Text(tr("The day"))
+                SettingsHeader("The day")
             } footer: {
                 Text(tr("Your Mac's clock and calendar, told to the model before every line and paper plane: \"late evening (22:40)\", \"Saturday, 26 September 2026\". This is apart from the colony's own day and night, which only says when they sleep."))
             }
@@ -32,7 +32,7 @@ struct CalendarSettingsView: View {
                 }
                 .disabled(settings.awareness.faiths.isEmpty || !settings.hasModel)
             } header: {
-                Text(tr("Holidays"))
+                SettingsHeader("Holidays")
             } footer: {
                 Text(tr("On a holiday they know it, and which day of it (\"day 3 of Sukkot\"); before one, how far off it is. Jewish dates come from the Hebrew calendar and Muslim ones from the Islamic (Umm al-Qura) calendar, both built into macOS, so nothing is looked up online; a holiday that starts at sundown \"begins this evening\" the evening before. Where the new moon is sighted locally, a Muslim date can fall a day apart. With the built-in lines, one conversation in three on a holiday is about it; they only know a holiday on the day, so how far ahead to mention one needs a model."))
             }
@@ -47,7 +47,7 @@ struct CalendarSettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } header: {
-                Text(tr("What they know right now"))
+                SettingsHeader("What they know right now")
             } footer: {
                 Text(settings.hasModel
                      ? tr("This goes into {situation} in the Talk prompts, and at the top of a paper plane's note.")
@@ -72,7 +72,7 @@ struct CalendarSettingsView: View {
                     }
                 }
             } header: {
-                Text(tr("Coming up in the next 60 days"))
+                SettingsHeader("Coming up in the next 60 days")
             }
         }
     }

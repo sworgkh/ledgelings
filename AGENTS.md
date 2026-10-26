@@ -29,13 +29,15 @@ Nothing the creatures do is hard-wired if someone could want it otherwise.
 - An on/off toggle, and every number a person might tune (how often, how long,
   how loud), in `AppSettings`: `@Published`, saved on change, clamped to its range
   on load, with a default that is chosen, not accidental.
-- Shown in the settings window on the tab it belongs to (Creatures, Actions, Chases, Beds, Play, Ball games, Sprites, Talk, Flowers, Bonds, Relationships,
-  Productivity tools, Voice, Costs, Chats; a new tab when a feature outgrows its host, as Voice,
-  Costs and Ball games did). Two columns; a tab fits a laptop screen without scrolling. A footer
-  says what the setting does in plain words.
+- Shown in the settings window on the page it belongs to (the sidebar's `SettingsPage`s, under
+  their `SettingsGroup`; a new page when a feature outgrows its host, as Voice, Costs and Ball
+  games did: a case, its `title` and `group`, and its view in `SettingsView.page`). Two columns;
+  a page fits a laptop screen without scrolling. A footer says what the setting does in plain words.
+  Section headings are `SettingsHeader("…")`, so a search can land on them.
+- Findable by the settings search: its key, label and section go into `SettingsIndex.sections`
+  (a test fails for a saved key in no section).
 - A tool that works for the owner rather than being creature behaviour (reminders,
-  a clipboard) is a section of Productivity tools: a `ProductivityTool` case, its
-  `title`, and its view in `ProductivitySettingsView.page`.
+  a clipboard) is a page under the *Tools* group.
 - Something toggled often (voice on/off) also gets a menu item.
 - Documented in `docs/SETTINGS.md` (the table: setting, default, range, notes) and
   in SPEC §12's settings table, with the key name.
@@ -80,9 +82,11 @@ Nobody should have to remember what a letter on a button means.
 The owner judges the running app, not the diff: a change is done when it is built
 with `scripts/make-app.sh`, installed and seen working.
 
-- `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
-  writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, ballgames, sprites, talk, flowers, bonds, relationships, productivity, voice, costs, chats;
-  `reminders` still opens productivity, its old name; `clipboard`, `screenshots` and `dictation` open it on that tool).
+- `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
+  writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames,
+  talk, voice, bonds, relationships, reminders, clipboard, screenshots, dictation, costs, chats;
+  `--settings-search <words>` searches and opens the first place;
+  `productivity`, the old tools tab, still opens Reminders).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its

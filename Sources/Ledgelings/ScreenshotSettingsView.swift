@@ -20,7 +20,7 @@ struct ScreenshotSettingsView: View {
                     }
                 }
             } header: {
-                Text(tr("Screenshots"))
+                SettingsHeader("Screenshots")
             } footer: {
                 Text(tr("Every screen freezes and dims; drag an area (R), draw a loop (L), or take the screen (W) or all of them (A). Then box (B), arrow (→), highlight (H), blur (X) or blur by hand (F), in six colours (1–6); ⌘Z undoes. ⏎ takes it, ⌘C copies, ⌘S saves, ⎋ lets go. Pictures only, never video; nothing leaves this Mac."))
             }
@@ -52,7 +52,7 @@ struct ScreenshotSettingsView: View {
                     Text(settings.shotShortcutProblem).foregroundStyle(.red)
                 }
             } header: {
-                Text(tr("Shortcuts"))
+                SettingsHeader("Shortcuts")
             } footer: {
                 Text(tr("They work in every app. Full screen and the last rectangle go straight to the clipboard or the folder, with no toolbar; with no rectangle taken yet, the last-rectangle keys open the toolbar. All monitors are stitched at each one's own sharpness."))
             }
@@ -72,7 +72,7 @@ struct ScreenshotSettingsView: View {
                     }
                 }
             } header: {
-                Text(tr("Where a shot goes"))
+                SettingsHeader("Where a shot goes")
             } footer: {
                 Text(tr("As a PNG named for its time (Screenshot 2026-10-18 14.03.22.png); the folder is made on the first save. ⌘C on the toolbar only copies, ⌘S always saves. A copy also lands in the clipboard history."))
             }
@@ -83,7 +83,7 @@ struct ScreenshotSettingsView: View {
                           in: Double(Shot.thicknessRange.lowerBound)...Double(Shot.thicknessRange.upperBound), step: 1, unit: tr(" pt"))
                 LabeledContent(tr("Colour")) { ShotSwatches(colour: $settings.shotColour) }
             } header: {
-                Text(tr("Marks"))
+                SettingsHeader("Marks")
             } footer: {
                 Text(tr("Boxes and arrows are this thick; blurring by hand is four times as wide. A blur is big square blocks, baked into the picture, so the words under it cannot be read back. The toolbar starts on the last colour picked."))
             }
@@ -93,7 +93,7 @@ struct ScreenshotSettingsView: View {
                 Toggle(tr("Hide the creatures while capturing"), isOn: $settings.shotHideCreatures)
                 Toggle(tr("A creature brings the shot home"), isOn: $settings.shotCreatureBrings)
             } header: {
-                Text(tr("Creatures"))
+                SettingsHeader("Creatures")
             } footer: {
                 Text(tr("Hidden, they are out of the picture too. Once it is taken, one hops up to where the toolbar was and carries a tiny picture of it back to its edge."))
             }
