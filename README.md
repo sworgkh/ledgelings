@@ -229,6 +229,15 @@ The recording stays in memory and is never saved. Model, language, shortcut and 
 recording are in Settings › Tools › Dictation, with *Allow…* for the
 microphone.
 
+**Translate** (macOS for now). **⌃⌥T** from any app: a creature brings a sheet of pixel paper;
+type in English, Russian or Hebrew and the translation appears beside it as you type, Google
+Translate style, with the rest of your phrase guessed in grey (⇥ takes it). The language is
+told by its letters, for free; ⏎ copies, ⌘⏎ pastes into the app you were in, ⌘S swaps to check
+it backwards, and Hebrew runs right to left. **⌃⌥⇧T** translates the last thing you copied, and
+every text row of the clipboard picker gets a translate button (⌘T). One cheap, fast OpenRouter
+model (Gemini 2.5 Flash Lite by default) does it for about a cent a day; links, code and numbers
+are kept out of its reach, and protected snippets never reach it. Settings › Tools › Translate.
+
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
 triangle and a mushroom come built in, each with its own cast of characters. The
 **sprite kit** is a small form (what it is, a name, a colour, three characters; *Refine

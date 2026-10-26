@@ -42,6 +42,11 @@ final class ClipPickerController {
     var pressKeys = true
     /// Off in `--clip-demo` only: a script has no finger for Touch ID.
     var askOwner = true
+    /// A row's words into another language (the translator); nil: no translate buttons.
+    var translateRow: ((String, Translate.Language?) async -> (target: Translate.Language?, result: Result<String, Translator.Trouble>))?
+    /// The row's words in the Translate sheet.
+    var openInSheet: ((String) -> Void)?
+    private var translating: Task<Void, Never>?
 
     init(settings: AppSettings, book: ClipBook, watcher: @escaping () -> ClipWatcher?, editSnippets: @escaping () -> Void,
          helper: @escaping () -> ClipHelping? = { nil }) {
@@ -56,6 +61,8 @@ final class ClipPickerController {
         model.close = { [weak self] in self?.close() }
         model.askTrust = { ClipPaster.askForTrust() }
         model.edit = { [weak self] in self?.close(); self?.editSnippets() }
+        model.translate = { [weak self] in self?.toggleTranslation($0) }
+        model.openTranslation = { [weak self] in self?.openTranslationInSheet() }
     }
 
     var isUp: Bool { panel != nil }
@@ -79,6 +86,8 @@ final class ClipPickerController {
         model.refusal = ""
         model.needsTrust = settings.clipAutoPaste && !ClipPaster.trusted
         model.plainFirst = settings.clipPlainText
+        model.translateOn = translateRow != nil && settings.translateEnabled && settings.translatePickerButton
+        model.translation = nil
         model.refresh(selectFirst: true)
         model.unfolded = !settings.clipAnimate
         let made = ClipPanel(frame: screen.visibleFrame)
@@ -141,7 +150,12 @@ final class ClipPickerController {
     func key(_ code: Int, _ flags: NSEvent.ModifierFlags) -> Bool {
         let command = flags.contains(.command), option = flags.contains(.option), control = flags.contains(.control)
         switch code {
-        case kVK_Escape: close()
+        case kVK_Escape:
+            // A translation open under a row closes first, the picker after.
+            if model.translation != nil { model.translation = nil; translating?.cancel() } else { close() }
+        case kVK_ANSI_T where command && flags.contains(.shift) && model.translateOn: openTranslationInSheet()
+        case kVK_ANSI_T where command && model.translateOn: model.selectedRow.map(toggleTranslation)
+        case kVK_Tab where option && model.translation != nil: nextTarget()
         case kVK_DownArrow: model.step(1)
         case kVK_UpArrow: model.step(-1)
         case kVK_PageDown: model.step(8)
@@ -149,7 +163,10 @@ final class ClipPickerController {
         case kVK_ANSI_N where control: model.step(1)
         case kVK_ANSI_P where control: model.step(-1)
         case kVK_Return, kVK_ANSI_KeypadEnter:
-            if let row = model.selectedRow { choose(row, otherWay: option) }
+            // With its translation open, ⏎ pastes the translation; ⌥⏎ the original.
+            if let row = model.selectedRow, let t = model.translation, t.id == row.id, !option {
+                if case .done(let words) = t.state { pasteTranslation(words, from: row) } else { NSSound.beep() }
+            } else if let row = model.selectedRow { choose(row, otherWay: option && model.translation?.id != row.id) }
         case kVK_Tab: model.jumpGroup()
         case kVK_ANSI_P where command: model.selectedRow.map(pin)
         case kVK_ANSI_E where command: model.edit()
@@ -180,6 +197,62 @@ final class ClipPickerController {
         book.remove(row.id)
         model.refresh(keeping: model.rows.firstIndex { $0.id == row.id })
         trace?("forget \(row.text)")
+    }
+
+    // MARK: Translating a row
+
+    /// The words a row would be translated from, or nil when it may not be.
+    private func words(of row: ClipPickerModel.Row) -> String? {
+        guard row.translatable else { return nil }
+        switch row.group {
+        case .recent: return book.history.clips.first { $0.id == row.id }?.text
+        case .snippets: return book.snippets.snippet(row.id).flatMap { $0.protected ? nil : $0.text }
+        }
+    }
+
+    /// ⌘T or the row's button: its translation opens under it, or closes.
+    func toggleTranslation(_ row: ClipPickerModel.Row) {
+        if model.translation?.id == row.id { model.translation = nil; translating?.cancel(); return }
+        model.selected = row.id
+        translateSelected(after: nil)
+    }
+
+    /// ⌥⇥: the same row into the next language that is on.
+    private func nextTarget() {
+        guard let t = model.translation, model.selected == t.id else { return }
+        translateSelected(after: t.target)
+    }
+
+    private func translateSelected(after: Translate.Language?) {
+        guard let row = model.selectedRow, let words = words(of: row), let translateRow else { NSSound.beep(); return }
+        translating?.cancel()
+        model.translation = .init(id: row.id, target: after, state: .waiting)
+        trace?("translate row \(row.text.prefix(40))")
+        translating = Task { @MainActor [weak self] in
+            let (target, result) = await translateRow(words, after)
+            guard let self, !Task.isCancelled, self.model.translation?.id == row.id else { return }
+            switch result {
+            case .success(let text):
+                self.model.translation = .init(id: row.id, target: target, state: .done(text))
+                self.trace?("row translated into \(target?.code ?? "?"): \(text.prefix(60))")
+            case .failure(.cancelled): return
+            case .failure(let trouble):
+                self.model.translation = .init(id: row.id, target: target, state: .trouble(trouble == .empty ? Translate.Refusal.nothingToTranslate.line : trouble.line))
+            }
+        }
+    }
+
+    /// ⌘⇧T: the row's words in the Translate sheet; the picker goes.
+    private func openTranslationInSheet() {
+        guard let row = model.selectedRow, let words = words(of: row), let openInSheet else { NSSound.beep(); return }
+        close()
+        openInSheet(words)
+    }
+
+    /// The translation pasted as plain text into the app that was in front, and kept in the history.
+    private func pasteTranslation(_ words: String, from row: ClipPickerModel.Row) {
+        paste(ClipPaster.Item(text: words), plain: true, from: row)
+        keepInHistory(words, clips: book, settings: settings)
     }
 
     // MARK: Choosing
@@ -326,9 +399,17 @@ private extension CGRect {
 protocol ClipHelping: AnyObject {
     /// Sends a creature to hold `paper` (global points); seconds until it is there, nil when nobody can come.
     func clipHelperCome(paper: CGRect, centre: CGPoint) -> Double?
+    /// The same, with `wanted` asked first (empty: whoever is nearest the middle).
+    func clipHelperCome(paper: CGRect, centre: CGPoint, wanted: String) -> Double?
+    /// How the helper holds the sheet while it waits on something.
+    func clipHelperMood(_ mood: ClipHelperMood)
     /// Back to its edge, `after` seconds from now.
     func clipHelperGoHome(after: Double)
     var clipHelperPerch: CGPoint? { get }
+}
+
+enum ClipHelperMood: Equatable {
+    case calm, thinking, puzzled
 }
 
 /// A borderless, see-through panel over the screen that takes the keyboard
@@ -432,6 +513,8 @@ final class ClipPickerModel: ObservableObject {
         var thumbnail: NSImage? = nil
         /// A copy of a protected snippet's words: `text` is its mask, the row a shade apart.
         var masked = false
+        /// It has words a model may see: text, not a picture, a file, a password or a protected snippet.
+        var translatable = false
     }
 
     @Published var query = "" { didSet { if query != oldValue { refresh(selectFirst: true) } } }
@@ -452,6 +535,18 @@ final class ClipPickerModel: ObservableObject {
     /// Where the paper sits in the panel, in the panel's points from its top-left.
     @Published var paper = CGRect.zero
     @Published private(set) var counts = (recent: 0, snippets: 0)
+    /// Rows get a translate button (⌘T): the translator is on and so is its button.
+    @Published var translateOn = false
+    /// A row's translation, open under it.
+    @Published var translation: RowTranslation?
+
+    struct RowTranslation: Equatable {
+        enum State: Equatable { case waiting, done(String), trouble(String) }
+        let id: UUID
+        /// The language it went into; nil while the first answer is on its way.
+        let target: Translate.Language?
+        let state: State
+    }
 
     var source: () -> (Clipboard.History, Clipboard.SnippetBook) = { (.init(), .init()) }
     var thumbnail: (Clipboard.Clip) -> NSImage? = { _ in nil }
@@ -459,6 +554,8 @@ final class ClipPickerModel: ObservableObject {
     var close: () -> Void = {}
     var askTrust: () -> Void = {}
     var edit: () -> Void = {}
+    var translate: (Row) -> Void = { _ in }
+    var openTranslation: () -> Void = {}
 
     var selectedRow: Row? { rows.first { $0.id == selected } }
 
@@ -471,11 +568,13 @@ final class ClipPickerModel: ObservableObject {
         let recent = found.clips.map { clip in
             let mask = snippets.mask(for: clip)
             return Row(id: clip.id, group: .recent, text: mask ?? clip.preview(90), detail: Self.detail(clip, now: now), title: nil,
-                       pinned: clip.pinned, protected: false, thumbnail: thumbnail(clip), masked: mask != nil)
+                       pinned: clip.pinned, protected: false, thumbnail: thumbnail(clip), masked: mask != nil,
+                       translatable: translateOn && Translate.mayTranslate(clip, snippets: snippets))
         }
         let saved = found.snippets.map { snippet in
             Row(id: snippet.id, group: .snippets, text: snippet.preview(90), detail: snippets.folder(of: snippet.id)?.title ?? "",
-                title: snippet.title, pinned: false, protected: snippet.protected)
+                title: snippet.title, pinned: false, protected: snippet.protected,
+                translatable: translateOn && Translate.refusal(snippet, snippets: snippets) == nil)
         }
         rows = first == .recent ? recent + saved : saved + recent
         counts = (recent.count, saved.count)
@@ -604,6 +703,7 @@ struct ClipPickerView: View {
                     ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
                         if index == 0 || model.rows[index - 1].group != row.group { header(row.group) }
                         line(row, number: index < 9 ? index + 1 : nil).id(row.id)
+                        if let t = model.translation, t.id == row.id { translation(t) }
                     }
                 }
                 .padding(.trailing, 6)
@@ -613,6 +713,32 @@ struct ClipPickerView: View {
                 if let id { proxy.scrollTo(id) }
             }
         }
+    }
+
+    /// A row's translation, under it: where it went, the words (or dots, or the trouble), and the sheet.
+    private func translation(_ t: ClipPickerModel.RowTranslation) -> some View {
+        let words: String, ink: Color
+        switch t.state {
+        case .waiting: words = "•••"; ink = Self.softInk
+        case .done(let text): words = text; ink = PixelBox.rim
+        case .trouble(let why): words = why; ink = Self.softInk
+        }
+        let rtl = t.target?.rightToLeft ?? false
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text(t.target.map { tr("INTO %@ · ⌥⇥ NEXT · ⏎ PASTES IT", $0.title.uppercased()) } ?? tr("TRANSLATING…"))
+                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
+                Spacer()
+                TranslateButtonView(button: .openSheet) { model.openTranslation() }
+            }
+            Text(words).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(ink)
+                .lineLimit(4).textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
+                .multilineTextAlignment(rtl ? .trailing : .leading)
+        }
+        .padding(.horizontal, 30).padding(.vertical, 6)
+        .background(Rectangle().fill(Self.maskTint))
     }
 
     private func header(_ group: ClipPickerModel.Group) -> some View {
@@ -639,6 +765,12 @@ struct ClipPickerView: View {
             Text(row.protected ? tr("LOCKED · %@", row.detail) : row.detail)
                 .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
                 .lineLimit(1)
+            if row.translatable {
+                Button { model.translate(row) } label: { PixelIcon(rows: Translate.Button.translate.icon).opacity(chosen ? 1 : 0.55) }
+                    .buttonStyle(.plain)
+                    .modifier(PixelTag(text: Translate.Button.translate.tooltip()))
+                    .accessibilityLabel(Translate.Button.translate.tooltip())
+            }
         }
         .padding(.horizontal, 9)
         .frame(height: Self.rowHeight)
@@ -676,6 +808,7 @@ struct ClipPickerView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Text(model.checking ? tr("Touch the fingerprint sensor…")
+                 : model.translateOn ? tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘T TRANSLATE  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN"))
                  : tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN")))
                 .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
                 .lineLimit(1).minimumScaleFactor(0.7)

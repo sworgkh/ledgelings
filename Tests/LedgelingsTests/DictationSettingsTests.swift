@@ -47,7 +47,7 @@ import Testing
     }
 
     @Test func dictationIsTheFourthTool() {
-        #expect(SettingsGroup.tools.pages == [.reminders, .clipboard, .screenshots, .dictation])
+        #expect(Array(SettingsGroup.tools.pages.prefix(4)) == [.reminders, .clipboard, .screenshots, .dictation])
         #expect(SettingsPage.dictation.title == tr("Dictation"))
     }
 

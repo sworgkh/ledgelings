@@ -280,9 +280,11 @@ private struct OpenRouterFields: View {
 
 /// OpenRouter's whole model list, fetched from its API when this appears, searched
 /// by any words from the id or name, cheapest first. A click picks the model.
-private struct ModelBrowser: View {
+/// Translate uses it too, shorter.
+struct ModelBrowser: View {
     static let most = 60
     @Binding var chosen: String
+    var height: CGFloat = 220
     @State private var query = ""
     @State private var catalog: ModelCatalog?
     @State private var status = tr("loading models…")
@@ -304,7 +306,7 @@ private struct ModelBrowser: View {
                     }
                 }
             }
-            .frame(height: 220)
+            .frame(height: height)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
             Text(status).font(.caption).foregroundStyle(.secondary)
         }

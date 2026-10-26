@@ -100,6 +100,7 @@ struct SettingsView: View {
         case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, library: library, editSnippets: editSnippets)
         case .screenshots: ScreenshotSettingsView(settings: settings)
         case .dictation: DictationSettingsView(settings: settings, library: library)
+        case .translate: TranslateSettingsView(settings: settings, library: library)
         case .costs: CostsSettingsView(spend: spend)
         case .chats: ChatHistoryView(history: history)
         }
