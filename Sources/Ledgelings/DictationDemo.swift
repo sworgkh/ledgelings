@@ -46,17 +46,23 @@ enum DictationDemo {
         return ok
     }
 
-    static func run(settings: AppSettings, controller: DictationController, clips: ClipBook, model: String?) async -> Bool {
+    /// The settings the demo changes: put back after, and a key that was not saved before is removed again.
+    static let touched = ["dictationModel", "dictationPaste"]
+
+    static func run(settings: AppSettings, controller: DictationController, clips: ClipBook, model: String?,
+                    defaults: UserDefaults = .standard) async -> Bool {
         let start = Date()
         func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "dictate %5.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
         let board = ClipPaster.saved()
         let keptModel = settings.dictationModel, keptPaste = settings.dictationPaste
         let before = Set(clips.history.clips.map(\.id))
+        let unsaved = touched.filter { defaults.object(forKey: $0) == nil }
         defer {
             ClipPaster.restore(board)
             for clip in clips.history.clips where !before.contains(clip.id) { clips.remove(clip.id) }
             settings.dictationModel = keptModel
             settings.dictationPaste = keptPaste
+            unsaved.forEach(defaults.removeObject(forKey:))
             log("clipboard, history and settings put back")
         }
         if let model { settings.dictationModel = model }
