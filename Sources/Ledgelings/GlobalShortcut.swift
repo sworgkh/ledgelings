@@ -13,19 +13,25 @@ final class HotKeys {
     private var handler: EventHandlerRef?
     private var held: [UInt32: EventHotKeyRef] = [:]
     private var actions: [UInt32: () -> Void] = [:]
+    /// What letting go of a key does, for the few that care (dictation's hold to talk).
+    private var releases: [UInt32: () -> Void] = [:]
     private var lastID: UInt32 = 0
 
     private init() {
-        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        var specs = [EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+                     EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased))]
         InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
             var id = EventHotKeyID()
             guard let event, GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
                                                nil, MemoryLayout<EventHotKeyID>.size, nil, &id) == noErr else { return noErr }
+            let released = GetEventKind(event) == UInt32(kEventHotKeyReleased)
             // Carbon calls on the main thread, in the middle of its own event; what
             // the press opens (a menu tracks in its own loop) waits until it is done.
-            DispatchQueue.main.async { MainActor.assumeIsolated { HotKeys.shared.actions[id.id]?() } }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { (released ? HotKeys.shared.releases[id.id] : HotKeys.shared.actions[id.id])?() }
+            }
             return noErr
-        }, 1, &spec, nil, &handler)
+        }, 2, &specs, nil, &handler)
     }
 
     /// A number of its own for a new shortcut.
@@ -37,9 +43,10 @@ final class HotKeys {
     /// Lets go of what `id` held and takes `shortcut`, or nothing. False when the
     /// system refused it: another app, or another of ours, has it already.
     @discardableResult
-    func hold(_ id: UInt32, _ shortcut: Shortcut?, pressed: @escaping () -> Void) -> Bool {
+    func hold(_ id: UInt32, _ shortcut: Shortcut?, pressed: @escaping () -> Void, released: (() -> Void)? = nil) -> Bool {
         if let old = held.removeValue(forKey: id) { UnregisterEventHotKey(old) }
         actions[id] = pressed
+        releases[id] = released
         guard let shortcut else { return true }
         var ref: EventHotKeyRef?
         // "LDGL", so the system can tell our hot keys from another app's.
@@ -53,6 +60,7 @@ final class HotKeys {
     func release(_ id: UInt32) {
         if let old = held.removeValue(forKey: id) { UnregisterEventHotKey(old) }
         actions[id] = nil
+        releases[id] = nil
     }
 }
 
@@ -73,11 +81,11 @@ final class GlobalShortcut {
     }
 
     init(settings: AppSettings, enabled: some Publisher<Bool, Never>, shortcut: some Publisher<Shortcut, Never>,
-         problem: @escaping (String) -> Void, pressed: @escaping () -> Void) {
+         problem: @escaping (String) -> Void, pressed: @escaping () -> Void, released: (() -> Void)? = nil) {
         following = Publishers.CombineLatest3(enabled, shortcut, settings.$recordingShortcut)
             .sink { [id] enabled, shortcut, recording in
                 let wanted = enabled && !recording ? shortcut : nil
-                let taken = HotKeys.shared.hold(id, wanted, pressed: pressed)
+                let taken = HotKeys.shared.hold(id, wanted, pressed: pressed, released: released)
                 problem(taken ? "" : tr("macOS would not take %@: it is already taken. Record another.", Self.label(shortcut)))
             }
     }

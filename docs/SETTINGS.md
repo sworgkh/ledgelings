@@ -42,6 +42,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Take a Screenshot…** (⌃⌥S from any app) | Freezes the screens with the screenshot toolbar ([Screenshots](#screenshots)) |
 | **Screenshot the Full Screen** (⌘⇧8, the `*` key, from any app) | All screens in one picture (or the one under the cursor), straight to the clipboard or folder |
 | **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
+| **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -569,9 +570,10 @@ greyed out under a *Needs a model* note.
 ## Productivity tools tab
 
 Tools the creatures run for you rather than for themselves. A row of tools
-across the top picks one (**Reminders**, **Clipboard**, **Screenshots**); its settings fill the two
+across the top picks one (**Reminders**, **Clipboard**, **Screenshots**, **Dictation**); its settings fill the two
 columns below. `--settings productivity` opens it (`reminders` too, its old name);
-`--settings clipboard` opens it on Clipboard, `--settings screenshots` on Screenshots.
+`--settings clipboard` opens it on Clipboard, `--settings screenshots` on Screenshots,
+`--settings dictation` on Dictation.
 
 ### Reminders
 
@@ -780,6 +782,42 @@ A shortcut another app already holds is refused, and a red line under the shortc
 | **A creature brings the shot home** (`shotCreatureBrings`) | on | | One hops to the toolbar's spot, picks up an 18×14-pixel picture of the shot and carries it home |
 
 The last rectangle (`shotLastRect`) is remembered across relaunches; it has no switch.
+
+### Dictation
+
+Speak, and the words land on the clipboard. macOS for now; Windows follows.
+
+**⌃⌥D** from any app starts listening: a creature leaps to the middle of the screen holding
+a pixel microphone, its green bars rising with your voice and the clock over its head.
+Press ⌃⌥D again (or ⏎) and it stops: the creature thinks (*Hmm… writing it down*, three dots
+on the microphone) while an OpenRouter model that listens to sound writes it down; then it
+says *Copied: …the first words…* and hops home. The words are on the clipboard and in the
+clipboard history (as copied from *Dictation*). **⎋** while it listens lets it go and sends
+nothing; under 0.3 s is a slip and nothing is sent either.
+
+The sound is 16 kHz mono, kept in memory only, sent once and never saved. Every
+recording is priced on the Costs tab as **Dictation**, even one where no words came back.
+Trouble is said by the creature in plain words: no OpenRouter key, no microphone, the
+microphone not allowed, no network, OpenRouter refusing.
+
+**Left column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Dictation** (`dictationEnabled`) | on | | Off: the shortcut is let go and the menu item hides. Needs the **microphone** (macOS asks once; **Allow…** here asks, or opens System Settings once refused) and the OpenRouter key from the Talk tab |
+| **Start and stop** (`dictationShortcut…`) | on, ⌃⌥D | | Click the keys to record others. Refused by the system: a red line says so |
+| **Hold to talk** (`dictationHoldToTalk`) | off | | On: it listens only while the keys are held, and writes it down when you let go |
+| **Longest recording** (`dictationMaxSeconds`) | 120 s | 10 to 600 s | At the end it stops by itself and sends what it heard |
+
+**Right column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Model** (`dictationModel`) | `google/gemini-2.5-flash-lite` | OpenRouter's models that take audio | Listed from OpenRouter, cheapest a minute first (about $0.0007 a minute for the default); the price of each call comes back with it |
+| **Spoken in** (`dictationLanguage`) | Any (the model hears it) | English, Russian, Hebrew, Ukrainian, German, French, Spanish, Italian, Portuguese, Chinese, Japanese | Told to the model; mixed languages are kept each in its own |
+| **Tidy it up** (`dictationCleanUp`) | on | | Leaves out um and uh, stutters and false starts, adds punctuation; in the same call. Off: every word as said |
+| **Paste into the app I was in** (`dictationPaste`) | off | | Presses ⌘V into the app in front when it started. Needs **Accessibility**, as the clipboard picker does |
+| **Who holds the microphone** (`dictationCreature`, `dictationHelper`) | Anyone free, by chance | a creature on screen, or *Nobody* | Nobody: a small note says how it went instead |
 
 ## Voice tab
 

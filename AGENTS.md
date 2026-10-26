@@ -82,7 +82,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <tab> --snapshot out.png`
   writes a settings tab to a PNG (tabs: creatures, actions, chases, beds, play, ballgames, sprites, talk, flowers, bonds, relationships, productivity, voice, costs, chats;
-  `reminders` still opens productivity, its old name; `clipboard` and `screenshots` open it on that tool).
+  `reminders` still opens productivity, its old name; `clipboard`, `screenshots` and `dictation` open it on that tool).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its
@@ -131,7 +131,7 @@ with `scripts/make-app.sh`, installed and seen working.
   with no cursor known, printing each step (`film 1.00 clip Whiskers leaps to (245, 558) in 0.31 s`).
 - `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
   `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`, `shortcut ⌃⌥S screenshot registered`,
-  `shortcut ⇧⌘8 full screen registered`, `shortcut ⇧⌘\ last rectangle registered`),
+  `shortcut ⇧⌘8 full screen registered`, `shortcut ⇧⌘\ last rectangle registered`, `shortcut ⌃⌥D dictation registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
 - `--shot-check` prints whether this build has Screen Recording and whether each monitor's capture
   shows the screen (`shot Built-in Retina Display: 3024×1964 px at 2×, 412 colours in a sample`); exit 1 if
@@ -143,6 +143,16 @@ with `scripts/make-app.sh`, installed and seen working.
   toolbar beside the film as it stands (`…-toolbar.png`) and with a hover tag (`…-toolbar-tip.png`): a
   rectangle with marks and blurs, a lasso, all monitors, the last rectangle again; writes each PNG beside
   the film and prints each step (`film 7.40 taken 800×520 px, 4 marks`).
+- `--mic-check` prints whether this build may use the microphone and records 1.5 s (`mic heard 1.50 s, 24000 samples
+  at 16000 Hz, loudest 0.41`); exit 1 if refused or silent. Like `--paste-check`, from a terminal it borrows the
+  terminal's permission: `open build/Ledgelings.app --stderr /dev/stdout --args --mic-check` for the app's own.
+- `--dictate-demo [--model id]` has the Mac say a test line into a file and sends its 16 kHz WAV through the real
+  dictation call, with the creature on screen; checks the words land on the clipboard and in the history, prints each
+  step with its time and price (`dictate 2.31  answered in 1.4 s: 412 tokens in, 21 out, <$0.001`), and puts the
+  clipboard, history and settings back. Exit 1 if wrong. Needs the OpenRouter key (the keychain prompt on a new build).
+- `--dictate-film out.mp4` films the dictation creature offscreen: the leap with the microphone, the bars following a
+  voice, the clock, thinking, *Copied: …* and the hop home, then a round with no key; stills beside it
+  (`…-listening.png`, `…-thinking.png`, `…-copied.png`).
 - `--kit-images <folder>` writes the sprite kit's two pictures and the prompt (from the saved
   form) and quits; `--kit-import <picture>` imports one picture with the saved form, as
   Import… does, and prints the name, colour and idle pose it read (it adds the species).

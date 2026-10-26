@@ -56,7 +56,7 @@ import Testing
     }
 
     @Test func screenshotsIsTheThirdTool() {
-        #expect(ProductivityTool.allCases == [.reminders, .clipboard, .screenshots])
+        #expect(Array(ProductivityTool.allCases.prefix(3)) == [.reminders, .clipboard, .screenshots])
     }
 
     /// A flat picture of one colour, `w`×`h` pixels.

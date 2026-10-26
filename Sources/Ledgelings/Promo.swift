@@ -372,6 +372,19 @@ enum Promo {
             }
         }
 
+        /// The frame last appended, as a picture: for the stills a film writes beside itself.
+        func lastFrame() -> CGImage? {
+            let w = Int(size.width), h = Int(size.height)
+            guard let context = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: bytesPerRow,
+                                          space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue),
+                  let data = context.data else { return nil }
+            // Core Animation draws y-up; a bitmap's rows run top-down, as the video's do.
+            let src = readback.contents()
+            for row in 0..<h { memcpy(data + row * bytesPerRow, src + (h - 1 - row) * bytesPerRow, bytesPerRow) }
+            return context.makeImage()
+        }
+
         func finish() async throws {
             input.markAsFinished()
             await writer.finishWriting()
