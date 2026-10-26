@@ -36,7 +36,7 @@ public sealed partial class App
             var text = next.Text.Length > 40 ? next.Text[..40] : next.Text;
             items.Add(new TrayIcon.Item("   " + L10n.Tr("Next: %@, %@", text, Reminders.When(next.Time, DateTimeOffset.Now))
                 + (settings.RemindersEnabled ? "" : " " + L10n.Tr("(off)")),
-                () => OpenSettings(ProductivityTool.Reminders)));
+                () => OpenSettings(SettingsPage.Reminders)));
         }
     }
 
@@ -45,7 +45,7 @@ public sealed partial class App
     {
         if (settings is null || reminders is null) return;
         if (settings.ReminderPaperNote) ReminderNote.ShowNote(reminders, colony?.NoteKeeper());
-        else OpenSettings(ProductivityTool.Reminders);
+        else OpenSettings(SettingsPage.Reminders);
     }
 
     /// <summary>The settings window's Reminders tool, handed its book once.</summary>

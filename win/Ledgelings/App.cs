@@ -64,6 +64,8 @@ public sealed partial class App : Application
         StartShortcut();
         StartClipboard();
         StartDictation();
+        StartTranslate();
+        StartToolsScreen();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
 
@@ -103,19 +105,21 @@ public sealed partial class App : Application
         var keys = ShortcutTitle;
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
+        AddToolsItem(items);
         AddClipboardItems(items);
         AddDictationItems(items);
+        AddTranslateItems(items);
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Deeds from Talk"), () => settings.DeedsEnabled = !settings.DeedsEnabled, Checked: settings.DeedsEnabled));
         var status = colony.TalkStatus;
         items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
-        items.Add(new TrayIcon.Item(L10n.Tr("Chat History\u2026"), () => OpenSettings(SettingsTab.Chats)));
+        items.Add(new TrayIcon.Item(L10n.Tr("Chat History\u2026"), () => OpenSettings(SettingsPage.Chats)));
         items.Add(new TrayIcon.Item(L10n.Tr("Relationships\u2026"), OpenRelationships));
         var s = spend.Summary;
         if (s.AllTime.Calls > 0)
-            items.Add(new TrayIcon.Item(L10n.Tr("Spent: %@ today, %@ this month", Spend.Label(s.Today.Cost), Spend.Label(s.Month.Cost)), () => OpenSettings(SettingsTab.Costs)));
+            items.Add(new TrayIcon.Item(L10n.Tr("Spent: %@ today, %@ this month", Spend.Label(s.Today.Cost), Spend.Label(s.Month.Cost)), () => OpenSettings(SettingsPage.Costs)));
         // Each language under its own name, so whoever cannot read the current one still finds theirs.
         items.Add(new TrayIcon.Item(L10n.Tr("Language"), Children: Languages.All
             .Select(l => new TrayIcon.Item(l.Title(), () => settings.Language = l, Checked: settings.Language == l)).ToList()));
@@ -167,9 +171,8 @@ public sealed partial class App : Application
         return Math.Max(60, (eight - DateTime.Now).TotalSeconds);
     }
 
-    private void OpenSettings(SettingsTab? tab) => EnsureSettingsWindow()?.Show(tab);
+    private void OpenSettings(SettingsPage? page) => EnsureSettingsWindow()?.Show(page);
 
-    private void OpenSettings(ProductivityTool tool) => EnsureSettingsWindow()?.Show(tool);
 
     /// <summary>The one settings window, made on first use.</summary>
     private SettingsWindow? EnsureSettingsWindow()
@@ -186,6 +189,8 @@ public sealed partial class App : Application
         tray?.Dispose();
         StopReminders();
         StopDictation();
+        StopTranslate();
+        StopToolsScreen();
         StopShortcut();
         StopClipboard();
         colony?.Dispose();

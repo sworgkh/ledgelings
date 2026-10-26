@@ -140,10 +140,12 @@ core tests are the Swift tests line for line.
 - Bubble text is Consolas Bold 12 pt; the Mac uses the system monospaced font.
 - **Marks in a line.** A bubble shows the plain text of `*sighs*` and `**bold**`
   (SPEC §6.3.1): GDI+ draws one face per call.
-- **Settings layout.** Each tab is one scrolling column; the Mac lays a tab out
-  in two columns on one screen.
+- **Settings layout.** The Mac's sidebar of pages under five headings, with its search (Ctrl+F);
+  each page is one scrolling column, where the Mac lays a page out in two columns on one screen.
+  The search reads the pages' own labels and footers rather than the Mac's hand-kept index.
 - **The OpenRouter key** is read at launch: the Credential Manager never prompts,
-  so there is nothing to save the user from by reading it late.
+  so there is nothing to save the user from by reading it late. A read that fails (not
+  "not found") is tried again when the Translate sheet opens or dictation starts.
 - **Steppers are sliders** (lines not repeated, story length, holiday look-ahead, throws at the hoop);
   same ranges and steps.
 - **Reveal in Finder** is **Show in Explorer**; Productivity tools › Reminders' file box has one too.
@@ -162,6 +164,11 @@ core tests are the Swift tests line for line.
   memory only. Windows' hot keys report only presses, so **Hold to talk** watches the key itself.
   There is no microphone prompt on Windows: **Allow…** opens Settings › Privacy › Microphone. The
   Mac's `--mic-check`, `--dictate-demo` and `--dictate-film` have no Windows twin.
+- **Translate** is **Ctrl+Alt+T**, the last copy **Ctrl+Alt+Shift+T**: the Mac's sheet, keys the
+  Windows way round (Clear is Ctrl+Shift+Backspace; the picker's next language Ctrl+Tab). The
+  sheet takes the keyboard like the picker. The Mac's `--translate*` flags have no Windows twin.
+- **The Tools screen** is **Ctrl+Alt+K** and the Actions sheet's wrench (K): five tiles, no
+  screenshot ones; the order changes with Move up and Move down.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
@@ -215,22 +222,22 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation,
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate, Tools, SettingsPages,
                            Deeds (+ .Lines), Bonds (+ .Storyline .Memory .Seed)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
                                      .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard .Deeds .Memory)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
-                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard), GlobalHotkey, ShortcutKeys, Program
-                           AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard),
+                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ToolsScreen), GlobalHotkey, ShortcutKeys, Program
+                           AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard .Dictation .Translate .ToolsScreen),
                            SettingsStore, LaunchAtLogin
-                           ChatClient (+ .Network), ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
+                           ChatClient (+ .Network), Translator, ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore, Native/ClipboardNative
-                           UI/SettingsWindow.xaml (Productivity tools holds a Tools tab per tool; + .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
-                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), SnippetsWindow, RelationshipsWindow
+                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
+                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), TranslateSheet, ToolsScreen, PixelGlyph, SnippetsWindow, RelationshipsWindow
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

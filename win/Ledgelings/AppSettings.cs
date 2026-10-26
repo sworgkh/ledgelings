@@ -60,6 +60,8 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadReminders();
         LoadClipboard();
         LoadDictation();
+        LoadTranslate();
+        LoadToolsScreen();
         LoadVoice();
         LoadSpriteKit();
         FollowLanguage();

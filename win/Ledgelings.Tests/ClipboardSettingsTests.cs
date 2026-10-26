@@ -49,8 +49,7 @@ public class ClipboardSettingsTests
     }
 
     [Fact]
-    public void ClipboardIsAToolFoundByItsHeader() =>
-        Assert.Contains(ProductivityTool.Clipboard, Enum.GetValues<ProductivityTool>());
+    public void ClipboardIsATool() => Assert.Equal(SettingsGroup.Tools, SettingsPage.Clipboard.Group());
 
     [Fact]
     public void AProtectedSnippetsWordsLiveOnlyInTheSecretStore()
