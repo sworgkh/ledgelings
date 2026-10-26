@@ -6,6 +6,8 @@ import planeMeta from "../public/sprites/plane.json";
 import teaMeta from "../public/sprites/tea.json";
 import zzzMeta from "../public/sprites/zzz.json";
 import houseMeta from "../public/sprites/house.json";
+import bedsMeta from "../public/sprites/beds.json";
+import playMeta from "../public/sprites/play.json";
 
 type Rect = { x: number; y: number; w: number; h: number };
 type Meta = { frames: Record<string, Rect> };
@@ -303,3 +305,84 @@ export const At: React.FC<{
 
 /** Height of a creature's centre above the floor it stands on. */
 export const lift = (scale: number) => 11 * scale;
+
+export type BedKind =
+  | "crate"
+  | "lilypad"
+  | "cloud"
+  | "dock"
+  | "box"
+  | "hammock"
+  | "pillow";
+
+/** Sheet pixels above the floor a sleeper's feet rest on, as `Bed.lift` in Beds.swift. */
+export const BED_LIFT: Record<BedKind, number> = {
+  crate: 6,
+  lilypad: 4,
+  cloud: 6,
+  dock: 4,
+  box: 3,
+  hammock: 8,
+  pillow: 7,
+};
+
+/** A bed standing on a floor at `floor`, centred on `x`. */
+export const Bed: React.FC<{
+  kind: BedKind;
+  x: number;
+  floor: number;
+  scale?: number;
+}> = ({ kind, x, floor, scale = 4 }) => (
+  <Sprite
+    sheet="beds"
+    meta={bedsMeta}
+    frame={kind}
+    scale={scale}
+    style={{
+      position: "absolute",
+      left: x - 18 * scale,
+      top: floor - 16 * scale,
+    }}
+  />
+);
+
+export type PlayFrame =
+  | "ball-0"
+  | "ball-1"
+  | "hoop"
+  | "hoop-swish"
+  | "chute"
+  | "hook"
+  | "rope"
+  | "drop"
+  | "soccer-0"
+  | "soccer-1"
+  | "net"
+  | "baseball"
+  | "bat"
+  | "base"
+  | "base-taken";
+
+/** One prop of the games' sheet (balls, hoop, chute, nets, bases), its 32×28 cell
+ *  centred on (x, y). */
+export const Prop: React.FC<{
+  frame: PlayFrame;
+  x: number;
+  y: number;
+  scale?: number;
+  flip?: boolean;
+  angle?: number;
+}> = ({ frame, x, y, scale = 4, flip = false, angle = 0 }) => (
+  <Sprite
+    sheet="play"
+    meta={playMeta}
+    frame={frame}
+    scale={scale}
+    style={{
+      position: "absolute",
+      left: x - 16 * scale,
+      top: y - 14 * scale,
+      transform: `${flip ? "scaleX(-1) " : ""}rotate(${angle}deg)`,
+    }}
+  />
+);

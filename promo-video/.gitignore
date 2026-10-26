@@ -8,3 +8,4 @@ out
 
 # Made by scripts/make-music.py before each render.
 public/music.wav
+public/music-v2.wav
