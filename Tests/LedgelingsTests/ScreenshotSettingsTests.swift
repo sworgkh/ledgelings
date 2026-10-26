@@ -56,7 +56,7 @@ import Testing
     }
 
     @Test func screenshotsIsTheThirdTool() {
-        #expect(Array(SettingsGroup.tools.pages.prefix(3)) == [.reminders, .clipboard, .screenshots])
+        #expect(Array(SettingsGroup.tools.pages.dropFirst().prefix(3)) == [.reminders, .clipboard, .screenshots])
     }
 
     /// A flat picture of one colour, `w`×`h` pixels.

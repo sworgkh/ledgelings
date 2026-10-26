@@ -51,6 +51,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
 | **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
 | **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
+| **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -91,6 +92,7 @@ stands and flips at a click; the sheet stays up.
 | **VOICE ON / OFF** | *Hear Them Talk*: bubbles read out loud |
 | **REVENGE ON / OFF** | *Cursor Revenge* |
 | **CURSOR: A MENACE** | *The Cursor Is*: each click the next of playmate, just there, menace |
+| *the wrench picture* (K; top right, on the title line) | The Tools screen ([Tools screen](#tools-screen)); its tag names the key, and the shortcut from any app. Hidden while the screen is off. macOS |
 | **SCREEN: ALL ▾** (top right, on the title line) | Only with two monitors or more. A menu of *All Screens* and each monitor by name: pick one and they live there only (the button then names it, *BUILT-IN* for the laptop's own) |
 | **ENGLISH / РУССКИЙ** | The language, under its own name; each click the next |
 | **ACTIVITIES…** (A) | The sheet's inner page, below |
@@ -578,10 +580,36 @@ greyed out under a *Needs a model* note.
 ## Tools
 
 Tools the creatures run for you rather than for themselves, a page each under the
-sidebar's *Tools* heading: **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**.
-`--settings reminders` opens the first (`productivity` too, the old tab's name);
-`--settings clipboard`, `--settings screenshots`, `--settings dictation` the others.
+sidebar's *Tools* heading: **Tools screen**, **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**.
+`--settings tools` opens the first, `--settings reminders` the next (`productivity` too, the old tab's name);
+`--settings clipboard`, `--settings screenshots`, `--settings dictation`, `--settings translate` the others.
 On Windows they are still one *Productivity tools* tab with a row of tools across the top.
+
+### Tools screen
+
+**macOS** for now; Windows follows.
+
+**⌃⌥K** from any app (or **Tools…** in the menu, or the wrench on the Creature Actions
+sheet, K): a sheet of pixel paper with a big picture tile for each tool: **Translate**,
+**Dictate**, **Screenshot**, **Full screen**, **Last rectangle**, **Clipboard history**,
+**Snippets**, **Add a reminder**. Each tile shows its own shortcut and its number. Click one,
+press its number, or move with the arrows and press ⏎; ⎋ closes. A tool switched off is greyed:
+its tag says where to switch it on, and choosing it opens that page. On hover each tile names
+what it does and its keys. The app you were in keeps the keyboard, so a tool that pastes
+pastes there.
+
+**Left column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Tools screen** (`toolsScreenEnabled`) | on | | Off: the shortcut is let go, the menu item and the Actions sheet's wrench hide |
+| **Open it from any app** (`toolsScreenShortcut…`) | on, ⌃⌥K | | Click the keys to record others. Refused by the system: a red line says so |
+
+**Right column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **On the screen** (`toolsScreenTools`) | all eight | any, in any order | Untick to hide a tile; drag to reorder. The first nine get the number keys |
 
 ### Reminders
 

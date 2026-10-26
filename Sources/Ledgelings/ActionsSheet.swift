@@ -85,6 +85,8 @@ final class ActionsController {
         s.language = settings.language
         s.screen = ScreenChoice.isOffered ? Self.screenTitle(settings) : nil
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
+        model.toolsOn = settings.toolsScreenEnabled
+        model.toolsShortcut = settings.toolsScreenShortcutEnabled ? GlobalShortcut.label(settings.toolsScreenShortcut) : ""
         guard let colony = colony() else {
             if model.state != s { model.state = s }
             return
@@ -327,14 +329,20 @@ enum ActionsSwitch: CaseIterable {
 
 /// Where the sheet can send you, as the menu did.
 enum ActionsLink: CaseIterable {
-    case settings, chats, quit
+    case settings, chats, quit, tools
 
     var title: String {
         switch self {
         case .settings: tr("SETTINGS")
         case .chats: tr("CHATS")
         case .quit: tr("QUIT")
+        case .tools: tr("TOOLS")
         }
+    }
+
+    /// The Tools picture's tag: what it opens and its keys, K here and the shortcut from any app.
+    static func toolsTooltip(shortcut: String) -> String {
+        shortcut.isEmpty ? tr("The Tools screen (K)") : tr("The Tools screen (K · %@)", shortcut)
     }
 }
 
@@ -468,6 +476,9 @@ final class ActionsModel: ObservableObject {
     var keeper: (name: String, face: CGImage?)?
     /// The shortcut from any app as drawn ("⌃⌥L"), empty while it is off.
     @Published var shortcut = ""
+    /// The Tools screen's picture, and its shortcut from any app as drawn.
+    @Published var toolsOn = true
+    @Published var toolsShortcut = ""
     var press: (ActionsTile) -> Void = { _ in }
     var hide: (Double?) -> Void = { _ in }
     var flip: (ActionsSwitch) -> Void = { _ in }
@@ -619,6 +630,16 @@ struct ActionsSheetView: View {
                         Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
                             .lineLimit(1)
                         Spacer(minLength: 0)
+                        // The Tools screen: every owner tool on one sheet (K).
+                        if model.toolsOn {
+                            Button { model.open(.tools) } label: {
+                                PixelGlyph(rows: Tools.sheetIcon).foregroundStyle(PixelBox.rim)
+                            }
+                            .buttonStyle(TinyPixelButtonStyle())
+                            .keyboardShortcut("k", modifiers: [])
+                            .help(ActionsLink.toolsTooltip(shortcut: model.toolsShortcut))
+                            .fixedSize()
+                        }
                         // With two monitors or more: which one they live on, chosen from a menu of their names.
                         // Up here, small: the switches' row has no room left in Russian.
                         if let screen = model.state.screen {

@@ -33,6 +33,8 @@ public struct Shortcut: Equatable, Sendable {
     public static let shotLast = Shortcut(keyCode: 42, modifiers: [.command, .shift])
     /// Dictation: Control-Option-D, D for dictate, beside the others.
     public static let dictation = Shortcut(keyCode: 2, modifiers: [.control, .option])
+    /// The Tools screen: Control-Option-K, K for kit, beside L for Ledgelings.
+    public static let tools = Shortcut(keyCode: 40, modifiers: [.control, .option])
     /// Type to translate: Control-Option-T, T for translate.
     public static let translate = Shortcut(keyCode: 17, modifiers: [.control, .option])
     /// Translate the last copy: Control-Option-Shift-T, the same key with Shift.

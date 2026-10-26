@@ -536,6 +536,19 @@ final class AppSettings: ObservableObject {
     /// Why a screenshot shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var shotShortcutProblem = ""
 
+    // MARK: The Tools screen
+
+    /// The Tools screen (§7.15): every owner tool on one sheet. Off: its shortcut is let go and the Creature Actions button goes.
+    @Published var toolsScreenEnabled: Bool { didSet { save(toolsScreenEnabled, "toolsScreenEnabled") } }
+    @Published var toolsScreenShortcutEnabled: Bool { didSet { save(toolsScreenShortcutEnabled, "toolsScreenShortcutEnabled") } }
+    @Published var toolsScreenShortcut: Shortcut {
+        didSet { save(toolsScreenShortcut.keyCode, "toolsScreenShortcutKeyCode"); save(toolsScreenShortcut.modifiers.rawValue, "toolsScreenShortcutModifiers") }
+    }
+    /// The tools on the screen, in their order, by name; one left out is not shown.
+    @Published var toolsScreenTools: [String] { didSet { save(toolsScreenTools, "toolsScreenTools") } }
+    /// Why the Tools screen's shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var toolsScreenShortcutProblem = ""
+
     // MARK: Translate
 
     /// The translator (§7.14). Off: no translate shortcuts are taken, the picker has no button, the menu item goes.
@@ -1005,6 +1018,11 @@ final class AppSettings: ObservableObject {
         dictationPaste = defaults.object(forKey: "dictationPaste") as? Bool ?? false
         dictationCreature = defaults.object(forKey: "dictationCreature") as? Bool ?? true
         dictationHelper = defaults.string(forKey: "dictationHelper") ?? ""
+        toolsScreenEnabled = defaults.object(forKey: "toolsScreenEnabled") as? Bool ?? true
+        toolsScreenShortcutEnabled = defaults.object(forKey: "toolsScreenShortcutEnabled") as? Bool ?? true
+        toolsScreenShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "toolsScreenShortcutKeyCode") as? Int,
+                                       savedModifiers: defaults.object(forKey: "toolsScreenShortcutModifiers") as? Int, standard: .tools)
+        toolsScreenTools = Tools.shown(defaults.stringArray(forKey: "toolsScreenTools") ?? Tools.defaultShown).map(\.rawValue)
         translateEnabled = defaults.object(forKey: "translateEnabled") as? Bool ?? true
         translateShortcutEnabled = defaults.object(forKey: "translateShortcutEnabled") as? Bool ?? true
         translateShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "translateShortcutKeyCode") as? Int,

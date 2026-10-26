@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                      watcher: { [weak self] in self?.clipWatcher })
     private(set) lazy var translate = TranslateController(settings: settings, spend: spend, clips: clips, watcher: { [weak self] in self?.clipWatcher },
                                                           helper: { [weak self] in self?.colony })
+    private lazy var toolsScreen = ToolsScreenController(settings: settings)
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
     private var shortcutShown: AnyCancellable?
@@ -242,6 +243,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         shots.takeShortcuts { [weak self] in self?.shotShortcutPressed($0) }
         dictation.takeShortcut { [weak self] in self?.dictationShortcutPressed() }
         translate.takeShortcuts { [weak self] in self?.translateShortcutPressed($0) }
+        setUpToolsScreen()
         translate.sheet.openSettings = { [weak self] in self?.settingsWindow.show(.translate) }
         picker.translateRow = { [weak self] text, after in
             guard let self else { return (nil, .failure(.cancelled)) }
@@ -270,6 +272,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let dictationState = !settings.dictationEnabled || !settings.dictationShortcutEnabled ? "off"
                 : settings.dictationShortcutProblem.isEmpty ? "registered" : "refused: \(settings.dictationShortcutProblem)"
             FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.dictationShortcut)) dictation \(dictationState)\n".utf8))
+            let toolsState = !settings.toolsScreenEnabled || !settings.toolsScreenShortcutEnabled ? "off"
+                : settings.toolsScreenShortcutProblem.isEmpty ? "registered" : "refused: \(settings.toolsScreenShortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.toolsScreenShortcut)) tools \(toolsState)\n".utf8))
             for (name, on, key) in [("translate", settings.translateShortcutEnabled, settings.translateShortcut),
                                     ("translate last copy", settings.translateClipShortcutEnabled, settings.translateClipShortcut)] {
                 let problem = settings.translateShortcutProblem.contains(GlobalShortcut.label(key)) ? settings.translateShortcutProblem : ""
@@ -303,6 +308,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let translate = translate, spend = spend
             Task { @MainActor in
                 exit(await TranslateDemo.bench(runs: value("--runs").flatMap(Int.init) ?? 10, controller: translate, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        // `--tools [--snapshot out.png]`: the Tools screen on the real screen, written to a PNG, then closed.
+        if args.contains("--tools") {
+            let toolsScreen = toolsScreen
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                toolsScreen.trace = { FileHandle.standardError.write(Data("\($0)\n".utf8)) }
+                toolsScreen.show()
+                for tile in toolsScreen.model.tiles {
+                    FileHandle.standardError.write(Data("tools \(tile.number) \(tile.tool.rawValue)\(tile.on ? "" : " (off)"): \(tile.tooltip)\n".utf8))
+                }
+                try? await Task.sleep(for: .seconds(1))
+                if let out = value("--snapshot") { try? toolsScreen.snapshot(to: URL(fileURLWithPath: out)) }
+                toolsScreen.close()
+                exit(0)
             }
         }
         if let text = value("--translate-sheet") {
@@ -555,6 +576,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let shotLastItem = NSMenuItem(title: "", action: #selector(takeLastShot), keyEquivalent: "")
     private let dictationItem = NSMenuItem(title: "", action: #selector(dictate), keyEquivalent: "")
     private let translateItem = NSMenuItem(title: "", action: #selector(openTranslate), keyEquivalent: "")
+    private let toolsItem = NSMenuItem(title: "", action: #selector(openToolsScreen), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -571,7 +593,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(activitiesItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
-        for item in [clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem] {
+        for item in [toolsItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem] {
             item.target = self
             menu.addItem(item)
         }
@@ -663,6 +685,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let translateKey = GlobalShortcut.keyName(settings.translateShortcut.keyCode).lowercased()
         translateItem.keyEquivalent = settings.translateShortcutEnabled && translateKey.count == 1 ? translateKey : ""
         translateItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.translateShortcut.modifiers)
+        toolsItem.title = tr("Tools…")
+        toolsItem.isHidden = !settings.toolsScreenEnabled
+        let toolsKey = GlobalShortcut.keyName(settings.toolsScreenShortcut.keyCode).lowercased()
+        toolsItem.keyEquivalent = settings.toolsScreenShortcutEnabled && toolsKey.count == 1 ? toolsKey : ""
+        toolsItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.toolsScreenShortcut.modifiers)
         for choice in languageItem.submenu?.items ?? [] {
             choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
         }
@@ -741,6 +768,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func dictate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); dictation.press() } }
 
     // From the menu: once it has closed, so the sheet knows the app that was in front.
+    @objc private func openToolsScreen() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); toolsScreen.show() } }
     @objc private func openTranslate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); translate.sheet.show() } }
 
     /// A translate shortcut from any app, for `--shortcut`: said, then quit once the sheet is closed.
@@ -806,7 +834,62 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .settings: openSettings()
         case .chats: openChats()
         case .quit: NSApp.terminate(nil)
+        case .tools:
+            // The Actions sheet made Ledgelings the active app: give the keyboard back
+            // first, so a tool that pastes pastes into the app you were in.
+            NSApp.deactivate()
+            Task { @MainActor in try? await Task.sleep(for: .milliseconds(200)); toolsScreen.show() }
         }
+    }
+
+    /// What each tile of the Tools screen starts, whether it is on, its shortcut, and its shortcut from any app.
+    private func setUpToolsScreen() {
+        toolsScreen.start = { [weak self] tool in
+            guard let self else { return }
+            switch tool {
+            case .translate: translate.sheet.show()
+            case .dictation: dictation.press()
+            case .screenshot: shots.withToolbar()
+            case .fullScreen: shots.fullScreen()
+            case .lastRectangle: shots.lastRectangle()
+            case .clipHistory: picker.show(.recent)
+            case .snippets: picker.show(.snippets)
+            case .reminder: openReminders()
+            }
+        }
+        toolsScreen.isOn = { [weak self] tool in
+            guard let s = self?.settings else { return false }
+            switch tool {
+            case .translate: return s.translateEnabled
+            case .dictation: return s.dictationEnabled
+            case .screenshot, .fullScreen, .lastRectangle: return s.shotEnabled
+            case .clipHistory, .snippets: return s.clipboardEnabled
+            case .reminder: return s.remindersEnabled
+            }
+        }
+        toolsScreen.shortcutLabel = { [weak self] tool in
+            guard let s = self?.settings else { return nil }
+            let pair: (Bool, Shortcut)? = switch tool {
+            case .translate: (s.translateShortcutEnabled, s.translateShortcut)
+            case .dictation: (s.dictationShortcutEnabled, s.dictationShortcut)
+            case .screenshot: (s.shotCaptureShortcutEnabled, s.shotCaptureShortcut)
+            case .fullScreen: (s.shotFullShortcutEnabled, s.shotFullShortcut)
+            case .lastRectangle: (s.shotLastShortcutEnabled, s.shotLastShortcut)
+            case .clipHistory: (s.clipHistoryShortcutEnabled, s.clipHistoryShortcut)
+            case .snippets: (s.clipSnippetsShortcutEnabled, s.clipSnippetsShortcut)
+            case .reminder: nil
+            }
+            return pair.flatMap { $0.0 ? GlobalShortcut.label($0.1) : nil }
+        }
+        toolsScreen.openSettings = { [weak self] in self?.settingsWindow.show($0) }
+        toolsScreen.takeShortcut { [weak self] in self?.toolsShortcutPressed() }
+    }
+
+    /// The Tools screen's shortcut from any app, for `--shortcut`: said, then quit once the screen is closed.
+    private func toolsShortcutPressed() {
+        guard CommandLine.arguments.contains("--shortcut") else { return }
+        FileHandle.standardError.write(Data("shortcut pressed: tools\n".utf8))
+        Task { @MainActor in try? await Task.sleep(for: .seconds(2)); while toolsScreen.isUp { try? await Task.sleep(for: .seconds(0.2)) }; exit(0) }
     }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
     @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }

@@ -6,7 +6,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
     case chases, play, ballGames
     case talk, voice, bonds, relationships
-    case reminders, clipboard, screenshots, dictation, translate
+    case tools, reminders, clipboard, screenshots, dictation, translate
     case costs, chats
 
     public var title: String {
@@ -29,6 +29,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .screenshots: tr("Screenshots")
         case .dictation: tr("Dictation")
         case .translate: tr("Translate")
+        case .tools: tr("Tools screen")
         case .costs: tr("Costs")
         case .chats: tr("Chats")
         }
@@ -39,7 +40,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
         case .chases, .play, .ballGames: .games
         case .talk, .voice, .bonds, .relationships: .talkAndFriends
-        case .reminders, .clipboard, .screenshots, .dictation, .translate: .tools
+        case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate: .tools
         case .costs, .chats: .moneyAndHistory
         }
     }
@@ -50,6 +51,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     public static func named(_ name: String) -> SettingsPage? {
         let lower = name.lowercased()
         if lower == "productivity" { return .reminders }
+        if lower == "toolsscreen" { return .tools }
         return allCases.first { $0.rawValue.lowercased() == lower }
     }
 }
@@ -244,6 +246,10 @@ public enum SettingsIndex {
         Section(.dictation, "Shortcut", labels: ["Start and stop", "Hold to talk", "Longest recording"], footer: "It works in every app. Holding to talk, it listens while the keys are down and writes it down when you let go. At the longest length it stops by itself and sends what it heard.", keys: ["dictationHoldToTalk", "dictationMaxSeconds", "dictationShortcutEnabled", "dictationShortcutKeyCode", "dictationShortcutModifiers"]),
         Section(.dictation, "Writing it down", labels: ["Model", "Spoken in", "Tidy it up"], footer: "OpenRouter's models that listen to sound, cheapest first; each recording is priced in Settings › Costs as Dictation. Tidying leaves out um and uh, stutters and false starts, and adds punctuation, in the same call.", keys: ["dictationCleanUp", "dictationLanguage", "dictationModel"]),
         Section(.dictation, "The words and the creature", labels: ["Paste into the app I was in", "Needs Accessibility, to press ⌘V for you. Until then it only copies.", "Allow…", "Who holds the microphone", "Anyone free, by chance", "Nobody: a note says how it went"], footer: "A creature leaps to the middle of the screen holding a microphone whose bars follow your voice, the clock over its head; it thinks while the words are written, says the first of them and hops home.", keys: ["dictationCreature", "dictationHelper", "dictationPaste"]),
+
+        // tools
+        Section(.tools, "Tools screen", labels: ["Tools screen", "Open it from any app"], footer: "Every tool on one sheet, a big picture each: click one, press its number, or choose with the arrows and ⏎; ⎋ closes. The Creature Actions sheet opens it too (K). A tool switched off is greyed, and a click opens the page that switches it on.", keys: ["toolsScreenEnabled", "toolsScreenShortcutEnabled", "toolsScreenShortcutKeyCode", "toolsScreenShortcutModifiers"]),
+        Section(.tools, "On the screen", labels: ["Type to translate", "Speak, and the words land on the clipboard", "A screenshot with the toolbar", "The full screen, straight out", "The last rectangle again", "Your recent copies, to paste again", "The snippets, to paste", "A reminder, thrown at you by paper plane"], footer: "Drag to change the order: the first is 1, the next 2. Switched off here, a tool is not on the screen.", keys: ["toolsScreenTools"]),
 
         // translate
         Section(.translate, "Translate", labels: ["Translator", "Type to translate", "Translate the last copy", "The last copy", "Opens the sheet, already translated", "Puts it on the clipboard quietly"], footer: "Both work in every app. Type to translate opens the sheet: your words on the left, the translation on the right as you type. The last copy opens in the sheet already translated, or quietly replaces the clipboard with its translation and says so by the text cursor. ⏎ copies the translation, ⌘⏎ pastes it into the app you were in.", keys: ["translateClipMode", "translateClipShortcutEnabled", "translateClipShortcutKeyCode", "translateClipShortcutModifiers", "translateEnabled", "translateShortcutEnabled", "translateShortcutKeyCode", "translateShortcutModifiers"]),

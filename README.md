@@ -238,6 +238,12 @@ every text row of the clipboard picker gets a translate button (⌘T). One cheap
 model (Gemini 2.5 Flash Lite by default) does it for about a cent a day; links, code and numbers
 are kept out of its reach, and protected snippets never reach it. Settings › Tools › Translate.
 
+**The Tools screen** (macOS for now). **⌃⌥K** from any app, or the wrench on the Creature
+Actions sheet: every tool on one sheet of pixel paper, a big picture tile each (translate,
+dictate, the three screenshots, clipboard history, snippets, a reminder), with its own
+shortcut under it. Click one, press its number, or use the arrows and ⏎. Which tiles show,
+and in what order, is in Settings › Tools › Tools screen.
+
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
 triangle and a mushroom come built in, each with its own cast of characters. The
 **sprite kit** is a small form (what it is, a name, a colour, three characters; *Refine
