@@ -47,6 +47,27 @@ public sealed class ClipPickerController
 
     public Action<string>? Trace { get; set; }
 
+    // The translator (SPEC §7.14): a row's words into another language, under it.
+    private Func<string, Translate.Lang?, Task<(Translate.Lang? Target, string? Text, string? Trouble)>>? translateRow;
+    private Action<string, Translate.Lang?>? openInSheet;
+    private Func<bool> translateOn = () => false;
+    private int translating;
+
+    /// <summary>A row's translation, open under it: waiting (dots), done (its words), or the trouble.</summary>
+    internal sealed record RowTranslation(Guid Id, Translate.Lang? Target, string? Words, string? Trouble);
+    internal RowTranslation? Translation { get; private set; }
+    /// <summary>Rows get a translate picture (Ctrl+T): the translator is on and so is its button.</summary>
+    internal bool TranslateOn => translateRow is not null && translateOn();
+
+    /// <summary>Handed the translator once it is made.</summary>
+    public void UseTranslator(Func<string, Translate.Lang?, Task<(Translate.Lang? Target, string? Text, string? Trouble)>> row,
+                              Action<string, Translate.Lang?> sheet, Func<bool> on)
+    {
+        translateRow = row;
+        openInSheet = sheet;
+        translateOn = on;
+    }
+
     public ClipPickerController(AppSettings settings, ClipBook book, Func<Colony?> colony, Action editSnippets)
     {
         this.settings = settings;
@@ -77,6 +98,7 @@ public sealed class ClipPickerController
         model.First = first;
         model.Search("");
         model.Refresh(selectFirst: true);
+        Translation = null;
         var monitor = Screen(caret, previous);
         window = new ClipPickerWindow(this, model, settings, monitor);
         window.Closed += (s, _) => { if (ReferenceEquals(window, s)) window = null; };
@@ -101,7 +123,7 @@ public sealed class ClipPickerController
     }
 
     /// <summary>The monitor with the text caret, else with the front window, else with the pointer.</summary>
-    private static Monitor Screen(Win32.RECT? caret, IntPtr front)
+    internal static Monitor Screen(Win32.RECT? caret, IntPtr front)
     {
         var monitors = Desktop.Monitors();
         bool On(Monitor m, int x, int y) => x >= m.Left && x < m.Left + m.Width && y >= m.Top && y < m.Top + m.Height;
@@ -120,14 +142,28 @@ public sealed class ClipPickerController
         bool ctrl = modifiers.HasFlag(ModifierKeys.Control), alt = modifiers.HasFlag(ModifierKeys.Alt);
         switch (key)
         {
-            case System.Windows.Input.Key.Escape: Close(); return true;
+            // A translation open under a row closes first, the picker after.
+            case System.Windows.Input.Key.Escape:
+                if (Translation is not null) { Translation = null; translating++; break; }
+                Close();
+                return true;
+            case System.Windows.Input.Key.T when ctrl && modifiers.HasFlag(ModifierKeys.Shift) && TranslateOn: OpenInSheet(); return true;
+            case System.Windows.Input.Key.T when ctrl && TranslateOn: if (model.SelectedRow is { } t) ToggleTranslation(t); break;
+            case System.Windows.Input.Key.Tab when ctrl && Translation is not null: NextTarget(); break;
             case System.Windows.Input.Key.Down: model.Step(1); break;
             case System.Windows.Input.Key.Up: model.Step(-1); break;
             case System.Windows.Input.Key.PageDown: model.Step(8); break;
             case System.Windows.Input.Key.PageUp: model.Step(-8); break;
             case System.Windows.Input.Key.N when ctrl: model.Step(1); break;
             case System.Windows.Input.Key.P when ctrl: if (model.SelectedRow is { } p) Pin(p); break;
-            case System.Windows.Input.Key.Enter: if (model.SelectedRow is { } r) Choose(r, alt); return true;
+            case System.Windows.Input.Key.Enter:
+                // With its translation open, Enter pastes the translation; Alt+Enter the original.
+                if (model.SelectedRow is { } r && Translation is { } open && open.Id == r.Id && !alt)
+                {
+                    if (open.Words is string words) PasteTranslation(words, r); else System.Media.SystemSounds.Beep.Play();
+                }
+                else if (model.SelectedRow is { } row) Choose(row, alt && Translation?.Id != row.Id);
+                return true;
             case System.Windows.Input.Key.Tab: model.JumpGroup(); break;
             case System.Windows.Input.Key.E when ctrl: Close(); editSnippets(); return true;
             case System.Windows.Input.Key.Delete when fieldEmpty:
@@ -175,6 +211,66 @@ public sealed class ClipPickerController
         book.Remove(row.Id);
         model.Refresh(keeping: at);
         Trace?.Invoke("forget " + row.Text);
+    }
+
+    // MARK: Translating a row
+
+    /// <summary>The words a row would be translated from, or null when it may not be (a picture, a protected snippet or
+    /// a copy of its words, nothing but links and numbers).</summary>
+    internal string? Words(ClipPicker.Row row)
+    {
+        if (!TranslateOn) return null;
+        if (row.Group == ClipPicker.Group.Recent)
+            return book.History.Clips.FirstOrDefault(c => c.Id == row.Id) is { } clip && Translate.MayTranslate(clip, book.Snippets) ? clip.Text : null;
+        return book.Snippets.Find(row.Id) is { } snippet && Translate.RefusalOf(snippet, book.Snippets) is null ? snippet.Text : null;
+    }
+
+    /// <summary>Ctrl+T or the row's picture: its translation opens under it, or closes.</summary>
+    internal void ToggleTranslation(ClipPicker.Row row)
+    {
+        if (Translation?.Id == row.Id) { Translation = null; translating++; window?.Redraw(scroll: false); return; }
+        model.Selected = row.Id;
+        TranslateSelected(null);
+    }
+
+    /// <summary>Ctrl+Tab: the same row into the next language that is on.</summary>
+    private void NextTarget()
+    {
+        if (Translation is { } t && model.Selected == t.Id) TranslateSelected(t.Target);
+    }
+
+    private void TranslateSelected(Translate.Lang? after)
+    {
+        if (model.SelectedRow is not { } row || Words(row) is not { } words || translateRow is null) { System.Media.SystemSounds.Beep.Play(); return; }
+        var mine = ++translating;
+        Translation = new RowTranslation(row.Id, after, null, null);
+        Trace?.Invoke("translate row " + (row.Text.Length <= 40 ? row.Text : row.Text[..40]));
+        window?.Redraw(scroll: false);
+        _ = Run();
+        async Task Run()
+        {
+            var (target, text, trouble) = await translateRow(words, after);
+            if (mine != translating || Translation?.Id != row.Id) return;
+            Translation = new RowTranslation(row.Id, target, text, text is null ? trouble ?? Translate.Refusal.NothingToTranslate.Line() : null);
+            if (text is not null) Trace?.Invoke($"row translated into {target?.Code ?? "?"}: {(text.Length <= 60 ? text : text[..60])}");
+            window?.Redraw(scroll: false);
+        }
+    }
+
+    /// <summary>Ctrl+Shift+T: the row's words in the Translate sheet; the picker goes.</summary>
+    internal void OpenInSheet()
+    {
+        if (model.SelectedRow is not { } row || Words(row) is not { } words || openInSheet is null) { System.Media.SystemSounds.Beep.Play(); return; }
+        var into = Translation?.Id == row.Id ? Translation.Target : null;
+        Close();
+        openInSheet(words, into);
+    }
+
+    /// <summary>The translation pasted as plain text into the app that was in front, and kept in the history.</summary>
+    private void PasteTranslation(string words, ClipPicker.Row row)
+    {
+        Paste(new ClipPaster.Item(words), plain: true, row);
+        TranslateSheetController.KeepInHistory(words, book, settings);
     }
 
     // MARK: Choosing
@@ -419,8 +515,11 @@ internal sealed class ClipPickerWindow : Window
         footer.FontFamily = mono; footer.FontSize = 9; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
         footer.Margin = new Thickness(0, 8, 60, 0);   // clear of the paper's folded-down corner
         footer.TextTrimming = TextTrimming.CharacterEllipsis;
-        footer.Text = L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE",
-                              settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN"));
+        footer.Text = controller.TranslateOn
+            ? L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+T TRANSLATE  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE",
+                      settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN"))
+            : L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE",
+                      settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN"));
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
@@ -455,6 +554,7 @@ internal sealed class ClipPickerWindow : Window
             var line = Line(row, i < 9 ? i + 1 : null);
             lines[row.Id] = line;
             rows.Children.Add(line);
+            if (controller.Translation is { } t && t.Id == row.Id) rows.Children.Add(Translation(t));
         }
         if (model.Rows.Count > shown.Count)
             rows.Children.Add(new TextBlock { Text = L10n.Tr("%d more: type to narrow", model.Rows.Count - shown.Count), FontFamily = mono, FontSize = 10, Foreground = faintInk });
@@ -471,6 +571,18 @@ internal sealed class ClipPickerWindow : Window
         num.Width = 20;
         DockPanel.SetDock(num, Dock.Left);
         panel.Children.Add(num);
+        if (controller.Words(row) is not null)
+        {
+            // The translate picture: on hover its name and key; a click opens the translation under the row.
+            var tip = Translate.Button.Translate.Tooltip();
+            var picture = PixelGlyph.Image(Translate.Button.Translate.Icon(), Color.FromRgb(40, 34, 58), 1.5);
+            picture.Opacity = chosen ? 1 : 0.55;
+            var button = new Border { Child = picture, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
+            System.Windows.Automation.AutomationProperties.SetName(button, tip);
+            button.MouseLeftButtonUp += (_, e) => { e.Handled = true; controller.ToggleTranslation(row); };
+            DockPanel.SetDock(button, Dock.Right);
+            panel.Children.Add(button);
+        }
         var detail = Text(row.Protected ? L10n.Tr("LOCKED · %@", row.Detail) : row.Detail, 10, FontWeights.SemiBold, chosen ? PixelBox.Rim : faintInk);
         detail.Margin = new Thickness(8, 0, 0, 0);
         DockPanel.SetDock(detail, Dock.Right);
@@ -486,6 +598,36 @@ internal sealed class ClipPickerWindow : Window
         if (!chosen)
             return Hook(new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = row.Masked ? maskTint : Brushes.Transparent }, row);
         return Hook(new PixelBox { Look = PixelBox.Finish.Chosen, Child = panel, Margin = new Thickness(0, 1, 6, 1) }, row);
+    }
+
+    /// <summary>A row's translation, under it: where it went, the words (or dots, or the trouble), and the sheet.</summary>
+    private FrameworkElement Translation(ClipPickerController.RowTranslation t)
+    {
+        var culture = Languages.Current.Culture();
+        var head = new DockPanel();
+        var tip = Translate.Button.OpenSheet.Tooltip();
+        var sheet = new Border
+        {
+            Child = PixelGlyph.Image(Translate.Button.OpenSheet.Icon(), Color.FromRgb(40, 34, 58), 1.5),
+            Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, Padding = new Thickness(3),
+        };
+        System.Windows.Automation.AutomationProperties.SetName(sheet, tip);
+        sheet.MouseLeftButtonUp += (_, e) => { e.Handled = true; controller.OpenInSheet(); };
+        DockPanel.SetDock(sheet, Dock.Right);
+        head.Children.Add(sheet);
+        head.Children.Add(new TextBlock
+        {
+            Text = t.Target is { } into ? L10n.Tr("INTO %@ · CTRL+TAB NEXT · ENTER PASTES IT", into.Title.ToUpper(culture)) : L10n.Tr("TRANSLATING…"),
+            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center,
+        });
+        var words = new TextBlock
+        {
+            Text = t.Words ?? t.Trouble ?? "•••",
+            FontFamily = mono, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = t.Words is null ? softInk : PixelBox.Rim,
+            TextWrapping = TextWrapping.Wrap, MaxHeight = 64, Margin = new Thickness(0, 4, 0, 0),
+            FlowDirection = t.Target?.RightToLeft == true && t.Words is not null ? FlowDirection.RightToLeft : FlowDirection.LeftToRight,
+        };
+        return new Border { Child = new StackPanel { Children = { head, words } }, Padding = new Thickness(30, 6, 12, 6), Margin = new Thickness(0, 0, 6, 2), Background = maskTint };
     }
 
     /// <summary>A picture's thumbnail, its few pixels drawn big, square and sharp, in a 1-pixel rim like the creatures'.</summary>

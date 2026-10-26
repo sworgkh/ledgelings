@@ -117,6 +117,7 @@ public sealed partial class App
     {
         if (settings is null) return;
         dictationFront = ClipboardNative.GetForegroundWindow();
+        settings.RetryOpenRouterKey();
         if (settings.OpenRouterKey.Trim().Length == 0) { dictationRecorder.Done(); DictationFail(new(Dictation.TroubleKind.NoKey)); return; }
         var made = new DictationRecorder();
         try { made.Start(); }

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Ledgelings.Core;
+using Ledgelings.Native;
 
 namespace Ledgelings;
 
@@ -57,7 +58,7 @@ public sealed partial class AppSettings
         talkServer = store.Get<string>("talkServer") ?? DefaultTalkServer;
         talkModel = store.Get<string>("talkModel") ?? DefaultTalkModel;
         openRouterModel = store.Get<string>("openRouterModel") ?? DefaultOpenRouterModel;
-        openRouterKey = secrets.Get(KeyAccount) ?? "";
+        ReadKey();
         bubbleSeconds = Math.Clamp(store.Get<double?>("bubbleSeconds") ?? Banter.DefaultBubbleSeconds, BubbleMin, BubbleMax);
         flowerMinutes = Math.Clamp(store.Get<double?>("flowerMinutes") ?? 2, FlowerMin, FlowerMax);
         // Twelve: more than any one character's built-in letters, a few rounds of banter.
@@ -98,6 +99,30 @@ public sealed partial class AppSettings
     public string TalkModel { get => talkModel; set => Put(ref talkModel, value, "talkModel"); }
     public string OpenRouterModel { get => openRouterModel; set => Put(ref openRouterModel, value, "openRouterModel"); }
 
+    /// <summary>The last read failed (the Credential Manager not there yet, or refusing), so the empty key is
+    /// not the owner's answer: something they start by hand reads it again (the Mac's #105).</summary>
+    private bool keyReadFailed;
+
+    private void ReadKey()
+    {
+        switch (secrets.Read(KeyAccount))
+        {
+            case SecretRead.Found found: openRouterKey = found.Value; keyReadFailed = false; break;
+            case SecretRead.Missing: openRouterKey = ""; keyReadFailed = false; break;
+            default: openRouterKey = ""; keyReadFailed = true; break;
+        }
+    }
+
+    /// <summary>Reads the key again if the last read failed: the Translate sheet opens, dictation starts. A key
+    /// read fine, or none saved, costs nothing. Creatures talking on their own never ask.</summary>
+    public void RetryOpenRouterKey()
+    {
+        if (!keyReadFailed) return;
+        var before = openRouterKey;
+        ReadKey();
+        if (openRouterKey != before) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpenRouterKey)));
+    }
+
     /// <summary>Lives in the Credential Manager, never in the settings file. Empty means no key.
     /// Reading it never prompts on Windows, so unlike the Mac it is read at launch.</summary>
     public string OpenRouterKey
@@ -107,6 +132,7 @@ public sealed partial class AppSettings
         {
             if (openRouterKey == value) return;
             openRouterKey = value;
+            keyReadFailed = false;
             secrets.Set(KeyAccount, value);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpenRouterKey)));
             Changed?.Invoke();

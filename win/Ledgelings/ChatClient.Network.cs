@@ -49,6 +49,12 @@ public sealed partial class ChatClient
     public async Task<Answer> Line(string system, string user) =>
         ParseReply(await Fetch(LineRequest(system, user), TimeSpan.FromSeconds(60)));
 
+    /// <summary>One call with its own time limit: a translation (8 s) or a guess (3 s), SPEC §7.14. Never cancelled by a
+    /// newer keystroke: a call the server answers is priced (AGENTS rule 1). Only its own time limit ends it, and a call cut
+    /// off there has no reply to price, as on the Mac.</summary>
+    public async Task<Answer> Ask(string system, string user, int maxTokens, double temperature, TimeSpan timeout) =>
+        ParseReply(await Fetch(Request(system, user, maxTokens, temperature), timeout));
+
     private static async Task<string> Fetch(HttpRequestMessage request, TimeSpan timeout)
     {
         try

@@ -9,6 +9,10 @@ public sealed partial class Colony
 {
     private enum ClipStage { Going, Holding, Returning }
 
+    /// <summary>How the creature holding a sheet looks while the Translate sheet works (SPEC §7.14): still, thinking
+    /// dots while the model answers, or a shrug with a "?" at trouble.</summary>
+    public enum ClipHelperMood { Calm, Thinking, Puzzled }
+
     private sealed class ClipHelp
     {
         public int Index;
@@ -17,6 +21,8 @@ public sealed partial class Colony
         public Pt Perch;
         /// <summary>Where it was on its edge before it came.</summary>
         public Pt Home;
+        public ClipHelperMood Mood;
+        public double MoodSince;
     }
 
     private ClipHelp? clipHelp;
@@ -29,7 +35,10 @@ public sealed partial class Colony
 
     /// <summary>Sends a creature to hold <paramref name="paper"/> (global points, y up). Seconds until it lands
     /// there, or null when nobody can come: all busy, hiding, or nobody at all.</summary>
-    public double? ClipHelperCome(Rect paper, Pt centre)
+    public double? ClipHelperCome(Rect paper, Pt centre) => ClipHelperCome(paper, centre, Settings.ClipHelper);
+
+    /// <summary>The same, <paramref name="wanted"/> coming if free (empty: whoever is nearest the middle).</summary>
+    public double? ClipHelperCome(Rect paper, Pt centre, string wanted)
     {
         if (clipHelp is { } old) ClipHelperLand(old.Index);
         if (hideout.IsActive) return null;
@@ -40,7 +49,7 @@ public sealed partial class Colony
                 !busy.Contains(i) && held?.Index != i && CurrentGrab?.Index != i && !IsMoving(i)
                 && !c.IsPlaying && !c.IsChatting && !c.IsHeld && !bubbles.ContainsKey(i));
         }).ToList();
-        if (ClipHelper.Choose(candidates, centre, Settings.ClipHelper) is not int i || !creatures[i].TakeOff(waking: true)) return null;
+        if (ClipHelper.Choose(candidates, centre, wanted) is not int i || !creatures[i].TakeOff(waking: true)) return null;
         bedTrips.Remove(i);
         gardeners.Remove(i);
         busy.Add(i);
@@ -61,6 +70,16 @@ public sealed partial class Colony
         help.Leap = new ClipHelper.Leap(from, help.Home, ClipHelper.Flight(from.DistanceTo(help.Home), Settings.ClipAnimationSpeed));
         help.Stage = ClipStage.Returning;
         Trace?.Invoke($"clip {CharacterFor(help.Index).Name} leaps home");
+    }
+
+    /// <summary>Thinking dots while the model answers, a shrug at trouble, calm again: for the Translate sheet.</summary>
+    public void ClipHelperMoodTo(ClipHelperMood mood)
+    {
+        if (clipHelp is not { } help || help.Mood == mood) return;
+        help.Mood = mood;
+        help.MoodSince = Elapsed;
+        if (mood == ClipHelperMood.Calm) bubbles.Remove(help.Index);
+        Trace?.Invoke($"clip {CharacterFor(help.Index).Name} is {mood.ToString().ToLowerInvariant()}");
     }
 
     /// <summary>The creatures' overlays over every other topmost window: the picker came up after them, and the
@@ -86,7 +105,33 @@ public sealed partial class Colony
                 if (Settings.ClipHelperTalks && Settings.TalkEnabled) Say(ClipHelper.Line(CharacterFor(i).Name, rng), i, builtIn: true);
                 break;
             case ClipStage.Holding:
-                creatures[i].Carry(help.Perch, 0, "idle");
+                var since = Elapsed - help.MoodSince;
+                switch (help.Mood)
+                {
+                    case ClipHelperMood.Thinking:
+                        creatures[i].Carry(help.Perch, 0, "idle");
+                        // One, two, three dots, round and round: never said, never voiced.
+                        var dots = new string('•', (int)(since * 3) % 3 + 1);
+                        if (!bubbles.TryGetValue(i, out var shown) || shown.Text != dots)
+                        {
+                            bubbleSerial += 1;
+                            bubbles[i] = new Bubble { Text = dots, Until = Elapsed + 1, Serial = bubbleSerial };
+                        }
+                        break;
+                    case ClipHelperMood.Puzzled:
+                        // A shrug: up a few points and down again, a "?" over it for two seconds.
+                        var lift = since < 0.3 ? 6 * Math.Sin(Math.PI * since / 0.3) : 0;
+                        creatures[i].Carry(new Pt(help.Perch.X, help.Perch.Y + lift), 0, since < 0.3 ? "jump" : "idle");
+                        if (since < 2 && (!bubbles.TryGetValue(i, out var asked) || asked.Text != "?"))
+                        {
+                            bubbleSerial += 1;
+                            bubbles[i] = new Bubble { Text = "?", Until = Elapsed + 2 - since, Serial = bubbleSerial };
+                        }
+                        break;
+                    default:
+                        creatures[i].Carry(help.Perch, 0, "idle");
+                        break;
+                }
                 break;
             case ClipStage.Returning:
                 help.Leap.Update(dt);

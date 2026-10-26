@@ -88,7 +88,9 @@ public sealed partial class App
         switch (link)
         {
             case ActionsLink.Settings: OpenSettings(null); break;
-            case ActionsLink.Chats: OpenSettings(SettingsTab.Chats); break;
+            case ActionsLink.Chats: OpenSettings(SettingsPage.Chats); break;
+            // A beat for the sheet to go first.
+            case ActionsLink.Tools: AfterMs(200, () => toolsScreen?.Show()); break;
             default: Shutdown(); break;
         }
     }

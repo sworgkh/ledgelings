@@ -64,5 +64,5 @@ public class RelationshipsSettingsTests
     }
 
     [Fact]
-    public void TheTabIsNamedForScripts() => Assert.Equal("Relationships", SettingsTabs.Header(SettingsTab.Relationships));
+    public void ThePageIsNamedForScripts() => Assert.Equal(Ledgelings.Core.SettingsPage.Relationships, Ledgelings.Core.SettingsPages.Named("relationships"));
 }

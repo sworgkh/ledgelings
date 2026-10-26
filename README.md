@@ -229,7 +229,7 @@ The recording stays in memory and is never saved. Model, language, shortcut and 
 recording are in Settings › Tools › Dictation, with *Allow…* for the
 microphone.
 
-**Translate** (macOS for now). **⌃⌥T** from any app: a creature brings a sheet of pixel paper;
+**Translate** (macOS; Windows with Ctrl+Alt+T). **⌃⌥T** from any app: a creature brings a sheet of pixel paper;
 type in English, Russian or Hebrew and the translation appears beside it as you type, Google
 Translate style, with the rest of your phrase guessed in grey (⇥ takes it). The language is
 told by its letters, for free; ⏎ copies, ⌘⏎ pastes into the app you were in, ⌘S swaps to check
@@ -238,7 +238,7 @@ every text row of the clipboard picker gets a translate button (⌘T). One cheap
 model (Gemini 2.5 Flash Lite by default) does it for about a cent a day; links, code and numbers
 are kept out of its reach, and protected snippets never reach it. Settings › Tools › Translate.
 
-**The Tools screen** (macOS for now). **⌃⌥K** from any app, or the wrench on the Creature
+**The Tools screen** (macOS; Windows with Ctrl+Alt+K). **⌃⌥K** from any app, or the wrench on the Creature
 Actions sheet: every tool on one sheet of pixel paper, a big picture tile each (translate,
 dictate, the three screenshots, clipboard history, snippets, a reminder), with its own
 shortcut under it. Click one, press its number, or use the arrows and ⏎. Which tiles show,

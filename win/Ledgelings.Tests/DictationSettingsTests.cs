@@ -39,7 +39,7 @@ public class DictationSettingsTests
     }
 
     [Fact]
-    public void DictationIsATool() => Assert.Contains(ProductivityTool.Dictation, Enum.GetValues<ProductivityTool>());
+    public void DictationIsATool() => Assert.Equal(SettingsGroup.Tools, SettingsPage.Dictation.Group());
 
     [Fact]
     public void TheMicrophoneIsAPictureTurnedToFaceOut()

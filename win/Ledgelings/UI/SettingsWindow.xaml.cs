@@ -6,8 +6,9 @@ using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-/// <summary>The settings window: four tabs over the settings, the sprite library, the spend
-/// ledger and the chat history. Simple bindings for the simple values; the lists are rebuilt in code.</summary>
+/// <summary>The settings window: a sidebar of pages under five headings, with a search (SettingsWindow.Sidebar.cs), over
+/// the settings, the sprite library, the spend ledger and the chat history. Simple bindings for the simple values;
+/// the lists are rebuilt in code.</summary>
 public sealed partial class SettingsWindow : Window
 {
     private readonly AppSettings settings;
@@ -64,23 +65,15 @@ public sealed partial class SettingsWindow : Window
         InitCalendar();
         InitPlay();
         InitDictation();
+        InitTranslate();
+        InitToolsScreen();
+        InitSidebar();
         Closing += (_, e) => { e.Cancel = true; Hide(); };      // the window is reused; the app lives in the tray
     }
 
-    /// <summary>Bring the window up on Productivity tools, on one tool.</summary>
-    public void Show(ProductivityTool tool)
+    /// <summary>The window up and in front, on whatever page is chosen (<see cref="Show(SettingsPage?)"/>).</summary>
+    private void Bring()
     {
-        if (Tools.Items.OfType<TabItem>().FirstOrDefault(i => Tr.GetHeader(i) == tool.ToString()) is TabItem item)
-            Tools.SelectedItem = item;
-        Show(SettingsTab.Productivity);
-    }
-
-    /// <summary>Bring the window up, on the given tab if asked.</summary>
-    public void Show(SettingsTab? tab)
-    {
-        // By header, not position: tabs are added feature by feature.
-        if (tab is SettingsTab t && Tabs.Items.OfType<TabItem>().FirstOrDefault(i => Tr.GetHeader(i) == SettingsTabs.Header(t)) is TabItem item)
-            Tabs.SelectedItem = item;
         if (!IsVisible) Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
@@ -133,6 +126,9 @@ public sealed partial class SettingsWindow : Window
     private void ShowLanguage()
     {
         Tr.Refresh();
+        RefreshSidebar();
+        RefreshTranslate();
+        RefreshToolsScreen();
         ShowFooters();
         ShowCursorMoods();
         ShowScreens();

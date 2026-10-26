@@ -8,6 +8,17 @@ public interface ISecretStore
     string? Get(string account);
     /// <summary>Null or empty removes the item.</summary>
     void Set(string account, string? value);
+
+    /// <summary>What a read found: the secret, nothing saved, or a read that failed (the Credential Manager
+    /// was not there yet, or refused), which is worth trying again. The Mac's <c>SecretStore.read</c>.</summary>
+    SecretRead Read(string account) => Get(account) is { } value ? new SecretRead.Found(value) : new SecretRead.Missing();
+}
+
+public abstract record SecretRead
+{
+    public sealed record Found(string Value) : SecretRead;
+    public sealed record Missing : SecretRead;
+    public sealed record Failed(int Error) : SecretRead;
 }
 
 /// <summary>Secrets in the Windows Credential Manager, as generic credentials named
@@ -23,16 +34,24 @@ public sealed class CredentialStore : ISecretStore
 
     private string Target(string account) => $"{Service}/{account}";
 
-    public string? Get(string account)
+    public string? Get(string account) => Read(account) is SecretRead.Found found ? found.Value : null;
+
+    private const int ERROR_NOT_FOUND = 1168;
+
+    public SecretRead Read(string account)
     {
-        if (!CredReadW(Target(account), CRED_TYPE_GENERIC, 0, out var handle)) return null;
+        if (!CredReadW(Target(account), CRED_TYPE_GENERIC, 0, out var handle))
+        {
+            var error = Marshal.GetLastWin32Error();
+            return error == ERROR_NOT_FOUND ? new SecretRead.Missing() : new SecretRead.Failed(error);
+        }
         try
         {
             var cred = Marshal.PtrToStructure<CREDENTIALW>(handle);
-            if (cred.CredentialBlob == IntPtr.Zero || cred.CredentialBlobSize == 0) return "";
+            if (cred.CredentialBlob == IntPtr.Zero || cred.CredentialBlobSize == 0) return new SecretRead.Found("");
             var bytes = new byte[cred.CredentialBlobSize];
             Marshal.Copy(cred.CredentialBlob, bytes, 0, bytes.Length);
-            return System.Text.Encoding.UTF8.GetString(bytes);
+            return new SecretRead.Found(System.Text.Encoding.UTF8.GetString(bytes));
         }
         finally { CredFree(handle); }
     }

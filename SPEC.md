@@ -2219,8 +2219,10 @@ stills beside it (`out-listening.png`, `out-thinking.png`, `out-copied.png`).
 
 ### 7.14 Translate
 
-A translator the creatures carry (Settings › Tools › Translate), **macOS** for now; Windows
-follows. Its part with no network is `Translate` in the core: the languages, how they are
+A translator the creatures carry (Settings › Tools › Translate), on macOS and, since 0.62.0, on
+Windows (keys the Windows way round: Ctrl for ⌘, Alt for ⌥; Clear is Ctrl+Shift+Backspace, the
+picker's next language Ctrl+Tab; the sheet takes the keyboard and gives it back before Ctrl+V, as the
+picker does). Its part with no network is `Translate` in the core: the languages, how they are
 told apart, where a text goes, the markers, the parts, the instructions, what is never sent,
 the cache and the buttons.
 
@@ -2332,7 +2334,8 @@ answers: no key, no network, nothing recorded.
 ### 7.15 The Tools screen
 
 Every tool the creatures run for the owner on one sheet of the letter's pixel paper
-(`ToolsScreenController`, **macOS** for now; Windows follows): **⌃⌥K** from any app, the
+(`ToolsScreenController`; on Windows since 0.62.0 with Ctrl+Alt+K and five tiles, no screenshots
+there yet, reordered with Move up and Move down): **⌃⌥K** from any app, the
 **Tools…** menu item, or the wrench picture on the Creature Actions sheet's title line (K).
 A tile each, four to a row, in the order of Settings › Tools › Tools screen
 (`Tools.Tool`, the codes `translate`, `dictation`, `screenshot`, `fullScreen`,
@@ -2735,9 +2738,9 @@ falls through to whatever is underneath.
 | Menu: Take a Screenshot…, Screenshot the Full Screen, Screenshot the Last Rectangle (with `shotEnabled`) | the same three (§7.12) |
 | The dictation shortcut, in any app (`dictationShortcut` ⌃⌥D, Windows Ctrl+Alt+D); ⏎ / ⎋ (Enter / Esc) while it listens | starts listening; again (or ⏎) stops and writes it down; ⎋ sends nothing; held, with `dictationHoldToTalk` (§7.13) |
 | Menu / tray: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
-| The translate shortcuts, in any app (`translateShortcut` ⌃⌥T, `translateClipShortcut` ⌃⌥⇧T; macOS) | the Translate sheet (again: closes); the newest copy translated, in the sheet or quietly onto the clipboard (§7.14) |
+| The translate shortcuts, in any app (`translateShortcut` ⌃⌥T, `translateClipShortcut` ⌃⌥⇧T; Windows Ctrl+Alt+T, Ctrl+Alt+Shift+T) | the Translate sheet (again: closes); the newest copy translated, in the sheet or quietly onto the clipboard (§7.14) |
 | Menu: Translate… (with `translateEnabled`) | the Translate sheet (§7.14.1) |
-| The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; macOS), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
+| The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; Windows Ctrl+Alt+K), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
 | Clipboard picker: ⌘T on a row, ⌥⇥, ⌘⇧T, ⏎ | its translation under it, the next language, the sheet, paste the translation (§7.14.2) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
 | Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |

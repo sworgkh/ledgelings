@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:Ledgelings.UI"
-        ui:Tr.Title="Ledgelings Settings" Width="620" Height="700" MinWidth="520" MinHeight="480"
+        ui:Tr.Title="Ledgelings Settings" Width="980" Height="720" MinWidth="760" MinHeight="480"
         WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
   <Window.Resources>
     <Style x:Key="Footer" TargetType="TextBlock">
@@ -32,7 +32,43 @@
       <Setter Property="IsSnapToTickEnabled" Value="True"/>
     </Style>
   </Window.Resources>
-  <TabControl x:Name="Tabs">
+  <!-- A sidebar of every page under its group's heading, with a search box (SettingsWindow.Sidebar.cs);
+       the pages are a TabControl with no tab strip, each found by its Tr.Header (SettingsPage's English title). -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="230"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Border Grid.Column="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="#22000000" BorderThickness="0,0,1,0">
+      <DockPanel>
+        <Border DockPanel.Dock="Top" Margin="10,12,10,8" Padding="6,0" Height="28" CornerRadius="5" Background="White" BorderBrush="#33000000" BorderThickness="1">
+          <DockPanel>
+            <Image x:Name="SearchIcon" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            <Button x:Name="ClearSearch" DockPanel.Dock="Right" Visibility="Collapsed" Background="Transparent" BorderThickness="0" Padding="2" Cursor="Hand" Click="ClearSearch_Click">
+              <Image x:Name="ClearIcon" Width="12" Height="12" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            </Button>
+            <Grid>
+              <TextBlock x:Name="SearchHint" ui:Tr.Text="Search settings" Foreground="Gray" VerticalAlignment="Center" IsHitTestVisible="False"/>
+              <TextBox x:Name="SearchBox" BorderThickness="0" Background="Transparent" VerticalAlignment="Center" TextChanged="SearchBox_Changed" PreviewKeyDown="SearchBox_Key"/>
+            </Grid>
+          </DockPanel>
+        </Border>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel x:Name="Sidebar" Margin="8,0,8,12"/>
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+    <DockPanel Grid.Column="1">
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="16,12,16,0">
+        <TextBlock x:Name="PageTitle" FontSize="16" FontWeight="Bold" VerticalAlignment="Bottom"/>
+        <TextBlock x:Name="PageGroup" FontSize="10" FontWeight="Bold" Foreground="Gray" Margin="10,0,0,2" VerticalAlignment="Bottom"/>
+      </StackPanel>
+  <TabControl x:Name="Tabs" BorderThickness="0" Padding="4,0,0,0" SelectionChanged="Tabs_SelectionChanged">
+    <TabControl.Template>
+      <ControlTemplate TargetType="TabControl">
+        <ContentPresenter ContentSource="SelectedContent" Margin="{TemplateBinding Padding}"/>
+      </ControlTemplate>
+    </TabControl.Template>
     <TabItem ui:Tr.Header="Creatures">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">
@@ -1083,237 +1119,330 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
-    <!-- Productivity tools: things the creatures do for you. One tab per tool in Tools,
-         its header the ProductivityTool name; a new tool adds a TabItem here and a case there. -->
-    <TabItem ui:Tr.Header="Productivity tools">
-      <TabControl x:Name="Tools" Margin="0,6,0,0">
-        <TabItem ui:Tr.Header="Reminders">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="12">
-              <GroupBox ui:Tr.Header="New reminder">
-                <StackPanel>
-                  <DockPanel Margin="0,4">
-                    <TextBlock ui:Tr.Text="Remind me to" Style="{StaticResource RowLabel}"/>
-                    <Grid>
-                      <TextBox x:Name="ReminderText" KeyDown="ReminderText_KeyDown" TextChanged="ReminderText_Changed"/>
-                      <TextBlock x:Name="ReminderHint" ui:Tr.Text="Stretch, call mom, stand-up…" Foreground="Gray" IsHitTestVisible="False" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                    </Grid>
-                  </DockPanel>
-                  <DockPanel Margin="0,4">
-                    <TextBlock ui:Tr.Text="When" Style="{StaticResource RowLabel}"/>
-                    <TextBox x:Name="ReminderClock" DockPanel.Dock="Right" Width="60" Margin="8,0,0,0" LostFocus="ReminderClock_LostFocus" ui:Tr.ToolTip="Time, 24-hour: 14:30"/>
-                    <DatePicker x:Name="ReminderDay" SelectedDateChanged="ReminderDay_Changed"/>
-                  </DockPanel>
-                  <DockPanel Margin="0,4">
-                    <TextBlock ui:Tr.Text="Repeat" Style="{StaticResource RowLabel}"/>
-                    <ComboBox x:Name="ReminderRepeat" DisplayMemberPath="Title"/>
-                  </DockPanel>
-                  <DockPanel Margin="0,6,0,0">
-                    <Button x:Name="AddReminder" DockPanel.Dock="Right" ui:Tr.Content="Add Reminder" Click="AddReminder_Click" IsEnabled="False"/>
-                    <StackPanel Orientation="Horizontal">
-                      <Button ui:Tr.Content="In 5 min" Tag="5" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
-                      <Button ui:Tr.Content="In 30 min" Tag="30" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
-                      <Button ui:Tr.Content="In 1 hour" Tag="60" Click="ReminderSoon_Click"/>
-                    </StackPanel>
-                  </DockPanel>
-                  <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."/>
+    <!-- The Tools group: things the creatures do for you, a page each in the sidebar. -->
+    <TabItem ui:Tr.Header="Reminders">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="New reminder">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="Remind me to" Style="{StaticResource RowLabel}"/>
+                <Grid>
+                  <TextBox x:Name="ReminderText" KeyDown="ReminderText_KeyDown" TextChanged="ReminderText_Changed"/>
+                  <TextBlock x:Name="ReminderHint" ui:Tr.Text="Stretch, call mom, stand-up…" Foreground="Gray" IsHitTestVisible="False" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                </Grid>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="When" Style="{StaticResource RowLabel}"/>
+                <TextBox x:Name="ReminderClock" DockPanel.Dock="Right" Width="60" Margin="8,0,0,0" LostFocus="ReminderClock_LostFocus" ui:Tr.ToolTip="Time, 24-hour: 14:30"/>
+                <DatePicker x:Name="ReminderDay" SelectedDateChanged="ReminderDay_Changed"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="Repeat" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReminderRepeat" DisplayMemberPath="Title"/>
+              </DockPanel>
+              <DockPanel Margin="0,6,0,0">
+                <Button x:Name="AddReminder" DockPanel.Dock="Right" ui:Tr.Content="Add Reminder" Click="AddReminder_Click" IsEnabled="False"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button ui:Tr.Content="In 5 min" Tag="5" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
+                  <Button ui:Tr.Content="In 30 min" Tag="30" Click="ReminderSoon_Click" Margin="0,0,8,0"/>
+                  <Button ui:Tr.Content="In 1 hour" Tag="60" Click="ReminderSoon_Click"/>
                 </StackPanel>
-              </GroupBox>
-              <GroupBox ui:Tr.Header="Delivery">
-                <StackPanel>
-                  <CheckBox ui:Tr.Content="Reminders arrive by paper plane" IsChecked="{Binding RemindersEnabled, Mode=TwoWay}"/>
-                  <DockPanel Margin="0,6,0,4">
-                    <TextBlock ui:Tr.Text="Letter stays open" Style="{StaticResource RowLabel}"/>
-                    <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding ReminderLetterSeconds}" ui:Tr.Unit=" s"/>
-                    <Slider Minimum="10" Maximum="600" TickFrequency="10" Value="{Binding ReminderLetterSeconds, Mode=TwoWay}"/>
-                  </DockPanel>
-                  <CheckBox ui:Tr.Content="The thrower reads its note out loud" IsChecked="{Binding ReminderReadAloud, Mode=TwoWay}"/>
-                  <CheckBox ui:Tr.Content="Add a Reminder… opens a paper note" IsChecked="{Binding ReminderPaperNote, Mode=TwoWay}" Margin="0,4,0,0"/>
-                  <Button ui:Tr.Content="Send a Test Letter" Click="TestLetter_Click" HorizontalAlignment="Right" Margin="0,6,0,0"/>
-                  <TextBlock x:Name="ReminderFooter" Style="{StaticResource Footer}"/>
-                </StackPanel>
-              </GroupBox>
-              <GroupBox ui:Tr.Header="Your reminders">
-                <StackPanel>
-                  <TextBlock x:Name="NoReminders" ui:Tr.Text="No reminders yet." Foreground="Gray"/>
-                  <ItemsControl x:Name="ReminderList">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate>
-                        <DockPanel Margin="0,4">
-                          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderSend_Click"><Run ui:Tr.Text="Send Now"/></Hyperlink></TextBlock>
-                            <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderDelete_Click"><Run ui:Tr.Text="Delete"/></Hyperlink></TextBlock>
-                          </StackPanel>
-                          <StackPanel Opacity="{Binding Opacity}">
-                            <TextBlock Text="{Binding Text}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                            <TextBlock Text="{Binding When}" FontSize="11" Foreground="Gray"/>
-                          </StackPanel>
-                        </DockPanel>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                  <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Sent one-off reminders stay here, greyed, until you clear them."/>
-                </StackPanel>
-              </GroupBox>
-              <GroupBox ui:Tr.Header="The file">
-                <DockPanel>
-                  <Button x:Name="ClearSent" DockPanel.Dock="Right" ui:Tr.Content="Clear Sent" Click="ClearSent_Click" Margin="8,0,0,0"/>
-                  <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealReminders_Click" Margin="8,0,0,0"/>
-                  <TextBox x:Name="RemindersPath" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
-                </DockPanel>
-              </GroupBox>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."/>
             </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem ui:Tr.Header="Clipboard">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="12">
-              <CheckBox ui:Tr.Content="Clipboard manager" IsChecked="{Binding ClipboardEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-              <StackPanel IsEnabled="{Binding ClipboardEnabled}">
-                <GroupBox ui:Tr.Header="History">
-                  <StackPanel>
-                    <CheckBox ui:Tr.Content="Keep a history of what is copied" IsChecked="{Binding ClipHistoryEnabled, Mode=TwoWay}"/>
-                    <DockPanel Margin="0,6,0,4">
-                      <TextBlock ui:Tr.Text="Copies kept" Style="{StaticResource RowLabel}"/>
-                      <TextBlock Style="{StaticResource RowValue}" Text="{Binding ClipHistoryLimit}"/>
-                      <Slider Minimum="10" Maximum="2000" TickFrequency="10" Value="{Binding ClipHistoryLimit, Mode=TwoWay}"/>
-                    </DockPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Delivery">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Reminders arrive by paper plane" IsChecked="{Binding RemindersEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Letter stays open" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding ReminderLetterSeconds}" ui:Tr.Unit=" s"/>
+                <Slider Minimum="10" Maximum="600" TickFrequency="10" Value="{Binding ReminderLetterSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <CheckBox ui:Tr.Content="The thrower reads its note out loud" IsChecked="{Binding ReminderReadAloud, Mode=TwoWay}"/>
+              <CheckBox ui:Tr.Content="Add a Reminder… opens a paper note" IsChecked="{Binding ReminderPaperNote, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <Button ui:Tr.Content="Send a Test Letter" Click="TestLetter_Click" HorizontalAlignment="Right" Margin="0,6,0,0"/>
+              <TextBlock x:Name="ReminderFooter" Style="{StaticResource Footer}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Your reminders">
+            <StackPanel>
+              <TextBlock x:Name="NoReminders" ui:Tr.Text="No reminders yet." Foreground="Gray"/>
+              <ItemsControl x:Name="ReminderList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
                     <DockPanel Margin="0,4">
-                      <TextBlock ui:Tr.Text="Kept for" Style="{StaticResource RowLabel}"/>
-                      <TextBlock x:Name="ClipKeepDaysValue" Style="{StaticResource RowValue}"/>
-                      <Slider Minimum="0" Maximum="365" TickFrequency="1" Value="{Binding ClipKeepDays, Mode=TwoWay}"/>
-                    </DockPanel>
-                    <CheckBox ui:Tr.Content="Keep formatting (rich text)" IsChecked="{Binding ClipKeepFormatting, Mode=TwoWay}"/>
-                    <CheckBox ui:Tr.Content="Keep files copied in Explorer" IsChecked="{Binding ClipKeepFiles, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <CheckBox ui:Tr.Content="Keep images" IsChecked="{Binding ClipKeepImages, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <DockPanel Margin="0,4" IsEnabled="{Binding ClipKeepImages}">
-                      <TextBlock ui:Tr.Text="Largest image kept" Style="{StaticResource RowLabel}"/>
-                      <TextBlock x:Name="ClipLargestImageValue" Style="{StaticResource RowValue}"/>
-                      <Slider Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ClipLargestImageMB, Mode=TwoWay}"/>
-                    </DockPanel>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures count as copies; one bigger than the largest size is left out. Nothing copied ever leaves this PC or reaches a model."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="Pasting">
-                  <StackPanel>
-                    <CheckBox ui:Tr.Content="Paste into the app I was in" IsChecked="{Binding ClipAutoPaste, Mode=TwoWay}"/>
-                    <CheckBox ui:Tr.Content="Paste as plain text" IsChecked="{Binding ClipPlainText, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <CheckBox ui:Tr.Content="Unfold and collapse the picker" IsChecked="{Binding ClipAnimate, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <DockPanel Margin="0,6,0,4" IsEnabled="{Binding ClipAnimate}">
-                      <TextBlock ui:Tr.Text="Animation speed" Style="{StaticResource RowLabel}"/>
-                      <TextBlock Style="{StaticResource RowValue}" Text="{Binding ClipAnimationSpeed, StringFormat={}{0:0.##}×}"/>
-                      <Slider Minimum="0.5" Maximum="3" TickFrequency="0.25" IsSnapToTickEnabled="True" Value="{Binding ClipAnimationSpeed, Mode=TwoWay}"/>
-                    </DockPanel>
-                    <DockPanel Margin="0,4" IsEnabled="{Binding ClipAnimate}">
-                      <TextBlock ui:Tr.Text="Who brings it" Style="{StaticResource RowLabel}"/>
-                      <ComboBox x:Name="ClipHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="ClipHelper_Changed" Width="240" HorizontalAlignment="Left"/>
-                    </DockPanel>
-                    <CheckBox ui:Tr.Content="It says a line as the sheet unfolds" IsChecked="{Binding ClipHelperTalks, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Enter pastes, Alt+Enter the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="Shortcuts">
-                  <StackPanel>
-                    <DockPanel Margin="0,2">
-                      <CheckBox ui:Tr.Content="History picker" IsChecked="{Binding ClipHistoryShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
-                      <Button x:Name="ClipHistoryShortcutButton" Click="ClipShortcutButton_Click" Tag="history" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding ClipHistoryShortcutEnabled}"/>
-                    </DockPanel>
-                    <DockPanel Margin="0,2">
-                      <CheckBox ui:Tr.Content="Snippets picker" IsChecked="{Binding ClipSnippetsShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
-                      <Button x:Name="ClipSnippetsShortcutButton" Click="ClipShortcutButton_Click" Tag="snippets" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding ClipSnippetsShortcutEnabled}"/>
-                    </DockPanel>
-                    <CheckBox ui:Tr.Content="A snippet's own shortcut pastes it at once" IsChecked="{Binding ClipSnippetShortcutsEnabled, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <TextBlock x:Name="ClipShortcutProblemText" Text="{Binding ClipShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, Ctrl+1–9 for the first nine, Tab between the groups, Ctrl+P to pin, Delete to forget a copy, Esc to close."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="Snippets">
-                  <StackPanel>
-                    <DockPanel>
-                      <Button ui:Tr.Content="Edit Snippets…" Click="EditSnippets_Click" DockPanel.Dock="Left"/>
-                      <TextBlock x:Name="ClipSnippetCount" Foreground="Gray" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    </DockPanel>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A protected snippet's words live in Windows Credential Manager, never in a file: shown as dots, kept out of the history and taken off the clipboard a second after pasting."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="Never kept">
-                  <StackPanel>
-                    <ListBox x:Name="ClipExcludedList" Height="96"/>
-                    <DockPanel Margin="0,6,0,0">
-                      <Button x:Name="ClipClearHistory" DockPanel.Dock="Right" Click="ClipClearHistory_Click"/>
-                      <StackPanel Orientation="Horizontal">
-                        <Button ui:Tr.Content="Add App…" Click="ClipAddApp_Click" Margin="0,0,8,0"/>
-                        <Button ui:Tr.Content="Remove" Click="ClipRemoveApp_Click"/>
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderSend_Click"><Run ui:Tr.Text="Send Now"/></Hyperlink></TextBlock>
+                        <TextBlock Margin="8,0,0,0"><Hyperlink Tag="{Binding Id}" Click="ReminderDelete_Click"><Run ui:Tr.Text="Delete"/></Hyperlink></TextBlock>
+                      </StackPanel>
+                      <StackPanel Opacity="{Binding Opacity}">
+                        <TextBlock Text="{Binding Text}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding When}" FontSize="11" Foreground="Gray"/>
                       </StackPanel>
                     </DockPanel>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Nothing copied in these apps is kept, nor anything a password manager marks as secret. Clear History keeps pinned copies."/>
-                  </StackPanel>
-                </GroupBox>
-              </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Sent one-off reminders stay here, greyed, until you clear them."/>
             </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem ui:Tr.Header="Dictation">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="12">
-              <CheckBox ui:Tr.Content="Dictation" IsChecked="{Binding DictationEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-              <TextBlock x:Name="DictationKeyNote" ui:Tr.Text="Uses the OpenRouter key from Settings › Talk, and none is in use there yet. Without one a creature only says so." Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,0,0,6"/>
-              <StackPanel IsEnabled="{Binding DictationEnabled}">
-                <GroupBox ui:Tr.Header="Shortcut">
-                  <StackPanel>
-                    <DockPanel Margin="0,2">
-                      <CheckBox ui:Tr.Content="Start and stop" IsChecked="{Binding DictationShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
-                      <Button x:Name="DictationShortcutButton" Click="DictationShortcutButton_Click" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding DictationShortcutEnabled}"/>
-                    </DockPanel>
-                    <CheckBox ui:Tr.Content="Hold to talk" IsChecked="{Binding DictationHoldToTalk, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <DockPanel Margin="0,6,0,4">
-                      <TextBlock ui:Tr.Text="Longest recording" Style="{StaticResource RowLabel}"/>
-                      <TextBlock x:Name="DictationMaxValue" Style="{StaticResource RowValue}"/>
-                      <Slider Minimum="10" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding DictationMaxSeconds, Mode=TwoWay}"/>
-                    </DockPanel>
-                    <TextBlock x:Name="DictationShortcutProblemText" Text="{Binding DictationShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Press the shortcut and speak; press it again (or Enter) and the words land on the clipboard and in the clipboard history. Esc lets it go and sends nothing. Holding to talk, it listens while the keys are down. The sound is kept in memory only and never saved."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="Microphone">
-                  <StackPanel>
-                    <DockPanel>
-                      <Button ui:Tr.Content="Allow…" Click="DictationAllow_Click" DockPanel.Dock="Right"/>
-                      <TextBlock x:Name="DictationMicrophoneName" VerticalAlignment="Center"/>
-                    </DockPanel>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Windows lets desktop apps use the microphone unless it is switched off in Settings › Privacy › Microphone; Allow… opens that page. Switched off, a recording is silence."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="Writing it down">
-                  <StackPanel>
-                    <DockPanel Margin="0,2">
-                      <TextBlock ui:Tr.Text="Model" Style="{StaticResource RowLabel}"/>
-                      <ComboBox x:Name="DictationModelBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="DictationModel_Changed"/>
-                    </DockPanel>
-                    <TextBlock x:Name="DictationModelsProblem" Foreground="DarkOrange" TextWrapping="Wrap"/>
-                    <DockPanel Margin="0,4">
-                      <TextBlock ui:Tr.Text="Spoken in" Style="{StaticResource RowLabel}"/>
-                      <ComboBox x:Name="DictationLanguageBox" DisplayMemberPath="Title" SelectedValuePath="Language" SelectionChanged="DictationLanguage_Changed" Width="240" HorizontalAlignment="Left"/>
-                    </DockPanel>
-                    <CheckBox ui:Tr.Content="Tidy it up" IsChecked="{Binding DictationCleanUp, Mode=TwoWay}" Margin="0,4,0,0"/>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="OpenRouter's models that listen to sound, cheapest first; each recording is priced in Settings › Costs as Dictation. Tidying leaves out um and uh, stutters and false starts, and adds punctuation, in the same call."/>
-                  </StackPanel>
-                </GroupBox>
-                <GroupBox ui:Tr.Header="The words and the creature">
-                  <StackPanel>
-                    <CheckBox ui:Tr.Content="Paste into the app I was in" IsChecked="{Binding DictationPaste, Mode=TwoWay}"/>
-                    <DockPanel Margin="0,6,0,4">
-                      <TextBlock ui:Tr.Text="Who holds the microphone" Style="{StaticResource RowLabel}"/>
-                      <ComboBox x:Name="DictationHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="DictationHelper_Changed" Width="240" HorizontalAlignment="Left"/>
-                    </DockPanel>
-                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A creature leaps to the middle of the screen holding a microphone whose bars follow your voice, the clock over its head; it thinks while the words are written, says the first of them and hops home."/>
-                  </StackPanel>
-                </GroupBox>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The file">
+            <DockPanel>
+              <Button x:Name="ClearSent" DockPanel.Dock="Right" ui:Tr.Content="Clear Sent" Click="ClearSent_Click" Margin="8,0,0,0"/>
+              <Button DockPanel.Dock="Right" ui:Tr.Content="Show in Explorer" Click="RevealReminders_Click" Margin="8,0,0,0"/>
+              <TextBox x:Name="RemindersPath" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+            </DockPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Clipboard">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <CheckBox ui:Tr.Content="Clipboard manager" IsChecked="{Binding ClipboardEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+          <StackPanel IsEnabled="{Binding ClipboardEnabled}">
+            <GroupBox ui:Tr.Header="History">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="Keep a history of what is copied" IsChecked="{Binding ClipHistoryEnabled, Mode=TwoWay}"/>
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="Copies kept" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" Text="{Binding ClipHistoryLimit}"/>
+                  <Slider Minimum="10" Maximum="2000" TickFrequency="10" Value="{Binding ClipHistoryLimit, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,4">
+                  <TextBlock ui:Tr.Text="Kept for" Style="{StaticResource RowLabel}"/>
+                  <TextBlock x:Name="ClipKeepDaysValue" Style="{StaticResource RowValue}"/>
+                  <Slider Minimum="0" Maximum="365" TickFrequency="1" Value="{Binding ClipKeepDays, Mode=TwoWay}"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="Keep formatting (rich text)" IsChecked="{Binding ClipKeepFormatting, Mode=TwoWay}"/>
+                <CheckBox ui:Tr.Content="Keep files copied in Explorer" IsChecked="{Binding ClipKeepFiles, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <CheckBox ui:Tr.Content="Keep images" IsChecked="{Binding ClipKeepImages, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <DockPanel Margin="0,4" IsEnabled="{Binding ClipKeepImages}">
+                  <TextBlock ui:Tr.Text="Largest image kept" Style="{StaticResource RowLabel}"/>
+                  <TextBlock x:Name="ClipLargestImageValue" Style="{StaticResource RowValue}"/>
+                  <Slider Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ClipLargestImageMB, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every copy goes into the history, newest first; copying the same thing again moves it to the top. Pinned copies stay whatever the limits say. Pictures count as copies; one bigger than the largest size is left out. Nothing copied ever leaves this PC or reaches a model."/>
               </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Pasting">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="Paste into the app I was in" IsChecked="{Binding ClipAutoPaste, Mode=TwoWay}"/>
+                <CheckBox ui:Tr.Content="Paste as plain text" IsChecked="{Binding ClipPlainText, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <CheckBox ui:Tr.Content="Unfold and collapse the picker" IsChecked="{Binding ClipAnimate, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <DockPanel Margin="0,6,0,4" IsEnabled="{Binding ClipAnimate}">
+                  <TextBlock ui:Tr.Text="Animation speed" Style="{StaticResource RowLabel}"/>
+                  <TextBlock Style="{StaticResource RowValue}" Text="{Binding ClipAnimationSpeed, StringFormat={}{0:0.##}×}"/>
+                  <Slider Minimum="0.5" Maximum="3" TickFrequency="0.25" IsSnapToTickEnabled="True" Value="{Binding ClipAnimationSpeed, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,4" IsEnabled="{Binding ClipAnimate}">
+                  <TextBlock ui:Tr.Text="Who brings it" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="ClipHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="ClipHelper_Changed" Width="240" HorizontalAlignment="Left"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="It says a line as the sheet unfolds" IsChecked="{Binding ClipHelperTalks, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Enter pastes, Alt+Enter the other way (plain or formatted). A creature brings the sheet and holds its corner; it collapses into the text cursor and the creature leaps back. The paste never waits."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Shortcuts">
+              <StackPanel>
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="History picker" IsChecked="{Binding ClipHistoryShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
+                  <Button x:Name="ClipHistoryShortcutButton" Click="ClipShortcutButton_Click" Tag="history" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding ClipHistoryShortcutEnabled}"/>
+                </DockPanel>
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="Snippets picker" IsChecked="{Binding ClipSnippetsShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
+                  <Button x:Name="ClipSnippetsShortcutButton" Click="ClipShortcutButton_Click" Tag="snippets" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding ClipSnippetsShortcutEnabled}"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="A snippet's own shortcut pastes it at once" IsChecked="{Binding ClipSnippetShortcutsEnabled, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <TextBlock x:Name="ClipShortcutProblemText" Text="{Binding ClipShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="They work in every app. In the picker: type to search copies and snippets at once, ↑↓ to choose, Ctrl+1–9 for the first nine, Tab between the groups, Ctrl+P to pin, Delete to forget a copy, Esc to close."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Snippets">
+              <StackPanel>
+                <DockPanel>
+                  <Button ui:Tr.Content="Edit Snippets…" Click="EditSnippets_Click" DockPanel.Dock="Left"/>
+                  <TextBlock x:Name="ClipSnippetCount" Foreground="Gray" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A protected snippet's words live in Windows Credential Manager, never in a file: shown as dots, kept out of the history and taken off the clipboard a second after pasting."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Never kept">
+              <StackPanel>
+                <ListBox x:Name="ClipExcludedList" Height="96"/>
+                <DockPanel Margin="0,6,0,0">
+                  <Button x:Name="ClipClearHistory" DockPanel.Dock="Right" Click="ClipClearHistory_Click"/>
+                  <StackPanel Orientation="Horizontal">
+                    <Button ui:Tr.Content="Add App…" Click="ClipAddApp_Click" Margin="0,0,8,0"/>
+                    <Button ui:Tr.Content="Remove" Click="ClipRemoveApp_Click"/>
+                  </StackPanel>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Nothing copied in these apps is kept, nor anything a password manager marks as secret. Clear History keeps pinned copies."/>
+              </StackPanel>
+            </GroupBox>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Dictation">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <CheckBox ui:Tr.Content="Dictation" IsChecked="{Binding DictationEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+          <TextBlock x:Name="DictationKeyNote" ui:Tr.Text="Uses the OpenRouter key from Settings › Talk, and none is in use there yet. Without one a creature only says so." Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,0,0,6"/>
+          <StackPanel IsEnabled="{Binding DictationEnabled}">
+            <GroupBox ui:Tr.Header="Shortcut">
+              <StackPanel>
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="Start and stop" IsChecked="{Binding DictationShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
+                  <Button x:Name="DictationShortcutButton" Click="DictationShortcutButton_Click" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding DictationShortcutEnabled}"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="Hold to talk" IsChecked="{Binding DictationHoldToTalk, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="Longest recording" Style="{StaticResource RowLabel}"/>
+                  <TextBlock x:Name="DictationMaxValue" Style="{StaticResource RowValue}"/>
+                  <Slider Minimum="10" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding DictationMaxSeconds, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock x:Name="DictationShortcutProblemText" Text="{Binding DictationShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Press the shortcut and speak; press it again (or Enter) and the words land on the clipboard and in the clipboard history. Esc lets it go and sends nothing. Holding to talk, it listens while the keys are down. The sound is kept in memory only and never saved."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Microphone">
+              <StackPanel>
+                <DockPanel>
+                  <Button ui:Tr.Content="Allow…" Click="DictationAllow_Click" DockPanel.Dock="Right"/>
+                  <TextBlock x:Name="DictationMicrophoneName" VerticalAlignment="Center"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Windows lets desktop apps use the microphone unless it is switched off in Settings › Privacy › Microphone; Allow… opens that page. Switched off, a recording is silence."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Writing it down">
+              <StackPanel>
+                <DockPanel Margin="0,2">
+                  <TextBlock ui:Tr.Text="Model" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="DictationModelBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="DictationModel_Changed"/>
+                </DockPanel>
+                <TextBlock x:Name="DictationModelsProblem" Foreground="DarkOrange" TextWrapping="Wrap"/>
+                <DockPanel Margin="0,4">
+                  <TextBlock ui:Tr.Text="Spoken in" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="DictationLanguageBox" DisplayMemberPath="Title" SelectedValuePath="Language" SelectionChanged="DictationLanguage_Changed" Width="240" HorizontalAlignment="Left"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="Tidy it up" IsChecked="{Binding DictationCleanUp, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="OpenRouter's models that listen to sound, cheapest first; each recording is priced in Settings › Costs as Dictation. Tidying leaves out um and uh, stutters and false starts, and adds punctuation, in the same call."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="The words and the creature">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="Paste into the app I was in" IsChecked="{Binding DictationPaste, Mode=TwoWay}"/>
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="Who holds the microphone" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="DictationHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="DictationHelper_Changed" Width="240" HorizontalAlignment="Left"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A creature leaps to the middle of the screen holding a microphone whose bars follow your voice, the clock over its head; it thinks while the words are written, says the first of them and hops home."/>
+              </StackPanel>
+            </GroupBox>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Translate">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <CheckBox ui:Tr.Content="Translator" IsChecked="{Binding TranslateEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+          <TextBlock x:Name="TranslateKeyNote" ui:Tr.Text="Uses the OpenRouter key from Settings › Talk, and none is saved there yet. Without one, and without LM Studio as the brain, the sheet says so." Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,0,0,6"/>
+          <StackPanel IsEnabled="{Binding TranslateEnabled}">
+            <GroupBox ui:Tr.Header="Translate">
+              <StackPanel>
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="Type to translate" IsChecked="{Binding TranslateShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
+                  <Button x:Name="TranslateShortcutButton" Click="TranslateShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding TranslateShortcutEnabled}"/>
+                </DockPanel>
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="Translate the last copy" IsChecked="{Binding TranslateClipShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
+                  <Button x:Name="TranslateClipShortcutButton" Click="TranslateClipShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding TranslateClipShortcutEnabled}"/>
+                </DockPanel>
+                <DockPanel Margin="0,6,0,2">
+                  <TextBlock ui:Tr.Text="The last copy" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="TranslateClipModeBox" DisplayMemberPath="Title" SelectedValuePath="Mode" SelectionChanged="TranslateClipMode_Changed" Width="300" HorizontalAlignment="Left"/>
+                </DockPanel>
+                <TextBlock Text="{Binding TranslateShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Both work in every app. Type to translate opens the sheet: your words on the left, the translation on the right as you type. The last copy opens in the sheet already translated, or quietly replaces the clipboard with its translation and says so by the text cursor. Enter copies the translation, Ctrl+Enter pastes it into the app you were in."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Languages">
+              <StackPanel>
+                <StackPanel x:Name="TranslateLanguageList"/>
+                <StackPanel x:Name="TranslateTargetList" Margin="0,6,0,0"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Told apart by their letters, Latin, Cyrillic or Hebrew, on this computer and for free, before anything is sent. A text already in its target goes into the target's own language instead. At least two stay on."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Model">
+              <StackPanel>
+                <DockPanel Margin="0,2">
+                  <TextBlock ui:Tr.Text="Model" Style="{StaticResource RowLabel}"/>
+                  <TextBox Text="{Binding TranslateModel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                </DockPanel>
+                <DockPanel Margin="0,2">
+                  <TextBlock ui:Tr.Text="From OpenRouter" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="TranslateModelBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="TranslateModel_Changed"/>
+                </DockPanel>
+                <TextBlock x:Name="TranslateModelsProblem" Foreground="DarkOrange" TextWrapping="Wrap"/>
+                <CheckBox ui:Tr.Content="Guess the rest of the phrase" IsChecked="{Binding TranslateAutocomplete, Mode=TwoWay}" Margin="0,6,0,2"/>
+                <DockPanel Margin="0,2" IsEnabled="{Binding TranslateAutocomplete}">
+                  <TextBlock ui:Tr.Text="Guess model" Style="{StaticResource RowLabel}"/>
+                  <TextBox Text="{Binding TranslateAutocompleteModel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                </DockPanel>
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="Wait after typing" Style="{StaticResource RowLabel}"/>
+                  <TextBlock ui:Tr.Value="{Binding TranslateDelayMs}" ui:Tr.Unit=" ms" Style="{StaticResource RowValue}"/>
+                  <Slider Minimum="200" Maximum="1500" TickFrequency="50" Value="{Binding TranslateDelayMs, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="An OpenRouter model, with the key from Settings › Talk; with LM Studio as the brain and no key, its model, free. Cheap and fast is best: about a cent a day. Every call shows on Costs as Translation, every guess as Autocomplete. Tab takes the grey words. An empty guess model guesses with the translating one."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="Clipboard and safety">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="Translate button in the clipboard picker" IsChecked="{Binding TranslatePickerButton, Mode=TwoWay}"/>
+                <CheckBox ui:Tr.Content="Keep translations in the clipboard history" IsChecked="{Binding TranslateKeepInHistory, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="Ask before sending more than" Style="{StaticResource RowLabel}"/>
+                  <TextBlock ui:Tr.Value="{Binding TranslateLiveLimit}" ui:Tr.Number="0" Style="{StaticResource RowValue}"/>
+                  <Slider Minimum="1000" Maximum="20000" TickFrequency="500" Value="{Binding TranslateLiveLimit, Mode=TwoWay}"/>
+                </DockPanel>
+                <DockPanel Margin="0,4">
+                  <TextBlock ui:Tr.Text="Who brings the sheet" Style="{StaticResource RowLabel}"/>
+                  <ComboBox x:Name="TranslateHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="TranslateHelper_Changed" Width="260" HorizontalAlignment="Left"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Text goes to the model only when you translate it. Protected snippets and copies of their words never do, and get no button. Links, e-mails, code and numbers are kept as they are. Longer texts wait for Enter and say their parts and price first; never more than 50 000 characters."/>
+              </StackPanel>
+            </GroupBox>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Tools screen">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Tools screen">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Tools screen" IsChecked="{Binding ToolsScreenEnabled, Mode=TwoWay}" FontWeight="SemiBold"/>
+              <DockPanel Margin="0,6,0,2" IsEnabled="{Binding ToolsScreenEnabled}">
+                <CheckBox ui:Tr.Content="Open it from any app" IsChecked="{Binding ToolsScreenShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
+                <Button x:Name="ToolsScreenShortcutButton" Click="ToolsScreenShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding ToolsScreenShortcutEnabled}"/>
+              </DockPanel>
+              <TextBlock Text="{Binding ToolsScreenShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Every tool on one sheet, a big picture each: click one, press its number, or choose with the arrows and Enter; Esc closes. The Creature Actions sheet opens it too (K). A tool switched off is greyed, and a click opens the page that switches it on."/>
             </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-      </TabControl>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="On the screen" IsEnabled="{Binding ToolsScreenEnabled}">
+            <StackPanel>
+              <StackPanel x:Name="ToolsScreenList"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Move a tool up or down to change the order: the first is 1, the next 2. Switched off here, a tool is not on the screen. Windows has no screenshot tool yet, so no screenshot tiles."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
     </TabItem>
     <TabItem ui:Tr.Header="Voice">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -1547,4 +1676,6 @@
       </DockPanel>
     </TabItem>
   </TabControl>
+    </DockPanel>
+  </Grid>
 </Window>

@@ -2,14 +2,15 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. On the Mac a sidebar lists twenty pages under five headings: *Creatures &
+Settings…*. A sidebar lists the pages under five headings: *Creatures &
 world* (**Creatures**, **Actions**, **Sprites**, **Beds**, **Flowers**, **Calendar**), *Games* (**Chases**, **Play**,
-**Ball games**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Reminders**,
-**Clipboard**, **Screenshots**, **Dictation**, **Translate**) and *Money & history* (**Costs**, **Chats**); each page is two
+**Ball games**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Tools screen**, **Reminders**,
+**Clipboard**, **Screenshots**, **Dictation**, **Translate**) and *Money & history* (**Costs**, **Chats**); on the Mac each page is two
 columns that fit on one screen. The search box at its top (⌘F) finds any setting by the words
 of its label, its section or its footer, in Russian or English: click a place (⏎ for the first)
-and its page opens with the section lit up; ⎋ clears it. On Windows the same pages are still
-tabs, the tools under one *Productivity tools* tab.
+and its page opens with the section lit up; ⎋ clears it. On Windows the same sidebar and search
+(Ctrl+F, Enter, Esc), twenty pages (no Screenshots yet), each page one scrolling column; the
+search reads the pages themselves, so it finds every label and footer there is.
 
 ## Without a model
 
@@ -583,11 +584,13 @@ Tools the creatures run for you rather than for themselves, a page each under th
 sidebar's *Tools* heading: **Tools screen**, **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**.
 `--settings tools` opens the first, `--settings reminders` the next (`productivity` too, the old tab's name);
 `--settings clipboard`, `--settings screenshots`, `--settings dictation`, `--settings translate` the others.
-On Windows they are still one *Productivity tools* tab with a row of tools across the top.
+On Windows the same pages, but Screenshots, under the same heading.
 
 ### Tools screen
 
-**macOS** for now; Windows follows.
+On Windows since 0.62.0: **Ctrl+Alt+K**, the tray's **Tools…**, the wrench (K); five tiles, as
+Windows has no screenshot tool yet. A Mac's saved screenshot tiles are skipped. The order is
+changed with **Move up** and **Move down** rather than by dragging.
 
 **⌃⌥K** from any app (or **Tools…** in the menu, or the wrench on the Creature Actions
 sheet, K): a sheet of pixel paper with a big picture tile for each tool: **Translate**,
@@ -859,7 +862,12 @@ microphone not allowed, no network, OpenRouter refusing.
 
 ### Translate
 
-**macOS** for now; Windows follows.
+On Windows since 0.62.0, the same sheet, keys the Windows way round: **Ctrl+Alt+T** and
+**Ctrl+Alt+Shift+T** from any app (and the tray's **Translate…**); Enter copies, Ctrl+Enter pastes,
+Ctrl+S swaps, Ctrl+1–4 the source, Alt+1–3 the target, **Ctrl+Shift+Backspace** clears (Ctrl+Backspace
+deletes a word in a Windows text box), Esc closes. In the picker **Ctrl+T**, **Ctrl+Tab** for the next
+language (Alt+Tab is Windows'), **Ctrl+Shift+T** into the sheet. The sheet takes the keyboard, as the
+picker does, and puts the window you were in back before Ctrl+V. The settings are one column.
 
 **⌃⌥T** from any app: a creature leaps to the middle of the screen with a sheet of pixel paper.
 Type on the left in English, Russian or Hebrew; 400 ms after you stop, the translation appears

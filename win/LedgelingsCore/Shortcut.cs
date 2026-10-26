@@ -24,6 +24,12 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
     public static readonly Shortcut ClipSnippets = new(0x42, ShortcutModifiers.Control | ShortcutModifiers.Option);
     /// <summary>Dictation: Ctrl+Alt+D, D for dictate, beside the others.</summary>
     public static readonly Shortcut Dictation = new(0x44, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>The Translate sheet: Ctrl+Alt+T, T for translate, as on the Mac.</summary>
+    public static readonly Shortcut Translate = new(0x54, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>Translate the newest copy: Ctrl+Alt+Shift+T.</summary>
+    public static readonly Shortcut TranslateClip = new(0x54, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift);
+    /// <summary>The Tools screen: Ctrl+Alt+K, as on the Mac.</summary>
+    public static readonly Shortcut Tools = new(0x4B, ShortcutModifiers.Control | ShortcutModifiers.Option);
 
     /// <summary>As it was saved, or the standard one when what was saved cannot be a shortcut.</summary>
     public static Shortcut Saved(int? keyCode, int? modifiers) => Saved(keyCode, modifiers, Standard);
