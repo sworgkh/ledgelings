@@ -10,18 +10,38 @@ import Security
 protocol SecretStore: Sendable {
     func get(_ account: String) -> String?
     func set(_ value: String?, for account: String)
+    /// What a read found: the secret, nothing saved, or a read that failed
+    /// (the permission dialog refused or closed), which is worth trying again.
+    func read(_ account: String) -> SecretRead
+}
+
+enum SecretRead: Equatable {
+    case found(String)
+    case missing
+    case failed(Int32)
+}
+
+extension SecretStore {
+    func read(_ account: String) -> SecretRead { get(account).map(SecretRead.found) ?? .missing }
 }
 
 struct Keychain: SecretStore {
     var service = "Ledgelings"
 
     func get(_ account: String) -> String? {
+        if case .found(let value) = read(account) { return value }
+        return nil
+    }
+
+    func read(_ account: String) -> SecretRead {
         var query = base(account)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: AnyObject?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess, let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return .missing }
+        guard status == errSecSuccess, let data = result as? Data, let value = String(data: data, encoding: .utf8) else { return .failed(status) }
+        return .found(value)
     }
 
     /// Replace, never update: changing an item made by an earlier build of the

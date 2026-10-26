@@ -182,7 +182,7 @@ final class AppSettings: ObservableObject {
     /// permission dialog for everyone, OpenRouter user or not.
     var openRouterKey: String {
         get {
-            if keyCache == nil { keyCache = keychain.get(Self.keychainKeyAccount) ?? "" }
+            if keyCache == nil { readKey() }
             return keyCache ?? ""
         }
         set {
@@ -190,10 +190,30 @@ final class AppSettings: ObservableObject {
             // unchanged value must not cost a keychain prompt.
             guard newValue != openRouterKey else { return }
             keyCache = newValue
+            keyReadFailed = false
             keychain.set(newValue, for: Self.keychainKeyAccount)
         }
     }
     @Published private var keyCache: String?
+    /// The last read failed (the keychain's dialog refused or closed), so the
+    /// empty key is not the owner's answer: something they start by hand reads
+    /// it again. Creatures talking on their own do not, or the dialog would
+    /// come back with every line.
+    private var keyReadFailed = false
+
+    private func readKey() {
+        switch keychain.read(Self.keychainKeyAccount) {
+        case .found(let key): keyCache = key; keyReadFailed = false
+        case .missing: keyCache = ""; keyReadFailed = false
+        case .failed: keyCache = ""; keyReadFailed = true
+        }
+    }
+
+    /// Reads the key again if the last read failed: the Translate sheet opens,
+    /// dictation starts. A key read fine, or none saved, costs nothing.
+    func retryOpenRouterKey() {
+        if keyReadFailed { readKey() }
+    }
     @Published var bubbleSeconds: Double { didSet { save(bubbleSeconds, "bubbleSeconds") } }
     /// How many of its own last lines a character avoids saying again; 0 lets it repeat freely.
     @Published var lineMemory: Int { didSet { save(lineMemory, "lineMemory") } }

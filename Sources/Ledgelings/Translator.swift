@@ -61,6 +61,7 @@ final class Translator {
     func refresh() {
         // A stand-in model never needs the key, and reading it would put up the keychain's dialog.
         guard fake == nil else { return }
+        settings.retryOpenRouterKey()
         key = settings.openRouterKey.trimmingCharacters(in: .whitespaces)
     }
 
