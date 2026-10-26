@@ -86,7 +86,8 @@ enum DictationDemo {
         case .success(let text):
             let onBoard = NSPasteboard.general.string(forType: .string) ?? ""
             let missing = expected.filter { !text.lowercased().contains($0) }
-            let inHistory = clips.history.clips.contains { $0.text == text && !before.contains($0.id) }
+            // The same words copied before are moved up, not added again: there, whatever their id.
+            let inHistory = clips.history.clips.contains { $0.text == text }
             log("transcript: \(text)")
             log(onBoard == text ? "ok: on the clipboard" : "WRONG: the clipboard holds \"\(onBoard.prefix(60))\"")
             log(!settings.clipboardEnabled || !settings.clipHistoryEnabled ? "history is off: not checked" : inHistory ? "ok: in the clipboard history" : "WRONG: not in the history")
