@@ -63,6 +63,7 @@ public sealed partial class App : Application
         StartReminders();
         StartShortcut();
         StartClipboard();
+        StartDictation();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
 
@@ -103,6 +104,7 @@ public sealed partial class App : Application
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
         AddClipboardItems(items);
+        AddDictationItems(items);
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
@@ -183,6 +185,7 @@ public sealed partial class App : Application
     {
         tray?.Dispose();
         StopReminders();
+        StopDictation();
         StopShortcut();
         StopClipboard();
         colony?.Dispose();

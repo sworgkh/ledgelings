@@ -785,7 +785,9 @@ The last rectangle (`shotLastRect`) is remembered across relaunches; it has no s
 
 ### Dictation
 
-Speak, and the words land on the clipboard. macOS for now; Windows follows.
+Speak, and the words land on the clipboard. On Windows the shortcut is **Ctrl+Alt+D**, Enter
+stops and Esc lets go; the tray has **Dictate**; Windows asks no microphone question, so
+**Allow…** opens Settings › Privacy › Microphone (switched off there, a recording is silence).
 
 **⌃⌥D** from any app starts listening: a creature leaps to the middle of the screen holding
 a pixel microphone, its green bars rising with your voice and the clock over its head.

@@ -22,6 +22,8 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
     public static readonly Shortcut ClipHistory = new(0x56, ShortcutModifiers.Control | ShortcutModifiers.Option);
     /// <summary>The snippets picker: Ctrl+Alt+B, beside V on the keyboard.</summary>
     public static readonly Shortcut ClipSnippets = new(0x42, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>Dictation: Ctrl+Alt+D, D for dictate, beside the others.</summary>
+    public static readonly Shortcut Dictation = new(0x44, ShortcutModifiers.Control | ShortcutModifiers.Option);
 
     /// <summary>As it was saved, or the standard one when what was saved cannot be a shortcut.</summary>
     public static Shortcut Saved(int? keyCode, int? modifiers) => Saved(keyCode, modifiers, Standard);

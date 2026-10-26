@@ -2150,8 +2150,13 @@ step printed (`film 7.40 taken 800×520 px, 4 marks`, `film 7.40 shot Whiskers h
 
 ### 7.13 Dictation
 
-Speech to the clipboard (Settings › Productivity tools › Dictation), macOS first
-(Windows to follow). The recording's states, the instruction, the request, the model
+Speech to the clipboard (Settings › Productivity tools › Dictation), on both platforms.
+Windows: Ctrl+Alt+D; Enter and Esc while it listens; the default recording device through
+winmm's waveIn, asked for 16 kHz mono 16-bit (Windows converts), ten 0.1 s buffers taken in
+order every 50 ms; hold to talk watches the key itself (`GetAsyncKeyState`), since Windows'
+hot keys report only presses; no microphone prompt, so Allow… opens Settings › Privacy ›
+Microphone (switched off, a recording is silence); the key from Credential Manager; the
+flags are the Mac's only. The recording's states, the instruction, the request, the model
 list, the WAV, the meter and the microphone's pixels are `Dictation` in the core.
 
 - **Shortcut** `dictationShortcut` (⌃⌥D), from any app (§11), and the menu item **Dictate**
@@ -2591,8 +2596,8 @@ falls through to whatever is underneath.
 | Menu: Clipboard History…, Paste a Snippet…, Edit Snippets… (with `clipboardEnabled`) | the picker on either group, or the snippet editor (§7.11) |
 | The screenshot shortcuts, in any app (`shotCaptureShortcut` ⌃⌥S, `shotFullShortcut` ⌘⇧8, `shotLastShortcut` ⌘⇧\; macOS) | a shot with the toolbar (again: let go), the full screen, or the last rectangle (§7.12) |
 | Menu: Take a Screenshot…, Screenshot the Full Screen, Screenshot the Last Rectangle (with `shotEnabled`) | the same three (§7.12) |
-| The dictation shortcut, in any app (`dictationShortcut` ⌃⌥D; macOS); ⏎ / ⎋ while it listens | starts listening; again (or ⏎) stops and writes it down; ⎋ sends nothing; held, with `dictationHoldToTalk` (§7.13) |
-| Menu: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
+| The dictation shortcut, in any app (`dictationShortcut` ⌃⌥D, Windows Ctrl+Alt+D); ⏎ / ⎋ (Enter / Esc) while it listens | starts listening; again (or ⏎) stops and writes it down; ⎋ sends nothing; held, with `dictationHoldToTalk` (§7.13) |
+| Menu / tray: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
 | Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |
 | Menu: Screen › (two monitors or more) | the same menu |

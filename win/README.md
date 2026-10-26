@@ -157,6 +157,11 @@ core tests are the Swift tests line for line.
   thumbnail and *Image 1280×720*, and pastes back in the clipboard formats it came in. A copy
   of a protected snippet's words shows as `PWD:{Name}: [N] chars` on a faint tint (a salted
   fingerprint in `snippets.json` tells it apart) and pastes its real words.
+- **Dictation** is **Ctrl+Alt+D**; Enter stops and Esc lets go while it listens. The microphone is
+  recorded through winmm's `waveIn` at 16 kHz mono (Windows converts; no NAudio, no WASAPI COM), in
+  memory only. Windows' hot keys report only presses, so **Hold to talk** watches the key itself.
+  There is no microphone prompt on Windows: **Allow…** opens Settings › Privacy › Microphone. The
+  Mac's `--mic-check`, `--dictate-demo` and `--dictate-film` have no Windows twin.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
@@ -210,7 +215,7 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines),
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation,
                            Deeds (+ .Lines), Bonds (+ .Storyline .Memory .Seed)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:

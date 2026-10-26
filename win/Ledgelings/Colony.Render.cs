@@ -31,7 +31,7 @@ public sealed partial class Colony
                 Hat = gifts.Hat(i) is string flower ? flowerFrames.Frame(flower, 0) : null,
                 Hidden = hideout.IsInside(i),
                 Shrink = shrink,
-                Letter = LetterImage(i),
+                Letter = LetterImage(i) ?? DictationMicrophone(i),
                 BubbleLift = PlayBubbleLift(i),
             });
         }

@@ -1253,6 +1253,66 @@
             </StackPanel>
           </ScrollViewer>
         </TabItem>
+        <TabItem ui:Tr.Header="Dictation">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12">
+              <CheckBox ui:Tr.Content="Dictation" IsChecked="{Binding DictationEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+              <TextBlock x:Name="DictationKeyNote" ui:Tr.Text="Uses the OpenRouter key from Settings › Talk, and none is in use there yet. Without one a creature only says so." Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,0,0,6"/>
+              <StackPanel IsEnabled="{Binding DictationEnabled}">
+                <GroupBox ui:Tr.Header="Shortcut">
+                  <StackPanel>
+                    <DockPanel Margin="0,2">
+                      <CheckBox ui:Tr.Content="Start and stop" IsChecked="{Binding DictationShortcutEnabled, Mode=TwoWay}" Width="190" VerticalAlignment="Center"/>
+                      <Button x:Name="DictationShortcutButton" Click="DictationShortcutButton_Click" MinWidth="140" HorizontalAlignment="Left" IsEnabled="{Binding DictationShortcutEnabled}"/>
+                    </DockPanel>
+                    <CheckBox ui:Tr.Content="Hold to talk" IsChecked="{Binding DictationHoldToTalk, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <DockPanel Margin="0,6,0,4">
+                      <TextBlock ui:Tr.Text="Longest recording" Style="{StaticResource RowLabel}"/>
+                      <TextBlock x:Name="DictationMaxValue" Style="{StaticResource RowValue}"/>
+                      <Slider Minimum="10" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding DictationMaxSeconds, Mode=TwoWay}"/>
+                    </DockPanel>
+                    <TextBlock x:Name="DictationShortcutProblemText" Text="{Binding DictationShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Press the shortcut and speak; press it again (or Enter) and the words land on the clipboard and in the clipboard history. Esc lets it go and sends nothing. Holding to talk, it listens while the keys are down. The sound is kept in memory only and never saved."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="Microphone">
+                  <StackPanel>
+                    <DockPanel>
+                      <Button ui:Tr.Content="Allow…" Click="DictationAllow_Click" DockPanel.Dock="Right"/>
+                      <TextBlock x:Name="DictationMicrophoneName" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Windows lets desktop apps use the microphone unless it is switched off in Settings › Privacy › Microphone; Allow… opens that page. Switched off, a recording is silence."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="Writing it down">
+                  <StackPanel>
+                    <DockPanel Margin="0,2">
+                      <TextBlock ui:Tr.Text="Model" Style="{StaticResource RowLabel}"/>
+                      <ComboBox x:Name="DictationModelBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="DictationModel_Changed"/>
+                    </DockPanel>
+                    <TextBlock x:Name="DictationModelsProblem" Foreground="DarkOrange" TextWrapping="Wrap"/>
+                    <DockPanel Margin="0,4">
+                      <TextBlock ui:Tr.Text="Spoken in" Style="{StaticResource RowLabel}"/>
+                      <ComboBox x:Name="DictationLanguageBox" DisplayMemberPath="Title" SelectedValuePath="Language" SelectionChanged="DictationLanguage_Changed" Width="240" HorizontalAlignment="Left"/>
+                    </DockPanel>
+                    <CheckBox ui:Tr.Content="Tidy it up" IsChecked="{Binding DictationCleanUp, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="OpenRouter's models that listen to sound, cheapest first; each recording is priced in Settings › Costs as Dictation. Tidying leaves out um and uh, stutters and false starts, and adds punctuation, in the same call."/>
+                  </StackPanel>
+                </GroupBox>
+                <GroupBox ui:Tr.Header="The words and the creature">
+                  <StackPanel>
+                    <CheckBox ui:Tr.Content="Paste into the app I was in" IsChecked="{Binding DictationPaste, Mode=TwoWay}"/>
+                    <DockPanel Margin="0,6,0,4">
+                      <TextBlock ui:Tr.Text="Who holds the microphone" Style="{StaticResource RowLabel}"/>
+                      <ComboBox x:Name="DictationHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="DictationHelper_Changed" Width="240" HorizontalAlignment="Left"/>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A creature leaps to the middle of the screen holding a microphone whose bars follow your voice, the clock over its head; it thinks while the words are written, says the first of them and hops home."/>
+                  </StackPanel>
+                </GroupBox>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
       </TabControl>
     </TabItem>
     <TabItem ui:Tr.Header="Voice">

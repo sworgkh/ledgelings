@@ -19,6 +19,7 @@ public static partial class WindowsStrings
             ["runtime"] = RuRuntime,
             ["core"] = RuCore,
             ["clipboard"] = RuClipboard,
+            ["dictation"] = RuDictation,
         });
 
     private static readonly Lazy<Dictionary<string, string>> russian = new(() =>
