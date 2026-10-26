@@ -30,7 +30,7 @@ struct RelationshipsSettingsView: View {
                 }
                 .disabled(!settings.deedsEnabled)
             } header: {
-                Text(tr("Deeds from talk"))
+                SettingsHeader("Deeds from talk")
             } footer: {
                 Text(tr("A line or a letter may end in a deed: \"soccer?\" answered \"yes\" starts the match. Each prompt offers only what is possible right now, and anything else is ignored. About 40 more tokens a line."))
             }
@@ -45,7 +45,7 @@ struct RelationshipsSettingsView: View {
                 SliderRow(tr("Built-in letters and talks that invite"), value: $settings.builtInInviteShare, in: AppSettings.percentRange, step: 5, unit: "%")
                 SliderRow(tr("Built-in answers that say yes"), value: $settings.builtInAcceptChance, in: AppSettings.percentRange, step: 5, unit: "%")
             } header: {
-                Text(tr("How often"))
+                SettingsHeader("How often")
             } footer: {
                 Text(tr("Zero turns a limit off; the same two never do two things within 15 seconds. Without a model each character invites and answers in its own words, close friends saying yes more often."))
             }
@@ -71,7 +71,7 @@ struct RelationshipsSettingsView: View {
                     .disabled(!settings.dayContextEnabled)
                 }
             } header: {
-                Text(tr("Long-term memory"))
+                SettingsHeader("Long-term memory")
             } footer: {
                 Text(tr("Every conversation, letter and tea party carries what the two remember, cut to the tokens set here. The timeline is for you; only today and yesterday are sent."))
             }
@@ -83,7 +83,7 @@ struct RelationshipsSettingsView: View {
                     LabeledContent(tr("Pairs a night"), value: "\(settings.diaryPairsPerNight)")
                 }
             } header: {
-                Text(tr("The diary"))
+                SettingsHeader("The diary")
             } footer: {
                 Text(tr("One call a pair (Costs › Long-term memory): their story, the facts that still matter, the day in a line. Without a model days are counted and facts come from deeds and games."))
             }
@@ -106,7 +106,7 @@ struct RelationshipsSettingsView: View {
                 }
                 if !seedNews.isEmpty { Text(seedNews).font(.caption).foregroundStyle(.secondary) }
             } header: {
-                Text(tr("Their past"))
+                SettingsHeader("Their past")
             } footer: {
                 Text(tr("Builds each pair's memory from what they said on this Mac, one call a pair (Costs › Memory: reading the past); only their own lines are sent. Check First sends nothing. bonds.json is copied first."))
             }

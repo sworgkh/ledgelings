@@ -32,7 +32,7 @@ struct RemindersSettingsView: View {
                         .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             } header: {
-                Text(tr("New reminder"))
+                SettingsHeader("New reminder")
             } footer: {
                 Text(tr("When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."))
             }
@@ -47,7 +47,7 @@ struct RemindersSettingsView: View {
                     Button(tr("Send a Test Letter")) { send(Reminders.Reminder(text: tr("This is what a reminder looks like"), time: Date())) }
                 }
             } header: {
-                Text(tr("Delivery"))
+                SettingsHeader("Delivery")
             } footer: {
                 Text(footer)
             }
@@ -57,7 +57,7 @@ struct RemindersSettingsView: View {
                 if all.isEmpty { Text(tr("No reminders yet.")).foregroundStyle(.secondary) }
                 ForEach(all) { row($0) }
             } header: {
-                Text(tr("Your reminders"))
+                SettingsHeader("Your reminders")
             } footer: {
                 Text(tr("Sent one-off reminders stay here, greyed, until you clear them."))
             }
@@ -71,7 +71,7 @@ struct RemindersSettingsView: View {
                         .disabled(!reminders.book.reminders.contains(where: \.isFinished))
                 }
             } header: {
-                Text(tr("The file"))
+                SettingsHeader("The file")
             }
         }
     }

@@ -87,7 +87,7 @@ import Testing
 
     /// Every key the sources look up: `tr("…")` and `trCount(n, "…", "…")`.
     static func keys() -> [(file: String, key: String)] {
-        let single = try! Regex("\\btr\\(" + literal)
+        let single = try! Regex("\\b(?:tr|SettingsHeader)\\(" + literal)
         let counted = try! Regex("\\btrCount\\([^,]+,\\s*" + literal + "\\s*,\\s*" + literal + "\\s*\\)")
         return sources().flatMap { file in
             file.text.matches(of: single).compactMap { m in (m.output[1].substring).map { (file.name, unescape(String($0))) } }

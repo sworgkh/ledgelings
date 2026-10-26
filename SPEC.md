@@ -1525,7 +1525,7 @@ answered.
 
 ### 7.7 Reminders
 
-The user sets reminders (Settings › Productivity tools › Reminders); when one comes due, a creature
+The user sets reminders (Settings › Tools › Reminders); when one comes due, a creature
 throws it at the user as a paper plane that opens into a letter in the middle of
 the screen.
 
@@ -1552,7 +1552,7 @@ the screen.
   (±1 day, `Reminders.day`) and a time stepper (`Reminders.step`, ±15 minutes to the
   next quarter hour); In 5 min / 30 min / 1 hour, Tomorrow 9:00; the four repeats.
   Return adds it (empty text: nothing) and the sheet shrinks up and fades; Esc closes
-  it. Off, ⌘R opens Settings › Productivity tools › Reminders. `--note [--snapshot file.png]` opens it.
+  it. Off, ⌘R opens Settings › Tools › Reminders. `--note [--snapshot file.png]` opens it.
 - **The thrower**: any creature free for mail (§7.6), not the one a plane is
   flying to, chosen at random; after 3 s with nobody free (or at once while the
   house is out), any creature on screen and not held, awake ones first. It stops
@@ -1919,7 +1919,7 @@ baseball alone is played four times among five creatures, by 1, 2, 3 and 5
 
 ### 7.11 The clipboard
 
-A clipboard manager in the game's style (Settings › Productivity tools › Clipboard):
+A clipboard manager in the game's style (Settings › Tools › Clipboard):
 a history of what was copied, snippets kept to paste again, and one picker that
 searches both. Nothing copied or kept is ever sent to a model or the network.
 
@@ -2073,7 +2073,7 @@ concealed, passing or excluded`, `clip 1.94 picker: would paste Wi-Fi password a
 
 ### 7.12 Screenshots
 
-A screenshot tool in the game's style (Settings › Productivity tools › Screenshots),
+A screenshot tool in the game's style (Settings › Tools › Screenshots),
 macOS first (Windows to follow). Pictures only, never video; nothing is sent anywhere.
 The geometry, stitching, blur and naming are `Shot` in the core.
 
@@ -2150,7 +2150,7 @@ step printed (`film 7.40 taken 800×520 px, 4 marks`, `film 7.40 shot Whiskers h
 
 ### 7.13 Dictation
 
-Speech to the clipboard (Settings › Productivity tools › Dictation), on both platforms.
+Speech to the clipboard (Settings › Tools › Dictation), on both platforms.
 Windows: Ctrl+Alt+D; Enter and Esc while it listens; the default recording device through
 winmm's waveIn, asked for 16 kHz mono 16-bit (Windows converts), ten 0.1 s buffers taken in
 order every 50 ms; hold to talk watches the key itself (`GetAsyncKeyState`), since Windows'
@@ -2607,8 +2607,8 @@ falls through to whatever is underneath.
 | Sheet: Have a Tea Party (E) | two sit down to tea now (§7.8); greyed while tea parties are off or one is on |
 | Sheet: Clear N Flowers (F) | pulls up every planted flower (§7.3.1); greyed while none are planted |
 | Sheet: Send a Paper Plane (P) | a plane goes up now if two creatures are free (§7.6); greyed while one is in the air |
-| Sheet: Add a Reminder (R) | puts the sheet away; the paper note (§7.7), or with `reminderPaperNote` off the settings window on Productivity tools › Reminders |
-| Menu: `Next: <text>, <when>` | shown while a reminder waits (with `(off)` when reminders are off); Productivity tools › Reminders |
+| Sheet: Add a Reminder (R) | puts the sheet away; the paper note (§7.7), or with `reminderPaperNote` off the settings window on Tools › Reminders |
+| Menu: `Next: <text>, <when>` | shown while a reminder waits (with `(off)` when reminders are off); Tools › Reminders |
 | Click a reminder's open letter | folds it away (§7.7) |
 | Sheet: Put Them to Sleep / Wake Them Up (S) | skip to the next phase; shows `dusk in m:ss` / `dawn in m:ss`; greyed when night = 0 |
 | Sheet: Activities… (A) | the sheet's inner page, the games (below) |
@@ -2820,7 +2820,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | remindersEnabled | true | reminders are delivered (§7.7); off, what comes due waits |
 | reminderLetterSeconds | 60 | 10–600, clamped on load: seconds the letter stays open while the user is at the computer |
 | reminderReadAloud | true | with voice on, the thrower reads its note out loud |
-| reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, Productivity tools › Reminders |
+| reminderPaperNote | true | Add a Reminder… opens the paper note (§7.7); off, Tools › Reminders |
 | clipboardEnabled | true | the clipboard manager (§7.11); off, nothing is watched and no clipboard shortcut is taken |
 | clipHistoryEnabled | true | copies go into the history |
 | clipHistoryLimit | 200 | 10–2000, clamped on load: unpinned copies kept |
@@ -2866,9 +2866,23 @@ clipboard history and snippets in `clipboard.json` and `snippets.json` (§7.11),
 the hunt counts in `hunts.json` (§4.7.2), and the favourite sleeping places in
 `beds.json` (§7.9).
 
-Settings window: 1100×760 points, thirteen tabs, each laid out as two columns
-that scroll on their own so a tab fits on one screen (Chats is a day list
-beside the day's exchanges). **Creatures**: count, smallest/largest sliders,
+Settings window: 1280×760 points (it fits a 1280×800 laptop screen). On the left a
+sidebar 220 wide: a search box, then nineteen pages under five headings (`SettingsGroup`):
+*Creatures & world* (Creatures, Actions, Sprites, Beds, Flowers, Calendar), *Games*
+(Chases, Play, Ball games), *Talk & friends* (Talk, Voice, Bonds, Relationships),
+*Tools* (Reminders, Clipboard, Screenshots, Dictation) and *Money & history* (Costs,
+Chats), each heading's pages with its pixel picture. On the right the page: its
+group and name, then two columns that scroll on their own so a page fits on one
+screen (Chats is a day list beside the day's exchanges). The search (⌘F) looks
+through every section's heading, control labels and footer (`SettingsIndex`, in
+the current language and in English, case and accents ignored, every word anywhere in the
+section): it lists the places found, the label that matched and *page › section* under
+it; a click (⏎ for the first) opens the page, scrolls to the section and lights its
+heading gold for 1.4 s; ⎋ or the clear picture (*Clear the search (⎋)*) empties it. A key
+`AppSettings` saves that is in no section fails a test, so no setting hides from the search.
+`--settings <page>` opens a page (any page's name in lower case, `ballgames`; the old
+`productivity` and `reminders` open Reminders); `--settings-search <words>` opens the
+window with them searched and the first place open. **Creatures**: count, smallest/largest sliders,
 colour swatches (add/remove/reset), day/night sliders, Patience (complain toggle, how many in a row, calm-down slider), Tea parties (toggle, share of bumps, how long, sip between stories). **Chases**: counting toggle; talking about it (toggle, how often); wariness (toggle, after how many in a day); revenge (toggle, after how many, within, longest hold, tells you off again every, holds the pointer still, shakes to break free, each shake at least, shakes within, then peace for); the count per character on screen and anyone else counted, today / this week / in all with a Reset each, the total, since when, the file and Reset All… (confirmed). **Beds**: beds toggle; the favourite place (pull, walks to it at most); talking about it (toggle); who sleeps where (each creature on screen: its bed's picture and name, its place in words and nights, Forget), the file and Forget All Places… (confirmed). **Talk**: talk toggle,
 bubble slider, paper-plane toggle and the
 plane-interval slider; Brain picker; for Built-in lines: the script in a
@@ -2885,7 +2899,7 @@ running plot with its part or the last plot, Forget), then the file with Reveal
 in Finder and Forget All. **Calendar**: on the left the time-of-day and date
 toggles, one toggle per faith and the look-ahead stepper; on the right the
 almanac sentence as it is now (refreshed every 30 s) and the ticked faiths'
-holidays in the next 60 days. **Productivity tools**: a segmented row of tools at the top (`ProductivityTool`: Reminders, Clipboard, Screenshots, Dictation), the chosen tool's two columns below; `--settings productivity` (or the old `reminders`) opens it. Its **Reminders**: on the left a new reminder (text,
+holidays in the next 60 days. **Tools** (pages of their own, each in two columns): **Reminders**: on the left a new reminder (text,
 date and time, repeat, In 5 min / In 30 min / In 1 hour, Add Reminder), then
 the delivery toggle, letter slider, read-aloud toggle, paper-note toggle and Send a Test Letter; on
 the right every reminder, waiting ones by time then sent ones greyed, each with

@@ -19,7 +19,7 @@ struct BedsSettingsView: View {
             Section {
                 Toggle(tr("Each one sleeps in its own bed"), isOn: $settings.bedsEnabled)
             } header: {
-                Text(tr("Beds"))
+                SettingsHeader("Beds")
             } footer: {
                 Text(tr("Every character has a bed of its own, picked for who it is: a crate for Blocky, a basket for Mittens, a lily pad for Hopper. Falling asleep, it puts the bed down and sleeps on it; waking, it folds it away. Off, they sleep on the bare edge as before."))
             }
@@ -28,7 +28,7 @@ struct BedsSettingsView: View {
                 SliderRow(tr("Pull of the favourite place"), value: $settings.bedPull, in: AppSettings.bedPullRange, step: 5, unit: "%")
                 SliderRow(tr("Walks to it at most"), value: $settings.bedWalkDistance, in: AppSettings.bedWalkRange, step: 100, unit: tr(" pt"))
             } header: {
-                Text(tr("The favourite place"))
+                SettingsHeader("The favourite place")
             } footer: {
                 Text(tr("At nightfall a creature gets up and walks to its favourite place, if it is on the same screen outline and no further along the edge than this. The first night it picks a place its character likes (Blocky the bottom edge, Pip the ceiling). Each night there makes it likelier to go back, up to this pull; a night slept elsewhere wears the habit down, and enough of them move it. A nap you ask for is slept where it is."))
             }
@@ -37,7 +37,7 @@ struct BedsSettingsView: View {
             Section {
                 Toggle(tr("Say something about it now and then"), isOn: $settings.bedTalk)
             } header: {
-                Text(tr("Talking about it"))
+                SettingsHeader("Talking about it")
             } footer: {
                 Text(tr("Some nights a creature says a line as it lies down, in its own voice, and it mumbles something when you move its bed. Built-in lines: no model calls."))
             }
@@ -46,7 +46,7 @@ struct BedsSettingsView: View {
             Section {
                 list
             } header: {
-                Text(tr("Who sleeps where"))
+                SettingsHeader("Who sleeps where")
             } footer: {
                 Text(tr("Drag a sleeper's bed, by its edge or the part under its feet, to anywhere on an edge: it lands there, still asleep, and that is its favourite place from now on. Dragging a bed is not a chase. Kept by name: rename a character and it looks for a place afresh."))
             }
@@ -59,7 +59,7 @@ struct BedsSettingsView: View {
                     Button(tr("Forget All Places…")) { confirmForget = true }.disabled(beds.book.spots.isEmpty)
                 }
             } header: {
-                Text(tr("The file"))
+                SettingsHeader("The file")
             }
         }
         .confirmationDialog(tr("Forget where everyone likes to sleep?"), isPresented: $confirmForget) {

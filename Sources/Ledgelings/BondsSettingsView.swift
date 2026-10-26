@@ -18,7 +18,7 @@ struct BondsSettingsView: View {
                 }
                 .disabled(!writesStories)
             } header: {
-                Text(tr("Stories"))
+                SettingsHeader("Stories")
             } footer: {
                 Text(footer)
             }
@@ -35,7 +35,7 @@ struct BondsSettingsView: View {
                 }
                 .disabled(!keepsStorylines)
             } header: {
-                Text(tr("Storylines"))
+                SettingsHeader("Storylines")
             } footer: {
                 Text(tr("Every talk, tea party, flower, paper plane, game and cursor grab two characters share is kept. A new story is written from their story so far (a short chronicle, rewritten in the same call) and the latest moments, so it can bring back what happened and never contradicts it. About 300 more tokens per story. With the built-in lines, stories are made from these moments without a model."))
             }
@@ -50,7 +50,7 @@ struct BondsSettingsView: View {
                     .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
                 HStack { Spacer(); Button(tr("Reset Prompt")) { settings.resetPlotPrompt() } }
             } header: {
-                Text(tr("The prompt that writes a story"))
+                SettingsHeader("The prompt that writes a story")
             } footer: {
                 Text(tr("Placeholders: %@. The answer needs a PLOT: line, and may have BOND: and STORY: lines (their story so far, rewritten). {relationship} in the Talk prompt places the story; without it, it goes at the end.", Bonds.placeholders.map { "{\($0)}" }.joined(separator: " ")))
             } }
@@ -60,7 +60,7 @@ struct BondsSettingsView: View {
                 if pairs.isEmpty { Text(tr("Nobody has shared the screen yet.")).foregroundStyle(.secondary) }
                 ForEach(pairs, id: \.names) { bond in pair(bond) }
             } header: {
-                Text(tr("Who lives with whom"))
+                SettingsHeader("Who lives with whom")
             } footer: {
                 Text(tr("Time counts while both are on screen, and is kept by name: rename a character and it starts again as a stranger."))
             }
@@ -75,7 +75,7 @@ struct BondsSettingsView: View {
                     Button(tr("Forget All")) { bonds.forgetAll() }.disabled(bonds.book.bonds.isEmpty)
                 }
             } header: {
-                Text(tr("The file"))
+                SettingsHeader("The file")
             }
         }
     }

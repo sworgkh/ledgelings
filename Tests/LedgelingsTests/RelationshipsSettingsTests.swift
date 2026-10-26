@@ -65,7 +65,7 @@ import Testing
     }
 
     @Test func theTabIsNamedForScripts() {
-        #expect(SettingsTab.named("relationships") == .relationships)
+        #expect(SettingsPage.named("relationships") == .relationships)
     }
 
     /// Two creatures talking from the built-in lines, with a bonds file of their own.

@@ -47,8 +47,8 @@ import Testing
     }
 
     @Test func dictationIsTheFourthTool() {
-        #expect(ProductivityTool.allCases == [.reminders, .clipboard, .screenshots, .dictation])
-        #expect(ProductivityTool.dictation.title == tr("Dictation"))
+        #expect(SettingsGroup.tools.pages == [.reminders, .clipboard, .screenshots, .dictation])
+        #expect(SettingsPage.dictation.title == tr("Dictation"))
     }
 
     @Test func theMicrophoneIsAPictureTurnedToFaceOut() {

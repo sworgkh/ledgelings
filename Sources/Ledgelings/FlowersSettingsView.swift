@@ -16,7 +16,7 @@ struct FlowersSettingsView: View {
                 SliderRow(tr("Flower lasts"), value: $settings.flowerMinutes, in: AppSettings.flowerRange, step: 0.5, unit: tr(" min"))
                 Toggle(tr("The one with the flower follows the giver while it lasts"), isOn: $settings.followGiver)
             } header: {
-                Text(tr("Wearing"))
+                SettingsHeader("Wearing")
             } footer: {
                 Text(tr("Every third meeting of a pair, one gives the other a flower, worn on the head until it wilts or is planted. With the box ticked, the wearer trails the giver around the edge meanwhile. A creature wearing a flower walks past everyone without bumping."))
             }
@@ -38,7 +38,7 @@ struct FlowersSettingsView: View {
                     if let cleared { Text(cleared).foregroundStyle(.secondary) }
                 }
             } header: {
-                Text(tr("Planting"))
+                SettingsHeader("Planting")
             } footer: {
                 Text(tr("After wearing it a while, each one stops following its giver, goes looking for the kind of spot its character likes and plants the flower in the edge there. What it likes comes from who it is: Blocky wants the bottom edge, Pip the ceiling, Ruth a neat row beside the others, Dot plants at once, Zed waits for dark. If nowhere suits before the flower would wilt, it plants it where it stands. Planting one more than the most wilts the oldest. Clear Planted Flowers, here or in the menu, pulls them all up at once. Planted flowers are not kept when the app quits."))
             }
@@ -53,7 +53,7 @@ struct FlowersSettingsView: View {
                     }
                 }
             } header: {
-                Text(tr("Who plants where"))
+                SettingsHeader("Who plants where")
             } footer: {
                 Text(tr("Read from each character's description and its species on the Talk tab, the same way voices are cast: words like bottom, ceiling, corner, quiet, cheerful, counts, sleepy or fast. Edit a description and this changes with it."))
             }

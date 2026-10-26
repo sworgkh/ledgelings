@@ -15,7 +15,7 @@ struct ChasesSettingsView: View {
             Section {
                 Toggle(tr("Count chases and pick-ups"), isOn: $settings.huntCountEnabled)
             } header: {
-                Text(tr("Counting"))
+                SettingsHeader("Counting")
             } footer: {
                 Text(tr("Every time the cursor chases a creature off its edge or picks it up, it counts, by character: today, this week and in all. Days and weeks follow your calendar. Off, nothing is counted and the numbers stay as they are."))
             }
@@ -25,7 +25,7 @@ struct ChasesSettingsView: View {
                 SliderRow(tr("How often it comes up"), value: $settings.huntTalkChance, in: AppSettings.huntTalkChanceRange, step: 5, unit: "%")
                     .disabled(!settings.huntTalkEnabled)
             } header: {
-                Text(tr("Talking about it"))
+                SettingsHeader("Talking about it")
             } footer: {
                 Text(tr("This share of conversations, tea stories and paper planes carries the numbers: with a model they go into its prompt, compared with yesterday and the week, with any record; with the built-in lines a creature says its count in its own voice. A complaint always knows them, and a round number or a record day is said out loud. How they take it follows the cursor mood: a score, a fact, or a grudge. No extra model calls."))
             }
@@ -37,7 +37,7 @@ struct ChasesSettingsView: View {
                 }
                 .disabled(!settings.huntWary)
             } header: {
-                Text(tr("Wariness"))
+                SettingsHeader("Wariness")
             } footer: {
                 Text(tr("When the cursor is a menace, a creature chased this often today jumps away from further off, until tomorrow."))
             }
@@ -50,7 +50,7 @@ struct ChasesSettingsView: View {
                 SliderRow(tr("Each shake at least"), value: $settings.revengeShakeStroke, in: AppSettings.revengeShakeStrokeRange, step: 5, unit: tr(" pt"))
                 SliderRow(tr("Shakes within"), value: $settings.revengeShakeWindowSeconds, in: AppSettings.revengeShakeWindowRange, step: 0.5, unit: tr(" s"))
             } header: {
-                Text(tr("Shaking it off"))
+                SettingsHeader("Shaking it off")
             } footer: {
                 Text(tr("Move the mouse back and forth: this many turns, each after a stroke this long, within this time. Fewer, shorter, slower is gentler."))
             }
@@ -71,7 +71,7 @@ struct ChasesSettingsView: View {
                 }
                 .disabled(!settings.revengeEnabled)
             } header: {
-                Text(tr("Revenge"))
+                SettingsHeader("Revenge")
             } footer: {
                 Text(tr("Chased or picked up this often in that time, a creature jumps on the cursor and rides along on it, telling you off now and then in its own words and the cursor mood, until you shake it off or the limit runs out. Holding the pointer still, you cannot move it until it lets go, after 10 s at the latest. Escape lets go too; outside Ledgelings only with Accessibility allowed."))
             }
@@ -79,7 +79,7 @@ struct ChasesSettingsView: View {
             Section {
                 tally
             } header: {
-                Text(tr("The count"))
+                SettingsHeader("The count")
             } footer: {
                 Text(since)
             }
@@ -92,7 +92,7 @@ struct ChasesSettingsView: View {
                     Button(tr("Reset All…")) { confirmReset = true }.disabled(hunts.book.tallies.isEmpty)
                 }
             } header: {
-                Text(tr("The file"))
+                SettingsHeader("The file")
             }
         }
         .confirmationDialog(tr("Reset every creature's count to zero?"), isPresented: $confirmReset) {

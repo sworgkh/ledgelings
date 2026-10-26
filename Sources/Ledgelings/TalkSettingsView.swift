@@ -41,7 +41,7 @@ struct TalkSettingsView: View {
                     }
                 }
             } header: {
-                Text(tr("Brain"))
+                SettingsHeader("Brain")
             } footer: {
                 Text(brainFooter)
             }
@@ -70,7 +70,7 @@ struct TalkSettingsView: View {
                     Button(tr("Reset Cast")) { settings.casts.removeValue(forKey: castSpecies) }
                 }
             } header: {
-                Text(tr("Characters"))
+                SettingsHeader("Characters")
             } footer: {
                 Text(tr("Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog."))
             }
@@ -86,7 +86,7 @@ struct TalkSettingsView: View {
                 prompt(tr("Reply"), text: $settings.replyPrompt)
                 HStack { Spacer(); Button(tr("Reset Prompts")) { settings.resetPrompts() } }
             } header: {
-                Text(tr("Prompts"))
+                SettingsHeader("Prompts")
             } footer: {
                 Text(tr("Placeholders: %@. {situation} is written by the app: your time, date and holidays (Calendar tab), the colony's day or night, and where each creature is. {line} is what was just said, for the reply. {relationship} is how the two get on and the story between them (Bonds tab); left out, it goes at the end of the prompt.", Banter.placeholders.map { "{\($0)}" }.joined(separator: " ")))
             }
