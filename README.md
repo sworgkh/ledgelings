@@ -17,7 +17,7 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.60 — eight creatures with their own personalities, on every monitor or on
+**Status:** v0.62 — eight creatures with their own personalities, on every monitor or on
 the one you choose, talking when they meet (out loud, each in a voice of its own) from a
 hundred built-in lines or through a model of your choice, in English or Russian. They do
 what they talk about, remember each other, grow little stories from everything they have
@@ -25,11 +25,12 @@ lived through together, know your time of day and your holidays, give each other
 and plant them, send paper planes and throw your reminders at you, sit down to tea,
 sleep in beds of their own, play tag, ninja rope, parachute, basketball, soccer and
 baseball, and take the cursor as a friend or a nemesis, counting every hunt and riding
-it in revenge. They bring you a clipboard manager, a screenshot tool and dictation, go
-home when asked, and wear creatures you describe to any image model. Every chat is kept and every
-model call priced.
+it in revenge. They bring you a clipboard manager, a screenshot tool, dictation and a
+translator (English, Russian, Hebrew), all on one Tools screen, go home when asked, and
+wear creatures you describe to any image model. Every chat is kept and every model call
+priced.
 
-**See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) is a 78-second motion infographic of the features, with music, made from [promo-video/](promo-video). The older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
+**See it move:** the [new promo](https://youtu.be/kdwEVjqn3NI) (84 seconds, also [as an mp4](https://github.com/sworgkh/ledgelings/releases/download/v0.62.0/Ledgelings-promo-motion-v2.mp4)) shows everything since 0.18: the sprite kit, monitors, beds, six games, the cursor's revenge, deeds and memory, and the tools. It is a motion infographic with music, made from [promo-video/](promo-video). The [first promo](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) (78 seconds) covers the features up to 0.18, and the older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
 
 **Download:** the newest macOS `.pkg` and `.dmg` are on the [latest release](https://github.com/sworgkh/ledgelings/releases/latest).
 
