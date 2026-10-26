@@ -17,7 +17,7 @@ Ambient, click-through, living in the menu bar or the tray. Not a game, not a wi
 Everything the app does is written down once, platform-neutrally, in
 [SPEC.md](SPEC.md); both apps implement it and both run the same acceptance tests.
 
-**Status:** v0.59 — eight creatures with their own personalities, on every monitor or on
+**Status:** v0.60 — eight creatures with their own personalities, on every monitor or on
 the one you choose, talking when they meet (out loud, each in a voice of its own) from a
 hundred built-in lines or through a model of your choice, in English or Russian. They do
 what they talk about, remember each other, grow little stories from everything they have
@@ -25,8 +25,8 @@ lived through together, know your time of day and your holidays, give each other
 and plant them, send paper planes and throw your reminders at you, sit down to tea,
 sleep in beds of their own, play tag, ninja rope, parachute, basketball, soccer and
 baseball, and take the cursor as a friend or a nemesis, counting every hunt and riding
-it in revenge. They bring you a clipboard manager and a screenshot tool, go home when
-asked, and wear creatures you describe to any image model. Every chat is kept and every
+it in revenge. They bring you a clipboard manager, a screenshot tool and dictation, go
+home when asked, and wear creatures you describe to any image model. Every chat is kept and every
 model call priced.
 
 **See it move:** the [promo video](https://github.com/sworgkh/ledgelings/releases/download/v0.18.0/Ledgelings-promo-motion.mp4) is a 78-second motion infographic of the features, with music, made from [promo-video/](promo-video). The older [50-second screen recording](https://github.com/sworgkh/ledgelings/releases/download/v0.14.0/Ledgelings-promo-0.14.0.mp4) (no sound) is rendered by the app itself, `scripts/make-promo.sh`.
@@ -218,6 +218,16 @@ names itself and its key on hover. ⏎ copies the PNG, ⌘S also saves it to
 rectangle again; all shortcuts and the folder are in Settings › Productivity tools ›
 Screenshots. A creature carries the shot home. It needs **Screen Recording**: *Allow…*
 on that tab.
+
+**Dictation.** **⌃⌥D** (Ctrl+Alt+D on Windows) starts listening from any app: a creature
+leaps to the middle of the screen with a pixel microphone, its meter bars following your
+voice and a clock counting. ⌃⌥D again or ⏎ stops, ⎋ throws it away; *Hold to talk* listens
+only while the keys are down. An OpenRouter audio model (by default Gemini 2.5 Flash Lite,
+about $0.0007 a minute) writes it down, leaving out the ums and false starts, and the text
+lands on the clipboard and in its history, or is pasted straight into the app you were in.
+The recording stays in memory and is never saved. Model, language, shortcut and longest
+recording are in Settings › Productivity tools › Dictation, with *Allow…* for the
+microphone.
 
 **Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
 triangle and a mushroom come built in, each with its own cast of characters. The
