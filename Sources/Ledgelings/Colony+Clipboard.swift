@@ -17,6 +17,9 @@ extension Colony: ClipHelping {
         var stage: Stage
         /// Where it was on its edge before it came.
         var home: CGPoint
+        /// How it holds the sheet: calm, thinking while a model answers, puzzled at trouble.
+        var mood = ClipHelperMood.calm
+        var moodSince = 0.0
     }
 
     /// Where it holds the paper, while it is on its way there or holding it.
@@ -31,6 +34,11 @@ extension Colony: ClipHelping {
     /// Sends a creature to hold `paper` (global points). Seconds until it lands
     /// there, or nil when nobody can come: all busy, hiding, or nobody at all.
     func clipHelperCome(paper: CGRect, centre: CGPoint) -> Double? {
+        clipHelperCome(paper: paper, centre: centre, wanted: settings.clipHelper)
+    }
+
+    /// The same, `wanted` coming if free (empty: whoever is nearest the middle).
+    func clipHelperCome(paper: CGRect, centre: CGPoint, wanted: String) -> Double? {
         if let help = clipHelp { clipHelperLand(help.index) }
         guard !hideout.isActive else { return nil }
         let candidates = creatures.indices.map { i in
@@ -39,7 +47,7 @@ extension Colony: ClipHelping {
                                         free: !busy.contains(i) && held?.index != i && grab?.index != i && !isMoving(i)
                                             && !c.isPlaying && !c.isChatting && !c.isHeld && bubbles[i] == nil)
         }
-        guard let i = ClipHelper.choose(candidates, centre: centre, wanted: settings.clipHelper),
+        guard let i = ClipHelper.choose(candidates, centre: centre, wanted: wanted),
               creatures[i].takeOff(waking: true) else { return nil }
         bedTrips.removeValue(forKey: i)
         gardeners.remove(i)
@@ -70,6 +78,15 @@ extension Colony: ClipHelping {
         }
     }
 
+    /// Thinking dots over it while a model answers; a "?" and a little hop at trouble.
+    func clipHelperMood(_ mood: ClipHelperMood) {
+        guard let help = clipHelp, help.mood != mood else { return }
+        clipHelp?.mood = mood
+        clipHelp?.moodSince = elapsed
+        if mood == .calm { bubbles.removeValue(forKey: help.index) }
+        trace?("clip \(character(forCreature: help.index).name) is \(mood)")
+    }
+
     func updateClipHelp(dt: Double) {
         guard var help = clipHelp else { return }
         let i = help.index
@@ -89,7 +106,27 @@ extension Colony: ClipHelping {
             }
             help.stage = .going(leap)
         case .holding(let perch):
-            creatures[i].carry(to: perch, rotation: 0, pose: "idle")
+            let since = elapsed - help.moodSince
+            switch help.mood {
+            case .calm:
+                creatures[i].carry(to: perch, rotation: 0, pose: "idle")
+            case .thinking:
+                creatures[i].carry(to: perch, rotation: 0, pose: "idle")
+                // One, two, three dots, round and round: never said, never voiced.
+                let dots = String(repeating: "•", count: Int(since * 3) % 3 + 1)
+                if bubbles[i]?.text != dots {
+                    bubbleSerial += 1
+                    bubbles[i] = Bubble(text: dots, until: elapsed + 1, serial: bubbleSerial)
+                }
+            case .puzzled:
+                // A shrug: up a few points and down again, a "?" over it for two seconds.
+                let lift = since < 0.3 ? 6 * sin(.pi * since / 0.3) : 0
+                creatures[i].carry(to: CGPoint(x: perch.x, y: perch.y + lift), rotation: 0, pose: since < 0.3 ? "jump" : "idle")
+                if since < 2, bubbles[i]?.text != "?" {
+                    bubbleSerial += 1
+                    bubbles[i] = Bubble(text: "?", until: elapsed + 2 - since, serial: bubbleSerial)
+                }
+            }
         case .returning(var leap):
             leap.update(dt: dt)
             creatures[i].carry(to: leap.position, rotation: leap.rotation, pose: leap.pose)

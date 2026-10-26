@@ -516,6 +516,48 @@ final class AppSettings: ObservableObject {
     /// Why a screenshot shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var shotShortcutProblem = ""
 
+    // MARK: Translate
+
+    /// The translator (§7.14). Off: no translate shortcuts are taken, the picker has no button, the menu item goes.
+    @Published var translateEnabled: Bool { didSet { save(translateEnabled, "translateEnabled") } }
+    @Published var translateShortcutEnabled: Bool { didSet { save(translateShortcutEnabled, "translateShortcutEnabled") } }
+    @Published var translateShortcut: Shortcut {
+        didSet { save(translateShortcut.keyCode, "translateShortcutKeyCode"); save(translateShortcut.modifiers.rawValue, "translateShortcutModifiers") }
+    }
+    @Published var translateClipShortcutEnabled: Bool { didSet { save(translateClipShortcutEnabled, "translateClipShortcutEnabled") } }
+    @Published var translateClipShortcut: Shortcut {
+        didSet { save(translateClipShortcut.keyCode, "translateClipShortcutKeyCode"); save(translateClipShortcut.modifiers.rawValue, "translateClipShortcutModifiers") }
+    }
+    /// What the last-copy shortcut does: the sheet, or quietly onto the clipboard.
+    @Published var translateClipMode: Translate.ClipMode { didSet { save(translateClipMode.rawValue, "translateClipMode") } }
+    /// The languages on, by code; always at least two.
+    @Published var translateLanguages: [String] { didSet { save(translateLanguages, "translateLanguages") } }
+    /// What each language goes into, code to code.
+    @Published var translateTargets: [String: String] { didSet { save(translateTargets, "translateTargets") } }
+    /// The OpenRouter model that translates.
+    @Published var translateModel: String { didSet { save(translateModel, "translateModel") } }
+    /// The rest of a phrase guessed in grey as you type.
+    @Published var translateAutocomplete: Bool { didSet { save(translateAutocomplete, "translateAutocomplete") } }
+    /// The model that guesses; empty: the translating one.
+    @Published var translateAutocompleteModel: String { didSet { save(translateAutocompleteModel, "translateAutocompleteModel") } }
+    /// Milliseconds after the last keystroke before the text is translated and guessed.
+    @Published var translateDelayMs: Int { didSet { save(translateDelayMs, "translateDelayMs") } }
+    /// Longer than this many characters, nothing is sent until ⏎, after the parts and price are shown.
+    @Published var translateLiveLimit: Int { didSet { save(translateLiveLimit, "translateLiveLimit") } }
+    /// A translate button on every text row of the clipboard picker (⌘T).
+    @Published var translatePickerButton: Bool { didSet { save(translatePickerButton, "translatePickerButton") } }
+    /// A translation copied or pasted goes into the clipboard history, from "Translate".
+    @Published var translateKeepInHistory: Bool { didSet { save(translateKeepInHistory, "translateKeepInHistory") } }
+    /// A creature brings the sheet and holds it, as the clipboard picker's does.
+    @Published var translateHelperEnabled: Bool { didSet { save(translateHelperEnabled, "translateHelperEnabled") } }
+    /// Who: a name, or empty for whoever is nearest the middle.
+    @Published var translateHelper: String { didSet { save(translateHelper, "translateHelper") } }
+    /// Why a translate shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var translateShortcutProblem = ""
+
+    /// The languages that are on, in the chips' order.
+    var translateLanguagesOn: [Translate.Language] { Translate.on(translateLanguages) }
+
     // MARK: Dictation
 
     /// Dictation (§7.13). Off: no dictation shortcut is taken and the menu item goes.
@@ -943,6 +985,29 @@ final class AppSettings: ObservableObject {
         dictationPaste = defaults.object(forKey: "dictationPaste") as? Bool ?? false
         dictationCreature = defaults.object(forKey: "dictationCreature") as? Bool ?? true
         dictationHelper = defaults.string(forKey: "dictationHelper") ?? ""
+        translateEnabled = defaults.object(forKey: "translateEnabled") as? Bool ?? true
+        translateShortcutEnabled = defaults.object(forKey: "translateShortcutEnabled") as? Bool ?? true
+        translateShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "translateShortcutKeyCode") as? Int,
+                                     savedModifiers: defaults.object(forKey: "translateShortcutModifiers") as? Int, standard: .translate)
+        translateClipShortcutEnabled = defaults.object(forKey: "translateClipShortcutEnabled") as? Bool ?? true
+        translateClipShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "translateClipShortcutKeyCode") as? Int,
+                                         savedModifiers: defaults.object(forKey: "translateClipShortcutModifiers") as? Int, standard: .translateClip)
+        // The sheet: a translation you can read before it goes anywhere.
+        translateClipMode = defaults.string(forKey: "translateClipMode").flatMap(Translate.ClipMode.init(rawValue:)) ?? .sheet
+        translateLanguages = Translate.on(defaults.stringArray(forKey: "translateLanguages") ?? Translate.defaultLanguages).map(\.code)
+        let rules = (defaults.dictionary(forKey: "translateTargets") as? [String: String] ?? [:]).filter { Translate.language($0.key) != nil && Translate.language($0.value) != nil && $0.key != $0.value }
+        translateTargets = Translate.defaultTargets.merging(rules) { $1 }
+        translateModel = defaults.string(forKey: "translateModel").flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 } ?? Translate.defaultModel
+        translateAutocomplete = defaults.object(forKey: "translateAutocomplete") as? Bool ?? true
+        translateAutocompleteModel = defaults.string(forKey: "translateAutocompleteModel") ?? ""
+        let delay = defaults.object(forKey: "translateDelayMs") as? Int ?? Translate.defaultDelay
+        translateDelayMs = min(max(delay, Translate.delayRange.lowerBound), Translate.delayRange.upperBound)
+        let live = defaults.object(forKey: "translateLiveLimit") as? Int ?? Translate.defaultLiveLimit
+        translateLiveLimit = min(max(live, Translate.liveLimitRange.lowerBound), Translate.liveLimitRange.upperBound)
+        translatePickerButton = defaults.object(forKey: "translatePickerButton") as? Bool ?? true
+        translateKeepInHistory = defaults.object(forKey: "translateKeepInHistory") as? Bool ?? true
+        translateHelperEnabled = defaults.object(forKey: "translateHelperEnabled") as? Bool ?? true
+        translateHelper = defaults.string(forKey: "translateHelper") ?? ""
         followLanguage()
     }
 

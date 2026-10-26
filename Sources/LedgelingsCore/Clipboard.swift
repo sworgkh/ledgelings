@@ -20,7 +20,10 @@ import Foundation
 /// history with exactly those words is shown masked, `PWD:Wi-Fi: [16] chars`,
 /// and searched by that label; it still pastes its own words.
 ///
-/// Nothing in here is ever sent anywhere: no model sees a clip or a snippet.
+/// Nothing in here is sent anywhere on its own. A clip or an ordinary snippet
+/// reaches a model only when the owner translates it (§7.14: the picker's ⌘T, the
+/// last-copy shortcut); a protected snippet, and a copy of its words, never do
+/// (`Translate.refusal`).
 public enum Clipboard {
     // MARK: Clips
 

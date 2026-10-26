@@ -2,10 +2,10 @@
 
 Every setting is saved as you change it and applied live; nothing needs a restart.
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
-Settings…*. On the Mac a sidebar lists nineteen pages under five headings: *Creatures &
+Settings…*. On the Mac a sidebar lists twenty pages under five headings: *Creatures &
 world* (**Creatures**, **Actions**, **Sprites**, **Beds**, **Flowers**, **Calendar**), *Games* (**Chases**, **Play**,
 **Ball games**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Reminders**,
-**Clipboard**, **Screenshots**, **Dictation**) and *Money & history* (**Costs**, **Chats**); each page is two
+**Clipboard**, **Screenshots**, **Dictation**, **Translate**) and *Money & history* (**Costs**, **Chats**); each page is two
 columns that fit on one screen. The search box at its top (⌘F) finds any setting by the words
 of its label, its section or its footer, in Russian or English: click a place (⏎ for the first)
 and its page opens with the section lit up; ⎋ clears it. On Windows the same pages are still
@@ -50,6 +50,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Screenshot the Full Screen** (⌘⇧8, the `*` key, from any app) | All screens in one picture (or the one under the cursor), straight to the clipboard or folder |
 | **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
 | **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
+| **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
 | **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
@@ -577,7 +578,7 @@ greyed out under a *Needs a model* note.
 ## Tools
 
 Tools the creatures run for you rather than for themselves, a page each under the
-sidebar's *Tools* heading: **Reminders**, **Clipboard**, **Screenshots**, **Dictation**.
+sidebar's *Tools* heading: **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**.
 `--settings reminders` opens the first (`productivity` too, the old tab's name);
 `--settings clipboard`, `--settings screenshots`, `--settings dictation` the others.
 On Windows they are still one *Productivity tools* tab with a row of tools across the top.
@@ -827,6 +828,57 @@ microphone not allowed, no network, OpenRouter refusing.
 | **Tidy it up** (`dictationCleanUp`) | on | | Leaves out um and uh, stutters and false starts, adds punctuation; in the same call. Off: every word as said |
 | **Paste into the app I was in** (`dictationPaste`) | off | | Presses ⌘V into the app in front when it started. Needs **Accessibility**, as the clipboard picker does |
 | **Who holds the microphone** (`dictationCreature`, `dictationHelper`) | Anyone free, by chance | a creature on screen, or *Nobody* | Nobody: a small note says how it went instead |
+
+### Translate
+
+**macOS** for now; Windows follows.
+
+**⌃⌥T** from any app: a creature leaps to the middle of the screen with a sheet of pixel paper.
+Type on the left in English, Russian or Hebrew; 400 ms after you stop, the translation appears
+on the right, and the rest of your phrase is guessed in grey after the cursor (**⇥** takes it).
+The language is told by its letters, for free; each goes into its own language (Hebrew and
+Russian into English, English into Russian), or pick one: ⌘1 Detect, ⌘2–4 the source, ⌥1–3 the
+target. **⏎** copies the translation and closes, **⌘⏎** pastes it into the app you were in,
+**⌘S** swaps the languages and turns the translation into the text, to check it backwards,
+**⌘⌫** clears, **⎋** closes. Hebrew runs right to left. Each picture names its key on hover.
+
+**⌃⌥⇧T** translates the newest text you copied: in the sheet, or (*The last copy*: quietly)
+straight onto the clipboard with a note by the text cursor. In the **clipboard picker** every
+row with words has a translate picture: **⌘T** opens its translation under it, **⏎** pastes the
+translation, **⌥⏎** the original, **⌥⇥** the next language, **⌘⇧T** opens it in the sheet.
+
+Text is sent to a model only when you translate it, never on its own. Protected snippets and
+copies of their words never are, and have no button; nor do pictures, files or a lone link.
+Links, e-mails, code, numbers and paths are swapped for markers and put back, so the model
+cannot change them. Over 5 000 characters it waits for ⏎ and says the parts and price first;
+never more than 50 000. Every call is priced on the Costs tab as **Translation**, every guess as
+**Autocomplete**: about a cent a day. The last 200 translations are remembered in memory, so
+retyping costs nothing. A copied or pasted translation is kept in the clipboard history, from
+*Translate*.
+
+**Left column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Translator** (`translateEnabled`) | on | | Off: both shortcuts are let go, the picker has no button, the menu item hides |
+| **Type to translate** (`translateShortcut…`) | on, ⌃⌥T | | Click the keys to record others. Refused by the system: a red line says so |
+| **Translate the last copy** (`translateClipShortcut…`) | on, ⌃⌥⇧T | | The newest text copy; pictures and files are skipped |
+| **The last copy** (`translateClipMode`) | Opens the sheet, already translated | or *Puts it on the clipboard quietly* | Quietly: the translation replaces the clipboard; the original stays in the history |
+| **English / Russian / Hebrew** (`translateLanguages`) | all on | at least two | The languages in the chips |
+| **… goes into** (`translateTargets`) | Hebrew → English, Russian → English, English → Russian | any other language on | Where a text goes when you pick no target |
+
+**Right column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Model** (`translateModel`) | `google/gemini-2.5-flash-lite` | any OpenRouter model, searched below | Uses the Talk tab's key. With no key and LM Studio as the brain, its model, free |
+| **Guess the rest of the phrase** (`translateAutocomplete`) | on | | Up to six grey words after the cursor; only for left-to-right text |
+| **Guess model** (`translateAutocompleteModel`) | the same model | any | |
+| **Wait after typing** (`translateDelayMs`) | 400 ms | 200 to 1 500 ms | Shorter is livelier and costs a little more |
+| **Translate button in the clipboard picker** (`translatePickerButton`) | on | | The picture on each row and ⌘T |
+| **Keep translations in the clipboard history** (`translateKeepInHistory`) | on | | |
+| **Ask before sending more than** (`translateLiveLimit`) | 5 000 | 1 000 to 20 000 characters | Longer waits for ⏎ |
+| **Who brings the sheet** (`translateHelperEnabled`, `translateHelper`) | Whoever is nearest the middle | a creature on screen, or *Nobody* | It thinks (dots) while the model answers, shrugs (?) at trouble |
 
 ## Voice tab
 

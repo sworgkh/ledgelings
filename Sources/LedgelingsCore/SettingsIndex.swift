@@ -6,7 +6,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
     case chases, play, ballGames
     case talk, voice, bonds, relationships
-    case reminders, clipboard, screenshots, dictation
+    case reminders, clipboard, screenshots, dictation, translate
     case costs, chats
 
     public var title: String {
@@ -28,6 +28,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .clipboard: tr("Clipboard")
         case .screenshots: tr("Screenshots")
         case .dictation: tr("Dictation")
+        case .translate: tr("Translate")
         case .costs: tr("Costs")
         case .chats: tr("Chats")
         }
@@ -38,7 +39,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
         case .chases, .play, .ballGames: .games
         case .talk, .voice, .bonds, .relationships: .talkAndFriends
-        case .reminders, .clipboard, .screenshots, .dictation: .tools
+        case .reminders, .clipboard, .screenshots, .dictation, .translate: .tools
         case .costs, .chats: .moneyAndHistory
         }
     }
@@ -243,6 +244,12 @@ public enum SettingsIndex {
         Section(.dictation, "Shortcut", labels: ["Start and stop", "Hold to talk", "Longest recording"], footer: "It works in every app. Holding to talk, it listens while the keys are down and writes it down when you let go. At the longest length it stops by itself and sends what it heard.", keys: ["dictationHoldToTalk", "dictationMaxSeconds", "dictationShortcutEnabled", "dictationShortcutKeyCode", "dictationShortcutModifiers"]),
         Section(.dictation, "Writing it down", labels: ["Model", "Spoken in", "Tidy it up"], footer: "OpenRouter's models that listen to sound, cheapest first; each recording is priced in Settings › Costs as Dictation. Tidying leaves out um and uh, stutters and false starts, and adds punctuation, in the same call.", keys: ["dictationCleanUp", "dictationLanguage", "dictationModel"]),
         Section(.dictation, "The words and the creature", labels: ["Paste into the app I was in", "Needs Accessibility, to press ⌘V for you. Until then it only copies.", "Allow…", "Who holds the microphone", "Anyone free, by chance", "Nobody: a note says how it went"], footer: "A creature leaps to the middle of the screen holding a microphone whose bars follow your voice, the clock over its head; it thinks while the words are written, says the first of them and hops home.", keys: ["dictationCreature", "dictationHelper", "dictationPaste"]),
+
+        // translate
+        Section(.translate, "Translate", labels: ["Translator", "Type to translate", "Translate the last copy", "The last copy", "Opens the sheet, already translated", "Puts it on the clipboard quietly"], footer: "Both work in every app. Type to translate opens the sheet: your words on the left, the translation on the right as you type. The last copy opens in the sheet already translated, or quietly replaces the clipboard with its translation and says so by the text cursor. ⏎ copies the translation, ⌘⏎ pastes it into the app you were in.", keys: ["translateClipMode", "translateClipShortcutEnabled", "translateClipShortcutKeyCode", "translateClipShortcutModifiers", "translateEnabled", "translateShortcutEnabled", "translateShortcutKeyCode", "translateShortcutModifiers"]),
+        Section(.translate, "Languages", labels: ["English", "Russian", "Hebrew"], footer: "Told apart by their letters, Latin, Cyrillic or Hebrew, on this Mac and for free, before anything is sent. A text already in its target goes into the target's own language instead. At least two stay on.", keys: ["translateLanguages", "translateTargets"]),
+        Section(.translate, "Model", labels: ["Model", "Guess the rest of the phrase", "Guess model", "Wait after typing"], footer: "An OpenRouter model, with the key from Settings › Talk; with LM Studio as the brain and no key, its model, free. Cheap and fast is best: about a cent a day. Every call shows on Costs as Translation, every guess as Autocomplete. ⇥ takes the grey words.", keys: ["translateAutocomplete", "translateAutocompleteModel", "translateDelayMs", "translateModel"]),
+        Section(.translate, "Clipboard and safety", labels: ["Translate button in the clipboard picker", "Keep translations in the clipboard history", "Ask before sending more than", "Who brings the sheet", "Whoever is nearest the middle", "Nobody: it unfolds by itself"], footer: "Text goes to the model only when you translate it. Protected snippets and copies of their words never do, and get no button. Links, e-mails, code and numbers are kept as they are. Longer texts wait for ⏎ and say their parts and price first; never more than 50 000 characters.", keys: ["translateHelper", "translateHelperEnabled", "translateKeepInHistory", "translateLiveLimit", "translatePickerButton"]),
 
         // costs
         Section(.costs, "Spent", labels: ["Cost", "Calls", "Tokens", "Today", "This month", "All time"]),

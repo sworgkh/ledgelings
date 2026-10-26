@@ -35,6 +35,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private lazy var shots = ShotController(settings: settings, colony: { [weak self] in self?.colony })
     private lazy var dictation = DictationController(settings: settings, spend: spend, clips: clips, colony: { [weak self] in self?.colony },
                                                      watcher: { [weak self] in self?.clipWatcher })
+    private(set) lazy var translate = TranslateController(settings: settings, spend: spend, clips: clips, watcher: { [weak self] in self?.clipWatcher },
+                                                          helper: { [weak self] in self?.colony })
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
     private var shortcutShown: AnyCancellable?
@@ -183,6 +185,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--translate-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/translate.mp4"
+            Task { @MainActor in
+                do { try await TranslateFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings translate film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if CommandLine.arguments.contains("--mic-check") {
             Task { @MainActor in exit(await DictationDemo.check() ? 0 : 1) }
             return
@@ -229,6 +241,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
         shots.takeShortcuts { [weak self] in self?.shotShortcutPressed($0) }
         dictation.takeShortcut { [weak self] in self?.dictationShortcutPressed() }
+        translate.takeShortcuts { [weak self] in self?.translateShortcutPressed($0) }
+        translate.sheet.openSettings = { [weak self] in self?.settingsWindow.show(.translate) }
+        picker.translateRow = { [weak self] text, after in
+            guard let self else { return (nil, .failure(.cancelled)) }
+            return await self.translate.translateRow(text, after: after)
+        }
+        picker.openInSheet = { [weak self] in self?.translate.sheet.show(text: $0) }
         shortcutShown = Publishers.CombineLatest(settings.$shortcutEnabled, settings.$shortcut)
             .sink { [weak self] enabled, shortcut in self?.showShortcutInMenu(enabled ? shortcut : nil) }
         // `--shortcut`: says on stderr whether the system took the shortcut, then each press; quits after the first.
@@ -251,6 +270,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let dictationState = !settings.dictationEnabled || !settings.dictationShortcutEnabled ? "off"
                 : settings.dictationShortcutProblem.isEmpty ? "registered" : "refused: \(settings.dictationShortcutProblem)"
             FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.dictationShortcut)) dictation \(dictationState)\n".utf8))
+            for (name, on, key) in [("translate", settings.translateShortcutEnabled, settings.translateShortcut),
+                                    ("translate last copy", settings.translateClipShortcutEnabled, settings.translateClipShortcut)] {
+                let problem = settings.translateShortcutProblem.contains(GlobalShortcut.label(key)) ? settings.translateShortcutProblem : ""
+                let translateState = !settings.translateEnabled || !on ? "off" : problem.isEmpty ? "registered" : "refused: \(problem)"
+                FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(key)) \(name) \(translateState)\n".utf8))
+            }
             Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
         }
         // `--shot-demo [--snapshot out.png]`: a shot of the real screen with marks, the clipboard put back after.
@@ -260,6 +285,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 exit(await ShotDemo.run(settings: settings, controller: shots, snapshot: shot.map { URL(fileURLWithPath: $0) }) ? 0 : 1)
+            }
+        }
+        // `--translate "text" [--to he] [--model id]`, `--translate-bench [--runs 10]`,
+        // `--translate-sheet "text" [--snapshot out.png]`: the translator from a terminal, through the real call.
+        let args = CommandLine.arguments
+        func value(_ flag: String) -> String? { args.firstIndex(of: flag).flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil } }
+        if ProcessInfo.processInfo.environment["LEDGELINGS_FAKE_TRANSLATE"] != nil { translate.translator.fake = TranslateDemo.fake }
+        if let text = value("--translate") {
+            let translate = translate, spend = spend
+            Task { @MainActor in
+                translate.trace = { FileHandle.standardError.write(Data("  \($0)\n".utf8)) }
+                exit(await TranslateDemo.once(text, to: value("--to"), model: value("--model"), controller: translate, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        if args.contains("--translate-bench") {
+            let translate = translate, spend = spend
+            Task { @MainActor in
+                exit(await TranslateDemo.bench(runs: value("--runs").flatMap(Int.init) ?? 10, controller: translate, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        if let text = value("--translate-sheet") {
+            let translate = translate
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                translate.trace = { FileHandle.standardError.write(Data("  \($0)\n".utf8)) }
+                exit(await TranslateDemo.sheet(text, into: value("--to").flatMap(Translate.language), snapshot: value("--snapshot").map { URL(fileURLWithPath: $0) }, controller: translate) ? 0 : 1)
             }
         }
         // `--dictate-demo [--model id]`: a line the Mac says, through the real call, onto the clipboard; put back after.
@@ -503,6 +554,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let shotFullItem = NSMenuItem(title: "", action: #selector(takeFullShot), keyEquivalent: "")
     private let shotLastItem = NSMenuItem(title: "", action: #selector(takeLastShot), keyEquivalent: "")
     private let dictationItem = NSMenuItem(title: "", action: #selector(dictate), keyEquivalent: "")
+    private let translateItem = NSMenuItem(title: "", action: #selector(openTranslate), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -519,7 +571,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(activitiesItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
-        for item in [clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem] {
+        for item in [clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem] {
             item.target = self
             menu.addItem(item)
         }
@@ -606,6 +658,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let dictationKey = GlobalShortcut.keyName(settings.dictationShortcut.keyCode).lowercased()
         dictationItem.keyEquivalent = settings.dictationShortcutEnabled && dictationKey.count == 1 ? dictationKey : ""
         dictationItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.dictationShortcut.modifiers)
+        translateItem.title = tr("Translate…")
+        translateItem.isHidden = !settings.translateEnabled
+        let translateKey = GlobalShortcut.keyName(settings.translateShortcut.keyCode).lowercased()
+        translateItem.keyEquivalent = settings.translateShortcutEnabled && translateKey.count == 1 ? translateKey : ""
+        translateItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.translateShortcut.modifiers)
         for choice in languageItem.submenu?.items ?? [] {
             choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
         }
@@ -682,6 +739,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // From the menu: once it has closed, so the app in front is the one dictated into.
     @objc private func dictate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); dictation.press() } }
+
+    // From the menu: once it has closed, so the sheet knows the app that was in front.
+    @objc private func openTranslate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); translate.sheet.show() } }
+
+    /// A translate shortcut from any app, for `--shortcut`: said, then quit once the sheet is closed.
+    private func translateShortcutPressed(_ which: String) {
+        guard CommandLine.arguments.contains("--shortcut") else { return }
+        FileHandle.standardError.write(Data("shortcut pressed: \(which == "type" ? "translate" : "translate last copy")\n".utf8))
+        Task { @MainActor in try? await Task.sleep(for: .seconds(2)); while translate.sheet.isUp { try? await Task.sleep(for: .seconds(0.2)) }; exit(0) }
+    }
 
     /// The dictation shortcut from any app, for `--shortcut`: said, then quit once it has listened and written.
     private func dictationShortcutPressed() {
