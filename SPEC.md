@@ -2329,6 +2329,31 @@ the picker's row, the leap home; stills beside it (`-typing`, `-guess`, `-russia
 `-hebrew`, `-picker`). With `LEDGELINGS_FAKE_TRANSLATE=1` the flags use the same hand-written
 answers: no key, no network, nothing recorded.
 
+### 7.15 The Tools screen
+
+Every tool the creatures run for the owner on one sheet of the letter's pixel paper
+(`ToolsScreenController`, **macOS** for now; Windows follows): **⌃⌥K** from any app, the
+**Tools…** menu item, or the wrench picture on the Creature Actions sheet's title line (K).
+A tile each, four to a row, in the order of Settings › Tools › Tools screen
+(`Tools.Tool`, the codes `translate`, `dictation`, `screenshot`, `fullScreen`,
+`lastRectangle`, `clipHistory`, `snippets`, `reminder`): its 11×11 picture drawn ×2 in the
+game's style, its name, its own shortcut under it, its number in the corner.
+
+- **Starting one**: a click, its number (1–9), or the arrows and ⏎; the hovered or chosen tile
+  is framed. The screen goes first, then the tool starts 150 ms later, so a screenshot does
+  not catch the sheet and the picker finds the app you were in. ⎋, the shortcut again or a
+  click beside the paper closes it.
+- **A tool that is off** (its own switch on its page) is greyed with *off* under it; its tag
+  says *Off: switch it on in Settings › Tools › <page>*, and choosing it opens that page.
+- **The tag** on hover names what it does and its keys: *Type to translate (1 · ⌃⌥T)*,
+  *The snippets, to paste (7)*. Drawn in the panel (`PixelTag`), as the picker does.
+- The panel is a non-activating `ClipPanel` on the screen with the text cursor (else the
+  mouse): the app in front keeps the keyboard, so a tool that pastes pastes there.
+- Nothing is sent to any model by the screen itself; each tool prices its own calls.
+
+`--tools [--snapshot out.png]` opens it on the real screen, prints each tile with its tag
+(`tools 1 translate: Type to translate (1 · ⌃⌥T)`), writes the paper to a PNG and closes.
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -2712,6 +2737,7 @@ falls through to whatever is underneath.
 | Menu / tray: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
 | The translate shortcuts, in any app (`translateShortcut` ⌃⌥T, `translateClipShortcut` ⌃⌥⇧T; macOS) | the Translate sheet (again: closes); the newest copy translated, in the sheet or quietly onto the clipboard (§7.14) |
 | Menu: Translate… (with `translateEnabled`) | the Translate sheet (§7.14.1) |
+| The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; macOS), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
 | Clipboard picker: ⌘T on a row, ⌥⇥, ⌘⇧T, ⏎ | its translation under it, the next language, the sheet, paste the translation (§7.14.2) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
 | Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |
@@ -2988,6 +3014,9 @@ An error for want of a model reads as that note, never as a server refusal.
 | translatePickerButton | true | the clipboard picker's translate button and ⌘T |
 | translateKeepInHistory | true | a copied or pasted translation goes into the clipboard history |
 | translateHelperEnabled / translateHelper | true / empty | a creature brings the sheet; which by name, empty: whoever is nearest the middle |
+| toolsScreenEnabled | true | the Tools screen (§7.15); off, its shortcut is let go, the menu item and the Actions sheet's wrench hide |
+| toolsScreenShortcutEnabled / toolsScreenShortcutKeyCode / toolsScreenShortcutModifiers | true / K / ⌃⌥ | the screen, as `shortcut` |
+| toolsScreenTools | all eight, in `Tools.Tool` order | the tiles shown, in order; unknown and doubled codes are dropped on load |
 
 The reminders themselves are in `reminders.json`, not the preferences (§7.7), the
 clipboard history and snippets in `clipboard.json` and `snippets.json` (§7.11),
@@ -2995,10 +3024,10 @@ the hunt counts in `hunts.json` (§4.7.2), and the favourite sleeping places in
 `beds.json` (§7.9).
 
 Settings window: 1280×760 points (it fits a 1280×800 laptop screen). On the left a
-sidebar 220 wide: a search box, then twenty pages under five headings (`SettingsGroup`):
+sidebar 220 wide: a search box, then twenty-one pages under five headings (`SettingsGroup`):
 *Creatures & world* (Creatures, Actions, Sprites, Beds, Flowers, Calendar), *Games*
 (Chases, Play, Ball games), *Talk & friends* (Talk, Voice, Bonds, Relationships),
-*Tools* (Reminders, Clipboard, Screenshots, Dictation, Translate) and *Money & history* (Costs,
+*Tools* (Tools screen, Reminders, Clipboard, Screenshots, Dictation, Translate) and *Money & history* (Costs,
 Chats), each heading's pages with its pixel picture. On the right the page: its
 group and name, then two columns that scroll on their own so a page fits on one
 screen (Chats is a day list beside the day's exchanges). The search (⌘F) looks
