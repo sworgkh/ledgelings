@@ -48,7 +48,8 @@ public class ActionsSheetTests
     public void TheMenusSwitchesSayHowTheyStandAndTheLinksAreThere()
     {
         var s = new ActionsState();
-        Assert.True(ActionsSwitches.All.Count == 6 && ActionsLinks.All.Count == 3);
+        Assert.True(ActionsSwitches.All.Count == 6 && ActionsLinks.All.Count == 4);
+        Assert.Contains("(K)", ActionsLinks.ToolsTooltip(""));                    // the Tools picture names its key
         Assert.True(ActionsSwitch.Talk.Title(s) == "TALK ON" && ActionsSwitch.Talk.IsOn(s));
         Assert.True(ActionsSwitch.Voice.Title(s) == "VOICE OFF" && !ActionsSwitch.Voice.IsOn(s));
         Assert.Equal("CURSOR: A MENACE", ActionsSwitch.Cursor.Title(s));
@@ -58,7 +59,7 @@ public class ActionsSheetTests
         Assert.Equal("CURSOR: A PLAYMATE", ActionsSwitch.Cursor.Title(s));
         Assert.Equal("РУССКИЙ", ActionsSwitch.Language.Title(s));
         Assert.Equal("They keep quiet.", ActionsSwitch.Talk.Said(s));
-        Assert.Equal(new[] { "SETTINGS", "CHATS", "QUIT" }, ActionsLinks.All.Select(l => l.Title()));
+        Assert.Equal(new[] { "SETTINGS", "CHATS", "QUIT" }, ActionsLinks.Footer.Select(l => l.Title()));  // Tools is the wrench, not a word
     }
 
     [Fact]
