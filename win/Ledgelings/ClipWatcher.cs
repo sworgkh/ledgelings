@@ -207,7 +207,7 @@ public static class ClipPaster
 
     /// <summary>Files on the clipboard, as Explorer's Copy puts them (Read aloud's sound file), marked as ours so the
     /// history does not keep them.</summary>
-    /// False when the clipboard stayed busy.
+    /// <returns>False when the clipboard stayed busy.</returns>
     public static bool PutFiles(IReadOnlyList<string> files)
     {
         var data = new DataObject();
