@@ -2339,7 +2339,8 @@ there yet, reordered with Move up and Move down): **⌃⌥K** from any app, the
 **Tools…** menu item, or the wrench picture on the Creature Actions sheet's title line (K).
 A tile each, four to a row, in the order of Settings › Tools › Tools screen
 (`Tools.Tool`, the codes `translate`, `dictation`, `screenshot`, `fullScreen`,
-`lastRectangle`, `clipHistory`, `snippets`, `reminder`): its 11×11 picture drawn ×2 in the
+`lastRectangle`, `clipHistory`, `snippets`, `reminder`, `readAloud`; a tool added later goes at
+the end of a list arranged before it, once: `toolsScreenKnown`): its 11×11 picture drawn ×2 in the
 game's style, its name, its own shortcut under it, its number in the corner.
 
 - **Starting one**: a click, its number (1–9), or the arrows and ⏎; the hovered or chosen tile
@@ -2356,6 +2357,68 @@ game's style, its name, its own shortcut under it, its number in the corner.
 
 `--tools [--snapshot out.png]` opens it on the real screen, prints each tile with its tag
 (`tools 1 translate: Type to translate (1 · ⌃⌥T)`), writes the paper to a PNG and closes.
+
+### 7.16 Read aloud
+
+Text in, sound out (`ReadAloud`, `ReadAloudPlayer`, `ReadAloudSheetController`; macOS).
+**⌃⌥R** from any app, the **Read Aloud…** menu item, its tile on the Tools screen (9), or a row's
+loudspeaker in the clipboard picker (⌘R).
+
+- **The text**: the clipboard's (with `readAloudFromClipboard`), typed or pasted into the sheet.
+  Refused (`ReadAloud.refusal`, one check for the sheet, the picker and the flag): empty or only
+  marks, a protected snippet or a copy of its words, more than 50 000 characters.
+- **Parts** (`ReadAloud.parts`): a paragraph is a line with words; markdown marks and emoji go
+  (`Voices.speakable`). The first part is at most 240 characters, the rest at most 900, cut after a
+  sentence end, else a comma or dash, else a space, never before a third of the room. Each part's
+  language is told by its letters (`Translate.detect`, Latin, Cyrillic, Hebrew); one with none keeps
+  the one before; a preset's language forces all.
+- **Fetching and playing**: three parts are asked for at a time, each played the moment its turn
+  comes (an `AVAudioPlayerNode` → `AVAudioUnitTimePitch` → mixer, 24 kHz mono float). A rest of the
+  preset's length follows each paragraph's last part. When the next part is late the player pauses,
+  so the clock stays true, and goes on when it lands. Every piece is also kept in order (the tape).
+- **Who reads** (`ReadAloudPlayer.plan`): the preset's engine. OpenRouter: `POST /audio/speech`
+  (`SpeechClient`, PCM first, MP3 when refused; the pace as `speed`, or, refused, stretched here
+  offline), with the key from Talk; none: the Mac's voices read it all, the status says so. A local
+  server: the Voice page's, free. The Mac (`AVSpeechSynthesizer.write`, rendered, converted): free.
+- **The voice of a part**: among the model's voices that speak its language (`ReadAloud.voices`:
+  unmarked names such as Gemini's speak every language; marked lists such as Kokoro's `af_` or MAI's
+  `ru-RU-` only theirs). The preset's voice if among them; else, for a character, its own on the
+  Voice page (same model), else `Casting.assign` from its persona and species' kind; else the first.
+  None speaks the part's language: the Mac's voice for that language reads that part (Milena for
+  Russian, Carmit for Hebrew), and the status says so.
+- **Pace**: 0.5–2×, asked of the model at the start; the sheet's ⌘− / ⌘= change it at once while it
+  plays (the time-pitch rate, the pitch kept) and the next reading asks the new pace.
+- **Cost** (AGENTS rule 1): every reply is priced by its `X-Generation-Id` at `/generation`, under
+  `Spend.Purpose.readAloud`, also when the reading was stopped before its sound came (a fetch already
+  asked for is never cancelled, only its sound dropped); one with no id is recorded unpriced. Above
+  `readAloudLongLimit` characters a paid reading first shows its parts and estimated price
+  (`ReadAloud.estimate`: Gemini's 25 sound tokens a second at 15 characters a second) and waits for ⏎.
+- **Out**: ⌘S writes the tape as one file in `readAloudFolder` (`~/Desktop`), M4A (AAC 64 kbit/s) or
+  WAV (16-bit), named *Read aloud 2026-11-01 14.32.05 – first six words.m4a*; part-way through, what is
+  read so far. ⌘⇧C writes the same to `~/Library/Caches/Ledgelings/Read aloud/` (the last copy only)
+  and puts the file on the clipboard (the clipboard history skips the app's own write).
+
+#### 7.16.1 The sheet
+
+760×470 of the letter's pixel paper in a non-activating `ClipPanel`, brought by a creature
+(`readAloudHelper`, as Translate's) that holds its corner: thinking dots while the first part comes,
+then *reading* (`ClipHelperMood.reading`): a two-point nod every 0.9 s and a bubble of a dot running
+along three (`ReadAloud.readingDots`), never voiced, no mouth; a shrug and "?" at trouble.
+
+- The preset chips (⌘1–9; the tag says who reads, the pace and the key: *Bedtime: Zed, 0.8× (⌘3)*),
+  the text box (right to left for Hebrew), then the controls: read/pause, stop, slower, the pace,
+  faster, the next reader and its name, save, copy. Each is a picture (`ReadAloud.Button`, 11×11)
+  with a drawn tag naming its key (AGENTS rule 4). Then the bar (heard in orange, come in grey), the
+  clock (*0:12 / ~1:05*, `~` until every part is in) and the status line: the parts in, the voice and
+  model, the price so far, and what the Mac read instead.
+- Closing with `readAloudKeepReading` lets the reading go on (the creature goes home); **Stop
+  Reading** in the menu ends it; the shortcut brings the sheet back showing it.
+
+`--read "text" [--preset name] [--engine system] [--out file.m4a] [--mute]` reads through the real calls and prints the
+provider, the voice, the time to the first sound, the length and the price. `--read-bench [--models
+a,b]` asks each candidate for the same English, Russian and Hebrew paragraph without playing it and
+has the dictation model write each down again. `--read-sheet "text" [--preset name] [--snapshot
+out.png] [--mute]` opens the sheet on the real screen, reads, writes the paper and closes.
 
 ## 8. The brain: chat client
 
@@ -2740,6 +2803,9 @@ falls through to whatever is underneath.
 | Menu / tray: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
 | The translate shortcuts, in any app (`translateShortcut` ⌃⌥T, `translateClipShortcut` ⌃⌥⇧T; Windows Ctrl+Alt+T, Ctrl+Alt+Shift+T) | the Translate sheet (again: closes); the newest copy translated, in the sheet or quietly onto the clipboard (§7.14) |
 | Menu: Translate… (with `translateEnabled`) | the Translate sheet (§7.14.1) |
+| The read-aloud shortcut, in any app (`readAloudShortcut` ⌃⌥R) | the Read aloud sheet with the clipboard's text, read at once (again: closes; while it reads, brings it back) (§7.16) |
+| Menu: Read Aloud… / Stop Reading (while it reads) | the Read aloud sheet; ends the reading (§7.16) |
+| A clipboard picker row's loudspeaker, or ⌘R | that row read aloud in the sheet (§7.16) |
 | The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; Windows Ctrl+Alt+K), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
 | Clipboard picker: ⌘T on a row, ⌥⇥, ⌘⇧T, ⏎ | its translation under it, the next language, the sheet, paste the translation (§7.14.2) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
@@ -3017,6 +3083,18 @@ An error for want of a model reads as that note, never as a server refusal.
 | translatePickerButton | true | the clipboard picker's translate button and ⌘T |
 | translateKeepInHistory | true | a copied or pasted translation goes into the clipboard history |
 | translateHelperEnabled / translateHelper | true / empty | a creature brings the sheet; which by name, empty: whoever is nearest the middle |
+| readAloudEnabled | true | Read aloud (§7.16); off, its shortcut is let go, the picker has no button, the menu item hides |
+| readAloudShortcutEnabled / readAloudShortcutKeyCode / readAloudShortcutModifiers | true / R / ⌃⌥ | the sheet, as `shortcut` |
+| readAloudFromClipboard / readAloudStartAtOnce | true / true | the sheet opens with the clipboard's text, and reads it at once |
+| readAloudKeepReading | true | closing the sheet lets the reading go on; Stop Reading ends it |
+| readAloudPickerButton | true | the clipboard picker's loudspeaker and ⌘R |
+| readAloudHelperEnabled / readAloudHelper | true / empty | a creature brings the sheet and reads beside it; empty: whoever is nearest the middle |
+| readAloudPresets | Narrator, Quick skim, Bedtime, Robot, Russian | JSON: id, name, engine, model, voice, character, speed (0.5–2), pause (0–3 s), language; read leniently and clamped, each id once, at most 9, never none |
+| readAloudDefaultPreset | the Narrator's id | the preset the sheet starts with; unknown reads as the first |
+| readAloudFolder | `~/Desktop` | where ⌘S saves; empty reads as the default |
+| readAloudFormat | `m4a` | `m4a` or `wav`; unknown reads as `m4a` |
+| readAloudLongLimit | 3 000 | 500–20 000 characters, clamped: a longer paid reading shows its price and waits for ⏎ |
+| toolsScreenKnown | every tool | not shown: the tools there were when the Tools screen's list was read, so a new one joins an arranged list once |
 | toolsScreenEnabled | true | the Tools screen (§7.15); off, its shortcut is let go, the menu item and the Actions sheet's wrench hide |
 | toolsScreenShortcutEnabled / toolsScreenShortcutKeyCode / toolsScreenShortcutModifiers | true / K / ⌃⌥ | the screen, as `shortcut` |
 | toolsScreenTools | all eight, in `Tools.Tool` order | the tiles shown, in order; unknown and doubled codes are dropped on load |
@@ -3030,7 +3108,7 @@ Settings window: 1280×760 points (it fits a 1280×800 laptop screen). On the le
 sidebar 220 wide: a search box, then twenty-one pages under five headings (`SettingsGroup`):
 *Creatures & world* (Creatures, Actions, Sprites, Beds, Flowers, Calendar), *Games*
 (Chases, Play, Ball games), *Talk & friends* (Talk, Voice, Bonds, Relationships),
-*Tools* (Tools screen, Reminders, Clipboard, Screenshots, Dictation, Translate) and *Money & history* (Costs,
+*Tools* (Tools screen, Reminders, Clipboard, Screenshots, Dictation, Translate, Read aloud) and *Money & history* (Costs,
 Chats), each heading's pages with its pixel picture. On the right the page: its
 group and name, then two columns that scroll on their own so a page fits on one
 screen (Chats is a day list beside the day's exchanges). The search (⌘F) looks

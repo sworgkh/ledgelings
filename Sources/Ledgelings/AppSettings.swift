@@ -591,6 +591,51 @@ final class AppSettings: ObservableObject {
     /// The languages that are on, in the chips' order.
     var translateLanguagesOn: [Translate.Language] { Translate.on(translateLanguages) }
 
+    // MARK: Read aloud
+
+    /// Read aloud (§7.16): text in, sound out. Off: no shortcut is taken, the picker has no button, the menu item goes.
+    @Published var readAloudEnabled: Bool { didSet { save(readAloudEnabled, "readAloudEnabled") } }
+    @Published var readAloudShortcutEnabled: Bool { didSet { save(readAloudShortcutEnabled, "readAloudShortcutEnabled") } }
+    @Published var readAloudShortcut: Shortcut {
+        didSet { save(readAloudShortcut.keyCode, "readAloudShortcutKeyCode"); save(readAloudShortcut.modifiers.rawValue, "readAloudShortcutModifiers") }
+    }
+    /// The sheet opens with the clipboard's text already in it.
+    @Published var readAloudFromClipboard: Bool { didSet { save(readAloudFromClipboard, "readAloudFromClipboard") } }
+    /// …and starts reading it at once (a long paid text still waits for ⏎).
+    @Published var readAloudStartAtOnce: Bool { didSet { save(readAloudStartAtOnce, "readAloudStartAtOnce") } }
+    /// The reading goes on when the sheet closes; the menu's Stop Reading ends it.
+    @Published var readAloudKeepReading: Bool { didSet { save(readAloudKeepReading, "readAloudKeepReading") } }
+    /// A read-aloud button on every text row of the clipboard picker (⌘R).
+    @Published var readAloudPickerButton: Bool { didSet { save(readAloudPickerButton, "readAloudPickerButton") } }
+    /// A creature brings the sheet and reads beside it.
+    @Published var readAloudHelperEnabled: Bool { didSet { save(readAloudHelperEnabled, "readAloudHelperEnabled") } }
+    /// Who: a name, or empty for whoever is nearest the middle.
+    @Published var readAloudHelper: String { didSet { save(readAloudHelper, "readAloudHelper") } }
+    /// The presets, in the sheet's order (⌘1…); never empty.
+    @Published var readAloudPresets: [ReadAloud.Preset] { didSet { saveJSON(readAloudPresets, "readAloudPresets") } }
+    /// The id of the preset the sheet starts with.
+    @Published var readAloudDefaultPreset: String { didSet { save(readAloudDefaultPreset, "readAloudDefaultPreset") } }
+    /// Where Save… puts the sound file first; `~` is the home folder.
+    @Published var readAloudFolder: String { didSet { save(readAloudFolder, "readAloudFolder") } }
+    @Published var readAloudFormat: ReadAloud.Format { didSet { save(readAloudFormat.rawValue, "readAloudFormat") } }
+    /// Longer than this many characters, a paid reading waits for ⏎, its price shown first.
+    @Published var readAloudLongLimit: Int { didSet { save(readAloudLongLimit, "readAloudLongLimit") } }
+    /// Why the read-aloud shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var readAloudShortcutProblem = ""
+
+    static let defaultReadAloudFolder = "~/Desktop"
+
+    /// The preset the sheet starts with: the chosen one, else the first.
+    var readAloudDefault: ReadAloud.Preset {
+        readAloudPresets.first { $0.id.uuidString == readAloudDefaultPreset } ?? readAloudPresets.first ?? ReadAloud.defaultPresets[0]
+    }
+
+    /// The save folder as a file URL, the home folder for `~`.
+    var readAloudFolderURL: URL {
+        let path = (readAloudFolder.trimmingCharacters(in: .whitespaces).isEmpty ? Self.defaultReadAloudFolder : readAloudFolder) as NSString
+        return URL(fileURLWithPath: path.expandingTildeInPath, isDirectory: true)
+    }
+
     // MARK: Dictation
 
     /// Dictation (§7.13). Off: no dictation shortcut is taken and the menu item goes.
@@ -1022,7 +1067,34 @@ final class AppSettings: ObservableObject {
         toolsScreenShortcutEnabled = defaults.object(forKey: "toolsScreenShortcutEnabled") as? Bool ?? true
         toolsScreenShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "toolsScreenShortcutKeyCode") as? Int,
                                        savedModifiers: defaults.object(forKey: "toolsScreenShortcutModifiers") as? Int, standard: .tools)
-        toolsScreenTools = Tools.shown(defaults.stringArray(forKey: "toolsScreenTools") ?? Tools.defaultShown).map(\.rawValue)
+        if let saved = defaults.stringArray(forKey: "toolsScreenTools") {
+            // A tool added since the list was arranged joins it once; switched off after that, it stays off.
+            let tools = Tools.withNew(saved, known: defaults.stringArray(forKey: "toolsScreenKnown"))
+            toolsScreenTools = tools
+            if tools != saved { defaults.set(tools, forKey: "toolsScreenTools") }
+        } else {
+            toolsScreenTools = Tools.defaultShown
+        }
+        if defaults.stringArray(forKey: "toolsScreenKnown") != Tools.defaultShown { defaults.set(Tools.defaultShown, forKey: "toolsScreenKnown") }
+        readAloudEnabled = defaults.object(forKey: "readAloudEnabled") as? Bool ?? true
+        readAloudShortcutEnabled = defaults.object(forKey: "readAloudShortcutEnabled") as? Bool ?? true
+        readAloudShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "readAloudShortcutKeyCode") as? Int,
+                                     savedModifiers: defaults.object(forKey: "readAloudShortcutModifiers") as? Int, standard: .readAloud)
+        readAloudFromClipboard = defaults.object(forKey: "readAloudFromClipboard") as? Bool ?? true
+        readAloudStartAtOnce = defaults.object(forKey: "readAloudStartAtOnce") as? Bool ?? true
+        readAloudKeepReading = defaults.object(forKey: "readAloudKeepReading") as? Bool ?? true
+        readAloudPickerButton = defaults.object(forKey: "readAloudPickerButton") as? Bool ?? true
+        readAloudHelperEnabled = defaults.object(forKey: "readAloudHelperEnabled") as? Bool ?? true
+        readAloudHelper = defaults.string(forKey: "readAloudHelper") ?? ""
+        let presets = ReadAloud.cleaned(defaults.data(forKey: "readAloudPresets")
+            .flatMap { try? JSONDecoder().decode([ReadAloud.Preset].self, from: $0) } ?? ReadAloud.defaultPresets)
+        readAloudPresets = presets
+        let chosen = defaults.string(forKey: "readAloudDefaultPreset") ?? ReadAloud.defaultPresetID.uuidString
+        readAloudDefaultPreset = presets.contains { $0.id.uuidString == chosen } ? chosen : presets[0].id.uuidString
+        readAloudFolder = defaults.string(forKey: "readAloudFolder").flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 } ?? Self.defaultReadAloudFolder
+        readAloudFormat = defaults.string(forKey: "readAloudFormat").flatMap(ReadAloud.Format.init(rawValue:)) ?? .m4a
+        let long = defaults.object(forKey: "readAloudLongLimit") as? Int ?? ReadAloud.defaultLongLimit
+        readAloudLongLimit = min(max(long, ReadAloud.longLimitRange.lowerBound), ReadAloud.longLimitRange.upperBound)
         translateEnabled = defaults.object(forKey: "translateEnabled") as? Bool ?? true
         translateShortcutEnabled = defaults.object(forKey: "translateShortcutEnabled") as? Bool ?? true
         translateShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "translateShortcutKeyCode") as? Int,

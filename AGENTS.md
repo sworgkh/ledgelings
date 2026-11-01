@@ -84,7 +84,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
   writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames,
-  talk, voice, bonds, relationships, tools, reminders, clipboard, screenshots, dictation, translate, costs, chats;
+  talk, voice, bonds, relationships, tools, reminders, clipboard, screenshots, dictation, translate, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place;
   `productivity`, the old tools tab, still opens Reminders).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
@@ -138,11 +138,18 @@ with `scripts/make-app.sh`, installed and seen working.
   [--to he] [--snapshot out.png]` opens the sheet on the real screen and writes it once translated;
   `--translate-film out.mp4` films the sheet offscreen (stills beside it). `LEDGELINGS_FAKE_TRANSLATE=1`: hand-written
   answers, no key, no network (the way to run them headless: a new build reading the key blocks on the keychain).
+- `--read "text" [--preset name] [--engine system] [--out file.m4a] [--mute]` reads through the real calls and prints the provider,
+  voice, time to first sound, length and price (`read provider openRouter · Charon on … · first sound after 1.9 s · …`);
+  `--read-bench [--models a,b]` asks each candidate speech model for the same EN/RU/HE paragraph without playing it,
+  and has the dictation model write each down again; `--read-sheet "text" [--preset name] [--snapshot out.png] [--mute]`
+  opens the sheet on the real screen, reads, writes the paper and closes. All priced under Read aloud. `--engine system`
+  reads with the Mac's voices: no key, no keychain prompt, free (headless, with `brainProvider` set to `script`).
 - `--tools [--snapshot out.png]` opens the Tools screen on the real screen, prints each tile with its tag
   (`tools 1 translate: Type to translate (1 · ⌃⌥T)`), writes the paper to a PNG and closes.
 - `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
   `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`, `shortcut ⌃⌥S screenshot registered`,
-  `shortcut ⇧⌘8 full screen registered`, `shortcut ⇧⌘\ last rectangle registered`, `shortcut ⌃⌥D dictation registered`, `shortcut ⌃⌥T translate registered`, `shortcut ⌃⌥K tools registered`),
+  `shortcut ⇧⌘8 full screen registered`, `shortcut ⇧⌘\ last rectangle registered`, `shortcut ⌃⌥D dictation registered`, `shortcut ⌃⌥T translate registered`, `shortcut ⌃⌥K tools registered`,
+  `shortcut ⌃⌥R read aloud registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
 - `--shot-check` prints whether this build has Screen Recording and whether each monitor's capture
   shows the screen (`shot Built-in Retina Display: 3024×1964 px at 2×, 412 colours in a sample`); exit 1 if

@@ -38,6 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private(set) lazy var translate = TranslateController(settings: settings, spend: spend, clips: clips, watcher: { [weak self] in self?.clipWatcher },
                                                           helper: { [weak self] in self?.colony })
     private lazy var toolsScreen = ToolsScreenController(settings: settings)
+    private(set) lazy var readAloud = ReadAloudController(settings: settings, spend: spend, voice: voice, library: library, clips: clips,
+                                                          watcher: { [weak self] in self?.clipWatcher }, helper: { [weak self] in self?.colony })
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
     private var shortcutShown: AnyCancellable?
@@ -243,6 +245,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         shots.takeShortcuts { [weak self] in self?.shotShortcutPressed($0) }
         dictation.takeShortcut { [weak self] in self?.dictationShortcutPressed() }
         translate.takeShortcuts { [weak self] in self?.translateShortcutPressed($0) }
+        readAloud.takeShortcut { [weak self] in self?.readAloudShortcutPressed() }
+        settingsWindow.readAloud = readAloud
+        picker.readRow = { [weak self] in self?.readAloud.read($0) }
         setUpToolsScreen()
         translate.sheet.openSettings = { [weak self] in self?.settingsWindow.show(.translate) }
         picker.translateRow = { [weak self] text, after in
@@ -281,6 +286,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let translateState = !settings.translateEnabled || !on ? "off" : problem.isEmpty ? "registered" : "refused: \(problem)"
                 FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(key)) \(name) \(translateState)\n".utf8))
             }
+            let readState = !settings.readAloudEnabled || !settings.readAloudShortcutEnabled ? "off"
+                : settings.readAloudShortcutProblem.isEmpty ? "registered" : "refused: \(settings.readAloudShortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.readAloudShortcut)) read aloud \(readState)\n".utf8))
             Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
         }
         // `--shot-demo [--snapshot out.png]`: a shot of the real screen with marks, the clipboard put back after.
@@ -308,6 +316,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let translate = translate, spend = spend
             Task { @MainActor in
                 exit(await TranslateDemo.bench(runs: value("--runs").flatMap(Int.init) ?? 10, controller: translate, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        // `--read "text" [--preset name] [--out file.m4a]`, `--read-bench`, `--read-sheet "text" [--snapshot out.png]`:
+        // Read aloud from a terminal, through the real calls.
+        if let text = value("--read") {
+            let readAloud = readAloud, spend = spend
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.5))
+                exit(await ReadAloudDemo.once(text, preset: value("--preset"), out: value("--out").map { URL(fileURLWithPath: $0) },
+                                              controller: readAloud, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        if args.contains("--read-bench") {
+            let readAloud = readAloud, spend = spend
+            Task { @MainActor in
+                exit(await ReadAloudDemo.bench(models: value("--models"), controller: readAloud, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        if let text = value("--read-sheet") {
+            let readAloud = readAloud
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                readAloud.trace = { FileHandle.standardError.write(Data("  \($0)\n".utf8)) }
+                exit(await ReadAloudDemo.sheet(text, preset: value("--preset"), snapshot: value("--snapshot").map { URL(fileURLWithPath: $0) },
+                                               controller: readAloud, settings: settings) ? 0 : 1)
             }
         }
         // `--tools [--snapshot out.png]`: the Tools screen on the real screen, written to a PNG, then closed.
@@ -576,6 +609,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let shotLastItem = NSMenuItem(title: "", action: #selector(takeLastShot), keyEquivalent: "")
     private let dictationItem = NSMenuItem(title: "", action: #selector(dictate), keyEquivalent: "")
     private let translateItem = NSMenuItem(title: "", action: #selector(openTranslate), keyEquivalent: "")
+    private let readAloudItem = NSMenuItem(title: "", action: #selector(openReadAloud), keyEquivalent: "")
+    private let stopReadingItem = NSMenuItem(title: "", action: #selector(stopReading), keyEquivalent: "")
     private let toolsItem = NSMenuItem(title: "", action: #selector(openToolsScreen), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
@@ -593,7 +628,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(activitiesItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
-        for item in [toolsItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem] {
+        for item in [toolsItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem, readAloudItem, stopReadingItem] {
             item.target = self
             menu.addItem(item)
         }
@@ -685,6 +720,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let translateKey = GlobalShortcut.keyName(settings.translateShortcut.keyCode).lowercased()
         translateItem.keyEquivalent = settings.translateShortcutEnabled && translateKey.count == 1 ? translateKey : ""
         translateItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.translateShortcut.modifiers)
+        readAloudItem.title = tr("Read Aloud…")
+        readAloudItem.isHidden = !settings.readAloudEnabled
+        let readKey = GlobalShortcut.keyName(settings.readAloudShortcut.keyCode).lowercased()
+        readAloudItem.keyEquivalent = settings.readAloudShortcutEnabled && readKey.count == 1 ? readKey : ""
+        readAloudItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.readAloudShortcut.modifiers)
+        stopReadingItem.title = tr("Stop Reading")
+        stopReadingItem.isHidden = !readAloud.player.isActive
         toolsItem.title = tr("Tools…")
         toolsItem.isHidden = !settings.toolsScreenEnabled
         let toolsKey = GlobalShortcut.keyName(settings.toolsScreenShortcut.keyCode).lowercased()
@@ -770,6 +812,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // From the menu: once it has closed, so the sheet knows the app that was in front.
     @objc private func openToolsScreen() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); toolsScreen.show() } }
     @objc private func openTranslate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); translate.sheet.show() } }
+    @objc private func openReadAloud() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); if !readAloud.sheet.isUp { readAloud.sheet.toggle() } } }
+    @objc private func stopReading() { readAloud.player.stop() }
+
+    /// The read-aloud shortcut from any app, for `--shortcut`: said, then quit once the sheet is closed.
+    private func readAloudShortcutPressed() {
+        guard CommandLine.arguments.contains("--shortcut") else { return }
+        FileHandle.standardError.write(Data("shortcut pressed: read aloud\n".utf8))
+        Task { @MainActor in try? await Task.sleep(for: .seconds(2)); while readAloud.sheet.isUp { try? await Task.sleep(for: .seconds(0.2)) }; readAloud.player.stop(); exit(0) }
+    }
 
     /// A translate shortcut from any app, for `--shortcut`: said, then quit once the sheet is closed.
     private func translateShortcutPressed(_ which: String) {
@@ -848,6 +899,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let self else { return }
             switch tool {
             case .translate: translate.sheet.show()
+            case .readAloud: if !readAloud.sheet.isUp { readAloud.sheet.toggle() }
             case .dictation: dictation.press()
             case .screenshot: shots.withToolbar()
             case .fullScreen: shots.fullScreen()
@@ -861,6 +913,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let s = self?.settings else { return false }
             switch tool {
             case .translate: return s.translateEnabled
+            case .readAloud: return s.readAloudEnabled
             case .dictation: return s.dictationEnabled
             case .screenshot, .fullScreen, .lastRectangle: return s.shotEnabled
             case .clipHistory, .snippets: return s.clipboardEnabled
@@ -871,6 +924,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let s = self?.settings else { return nil }
             let pair: (Bool, Shortcut)? = switch tool {
             case .translate: (s.translateShortcutEnabled, s.translateShortcut)
+            case .readAloud: (s.readAloudShortcutEnabled, s.readAloudShortcut)
             case .dictation: (s.dictationShortcutEnabled, s.dictationShortcut)
             case .screenshot: (s.shotCaptureShortcutEnabled, s.shotCaptureShortcut)
             case .fullScreen: (s.shotFullShortcutEnabled, s.shotFullShortcut)

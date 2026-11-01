@@ -46,6 +46,8 @@ final class ClipPickerController {
     var translateRow: ((String, Translate.Language?) async -> (target: Translate.Language?, result: Result<String, Translator.Trouble>))?
     /// The row's words in the Translate sheet.
     var openInSheet: ((String) -> Void)?
+    /// The row's words read aloud, in the Read aloud sheet; nil: no read buttons.
+    var readRow: ((String) -> Void)?
     private var translating: Task<Void, Never>?
 
     init(settings: AppSettings, book: ClipBook, watcher: @escaping () -> ClipWatcher?, editSnippets: @escaping () -> Void,
@@ -63,6 +65,7 @@ final class ClipPickerController {
         model.edit = { [weak self] in self?.close(); self?.editSnippets() }
         model.translate = { [weak self] in self?.toggleTranslation($0) }
         model.openTranslation = { [weak self] in self?.openTranslationInSheet() }
+        model.read = { [weak self] in self?.read($0) }
     }
 
     var isUp: Bool { panel != nil }
@@ -87,6 +90,7 @@ final class ClipPickerController {
         model.needsTrust = settings.clipAutoPaste && !ClipPaster.trusted
         model.plainFirst = settings.clipPlainText
         model.translateOn = translateRow != nil && settings.translateEnabled && settings.translatePickerButton
+        model.readOn = readRow != nil && settings.readAloudEnabled && settings.readAloudPickerButton
         model.translation = nil
         model.refresh(selectFirst: true)
         model.unfolded = !settings.clipAnimate
@@ -156,6 +160,7 @@ final class ClipPickerController {
         case kVK_ANSI_T where command && flags.contains(.shift) && model.translateOn: openTranslationInSheet()
         case kVK_ANSI_T where command && model.translateOn: model.selectedRow.map(toggleTranslation)
         case kVK_Tab where option && model.translation != nil: nextTarget()
+        case kVK_ANSI_R where command && model.readOn: model.selectedRow.map(read)
         case kVK_DownArrow: model.step(1)
         case kVK_UpArrow: model.step(-1)
         case kVK_PageDown: model.step(8)
@@ -202,8 +207,8 @@ final class ClipPickerController {
     // MARK: Translating a row
 
     /// The words a row would be translated from, or nil when it may not be.
-    private func words(of row: ClipPickerModel.Row) -> String? {
-        guard row.translatable else { return nil }
+    private func words(of row: ClipPickerModel.Row, reading: Bool = false) -> String? {
+        guard reading ? row.readable : row.translatable else { return nil }
         switch row.group {
         case .recent: return book.history.clips.first { $0.id == row.id }?.text
         case .snippets: return book.snippets.snippet(row.id).flatMap { $0.protected ? nil : $0.text }
@@ -240,6 +245,14 @@ final class ClipPickerController {
                 self.model.translation = .init(id: row.id, target: target, state: .trouble(trouble == .empty ? Translate.Refusal.nothingToTranslate.line : trouble.line))
             }
         }
+    }
+
+    /// ⌘R or the row's button: the picker goes, the row's words are read aloud in the Read aloud sheet.
+    func read(_ row: ClipPickerModel.Row) {
+        guard row.readable, let words = words(of: row, reading: true), let readRow else { NSSound.beep(); return }
+        trace?("read row \(row.text.prefix(40))")
+        close()
+        readRow(words)
     }
 
     /// ⌘⇧T: the row's words in the Translate sheet; the picker goes.
@@ -409,7 +422,8 @@ protocol ClipHelping: AnyObject {
 }
 
 enum ClipHelperMood: Equatable {
-    case calm, thinking, puzzled
+    /// `reading`: Read aloud's reader, nodding over the page with a dot running in its bubble.
+    case calm, thinking, puzzled, reading
 }
 
 /// A borderless, see-through panel over the screen that takes the keyboard
@@ -515,6 +529,8 @@ final class ClipPickerModel: ObservableObject {
         var masked = false
         /// It has words a model may see: text, not a picture, a file, a password or a protected snippet.
         var translatable = false
+        /// It may be read aloud: the same rule, and words to say.
+        var readable = false
     }
 
     @Published var query = "" { didSet { if query != oldValue { refresh(selectFirst: true) } } }
@@ -537,6 +553,8 @@ final class ClipPickerModel: ObservableObject {
     @Published private(set) var counts = (recent: 0, snippets: 0)
     /// Rows get a translate button (⌘T): the translator is on and so is its button.
     @Published var translateOn = false
+    /// Rows get a read-aloud button (⌘R): Read aloud is on and so is its button.
+    @Published var readOn = false
     /// A row's translation, open under it.
     @Published var translation: RowTranslation?
 
@@ -556,6 +574,7 @@ final class ClipPickerModel: ObservableObject {
     var edit: () -> Void = {}
     var translate: (Row) -> Void = { _ in }
     var openTranslation: () -> Void = {}
+    var read: (Row) -> Void = { _ in }
 
     var selectedRow: Row? { rows.first { $0.id == selected } }
 
@@ -569,12 +588,14 @@ final class ClipPickerModel: ObservableObject {
             let mask = snippets.mask(for: clip)
             return Row(id: clip.id, group: .recent, text: mask ?? clip.preview(90), detail: Self.detail(clip, now: now), title: nil,
                        pinned: clip.pinned, protected: false, thumbnail: thumbnail(clip), masked: mask != nil,
-                       translatable: translateOn && Translate.mayTranslate(clip, snippets: snippets))
+                       translatable: translateOn && Translate.mayTranslate(clip, snippets: snippets),
+                       readable: readOn && ReadAloud.refusal(clip, snippets: snippets) == nil)
         }
         let saved = found.snippets.map { snippet in
             Row(id: snippet.id, group: .snippets, text: snippet.preview(90), detail: snippets.folder(of: snippet.id)?.title ?? "",
                 title: snippet.title, pinned: false, protected: snippet.protected,
-                translatable: translateOn && Translate.refusal(snippet, snippets: snippets) == nil)
+                translatable: translateOn && Translate.refusal(snippet, snippets: snippets) == nil,
+                readable: readOn && ReadAloud.refusal(snippet, snippets: snippets) == nil)
         }
         rows = first == .recent ? recent + saved : saved + recent
         counts = (recent.count, saved.count)
@@ -765,6 +786,12 @@ struct ClipPickerView: View {
             Text(row.protected ? tr("LOCKED · %@", row.detail) : row.detail)
                 .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
                 .lineLimit(1)
+            if row.readable {
+                Button { model.read(row) } label: { PixelIcon(rows: ReadAloud.Button.readRow.icon).opacity(chosen ? 1 : 0.55) }
+                    .buttonStyle(.plain)
+                    .modifier(PixelTag(text: ReadAloud.Button.readRow.tooltip))
+                    .accessibilityLabel(ReadAloud.Button.readRow.tooltip)
+            }
             if row.translatable {
                 Button { model.translate(row) } label: { PixelIcon(rows: Translate.Button.translate.icon).opacity(chosen ? 1 : 0.55) }
                     .buttonStyle(.plain)
@@ -808,6 +835,7 @@ struct ClipPickerView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Text(model.checking ? tr("Touch the fingerprint sensor…")
+                 : model.translateOn && model.readOn ? tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘T TRANSLATE  ⌘R READ  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN"))
                  : model.translateOn ? tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘T TRANSLATE  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN"))
                  : tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN")))
                 .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)

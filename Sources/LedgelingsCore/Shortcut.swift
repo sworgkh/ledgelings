@@ -39,6 +39,8 @@ public struct Shortcut: Equatable, Sendable {
     public static let translate = Shortcut(keyCode: 17, modifiers: [.control, .option])
     /// Translate the last copy: Control-Option-Shift-T, the same key with Shift.
     public static let translateClip = Shortcut(keyCode: 17, modifiers: [.control, .option, .shift])
+    /// Read aloud: Control-Option-R, R for read.
+    public static let readAloud = Shortcut(keyCode: 15, modifiers: [.control, .option])
 
     public var keyCode: Int
     public var modifiers: Modifiers
