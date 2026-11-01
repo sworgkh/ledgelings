@@ -229,7 +229,27 @@ public sealed class SpeechClient
     public async Task<(byte[] Audio, string? Generation)> Speak(string text, string? voice, double? speed, string format = "pcm", CancellationToken cancel = default)
     {
         var reply = await Send(Request(text, voice, speed, format), Timeout, cancel);
-        return (Audio(reply.Body, reply.Type), reply.Generation);
+        return Read(reply.Body, reply.Type, reply.Answered, reply.Generation);
+    }
+
+    /// <summary>A reply that was answered (2xx, with a generation id) but held no sound to play: an empty
+    /// body, a web page. It was paid for, so the caller prices it by <see cref="Generation"/> (AGENTS rule 1)
+    /// before saying what went wrong, which is <see cref="Failure"/>.</summary>
+    public sealed class Unusable(string generation, ChatClient.Failure failure) : Exception(failure.Message, failure)
+    {
+        public string Generation { get; } = generation;
+        public ChatClient.Failure Failure { get; } = failure;
+    }
+
+    /// <summary>The reply as playable audio and its id. A refusal stays a refusal (the format and speed
+    /// retries read it); any other trouble with an answered reply that has an id is <see cref="Unusable"/>.</summary>
+    public static (byte[] Audio, string? Generation) Read(byte[] body, string? contentType, bool answered, string? generation)
+    {
+        try { return (Audio(body, contentType), generation); }
+        catch (ChatClient.Failure failure) when (failure.Refusal is null && answered && !string.IsNullOrEmpty(generation))
+        {
+            throw new Unusable(generation!, failure);
+        }
     }
 
     /// <summary>What the call cost, asked a few times because the answer lands late.
@@ -251,7 +271,7 @@ public sealed class SpeechClient
     }
 
     /// <summary>What came back: the body, its type, and OpenRouter's id for the call.</summary>
-    private sealed record Reply(byte[] Body, string? Type, string? Generation);
+    private sealed record Reply(byte[] Body, string? Type, string? Generation, bool Answered);
 
     /// <summary>One request, its reply read whole. A failed status with no JSON complaint in the body
     /// (a proxy's HTML page, a crashed server) is the server being down, not audio; a JSON complaint
@@ -268,7 +288,7 @@ public sealed class SpeechClient
             if (!response.IsSuccessStatusCode && ChatClient.ServerError(Encoding.UTF8.GetString(body)) is null)
                 throw ChatClient.Failure.ServerDown($"HTTP {(int)response.StatusCode}");
             var generation = response.Headers.TryGetValues("X-Generation-Id", out var ids) ? ids.FirstOrDefault() : null;
-            return new Reply(body, response.Content.Headers.ContentType?.ToString(), generation);
+            return new Reply(body, response.Content.Headers.ContentType?.ToString(), generation, response.IsSuccessStatusCode);
         }
         catch (OperationCanceledException) when (cancel.IsCancellationRequested) { throw; }
         catch (OperationCanceledException) { throw ChatClient.Failure.ServerDown(L10n.Tr("it took too long")); }

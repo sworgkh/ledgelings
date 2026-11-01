@@ -75,8 +75,12 @@ struct SpeechClient: Sendable {
             if let message = ChatClient.serverError(in: data) { throw ChatClient.Failure.refused(message) }
             throw ChatClient.Failure.badReply(String(decoding: data.prefix(160), as: UTF8.self))
         }
-        guard !data.isEmpty else { throw ChatClient.Failure.badReply(tr("no audio"))
- }
+        guard !data.isEmpty else { throw ChatClient.Failure.badReply(tr("no audio")) }
+        // Text or a web page is not a clip, whatever the status said (as on Windows).
+        if !type.isEmpty, !type.hasPrefix("audio/"), !type.hasPrefix("application/octet-stream") {
+            throw ChatClient.Failure.badReply(tr("%@, not audio: %@", String(type.split(separator: ";").first ?? ""),
+                                                 String(decoding: data.prefix(120), as: UTF8.self)))
+        }
         guard type.hasPrefix("audio/pcm") || type.hasPrefix("audio/l16") else { return data }
         func parameter(_ name: String) -> Int? {
             type.split(separator: ";").lazy.compactMap { part -> Int? in
@@ -191,8 +195,28 @@ struct SpeechClient: Sendable {
         catch let failure as ChatClient.Failure { throw failure }
         catch { throw ChatClient.Failure.serverDown(error.localizedDescription) }
         let http = response as? HTTPURLResponse
-        let audio = try Self.audio(data, contentType: http?.value(forHTTPHeaderField: "Content-Type"))
-        return (audio, http?.value(forHTTPHeaderField: "X-Generation-Id"))
+        return try Self.read(data, contentType: http?.value(forHTTPHeaderField: "Content-Type"), status: http?.statusCode ?? 200,
+                             generation: http?.value(forHTTPHeaderField: "X-Generation-Id"))
+    }
+
+    /// A reply that was answered (2xx, with a generation id) but held no sound to play: an
+    /// empty body, a web page. It was paid for, so the caller prices it by `generation`
+    /// (AGENTS rule 1) before saying what went wrong.
+    struct Unusable: Error {
+        let generation: String
+        let failure: ChatClient.Failure
+    }
+
+    /// The reply as playable audio and its id. A refusal stays a refusal (the format and speed
+    /// retries read it); any other trouble with a 2xx reply that has an id is `Unusable`.
+    static func read(_ data: Data, contentType: String?, status: Int, generation: String?) throws -> (audio: Data, generation: String?) {
+        do {
+            return (try audio(data, contentType: contentType), generation)
+        } catch let failure as ChatClient.Failure {
+            if case .refused = failure { throw failure }
+            guard (200..<300).contains(status), let generation, !generation.isEmpty else { throw failure }
+            throw Unusable(generation: generation, failure: failure)
+        }
     }
 
     /// What the call cost, asked a few times because the answer lands late.

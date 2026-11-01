@@ -14,6 +14,24 @@ public class SpeechClientTests
 
     private static byte[] Bytes(string text) => Encoding.UTF8.GetBytes(text);
 
+    /// <summary>AGENTS rule 1: a 200 that held no sound was still paid for, so it keeps its id to be priced by.</summary>
+    [Fact]
+    public void AnAnsweredReplyWithNoSoundKeepsItsIdToBePriced()
+    {
+        Assert.Equal("gen-42", Assert.Throws<SpeechClient.Unusable>(() => SpeechClient.Read(Array.Empty<byte>(), "audio/pcm;rate=24000", true, "gen-42")).Generation);
+        Assert.Equal("gen-42", Assert.Throws<SpeechClient.Unusable>(() => SpeechClient.Read(Bytes("<html>oops</html>"), "text/html", true, "gen-42")).Generation);
+        Assert.Equal("gen-42", Assert.Throws<SpeechClient.Unusable>(() => SpeechClient.Read(Bytes("{\"choices\":[]}"), "application/json", true, "gen-42")).Generation);
+        // No id: nothing to price it by. Not answered: not paid. Both stay plain failures.
+        Assert.IsType<ChatClient.Failure>(Assert.ThrowsAny<Exception>(() => SpeechClient.Read(Array.Empty<byte>(), "audio/mpeg", true, null)));
+        Assert.IsType<ChatClient.Failure>(Assert.ThrowsAny<Exception>(() => SpeechClient.Read(Array.Empty<byte>(), "audio/mpeg", false, "gen-1")));
+        // A refusal stays a refusal, for the format and speed retries.
+        var refused = Assert.Throws<ChatClient.Failure>(() => SpeechClient.Read(Bytes("{\"error\":{\"message\":\"Only mp3\"}}"), "application/json", true, "gen-1"));
+        Assert.Equal("Only mp3", refused.Refusal);
+        var good = SpeechClient.Read(new byte[] { 1, 2, 3, 4 }, "audio/mpeg", true, "gen-7");
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, good.Audio);
+        Assert.Equal("gen-7", good.Generation);
+    }
+
     [Fact]
     public void TheRequestAsksForPCMWithTheKeyVoiceAndSpeed()
     {

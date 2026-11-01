@@ -510,6 +510,12 @@ public sealed class ReadAloudPlayer
         for (var attempt = 0; attempt < 3 && reply is null; attempt++)
         {
             try { reply = await client.Speak(text, name, sendSpeed ? speed : null, format); }
+            catch (SpeechClient.Unusable paid)
+            {
+                // Paid for, though there is nothing to play: priced, then the trouble said.
+                if (!local) Charge(client, paid.Generation, mine);
+                throw paid.Failure;
+            }
             catch (ChatClient.Failure e) when (e.Refusal is string message && attempt < 2)
             {
                 if (SpeechClient.OtherFormat(message, format) is string other)

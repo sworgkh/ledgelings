@@ -7,7 +7,6 @@ public static partial class WindowsStrings
         // Why a server did not answer, after "the server is not answering: ".
         ["timed out"] = "время ожидания истекло",
         ["it took too long"] = "слишком долго",
-        ["%@, not audio: %@"] = "%@, а не звук: %@",
         // Windows' player.
         ["the clip would not play: %@"] = "запись не проигрывается: %@",
         ["the clip would not open"] = "запись не открывается",

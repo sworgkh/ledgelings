@@ -378,6 +378,10 @@ final class ReadAloudPlayer: ObservableObject {
         for attempt in 0..<3 where reply == nil {
             do {
                 reply = try await client.speak(text, voice: name, speed: sendSpeed ? speed : nil, format: format)
+            } catch let paid as SpeechClient.Unusable {
+                // Paid for, though there is nothing to play: priced, then the trouble said.
+                if !local { charge(client, paid.generation) }
+                throw paid.failure
             } catch ChatClient.Failure.refused(let message) where attempt < 2 {
                 if let other = SpeechClient.otherFormat(after: message, tried: format) {
                     format = other
