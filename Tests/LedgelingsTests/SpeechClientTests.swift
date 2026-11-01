@@ -22,6 +22,28 @@ import Testing
         #expect(body["speed"] as? Double == 1.25)
     }
 
+    /// AGENTS rule 1: a 200 that held no sound was still paid for, so it keeps its id to be priced by.
+    @Test func anAnsweredReplyWithNoSoundKeepsItsIdToBePriced() throws {
+        func unusable(_ data: Data, _ type: String?, status: Int = 200, id: String? = "gen-42") -> SpeechClient.Unusable? {
+            do { _ = try SpeechClient.read(data, contentType: type, status: status, generation: id); return nil }
+            catch let paid as SpeechClient.Unusable { return paid }
+            catch { return nil }
+        }
+        #expect(unusable(Data(), "audio/pcm;rate=24000")?.generation == "gen-42", "an empty body")
+        #expect(unusable(Data("<html>oops</html>".utf8), "text/html")?.generation == "gen-42", "a web page")
+        #expect(unusable(Data(#"{"choices":[]}"#.utf8), "application/json")?.generation == "gen-42", "JSON that is not a complaint")
+        #expect(unusable(Data(), "audio/mpeg", id: nil) == nil, "no id: nothing to price it by")
+        #expect(unusable(Data(), "audio/mpeg", status: 502) == nil, "not answered")
+        do {
+            _ = try SpeechClient.read(Data(#"{"error":{"message":"Only mp3"}}"#.utf8), contentType: "application/json", status: 200, generation: "gen-1")
+            Issue.record("a refusal must throw")
+        } catch ChatClient.Failure.refused(let message) {
+            #expect(message == "Only mp3", "a refusal stays a refusal, for the format and speed retries")
+        } catch { Issue.record("a refusal became \(error)") }
+        let good = try SpeechClient.read(Data([1, 2, 3, 4]), contentType: "audio/mpeg", status: 200, generation: "gen-7")
+        #expect(good.audio == Data([1, 2, 3, 4]) && good.generation == "gen-7")
+    }
+
     @Test func aModelThatRefusesAFormatIsAskedForTheOneItNames() throws {
         #expect(SpeechClient.otherFormat(after: #"MiniMax TTS only supports response_format="mp3" for streaming. Got "pcm"."#, tried: "pcm") == "mp3")
         #expect(SpeechClient.otherFormat(after: #"Gemini TTS only supports response_format="pcm". Got "mp3"."#, tried: "mp3") == "pcm")

@@ -70,6 +70,7 @@ extension Strings {
         ", kept copy, free": ", сохранённая копия, бесплатно",
         "no voices to choose from": "не из каких голосов выбирать",
         "no audio": "нет звука",
+        "%@, not audio: %@": "%@, а не звук: %@",
 
         // Servers and prices
         "the server is not answering: %@": "сервер не отвечает: %@",

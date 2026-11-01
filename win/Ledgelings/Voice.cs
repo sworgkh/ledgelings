@@ -306,6 +306,12 @@ public sealed partial class Voice
                 {
                     reply = await client.Speak(line, voice, sendSpeed ? asked : null, format, cancel.Token);
                 }
+                catch (SpeechClient.Unusable paid)
+                {
+                    // Paid for, though there is nothing to play: priced, then the trouble said.
+                    if (!local) _ = Charge(client, paid.Generation);
+                    throw paid.Failure;
+                }
                 catch (ChatClient.Failure e) when (e.Refusal is string message && attempt < 2)
                 {
                     if (SpeechClient.OtherFormat(message, format) is string other)

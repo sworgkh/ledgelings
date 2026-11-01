@@ -92,6 +92,11 @@ enum ReadAloudDemo {
                 var reply: (audio: Data, generation: String?)?
                 for _ in 0..<2 where reply == nil {
                     do { reply = try await client.speak(text, voice: pool.first, speed: 1, format: format) }
+                    catch let paid as SpeechClient.Unusable {
+                        let usage = await client.cost(of: paid.generation)
+                        spend.record(provider: .openRouter, model: model, usage: usage ?? Spend.Usage(promptTokens: 0, completionTokens: 0, cost: nil), purpose: .readAloud)
+                        say("bench   \(language.code): paid, but \(paid.failure)"); break
+                    }
                     catch ChatClient.Failure.refused(let message) {
                         guard let other = SpeechClient.otherFormat(after: message, tried: format) else { say("bench   \(language.code): refused: \(message)"); break }
                         format = other
