@@ -205,6 +205,17 @@ public static class ClipPaster
         Retry(() => WpfClipboard.SetDataObject(data, true));
     }
 
+    /// <summary>Files on the clipboard, as Explorer's Copy puts them (Read aloud's sound file), marked as ours so the
+    /// history does not keep them.</summary>
+    /// <returns>False when the clipboard stayed busy.</returns>
+    public static bool PutFiles(IReadOnlyList<string> files)
+    {
+        var data = new DataObject();
+        data.SetData(DataFormats.FileDrop, files.ToArray());
+        data.SetData(OwnFormat, "1");
+        return Retry<object>(() => { WpfClipboard.SetDataObject(data, true); return new object(); }) is not null;
+    }
+
     /// <summary>The words, formatting and files on the clipboard now, to put back after a secret was pasted.</summary>
     public static Item? Saved()
     {

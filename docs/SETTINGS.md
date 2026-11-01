@@ -52,7 +52,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
 | **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
 | **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
-| **Read Aloud…** (⌃⌥R from any app) | The Read aloud sheet with the clipboard's text, read out in a preset's voice ([Read aloud](#read-aloud); macOS) |
+| **Read Aloud…** (⌃⌥R from any app; Ctrl+Alt+Shift+R on Windows) | The Read aloud sheet with the clipboard's text, read out in a preset's voice ([Read aloud](#read-aloud)) |
 | **Stop Reading** (only while it reads) | Ends a reading the sheet let go on when it closed |
 | **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
@@ -590,9 +590,9 @@ On Windows the same pages, but Screenshots, under the same heading.
 
 ### Tools screen
 
-On Windows since 0.62.0: **Ctrl+Alt+K**, the tray's **Tools…**, the wrench (K); five tiles, as
-Windows has no screenshot tool yet. A Mac's saved screenshot tiles are skipped. The order is
-changed with **Move up** and **Move down** rather than by dragging.
+On Windows since 0.62.0: **Ctrl+Alt+K**, the tray's **Tools…**, the wrench (K); six tiles since 0.63.0
+(Read aloud the sixth, given once to a list arranged before), as Windows has no screenshot tool yet. A Mac's
+saved screenshot tiles are skipped. The order is changed with **Move up** and **Move down** rather than by dragging.
 
 **⌃⌥K** from any app (or **Tools…** in the menu, or the wrench on the Creature Actions
 sheet, K): a sheet of pixel paper with a big picture tile for each tool: **Translate**,
@@ -921,6 +921,20 @@ retyping costs nothing. A copied or pasted translation is kept in the clipboard 
 
 ### Read aloud
 
+On Windows since 0.63.0, the same sheet and presets, keys the Windows way round: **Ctrl+Alt+Shift+R**
+from any app (Ctrl+Alt+R is already Add a Reminder there; and the tray's **Read Aloud…**, with **Stop
+Reading** while it reads, and the sixth tile of the Tools screen); Enter reads, pauses and goes on,
+Shift+Enter a new line, **Ctrl+.** stops, **Ctrl+-** / **Ctrl+=** the pace, Ctrl+1–9 a preset, **Ctrl+R**
+the next reader, **Ctrl+S** saves, **Ctrl+Shift+C** copies the file, **Ctrl+Shift+Backspace** clears
+(Ctrl+Backspace deletes a word in a Windows text box), Esc closes; **Ctrl+R** in the clipboard picker. The
+Mac's own voices are Windows' own (SAPI), one that speaks each part's language (David or Zira for English,
+Irina for Russian once Windows has the Russian speech pack; Hebrew only where a desktop voice for it is
+installed); a part in a language Windows has no voice for is skipped and the status says so. Windows has
+no time-stretch for a .NET app, so a new pace starts with the next part asked for, not at once. **Save** writes WAV only (Windows has no AAC encoder
+without a new dependency; an M4A choice is kept but writes WAV too), and a part a model sent only as MP3
+plays but is left out of the file. The file goes to the Desktop by default, the copy to
+`%LOCALAPPDATA%\Ledgelings\Read aloud\`. The sheet takes the keyboard, as the picker does. The settings are one column.
+
 **⌃⌥R** from any app (or **Read Aloud…** in the menu, or its tile on the Tools screen): a creature
 leaps to the middle of the screen with a sheet of pixel paper holding the clipboard's text, and
 reads it out, nodding over the page with a dot running along its bubble. The text is cut into
@@ -959,12 +973,12 @@ Over 3 000 characters a paid reading first says its parts and price and waits fo
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Read aloud** (`readAloudEnabled`) | on | | Off: the shortcut is let go, the picker has no button, the menu item and the tile go grey |
-| **Open the sheet** (`readAloudShortcut…`) | on, ⌃⌥R | | Click the keys to record others. Refused by the system: a red line says so |
+| **Open the sheet** (`readAloudShortcut…`) | on, ⌃⌥R (Windows Ctrl+Alt+Shift+R) | | Click the keys to record others. Refused by the system: a red line says so |
 | **Start with the clipboard's text** (`readAloudFromClipboard`) | on | | A protected snippet on the clipboard is not put in; the sheet says why |
 | **Start reading at once** (`readAloudStartAtOnce`) | on | | Only with the clipboard's text; a long paid text still waits for ⏎ |
 | **Keep reading when the sheet closes** (`readAloudKeepReading`) | on | | Off: ⎋ stops it. A paused reading always stops |
 | **Save in** (`readAloudFolder`) | `~/Desktop` | any folder | Choose… picks one; the file is named by the time and the first words |
-| **Format** (`readAloudFormat`) | M4A | or WAV | M4A is AAC at 64 kbit/s, about 0.5 MB a minute; WAV is 16-bit, about 2.9 MB a minute |
+| **Format** (`readAloudFormat`) | M4A | or WAV | M4A is AAC at 64 kbit/s, about 0.5 MB a minute; WAV is 16-bit, about 2.9 MB a minute. On Windows WAV either way |
 | **Ask before sending more than** (`readAloudLongLimit`) | 3 000 | 500 to 20 000 characters | Paid readings only; the Mac's voices never ask |
 | **Read-aloud button in the clipboard picker** (`readAloudPickerButton`) | on | | The loudspeaker on each row and ⌘R |
 | **Who brings the sheet** (`readAloudHelperEnabled`, `readAloudHelper`) | Whoever is nearest the middle | a creature on screen, or *Nobody* | It thinks (dots) while the first part comes, reads (a running dot) while it plays, shrugs (?) at trouble |
@@ -979,7 +993,7 @@ Start with, Try it (a line in the chosen preset), and the chosen one's fields:
 | **Model** | `google/gemini-3.8-flash-lite-tts` | any OpenRouter speech model | Gemini: one voice list for English, Russian and Hebrew |
 | **Voice** | Charon | the model's voices, or *Chosen for the reader* | A Mac voice for the Mac |
 | **Reader** | A narrator | any character of any species | |
-| **Pace** | 1× | 0.5× to 2× | Asked of the model; a model that refuses a pace is stretched on this Mac, the pitch kept |
+| **Pace** | 1× | 0.5× to 2× | Asked of the model; a model that refuses a pace is stretched on this Mac, the pitch kept. On Windows a model that refuses reads at its own, and the sheet's new pace starts with the next part |
 | **Rest after a paragraph** | 0.6 s | 0 to 3 s | |
 | **Language** | Told by its letters | English, Russian, Hebrew | Forced: every part is read as that language |
 

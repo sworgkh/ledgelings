@@ -59,6 +59,20 @@ public sealed class ClipPickerController
     /// <summary>Rows get a translate picture (Ctrl+T): the translator is on and so is its button.</summary>
     internal bool TranslateOn => translateRow is not null && translateOn();
 
+    // Read aloud (SPEC §7.16): a row's words read out in the Read aloud sheet.
+    private Action<string>? readRow;
+    private Func<bool> readOn = () => false;
+
+    /// <summary>Rows get a loudspeaker picture (Ctrl+R): Read aloud is on and so is its button.</summary>
+    internal bool ReadOn => readRow is not null && readOn();
+
+    /// <summary>Handed Read aloud once it is made.</summary>
+    public void UseReader(Action<string> read, Func<bool> on)
+    {
+        readRow = read;
+        readOn = on;
+    }
+
     /// <summary>Handed the translator once it is made.</summary>
     public void UseTranslator(Func<string, Translate.Lang?, Task<(Translate.Lang? Target, string? Text, string? Trouble)>> row,
                               Action<string, Translate.Lang?> sheet, Func<bool> on)
@@ -150,6 +164,7 @@ public sealed class ClipPickerController
             case System.Windows.Input.Key.T when ctrl && modifiers.HasFlag(ModifierKeys.Shift) && TranslateOn: OpenInSheet(); return true;
             case System.Windows.Input.Key.T when ctrl && TranslateOn: if (model.SelectedRow is { } t) ToggleTranslation(t); break;
             case System.Windows.Input.Key.Tab when ctrl && Translation is not null: NextTarget(); break;
+            case System.Windows.Input.Key.R when ctrl && ReadOn: if (model.SelectedRow is { } toRead) Read(toRead); return true;
             case System.Windows.Input.Key.Down: model.Step(1); break;
             case System.Windows.Input.Key.Up: model.Step(-1); break;
             case System.Windows.Input.Key.PageDown: model.Step(8); break;
@@ -223,6 +238,25 @@ public sealed class ClipPickerController
         if (row.Group == ClipPicker.Group.Recent)
             return book.History.Clips.FirstOrDefault(c => c.Id == row.Id) is { } clip && Translate.MayTranslate(clip, book.Snippets) ? clip.Text : null;
         return book.Snippets.Find(row.Id) is { } snippet && Translate.RefusalOf(snippet, book.Snippets) is null ? snippet.Text : null;
+    }
+
+    /// <summary>The words a row would be read from, or null when it may not be (a picture, a protected snippet or a copy
+    /// of its words, nothing sayable).</summary>
+    internal string? ReadWords(ClipPicker.Row row)
+    {
+        if (!ReadOn) return null;
+        if (row.Group == ClipPicker.Group.Recent)
+            return book.History.Clips.FirstOrDefault(c => c.Id == row.Id) is { } clip && ReadAloud.RefusalOf(clip, book.Snippets) is null ? clip.Text : null;
+        return book.Snippets.Find(row.Id) is { } snippet && ReadAloud.RefusalOf(snippet, book.Snippets) is null ? snippet.Text : null;
+    }
+
+    /// <summary>Ctrl+R or the row's loudspeaker: the picker goes, the row's words are read aloud in the Read aloud sheet.</summary>
+    internal void Read(ClipPicker.Row row)
+    {
+        if (ReadWords(row) is not { } words || readRow is null) { System.Media.SystemSounds.Beep.Play(); return; }
+        Trace?.Invoke("read row " + (row.Text.Length <= 40 ? row.Text : row.Text[..40]));
+        Close();
+        readRow(words);
     }
 
     /// <summary>Ctrl+T or the row's picture: its translation opens under it, or closes.</summary>
@@ -515,11 +549,14 @@ internal sealed class ClipPickerWindow : Window
         footer.FontFamily = mono; footer.FontSize = 9; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
         footer.Margin = new Thickness(0, 8, 60, 0);   // clear of the paper's folded-down corner
         footer.TextTrimming = TextTrimming.CharacterEllipsis;
-        footer.Text = controller.TranslateOn
-            ? L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+T TRANSLATE  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE",
-                      settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN"))
-            : L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE",
-                      settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN"));
+        var other = settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN");
+        footer.Text = (controller.TranslateOn, controller.ReadOn) switch
+        {
+            (true, true) => L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+T TRANSLATE  CTRL+R READ  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE", other),
+            (true, false) => L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+T TRANSLATE  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE", other),
+            (false, true) => L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+R READ  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE", other),
+            _ => L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE", other),
+        };
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
@@ -580,6 +617,18 @@ internal sealed class ClipPickerWindow : Window
             var button = new Border { Child = picture, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
             System.Windows.Automation.AutomationProperties.SetName(button, tip);
             button.MouseLeftButtonUp += (_, e) => { e.Handled = true; controller.ToggleTranslation(row); };
+            DockPanel.SetDock(button, Dock.Right);
+            panel.Children.Add(button);
+        }
+        if (controller.ReadWords(row) is not null)
+        {
+            // The loudspeaker: on hover its name and key; a click reads the row aloud in the Read aloud sheet.
+            var tip = ReadAloud.Button.ReadRow.Tooltip();
+            var picture = PixelGlyph.Image(ReadAloud.Button.ReadRow.Icon(), Color.FromRgb(40, 34, 58), 1.5);
+            picture.Opacity = chosen ? 1 : 0.55;
+            var button = new Border { Child = picture, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
+            System.Windows.Automation.AutomationProperties.SetName(button, tip);
+            button.MouseLeftButtonUp += (_, e) => { e.Handled = true; controller.Read(row); };
             DockPanel.SetDock(button, Dock.Right);
             panel.Children.Add(button);
         }

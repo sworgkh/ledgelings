@@ -66,6 +66,7 @@ public sealed partial class SettingsWindow : Window
         InitPlay();
         InitDictation();
         InitTranslate();
+        InitReadAloud();
         InitToolsScreen();
         InitSidebar();
         Closing += (_, e) => { e.Cancel = true; Hide(); };      // the window is reused; the app lives in the tray
@@ -128,6 +129,7 @@ public sealed partial class SettingsWindow : Window
         Tr.Refresh();
         RefreshSidebar();
         RefreshTranslate();
+        RefreshReadAloud();
         RefreshToolsScreen();
         ShowFooters();
         ShowCursorMoods();

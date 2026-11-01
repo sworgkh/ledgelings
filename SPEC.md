@@ -2334,8 +2334,8 @@ answers: no key, no network, nothing recorded.
 ### 7.15 The Tools screen
 
 Every tool the creatures run for the owner on one sheet of the letter's pixel paper
-(`ToolsScreenController`; on Windows since 0.62.0 with Ctrl+Alt+K and five tiles, no screenshots
-there yet, reordered with Move up and Move down): **⌃⌥K** from any app, the
+(`ToolsScreenController`; on Windows since 0.62.0 with Ctrl+Alt+K and five tiles, six with Read aloud
+since 0.63.0, no screenshots there yet, reordered with Move up and Move down): **⌃⌥K** from any app, the
 **Tools…** menu item, or the wrench picture on the Creature Actions sheet's title line (K).
 A tile each, four to a row, in the order of Settings › Tools › Tools screen
 (`Tools.Tool`, the codes `translate`, `dictation`, `screenshot`, `fullScreen`,
@@ -2360,9 +2360,21 @@ game's style, its name, its own shortcut under it, its number in the corner.
 
 ### 7.16 Read aloud
 
-Text in, sound out (`ReadAloud`, `ReadAloudPlayer`, `ReadAloudSheetController`; macOS).
-**⌃⌥R** from any app, the **Read Aloud…** menu item, its tile on the Tools screen (9), or a row's
+Text in, sound out (`ReadAloud`, `ReadAloudPlayer`, `ReadAloudSheetController`), on macOS and, since
+0.63.0, on Windows. **⌃⌥R** from any app, the **Read Aloud…** menu item, its tile on the Tools screen (9), or a row's
 loudspeaker in the clipboard picker (⌘R).
+
+On Windows the keys go the Windows way round: **Ctrl+Alt+Shift+R** (Ctrl+Alt+R is Windows' Add a
+Reminder), Ctrl for ⌘ on the sheet (Ctrl+. stop, Ctrl+S save, Ctrl+Shift+C copy, Ctrl+- / Ctrl+= pace,
+Ctrl+1–9 preset, Ctrl+R reader), Clear is Ctrl+Shift+Backspace, the picker's row Ctrl+R, and the tile is the
+sixth. The Mac's voices are Windows' own (SAPI through `System.Speech`, rendered to WAV, one whose culture
+speaks the part's language, a character's cast with `Casting` from its persona and kind); a part no Windows
+voice speaks is skipped and the status says so. The parts play one after another through WPF's
+`MediaPlayer`, the rests waited out. There is no time-stretch: a new pace is asked of the parts not yet
+asked for, from the next part, and a model that refuses a pace reads at its own. Save and Copy write one
+16-bit 24 kHz WAV (`ReadAloudTape`: mixed down, resampled, joined), whatever `readAloudFormat` says, as
+Windows has no AAC encoder without a new dependency; a part a model sent only as MP3 plays but is left out
+of the file. Copy puts the file on the clipboard as a file drop, from `%LOCALAPPDATA%\Ledgelings\Read aloud\`.
 
 - **The text**: the clipboard's (with `readAloudFromClipboard`), typed or pasted into the sheet.
   Refused (`ReadAloud.refusal`, one check for the sheet, the picker and the flag): empty or only
@@ -2803,9 +2815,9 @@ falls through to whatever is underneath.
 | Menu / tray: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
 | The translate shortcuts, in any app (`translateShortcut` ⌃⌥T, `translateClipShortcut` ⌃⌥⇧T; Windows Ctrl+Alt+T, Ctrl+Alt+Shift+T) | the Translate sheet (again: closes); the newest copy translated, in the sheet or quietly onto the clipboard (§7.14) |
 | Menu: Translate… (with `translateEnabled`) | the Translate sheet (§7.14.1) |
-| The read-aloud shortcut, in any app (`readAloudShortcut` ⌃⌥R) | the Read aloud sheet with the clipboard's text, read at once (again: closes; while it reads, brings it back) (§7.16) |
-| Menu: Read Aloud… / Stop Reading (while it reads) | the Read aloud sheet; ends the reading (§7.16) |
-| A clipboard picker row's loudspeaker, or ⌘R | that row read aloud in the sheet (§7.16) |
+| The read-aloud shortcut, in any app (`readAloudShortcut` ⌃⌥R; Windows Ctrl+Alt+Shift+R) | the Read aloud sheet with the clipboard's text, read at once (again: closes; while it reads, brings it back) (§7.16) |
+| Menu / tray: Read Aloud… / Stop Reading (while it reads) | the Read aloud sheet; ends the reading (§7.16) |
+| A clipboard picker row's loudspeaker, or ⌘R (Windows Ctrl+R) | that row read aloud in the sheet (§7.16) |
 | The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; Windows Ctrl+Alt+K), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
 | Clipboard picker: ⌘T on a row, ⌥⇥, ⌘⇧T, ⏎ | its translation under it, the next language, the sheet, paste the translation (§7.14.2) |
 | Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
@@ -3084,15 +3096,15 @@ An error for want of a model reads as that note, never as a server refusal.
 | translateKeepInHistory | true | a copied or pasted translation goes into the clipboard history |
 | translateHelperEnabled / translateHelper | true / empty | a creature brings the sheet; which by name, empty: whoever is nearest the middle |
 | readAloudEnabled | true | Read aloud (§7.16); off, its shortcut is let go, the picker has no button, the menu item hides |
-| readAloudShortcutEnabled / readAloudShortcutKeyCode / readAloudShortcutModifiers | true / R / ⌃⌥ | the sheet, as `shortcut` |
+| readAloudShortcutEnabled / readAloudShortcutKeyCode / readAloudShortcutModifiers | true / R / ⌃⌥ (Windows Ctrl+Alt+Shift+R) | the sheet, as `shortcut` |
 | readAloudFromClipboard / readAloudStartAtOnce | true / true | the sheet opens with the clipboard's text, and reads it at once |
 | readAloudKeepReading | true | closing the sheet lets the reading go on; Stop Reading ends it |
 | readAloudPickerButton | true | the clipboard picker's loudspeaker and ⌘R |
 | readAloudHelperEnabled / readAloudHelper | true / empty | a creature brings the sheet and reads beside it; empty: whoever is nearest the middle |
 | readAloudPresets | Narrator, Quick skim, Bedtime, Robot, Russian | JSON: id, name, engine, model, voice, character, speed (0.5–2), pause (0–3 s), language; read leniently and clamped, each id once, at most 9, never none |
 | readAloudDefaultPreset | the Narrator's id | the preset the sheet starts with; unknown reads as the first |
-| readAloudFolder | `~/Desktop` | where ⌘S saves; empty reads as the default |
-| readAloudFormat | `m4a` | `m4a` or `wav`; unknown reads as `m4a` |
+| readAloudFolder | `~/Desktop` | where ⌘S saves (on Windows the Desktop wherever Windows keeps it); empty reads as the default |
+| readAloudFormat | `m4a` | `m4a` or `wav`; unknown reads as `m4a`; Windows writes WAV either way |
 | readAloudLongLimit | 3 000 | 500–20 000 characters, clamped: a longer paid reading shows its price and waits for ⏎ |
 | toolsScreenKnown | every tool | not shown: the tools there were when the Tools screen's list was read, so a new one joins an arranged list once |
 | toolsScreenEnabled | true | the Tools screen (§7.15); off, its shortcut is let go, the menu item and the Actions sheet's wrench hide |

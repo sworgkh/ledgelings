@@ -65,6 +65,7 @@ public sealed partial class App : Application
         StartClipboard();
         StartDictation();
         StartTranslate();
+        StartReadAloud();
         StartToolsScreen();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
@@ -109,6 +110,7 @@ public sealed partial class App : Application
         AddClipboardItems(items);
         AddDictationItems(items);
         AddTranslateItems(items);
+        AddReadAloudItems(items);
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
@@ -181,6 +183,7 @@ public sealed partial class App : Application
         settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, SeedMemory = SeedMemory, OpenRelationships = OpenRelationships, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
         AttachClipboard(settingsWindow);
+        AttachReadAloud(settingsWindow);
         return settingsWindow;
     }
 
@@ -190,6 +193,7 @@ public sealed partial class App : Application
         StopReminders();
         StopDictation();
         StopTranslate();
+        StopReadAloud();
         StopToolsScreen();
         StopShortcut();
         StopClipboard();

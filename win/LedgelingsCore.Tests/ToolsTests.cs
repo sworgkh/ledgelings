@@ -27,7 +27,7 @@ public class ToolsTests
     [Fact]
     public void TheCodesAreTheMacsAndUnknownOnesAreDropped()
     {
-        Assert.Equal(new[] { "translate", "dictation", "clipHistory", "snippets", "reminder" }, Tools.DefaultShown);
+        Assert.Equal(new[] { "translate", "dictation", "clipHistory", "snippets", "reminder", "readAloud" }, Tools.DefaultShown);
         // A Mac's screenshot tile has no Windows tool: dropped; a doubled one is kept once.
         Assert.Equal(new[] { Tools.Tool.Snippets, Tools.Tool.Translate },
                      Tools.Shown(new[] { "snippets", "screenshot", "translate", "snippets", "nonsense" }));
@@ -60,7 +60,7 @@ public class ToolsTests
     [Fact]
     public void ThePagesSitUnderTheMacsFiveGroups()
     {
-        Assert.Equal(new[] { SettingsPage.Tools, SettingsPage.Reminders, SettingsPage.Clipboard, SettingsPage.Dictation, SettingsPage.Translate },
+        Assert.Equal(new[] { SettingsPage.Tools, SettingsPage.Reminders, SettingsPage.Clipboard, SettingsPage.Dictation, SettingsPage.Translate, SettingsPage.ReadAloud },
                      SettingsGroup.Tools.Pages());
         Assert.Equal(new[] { SettingsPage.Costs, SettingsPage.Chats }, SettingsGroup.MoneyAndHistory.Pages());
         Assert.Equal(SettingsPages.All.Count, SettingsPages.Groups.Sum(g => g.Pages().Count));

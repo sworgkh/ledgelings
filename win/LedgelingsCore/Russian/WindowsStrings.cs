@@ -21,6 +21,7 @@ public static partial class WindowsStrings
             ["clipboard"] = RuClipboard,
             ["dictation"] = RuDictation,
             ["translate"] = RuTranslate,
+            ["readAloud"] = RuReadAloud!,      // set by its own file before the parts are first built
         });
 
     private static readonly Lazy<Dictionary<string, string>> russian = new(() =>
