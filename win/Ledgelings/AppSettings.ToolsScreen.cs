@@ -16,7 +16,15 @@ public sealed partial class AppSettings
         toolsScreenShortcutEnabled = store.Get<bool?>("toolsScreenShortcutEnabled") ?? true;
         toolsScreenShortcut = Shortcut.Saved(store.Get<int?>("toolsScreenShortcutKeyCode"), store.Get<int?>("toolsScreenShortcutModifiers"), Shortcut.Tools);
         // Unknown codes (a Mac's screenshot tiles) and doubled ones go on load.
-        toolsScreenTools = Tools.Shown(store.Get<List<string>>("toolsScreenTools") ?? Tools.DefaultShown.ToList()).Select(t => t.Code()).ToList();
+        if (store.Get<List<string>>("toolsScreenTools") is { } saved)
+        {
+            // A tool added since the list was arranged joins it once, at its end; switched off after that, it stays off.
+            toolsScreenTools = Tools.WithNew(saved, store.Get<List<string>>("toolsScreenKnown")).ToList();
+            if (!toolsScreenTools.SequenceEqual(saved)) store.Set("toolsScreenTools", toolsScreenTools);
+        }
+        else toolsScreenTools = Tools.DefaultShown.ToList();
+        if (store.Get<List<string>>("toolsScreenKnown") is not { } known || !known.SequenceEqual(Tools.DefaultShown))
+            store.Set("toolsScreenKnown", Tools.DefaultShown.ToList());
     }
 
     /// <summary>The Tools screen. Off: its shortcut is let go, the tray item and the Actions sheet's wrench go.</summary>

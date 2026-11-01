@@ -53,6 +53,7 @@ public sealed partial class SettingsWindow
         PageTitle.Text = p.Title();
         PageGroup.Text = p.Group().Title().ToUpper(Languages.Current.Culture());
         if (p == SettingsPage.Translate) LoadTranslateModelsOnce();
+        if (p == SettingsPage.ReadAloud) LoadSpeechModelsOnce();
         DrawSidebar();
     }
 

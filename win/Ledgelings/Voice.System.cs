@@ -167,7 +167,7 @@ public sealed partial class Voice
 
     /// <summary>The line as a WAV, not played. <paramref name="speed"/> is a multiplier; SAPI's rate
     /// runs from −10 to 10, a third as fast to three times as fast.</summary>
-    private static byte[] Render(string line, string? voice, double speed, double? pitch, string? culture)
+    internal static byte[] Render(string line, string? voice, double speed, double? pitch, string? culture)
     {
         using var synth = new SpeechSynthesizer();
         if (voice is not null)

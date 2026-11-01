@@ -25,6 +25,7 @@ public sealed partial class App
                     case Tools.Tool.Dictation: DictationPress(); break;
                     case Tools.Tool.ClipHistory: clipPicker?.Show(ClipPicker.Group.Recent); break;
                     case Tools.Tool.Snippets: clipPicker?.Show(ClipPicker.Group.Snippets); break;
+                    case Tools.Tool.ReadAloud: ShowReadAloud(); break;
                     default: AddAReminder(); break;
                 }
             },
@@ -34,6 +35,7 @@ public sealed partial class App
                 Tools.Tool.Dictation => s.DictationEnabled,
                 Tools.Tool.ClipHistory => s.ClipboardEnabled && s.ClipHistoryEnabled && clipPicker is not null,
                 Tools.Tool.Snippets => s.ClipboardEnabled && clipPicker is not null,
+                Tools.Tool.ReadAloud => s.ReadAloudEnabled && readAloudSheet is not null,
                 _ => s.RemindersEnabled,
             },
             ShortcutLabel = tool => tool switch
@@ -42,6 +44,7 @@ public sealed partial class App
                 Tools.Tool.Dictation when s.DictationShortcutEnabled => ShortcutKeys.Label(s.DictationShortcut),
                 Tools.Tool.ClipHistory when s.ClipHistoryShortcutEnabled => ShortcutKeys.Label(s.ClipHistoryShortcut),
                 Tools.Tool.Snippets when s.ClipSnippetsShortcutEnabled => ShortcutKeys.Label(s.ClipSnippetsShortcut),
+                Tools.Tool.ReadAloud when s.ReadAloudShortcutEnabled => ShortcutKeys.Label(s.ReadAloudShortcut),
                 // Windows' reminder key is fixed, Ctrl+Alt+R, and held only when Windows gave it.
                 Tools.Tool.Reminder when reminderKey is { IsRegistered: true } => ReminderHotkeyTitle,
                 _ => null,

@@ -82,7 +82,7 @@ public class SpendTests
     [Fact]
     public void AllTheMacsPurposesAreHereWithTheirWords()
     {
-        Assert.Equal(new[] { "talk", "planes", "voice", "casting", "plots", "reminders", "complaints", "teaParties", "revenge", "creatureRefine", "plays", "ballGames", "memory", "memorySeed", "dictation", "translation", "autocomplete" },
+        Assert.Equal(new[] { "talk", "planes", "voice", "casting", "plots", "reminders", "complaints", "teaParties", "revenge", "creatureRefine", "plays", "ballGames", "memory", "memorySeed", "dictation", "translation", "autocomplete", "readAloud" },
             Enum.GetValues<Spend.Purpose>().Select(p => p.Raw()));
         Assert.Equal("Tea parties", Spend.PurposeTitle("teaParties"));
         Assert.Equal("Revenge", Spend.PurposeTitle("revenge"));

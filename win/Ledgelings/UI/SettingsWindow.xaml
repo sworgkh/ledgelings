@@ -1421,6 +1421,99 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Read aloud">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Read aloud">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Read aloud" IsChecked="{Binding ReadAloudEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+              <StackPanel IsEnabled="{Binding ReadAloudEnabled}">
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="Open the sheet" IsChecked="{Binding ReadAloudShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
+                  <Button x:Name="ReadAloudShortcutButton" Click="ReadAloudShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding ReadAloudShortcutEnabled}"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="Start with the clipboard's text" IsChecked="{Binding ReadAloudFromClipboard, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <CheckBox ui:Tr.Content="Start reading at once" IsChecked="{Binding ReadAloudStartAtOnce, Mode=TwoWay}" IsEnabled="{Binding ReadAloudFromClipboard}" Margin="0,4,0,0"/>
+                <CheckBox ui:Tr.Content="Keep reading when the sheet closes" IsChecked="{Binding ReadAloudKeepReading, Mode=TwoWay}" Margin="0,4,0,0"/>
+                <TextBlock Text="{Binding ReadAloudShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+              </StackPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The shortcut works in every app: a creature brings a sheet with the clipboard's text in it and reads it out, the parts playing as they come. Enter reads and pauses, Ctrl+. stops, Ctrl+S saves the sound, Ctrl+Shift+C copies it as a file. With Keep reading on, closing the sheet lets it read on; the tray's Stop Reading ends it."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Presets" IsEnabled="{Binding ReadAloudEnabled}">
+            <StackPanel>
+              <StackPanel x:Name="ReadAloudPresetList"/>
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,6">
+                <Button x:Name="ReadAloudAddButton" ui:Tr.Content="Add" Click="ReadAloudAdd_Click" Padding="8,1" Margin="0,0,6,0"/>
+                <Button x:Name="ReadAloudDeleteButton" ui:Tr.Content="Delete" Click="ReadAloudDelete_Click" Padding="8,1" Margin="0,0,6,0"/>
+                <Button ui:Tr.Content="Start with" Click="ReadAloudStartWith_Click" Padding="8,1" Margin="0,0,18,0"/>
+                <Button x:Name="ReadAloudTryButton" ui:Tr.Content="Try it" Click="ReadAloudTry_Click" Padding="8,1"/>
+              </StackPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Name" Style="{StaticResource RowLabel}"/>
+                <TextBox x:Name="ReadAloudNameBox" LostFocus="ReadAloudName_Changed"/>
+              </DockPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Reads with" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudEngineBox" DisplayMemberPath="Title" SelectedValuePath="Engine" SelectionChanged="ReadAloudEngine_Changed" Width="300" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <DockPanel x:Name="ReadAloudModelRow" Margin="0,2">
+                <TextBlock ui:Tr.Text="Model" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudModelBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="ReadAloudModel_Changed"/>
+              </DockPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Voice" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudVoiceBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="ReadAloudVoice_Changed" Width="300" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Reader" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudReaderBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="ReadAloudReader_Changed" Width="300" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <DockPanel Margin="0,6,0,2">
+                <TextBlock ui:Tr.Text="Pace" Style="{StaticResource RowLabel}"/>
+                <TextBlock x:Name="ReadAloudPaceValue" Style="{StaticResource RowValue}"/>
+                <Slider x:Name="ReadAloudPaceSlider" Minimum="0.5" Maximum="2" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="ReadAloudPace_Changed"/>
+              </DockPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Rest after a paragraph" Style="{StaticResource RowLabel}"/>
+                <TextBlock x:Name="ReadAloudRestValue" Style="{StaticResource RowValue}"/>
+                <Slider x:Name="ReadAloudRestSlider" Minimum="0" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="ReadAloudRest_Changed"/>
+              </DockPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Language" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudLanguageBox" DisplayMemberPath="Title" SelectedValuePath="Id" SelectionChanged="ReadAloudLanguage_Changed" Width="300" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <TextBlock x:Name="ReadAloudModelsProblem" Foreground="DarkOrange" TextWrapping="Wrap"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A preset is who reads and how: the voice, a character or a narrator, the pace and the rest after each paragraph. Ctrl+1–9 picks one on the sheet. A character reads in a voice cast from its persona and species, the one it has on the Voice page when that is the same model. Each part's language is told by its letters, and a voice that speaks it is found; if the model has none, Windows' own voice for that language reads that part, free, and a part no voice on this PC speaks is skipped. A new pace on the sheet starts with the next part."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Saving and safety" IsEnabled="{Binding ReadAloudEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Save in" Style="{StaticResource RowLabel}"/>
+                <Button DockPanel.Dock="Right" ui:Tr.Content="Choose…" Click="ReadAloudFolder_Click" Padding="8,1" Margin="6,0,0,0"/>
+                <TextBlock Text="{Binding ReadAloudFolder}" Foreground="Gray" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Margin="0,2">
+                <TextBlock ui:Tr.Text="Format" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudFormatBox" DisplayMemberPath="Title" SelectedValuePath="Format" SelectionChanged="ReadAloudFormat_Changed" Width="300" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Ask before sending more than" Style="{StaticResource RowLabel}"/>
+                <TextBlock ui:Tr.Value="{Binding ReadAloudLongLimit}" ui:Tr.Number="0" Style="{StaticResource RowValue}"/>
+                <Slider Minimum="500" Maximum="20000" TickFrequency="500" IsSnapToTickEnabled="True" Value="{Binding ReadAloudLongLimit, Mode=TwoWay}"/>
+              </DockPanel>
+              <CheckBox ui:Tr.Content="Read-aloud button in the clipboard picker" IsChecked="{Binding ReadAloudPickerButton, Mode=TwoWay}" Margin="0,2"/>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="Who brings the sheet" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ReadAloudHelperBox" DisplayMemberPath="Title" SelectedValuePath="Name" SelectionChanged="ReadAloudHelper_Changed" Width="260" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Save writes the whole reading as one WAV file in this folder, named by the time and its first words: Windows has no M4A encoder to hand, so M4A is saved as WAV too. A part an MP3-only model sent plays but is not in the file. Copy puts the file on the clipboard, to drop into a chat or a mail. Every call to a speech model shows on Costs as Read aloud, a stopped one too. Longer texts wait for Enter and say their parts and price first; never more than 50 000 characters. Protected snippets are never read."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Tools screen">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">

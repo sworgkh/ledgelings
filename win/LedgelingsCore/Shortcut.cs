@@ -28,6 +28,9 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
     public static readonly Shortcut Translate = new(0x54, ShortcutModifiers.Control | ShortcutModifiers.Option);
     /// <summary>Translate the newest copy: Ctrl+Alt+Shift+T.</summary>
     public static readonly Shortcut TranslateClip = new(0x54, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift);
+    /// <summary>Read aloud: Ctrl+Alt+Shift+R, R for read. The Mac's is Ctrl+Option+R, but Windows' Ctrl+Alt+R is
+    /// already Add a Reminder, so Shift is held too, as for translating the last copy.</summary>
+    public static readonly Shortcut ReadAloud = new(0x52, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift);
     /// <summary>The Tools screen: Ctrl+Alt+K, as on the Mac.</summary>
     public static readonly Shortcut Tools = new(0x4B, ShortcutModifiers.Control | ShortcutModifiers.Option);
 

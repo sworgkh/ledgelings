@@ -84,6 +84,7 @@ Ledgelings again; the sheet has the menu's switches, Settings and Quit.
 | Protected snippets' words | Credential Manager › Windows Credentials › `Ledgelings Snippets/snippet.<ID>` |
 | Kept OpenRouter voices | `%APPDATA%\Ledgelings\voices\` |
 | Saved built-in line voices | `%APPDATA%\Ledgelings\line-voices\` |
+| Read aloud: a saved reading, the copied one | the Desktop (Settings › Read aloud › Save in); `%LOCALAPPDATA%\Ledgelings\Read aloud\` (the last copy only) |
 | Imported creatures | `%APPDATA%\Ledgelings\sprites\<name>\` |
 | OpenRouter key | Credential Manager › Windows Credentials › `Ledgelings/openRouterKey` |
 | Start at login | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Ledgelings` (Task Manager › Startup apps) |
@@ -167,8 +168,16 @@ core tests are the Swift tests line for line.
 - **Translate** is **Ctrl+Alt+T**, the last copy **Ctrl+Alt+Shift+T**: the Mac's sheet, keys the
   Windows way round (Clear is Ctrl+Shift+Backspace; the picker's next language Ctrl+Tab). The
   sheet takes the keyboard like the picker. The Mac's `--translate*` flags have no Windows twin.
-- **The Tools screen** is **Ctrl+Alt+K** and the Actions sheet's wrench (K): five tiles, no
-  screenshot ones; the order changes with Move up and Move down.
+- **Read aloud** is **Ctrl+Alt+Shift+R** (Ctrl+Alt+R is already Add a Reminder): the Mac's sheet
+  and presets, keys the Windows way round (Ctrl+. stops, Ctrl+S saves, Ctrl+Shift+C copies the
+  file, Ctrl+- / Ctrl+= the pace, Ctrl+R the next reader). Windows' own voices are SAPI rendered
+  to WAV, one fitting each part's language (a part no voice speaks is skipped). The pace changes
+  from the next part (no time-stretch here). Saving writes WAV only (no AAC encoder without a new
+  dependency), and an MP3-only model's parts play but are left out of the file. The tray gains
+  **Read Aloud…** and, while it reads, **Stop Reading**. The Mac's `--read*` flags have no Windows twin.
+- **The Tools screen** is **Ctrl+Alt+K** and the Actions sheet's wrench (K): six tiles, no
+  screenshot ones; the order changes with Move up and Move down. A list arranged before 0.63
+  gets Read aloud once, at its end.
 - **Add a Reminder…** is **Ctrl+Alt+R**, system-wide (`RegisterHotKey`). The Mac's
   ⌘R would be Ctrl+R here, which every browser uses to reload. If another app holds
   Ctrl+Alt+R, the shortcut quietly does nothing and the menu stops showing it.
@@ -222,22 +231,22 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate, Tools, SettingsPages,
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate, ReadAloud, Tools, SettingsPages,
                            Deeds (+ .Lines), Bonds (+ .Storyline .Memory .Seed)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
                                      .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard .Deeds .Memory)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
-                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ToolsScreen), GlobalHotkey, ShortcutKeys, Program
-                           AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard .Dictation .Translate .ToolsScreen),
+                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ReadAloud, .ToolsScreen), GlobalHotkey, ShortcutKeys, Program
+                           AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard .Dictation .Translate .ReadAloud .ToolsScreen),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), Translator, ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
-                           Voice (+ .Casting .System .Playback), SpeechClient, WaveTape
+                           Voice (+ .Casting .System .Playback), SpeechClient, WaveTape, ReadAloudPlayer, ReadAloudTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore, Native/ClipboardNative
-                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
-                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), TranslateSheet, ToolsScreen, PixelGlyph, SnippetsWindow, RelationshipsWindow
+                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .ReadAloud .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
+                           ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), TranslateSheet, ReadAloudSheet, ToolsScreen, PixelGlyph, SnippetsWindow, RelationshipsWindow
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
   publish.ps1            a release build under win/build

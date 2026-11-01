@@ -10,8 +10,9 @@ public sealed partial class Colony
     private enum ClipStage { Going, Holding, Returning }
 
     /// <summary>How the creature holding a sheet looks while the Translate sheet works (SPEC §7.14): still, thinking
-    /// dots while the model answers, or a shrug with a "?" at trouble.</summary>
-    public enum ClipHelperMood { Calm, Thinking, Puzzled }
+    /// dots while the model answers, or a shrug with a "?" at trouble. <c>Reading</c>: Read aloud's reader (SPEC §7.16),
+    /// nodding over the page with a dot running in its bubble.</summary>
+    public enum ClipHelperMood { Calm, Thinking, Puzzled, Reading }
 
     private sealed class ClipHelp
     {
@@ -116,6 +117,16 @@ public sealed partial class Colony
                         {
                             bubbleSerial += 1;
                             bubbles[i] = new Bubble { Text = dots, Until = Elapsed + 1, Serial = bubbleSerial };
+                        }
+                        break;
+                    case ClipHelperMood.Reading:
+                        // A slow nod over the page, a dot running along its bubble: it reads, mouth-less, never voiced itself.
+                        creatures[i].Carry(new Pt(help.Perch.X, help.Perch.Y + ReadAloud.ReadingBob(since)), 0, "idle");
+                        var running = ReadAloud.ReadingDots(since);
+                        if (!bubbles.TryGetValue(i, out var reading) || reading.Text != running)
+                        {
+                            bubbleSerial += 1;
+                            bubbles[i] = new Bubble { Text = running, Until = Elapsed + 1, Serial = bubbleSerial };
                         }
                         break;
                     case ClipHelperMood.Puzzled:
