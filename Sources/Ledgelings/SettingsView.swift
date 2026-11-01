@@ -51,6 +51,8 @@ struct SettingsView: View {
     var openRelationships: () -> Void = {}
     /// Reads the chat log into the pairs' memory; returns what it did.
     var seedMemory: (Bool) async -> String = { _ in "" }
+    /// Read aloud, for its page's readers and Try it; nil in a test.
+    var readAloud: ReadAloudController? = nil
 
     var body: some View {
         HStack(spacing: 0) {
@@ -101,6 +103,7 @@ struct SettingsView: View {
         case .screenshots: ScreenshotSettingsView(settings: settings)
         case .dictation: DictationSettingsView(settings: settings, library: library)
         case .translate: TranslateSettingsView(settings: settings, library: library)
+        case .readAloud: ReadAloudSettingsView(settings: settings, voice: voice, library: library, readAloud: readAloud)
         case .tools: ToolsScreenSettingsView(settings: settings)
         case .costs: CostsSettingsView(spend: spend)
         case .chats: ChatHistoryView(history: history)
@@ -356,6 +359,8 @@ final class SettingsWindowController {
     private let seedMemory: (Bool) async -> String
     private let navigation = SettingsNavigation()
     private var retitle: AnyCancellable?
+    /// Set once Read aloud is made, before the window first opens.
+    var readAloud: ReadAloudController?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
          reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, clips: ClipBook, send: @escaping (Reminders.Reminder) -> Void,
@@ -387,7 +392,7 @@ final class SettingsWindowController {
             if let first = SettingsIndex.search(search).first { navigation.open(first) }
         }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }

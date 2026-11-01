@@ -118,6 +118,14 @@ extension Colony: ClipHelping {
                     bubbleSerial += 1
                     bubbles[i] = Bubble(text: dots, until: elapsed + 1, serial: bubbleSerial)
                 }
+            case .reading:
+                // A slow nod over the page, a dot running along its bubble: it reads, mouth-less, never voiced itself.
+                creatures[i].carry(to: CGPoint(x: perch.x, y: perch.y + ReadAloud.readingBob(since: since)), rotation: 0, pose: "idle")
+                let dots = ReadAloud.readingDots(since: since)
+                if bubbles[i]?.text != dots {
+                    bubbleSerial += 1
+                    bubbles[i] = Bubble(text: dots, until: elapsed + 1, serial: bubbleSerial)
+                }
             case .puzzled:
                 // A shrug: up a few points and down again, a "?" over it for two seconds.
                 let lift = since < 0.3 ? 6 * sin(.pi * since / 0.3) : 0

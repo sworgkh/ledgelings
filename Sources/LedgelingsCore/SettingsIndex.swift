@@ -6,7 +6,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
     case chases, play, ballGames
     case talk, voice, bonds, relationships
-    case tools, reminders, clipboard, screenshots, dictation, translate
+    case tools, reminders, clipboard, screenshots, dictation, translate, readAloud
     case costs, chats
 
     public var title: String {
@@ -29,6 +29,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .screenshots: tr("Screenshots")
         case .dictation: tr("Dictation")
         case .translate: tr("Translate")
+        case .readAloud: tr("Read aloud")
         case .tools: tr("Tools screen")
         case .costs: tr("Costs")
         case .chats: tr("Chats")
@@ -40,7 +41,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
         case .chases, .play, .ballGames: .games
         case .talk, .voice, .bonds, .relationships: .talkAndFriends
-        case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate: .tools
+        case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
         }
     }
@@ -110,6 +111,7 @@ public enum SettingsIndex {
     public static let unshown: [String: String] = [
         "memoryTokensMoved": "a one-time move of the memory budget, done at launch",
         "shotLastRect": "the last rectangle taken, remembered for ⇧⌘\\",
+        "toolsScreenKnown": "the tools there were when the Tools screen's list was last read, so a new one joins it once",
     ]
 
     /// The sections whose words hold every word of `query`, best first: a
@@ -249,7 +251,12 @@ public enum SettingsIndex {
 
         // tools
         Section(.tools, "Tools screen", labels: ["Tools screen", "Open it from any app"], footer: "Every tool on one sheet, a big picture each: click one, press its number, or choose with the arrows and ⏎; ⎋ closes. The Creature Actions sheet opens it too (K). A tool switched off is greyed, and a click opens the page that switches it on.", keys: ["toolsScreenEnabled", "toolsScreenShortcutEnabled", "toolsScreenShortcutKeyCode", "toolsScreenShortcutModifiers"]),
-        Section(.tools, "On the screen", labels: ["Type to translate", "Speak, and the words land on the clipboard", "A screenshot with the toolbar", "The full screen, straight out", "The last rectangle again", "Your recent copies, to paste again", "The snippets, to paste", "A reminder, thrown at you by paper plane"], footer: "Drag to change the order: the first is 1, the next 2. Switched off here, a tool is not on the screen.", keys: ["toolsScreenTools"]),
+        Section(.tools, "On the screen", labels: ["Type to translate", "Paste text and hear it read", "Speak, and the words land on the clipboard", "A screenshot with the toolbar", "The full screen, straight out", "The last rectangle again", "Your recent copies, to paste again", "The snippets, to paste", "A reminder, thrown at you by paper plane"], footer: "Drag to change the order: the first is 1, the next 2. Switched off here, a tool is not on the screen.", keys: ["toolsScreenTools"]),
+
+        // read aloud
+        Section(.readAloud, "Read aloud", labels: ["Read aloud", "Open the sheet", "Start with the clipboard's text", "Start reading at once", "Keep reading when the sheet closes"], footer: "The shortcut works in every app: a creature brings a sheet with the clipboard's text in it and reads it out, the parts playing as they come. ⏎ reads and pauses, ⌘. stops, ⌘S saves the sound, ⌘⇧C copies it as a file. With Keep reading on, closing the sheet lets it read on; the menu's Stop Reading ends it.", keys: ["readAloudEnabled", "readAloudFromClipboard", "readAloudKeepReading", "readAloudShortcutEnabled", "readAloudShortcutKeyCode", "readAloudShortcutModifiers", "readAloudStartAtOnce"]),
+        Section(.readAloud, "Presets", labels: ["Start with", "Add", "Delete", "Name", "Reads with", "Model", "Voice", "Chosen for the reader", "Reader", "A narrator", "Pace", "Rest after a paragraph", "Language", "Told by its letters", "Try it"], footer: "A preset is who reads and how: the voice, a character or a narrator, the pace and the rest after each paragraph. ⌘1–9 picks one on the sheet. A character reads in a voice cast from its persona and species, the one it has on the Voice page when that is the same model. Each part's language is told by its letters, and a voice that speaks it is found; if the model has none, the Mac's own voice reads that part, free.", keys: ["readAloudDefaultPreset", "readAloudPresets"]),
+        Section(.readAloud, "Saving and safety", labels: ["Save in", "Choose…", "Format", "Ask before sending more than", "Read-aloud button in the clipboard picker", "Who brings the sheet", "Whoever is nearest the middle", "Nobody: it unfolds by itself"], footer: "Save writes the whole reading as one file in this folder, named by the time and its first words. Copy puts the file on the clipboard, to drop into a chat or a mail. Every call to a speech model shows on Costs as Read aloud, a stopped one too. Longer texts wait for ⏎ and say their parts and price first; never more than 50 000 characters. Protected snippets are never read.", keys: ["readAloudFolder", "readAloudFormat", "readAloudHelper", "readAloudHelperEnabled", "readAloudLongLimit", "readAloudPickerButton"]),
 
         // translate
         Section(.translate, "Translate", labels: ["Translator", "Type to translate", "Translate the last copy", "The last copy", "Opens the sheet, already translated", "Puts it on the clipboard quietly"], footer: "Both work in every app. Type to translate opens the sheet: your words on the left, the translation on the right as you type. The last copy opens in the sheet already translated, or quietly replaces the clipboard with its translation and says so by the text cursor. ⏎ copies the translation, ⌘⏎ pastes it into the app you were in.", keys: ["translateClipMode", "translateClipShortcutEnabled", "translateClipShortcutKeyCode", "translateClipShortcutModifiers", "translateEnabled", "translateShortcutEnabled", "translateShortcutKeyCode", "translateShortcutModifiers"]),

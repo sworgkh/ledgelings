@@ -64,7 +64,7 @@ import Testing
     }
 
     @Test func translateIsTheFifthTool() {
-        #expect(SettingsGroup.tools.pages == [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate])
+        #expect(SettingsGroup.tools.pages == [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud])
         #expect(SettingsPage.named("translate") == .translate)
     }
 

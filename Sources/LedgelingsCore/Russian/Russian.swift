@@ -27,6 +27,7 @@ extension Strings {
         "screenshots": ruScreenshots,
         "dictation": ruDictation,
         "translate": ruTranslate,
+        "readAloud": ruReadAloud,
         "relationships": ruRelationships,
     ]
 }
