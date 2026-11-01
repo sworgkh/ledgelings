@@ -52,6 +52,8 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
 | **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
 | **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
+| **Read Aloud…** (⌃⌥R from any app) | The Read aloud sheet with the clipboard's text, read out in a preset's voice ([Read aloud](#read-aloud); macOS) |
+| **Stop Reading** (only while it reads) | Ends a reading the sheet let go on when it closed |
 | **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
@@ -581,9 +583,9 @@ greyed out under a *Needs a model* note.
 ## Tools
 
 Tools the creatures run for you rather than for themselves, a page each under the
-sidebar's *Tools* heading: **Tools screen**, **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**.
+sidebar's *Tools* heading: **Tools screen**, **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**, **Read aloud**.
 `--settings tools` opens the first, `--settings reminders` the next (`productivity` too, the old tab's name);
-`--settings clipboard`, `--settings screenshots`, `--settings dictation`, `--settings translate` the others.
+`--settings clipboard`, `--settings screenshots`, `--settings dictation`, `--settings translate`, `--settings readaloud` the others.
 On Windows the same pages, but Screenshots, under the same heading.
 
 ### Tools screen
@@ -595,7 +597,8 @@ changed with **Move up** and **Move down** rather than by dragging.
 **⌃⌥K** from any app (or **Tools…** in the menu, or the wrench on the Creature Actions
 sheet, K): a sheet of pixel paper with a big picture tile for each tool: **Translate**,
 **Dictate**, **Screenshot**, **Full screen**, **Last rectangle**, **Clipboard history**,
-**Snippets**, **Add a reminder**. Each tile shows its own shortcut and its number. Click one,
+**Snippets**, **Add a reminder**, **Read aloud** (9th, so the older tiles keep their numbers; a list
+you arranged before 0.63 gets it once at its end). Each tile shows its own shortcut and its number. Click one,
 press its number, or move with the arrows and press ⏎; ⎋ closes. A tool switched off is greyed:
 its tag says where to switch it on, and choosing it opens that page. On hover each tile names
 what it does and its keys. The app you were in keeps the keyboard, so a tool that pastes
@@ -915,6 +918,70 @@ retyping costs nothing. A copied or pasted translation is kept in the clipboard 
 | **Keep translations in the clipboard history** (`translateKeepInHistory`) | on | | |
 | **Ask before sending more than** (`translateLiveLimit`) | 5 000 | 1 000 to 20 000 characters | Longer waits for ⏎ |
 | **Who brings the sheet** (`translateHelperEnabled`, `translateHelper`) | Whoever is nearest the middle | a creature on screen, or *Nobody* | It thinks (dots) while the model answers, shrugs (?) at trouble |
+
+### Read aloud
+
+**⌃⌥R** from any app (or **Read Aloud…** in the menu, or its tile on the Tools screen): a creature
+leaps to the middle of the screen with a sheet of pixel paper holding the clipboard's text, and
+reads it out, nodding over the page with a dot running along its bubble. The text is cut into
+parts at paragraph and sentence ends; the first is short, so the first sound comes in a second or
+two, and the rest play as they arrive, with a rest after each paragraph. The bar under the text
+shows what is heard and what has come; the clock says how long.
+
+Keys: **⏎** reads, pauses and goes on, **⇧⏎** a new line, **⌘.** stops, **⌘−** / **⌘=** the pace
+(it changes at once while reading, the pitch kept), **⌘1–9** a preset, **⌘R** the next reader
+(the narrator, then every character of every species), **⌘S** saves the sound as one file in the
+save folder, **⌘⇧C** puts that file on the clipboard (⌘V drops it into a chat or a mail), **⌘⌫**
+clears, **⎋** closes. With *Keep reading* on, closing the sheet lets the reading go on; the menu's
+**Stop Reading** ends it, and the shortcut brings the sheet back with it. Each picture names its key
+on hover. In the **clipboard picker** every row with words has a loudspeaker picture: it, or **⌘R**,
+reads that row.
+
+**Who reads.** A preset says: an OpenRouter speech model (the Talk page's key; priced on Costs as
+**Read aloud**, a stopped reading's calls too), the Mac's own voices (free) or a speech server on this
+computer (free); a voice, or the one chosen for the reader; a character from any species or a
+narrator; the pace; the rest after a paragraph; and a language, or each part's own told by its
+letters. A character reads in the voice it has on the Voice page (same model), else one cast from
+its persona and species, as the Voice page casts. A part in a language the model has no voice for
+(Kokoro has no Russian or Hebrew) is read by the Mac's voice for it, and the status line says so.
+With no OpenRouter key the Mac's own voice reads everything, free, and says so.
+
+Shipped presets, all editable: **Narrator** (Charon, 1×), **Quick skim** (Puck, 1.6×, short
+rests), **Bedtime** (Zed, cast from his sleepy persona, 0.8×, long rests), **Robot** (Unit 7,
+1.1×), **Russian** (Kore, everything read as Russian). Add copies the one chosen; Delete keeps at
+least one; *Start with* makes it the sheet's first. At most nine, one per number key.
+
+Never sent: empty text, a protected snippet or a copy of its words, more than 50 000 characters.
+Over 3 000 characters a paid reading first says its parts and price and waits for ⏎.
+
+**Left column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Read aloud** (`readAloudEnabled`) | on | | Off: the shortcut is let go, the picker has no button, the menu item and the tile go grey |
+| **Open the sheet** (`readAloudShortcut…`) | on, ⌃⌥R | | Click the keys to record others. Refused by the system: a red line says so |
+| **Start with the clipboard's text** (`readAloudFromClipboard`) | on | | A protected snippet on the clipboard is not put in; the sheet says why |
+| **Start reading at once** (`readAloudStartAtOnce`) | on | | Only with the clipboard's text; a long paid text still waits for ⏎ |
+| **Keep reading when the sheet closes** (`readAloudKeepReading`) | on | | Off: ⎋ stops it. A paused reading always stops |
+| **Save in** (`readAloudFolder`) | `~/Desktop` | any folder | Choose… picks one; the file is named by the time and the first words |
+| **Format** (`readAloudFormat`) | M4A | or WAV | M4A is AAC at 64 kbit/s, about 0.5 MB a minute; WAV is 16-bit, about 2.9 MB a minute |
+| **Ask before sending more than** (`readAloudLongLimit`) | 3 000 | 500 to 20 000 characters | Paid readings only; the Mac's voices never ask |
+| **Read-aloud button in the clipboard picker** (`readAloudPickerButton`) | on | | The loudspeaker on each row and ⌘R |
+| **Who brings the sheet** (`readAloudHelperEnabled`, `readAloudHelper`) | Whoever is nearest the middle | a creature on screen, or *Nobody* | It thinks (dots) while the first part comes, reads (a running dot) while it plays, shrugs (?) at trouble |
+
+**Right column**, *Presets* (`readAloudPresets`, `readAloudDefaultPreset`): the list, Add, Delete,
+Start with, Try it (a line in the chosen preset), and the chosen one's fields:
+
+| Field | Default (Narrator) | Range | Notes |
+|---|---|---|---|
+| **Name** | Narrator | any | The shipped names are translated; your own are shown as written |
+| **Reads with** | OpenRouter speech model | the Mac's own voices, a local speech server | The local server is the Voice page's |
+| **Model** | `google/gemini-3.8-flash-lite-tts` | any OpenRouter speech model | Gemini: one voice list for English, Russian and Hebrew |
+| **Voice** | Charon | the model's voices, or *Chosen for the reader* | A Mac voice for the Mac |
+| **Reader** | A narrator | any character of any species | |
+| **Pace** | 1× | 0.5× to 2× | Asked of the model; a model that refuses a pace is stretched on this Mac, the pitch kept |
+| **Rest after a paragraph** | 0.6 s | 0 to 3 s | |
+| **Language** | Told by its letters | English, Russian, Hebrew | Forced: every part is read as that language |
 
 ## Voice tab
 

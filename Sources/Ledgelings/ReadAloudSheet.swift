@@ -71,6 +71,8 @@ final class ReadAloudSheetController {
             model.textView?.string = text
             let chosen = preset ?? settings.readAloudDefault
             model.presetID = chosen.id
+            // A preset handed in as it is (a script's `--engine`), not looked up again by its id.
+            model.given = preset
             model.reader = chosen.character
             model.speed = chosen.speed
             model.note = ""
@@ -191,6 +193,7 @@ final class ReadAloudSheetController {
         guard model.presets.indices.contains(n) else { NSSound.beep(); return }
         let preset = model.presets[n]
         model.presetID = preset.id
+        model.given = nil
         model.reader = preset.character
         model.speed = preset.speed
         model.waitingForEnter = false
@@ -323,6 +326,8 @@ final class ReadAloudSheetModel: ObservableObject {
     @Published var text = ""
     @Published var presets: [ReadAloud.Preset] = ReadAloud.defaultPresets
     @Published var presetID: UUID?
+    /// The preset as it was handed to the sheet, when it was; wins over the saved one of the same id.
+    var given: ReadAloud.Preset?
     /// The character reading, chosen on the sheet; "" is the narrator.
     @Published var reader = ""
     @Published var readers: [String] = [""]
@@ -354,7 +359,7 @@ final class ReadAloudSheetModel: ObservableObject {
 
     /// The preset chosen, with the reader and pace chosen on the sheet.
     var preset: ReadAloud.Preset {
-        var p = presets.first { $0.id == presetID } ?? presets.first ?? ReadAloud.defaultPresets[0]
+        var p = given.flatMap { $0.id == presetID ? $0 : nil } ?? presets.first { $0.id == presetID } ?? presets.first ?? ReadAloud.defaultPresets[0]
         if p.character != reader {
             // Another reader than the preset's: its voice is cast for that reader, not the preset's own.
             p.character = reader

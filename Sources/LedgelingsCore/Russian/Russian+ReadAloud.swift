@@ -34,7 +34,7 @@ extension Strings {
         "Paused at %@": "Пауза на %@",
         "Preset": "Пресет",
         "Presets": "Пресеты",
-        "READ ALOUD": "ВСЛУХ",
+        "READ ALOUD": "ЧТЕНИЕ ВСЛУХ",
         "Read aloud (%@)": "Прочитать вслух (%@)",
         "Read aloud": "Чтение вслух",
         "Read it aloud (%@)": "Прочитать вслух (%@)",

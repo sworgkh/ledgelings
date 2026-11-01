@@ -4,7 +4,7 @@ import LedgelingsCore
 
 /// Read aloud from a terminal (§7.16):
 ///
-///     Ledgelings --read "text" [--preset name] [--out file.m4a] [--mute]
+///     Ledgelings --read "text" [--preset name] [--engine system] [--out file.m4a] [--mute]
 ///     Ledgelings --read-bench [--models a,b,c]
 ///     Ledgelings --read-sheet "text" [--preset name] [--snapshot out.png] [--mute]
 ///
@@ -17,9 +17,18 @@ import LedgelingsCore
 /// a PNG and closes. All are priced on Costs under Read aloud.
 @MainActor
 enum ReadAloudDemo {
+    /// The preset named (else the default), read with `--engine system|local|openRouter` when given:
+    /// `system` checks the sheet and the sound with no key, no keychain prompt and no cost.
     static func preset(named name: String?, settings: AppSettings) -> ReadAloud.Preset {
-        guard let name = name?.lowercased() else { return settings.readAloudDefault }
-        return settings.readAloudPresets.first { $0.name.lowercased() == name || $0.title.lowercased() == name } ?? settings.readAloudDefault
+        let wanted = name?.lowercased()
+        var preset = wanted.flatMap { w in settings.readAloudPresets.first { $0.name.lowercased() == w || $0.title.lowercased() == w } } ?? settings.readAloudDefault
+        let args = CommandLine.arguments
+        if let at = args.firstIndex(of: "--engine"), args.indices.contains(at + 1),
+           let engine = ReadAloud.Engine.allCases.first(where: { $0.rawValue.lowercased() == args[at + 1].lowercased() }), engine != preset.engine {
+            preset.engine = engine
+            preset.voice = ""
+        }
+        return preset
     }
 
     static var muted: Bool { CommandLine.arguments.contains("--mute") }
