@@ -175,6 +175,78 @@
       "y": 0,
       "w": 36,
       "h": 16
+    },
+    "sand": {
+      "x": 972,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "stone": {
+      "x": 1008,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "towel": {
+      "x": 1044,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "walnut": {
+      "x": 1080,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "ringbox": {
+      "x": 1116,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "crust": {
+      "x": 1152,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "mirror": {
+      "x": 1188,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "geode": {
+      "x": 1224,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "crayons": {
+      "x": 1260,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "seedpacket": {
+      "x": 1296,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "clover": {
+      "x": 1332,
+      "y": 0,
+      "w": 36,
+      "h": 16
+    },
+    "bucket": {
+      "x": 1368,
+      "y": 0,
+      "w": 36,
+      "h": 16
     }
   },
   "animations": {
@@ -363,6 +435,90 @@
     "sock": {
       "frames": [
         "sock"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "sand": {
+      "frames": [
+        "sand"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "stone": {
+      "frames": [
+        "stone"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "towel": {
+      "frames": [
+        "towel"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "walnut": {
+      "frames": [
+        "walnut"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "ringbox": {
+      "frames": [
+        "ringbox"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "crust": {
+      "frames": [
+        "crust"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "mirror": {
+      "frames": [
+        "mirror"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "geode": {
+      "frames": [
+        "geode"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "crayons": {
+      "frames": [
+        "crayons"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "seedpacket": {
+      "frames": [
+        "seedpacket"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "clover": {
+      "frames": [
+        "clover"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "bucket": {
+      "frames": [
+        "bucket"
       ],
       "fps": 1.0,
       "loop": true

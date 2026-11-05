@@ -165,10 +165,10 @@ def blocky_eyes(top, height, eye_h=None):
     return eyes(18, top + max(3, height // 4), h, gap=2, w=3)
 
 
-def blocky_feet(left, right, bottom):
+def blocky_feet(left, right, bottom, xs=(8, 20)):
     """Two 4×2 blocks under the body; a raised foot loses its lower row. None = tucked away."""
     f = set()
-    for x0, up in ((8, left), (20, right)):
+    for x0, up in ((xs[0], left), (xs[1], right)):
         if up is None: continue
         y = bottom + (0 if up else 1)
         f |= rect(x0, y, x0 + 3, y + 1)
@@ -207,6 +207,63 @@ def mushroom(top, cap_h, bottom, lf, rf, eye_h=None):
     d |= blocky_eyes(cap_bottom, stem_h, eye_h)
     return cap | stem, d, blocky_feet(lf, rf, bottom)
 
+
+def cactus(top, bottom, lf, rf, arms=(10, 8), eye_h=3):
+    """A thin column, half Blocky's width, with two small raised arms; `arms` are the elbow rows
+    below the top (left, right)."""
+    body = rect(12, top, 22, bottom) - {(22, top)}                          # one stepped corner on the crown
+    left, right = (top + a for a in arms)
+    body |= rect(8, left, 11, left + 2) | rect(8, left - 3, 10, left)       # out from the column, then up
+    body |= rect(23, right, 26, right + 2) | rect(24, right - 3, 26, right)
+    spines = {(8, left - 4): "o", (26, right - 4): "o"}
+    height = bottom - top + 1
+    eye_y = top + max(3, height // 4)                                       # 14-16 and 19-21: right of centre, clear of the edge
+    d = spines | {(x, y): "k" for x in (14, 15, 16, 19, 20, 21) for y in range(eye_y, eye_y + eye_h)}
+    return body, d, blocky_feet(lf, rf, bottom, xs=(11, 20))
+
+
+def beetle(top, bottom, lf, rf, eye_h=None, reach=0):
+    """A wide shell with stepped corners, split down the back, and two antennae with square knobs.
+    `reach` tips the antennae outwards (+) or back towards each other (-)."""
+    shell = cut_rect(L, top, R, bottom, (4, 2, 1))
+    d = {(17, y): "o" for y in range(top, bottom)}                          # the split between the wing cases
+    for x0, out in ((15, -1), (19, 1)):                                     # stalks climb outwards to a knob
+        end = x0 + out * (2 + reach)
+        d |= {(x0, top - 1): "o", (x0, top - 2): "o", (x0 + out, top - 3): "o", (end, top - 4): "o"}
+        d |= {(x, y): "o" for x in (end, end + out) for y in (top - 5, top - 4)}
+    height = bottom - top + 1
+    h = eye_h or max(3, min(6, height // 3))
+    d |= eyes(17, top + max(3, height // 4), h, gap=4, w=3)
+    return shell, d, blocky_feet(lf, rf, bottom)
+
+
+def crystal(tip, shoulder, bottom, lf, rf, lean=0, eye_h=None):
+    """A square body under a stepped point: two rows of tip, then one pixel wider a row down to `shoulder`."""
+    mask = set()
+    for y in range(tip, shoulder):
+        hw = max(0, y - tip - 1)
+        cx = 16 + round(lean * (shoulder - y) / max(1, shoulder - tip))
+        mask |= rect(cx - hw, y, cx + hw, y)
+    mask |= rect(9, shoulder, 23, bottom)
+    h = eye_h or max(3, min(5, (bottom - tip + 1) // 4))
+    d = eyes(17, shoulder + 2, min(h, bottom - shoulder - 3), gap=2, w=3)
+    return mask, d, blocky_feet(lf, rf, bottom, xs=(10, 19))
+
+
+LEAF = [(8, 11), (8, 12), (8, 13), (9, 14), (11, 15)]                              # the left leaf's rows, leaning up and out
+
+
+def sprout(top, bottom, lf, rf, sway=0, wilt=False, eye_h=None):
+    """Blocky's square body with a two-leaf sprout on a short stem. `sway` leans the leaves;
+    `wilt` lets them hang down beside the stem, for sleep."""
+    body = rect(8, top, 23, bottom)
+    rows = LEAF[::-1] if wilt else LEAF
+    y = top - (6 if wilt else 7)                                            # the leaves' top row
+    leaves = set()
+    for k, (x0, x1) in enumerate(rows):
+        leaves |= rect(x0 + sway, y + k, x1 + sway, y + k) | rect(31 - x1 + sway, y + k, 31 - x0 + sway, y + k)
+    stem = rect(15, y + (0 if wilt else 4), 16, top - 1)
+    return body | stem | leaves, blocky_eyes(top, bottom - top + 1, eye_h), blocky_feet(lf, rf, bottom)
 
 
 CREATURES = {
@@ -282,6 +339,50 @@ CREATURES = {
         {"idle": mushroom(5, 8, 24, 0, 0), "walk-0": mushroom(5, 8, 24, 0, 0), "walk-1": mushroom(7, 8, 24, 0, 1),
          "walk-2": mushroom(5, 8, 24, 0, 0), "walk-3": mushroom(5, 7, 24, 1, 0), "jump": mushroom(5, 7, 26, None, None, eye_h=6),
          "land": mushroom(13, 6, 24, 0, 0, eye_h=3), "sleep-0": mushroom(9, 7, 24, 0, 0, eye_h=3), "sleep-1": mushroom(10, 7, 24, 0, 0, eye_h=3)},
+    ),
+    "cactus": (
+        "#3f8f6b",
+        "a narrow little cactus with two raised arms and a few spines",
+        [("Prickles", "Grumpy and dry, an old man of few words. Hates being watered, hugged or hurried."),
+         ("Saguaro", "Very old and very slow, a deep-voiced desert elder who pauses a long time between words."),
+         ("Tumble", "A cheerful, fast-talking little girl. Loves the sun on the screen and waves both arms at everyone.")],
+        {"idle": cactus(5, 24, 0, 0), "walk-0": cactus(5, 24, 0, 0), "walk-1": cactus(7, 24, 0, 1, arms=(9, 8)),
+         "walk-2": cactus(5, 24, 0, 0), "walk-3": cactus(5, 24, 1, 0, arms=(11, 7)), "jump": cactus(5, 26, None, None, arms=(8, 6), eye_h=4),
+         "land": cactus(13, 24, 0, 0, arms=(5, 4), eye_h=2), "sleep-0": cactus(9, 24, 0, 0, arms=(9, 8)),
+         "sleep-1": cactus(10, 24, 0, 0, arms=(9, 8))},
+    ),
+    "beetle": (
+        "#3f6cc9",
+        "a wide little beetle with a shell split down the back and two feelers",
+        [("Click", "Tiny, fast and anxious, a nervous little boy. Talks in quick bursts and clicks when worried."),
+         ("Scarab", "Grand and slow, an old lady who thinks she is royalty. Speaks of ancient sands."),
+         ("Crumb", "A cheerful, busy little fellow. Counts things out loud, carries crumbs home and never stops.")],
+        {"idle": beetle(12, 24, 0, 0), "walk-0": beetle(12, 24, 0, 0), "walk-1": beetle(14, 24, 0, 1, reach=1),
+         "walk-2": beetle(12, 24, 0, 0), "walk-3": beetle(11, 24, 1, 0, reach=-1), "jump": beetle(10, 26, None, None, eye_h=4, reach=1),
+         "land": beetle(17, 24, 0, 0, eye_h=2, reach=1), "sleep-0": beetle(15, 24, 0, 0, eye_h=2, reach=-1),
+         "sleep-1": beetle(16, 24, 0, 0, eye_h=2, reach=-1)},
+    ),
+    "crystal": (
+        "#b48cf0",
+        "a bright little crystal with a stepped, pointed top on a square body",
+        [("Shard", "Bright and cheerful, a sparkling young girl. Everything is shiny, everything is wonderful."),
+         ("Quartz", "Calm and slow, a deep-voiced old man. Thinks in millions of years."),
+         ("Prism", "A fast-talking young show-off, he splits every topic into seven colours.")],
+        {"idle": crystal(5, 13, 24, 0, 0), "walk-0": crystal(5, 13, 24, 0, 0), "walk-1": crystal(7, 14, 24, 0, 1, lean=1),
+         "walk-2": crystal(5, 13, 24, 0, 0), "walk-3": crystal(5, 13, 24, 1, 0, lean=-1), "jump": crystal(5, 14, 26, None, None, eye_h=5),
+         "land": crystal(13, 18, 24, 0, 0, eye_h=2), "sleep-0": crystal(9, 15, 24, 0, 0, eye_h=3),
+         "sleep-1": crystal(10, 16, 24, 0, 0, eye_h=3)},
+    ),
+    "sprout": (
+        "#a3d14b",
+        "a square little plant with a two-leaf sprout on its head",
+        [("Sprout", "Young and cheerful, a tiny boy. Proud of his two leaves and wants to grow up fast."),
+         ("Fern", "A shy, soft-spoken little girl. Leans towards the light and almost whispers."),
+         ("Bud", "A hyper, impatient tiny kid who talks fast and asks if he is taller yet.")],
+        {"idle": sprout(12, 24, 0, 0), "walk-0": sprout(12, 24, 0, 0), "walk-1": sprout(13, 24, 0, 1, sway=1),
+         "walk-2": sprout(12, 24, 0, 0), "walk-3": sprout(12, 24, 1, 0, sway=-1), "jump": sprout(12, 26, None, None, eye_h=5),
+         "land": sprout(17, 24, 0, 0, eye_h=2), "sleep-0": sprout(14, 24, 0, 0, wilt=True, eye_h=3),
+         "sleep-1": sprout(15, 24, 0, 0, wilt=True, eye_h=3)},
     ),
 }
 

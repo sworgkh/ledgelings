@@ -77,6 +77,34 @@ extension Complaints {
                   "You won't tag me. But I like that you keep trying."],
         "Delta": ["Change logged: {times} chases. Mood: improved. Again.",
                   "Interesting: being chased is fun now. Noted."],
+        // cactus
+        "Prickles": ["{times}. Fine. That was... not terrible.",
+                     "Again? Hmph. Once more. Then nobody hugs me."],
+        "Saguaro": ["{times}... a good chase... under a good sun...",
+                    "Again... slowly... I have time... I have always had time..."],
+        "Tumble": ["{times}! Again again again! That was so fun!",
+                   "Woo! Chase me! Chase me some more!"],
+        // beetle
+        "Click": ["{times}! Fun! Scary! Fun! Click!",
+                  "Again? Okay. Okay okay. Quickly. Click."],
+        "Scarab": ["{times}. Very well. One enjoyed that. A little.",
+                   "Again, then. One permits it. Graciously."],
+        "Crumb": ["{times}! Fun! Back to work now! One, two, three...",
+                  "Again! Then work! Then again!"],
+        // crystal
+        "Shard": ["{times}! That was wonderful! Everything sparkled!",
+                  "Again! Again! I love it! Shiny!"],
+        "Quartz": ["{times}. A fine chase. Over in a geological instant.",
+                   "Again, then. Time is something I have plenty of."],
+        "Prism": ["{times}! That was fun in all seven colours! Eight, actually! I found a new one!",
+                  "Again! I'll split it into a rainbow this time! Watch!"],
+        // sprout
+        "Sprout": ["{times}! That was fun! I think I grew a bit!",
+                   "Again! Chasing makes me grow, I'm sure of it!"],
+        "Fern": ["{times}... um... that was nice... actually...",
+                 "Again...? Okay... if you want..."],
+        "Bud": ["{times}! Again! Faster! Did I grow?",
+                "That was so fun! Again again again! Now! Now!"],
     ]
 
     public static let englishNeutralLines: [String: [String]] = [
@@ -142,6 +170,34 @@ extension Complaints {
                   "Moved a bit. I'll be back on my spot."],
         "Delta": ["Change since last time: {times} hops. Nothing else.",
                   "Noticed: I moved. That's all."],
+        // cactus
+        "Prickles": ["{times} times moved. Sand is sand. Whatever.",
+                     "Here, there. Dry either way."],
+        "Saguaro": ["{times}... moved... the sand forgets... so shall I...",
+                    "Here... or there... the stars are the same..."],
+        "Tumble": ["{times} times! Okay! New spot! Is it sunny? It's a bit sunny!",
+                   "Hi new place! Hi! I'm waving at you!"],
+        // beetle
+        "Click": ["{times} moves. Okay. Is this spot safe? Click?",
+                  "New place. Checking. Checking. Fine. Probably."],
+        "Scarab": ["{times} times moved. One's court moves with one.",
+                   "A new spot. It will do. For now."],
+        "Crumb": ["{times} moves. New spot. Any crumbs here? Two! Good!",
+                  "Fine, fine. I'll count from here."],
+        // crystal
+        "Shard": ["{times} times! New spot! Is the light good? It's good!",
+                  "Ooh, here's nice too! Everything's nice!"],
+        "Quartz": ["{times} moves. Continents drift too. I don't mind.",
+                   "Here or there. Ten thousand years from now, nobody will know."],
+        "Prism": ["{times} moves. New angle. New rainbow. Fine by me.",
+                  "Here's good. I can refract anywhere. I'm that good."],
+        // sprout
+        "Sprout": ["{times} moves! New spot! Is there sun? There's sun!",
+                   "Okay! I can grow here too!"],
+        "Fern": ["{times} moves... it's okay... here's fine...",
+                 "Oh... a new place... hello..."],
+        "Bud": ["{times} moves! New place! Is it taller here? Am I?",
+                "Okay okay okay! Here! Fine! Am I taller yet?"],
     ]
 
     public static let englishGoodPrompt = """

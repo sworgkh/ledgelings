@@ -22,7 +22,7 @@ import Testing
 
     @Test func everyShippedCharacterHasABedOfItsOwn() {
         let names = Self.shipped
-        #expect(names.count == 27)
+        #expect(names.count == 39)
         for name in names { #expect(Beds.builtIn[name] != nil, "\(name) has no bed") }
         let beds = names.compactMap { Beds.builtIn[$0] }
         #expect(Set(beds).count == names.count, "no two characters share a bed")
@@ -33,6 +33,10 @@ import Testing
         #expect(Beds.kind(name: "Tom", persona: "Purrs a lot.", kind: "a small pixel creature") == .catbed)
         #expect(Beds.kind(name: "Bolt", persona: "Curious and new here.", kind: "a tall robot with a lamp") == .dock)
         #expect(Beds.kind(name: "Nobody", persona: "Curious and new here.", kind: "a small pixel creature") == .matchbox, "small")
+        #expect(Beds.kind(name: "Spiny", persona: "Curious and new here.", kind: "a tall desert cactus") == .sand)
+        #expect(Beds.kind(name: "Bzz", persona: "Curious and new here.", kind: "a shiny green beetle") == .walnut)
+        #expect(Beds.kind(name: "Gem", persona: "Sparkly and proud.", kind: "a pink gem") == .geode)
+        #expect(Beds.kind(name: "Leafy", persona: "Curious and new here.", kind: "a potted plant") == .seedpacket)
         #expect(Beds.kind(name: "X", persona: "", kind: "") == .grass, "a tuft of grass when nothing fits")
         #expect(Beds.kind(name: "Blocky", persona: "Purrs.", kind: "a cat") == .crate, "a built-in name keeps its own bed")
     }

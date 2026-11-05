@@ -138,5 +138,17 @@ public enum ClipHelper {
         "Spike": ["Point at one.", "Sharp choice, please."],
         "Wedge": ["Steady. Pick.", "Not tipping. Choose."],
         "Delta": ["New since last time.", "Something changed. Pick."],
+        "Prickles": ["Pick one. Quickly.", "Hmph. Choose."],
+        "Saguaro": ["Take... your time... choose...", "The desert waits... so do I... pick..."],
+        "Tumble": ["Ooh, pick one! Pick one!", "Which one which one which one?"],
+        "Click": ["Quick, pick! Quick!", "This one? That one? Click!"],
+        "Scarab": ["Choose, dear. One is waiting.", "The royal pick, if you please."],
+        "Crumb": ["Pick one! I'll count the rest!", "One, two, three... choose!"],
+        "Shard": ["Ooh, pick a shiny one!", "They're all wonderful! Choose!"],
+        "Quartz": ["Take your time. Choose.", "No hurry. Pick one."],
+        "Prism": ["Pick one! I'd pick all seven!", "Choose! In any colour you like!"],
+        "Sprout": ["Pick one! I'll help!", "Ooh, which one? Choose!"],
+        "Fern": ["Um... pick one...?", "Whichever you like..."],
+        "Bud": ["Quick quick! Pick one!", "Pick! Pick! Pick!"],
     ]
 }

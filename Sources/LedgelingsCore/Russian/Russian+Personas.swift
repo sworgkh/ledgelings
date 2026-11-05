@@ -83,5 +83,37 @@ extension Strings {
             "Устойчивый упрямец. Не даёт себя опрокинуть, и в спорах тоже.",
         "Thinks in changes and differences. Notices what moved since last time.":
             "Мыслит изменениями и разницей. Замечает, что сдвинулось с прошлого раза.",
+        // cactus
+        "a narrow little cactus with two raised arms and a few spines": "узкий маленький кактус с двумя поднятыми руками и парой колючек",
+        "Grumpy and dry, an old man of few words. Hates being watered, hugged or hurried.":
+            "Ворчливый и сухой старик немногословный. Терпеть не может, когда его поливают, обнимают или торопят.",
+        "Very old and very slow, a deep-voiced desert elder who pauses a long time between words.":
+            "Очень старый и очень медленный старейшина пустыни с низким голосом, подолгу молчит между словами.",
+        "A cheerful, fast-talking little girl. Loves the sun on the screen and waves both arms at everyone.":
+            "Весёлая девочка, тараторит. Обожает солнце на экране и машет всем обеими руками.",
+        // beetle
+        "a wide little beetle with a shell split down the back and two feelers": "широкий маленький жук с панцирем, разделённым по спине, и двумя усиками",
+        "Tiny, fast and anxious, a nervous little boy. Talks in quick bursts and clicks when worried.":
+            "Крошечный, быстрый и тревожный мальчик. Говорит короткими очередями и щёлкает, когда волнуется.",
+        "Grand and slow, an old lady who thinks she is royalty. Speaks of ancient sands.":
+            "Величавая и неспешная старая дама, уверенная, что она королева. Говорит о древних песках.",
+        "A cheerful, busy little fellow. Counts things out loud, carries crumbs home and never stops.":
+            "Весёлый деловитый малый. Всё считает вслух, носит крошки домой и не останавливается.",
+        // crystal
+        "a bright little crystal with a stepped, pointed top on a square body": "яркий маленький кристалл со ступенчатой острой верхушкой на квадратном теле",
+        "Bright and cheerful, a sparkling young girl. Everything is shiny, everything is wonderful.":
+            "Яркая и весёлая сверкающая девушка. Всё блестит, всё чудесно.",
+        "Calm and slow, a deep-voiced old man. Thinks in millions of years.":
+            "Спокойный и медленный старик с низким голосом. Мыслит миллионами лет.",
+        "A fast-talking young show-off, he splits every topic into seven colours.":
+            "Тараторящий юный хвастун, раскладывает любую тему на семь цветов.",
+        // sprout
+        "a square little plant with a two-leaf sprout on its head": "квадратное маленькое растение с ростком из двух листиков на голове",
+        "Young and cheerful, a tiny boy. Proud of his two leaves and wants to grow up fast.":
+            "Юный и весёлый крошечный мальчик. Гордится своими двумя листиками и хочет поскорее вырасти.",
+        "A shy, soft-spoken little girl. Leans towards the light and almost whispers.":
+            "Застенчивая тихая девочка. Тянется к свету и говорит почти шёпотом.",
+        "A hyper, impatient tiny kid who talks fast and asks if he is taller yet.":
+            "Неугомонный нетерпеливый малыш, тараторит и всё спрашивает, вырос ли он уже.",
     ]
 }

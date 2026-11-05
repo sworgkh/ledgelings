@@ -76,6 +76,34 @@ extension Beds {
                   "Solid stack. Solid sleep. End of discussion."],
         "Delta": ["My sock is where I left it. Unlike its pair.",
                   "Something moved since last night. Not my sock. Good."],
+        // cactus
+        "Prickles": ["Warm sand. Dry. Perfect. Goodnight.",
+                     "My heap. Nobody waters it. Good."],
+        "Saguaro": ["A warm stone... it remembers the sun... as I do...",
+                    "Goodnight... stars... I see you there..."],
+        "Tumble": ["My towel! It's still warm from the sun! Night night!",
+                   "Night night, everybody! I'm waving! Can you see?"],
+        // beetle
+        "Click": ["My shell. Safe and hard. Goodnight. Click.",
+                  "Tucked in. Nobody step on me. Night."],
+        "Scarab": ["The royal box. Velvet, of course. Goodnight, subjects.",
+                   "One retires for the night. Do keep it down."],
+        "Crumb": ["My crust! A bed now, breakfast later! Goodnight!",
+                  "Counted all the crumbs. All of them. Night!"],
+        // crystal
+        "Shard": ["My little mirror! Goodnight, me! Goodnight, everyone!",
+                  "Night night! I'll sparkle again in the morning!"],
+        "Quartz": ["My geode. Crystals inside, like me. Goodnight.",
+                   "Still and cool. A good night for a stone."],
+        "Prism": ["My crayons! All seven colours! Goodnight, spectrum!",
+                  "Night! I'll dream in colour. Obviously."],
+        // sprout
+        "Sprout": ["My seed packet! That's where I came from! Night!",
+                   "Goodnight! I'll grow while I sleep!"],
+        "Fern": ["My clover... soft and low... goodnight...",
+                 "Goodnight... everyone... quietly..."],
+        "Bud": ["My bucket! I'll grow in here tonight! Am I taller in the morning?",
+                "Night! Wake me up when I'm taller!"],
     ]
 
     public static let englishMovedLines: [String: [String]] = [
@@ -106,5 +134,17 @@ extension Beds {
         "Spike": ["You moved my pincushion. Bold. Pointless, but bold."],
         "Wedge": ["You moved the books. I did not tip. Noted."],
         "Delta": ["My sock moved. I noticed. I always notice."],
+        "Prickles": ["Who moved my sand? ...Still dry. Fine."],
+        "Saguaro": ["...the stone... has moved... the stars... have not..."],
+        "Tumble": ["Ooh, my towel moved! New sunny spot? Yay!"],
+        "Click": ["Who moved it? Who? ...okay. Still safe. Click."],
+        "Scarab": ["Someone has moved the royal box. One shall overlook it. Once."],
+        "Crumb": ["My crust moved! ...still all there! Good!"],
+        "Shard": ["My mirror moved! Ooh, the light's different here! Nice!"],
+        "Quartz": ["The geode has shifted. Tectonics. I don't mind."],
+        "Prism": ["My crayons moved! Still all seven? ...Seven! Good!"],
+        "Sprout": ["My packet moved! Did it grow too? Cool!"],
+        "Fern": ["Oh... my clover moved... it's okay..."],
+        "Bud": ["My bucket moved! Is it a taller spot? Cool!"],
     ]
 }

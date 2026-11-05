@@ -82,6 +82,34 @@ extension Revenge {
                   "You won't shift me off this. Not until you've learned."],
         "Delta": ["What's changed: I'm holding your cursor now. Because of the {today} chases.",
                   "Noticed something? Your cursor stopped. That's me. On it."],
+        // cactus
+        "Prickles": ["Got it. Your cursor. Prickly, isn't it.",
+                     "{today} times today. My turn now. Hmph."],
+        "Saguaro": ["Caught... young cursor... the old arms... are slow... but they hold...",
+                    "{today}... times... today... now you will learn... patience..."],
+        "Tumble": ["Got it got it got it! Your cursor! It's mine now!",
+                   "{today} times today! Now I'm chasing YOU!"],
+        // beetle
+        "Click": ["Got it! Got your cursor! Don't— don't take it back!",
+                  "{today} times today! Now it's my turn! Click! Click!"],
+        "Scarab": ["Seized! Your cursor belongs to the crown now.",
+                   "{today} times today. One has had enough. It is confiscated."],
+        "Crumb": ["Got it! Your cursor! I'll carry it home with the crumbs!",
+                  "{today} today! I counted! My turn!"],
+        // crystal
+        "Shard": ["Caught it! Your cursor! It's so shiny when it's mine!",
+                  "{today} times today! Now I've got it! Sparkle!"],
+        "Quartz": ["Caught. Your cursor is set in stone now.",
+                   "{today} times today. Stone remembers. Now you wait."],
+        "Prism": ["Got it! Your cursor! Now I'll split it into seven little cursors!",
+                  "{today} today! Payback, in full colour!"],
+        // sprout
+        "Sprout": ["Got it! Your cursor! I'm bigger than I look!",
+                   "{today} times today! Now I've got it! Ha!"],
+        "Fern": ["Oh... I caught your cursor... sorry... I'm keeping it a little...",
+                 "{today} times today... so... um... now it's mine..."],
+        "Bud": ["Got it got it got it! Your cursor! Mine now!",
+                "{today} today! Now it's MY turn! Ha!"],
     ]
 
     public static let englishGoodLines: [String: [String]] = [
@@ -147,6 +175,34 @@ extension Revenge {
                   "Caught it. I'm not letting go easily. Tag."],
         "Delta": ["Notice the change? I caught your cursor. Tag.",
                   "Something's different: you're it now."],
+        // cactus
+        "Prickles": ["Caught. Don't make a fuss.",
+                     "Mine. For a minute. Then you can have it."],
+        "Saguaro": ["Ahh... caught... like a cool night... after a hot day...",
+                    "Held... gently... as the desert holds... the rain..."],
+        "Tumble": ["Caught it! Look! Both arms! Hi!",
+                   "Tag! Tag tag tag! You're it!"],
+        // beetle
+        "Click": ["Caught it! Me! Little me! Click!",
+                  "Got it! Quick, before it runs!"],
+        "Scarab": ["Caught it! Do bow, dear.",
+                   "Mine. By royal decree. Briefly."],
+        "Crumb": ["Caught it! That's one cursor! Counting it!",
+                  "Got it! Heavy! Fun! One!"],
+        // crystal
+        "Shard": ["Got it! Isn't it pretty? Look how it shines!",
+                  "Caught! Tag! You're it! Wonderful!"],
+        "Quartz": ["Caught it. Slowly. As is proper.",
+                   "Held. Like a fossil. Gently."],
+        "Prism": ["Caught it! Did you see that? Did everyone see that?",
+                  "Tag! Mine! In every colour!"],
+        // sprout
+        "Sprout": ["Caught it! Me! I caught it! Did you see?",
+                   "Tag! I'm fast for a sprout!"],
+        "Fern": ["Oh! I caught it... I did...",
+                 "Tag... you're it... um... if that's okay..."],
+        "Bud": ["Caught it! Did you see? Am I taller now?",
+                "Tag! You're it! Again! Again!"],
     ]
 
     public static let englishNeutralLines: [String: [String]] = [
@@ -212,6 +268,34 @@ extension Revenge {
                   "Holding it. Shake if you must."],
         "Delta": ["Change noticed: your cursor is with me now.",
                   "{today} chases today. Now I'm holding the cursor."],
+        // cactus
+        "Prickles": ["Holding it. Don't hurry me.",
+                     "Got your cursor. Fine."],
+        "Saguaro": ["Holding... your cursor... a while...",
+                    "Rest here... a moment... little arrow..."],
+        "Tumble": ["I've got your cursor! Hi, cursor!",
+                   "Holding it! Waving with it! Look!"],
+        // beetle
+        "Click": ["Holding it. Holding it. Is that okay?",
+                  "I've got your cursor. Sorry. Sorry. Click."],
+        "Scarab": ["One is holding your cursor. One may return it.",
+                   "Held. For inspection."],
+        "Crumb": ["Holding your cursor. Like a big crumb.",
+                  "Got it. Carrying it a bit. Back to work soon."],
+        // crystal
+        "Shard": ["Holding your cursor! It catches the light!",
+                  "I've got it! Just for a bit! Sparkle!"],
+        "Quartz": ["Holding your cursor. No rush. No rush at all.",
+                   "I have it. For a moment. Which, to a rock, is nothing."],
+        "Prism": ["Holding your cursor. Making it a rainbow. Just a small one.",
+                  "Got it. Showing it off a bit. You don't mind."],
+        // sprout
+        "Sprout": ["I've got your cursor! I'm holding it with my leaves!",
+                   "Holding it! Like a grown-up!"],
+        "Fern": ["I'm holding your cursor... just a little...",
+                 "Um... I have it... I'll give it back soon..."],
+        "Bud": ["Holding your cursor! Is this how grown-ups do it?",
+                "Got it! Can I keep it? No? Okay!"],
     ]
 
     // MARK: Last words, shaken off
@@ -248,6 +332,18 @@ extension Revenge {
         "Spike": ["Fine. But you've seen my point."],
         "Wedge": ["You moved me. This time."],
         "Delta": ["Change: I let go. Grudge: unchanged."],
+        "Prickles": ["Hmph. Dropped it."],
+        "Saguaro": ["Ahh... the arms... let go..."],
+        "Tumble": ["Whoops! It slipped!"],
+        "Click": ["Eep! Gone!"],
+        "Scarab": ["One... has been dropped. How common."],
+        "Crumb": ["Dropped it! Minus one!"],
+        "Shard": ["Oops! It slipped! Shiny things do that!"],
+        "Quartz": ["Hm. It wore away."],
+        "Prism": ["Oops! Bent the wrong way!"],
+        "Sprout": ["Whoa! Dropped it!"],
+        "Fern": ["Oh... it slipped..."],
+        "Bud": ["Aw! Dropped it!"],
     ]
 
     public static let englishGoodLastWords: [String: [String]] = [
@@ -278,6 +374,18 @@ extension Revenge {
         "Spike": ["Point to you. Next round."],
         "Wedge": ["All right. You shook me. Next time I hold tighter."],
         "Delta": ["Change: you're not it any more. I am."],
+        "Prickles": ["Fine. Take it back."],
+        "Saguaro": ["Go... little arrow... the desert... is wide..."],
+        "Tumble": ["Bye bye, cursor! That was fun!"],
+        "Click": ["Okay! Let go! Phew!"],
+        "Scarab": ["You may have it back. Graciously."],
+        "Crumb": ["Done! Back to the crumbs!"],
+        "Shard": ["Bye, cursor! You were lovely!"],
+        "Quartz": ["Go on, then. Time moves."],
+        "Prism": ["Back to you! Now with extra colour!"],
+        "Sprout": ["Here! You can have it back!"],
+        "Fern": ["Here... you can have it back..."],
+        "Bud": ["Fine! Have it! Again later!"],
     ]
 
     public static let englishNeutralLastWords: [String: [String]] = [
@@ -308,5 +416,17 @@ extension Revenge {
         "Spike": ["Point made. Off I go."],
         "Wedge": ["Fine. Moving."],
         "Delta": ["Change: cursor free."],
+        "Prickles": ["There. Done."],
+        "Saguaro": ["Letting... go... slowly..."],
+        "Tumble": ["Okay! Let go! Bye!"],
+        "Click": ["Letting go. Quickly. Bye."],
+        "Scarab": ["Released. One is generous."],
+        "Crumb": ["Putting it down. One."],
+        "Shard": ["Letting go! Sparkle!"],
+        "Quartz": ["Letting go. Calmly."],
+        "Prism": ["There. Refracted. Returned."],
+        "Sprout": ["Okay! Letting go!"],
+        "Fern": ["Um... letting go..."],
+        "Bud": ["Okay! Bye, cursor!"],
     ]
 }

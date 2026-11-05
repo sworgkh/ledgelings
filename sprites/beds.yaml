@@ -54,6 +54,18 @@ poses:
   - {name: pincushion, prompt: "Spike - a tomato pincushion. The pins make the point."}
   - {name: books, prompt: "Wedge - a stack of three thick books. Stable. Will not be tipped over."}
   - {name: sock, prompt: "Delta - one striped sock, lying down. Its pair moved. Delta noticed."}
+  - {name: sand, prompt: "Prickles - a heap of warm sand, stepped like a dune. No water. Good."}
+  - {name: stone, prompt: "Saguaro - a flat stone warmed by a long day of sun. It has waited longer than he has."}
+  - {name: towel, prompt: "Tumble - a striped beach towel spread out in the sun, rolled up at one end."}
+  - {name: walnut, prompt: "Click - half a walnut shell, rim up. Small, hard, and you can hide in it."}
+  - {name: ringbox, prompt: "Scarab - a velvet ring box, lid thrown open. Fit for a queen. Obviously."}
+  - {name: crust, prompt: "Crumb - a crust of bread, carried home. A bed now, breakfast later."}
+  - {name: mirror, prompt: "Shard - a small square mirror lying face up, sparkles over it. Shiny!"}
+  - {name: geode, prompt: "Quartz - a geode split open, crystals inside. A few million years in the making."}
+  - {name: crayons, prompt: "Prism - a box of crayons in seven colours. Prism counts them aloud."}
+  - {name: seedpacket, prompt: "Sprout - a seed packet with a grown-up plant on the front. One day."}
+  - {name: clover, prompt: "Fern - a patch of clover, soft and low, one pink flower. Good for hiding a little."}
+  - {name: bucket, prompt: "Bud - a little blue toy bucket with a handle, for growing in."}
 
 animations:
   crate: {frames: [crate], fps: 1, loop: true}
@@ -83,3 +95,15 @@ animations:
   pincushion: {frames: [pincushion], fps: 1, loop: true}
   books: {frames: [books], fps: 1, loop: true}
   sock: {frames: [sock], fps: 1, loop: true}
+  sand: {frames: [sand], fps: 1, loop: true}
+  stone: {frames: [stone], fps: 1, loop: true}
+  towel: {frames: [towel], fps: 1, loop: true}
+  walnut: {frames: [walnut], fps: 1, loop: true}
+  ringbox: {frames: [ringbox], fps: 1, loop: true}
+  crust: {frames: [crust], fps: 1, loop: true}
+  mirror: {frames: [mirror], fps: 1, loop: true}
+  geode: {frames: [geode], fps: 1, loop: true}
+  crayons: {frames: [crayons], fps: 1, loop: true}
+  seedpacket: {frames: [seedpacket], fps: 1, loop: true}
+  clover: {frames: [clover], fps: 1, loop: true}
+  bucket: {frames: [bucket], fps: 1, loop: true}

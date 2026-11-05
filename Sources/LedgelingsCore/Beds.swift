@@ -15,20 +15,21 @@ public enum Beds {
     public enum Kind: String, CaseIterable, Codable, Sendable {
         case crate, hammock, quilt, pillow, matchbox, bed, box, catbed, cushion, lilypad, moss, puddle,
              cloud, leaf, blanket, log, grass, flowerpot, dock, toolbox, spacebar, sponge, teacup,
-             bubblewrap, pincushion, books, sock
+             bubblewrap, pincushion, books, sock, sand, stone, towel, walnut, ringbox, crust, mirror, geode, crayons,
+             seedpacket, clover, bucket
 
         /// Sheet pixels above the floor the sleeper's feet rest on: the top of the
         /// mattress. Kept in step with `LIFT` in `spritetool/painters/beds.py`.
         public var lift: Int {
             switch self {
-            case .puddle: 2
-            case .box, .grass: 3
-            case .lilypad, .leaf, .dock: 4
-            case .quilt, .matchbox, .moss: 5
-            case .crate, .bed, .catbed, .cushion, .cloud, .blanket, .log, .bubblewrap, .sock: 6
-            case .pillow, .toolbox, .sponge, .pincushion: 7
-            case .hammock, .spacebar, .books: 8
-            case .teacup: 9
+            case .puddle, .clover: 2
+            case .box, .grass, .towel: 3
+            case .lilypad, .leaf, .dock, .mirror: 4
+            case .quilt, .matchbox, .moss, .stone, .seedpacket: 5
+            case .crate, .bed, .catbed, .cushion, .cloud, .blanket, .log, .bubblewrap, .sock, .ringbox, .crust: 6
+            case .pillow, .toolbox, .sponge, .pincushion, .walnut, .geode, .crayons: 7
+            case .hammock, .spacebar, .books, .sand: 8
+            case .teacup, .bucket: 9
             case .flowerpot: 10
             }
         }
@@ -63,6 +64,18 @@ public enum Beds {
             case .pincushion: tr("a pincushion")
             case .books: tr("a stack of books")
             case .sock: tr("a striped sock")
+            case .sand: tr("a heap of warm sand")
+            case .stone: tr("a flat sun-warmed stone")
+            case .towel: tr("a striped beach towel")
+            case .walnut: tr("half a walnut shell")
+            case .ringbox: tr("a velvet ring box")
+            case .crust: tr("a crust of bread")
+            case .mirror: tr("a small square mirror")
+            case .geode: tr("a geode split open")
+            case .crayons: tr("a box of crayons")
+            case .seedpacket: tr("a seed packet")
+            case .clover: tr("a patch of clover")
+            case .bucket: tr("a little toy bucket")
             }
         }
     }
@@ -85,6 +98,14 @@ public enum Beds {
         "Goop": .sponge, "Puddle": .teacup, "Blorp": .bubblewrap,
         // triangle
         "Spike": .pincushion, "Wedge": .books, "Delta": .sock,
+        // cactus
+        "Prickles": .sand, "Saguaro": .stone, "Tumble": .towel,
+        // beetle
+        "Click": .walnut, "Scarab": .ringbox, "Crumb": .crust,
+        // crystal
+        "Shard": .mirror, "Quartz": .geode, "Prism": .crayons,
+        // sprout
+        "Sprout": .seedpacket, "Fern": .clover, "Bud": .bucket,
     ]
 
     /// For a character nobody wrote a bed for: word starts in its persona, then
@@ -96,6 +117,10 @@ public enum Beds {
         (["mushroom", "fung", "moss", "damp", "earth"], .moss),
         (["robot", "machine", "android", "metal", "antenna", "bolt"], .dock),
         (["slime", "blob", "goo", "sticky", "wobbl"], .sponge),
+        (["cactus", "desert", "spine", "prick"], .sand),
+        (["beetle", "bug", "insect", "shell"], .walnut),
+        (["crystal", "gem", "jewel", "quartz", "sparkl"], .geode),
+        (["sprout", "seed", "seedling", "plant", "leaf", "leaves"], .seedpacket),
         (["sleep", "nap", "drows", "yawn", "tired"], .pillow),
         (["old", "wise", "philosoph"], .quilt),
         (["tiny", "small", "little"], .matchbox),

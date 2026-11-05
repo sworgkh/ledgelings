@@ -393,12 +393,162 @@ def sock(d, ox, oy, bg):
     dot(d, ox + 34, f - 7, bg); dot(d, ox + 33, f - 6, outline(base))
 
 
+def sand(d, ox, oy, bg):
+    """Prickles: a heap of warm sand, stepped like a dune. No water. Good."""
+    f = oy + F
+    sand_ = (232, 196, 120)
+    block(d, ox + 1, f - 4, ox + 35, f, sand_)
+    block(d, ox + 5, f - 7, ox + 31, f - 3, sand_)
+    block(d, ox + 11, f - 9, ox + 25, f - 6, sand_)
+    for x, y in ((8, 2), (15, 5), (22, 2), (28, 5), (19, 8)):
+        dot(d, ox + x, f - y, shades(sand_)["shade"])           # grains
+    block(d, ox + 30, f - 3, ox + 34, f, (150, 146, 140))         # a pebble
+
+
+def stone(d, ox, oy, bg):
+    """Saguaro: a flat stone, warmed by a long day of sun. It has waited longer than he has."""
+    f = oy + F
+    grey = (168, 160, 150)
+    rounded(d, ox, oy, 1, F - 6, 35, F, grey, bg)
+    flat(d, ox + 6, f - 4, ox + 12, f - 3, shades(grey)["shade"])  # a crack, then lichen
+    flat(d, ox + 11, f - 3, ox + 15, f - 2, shades(grey)["shade"])
+    flat(d, ox + 24, f - 4, ox + 28, f - 3, (150, 170, 96))
+    flat(d, ox + 30, f - 12, ox + 34, f - 8, (250, 210, 60))       # the sun above it, square
+    dot(d, ox + 29, f - 10, (250, 210, 60)); dot(d, ox + 34, f - 10, (250, 210, 60))
+
+
+def towel(d, ox, oy, bg):
+    """Tumble: a striped beach towel, spread out in the sun. Wave at it."""
+    f = oy + F
+    base = (250, 244, 232)
+    block(d, ox + 1, f - 4, ox + 35, f, base)
+    for k, x in enumerate(range(3, 33, 5)):
+        flat(d, ox + x, f - 3, ox + x + 3, f - 1, [(236, 92, 84), (250, 190, 60), (96, 170, 220)][k % 3])
+    block(d, ox + 27, f - 7, ox + 35, f - 3, base)                 # rolled up at one end for a pillow
+    flat(d, ox + 29, f - 6, ox + 33, f - 5, (236, 92, 84))
+
+
+def walnut(d, ox, oy, bg):
+    """Click: half a walnut shell, rim up. Small, hard, and you can hide in it."""
+    f = oy + F
+    shell = (166, 118, 74)
+    block(d, ox + 4, f - 4, ox + 32, f, shell)
+    block(d, ox + 1, f - 8, ox + 35, f - 3, shell)
+    dot(d, ox + 1, f - 3, bg); dot(d, ox + 34, f - 3, bg)
+    for x in range(5, 32, 4):
+        dot(d, ox + x, f - 5, shades(shell)["shade"])             # the wrinkles
+        dot(d, ox + x + 2, f - 2, shades(shell)["shade"])
+    flat(d, ox + 3, f - 7, ox + 33, f - 6, (214, 176, 120))        # the pale inside of the rim
+
+
+def ringbox(d, ox, oy, bg):
+    """Scarab: a velvet ring box, lid thrown open. Fit for a queen. Obviously."""
+    f = oy + F
+    velvet, gold = (120, 40, 110), (240, 196, 70)
+    block(d, ox + 3, f - 7, ox + 33, f, velvet)
+    flat(d, ox + 4, f - 4, ox + 32, f - 3, gold)                  # the gold band
+    block(d, ox + 3, f - 15, ox + 33, f - 7, velvet)               # the lid, standing up behind
+    flat(d, ox + 6, f - 13, ox + 30, f - 9, (226, 210, 220))       # its satin lining
+    flat(d, ox + 16, f - 12, ox + 20, f - 11, gold)
+
+
+def crust(d, ox, oy, bg):
+    """Crumb: a crust of bread, carried home. A bed now, breakfast later."""
+    f = oy + F
+    crust_, crumb = (196, 128, 60), (246, 222, 170)
+    block(d, ox + 2, f - 7, ox + 34, f, crust_)
+    flat(d, ox + 4, f - 5, ox + 32, f - 2, crumb)                 # the soft inside
+    for x in (8, 15, 23, 28):
+        dot(d, ox + x, f - 4, shades(crumb)["shade"])
+    dot(d, ox + 2, f - 7, bg); dot(d, ox + 33, f - 7, bg)
+    dot(d, ox + 3, f - 6, outline(crust_)); dot(d, ox + 32, f - 6, outline(crust_))
+
+
+def mirror(d, ox, oy, bg):
+    """Shard: a small square mirror, lying face up. Shiny! Everything is shiny!"""
+    f = oy + F
+    frame, glass = (200, 168, 230), (206, 232, 246)
+    block(d, ox + 1, f - 5, ox + 35, f, frame)
+    flat(d, ox + 3, f - 4, ox + 33, f - 2, glass)
+    for x in (7, 19, 27):
+        flat(d, ox + x, f - 4, ox + x + 2, f - 3, (255, 255, 255))  # glints
+    for x, y in ((5, 9), (30, 11), (17, 8)):                         # sparkles over it
+        dot(d, ox + x, f - y, (255, 236, 120))
+        dot(d, ox + x - 1, f - y + 1, (255, 236, 120)); dot(d, ox + x + 1, f - y + 1, (255, 236, 120))
+        dot(d, ox + x, f - y + 2, (255, 236, 120))
+
+
+def geode(d, ox, oy, bg):
+    """Quartz: a geode split open, crystals inside. A few million years in the making. No hurry."""
+    f = oy + F
+    rock, amethyst = (130, 120, 112), (170, 130, 220)
+    rounded(d, ox, oy, 2, F - 8, 34, F, rock, bg)
+    flat(d, ox + 5, f - 6, ox + 31, f - 2, amethyst)
+    for x in range(6, 30, 4):
+        flat(d, ox + x, f - 6, ox + x + 2, f - 5, mix(amethyst, (255, 255, 255), 0.4))  # crystal points
+        dot(d, ox + x + 2, f - 3, shades(amethyst)["shade"])
+
+
+def crayons(d, ox, oy, bg):
+    """Prism: a box of crayons in every colour. Seven at least. Prism counts them aloud."""
+    f = oy + F
+    box_ = (240, 200, 60)
+    colours = [(220, 60, 60), (240, 140, 50), (240, 220, 70), (80, 180, 90), (70, 130, 220), (90, 70, 180), (170, 80, 200)]
+    for k, c in enumerate(colours):
+        x = 4 + k * 4
+        h = 11 if k % 2 else 12
+        flat(d, ox + x, f - h, ox + x + 3, f - 7, c)
+        dot(d, ox + x + 1, f - h - 1, c)                          # the stepped tip
+        flat(d, ox + x, f - h, ox + x + 1, f - 7, outline(c))
+    block(d, ox + 1, f - 8, ox + 35, f, box_)
+    flat(d, ox + 6, f - 5, ox + 30, f - 3, (60, 140, 70))         # the green band on the box
+
+
+def seedpacket(d, ox, oy, bg):
+    """Sprout: a seed packet, a picture of a grown-up plant on the front. One day."""
+    f = oy + F
+    paper, green = (240, 230, 206), (110, 186, 80)
+    block(d, ox + 2, f - 6, ox + 34, f, paper)
+    flat(d, ox + 3, f - 6, ox + 33, f - 5, (214, 92, 70))         # the folded top, a red strip
+    flat(d, ox + 8, f - 3, ox + 9, f - 1, green)                   # the plant on the front
+    flat(d, ox + 6, f - 4, ox + 8, f - 3, green); flat(d, ox + 9, f - 4, ox + 11, f - 3, green)
+    for x in (16, 20, 24, 28):
+        dot(d, ox + x, f - 3, (150, 110, 70))                     # seeds spilled from the corner
+
+
+def clover(d, ox, oy, bg):
+    """Fern: a patch of clover, soft and low. Quiet. Good for hiding a little."""
+    f = oy + F
+    green, dark = (100, 176, 90), (70, 136, 64)
+    block(d, ox + 1, f - 3, ox + 35, f, green)
+    for x in (2, 10, 18, 26):                                       # three-leaf clovers, square leaves
+        flat(d, ox + x, f - 6, ox + x + 2, f - 4, green)
+        flat(d, ox + x + 3, f - 6, ox + x + 5, f - 4, green)
+        flat(d, ox + x + 1, f - 8, ox + x + 4, f - 6, green)
+        dot(d, ox + x + 2, f - 4, dark)
+    flat(d, ox + 30, f - 10, ox + 33, f - 7, (240, 180, 210))     # one pink clover flower
+
+
+def bucket(d, ox, oy, bg):
+    """Bud: a little toy bucket, bright blue, for growing in. Is he taller yet?"""
+    f = oy + F
+    blue, yellow = (70, 150, 230), (250, 210, 60)
+    block(d, ox + 5, f - 9, ox + 31, f, blue)
+    block(d, ox + 3, f - 10, ox + 33, f - 7, blue)                 # the rim
+    flat(d, ox + 6, f - 5, ox + 30, f - 4, yellow)
+    flat(d, ox + 3, f - 14, ox + 4, f - 10, outline(blue))
+    flat(d, ox + 32, f - 14, ox + 33, f - 10, outline(blue))
+    flat(d, ox + 4, f - 15, ox + 32, f - 14, outline(blue))          # the handle, up over the top
+
+
 BEDS = {
     "crate": crate, "hammock": hammock, "quilt": quilt, "pillow": pillow, "matchbox": matchbox,
     "bed": bed, "box": box, "catbed": catbed, "cushion": cushion, "lilypad": lilypad, "moss": moss,
     "puddle": puddle, "cloud": cloud, "leaf": leaf, "blanket": blanket, "log": log, "grass": grass,
     "flowerpot": flowerpot, "dock": dock, "toolbox": toolbox, "spacebar": spacebar, "sponge": sponge,
     "teacup": teacup, "bubblewrap": bubblewrap, "pincushion": pincushion, "books": books, "sock": sock,
+    "sand": sand, "stone": stone, "towel": towel, "walnut": walnut, "ringbox": ringbox, "crust": crust,
+    "mirror": mirror, "geode": geode, "crayons": crayons, "seedpacket": seedpacket, "clover": clover, "bucket": bucket,
 }
 
 # Pixels above the floor the sleeper's feet rest on: the top of the mattress.
@@ -407,6 +557,8 @@ LIFT = {
     "cushion": 6, "lilypad": 4, "moss": 5, "puddle": 2, "cloud": 6, "leaf": 4, "blanket": 6, "log": 6,
     "grass": 3, "flowerpot": 10, "dock": 4, "toolbox": 7, "spacebar": 8, "sponge": 7, "teacup": 9,
     "bubblewrap": 6, "pincushion": 7, "books": 8, "sock": 6,
+    "sand": 8, "stone": 5, "towel": 3, "walnut": 7, "ringbox": 6, "crust": 6,
+    "mirror": 4, "geode": 7, "crayons": 7, "seedpacket": 5, "clover": 2, "bucket": 9,
 }
 
 

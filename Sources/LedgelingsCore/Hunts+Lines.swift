@@ -82,6 +82,34 @@ extension Hunts {
                   "{week} this week. Push all you like, I don't move."],
         "Delta": ["Since yesterday: up to {today} today. This week: {week}. The difference: annoying.",
                   "{all} in all. What changed? Only my patience."],
+        // cactus
+        "Prickles": ["{today} today. {all} in all. Hmph. Too many.",
+                     "{week} this week. A cactus waits. You don't."],
+        "Saguaro": ["{today}... today... {all}... in all... even the wind rests sometimes...",
+                    "{week}... this week... the desert has seen worse... but not much..."],
+        "Tumble": ["{today} today! {all} in all! That's too many even for me!",
+                   "{week} this week! My arms are tired from waving!"],
+        // beetle
+        "Click": ["{today} today! {all} in all! It keeps coming back! Click-click!",
+                  "{week} this week! Too many! I'm hiding! Don't look!"],
+        "Scarab": ["{today} today, {all} in all. One's patience is not a desert, dear.",
+                   "{week} this week. In the old days, that would have been a scandal."],
+        "Crumb": ["{today} today, {all} in all! I counted every one! Too many!",
+                  "{week} this week! That's more than my crumbs! Stop!"],
+        // crystal
+        "Shard": ["{today} today, {all} in all! Even I can't sparkle about that many!",
+                  "{week} this week! My facets are getting dizzy!"],
+        "Quartz": ["{today} today, {all} in all. Even erosion takes breaks.",
+                   "{week} this week. In stone years, that is far too fast."],
+        "Prism": ["{today} today, {all} in all! That's a full spectrum of too many!",
+                  "{week} this week! Red, orange, yellow, enough!"],
+        // sprout
+        "Sprout": ["{today} today, {all} in all! That's too many! My leaves are shaking!",
+                   "{week} this week! I'm only little!"],
+        "Fern": ["{today} today... {all} in all... um... that's a lot...",
+                 "{week} this week... I'm a little tired..."],
+        "Bud": ["{today} today! {all} in all! Too many! And I'm STILL not taller!",
+                "{week} this week! Enough! I'm busy growing!"],
     ]
 
     public static let englishGoodLines: [String: [String]] = [
@@ -147,6 +175,34 @@ extension Hunts {
                   "{all} in all. You won't tag me. I like that you keep trying."],
         "Delta": ["Change logged: {today} today, up from before. Mood: improved.",
                   "{week} this week, {all} in all. Interesting: it's more fun every time."],
+        // cactus
+        "Prickles": ["{today} today. Fine. I'll admit it. Fun.",
+                     "{week} this week. Hmph. Not bad, for a cursor."],
+        "Saguaro": ["{today}... today... {all}... in all... a fine season for chasing...",
+                    "{week}... this week... the old arms... still remember how..."],
+        "Tumble": ["{today} today! {all} in all! I love this game!",
+                   "{week} this week! Best week ever! Wave if you agree!"],
+        // beetle
+        "Click": ["{today} today! {all} in all! I wasn't even scared! Much!",
+                  "{week} this week! I'm fast! Did you see? So fast!"],
+        "Scarab": ["{today} today, {all} in all. A royal sport, really.",
+                   "{week} this week. One is quite the huntress, you know."],
+        "Crumb": ["{today} today, {all} in all! I counted! Great work, everybody!",
+                  "{week} this week! New record! I'm writing it down!"],
+        // crystal
+        "Shard": ["{today} today, {all} in all! Wonderful! Simply wonderful!",
+                  "{week} this week! Best week! Shiniest week!"],
+        "Quartz": ["{today} today, {all} in all. A good age for chasing.",
+                   "{week} this week. Even an old rock enjoys a game."],
+        "Prism": ["{today} today, {all} in all! A rainbow of fun! I did that!",
+                  "{week} this week! Best week, every colour of it!"],
+        // sprout
+        "Sprout": ["{today} today, {all} in all! I'm getting good at this!",
+                   "{week} this week! When I'm big, I'll catch it every time!"],
+        "Fern": ["{today} today... {all} in all... I liked it... quietly...",
+                 "{week} this week... that was fun... thank you..."],
+        "Bud": ["{today} today! {all} in all! Again! More! Faster!",
+                "{week} this week! Best week! Did I grow? I grew, right?"],
     ]
 
     public static let englishNeutralLines: [String: [String]] = [
@@ -212,5 +268,33 @@ extension Hunts {
                   "{week} this week. Didn't change a thing."],
         "Delta": ["Change since yesterday: {today} today. This week: {week}. Noted.",
                   "{all} in all. The difference: nothing much."],
+        // cactus
+        "Prickles": ["{today} today, {all} in all. Noted.",
+                     "{week} this week. Dry as ever."],
+        "Saguaro": ["{today}... today... {all}... in all... like grains of sand...",
+                    "{week}... this week... the sun rises... the cursor runs..."],
+        "Tumble": ["{today} today! {all} in all! Wow, numbers!",
+                   "{week} this week! Hi, cursor! Bye, cursor!"],
+        // beetle
+        "Click": ["{today} today. {all} in all. Counting. Click.",
+                  "{week} this week. Quick. Quick. Done."],
+        "Scarab": ["{today} today, {all} in all. Noted in the royal ledger.",
+                   "{week} this week. The scribes will record it."],
+        "Crumb": ["{today} today, {all} in all. Counted. Next!",
+                  "{week} this week. Into the tally it goes."],
+        // crystal
+        "Shard": ["{today} today, {all} in all! Ooh, numbers! Shiny numbers!",
+                  "{week} this week! That's a lot of glitter!"],
+        "Quartz": ["{today} today, {all} in all. Layer upon layer.",
+                   "{week} this week. Recorded, like rings in rock."],
+        "Prism": ["{today} today, {all} in all. Split seven ways, that's still a lot.",
+                  "{week} this week. In seven colours: busy, busy, busy, busy, busy, busy, busy."],
+        // sprout
+        "Sprout": ["{today} today, {all} in all! I'm counting like a grown-up!",
+                   "{week} this week! Bigger every day! Like me!"],
+        "Fern": ["{today} today... {all} in all...",
+                 "{week} this week... okay..."],
+        "Bud": ["{today} today! {all} in all! Is that a lot? It's a lot!",
+                "{week} this week! Am I taller yet? No? Okay!"],
     ]
 }

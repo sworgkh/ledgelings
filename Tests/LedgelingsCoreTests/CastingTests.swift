@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import LedgelingsCore
 
@@ -20,6 +21,32 @@ import Testing
 
         let wisp = Casting.traits(persona: "Wistful and poetic. Remembers monitors that are gone.", kind: "a little round ghost with a wavy hem, hovering")
         #expect(wisp.wants[.whisper, default: 0] >= 2)
+    }
+
+    /// The cactus, beetle, crystal and sprout casts, read the way the app reads their sheets.
+    @Test func theNewSpeciesSoundLikeTheirPersonas() throws {
+        let sprites = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Sources/Ledgelings/Resources/sprites")
+        var t: [String: Casting.Traits] = [:]
+        for species in ["cactus", "beetle", "crystal", "sprout"] {
+            let json = try JSONSerialization.jsonObject(with: Data(contentsOf: sprites.appendingPathComponent("\(species).json"))) as! [String: Any]
+            for c in json["cast"] as! [[String: String]] {
+                t[c["name"]!] = Casting.traits(persona: c["persona"]!, kind: json["kind"] as! String)
+            }
+        }
+        #expect(t.count == 12)
+        for (name, traits) in t { #expect(traits.wants[.robot] == nil, "\(name) is no robot") }
+        #expect(t["Prickles"]!.wants[.old, default: 0] > 0 && t["Prickles"]!.wants[.male, default: 0] > 0)
+        #expect(t["Saguaro"]!.wants[.old, default: 0] > 0 && t["Saguaro"]!.wants[.deep, default: 0] > 0 && t["Saguaro"]!.speed < 1)
+        #expect(t["Tumble"]!.wants[.female, default: 0] > 0 && t["Tumble"]!.speed > 1)
+        #expect(t["Click"]!.pitch > 1 && t["Click"]!.speed > 1)
+        #expect(t["Scarab"]!.wants[.old, default: 0] > 0 && t["Scarab"]!.wants[.female, default: 0] > 0)
+        #expect(t["Shard"]!.wants[.female, default: 0] > 0 && t["Shard"]!.pitch > 1)
+        #expect(t["Quartz"]!.wants[.deep, default: 0] > 0 && t["Quartz"]!.speed < 1)
+        #expect(t["Prism"]!.wants[.male, default: 0] > 0 && t["Prism"]!.speed > 1)
+        #expect(t["Sprout"]!.wants[.young, default: 0] > 0 && t["Sprout"]!.wants[.male, default: 0] > 0)
+        #expect(t["Fern"]!.wants[.female, default: 0] > 0 && t["Fern"]!.wants[.soft, default: 0] + t["Fern"]!.wants[.whisper, default: 0] > 0)
+        #expect(t["Bud"]!.speed > 1 && t["Bud"]!.pitch > 1)
     }
 
     @Test func shortWordsMustMatchWholeSoTheIsNotHe() {
