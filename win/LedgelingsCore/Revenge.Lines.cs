@@ -52,6 +52,18 @@ public static partial class Revenge
         ["Spike"] = new[] { "Got your cursor. My point, sharp as ever: {today} times is too many.", "Hanging on by my tip. Think about what you did." },
         ["Wedge"] = new[] { "I've got your cursor and I'm not budging. {today} times. Try shaking.", "You won't shift me off this. Not until you've learned." },
         ["Delta"] = new[] { "What's changed: I'm holding your cursor now. Because of the {today} chases.", "Noticed something? Your cursor stopped. That's me. On it." },
+        ["Prickles"] = new[] { "Got it. Your cursor. Prickly, isn't it.", "{today} times today. My turn now. Hmph." },
+        ["Saguaro"] = new[] { "Caught... young cursor... the old arms... are slow... but they hold...", "{today}... times... today... now you will learn... patience..." },
+        ["Tumble"] = new[] { "Got it got it got it! Your cursor! It's mine now!", "{today} times today! Now I'm chasing YOU!" },
+        ["Click"] = new[] { "Got it! Got your cursor! Don't— don't take it back!", "{today} times today! Now it's my turn! Click! Click!" },
+        ["Scarab"] = new[] { "Seized! Your cursor belongs to the crown now.", "{today} times today. One has had enough. It is confiscated." },
+        ["Crumb"] = new[] { "Got it! Your cursor! I'll carry it home with the crumbs!", "{today} today! I counted! My turn!" },
+        ["Shard"] = new[] { "Caught it! Your cursor! It's so shiny when it's mine!", "{today} times today! Now I've got it! Sparkle!" },
+        ["Quartz"] = new[] { "Caught. Your cursor is set in stone now.", "{today} times today. Stone remembers. Now you wait." },
+        ["Prism"] = new[] { "Got it! Your cursor! Now I'll split it into seven little cursors!", "{today} today! Payback, in full colour!" },
+        ["Sprout"] = new[] { "Got it! Your cursor! I'm bigger than I look!", "{today} times today! Now I've got it! Ha!" },
+        ["Fern"] = new[] { "Oh... I caught your cursor... sorry... I'm keeping it a little...", "{today} times today... so... um... now it's mine..." },
+        ["Bud"] = new[] { "Got it got it got it! Your cursor! Mine now!", "{today} today! Now it's MY turn! Ha!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishGoodLines = new Dictionary<string, string[]>
@@ -83,6 +95,18 @@ public static partial class Revenge
         ["Spike"] = new[] { "Got you. Sharp move, right? Tag.", "Caught your cursor on my point. Your turn." },
         ["Wedge"] = new[] { "Got your cursor, and I'm staying put. Try and shake me.", "Caught it. I'm not letting go easily. Tag." },
         ["Delta"] = new[] { "Notice the change? I caught your cursor. Tag.", "Something's different: you're it now." },
+        ["Prickles"] = new[] { "Caught. Don't make a fuss.", "Mine. For a minute. Then you can have it." },
+        ["Saguaro"] = new[] { "Ahh... caught... like a cool night... after a hot day...", "Held... gently... as the desert holds... the rain..." },
+        ["Tumble"] = new[] { "Caught it! Look! Both arms! Hi!", "Tag! Tag tag tag! You're it!" },
+        ["Click"] = new[] { "Caught it! Me! Little me! Click!", "Got it! Quick, before it runs!" },
+        ["Scarab"] = new[] { "Caught it! Do bow, dear.", "Mine. By royal decree. Briefly." },
+        ["Crumb"] = new[] { "Caught it! That's one cursor! Counting it!", "Got it! Heavy! Fun! One!" },
+        ["Shard"] = new[] { "Got it! Isn't it pretty? Look how it shines!", "Caught! Tag! You're it! Wonderful!" },
+        ["Quartz"] = new[] { "Caught it. Slowly. As is proper.", "Held. Like a fossil. Gently." },
+        ["Prism"] = new[] { "Caught it! Did you see that? Did everyone see that?", "Tag! Mine! In every colour!" },
+        ["Sprout"] = new[] { "Caught it! Me! I caught it! Did you see?", "Tag! I'm fast for a sprout!" },
+        ["Fern"] = new[] { "Oh! I caught it... I did...", "Tag... you're it... um... if that's okay..." },
+        ["Bud"] = new[] { "Caught it! Did you see? Am I taller now?", "Tag! You're it! Again! Again!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishNeutralLines = new Dictionary<string, string[]>
@@ -114,6 +138,18 @@ public static partial class Revenge
         ["Spike"] = new[] { "Got your cursor. That's the point.", "Holding it. {today} today." },
         ["Wedge"] = new[] { "Got your cursor. Not budging for a bit.", "Holding it. Shake if you must." },
         ["Delta"] = new[] { "Change noticed: your cursor is with me now.", "{today} chases today. Now I'm holding the cursor." },
+        ["Prickles"] = new[] { "Holding it. Don't hurry me.", "Got your cursor. Fine." },
+        ["Saguaro"] = new[] { "Holding... your cursor... a while...", "Rest here... a moment... little arrow..." },
+        ["Tumble"] = new[] { "I've got your cursor! Hi, cursor!", "Holding it! Waving with it! Look!" },
+        ["Click"] = new[] { "Holding it. Holding it. Is that okay?", "I've got your cursor. Sorry. Sorry. Click." },
+        ["Scarab"] = new[] { "One is holding your cursor. One may return it.", "Held. For inspection." },
+        ["Crumb"] = new[] { "Holding your cursor. Like a big crumb.", "Got it. Carrying it a bit. Back to work soon." },
+        ["Shard"] = new[] { "Holding your cursor! It catches the light!", "I've got it! Just for a bit! Sparkle!" },
+        ["Quartz"] = new[] { "Holding your cursor. No rush. No rush at all.", "I have it. For a moment. Which, to a rock, is nothing." },
+        ["Prism"] = new[] { "Holding your cursor. Making it a rainbow. Just a small one.", "Got it. Showing it off a bit. You don't mind." },
+        ["Sprout"] = new[] { "I've got your cursor! I'm holding it with my leaves!", "Holding it! Like a grown-up!" },
+        ["Fern"] = new[] { "I'm holding your cursor... just a little...", "Um... I have it... I'll give it back soon..." },
+        ["Bud"] = new[] { "Holding your cursor! Is this how grown-ups do it?", "Got it! Can I keep it? No? Okay!" },
     };
 
     public static readonly IReadOnlyList<string> EnglishBadAnyoneLastWords = new[]
@@ -160,6 +196,18 @@ public static partial class Revenge
         ["Spike"] = new[] { "Fine. But you've seen my point." },
         ["Wedge"] = new[] { "You moved me. This time." },
         ["Delta"] = new[] { "Change: I let go. Grudge: unchanged." },
+        ["Prickles"] = new[] { "Hmph. Dropped it." },
+        ["Saguaro"] = new[] { "Ahh... the arms... let go..." },
+        ["Tumble"] = new[] { "Whoops! It slipped!" },
+        ["Click"] = new[] { "Eep! Gone!" },
+        ["Scarab"] = new[] { "One... has been dropped. How common." },
+        ["Crumb"] = new[] { "Dropped it! Minus one!" },
+        ["Shard"] = new[] { "Oops! It slipped! Shiny things do that!" },
+        ["Quartz"] = new[] { "Hm. It wore away." },
+        ["Prism"] = new[] { "Oops! Bent the wrong way!" },
+        ["Sprout"] = new[] { "Whoa! Dropped it!" },
+        ["Fern"] = new[] { "Oh... it slipped..." },
+        ["Bud"] = new[] { "Aw! Dropped it!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishGoodLastWords = new Dictionary<string, string[]>
@@ -191,6 +239,18 @@ public static partial class Revenge
         ["Spike"] = new[] { "Point to you. Next round." },
         ["Wedge"] = new[] { "All right. You shook me. Next time I hold tighter." },
         ["Delta"] = new[] { "Change: you're not it any more. I am." },
+        ["Prickles"] = new[] { "Fine. Take it back." },
+        ["Saguaro"] = new[] { "Go... little arrow... the desert... is wide..." },
+        ["Tumble"] = new[] { "Bye bye, cursor! That was fun!" },
+        ["Click"] = new[] { "Okay! Let go! Phew!" },
+        ["Scarab"] = new[] { "You may have it back. Graciously." },
+        ["Crumb"] = new[] { "Done! Back to the crumbs!" },
+        ["Shard"] = new[] { "Bye, cursor! You were lovely!" },
+        ["Quartz"] = new[] { "Go on, then. Time moves." },
+        ["Prism"] = new[] { "Back to you! Now with extra colour!" },
+        ["Sprout"] = new[] { "Here! You can have it back!" },
+        ["Fern"] = new[] { "Here... you can have it back..." },
+        ["Bud"] = new[] { "Fine! Have it! Again later!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishNeutralLastWords = new Dictionary<string, string[]>
@@ -222,5 +282,17 @@ public static partial class Revenge
         ["Spike"] = new[] { "Point made. Off I go." },
         ["Wedge"] = new[] { "Fine. Moving." },
         ["Delta"] = new[] { "Change: cursor free." },
+        ["Prickles"] = new[] { "There. Done." },
+        ["Saguaro"] = new[] { "Letting... go... slowly..." },
+        ["Tumble"] = new[] { "Okay! Let go! Bye!" },
+        ["Click"] = new[] { "Letting go. Quickly. Bye." },
+        ["Scarab"] = new[] { "Released. One is generous." },
+        ["Crumb"] = new[] { "Putting it down. One." },
+        ["Shard"] = new[] { "Letting go! Sparkle!" },
+        ["Quartz"] = new[] { "Letting go. Calmly." },
+        ["Prism"] = new[] { "There. Refracted. Returned." },
+        ["Sprout"] = new[] { "Okay! Letting go!" },
+        ["Fern"] = new[] { "Um... letting go..." },
+        ["Bud"] = new[] { "Okay! Bye, cursor!" },
     };
 }

@@ -94,6 +94,18 @@ public static partial class Plays
         ["Spike"] = new Dictionary<string, string> { ["soccer"] = "Soccer. Pointy end goes forward. Try to keep up.", ["baseball"] = "Baseball. I'll make my point at the plate." },
         ["Wedge"] = new Dictionary<string, string> { ["soccer"] = "Soccer. Nothing gets past a wedge. Nothing.", ["baseball"] = "Baseball. No pitch is going to tip me over." },
         ["Delta"] = new Dictionary<string, string> { ["soccer"] = "Soccer: the score changes, the ball changes sides. I'll track the difference.", ["baseball"] = "Baseball: every hit changes who is where. I'll notice." },
+        ["Prickles"] = new Dictionary<string, string> { ["soccer"] = "Soccer. Kick it, don't hug it.", ["baseball"] = "Baseball. Stand still, wait, hit. My kind of game." },
+        ["Saguaro"] = new Dictionary<string, string> { ["soccer"] = "Soccer... the ball rolls... like a tumbleweed... I will wait for it...", ["baseball"] = "Baseball... I stand very still... I am good at standing still..." },
+        ["Tumble"] = new Dictionary<string, string> { ["soccer"] = "Soccer! I'm gonna run SO fast!", ["baseball"] = "Baseball! I'll wave at the ball and then hit it!" },
+        ["Click"] = new Dictionary<string, string> { ["soccer"] = "Soccer! The ball's huge! Don't let it roll on me!", ["baseball"] = "Baseball! I'll run! I'm good at running away!" },
+        ["Scarab"] = new Dictionary<string, string> { ["soccer"] = "Soccer. One rolled the sun across the sky. This is a smaller ball.", ["baseball"] = "Baseball. One will bat. Someone else will run, dear." },
+        ["Crumb"] = new Dictionary<string, string> { ["soccer"] = "Soccer! I'll count the goals! And the kicks! And the—", ["baseball"] = "Baseball! Bases are just big crumbs! I can carry those!" },
+        ["Shard"] = new Dictionary<string, string> { ["soccer"] = "Soccer! The ball's going to shine when it goes in!", ["baseball"] = "Baseball! A ball flying through the light! Wonderful!" },
+        ["Quartz"] = new Dictionary<string, string> { ["soccer"] = "Soccer. The ball rolls downhill, as all things do.", ["baseball"] = "Baseball. I will stand like a boulder at the plate." },
+        ["Prism"] = new Dictionary<string, string> { ["soccer"] = "Soccer! Watch this, everyone! Seven colours of footwork!", ["baseball"] = "Baseball! I'll hit it so hard it leaves a rainbow!" },
+        ["Sprout"] = new Dictionary<string, string> { ["soccer"] = "Soccer! I'll kick it really far! As far as a tree is tall!", ["baseball"] = "Baseball! When I'm big, I'll hit it to the moon!" },
+        ["Fern"] = new Dictionary<string, string> { ["soccer"] = "Soccer... um... I'll kick it softly...", ["baseball"] = "Baseball... I'll try my best... quietly..." },
+        ["Bud"] = new Dictionary<string, string> { ["soccer"] = "Soccer! I'll run the fastest! Watch me! Watch!", ["baseball"] = "Baseball! Hit it! Run! Run run run!" },
     };
 
     public static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> EnglishCheerLines =
@@ -126,6 +138,18 @@ public static partial class Plays
         ["Spike"] = new Dictionary<string, string> { ["goal"] = "Goal. Point made.", ["homeRun"] = "Home run. Sharp, wasn't it?", ["oops"] = "That miss was the pitch's fault. Point taken.", ["wander"] = "I've made my point here. Off to make it there." },
         ["Wedge"] = new Dictionary<string, string> { ["goal"] = "Goal. I said I wouldn't budge from the plan.", ["homeRun"] = "Home run. Steady stance. Never tipped.", ["oops"] = "I did not slip. I adjusted my angle.", ["wander"] = "I'm standing over there now. It's my decision." },
         ["Delta"] = new Dictionary<string, string> { ["goal"] = "Goal. Difference: plus one.", ["homeRun"] = "Home run. The ball's position changed by a whole screen.", ["oops"] = "Note: the ball moved, I didn't. Large difference.", ["wander"] = "Something moved over there. Must check." },
+        ["Prickles"] = new Dictionary<string, string> { ["goal"] = "Goal. Hmph. Don't clap.", ["homeRun"] = "Gone. Over the dunes. Fine.", ["oops"] = "Missed. The sun was in my eyes.", ["wander"] = "I'm standing in the sun a minute. Don't follow me." },
+        ["Saguaro"] = new Dictionary<string, string> { ["goal"] = "It went in... like the sun... behind the hills... beautiful...", ["homeRun"] = "Up... and up... like a hawk... over the desert...", ["oops"] = "Missed... in my youth... I would have... perhaps...", ["wander"] = "I shall stand... in that warm spot... for an age or two..." },
+        ["Tumble"] = new Dictionary<string, string> { ["goal"] = "GOAL! Goal goal goal! Everybody wave!", ["homeRun"] = "It's gone! Bye, ball! Byeee!", ["oops"] = "Oops! Missed! It's okay! Again!", ["wander"] = "Ooh, a sunny spot! Be right back!" },
+        ["Click"] = new Dictionary<string, string> { ["goal"] = "Goal! Click! Click-click! Goal!", ["homeRun"] = "Whoa! Up! Away! Click!", ["oops"] = "Missed! Sorry! Sorry! It was big!", ["wander"] = "I'll just hide over there. For a second. Click." },
+        ["Scarab"] = new Dictionary<string, string> { ["goal"] = "A goal! As one foretold.", ["homeRun"] = "Over the walls of the city! Splendid.", ["oops"] = "One missed on purpose. To be kind.", ["wander"] = "One shall take a royal stroll. Do not follow too closely." },
+        ["Crumb"] = new Dictionary<string, string> { ["goal"] = "Goal! That's one! Counting it!", ["homeRun"] = "All the way round! Four bases! I counted!", ["oops"] = "Missed! That's fine! Next one counts double!", ["wander"] = "I spotted a crumb over there. Back in a moment!" },
+        ["Shard"] = new Dictionary<string, string> { ["goal"] = "Goal! Wonderful! Everybody sparkle!", ["homeRun"] = "Up into the light! Gone! Beautiful!", ["oops"] = "Missed! That's okay! Still shiny!", ["wander"] = "Ooh, a sunbeam! I'll be right back!" },
+        ["Quartz"] = new Dictionary<string, string> { ["goal"] = "A goal. Calmly done. Very good.", ["homeRun"] = "It flies. Like a meteor, but upwards.", ["oops"] = "Missed. In a million years, it won't matter.", ["wander"] = "I'll rest in that quiet corner. Like a pebble in a stream." },
+        ["Prism"] = new Dictionary<string, string> { ["goal"] = "Goal! In every colour! Did you see that?", ["homeRun"] = "Gone! Leaving a rainbow trail! Spectacular!", ["oops"] = "Missed! On purpose! For drama!", ["wander"] = "I'll go catch some light over there. Don't miss me too much!" },
+        ["Sprout"] = new Dictionary<string, string> { ["goal"] = "Goal! Did you see? I'm getting good!", ["homeRun"] = "So far! As far as a big tree!", ["oops"] = "Missed! I'm still little! Next time!", ["wander"] = "I'll stand in that sunny spot for a bit. To grow." },
+        ["Fern"] = new Dictionary<string, string> { ["goal"] = "Oh! A goal... yay...", ["homeRun"] = "So high... like toward the sun...", ["oops"] = "Oh... missed... sorry...", ["wander"] = "Um... I'll stand in the light over there... for a bit..." },
+        ["Bud"] = new Dictionary<string, string> { ["goal"] = "GOAL! Again! Do it again!", ["homeRun"] = "It's going to the moon! Can I go too?", ["oops"] = "Missed! Again! Gimme another!", ["wander"] = "I'm bored, I'm going over there! Back soon! Maybe!" },
     };
 
     public const string EnglishCheerPrompt = """

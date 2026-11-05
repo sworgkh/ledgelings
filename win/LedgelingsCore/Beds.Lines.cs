@@ -45,6 +45,18 @@ public static partial class Beds
         ["Spike"] = new[] { "Pincushion. Soft on top, sharp around. Like me.", "Goodnight. Mind the pins. That's the point." },
         ["Wedge"] = new[] { "Three good books underneath. Nothing tips me over at night.", "Solid stack. Solid sleep. End of discussion." },
         ["Delta"] = new[] { "My sock is where I left it. Unlike its pair.", "Something moved since last night. Not my sock. Good." },
+        ["Prickles"] = new[] { "Warm sand. Dry. Perfect. Goodnight.", "My heap. Nobody waters it. Good." },
+        ["Saguaro"] = new[] { "A warm stone... it remembers the sun... as I do...", "Goodnight... stars... I see you there..." },
+        ["Tumble"] = new[] { "My towel! It's still warm from the sun! Night night!", "Night night, everybody! I'm waving! Can you see?" },
+        ["Click"] = new[] { "My shell. Safe and hard. Goodnight. Click.", "Tucked in. Nobody step on me. Night." },
+        ["Scarab"] = new[] { "The royal box. Velvet, of course. Goodnight, subjects.", "One retires for the night. Do keep it down." },
+        ["Crumb"] = new[] { "My crust! A bed now, breakfast later! Goodnight!", "Counted all the crumbs. All of them. Night!" },
+        ["Shard"] = new[] { "My little mirror! Goodnight, me! Goodnight, everyone!", "Night night! I'll sparkle again in the morning!" },
+        ["Quartz"] = new[] { "My geode. Crystals inside, like me. Goodnight.", "Still and cool. A good night for a stone." },
+        ["Prism"] = new[] { "My crayons! All seven colours! Goodnight, spectrum!", "Night! I'll dream in colour. Obviously." },
+        ["Sprout"] = new[] { "My seed packet! That's where I came from! Night!", "Goodnight! I'll grow while I sleep!" },
+        ["Fern"] = new[] { "My clover... soft and low... goodnight...", "Goodnight... everyone... quietly..." },
+        ["Bud"] = new[] { "My bucket! I'll grow in here tonight! Am I taller in the morning?", "Night! Wake me up when I'm taller!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishMovedLines = new Dictionary<string, string[]>
@@ -76,5 +88,17 @@ public static partial class Beds
         ["Spike"] = new[] { "You moved my pincushion. Bold. Pointless, but bold." },
         ["Wedge"] = new[] { "You moved the books. I did not tip. Noted." },
         ["Delta"] = new[] { "My sock moved. I noticed. I always notice." },
+        ["Prickles"] = new[] { "Who moved my sand? ...Still dry. Fine." },
+        ["Saguaro"] = new[] { "...the stone... has moved... the stars... have not..." },
+        ["Tumble"] = new[] { "Ooh, my towel moved! New sunny spot? Yay!" },
+        ["Click"] = new[] { "Who moved it? Who? ...okay. Still safe. Click." },
+        ["Scarab"] = new[] { "Someone has moved the royal box. One shall overlook it. Once." },
+        ["Crumb"] = new[] { "My crust moved! ...still all there! Good!" },
+        ["Shard"] = new[] { "My mirror moved! Ooh, the light's different here! Nice!" },
+        ["Quartz"] = new[] { "The geode has shifted. Tectonics. I don't mind." },
+        ["Prism"] = new[] { "My crayons moved! Still all seven? ...Seven! Good!" },
+        ["Sprout"] = new[] { "My packet moved! Did it grow too? Cool!" },
+        ["Fern"] = new[] { "Oh... my clover moved... it's okay..." },
+        ["Bud"] = new[] { "My bucket moved! Is it a taller spot? Cool!" },
     };
 }

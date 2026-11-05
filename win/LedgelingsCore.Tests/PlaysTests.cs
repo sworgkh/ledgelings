@@ -285,7 +285,7 @@ public class PlaysTests
         var swift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+Lines.swift"))
             + File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+BallLines.swift"));
         var names = Shipped();
-        Assert.Equal(27, names.Count);
+        Assert.Equal(39, names.Count);
         foreach (var language in Languages.All)
         {
             var start = Plays.StartLinesIn(language);

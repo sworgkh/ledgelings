@@ -19,7 +19,8 @@ public static partial class Beds
     {
         Crate, Hammock, Quilt, Pillow, Matchbox, Bed, Box, Catbed, Cushion, Lilypad, Moss, Puddle,
         Cloud, Leaf, Blanket, Log, Grass, Flowerpot, Dock, Toolbox, Spacebar, Sponge, Teacup,
-        Bubblewrap, Pincushion, Books, Sock,
+        Bubblewrap, Pincushion, Books, Sock, Sand, Stone, Towel, Walnut, Ringbox, Crust, Mirror, Geode, Crayons,
+        Seedpacket, Clover, Bucket,
     }
 
     /// <summary>The picture's name in the sheet: <c>catbed</c>.</summary>
@@ -29,14 +30,15 @@ public static partial class Beds
     /// Kept in step with <c>LIFT</c> in <c>spritetool/painters/beds.py</c>.</summary>
     public static int Lift(this Kind kind) => kind switch
     {
-        Kind.Puddle => 2,
-        Kind.Box or Kind.Grass => 3,
-        Kind.Lilypad or Kind.Leaf or Kind.Dock => 4,
-        Kind.Quilt or Kind.Matchbox or Kind.Moss => 5,
-        Kind.Crate or Kind.Bed or Kind.Catbed or Kind.Cushion or Kind.Cloud or Kind.Blanket or Kind.Log or Kind.Bubblewrap or Kind.Sock => 6,
-        Kind.Pillow or Kind.Toolbox or Kind.Sponge or Kind.Pincushion => 7,
-        Kind.Hammock or Kind.Spacebar or Kind.Books => 8,
-        Kind.Teacup => 9,
+        Kind.Puddle or Kind.Clover => 2,
+        Kind.Box or Kind.Grass or Kind.Towel => 3,
+        Kind.Lilypad or Kind.Leaf or Kind.Dock or Kind.Mirror => 4,
+        Kind.Quilt or Kind.Matchbox or Kind.Moss or Kind.Stone or Kind.Seedpacket => 5,
+        Kind.Crate or Kind.Bed or Kind.Catbed or Kind.Cushion or Kind.Cloud or Kind.Blanket or Kind.Log or Kind.Bubblewrap or Kind.Sock
+            or Kind.Ringbox or Kind.Crust => 6,
+        Kind.Pillow or Kind.Toolbox or Kind.Sponge or Kind.Pincushion or Kind.Walnut or Kind.Geode or Kind.Crayons => 7,
+        Kind.Hammock or Kind.Spacebar or Kind.Books or Kind.Sand => 8,
+        Kind.Teacup or Kind.Bucket => 9,
         _ => 10,      // the flowerpot
     };
 
@@ -69,6 +71,18 @@ public static partial class Beds
         Kind.Bubblewrap => "a sheet of bubble wrap",
         Kind.Pincushion => "a pincushion",
         Kind.Books => "a stack of books",
+        Kind.Sand => "a heap of warm sand",
+        Kind.Stone => "a flat sun-warmed stone",
+        Kind.Towel => "a striped beach towel",
+        Kind.Walnut => "half a walnut shell",
+        Kind.Ringbox => "a velvet ring box",
+        Kind.Crust => "a crust of bread",
+        Kind.Mirror => "a small square mirror",
+        Kind.Geode => "a geode split open",
+        Kind.Crayons => "a box of crayons",
+        Kind.Seedpacket => "a seed packet",
+        Kind.Clover => "a patch of clover",
+        Kind.Bucket => "a little toy bucket",
         _ => "a striped sock",
     });
 
@@ -83,6 +97,10 @@ public static partial class Beds
         ["Unit 7"] = Kind.Dock, ["Sprocket"] = Kind.Toolbox, ["Glitch"] = Kind.Spacebar,
         ["Goop"] = Kind.Sponge, ["Puddle"] = Kind.Teacup, ["Blorp"] = Kind.Bubblewrap,
         ["Spike"] = Kind.Pincushion, ["Wedge"] = Kind.Books, ["Delta"] = Kind.Sock,
+        ["Prickles"] = Kind.Sand, ["Saguaro"] = Kind.Stone, ["Tumble"] = Kind.Towel,
+        ["Click"] = Kind.Walnut, ["Scarab"] = Kind.Ringbox, ["Crumb"] = Kind.Crust,
+        ["Shard"] = Kind.Mirror, ["Quartz"] = Kind.Geode, ["Prism"] = Kind.Crayons,
+        ["Sprout"] = Kind.Seedpacket, ["Fern"] = Kind.Clover, ["Bud"] = Kind.Bucket,
     };
 
     /// <summary>For a character nobody wrote a bed for: word starts in its persona, then its species' kind.</summary>
@@ -94,6 +112,10 @@ public static partial class Beds
         (new[] { "mushroom", "fung", "moss", "damp", "earth" }, Kind.Moss),
         (new[] { "robot", "machine", "android", "metal", "antenna", "bolt" }, Kind.Dock),
         (new[] { "slime", "blob", "goo", "sticky", "wobbl" }, Kind.Sponge),
+        (new[] { "cactus", "desert", "spine", "prick" }, Kind.Sand),
+        (new[] { "beetle", "bug", "insect", "shell" }, Kind.Walnut),
+        (new[] { "crystal", "gem", "jewel", "quartz", "sparkl" }, Kind.Geode),
+        (new[] { "sprout", "seed", "seedling", "plant", "leaf", "leaves" }, Kind.Seedpacket),
         (new[] { "sleep", "nap", "drows", "yawn", "tired" }, Kind.Pillow),
         (new[] { "old", "wise", "philosoph" }, Kind.Quilt),
         (new[] { "tiny", "small", "little" }, Kind.Matchbox),
