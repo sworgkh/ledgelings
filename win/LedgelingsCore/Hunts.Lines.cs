@@ -52,6 +52,18 @@ public static partial class Hunts
         ["Spike"] = new[] { "{today} today, {all} in all. My point stands: stop.", "{week} this week. Keep count yourself, it's on your conscience." },
         ["Wedge"] = new[] { "{today} times today and I still won't tip. {all} in all. Give up.", "{week} this week. Push all you like, I don't move." },
         ["Delta"] = new[] { "Since yesterday: up to {today} today. This week: {week}. The difference: annoying.", "{all} in all. What changed? Only my patience." },
+        ["Prickles"] = new[] { "{today} today. {all} in all. Hmph. Too many.", "{week} this week. A cactus waits. You don't." },
+        ["Saguaro"] = new[] { "{today}... today... {all}... in all... even the wind rests sometimes...", "{week}... this week... the desert has seen worse... but not much..." },
+        ["Tumble"] = new[] { "{today} today! {all} in all! That's too many even for me!", "{week} this week! My arms are tired from waving!" },
+        ["Click"] = new[] { "{today} today! {all} in all! It keeps coming back! Click-click!", "{week} this week! Too many! I'm hiding! Don't look!" },
+        ["Scarab"] = new[] { "{today} today, {all} in all. One's patience is not a desert, dear.", "{week} this week. In the old days, that would have been a scandal." },
+        ["Crumb"] = new[] { "{today} today, {all} in all! I counted every one! Too many!", "{week} this week! That's more than my crumbs! Stop!" },
+        ["Shard"] = new[] { "{today} today, {all} in all! Even I can't sparkle about that many!", "{week} this week! My facets are getting dizzy!" },
+        ["Quartz"] = new[] { "{today} today, {all} in all. Even erosion takes breaks.", "{week} this week. In stone years, that is far too fast." },
+        ["Prism"] = new[] { "{today} today, {all} in all! That's a full spectrum of too many!", "{week} this week! Red, orange, yellow, enough!" },
+        ["Sprout"] = new[] { "{today} today, {all} in all! That's too many! My leaves are shaking!", "{week} this week! I'm only little!" },
+        ["Fern"] = new[] { "{today} today... {all} in all... um... that's a lot...", "{week} this week... I'm a little tired..." },
+        ["Bud"] = new[] { "{today} today! {all} in all! Too many! And I'm STILL not taller!", "{week} this week! Enough! I'm busy growing!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishGoodLines = new Dictionary<string, string[]>
@@ -83,6 +95,18 @@ public static partial class Hunts
         ["Spike"] = new[] { "{today} today, {all} in all, and still the sharpest at tag. Point made.", "{week} this week. You'll need a sharper aim. Again." },
         ["Wedge"] = new[] { "{today} tries today and I'm still on my spot. Good game.", "{all} in all. You won't tag me. I like that you keep trying." },
         ["Delta"] = new[] { "Change logged: {today} today, up from before. Mood: improved.", "{week} this week, {all} in all. Interesting: it's more fun every time." },
+        ["Prickles"] = new[] { "{today} today. Fine. I'll admit it. Fun.", "{week} this week. Hmph. Not bad, for a cursor." },
+        ["Saguaro"] = new[] { "{today}... today... {all}... in all... a fine season for chasing...", "{week}... this week... the old arms... still remember how..." },
+        ["Tumble"] = new[] { "{today} today! {all} in all! I love this game!", "{week} this week! Best week ever! Wave if you agree!" },
+        ["Click"] = new[] { "{today} today! {all} in all! I wasn't even scared! Much!", "{week} this week! I'm fast! Did you see? So fast!" },
+        ["Scarab"] = new[] { "{today} today, {all} in all. A royal sport, really.", "{week} this week. One is quite the huntress, you know." },
+        ["Crumb"] = new[] { "{today} today, {all} in all! I counted! Great work, everybody!", "{week} this week! New record! I'm writing it down!" },
+        ["Shard"] = new[] { "{today} today, {all} in all! Wonderful! Simply wonderful!", "{week} this week! Best week! Shiniest week!" },
+        ["Quartz"] = new[] { "{today} today, {all} in all. A good age for chasing.", "{week} this week. Even an old rock enjoys a game." },
+        ["Prism"] = new[] { "{today} today, {all} in all! A rainbow of fun! I did that!", "{week} this week! Best week, every colour of it!" },
+        ["Sprout"] = new[] { "{today} today, {all} in all! I'm getting good at this!", "{week} this week! When I'm big, I'll catch it every time!" },
+        ["Fern"] = new[] { "{today} today... {all} in all... I liked it... quietly...", "{week} this week... that was fun... thank you..." },
+        ["Bud"] = new[] { "{today} today! {all} in all! Again! More! Faster!", "{week} this week! Best week! Did I grow? I grew, right?" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishNeutralLines = new Dictionary<string, string[]>
@@ -114,5 +138,17 @@ public static partial class Hunts
         ["Spike"] = new[] { "{today} today, {all} in all. That's the point. There isn't one.", "{week} this week. Noted. Moving on." },
         ["Wedge"] = new[] { "{today} hops today. {all} in all. I'm still right here.", "{week} this week. Didn't change a thing." },
         ["Delta"] = new[] { "Change since yesterday: {today} today. This week: {week}. Noted.", "{all} in all. The difference: nothing much." },
+        ["Prickles"] = new[] { "{today} today, {all} in all. Noted.", "{week} this week. Dry as ever." },
+        ["Saguaro"] = new[] { "{today}... today... {all}... in all... like grains of sand...", "{week}... this week... the sun rises... the cursor runs..." },
+        ["Tumble"] = new[] { "{today} today! {all} in all! Wow, numbers!", "{week} this week! Hi, cursor! Bye, cursor!" },
+        ["Click"] = new[] { "{today} today. {all} in all. Counting. Click.", "{week} this week. Quick. Quick. Done." },
+        ["Scarab"] = new[] { "{today} today, {all} in all. Noted in the royal ledger.", "{week} this week. The scribes will record it." },
+        ["Crumb"] = new[] { "{today} today, {all} in all. Counted. Next!", "{week} this week. Into the tally it goes." },
+        ["Shard"] = new[] { "{today} today, {all} in all! Ooh, numbers! Shiny numbers!", "{week} this week! That's a lot of glitter!" },
+        ["Quartz"] = new[] { "{today} today, {all} in all. Layer upon layer.", "{week} this week. Recorded, like rings in rock." },
+        ["Prism"] = new[] { "{today} today, {all} in all. Split seven ways, that's still a lot.", "{week} this week. In seven colours: busy, busy, busy, busy, busy, busy, busy." },
+        ["Sprout"] = new[] { "{today} today, {all} in all! I'm counting like a grown-up!", "{week} this week! Bigger every day! Like me!" },
+        ["Fern"] = new[] { "{today} today... {all} in all...", "{week} this week... okay..." },
+        ["Bud"] = new[] { "{today} today! {all} in all! Is that a lot? It's a lot!", "{week} this week! Am I taller yet? No? Okay!" },
     };
 }

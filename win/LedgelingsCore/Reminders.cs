@@ -430,7 +430,72 @@ public static partial class Reminders
         {
             "Something changed since last time: now it's time for {reminder}.",
             "Difference noticed: the clock moved. {reminder}.",
-        },    };
+        },
+        // cactus
+        ["Prickles"] = new[]
+        {
+            "Hmph. {reminder}. Go on, then.",
+            "{reminder}. Now. Don't make me prickle.",
+        },
+        ["Saguaro"] = new[]
+        {
+            "The sun has moved... it is time... {reminder}...",
+            "Slowly... but surely... {reminder}... it is time...",
+        },
+        ["Tumble"] = new[]
+        {
+            "Hey hey! {reminder}! Don't forget! I'm waving!",
+            "It's time! {reminder}! Go go go!",
+        },
+        // beetle
+        ["Click"] = new[]
+        {
+            "Click! {reminder}! Quick, before you forget!",
+            "Sorry to bother— {reminder}— it's time— click—",
+        },
+        ["Scarab"] = new[]
+        {
+            "By royal decree: {reminder}. Off you go, dear.",
+            "One reminds you, graciously: {reminder}.",
+        },
+        ["Crumb"] = new[]
+        {
+            "Job for you: {reminder}! I'll count it done!",
+            "One thing to do: {reminder}! Off you go!",
+        },
+        // crystal
+        ["Shard"] = new[]
+        {
+            "Sparkle reminder! {reminder}! You can do it!",
+            "Ooh, it's time! {reminder}! How wonderful!",
+        },
+        ["Quartz"] = new[]
+        {
+            "Calmly: {reminder}. It is time.",
+            "Even mountains move eventually. {reminder}. Now is good.",
+        },
+        ["Prism"] = new[]
+        {
+            "Red alert! Orange alert! {reminder}!",
+            "In seven colours: {reminder}! Go!",
+        },
+        // sprout
+        ["Sprout"] = new[]
+        {
+            "Hey! It's time! {reminder}! I remembered all by myself!",
+            "Don't forget: {reminder}! Grown-ups do that!",
+        },
+        ["Fern"] = new[]
+        {
+            "Um... sorry... it's time... {reminder}...",
+            "Just a little reminder... {reminder}... okay...",
+        },
+        ["Bud"] = new[]
+        {
+            "Hey! Hey! {reminder}! Now! Go!",
+            "Quick quick! {reminder}! Don't wait!",
+        },
+    };
 
     /// <summary>The note <paramref name="writer"/> sends with <paramref name="reminder"/>.</summary>
     public static string Note(string writer, string reminder, Random rng) =>

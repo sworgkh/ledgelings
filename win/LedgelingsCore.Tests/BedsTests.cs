@@ -26,7 +26,7 @@ public class BedsTests
     public void EveryShippedCharacterHasABedOfItsOwn()
     {
         var names = Shipped();
-        Assert.Equal(27, names.Count);
+        Assert.Equal(39, names.Count);
         Assert.All(names, n => Assert.True(Beds.BuiltIn.ContainsKey(n), n + " has no bed"));
         var beds = names.Select(n => Beds.BuiltIn[n]).ToList();
         Assert.Equal(names.Count, beds.Distinct().Count());                                   // no two share a bed
@@ -39,6 +39,10 @@ public class BedsTests
         Assert.Equal(Beds.Kind.Catbed, Beds.KindOf("Tom", "Purrs a lot.", "a small pixel creature"));
         Assert.Equal(Beds.Kind.Dock, Beds.KindOf("Bolt", "Curious and new here.", "a tall robot with a lamp"));
         Assert.Equal(Beds.Kind.Matchbox, Beds.KindOf("Nobody", "Curious and new here.", "a small pixel creature"));
+        Assert.Equal(Beds.Kind.Sand, Beds.KindOf("Spiny", "Curious and new here.", "a tall desert cactus"));
+        Assert.Equal(Beds.Kind.Walnut, Beds.KindOf("Bzz", "Curious and new here.", "a shiny green beetle"));
+        Assert.Equal(Beds.Kind.Geode, Beds.KindOf("Gem", "Sparkly and proud.", "a pink gem"));
+        Assert.Equal(Beds.Kind.Seedpacket, Beds.KindOf("Leafy", "Curious and new here.", "a potted plant"));
         Assert.Equal(Beds.Kind.Grass, Beds.KindOf("X", "", ""));
         Assert.Equal(Beds.Kind.Crate, Beds.KindOf("Blocky", "Purrs.", "a cat"));                // a built-in name keeps its own
     }

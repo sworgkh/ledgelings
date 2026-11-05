@@ -131,5 +131,17 @@ public static class ClipHelper
         ["Spike"] = new[] { "Point at one.", "Sharp choice, please." },
         ["Wedge"] = new[] { "Steady. Pick.", "Not tipping. Choose." },
         ["Delta"] = new[] { "New since last time.", "Something changed. Pick." },
+        ["Prickles"] = new[] { "Pick one. Quickly.", "Hmph. Choose." },
+        ["Saguaro"] = new[] { "Take... your time... choose...", "The desert waits... so do I... pick..." },
+        ["Tumble"] = new[] { "Ooh, pick one! Pick one!", "Which one which one which one?" },
+        ["Click"] = new[] { "Quick, pick! Quick!", "This one? That one? Click!" },
+        ["Scarab"] = new[] { "Choose, dear. One is waiting.", "The royal pick, if you please." },
+        ["Crumb"] = new[] { "Pick one! I'll count the rest!", "One, two, three... choose!" },
+        ["Shard"] = new[] { "Ooh, pick a shiny one!", "They're all wonderful! Choose!" },
+        ["Quartz"] = new[] { "Take your time. Choose.", "No hurry. Pick one." },
+        ["Prism"] = new[] { "Pick one! I'd pick all seven!", "Choose! In any colour you like!" },
+        ["Sprout"] = new[] { "Pick one! I'll help!", "Ooh, which one? Choose!" },
+        ["Fern"] = new[] { "Um... pick one...?", "Whichever you like..." },
+        ["Bud"] = new[] { "Quick quick! Pick one!", "Pick! Pick! Pick!" },
     };
 }

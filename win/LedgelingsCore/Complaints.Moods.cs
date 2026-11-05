@@ -45,6 +45,18 @@ public static partial class Complaints
         ["Spike"] = new[] { "{times} times, and I'm still the sharpest at tag. Point made.", "You'll need a sharper aim than that. Again." },
         ["Wedge"] = new[] { "{times} tries and I'm still on my spot. Good game. Try again.", "You won't tag me. But I like that you keep trying." },
         ["Delta"] = new[] { "Change logged: {times} chases. Mood: improved. Again.", "Interesting: being chased is fun now. Noted." },
+        ["Prickles"] = new[] { "{times}. Fine. That was... not terrible.", "Again? Hmph. Once more. Then nobody hugs me." },
+        ["Saguaro"] = new[] { "{times}... a good chase... under a good sun...", "Again... slowly... I have time... I have always had time..." },
+        ["Tumble"] = new[] { "{times}! Again again again! That was so fun!", "Woo! Chase me! Chase me some more!" },
+        ["Click"] = new[] { "{times}! Fun! Scary! Fun! Click!", "Again? Okay. Okay okay. Quickly. Click." },
+        ["Scarab"] = new[] { "{times}. Very well. One enjoyed that. A little.", "Again, then. One permits it. Graciously." },
+        ["Crumb"] = new[] { "{times}! Fun! Back to work now! One, two, three...", "Again! Then work! Then again!" },
+        ["Shard"] = new[] { "{times}! That was wonderful! Everything sparkled!", "Again! Again! I love it! Shiny!" },
+        ["Quartz"] = new[] { "{times}. A fine chase. Over in a geological instant.", "Again, then. Time is something I have plenty of." },
+        ["Prism"] = new[] { "{times}! That was fun in all seven colours! Eight, actually! I found a new one!", "Again! I'll split it into a rainbow this time! Watch!" },
+        ["Sprout"] = new[] { "{times}! That was fun! I think I grew a bit!", "Again! Chasing makes me grow, I'm sure of it!" },
+        ["Fern"] = new[] { "{times}... um... that was nice... actually...", "Again...? Okay... if you want..." },
+        ["Bud"] = new[] { "{times}! Again! Faster! Did I grow?", "That was so fun! Again again again! Now! Now!" },
     };
 
     public static readonly IReadOnlyDictionary<string, string[]> EnglishNeutralLines = new Dictionary<string, string[]>
@@ -76,6 +88,18 @@ public static partial class Complaints
         ["Spike"] = new[] { "{times} times. Doesn't change my angle.", "Moved. Still sharp." },
         ["Wedge"] = new[] { "{times} times. I'll settle back where I was.", "Moved a bit. I'll be back on my spot." },
         ["Delta"] = new[] { "Change since last time: {times} hops. Nothing else.", "Noticed: I moved. That's all." },
+        ["Prickles"] = new[] { "{times} times moved. Sand is sand. Whatever.", "Here, there. Dry either way." },
+        ["Saguaro"] = new[] { "{times}... moved... the sand forgets... so shall I...", "Here... or there... the stars are the same..." },
+        ["Tumble"] = new[] { "{times} times! Okay! New spot! Is it sunny? It's a bit sunny!", "Hi new place! Hi! I'm waving at you!" },
+        ["Click"] = new[] { "{times} moves. Okay. Is this spot safe? Click?", "New place. Checking. Checking. Fine. Probably." },
+        ["Scarab"] = new[] { "{times} times moved. One's court moves with one.", "A new spot. It will do. For now." },
+        ["Crumb"] = new[] { "{times} moves. New spot. Any crumbs here? Two! Good!", "Fine, fine. I'll count from here." },
+        ["Shard"] = new[] { "{times} times! New spot! Is the light good? It's good!", "Ooh, here's nice too! Everything's nice!" },
+        ["Quartz"] = new[] { "{times} moves. Continents drift too. I don't mind.", "Here or there. Ten thousand years from now, nobody will know." },
+        ["Prism"] = new[] { "{times} moves. New angle. New rainbow. Fine by me.", "Here's good. I can refract anywhere. I'm that good." },
+        ["Sprout"] = new[] { "{times} moves! New spot! Is there sun? There's sun!", "Okay! I can grow here too!" },
+        ["Fern"] = new[] { "{times} moves... it's okay... here's fine...", "Oh... a new place... hello..." },
+        ["Bud"] = new[] { "{times} moves! New place! Is it taller here? Am I?", "Okay okay okay! Here! Fine! Am I taller yet?" },
     };
 
     public const string EnglishGoodPrompt = "{situation}\nThe person whose screen you live on keeps chasing you with the mouse cursor and picking you up: {times} times in a row now. To you it is a game of tag, and you love it. Say ONE line to them, playful and teasing, in your own voice. At most 20 words. Output only the line: no quotes, no name.";

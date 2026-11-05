@@ -5,7 +5,7 @@ this repo, running as a Windows tray app. Everything in [SPEC.md](../SPEC.md) ap
 this folder is its Windows implementation.
 
 **Status:** feature parity with the macOS app v0.29, except what is listed under
-*Not on Windows* below: eight creatures across every
+*Not on Windows* below: twelve creatures across every
 monitor, day and night, meetings with stars and flowers (the wearer trails the
 giver), talk from the built-in lines (the default: no model needed) or through
 LM Studio or OpenRouter, lines they rarely repeat, room for a thinking model,

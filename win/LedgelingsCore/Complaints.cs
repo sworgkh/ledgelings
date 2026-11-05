@@ -163,7 +163,48 @@ public static partial class Complaints
             "Stop. Pushing. Me. It won't work." },
         ["Delta"] = new[] { "The difference since last time: {times} jumps. Too many.",
             "Something changed: I'm annoyed now.",
-            "Noticed: your cursor moved. At me. Again." },    };
+            "Noticed: your cursor moved. At me. Again." },
+        // cactus
+        ["Prickles"] = new[] { "{times} times. Hmph. Stop it.",
+            "Moved again. A cactus stays put. That is the whole point of a cactus.",
+            "Don't touch. Spines. You were warned." },
+        ["Saguaro"] = new[] { "{times} times... I have stood... two hundred summers... without being moved so much...",
+            "Slow down... young one... a saguaro grows... one finger... a year...",
+            "Let me stand... the desert... is patient... be like the desert..." },
+        ["Tumble"] = new[] { "{times} times! Hey! That's a lot! I was waving!",
+            "Wheee— no, wait, stop, I was sunbathing!",
+            "Put me back in the sunny bit! Please please please!" },
+        // beetle
+        ["Click"] = new[] { "{times} times! Click-click! Too many! Too fast! Where am I?",
+            "Stop stop stop— I'm small— you'll squash me—",
+            "Can I hide? Under a window? Just for a bit? Please?" },
+        ["Scarab"] = new[] { "{times} times! One is not to be dragged about like a common bug!",
+            "Unhand me. In my dynasty, we were carried on cushions.",
+            "We are not amused. Put us back." },
+        ["Crumb"] = new[] { "{times} times! I lost count of my crumbs! Now I have to start again!",
+            "Wait! I was carrying something! Seven, eight— no, I dropped one!",
+            "Put me down, I've got work to do!" },
+        // crystal
+        ["Shard"] = new[] { "{times} times! Hey! You'll scratch me! I just polished!",
+            "Wheee— ow— no, gently! I'm a crystal!",
+            "Put me back in the light! I sparkle better there!" },
+        ["Quartz"] = new[] { "{times} times. I have been pressed under a mountain. This is more annoying.",
+            "Slow down. Rocks form over millions of years. Not millions of drags.",
+            "Let me rest. Stone likes to stay where it is." },
+        ["Prism"] = new[] { "{times} times! That's red-level annoying! Orange-level! Every colour of annoying!",
+            "Hey! Careful! You'll bend my light the wrong way!",
+            "Put me back, I had the perfect angle for a rainbow!" },
+        // sprout
+        ["Sprout"] = new[] { "{times} times! Hey! My leaves! You'll bend my leaves!",
+            "Careful! I'm still growing!",
+            "Put me back in the light! I need it to get big!" },
+        ["Fern"] = new[] { "{times} times... um... please stop...",
+            "Oh... I was in the light... could you put me back...?",
+            "Please... gently... my leaves are soft..." },
+        ["Bud"] = new[] { "{times} times! Again? I'm not taller yet! Stop squishing me!",
+            "Hey hey hey! Put me down! Am I taller? Am I?",
+            "I was growing! You interrupted! Now I have to start over!" },
+    };
 
     /// <summary>A complaint from <paramref name="name"/>, bothered <paramref name="times"/> times in a row.</summary>
     public static string Line(string name, int times, Random rng)

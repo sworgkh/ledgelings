@@ -22,7 +22,8 @@ public sealed partial class SpriteLibrary
     }
 
     /// <summary>The sheets shipped in the app, in the order the Sprites tab shows them.</summary>
-    public static readonly IReadOnlyList<string> BuiltIn = new[] { "blocky", "frog", "cat", "ghost", "slime", "robot", "triangle", "mushroom" };
+    public static readonly IReadOnlyList<string> BuiltIn = new[] { "blocky", "frog", "cat", "ghost", "slime", "robot", "triangle", "mushroom",
+        "cactus", "beetle", "crystal", "sprout" };
 
     public static readonly SpriteText.Tint KeyColour = new(255, 0, 255);
     public const int KeyTolerance = 60;
