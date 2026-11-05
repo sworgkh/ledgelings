@@ -55,5 +55,17 @@ extension Strings {
         "a pincushion": "игольница",
         "a stack of books": "стопка книг",
         "a striped sock": "полосатый носок",
+        "a heap of warm sand": "горка тёплого песка",
+        "a flat sun-warmed stone": "плоский тёплый от солнца камень",
+        "a striped beach towel": "полосатое пляжное полотенце",
+        "half a walnut shell": "половинка скорлупы грецкого ореха",
+        "a velvet ring box": "бархатная коробочка для кольца",
+        "a crust of bread": "хлебная корочка",
+        "a small square mirror": "маленькое квадратное зеркальце",
+        "a geode split open": "расколотая жеода",
+        "a box of crayons": "коробка восковых мелков",
+        "a seed packet": "пакетик семян",
+        "a patch of clover": "полянка клевера",
+        "a little toy bucket": "игрушечное ведёрко",
     ]
 }

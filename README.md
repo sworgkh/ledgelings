@@ -245,8 +245,9 @@ dictate, the three screenshots, clipboard history, snippets, a reminder), with i
 shortcut under it. Click one, press its number, or use the arrows and ⏎. Which tiles show,
 and in what order, is in Settings › Tools › Tools screen.
 
-**Eight creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
-triangle and a mushroom come built in, each with its own cast of characters. The
+**Twelve creatures, and yours.** Blocky, a frog, a cat, a ghost, a slime, a robot, a
+triangle, a mushroom, a cactus, a beetle, a crystal and a sprout come built in, each with
+its own cast of characters. The
 **sprite kit** is a small form (what it is, a name, a colour, three characters; *Refine
 with AI* fills it in with an OpenRouter key), a prompt built from it, and two pictures
 to attach: Blocky's nine poses and an empty template. Paste them into an image model,

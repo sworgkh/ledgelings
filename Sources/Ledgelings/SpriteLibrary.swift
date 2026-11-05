@@ -33,7 +33,8 @@ final class SpriteLibrary: ObservableObject {
     }
 
     /// The sheets shipped in the app, in the order the Sprites tab shows them.
-    nonisolated static let builtIn = ["blocky", "frog", "cat", "ghost", "slime", "robot", "triangle", "mushroom"]
+    nonisolated static let builtIn = ["blocky", "frog", "cat", "ghost", "slime", "robot", "triangle", "mushroom",
+                                      "cactus", "beetle", "crystal", "sprout"]
 
     static var defaultDirectory: URL {
         ChatHistory.defaultDirectory.deletingLastPathComponent().appendingPathComponent("sprites", isDirectory: true)

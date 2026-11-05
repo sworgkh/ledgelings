@@ -276,6 +276,22 @@ public enum Reminders {
                   "It's decided and it stays decided: {reminder}."],
         "Delta": ["Something changed since last time: now it's time for {reminder}.",
                   "Difference noticed: the clock moved. {reminder}."],
+        // cactus
+        "Prickles": ["Hmph. {reminder}. Go on, then.", "{reminder}. Now. Don't make me prickle."],
+        "Saguaro": ["The sun has moved... it is time... {reminder}...", "Slowly... but surely... {reminder}... it is time..."],
+        "Tumble": ["Hey hey! {reminder}! Don't forget! I'm waving!", "It's time! {reminder}! Go go go!"],
+        // beetle
+        "Click": ["Click! {reminder}! Quick, before you forget!", "Sorry to bother— {reminder}— it's time— click—"],
+        "Scarab": ["By royal decree: {reminder}. Off you go, dear.", "One reminds you, graciously: {reminder}."],
+        "Crumb": ["Job for you: {reminder}! I'll count it done!", "One thing to do: {reminder}! Off you go!"],
+        // crystal
+        "Shard": ["Sparkle reminder! {reminder}! You can do it!", "Ooh, it's time! {reminder}! How wonderful!"],
+        "Quartz": ["Calmly: {reminder}. It is time.", "Even mountains move eventually. {reminder}. Now is good."],
+        "Prism": ["Red alert! Orange alert! {reminder}!", "In seven colours: {reminder}! Go!"],
+        // sprout
+        "Sprout": ["Hey! It's time! {reminder}! I remembered all by myself!", "Don't forget: {reminder}! Grown-ups do that!"],
+        "Fern": ["Um... sorry... it's time... {reminder}...", "Just a little reminder... {reminder}... okay..."],
+        "Bud": ["Hey! Hey! {reminder}! Now! Go!", "Quick quick! {reminder}! Don't wait!"],
     ]
 
     /// The note `writer` sends with `reminder`.

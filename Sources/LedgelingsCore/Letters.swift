@@ -525,6 +525,214 @@ public enum Letters {
                 "Received, young one. In my day, planes had pilots.",
                 "A fine letter. In my day it would have been finer, but fine.",
             ]),
+        // cactus
+        "Prickles": Voice(
+            topics: ["dry weather", "being left alone", "sand"],
+            notes: [
+                "Don't water me. That's all. Prickles.",
+                "The sun was good today. Don't tell anyone I said so.",
+                "Someone tried to hug me. They regret it.",
+            ],
+            musings: [
+                "Hmph. A letter. Paper is dry, at least.",
+                "Short. Good. I like a short letter.",
+                "Read it twice. Don't tell anyone.",
+            ],
+            replies: [
+                "Got your letter. It was fine. This is mine. Also fine.",
+                "Hmph. Thanks. Don't make it a habit.",
+                "Read it. Dry and short. The best kind. Like this one.",
+            ]),
+        "Saguaro": Voice(
+            topics: ["the desert at night", "long summers", "the stars"],
+            notes: [
+                "The night was cool and the stars were many. Write back when the sun goes down.",
+                "I have counted two hundred summers. This one is warm. I hope yours is too.",
+                "Slowly, the shade moved across the screen today. A good day.",
+            ],
+            musings: [
+                "*slowly* A letter... like rain in the desert... rare... and welcome...",
+                "I will stand here... and read it again... at sunset...",
+                "The paper has travelled far... like the wind... over the dunes...",
+            ],
+            replies: [
+                "*slowly* Your letter arrived... like the first rain... thank you...",
+                "I read it... under the stars... it was good... here is mine...",
+                "Take your time... with this answer... I took mine...",
+            ]),
+        "Tumble": Voice(
+            topics: ["sunny spots", "waving", "making friends"],
+            notes: [
+                "Hi!!! I found the sunniest pixel on the whole screen! Come and see!",
+                "I waved at everybody today. Everybody! Did you see me? I waved at you too!",
+                "The sun came out from behind a window and I did a little dance. Hi!",
+            ],
+            musings: [
+                "A letter! For me! I'm waving at it!",
+                "I read it three times, really fast! Then once more!",
+                "I'm keeping it in the sunny spot so it stays warm!",
+            ],
+            replies: [
+                "Hi hi hi! Your letter was the BEST! Here's mine! It has waves in it!",
+                "I read it in the sun and it made me so happy! Thank you!",
+                "Got it! Love it! Writing back right now! Super fast!",
+            ]),
+        // beetle
+        "Click": Voice(
+            topics: ["good hiding places", "being small", "loud noises"],
+            notes: [
+                "Found a crack under the dock. Very safe. Very dark. Don't tell anyone. Click.",
+                "A window closed right next to me today. SLAM. I'm fine. I'm fine. Click.",
+                "If you hear clicking, it's me. I'm okay. Mostly.",
+            ],
+            musings: [
+                "A letter! For me? Are you sure? Click!",
+                "Reading it under the window. Where it's safe.",
+                "It didn't bite. Good letter. Good.",
+            ],
+            replies: [
+                "Got it! Read it fast! Writing fast! Here! Click!",
+                "Your letter was nice. Not scary at all. Thank you. Click.",
+                "Quick reply! Before something happens! Thank you!",
+            ]),
+        "Scarab": Voice(
+            topics: ["ancient sands", "the royal court", "good manners"],
+            notes: [
+                "Dear subject. One rolled a sunbeam across the screen today. You may thank one.",
+                "In my day, beetles were carved in gold. Now we are on screensavers. Tsk.",
+                "One has decided to hold court near the clock. Do visit. Bring crumbs.",
+            ],
+            musings: [
+                "A letter for one. How proper.",
+                "One shall read it again, on the royal cushion.",
+                "Finally, someone writes properly to a queen.",
+            ],
+            replies: [
+                "Dear friend. One has received your letter and found it charming. Do write again.",
+                "One read your words in the ancient way: slowly, and with a cushion.",
+                "A reply, by royal hand. Keep it somewhere nice.",
+            ]),
+        "Crumb": Voice(
+            topics: ["counting things", "carrying crumbs", "hard work"],
+            notes: [
+                "Today I carried forty-one crumbs home. Forty-two. One was a pixel.",
+                "I counted the icons on the desktop. Twelve! Then someone added one. Thirteen!",
+                "Busy day! Good day! Here is a crumb. Not a real one. A letter one.",
+            ],
+            musings: [
+                "A letter! That's one letter! Counting it!",
+                "Read it once, twice, three times! Done!",
+                "I'll file it with the crumbs. Good spot.",
+            ],
+            replies: [
+                "Got your letter! That makes three this week! Here's one back!",
+                "Thank you! I read every word. I counted them too. Lots!",
+                "Quick reply, then back to work! Hi!",
+            ]),
+        // crystal
+        "Shard": Voice(
+            topics: ["sparkly things", "good light", "wonderful days"],
+            notes: [
+                "The sun came through the window and I made a rainbow on the wall! A whole rainbow!",
+                "Everything was wonderful today. Everything! Even the scroll bar!",
+                "I found the best light on the screen. It's by the clock. Come sparkle with me!",
+            ],
+            musings: [
+                "A letter! How wonderful! I'm holding it up to the light!",
+                "It's so lovely I could sparkle! I am sparkling!",
+                "I'll read it again in the morning light. Everything's better then!",
+            ],
+            replies: [
+                "Your letter made me sparkle all over! Thank you! Here's mine!",
+                "Wonderful, wonderful letter! I read it in the best light!",
+                "Thank you! Everything you wrote was shiny!",
+            ]),
+        "Quartz": Voice(
+            topics: ["deep time", "mountains", "keeping calm"],
+            notes: [
+                "A mountain takes ten million years to rise. Your day will be fine.",
+                "I sat very still today. It went well. I recommend it.",
+                "The screen is warm in the afternoon. Like the inside of the earth, but less so.",
+            ],
+            musings: [
+                "A letter. Pressed flat, like good shale.",
+                "I will keep it a thousand years or so.",
+                "Calmly, I read it. Calmly, I will answer.",
+            ],
+            replies: [
+                "Thank you. Your letter was calm and good. Here is mine. It is slow.",
+                "I read it twice, the way a river cuts a canyon: slowly.",
+                "A fine letter. It will last, like stone.",
+            ]),
+        "Prism": Voice(
+            topics: ["rainbows", "showing off", "the seven colours"],
+            notes: [
+                "I split a sunbeam into seven colours today. Then into eight. Nobody's ever done eight. You're welcome.",
+                "Here's my day in seven colours: red, busy; orange, busier; yellow, I was brilliant; the rest, also brilliant.",
+                "I put a rainbow on the clock. People said ooh. I heard them.",
+            ],
+            musings: [
+                "A letter! For me! Of course, for me!",
+                "Let me hold it up to the light... now it's a rainbow letter!",
+                "I'll read it again in seven colours. One at a time.",
+            ],
+            replies: [
+                "Loved your letter! Here's mine, in seven parts! Well, one part! Seven colours!",
+                "Got it, read it, split it into a rainbow! Thanks!",
+                "Great letter! Almost as colourful as me!",
+            ]),
+        // sprout
+        "Sprout": Voice(
+            topics: ["growing up", "my two leaves", "sunshine"],
+            notes: [
+                "I think I grew today! Almost a whole pixel! Come and look!",
+                "My two leaves are doing great. One is a little bigger. That's the left one.",
+                "When I'm big I'm going to be a tree. A big one. You'll see.",
+            ],
+            musings: [
+                "A letter! For me! Like a grown-up!",
+                "I read it all by myself!",
+                "I'll keep it until I'm big!",
+            ],
+            replies: [
+                "Thank you for the letter! I wrote back all by myself!",
+                "Your letter was great! I grew a bit reading it!",
+                "Here's my letter! When I'm big, I'll write longer ones!",
+            ]),
+        "Fern": Voice(
+            topics: ["soft light", "quiet places", "hiding a little"],
+            notes: [
+                "um... hi. The light by the window was very soft today. I liked it.",
+                "I found a quiet corner. You can come too. If you want.",
+                "I leaned toward the sun all afternoon. It was nice. That's all.",
+            ],
+            musings: [
+                "Oh... a letter... for me...",
+                "I read it very quietly...",
+                "I'll keep it close... in the light...",
+            ],
+            replies: [
+                "um... thank you for your letter... I liked it a lot... here's mine...",
+                "I read it in the soft light... it was lovely...",
+                "Thank you... I don't get many letters... this made me happy...",
+            ]),
+        "Bud": Voice(
+            topics: ["getting taller", "going fast", "being bored"],
+            notes: [
+                "Am I taller yet? I checked eleven times today. Write back and tell me!",
+                "I ran all the way across the screen and back! Twice! Three times!",
+                "I'm bored. Write to me. Quickly. Then I won't be.",
+            ],
+            musings: [
+                "A letter! Already? Yay!",
+                "Read it! Done! Again!",
+                "Is there another one? Is there?",
+            ],
+            replies: [
+                "Got it! Read it! Writing back! Done! Did you get it?",
+                "Your letter was great! Is the next one coming soon?",
+                "Hi hi hi! Thanks! Am I taller in letters?",
+            ]),
     ]
 
     public static func voice(of name: String) -> Voice { voices[name] ?? anyone }

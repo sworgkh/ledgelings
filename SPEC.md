@@ -1672,11 +1672,12 @@ feet, turned with the edge, at `scale · grown`, animating `steam`.
 ### 7.9 Beds
 
 Every character has a bed (`Beds.Kind`, a picture in the `beds` sheet: 36×16
-sheet pixels, standing on the floor of its cell). The built-in 27 have their own,
+sheet pixels, standing on the floor of its cell). The built-in 39 have their own,
 by name (`Beds.builtIn`), no two alike; anyone else gets one from the first rule
 whose word starts appear in its persona, then its species' kind (`Beds.rules`: cat →
 cat basket, frog/pond → lily pad, ghost/float → cloud, mushroom/moss → moss, robot →
-dock, slime → sponge, sleep → pillow, old/wise → quilt, tiny/small → matchbox,
+dock, slime → sponge, cactus/desert → sand, beetle/bug → walnut shell, crystal/gem →
+geode, sprout/plant/seed → seed packet, sleep → pillow, old/wise → quilt, tiny/small → matchbox,
 boss/tidy → bed), else a tuft of grass. Each kind has a `lift`, sheet pixels from
 the floor to the top of its mattress (kept in step with `LIFT` in
 `spritetool/painters/beds.py`).
@@ -2543,8 +2544,9 @@ every filled pixel.
 
 ### 9.1.1 User sheets and the text format
 
-Eight species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
-`ghost`, `slime`, `robot`, `triangle`, `mushroom`, each written in the text format below
+Twelve species ship: `blocky` (painted by the sprite tool), and `frog`, `cat`,
+`ghost`, `slime`, `robot`, `triangle`, `mushroom`, `cactus`, `beetle`, `crystal`, `sprout`,
+each written in the text format below
 (`sprites/text/<name>.txt`) and turned into a sheet at build time. Their
 names are reserved. Imported creatures live in `<app support>/Ledgelings/sprites/<name>/` as
 `<name>.png` + `<name>.json` in exactly the built-in layout (32×32 cells,
@@ -2571,7 +2573,8 @@ Three import routes:
   with a `colour` is always recoloured to it (§9.2), in the colony and on
   its settings card, instead of the creature's slot colour. Shipped:
   frog `#6cbf4a`, ghost `#cfd3ea`, slime `#4fd1a3`, robot `#9aa5b1`,
-  mushroom `#d9483b`; the rest have none.
+  mushroom `#d9483b`, cactus `#3f8f6b`, beetle `#3f6cc9`, crystal `#b48cf0`,
+  sprout `#a3d14b`; the rest have none.
 
   Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade, `k` eye
   (black, blinks), `x` black that never blinks. `-`, `_` and space also mean

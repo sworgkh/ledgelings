@@ -151,7 +151,7 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 | **How many** | 3 | 1 to 24 | Creatures are added at the end and removed from the end, so the first ones keep their colours and characters |
 | **Live on** (`homeScreen`) | All screens | All screens, or one attached monitor by name | With more than one monitor, keep them all on one. Choose another and whoever is not on it springs up out of the top of its screen and comes down on the new one by parachute, one after another; from then on they walk, jump, play, take tea, sleep, plant and throw planes there only, the house stands there, and they grab the cursor only while it is on that monitor (riding it off, they let go). Unplug that monitor and they live on every screen; plug it back in and they go back to it. Also the **SCREEN** button on Creature Actions and the menu's **Screen ›**. On Windows the same, in the tray's **Screen ›**; a monitor Windows knows only as *Generic PnP Monitor* is listed as *Display 2* |
 | **Smallest** / **Largest** | 1.5× / 3× | 1× to 5× in half steps | Screen points per sprite pixel. Every creature is born with a place between the two and keeps it, so moving the sliders resizes everyone without reshuffling who is big. Set them equal and they all match. Dragging one past the other drags the other along. On Windows the scale is multiplied by the primary monitor's dpi factor |
-| **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |
+| **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom, cactus, beetle, crystal, sprout) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |
 | **Day lasts** | 3 min | 0.5 to 60 | |
 | **Night lasts** | 5 min | 0 to 60 | 0 means they never sleep. At dusk each creature wanders 0.5 to 7 more seconds, then lies down; at dawn each gets up within 3 seconds |
 | **The cursor is** (`cursorMood`) | A menace | A playmate, Just there, A menace | What the creatures make of the cursor. *A playmate*: being chased is a game of tag, and their lines, stories, letters and complaints say so. *Just there*: it comes and goes, nothing to have feelings about; a chase gets a passing remark. *A menace*: a grudge, as they were first written. Applies at once, to built-in lines and to what a model is asked for (through each persona, so an edited prompt follows it while it keeps `{speakerPersona}`). Also in the menu: *The Cursor Is* |
@@ -233,9 +233,13 @@ mound of moss, Croak a puddle; Boo a little cloud, Wisp an autumn leaf, Sheet a
 folded blanket; Morel a slice of log, Puff a tuft of grass, Cap a flowerpot; Unit 7
 a charging dock, Sprocket a toolbox, Glitch a spacebar keycap; Goop a sponge,
 Puddle a teacup, Blorp bubble wrap; Spike a pincushion, Wedge a stack of books,
-Delta a striped sock. A character of your own gets one from its persona and its
-species' words (a cat a basket, a robot a dock, anything small a matchbox), else a
-tuft of grass.
+Delta a striped sock; Prickles a heap of warm sand, Saguaro a sun-warmed stone, Tumble
+a beach towel; Click half a walnut shell, Scarab a velvet ring box, Crumb a crust of
+bread; Shard a little mirror, Quartz a geode, Prism a box of crayons; Sprout a seed
+packet, Fern a patch of clover, Bud a toy bucket. A character of your own gets one from
+its persona and its species' words (a cat a basket, a robot a dock, a cactus sand, a
+beetle a walnut shell, a gem a geode, a plant a seed packet, anything small a matchbox),
+else a tuft of grass.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
