@@ -284,6 +284,7 @@ public sealed class ActionsSheet : Window
             return;
         }
         open = new ActionsSheet(settings, colony, addReminder, follow, shortcut) { page = page };
+        WindowPlacer.Keep(open, WindowPlaces.Window.Actions, settings);
         open.Build();
         open.Refresh();
         open.Closed += (s, _) => { if (ReferenceEquals(open, s)) open = null; };

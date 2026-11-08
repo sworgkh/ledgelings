@@ -32,6 +32,7 @@ public sealed class TranslateSheetController
     public enum State { Idle, Waiting, Done, WaitingForEnter, Trouble, Refused }
 
     private readonly AppSettings settings;
+    internal AppSettings Settings => settings;
     private readonly Translator translator;
     private readonly ClipBook book;
     private readonly Func<Colony?> colony;
@@ -101,7 +102,7 @@ public sealed class TranslateSheetController
         Result = Guess = Status = "";
         Now = State.Idle;
         if (window is not null) { window.SetText(Text); Edited(now: true); return; }
-        var monitor = ClipPickerController.Screen(caret, previous);
+        var monitor = WindowPlacer.SheetMonitor(WindowPlaces.Window.Translate, settings, ClipPickerController.Screen(caret, previous));
         window = new TranslateSheetWindow(this, monitor);
         // Closed some other way (Alt+F4): the same clean-up as Esc.
         window.Closed += (s, _) => { if (ReferenceEquals(window, s)) { window = null; Gone(); } };
@@ -435,6 +436,7 @@ internal sealed class TranslateSheetWindow : Window
 
     private readonly TranslateSheetController controller;
     private readonly Monitor monitor;
+    private readonly SheetDrag drag;
     private readonly Grid paper = new() { Width = TranslateSheetController.SheetWidth, Height = TranslateSheetController.SheetHeight };
     private readonly ScaleTransform scale = new(1, 1);
     private readonly TextBox box = new();
@@ -464,7 +466,7 @@ internal sealed class TranslateSheetWindow : Window
         paper.VerticalAlignment = VerticalAlignment.Center;
         paper.RenderTransform = scale;
         paper.Opacity = 0;
-        paper.MouseLeftButtonDown += (_, e) => e.Handled = true;
+        drag = new SheetDrag(this, paper, monitor, TranslateSheetController.SheetWidth, TranslateSheetController.SheetHeight, WindowPlaces.Window.Translate, controller.Settings);
         var image = new Image
         {
             Source = Bitmaps.ToSource(ScreenOverlay.PaperImage((int)(TranslateSheetController.SheetWidth / ReminderNote.Pixel), (int)(TranslateSheetController.SheetHeight / ReminderNote.Pixel))),
@@ -499,13 +501,7 @@ internal sealed class TranslateSheetWindow : Window
     }
 
     /// <summary>The paper's bounds in screen pixels.</summary>
-    public System.Drawing.Rectangle PaperOnScreen()
-    {
-        UpdateLayout();
-        var dpi = VisualTreeHelper.GetDpi(this);
-        int w = (int)Math.Round(TranslateSheetController.SheetWidth * dpi.DpiScaleX), h = (int)Math.Round(TranslateSheetController.SheetHeight * dpi.DpiScaleY);
-        return new System.Drawing.Rectangle(monitor.Left + (monitor.Width - w) / 2, monitor.Top + (monitor.Height - h) / 2, w, h);
-    }
+    public System.Drawing.Rectangle PaperOnScreen() => drag.OnScreen();
 
     /// <summary>The sheet opens: out of its top-left corner, held by a creature, or out of its middle.</summary>
     public void Unfold(double seconds, bool fromCorner)

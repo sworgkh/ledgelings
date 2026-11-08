@@ -174,4 +174,41 @@ public class SpriteTextTests
         Assert.True(sheet.Kind == null && sheet.Cast.Count == 0);
         Assert.Null(SpriteText.Atlas("boxy")["kind"]);
     }
+
+    /// <summary>The idle grid with a cream band (C) over the eyes and one pot pixel (P).</summary>
+    static string Painted()
+    {
+        var g = Grid();
+        void Put(int x, int y, char c) { var row = g[y].ToCharArray(); row[x] = c; g[y] = new string(row); }
+        Put(14, 20, 'C'); Put(17, 20, 'C'); Put(12, 24, 'P');
+        return Text(grid: g).Replace("name: boxy\n", "name: boxy\npaint: C #f2e2c8\npaint: P #b06c4a\n");
+    }
+
+    [Fact]
+    public void APaintKeepsItsOwnColourInTheSheet()
+    {
+        var sheet = SpriteText.Parse(Painted());
+        Assert.Equal(SpriteText.Tint.FromHex("#b06c4a"), sheet.Paints['P']);
+        Assert.Equal(SpriteText.PaintInk('P'), sheet.Poses["idle"][24][12]);
+        Assert.Equal('P', sheet.Poses["idle"][24][12].Letter());
+        var image = SpriteText.Pixels(sheet, SpriteText.Palette.Blocky);
+        var i = (24 * image.Width + 12) * 4;
+        Assert.Equal(new byte[] { 0xb0, 0x6c, 0x4a, 255 }, image.Rgba[i..(i + 4)]);
+    }
+
+    [Fact]
+    public void ALidOverAnEyeOnAPaintIsThatPaint()
+    {
+        var closed = SpriteText.Variant(SpriteText.Parse(Painted()).Poses["idle"], "closed");
+        Assert.Equal(SpriteText.PaintInk('C'), closed[21][14]);
+        Assert.Equal(SpriteText.Ink.Eye, closed[22][14]);
+    }
+
+    [Theory]
+    [InlineData("paint: o #123456")]
+    [InlineData("paint: PP #123456")]
+    [InlineData("paint: P blue")]
+    [InlineData("paint: P #ff8b3e")]
+    public void APaintMustBeANewLetterAndAColourAwayFromThePalette(string line) =>
+        Assert.Throws<SpriteText.ParseException>(() => SpriteText.Parse(Text().Replace("name: boxy\n", "name: boxy\n" + line + "\n")));
 }

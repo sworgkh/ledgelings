@@ -11,6 +11,7 @@ public static partial class SpriteText
         var cast = new List<Character>();
         Tint? colour = null;
         var poses = new Dictionary<string, Ink[][]>();
+        var paints = new Dictionary<char, Tint>();
         string? current = null;
         var rows = new List<Ink[]>();
 
@@ -36,6 +37,19 @@ public static partial class SpriteText
                 colour = Tint.FromHex(c) ?? throw new ParseException(L10n.Tr("colour must be six hex digits like #f0a0b0, not \"%@\"", c));
                 continue;
             }
+            if (Keyed(line, "paint") is string paint)
+            {
+                var parts = paint.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length != 2 || parts[0].Length != 1 || !char.IsLetterOrDigit(parts[0][0]) || InkFor(parts[0][0]) is not null
+                    || Tint.FromHex(parts[1]) is not Tint tint)
+                    throw new ParseException(L10n.Tr("paint should be a letter other than . o b l s k x and a colour, like `paint: p #a0603a`, not \"%@\"", paint));
+                // The app recolours whatever is close to the palette; a paint there would not stay put.
+                var palette = Palette.Blocky;
+                if (new[] { palette.Body, palette.Light, palette.Shade, palette.Outline }.Any(t => Close(t, tint)))
+                    throw new ParseException(L10n.Tr("paint %@ is too close to a body colour: recolouring would change it", parts[0]));
+                paints[parts[0][0]] = tint;
+                continue;
+            }
             if (Keyed(line, "character") is string who)
             {
                 // "Name: what they are like" — the first colon splits them.
@@ -57,9 +71,10 @@ public static partial class SpriteText
             foreach (var letter in raw)
             {
                 if (InkFor(letter) is Ink ink) row.Add(ink);
+                else if (paints.ContainsKey(letter)) row.Add(PaintInk(letter));
                 else if (letter == ' ' || letter == '-' || letter == '_') row.Add(Ink.Clear);
                 else if (letter == '\t' || letter == '\r') continue;
-                else throw new ParseException(L10n.Tr("pose %@, row %d: `%@` is not one of . o b l s k x", inPose, rows.Count + 1, letter));
+                else throw new ParseException(L10n.Tr("pose %@, row %d: `%@` is not one of . o b l s k x or a paint", inPose, rows.Count + 1, letter));
             }
             while (row.Count > Cell && row[^1] == Ink.Clear) row.RemoveAt(row.Count - 1);
             if (row.Count < Cell && row.All(i => i == Ink.Clear)) row.AddRange(Enumerable.Repeat(Ink.Clear, Cell - row.Count));
@@ -69,7 +84,7 @@ public static partial class SpriteText
         Finish();
         if (string.IsNullOrEmpty(name)) throw new ParseException(L10n.Tr("the first line should be `name: something`"));
         foreach (var pose in Poses) if (!poses.ContainsKey(pose)) throw new ParseException(L10n.Tr("pose %@ is missing", pose));
-        return new Sheet { Name = name, Kind = kind, Cast = cast, Colour = colour, Poses = poses };
+        return new Sheet { Name = name, Kind = kind, Cast = cast, Colour = colour, Poses = poses, Paints = paints };
     }
 
     private static string? Keyed(string line, string key)
@@ -100,7 +115,8 @@ public static partial class SpriteText
     // MARK: Eyes
 
     /// <summary>The lids come down: <c>half</c> keeps the lower half of each vertical run of
-    /// eye pixels, <c>closed</c> keeps its bottom row. What the lid covers becomes body.</summary>
+    /// eye pixels, <c>closed</c> keeps its bottom row. What the lid covers becomes body, or the
+    /// paint above the eye when it sits on one (the beetle's cream head band).</summary>
     public static Ink[][] Variant(Ink[][] open, string variant)
     {
         if (variant == "open") return open;
@@ -116,7 +132,8 @@ public static partial class SpriteText
                 while (end < open.Length && open[end][x] == Ink.Eye) end++;
                 var run = end - y;
                 var keep = variant == "closed" ? 1 : (run + 1) / 2;
-                for (int row = y; row < end - keep; row++) grid[row][x] = Ink.Body;
+                var lid = y > 0 && open[y - 1][x] >= Ink.Paint ? open[y - 1][x] : Ink.Body;
+                for (int row = y; row < end - keep; row++) grid[row][x] = lid;
                 y = end;
             }
         }

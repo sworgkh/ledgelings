@@ -181,7 +181,8 @@
               </DockPanel>
               <CheckBox x:Name="StartAtLogin" ui:Tr.Content="Start Ledgelings when you log in" Checked="StartAtLogin_Changed" Unchecked="StartAtLogin_Changed"/>
               <TextBlock Margin="0,4,0,0"><Run ui:Tr.Text="Status"/><Run Text=": "/><Run x:Name="LoginStatus" Foreground="Gray"/></TextBlock>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the per-user Startup list; Task Manager › Startup apps shows it too."/>
+              <CheckBox Margin="0,6,0,0" ui:Tr.Content="Remember where windows were moved" IsChecked="{Binding RememberWindowPlaces, Mode=TwoWay}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the per-user Startup list; Task Manager › Startup apps shows it too. A window or sheet you drag somewhere opens there next time, unless that screen is gone."/>
             </StackPanel>
           </GroupBox>
         </StackPanel>
