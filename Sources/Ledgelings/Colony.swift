@@ -198,6 +198,10 @@ final class Colony: NSObject {
     var forcedOffer: Deeds.Offer?
     /// The next built-in answer to an invitation is this, whatever chance says (the film).
     var forcedAnswer: Bool?
+    /// Whether each pair's conversation brings up the gang's news, until when (`Colony+Gang`).
+    var newsRolls: [String: (until: Double, brings: Bool)] = [:]
+    /// Every conversation brings the news up while it is fresh (`--twist`).
+    var forceNews = false
     /// Pairs whose memory the model is writing now.
     var writingMemory: Set<String> = []
     var nextMemoryCheck = 0.0

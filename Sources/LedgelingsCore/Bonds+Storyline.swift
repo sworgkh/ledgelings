@@ -17,6 +17,8 @@ extension Bonds {
     public struct Moment: Codable, Equatable, Sendable {
         public enum Kind: String, Codable, CaseIterable, Sendable {
             case talk, tea, flower, plane, grab, play
+            /// The first time a newcomer to the gang met this one (`Gang`); `who` is the newcomer.
+            case meet
         }
         public var time: Date
         public var kind: Kind
@@ -132,6 +134,7 @@ extension Bonds {
         case .plane: trCount(n, "paper plane", "paper planes")
         case .grab: trCount(n, "cursor grab", "cursor grabs")
         case .play: trCount(n, "game", "games")
+        case .meet: trCount(n, "first meeting", "first meetings")
         }
     }
 
@@ -145,6 +148,7 @@ extension Bonds {
         case .flower: return tr("%1$@ gave %2$@ a %3$@", moment.who, other, Gifts.name(of: moment.detail ?? ""))
         case .plane: return tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.who, other, said)
         case .grab: return tr("%1$@ grabbed the cursor while %2$@ looked on", moment.who, other)
+        case .meet: return tr("%1$@, new to the gang, met %2$@ for the first time", moment.who, other)
         case .play:
             let played = tr("%1$@ and %2$@ played: %3$@", moment.who, other, Plays.name(of: moment.detail))
             return result(moment).map { played + " (" + $0 + ")" } ?? played
@@ -226,7 +230,7 @@ extension Bonds {
     /// tea party over a plane over a grab over a talk), with when it was, and a
     /// bond line from everything they ever did together, unless they already have one.
     public static func builtInPlot(_ bond: Bond, now: Date = Date(), using rng: inout some RandomNumberGenerator) -> Written {
-        let order: [Moment.Kind] = [.flower, .tea, .play, .plane, .grab, .talk]
+        let order: [Moment.Kind] = [.flower, .tea, .play, .plane, .grab, .meet, .talk]
         let moment = order.lazy.compactMap { kind in bond.moments.last { $0.kind == kind } }.first
         let names = bond.names
         let a = names.first ?? "", b = names.last ?? ""
@@ -254,6 +258,9 @@ extension Bonds {
                 let game = Plays.name(of: moment.detail)
                 choices = [tr("%2$@ wants a rematch of %3$@ with %1$@, after %4$@.", who, other, game, when),
                            tr("%1$@ has been practising since %3$@ with %2$@ %4$@, and means to win next time.", who, other, game, when)]
+            case .meet:
+                choices = [tr("%2$@ has been sizing up the newcomer %1$@ ever since they met %3$@.", who, other, when),
+                           tr("%1$@ is new to the gang and hopes %2$@ will show them around, after meeting %3$@.", who, other, when)]
             case .talk:
                 choices = [tr("%2$@ keeps coming back to what %1$@ said %3$@: \"%4$@\"", who, other, when, said),
                            tr("%1$@ and %2$@ have not settled what they talked about %3$@.", who, other, when)]

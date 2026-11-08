@@ -115,7 +115,16 @@ public enum Bonds {
     /// Every bond, by pair.
     public struct Book: Codable, Equatable, Sendable {
         public var bonds: [String: Bond] = [:]
+        /// Who has ever been on screen, and how the gang changed lately (`Gang`).
+        public var gang = Gang.Roster()
         public init() {}
+
+        /// A `bonds.json` from before the gang was kept still loads, with no roster yet.
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            bonds = try c.decodeIfPresent([String: Bond].self, forKey: .bonds) ?? [:]
+            gang = try c.decodeIfPresent(Gang.Roster.self, forKey: .gang) ?? Gang.Roster()
+        }
 
         public func bond(_ a: String, _ b: String) -> Bond? { bonds[key(a, b)] }
 

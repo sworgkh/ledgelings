@@ -98,6 +98,7 @@ struct SettingsView: View {
         case .voice: VoiceSettingsView(settings: settings, voice: voice)
         case .bonds: BondsSettingsView(settings: settings, bonds: bonds)
         case .relationships: RelationshipsSettingsView(settings: settings, bonds: bonds, open: openRelationships, seed: seedMemory)
+        case .twists: TwistsSettingsView(settings: settings, bonds: bonds)
         case .reminders: RemindersSettingsView(settings: settings, reminders: reminders, send: send)
         case .clipboard: ClipboardSettingsView(settings: settings, clips: clips, library: library, editSnippets: editSnippets)
         case .screenshots: ScreenshotSettingsView(settings: settings)

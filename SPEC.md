@@ -1010,6 +1010,55 @@ moments, empty tally, `seeded` false).
   facts, games, day by day newest first, and exactly the block each carries into a
   conversation, with its tokens and what their memory cost.
 
+#### 6.5.2.4 Plot twists: someone new, someone gone
+
+When the gang changes, the others talk about it for a few days (`Gang`, `Colony+Gang`).
+
+- **The roster** (`bonds.json`, key `gang`): every character ever on screen by name
+  (`members`: `kind`, `firstSeen`, `lastSeen`, `pending`, `away`, `backSince`), the last
+  40 `events` (`joined`, `left`, `returned`, with `time`, the species' `kind`, and for a
+  return `awaySince`) and `started`. Every 30 s (with the time together) the roster is
+  shown who is on screen. A newcomer counts once it has been on screen 120 s (`settle`);
+  one gone 120 s from its last sighting has **left** (event time: when last seen); a
+  leaver on screen again for 120 s has **come back**. A flicker (the count dragged up and
+  down) is nobody. Asleep, in the house or moving to another monitor a creature is still
+  on screen: no event. The **first look** (no `started`) knows everyone on screen and
+  everyone named in a bond (those as gone, quietly): no event. A rename is a newcomer
+  and a departure. Arrivals come from any source: a species switched on, the count
+  raised, an imported sprite, a new built-in species from an update.
+- **Fresh news**: each character's newest event from the last `twistDays` days;
+  `twistDepartures` off leaves out leaving and coming back. *Forget the News* clears
+  the events, not the members.
+- **In a prompt.** Each conversation (talk, a tea party, a letter: everything that
+  carries `relationship`) rolls once per pair, kept 120 s so both sides agree, against
+  `twistChance` % × (1 − age of the newest event / `twistDays`). On a hit the speaker's
+  side ends with `News in the gang: …` — "Pip, a small red mushroom…, is new to the gang:
+  arrived today." / "Boo has left the gang (yesterday); nobody has seen Boo since, or
+  knows where to." / "Boo came back to the gang today, after being away since 3 Nov.";
+  for the newcomer itself "You are new here: you joined the gang today… be shy, curious
+  or show off, as you would."; for a leaver or returner the speaker's bond line with it
+  ("You and Boo: …"); then "If it suits you, bring it up in your own way (a welcome,
+  suspicion, gossip, missing someone, a rumour), in a word or two; never explain it."
+  The story (§6.5.2) and the diary (§6.5.2.3) prompts get the news told of the pair
+  ("It may touch their story.") whenever it is fresh. No new call, no new purpose.
+- **Without a model.** On a hit a built-in conversation is about the news: news about
+  the listener is never told to its face; a newcomer or returner speaking talks about
+  itself (`arrival` lines, or "I'm back!"); otherwise each says its own line about
+  whoever it is (`new`, `gone`, `back`), `{name}` filled. Every shipped character has one
+  line in each of the four tables, in English and Russian (`Gang+Lines.swift`,
+  `Gang+Russian.swift`, exported for Windows under `gang`); anyone else a shared line.
+- **Memory.** The first time a fresh newcomer and another share anything (a talk, a
+  flower, a game…), their storyline gets a `meet` moment ("Pip, new to the gang, met
+  Blocky for the first time"; tallied "first meeting") before it, and with memory on a
+  fact "Pip and Blocky first met when Pip was new to the gang" (source `gang`). A
+  departure or a return is a fact for the three characters who spent most time with it
+  ("Boo left the gang (8 Nov)", "Boo came back to the gang"), with memory and
+  `twistDepartures` on; the diary then writes about it with the news in its prompt.
+- **Seeing it.** Settings › Plot twists lists the fresh news and the gang (on screen,
+  gone). `--twist join|leave|back <name>` makes the event by hand and forces every
+  conversation to bring it up; with `--converse` the lines print with `twist …` traces,
+  with `--memory` the roster follows every pair's memory (`gang Boo: away since …`).
+
 ### 6.5.3 Not repeating themselves
 
 Each character remembers its last `lineMemory` lines (default 12, 0 = off),
@@ -3049,6 +3098,10 @@ An error for want of a model reads as that note, never as a server refusal.
 | dayContextItems | 4 | 0–10, clamped on load |
 | seedDays | 14 | 1–60, clamped on load: how far back the seed reads |
 | seedLines | 40 | 5–200, clamped on load: lines per pair shown to the model |
+| twistsEnabled | true | a newcomer or a departure is news for days (§6.5.2.4) |
+| twistDays | 3 | 1–14, clamped on load: days the news stays a topic |
+| twistChance | 35 | 5–100 %, clamped on load: conversations that bring it up while new, fading to 0 by `twistDays` |
+| twistDepartures | true | leaving and coming back are news too |
 | voiceEnabled | false | §6.6.1; also the menu's "Hear Them Talk" |
 | voiceEngine | system | system, openRouter, local |
 | voicePerCharacter | true | |

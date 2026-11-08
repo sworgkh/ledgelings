@@ -5,7 +5,7 @@ import Foundation
 public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
     case chases, play, ballGames
-    case talk, voice, bonds, relationships
+    case talk, voice, bonds, relationships, twists
     case tools, reminders, clipboard, screenshots, dictation, translate, readAloud
     case costs, chats
 
@@ -24,6 +24,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .voice: tr("Voice")
         case .bonds: tr("Bonds")
         case .relationships: tr("Relationships")
+        case .twists: tr("Plot twists")
         case .reminders: tr("Reminders")
         case .clipboard: tr("Clipboard")
         case .screenshots: tr("Screenshots")
@@ -40,7 +41,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         switch self {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
         case .chases, .play, .ballGames: .games
-        case .talk, .voice, .bonds, .relationships: .talkAndFriends
+        case .talk, .voice, .bonds, .relationships, .twists: .talkAndFriends
         case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
         }
@@ -222,6 +223,12 @@ public enum SettingsIndex {
         Section(.relationships, "Long-term memory", labels: ["Pairs remember each other", "Memory sent with each line", "none", "Facts kept per pair", "Days of timeline kept", "The model may note facts as it speaks", "Each knows what it did today", "Things from today it mentions"], footer: "Every conversation, letter and tea party carries what the two remember, cut to the tokens set here. The timeline is for you; only today and yesterday are sent.", keys: ["dayContextEnabled", "dayContextItems", "memoryDays", "memoryEnabled", "memoryFacts", "memoryNotes", "memoryTokens"]),
         Section(.relationships, "The diary", labels: ["At nightfall the model writes their memory down", "A pair's memory at most every", "Pairs a night"], footer: "One call a pair (Costs › Long-term memory): their story, the facts that still matter, the day in a line. Without a model days are counted and facts come from deeds and games.", keys: ["diaryEnabled", "diaryEveryHours", "diaryPairsPerNight"]),
         Section(.relationships, "Their past", labels: ["Days read back", "Lines shown per pair", "Check First", "Read the Past In", "Open Relationships"], footer: "Builds each pair's memory from what they said on this Mac, one call a pair (Costs › Memory: reading the past); only their own lines are sent. Check First sends nothing. bonds.json is copied first.", keys: ["seedDays", "seedLines"]),
+
+        // twists
+        Section(.twists, "Plot twists", labels: ["A newcomer or a departure is news for days", "Someone leaving is news too", "The news stays a topic for", "Conversations that bring it up at first"], footer: "When a character new to the gang turns up (a species switched on, more creatures, an imported sprite, a new one in an update), or one leaves, the others talk about it: welcome, suspicion, gossip, missing someone. The chance fades to nothing as the news gets old. Sleeping or moving to another monitor is not leaving.", keys: ["twistChance", "twistDays", "twistDepartures", "twistsEnabled"]),
+        Section(.twists, "What it does", labels: ["The news rides in the prompts already sent (talk, tea, letters, stories, the diary), so it costs a few tokens and no call of its own. Without a model each character has a line of its own about someone new, someone gone and someone back. A newcomer's first meeting with each of the others is kept in their storyline, and a departure in the closest friends' memory."]),
+        Section(.twists, "News in the gang", labels: ["No news: the gang is as it was.", "Forget the News"], footer: "A change counts once it has held for two minutes. Forget the News ends every topic now; the gang is still remembered."),
+        Section(.twists, "The gang", labels: ["Nobody yet: the gang is counted half a minute after launch.", "On screen", "Gone"], footer: "Everyone who has ever been on screen, kept by name in bonds.json: a rename is a newcomer."),
 
         // reminders
         Section(.reminders, "New reminder", labels: ["Remind me to", "Stretch, call mom, stand-up…", "When", "Repeat", "In 5 min", "In 30 min", "In 1 hour", "Add Reminder"], footer: "When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday."),

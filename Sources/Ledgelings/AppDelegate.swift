@@ -377,6 +377,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(await DictationDemo.run(settings: settings, controller: dictation, clips: clips, model: model) ? 0 : 1)
             }
         }
+        // `--twist join|leave|back <name>`: that change of the gang, made by hand as if
+        // it had just happened, and every conversation brings it up; the roster and the
+        // news on stderr. With `--converse` or `--memory` that runs next; alone, it quits.
+        if let at = CommandLine.arguments.firstIndex(of: "--twist"), let colony {
+            let args = CommandLine.arguments
+            let kinds: [String: Gang.Event.Kind] = ["join": .joined, "leave": .left, "back": .returned]
+            guard args.indices.contains(at + 2), let kind = kinds[args[at + 1]] else {
+                FileHandle.standardError.write(Data("usage: --twist join|leave|back <name>\n".utf8)); exit(2)
+            }
+            colony.forceNews = true
+            let tracing = colony.trace
+            colony.trace = { FileHandle.standardError.write(Data(($0 + "\n").utf8)) }
+            colony.fakeTwist(kind, args[at + 2])
+            colony.trace = tracing
+            colony.gangDump().forEach { FileHandle.standardError.write(Data(($0 + "\n").utf8)) }
+            if !args.contains("--converse") && !args.contains("--memory") && !args.contains("--tea") { exit(0) }
+        }
         // `--converse`: one conversation, every line and voice cue on stderr with
         // the time since it started, then quit once the pair is let go.
         // `--invite soccer|tag|basketball|baseball|tea`: it opens with that

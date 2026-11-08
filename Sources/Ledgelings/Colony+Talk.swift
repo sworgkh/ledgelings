@@ -207,6 +207,9 @@ extension Colony {
         if flower == nil, let offer = builtInInvitation(speaker, to: listener, options) {
             return reciteInvitation(offer, from: speaker, to: listener, options: options, situation: situation)
         }
+        if flower == nil, let lines = builtInTwist(speaker, to: listener) {
+            return sayBuiltIn(lines, from: speaker, to: listener, situation: situation)
+        }
         let script: Script
         do { script = try Script.parse(settings.script) } catch { talkStatus = tr("the built-in lines: %@", "\(error)"); return false }
         var moment: Set<String> = [isNight ? "night" : "day"]

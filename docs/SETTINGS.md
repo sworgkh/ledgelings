@@ -559,6 +559,36 @@ conversation with that invitation and waits for the deed; `--memory [name]` prin
 pair's memory and the block each carries; `--memory-seed [--dry-run]` reads the past in;
 `--diary` writes every due pair's diary now; `--relationships --snapshot out.png`.
 
+## Plot twists tab
+
+When a character new to the gang turns up — a species switched on, more creatures,
+an imported sprite, a new species in an update — or one leaves, the others talk about
+it for a few days: a welcome, suspicion, gossip, missing someone, a rumour about where
+it went; the newcomer shy or showing off, as its persona goes. Someone who left and
+comes back is news too: "Boo's back!", with what the others remember of Boo.
+
+A change counts once it has held two minutes, so dragging the count up and down is
+nobody's arrival. Sleeping, hiding in the house or moving to another monitor is not
+leaving. On the first launch with this version everyone already on screen, and everyone
+the bonds remember, counts as known: no twist about the whole gang.
+
+The news rides in the prompts already sent (talk, tea, letters, stories, the diary): a
+few tokens, no call of its own. Without a model each character has its own line about
+someone new, someone gone and someone back. A newcomer's first meeting with each of
+the others goes into their storyline and memory; a departure into the memory of the
+leaver's three closest friends. The right side lists the fresh news and the gang;
+**Forget the News** ends every topic now.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **A newcomer or a departure is news for days** | on | | `twistsEnabled` |
+| **Someone leaving is news too** | on | | `twistDepartures`; off: only newcomers are news |
+| **The news stays a topic for** | 3 days | 1 to 14 | `twistDays` |
+| **Conversations that bring it up at first** | 35 % | 5 to 100 % | `twistChance`: the chance on the day it happens, fading to none by the last day |
+
+Flag: `--twist join|leave|back <name>` makes that change by hand and has every
+conversation bring it up; add `--converse` to hear it, `--memory` to see the roster.
+
 ## Calendar tab
 
 The creatures know your day: the time on your Mac's clock, the date, and the

@@ -53,7 +53,7 @@ extension Colony {
         guard let service = settings.chatClient(), let bond = bonds.bond(a, b), !writingMemory.contains(key) else { done?(); return }
         let values = Bonds.memoryValues(bond, a: who(bond.names[0]), b: who(bond.names[1]), lines: todaysLines(a, b),
                                         words: settings.storyWords, facts: settings.memoryFacts)
-        let prompt = Banter.render(Bonds.diaryPrompts(), values)
+        let prompt = Gang.withNews(Banter.render(Bonds.diaryPrompts(), values), pairNews)
         writingMemory.insert(key)
         trace?("memory \(key): writing the diary, \(Bonds.tokens(prompt)) tokens or so")
         Task { [weak self] in
@@ -195,6 +195,6 @@ extension Colony {
                 out.append("memory \(key): \(x) remembers (\(Bonds.tokens(block)) of \(settings.memoryTokens) tokens; all of it \(all)): \(block)")
             }
         }
-        return out
+        return out + gangDump()
     }
 }
