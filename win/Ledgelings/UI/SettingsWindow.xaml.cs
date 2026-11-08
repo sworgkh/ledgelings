@@ -26,6 +26,7 @@ public sealed partial class SettingsWindow : Window
     public SettingsWindow(AppSettings settings, ChatHistory history, SpriteLibrary library, SpendLedger spend)
     {
         this.settings = settings;
+        WindowPlacer.Keep(this, WindowPlaces.Window.Settings, settings);
         this.history = history;
         this.library = library;
         this.spend = spend;

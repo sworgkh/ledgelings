@@ -113,7 +113,7 @@ public sealed class ClipPickerController
         model.Search("");
         model.Refresh(selectFirst: true);
         Translation = null;
-        var monitor = Screen(caret, previous);
+        var monitor = WindowPlacer.SheetMonitor(WindowPlaces.Window.ClipPicker, settings, Screen(caret, previous));
         window = new ClipPickerWindow(this, model, settings, monitor);
         window.Closed += (s, _) => { if (ReferenceEquals(window, s)) window = null; };
         window.Show();
@@ -429,6 +429,7 @@ internal sealed class ClipPickerWindow : Window
     private readonly ClipPicker model;
     private readonly AppSettings settings;
     private readonly Monitor monitor;
+    private readonly SheetDrag drag;
     private readonly Grid paper = new() { Width = ClipPickerController.SheetWidth, Height = ClipPickerController.SheetHeight };
     private readonly ScaleTransform scale = new(1, 1);
     private readonly TextBox field = new();
@@ -459,7 +460,7 @@ internal sealed class ClipPickerWindow : Window
         paper.VerticalAlignment = VerticalAlignment.Center;
         paper.RenderTransform = scale;
         paper.Opacity = 0;
-        paper.MouseLeftButtonDown += (_, e) => e.Handled = true;
+        drag = new SheetDrag(this, paper, monitor, ClipPickerController.SheetWidth, ClipPickerController.SheetHeight, WindowPlaces.Window.ClipPicker, settings);
         var image = new Image
         {
             Source = Bitmaps.ToSource(ScreenOverlay.PaperImage((int)(ClipPickerController.SheetWidth / ReminderNote.Pixel), (int)(ClipPickerController.SheetHeight / ReminderNote.Pixel))),
@@ -495,13 +496,7 @@ internal sealed class ClipPickerWindow : Window
     }
 
     /// <summary>The paper's bounds in screen pixels.</summary>
-    public System.Drawing.Rectangle PaperOnScreen()
-    {
-        UpdateLayout();
-        var dpi = VisualTreeHelper.GetDpi(this);
-        int w = (int)Math.Round(ClipPickerController.SheetWidth * dpi.DpiScaleX), h = (int)Math.Round(ClipPickerController.SheetHeight * dpi.DpiScaleY);
-        return new System.Drawing.Rectangle(monitor.Left + (monitor.Width - w) / 2, monitor.Top + (monitor.Height - h) / 2, w, h);
-    }
+    public System.Drawing.Rectangle PaperOnScreen() => drag.OnScreen();
 
     /// <summary>The sheet opens: out of its top-left corner, held by a creature, or out of its middle.</summary>
     public void Unfold(double seconds, bool fromCorner)

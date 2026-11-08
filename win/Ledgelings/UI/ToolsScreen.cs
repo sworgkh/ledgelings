@@ -27,6 +27,7 @@ public sealed class ToolsScreenController
     }
 
     private readonly AppSettings settings;
+    internal AppSettings Settings => settings;
     private ToolsScreenWindow? window;
     private IntPtr previous;
 
@@ -63,7 +64,7 @@ public sealed class ToolsScreenController
         Tiles = tools.Select((tool, i) => new Tile(tool, i + 1, IsOn(tool), ShortcutLabel(tool))).ToList();
         Chosen = Math.Max(0, Tiles.ToList().FindIndex(t => t.On));
         var caret = previous == IntPtr.Zero ? null : ClipboardNative.Caret(previous);
-        var monitor = ClipPickerController.Screen(caret, previous);
+        var monitor = WindowPlacer.SheetMonitor(WindowPlaces.Window.Tools, settings, ClipPickerController.Screen(caret, previous));
         window = new ToolsScreenWindow(this, monitor);
         window.Closed += (s, _) => { if (ReferenceEquals(window, s)) window = null; };      // Alt+F4: nothing else to undo
         window.Show();
@@ -169,7 +170,7 @@ internal sealed class ToolsScreenWindow : Window
         WindowStartupLocation = WindowStartupLocation.Manual;
         UseLayoutRounding = true;
         SnapsToDevicePixels = true;
-        paper.MouseLeftButtonDown += (_, e) => e.Handled = true;
+        _ = new SheetDrag(this, paper, monitor, size.Width, size.Height, WindowPlaces.Window.Tools, controller.Settings);
         var image = new Image
         {
             Source = Bitmaps.ToSource(ScreenOverlay.PaperImage((int)(size.Width / ReminderNote.Pixel), (int)(size.Height / ReminderNote.Pixel))),

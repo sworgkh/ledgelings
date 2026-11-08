@@ -44,7 +44,7 @@ public sealed partial class App
     private void AddAReminder()
     {
         if (settings is null || reminders is null) return;
-        if (settings.ReminderPaperNote) ReminderNote.ShowNote(reminders, colony?.NoteKeeper());
+        if (settings.ReminderPaperNote) ReminderNote.ShowNote(reminders, colony?.NoteKeeper(), settings);
         else OpenSettings(SettingsPage.Reminders);
     }
 

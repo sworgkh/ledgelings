@@ -20,7 +20,9 @@ public static partial class SpriteText
                 for (int y = 0; y < Cell; y++)
                     for (int x = 0; x < Cell; x++)
                     {
-                        if (palette.TintOf(grid[y][x]) is not Tint tint) continue;
+                        var ink = grid[y][x];
+                        var paint = ink.PaintLetter() is char c && sheet.Paints.TryGetValue(c, out var p) ? p : (Tint?)null;
+                        if ((paint ?? palette.TintOf(ink)) is not Tint tint) continue;
                         var i = ((row * Cell + y) * width + column * Cell + x) * 4;
                         rgba[i] = tint.R; rgba[i + 1] = tint.G; rgba[i + 2] = tint.B; rgba[i + 3] = 255;
                     }

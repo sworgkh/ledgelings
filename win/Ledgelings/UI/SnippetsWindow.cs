@@ -38,6 +38,7 @@ public sealed class SnippetsWindow : Window
 
     private SnippetsWindow(ClipBook book, AppSettings settings)
     {
+        WindowPlacer.Keep(this, WindowPlaces.Window.Snippets, settings);
         this.book = book;
         this.settings = settings;
         Title = L10n.Tr("Snippets");

@@ -11,7 +11,9 @@ namespace Ledgelings.Core;
 /// on an imported creature exactly as on the built-in one.
 ///
 /// Letters: <c>.</c> nothing, <c>o</c> outline, <c>b</c> body, <c>l</c> light, <c>s</c> shade,
-/// <c>k</c> eye (black; it blinks), <c>x</c> black that never blinks.
+/// <c>k</c> eye (black; it blinks), <c>x</c> black that never blinks. Any other letter is a
+/// fixed colour named by a line before the poses, <c>paint: p #a0603a</c> (a flower pot,
+/// spots on a shell): recolouring leaves it as painted.
 /// </summary>
 public static partial class SpriteText
 {
@@ -34,9 +36,14 @@ public static partial class SpriteText
     /// <summary>What the kit's prompt says when the form has no description yet; in the current language.</summary>
     public static string DescribePlaceholder => L10n.Tr("<describe your creature here>");
 
-    public enum Ink { Clear, Outline, Body, Light, Shade, Eye, Black }
+    /// <summary>From <see cref="Ink.Paint"/> up, <c>Ink.Paint + letter</c> is a fixed colour, by its letter in
+    /// the sheet's <see cref="Sheet.Paints"/>.</summary>
+    public enum Ink { Clear, Outline, Body, Light, Shade, Eye, Black, Paint = 0x10000 }
 
-    public static char Letter(this Ink ink) => ink switch
+    public static Ink PaintInk(char letter) => Ink.Paint + letter;
+    public static char? PaintLetter(this Ink ink) => ink >= Ink.Paint ? (char)(ink - Ink.Paint) : null;
+
+    public static char Letter(this Ink ink) => ink.PaintLetter() ?? ink switch
     {
         Ink.Clear => '.', Ink.Outline => 'o', Ink.Body => 'b', Ink.Light => 'l', Ink.Shade => 's', Ink.Eye => 'k', _ => 'x',
     };
@@ -71,7 +78,8 @@ public static partial class SpriteText
             Ink.Body => Body,
             Ink.Light => Light,
             Ink.Shade => Shade,
-            _ => new Tint(0, 0, 0),
+            Ink.Eye or Ink.Black => new Tint(0, 0, 0),
+            _ => null,
         };
     }
 
@@ -87,6 +95,8 @@ public static partial class SpriteText
         public Tint? Colour { get; init; }
         /// <summary>pose → 32 rows of 32 inks, eyes open.</summary>
         public IReadOnlyDictionary<string, Ink[][]> Poses { get; init; } = new Dictionary<string, Ink[][]>();
+        /// <summary>letter → the fixed colour a paint ink stands for.</summary>
+        public IReadOnlyDictionary<char, Tint> Paints { get; init; } = new Dictionary<char, Tint>();
     }
 
     /// <summary>An RGBA sheet, 8 bits a channel, rows top to bottom.</summary>

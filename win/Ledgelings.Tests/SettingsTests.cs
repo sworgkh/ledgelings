@@ -49,6 +49,26 @@ public class SettingsTests
     }
 
     [Fact]
+    public void WindowPlacesAreRememberedByDefaultAndAChangeIsRemembered()
+    {
+        var box = Fresh();
+        var s = box.Settings;
+        Assert.True(s.RememberWindowPlaces);
+        Assert.Empty(s.WindowPlaceList);
+        s.Moved(Core.WindowPlaces.Window.Tools, 120.4, 700.6);
+        s.Moved(Core.WindowPlaces.Window.Overlay, 5, 5);
+        var again = box.Again();
+        Assert.Equal((120.0, 701.0), again.PlaceOf(Core.WindowPlaces.Window.Tools));
+        Assert.Null(again.PlaceOf(Core.WindowPlaces.Window.Overlay));      // the creatures' layer never moves
+        again.RememberWindowPlaces = false;
+        again.Moved(Core.WindowPlaces.Window.Settings, 10, 10);
+        var off = box.Again();
+        Assert.False(off.RememberWindowPlaces);
+        Assert.Null(off.PlaceOf(Core.WindowPlaces.Window.Tools));
+        Assert.False(off.WindowPlaceList.ContainsKey("settings"));       // off: nothing is used or kept
+    }
+
+    [Fact]
     public void ChasesAreCountedAndTalkedAboutByDefaultAndAChangeIsRemembered()
     {
         var box = Fresh();

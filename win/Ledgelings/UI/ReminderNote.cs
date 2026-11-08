@@ -46,10 +46,11 @@ public sealed class ReminderNote : Window
 
     /// <summary>Show the paper note, closing any open one first. <paramref name="keeper"/>: someone on screen to
     /// peek over its top edge, a name and an idle frame.</summary>
-    public static void ShowNote(ReminderBook reminders, (string Name, System.Drawing.Bitmap? Face)? keeper)
+    public static void ShowNote(ReminderBook reminders, (string Name, System.Drawing.Bitmap? Face)? keeper, AppSettings settings)
     {
         open?.Close();
         open = new ReminderNote(reminders, keeper);
+        WindowPlacer.Keep(open, WindowPlaces.Window.Reminder, settings);
         open.Closed += (s, _) => { if (ReferenceEquals(open, s)) open = null; };
         open.Show();
         open.Activate();

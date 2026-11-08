@@ -34,6 +34,7 @@ public sealed class RelationshipsWindow : Window
     private RelationshipsWindow(AppSettings settings, BondBook bonds)
     {
         this.settings = settings;
+        WindowPlacer.Keep(this, WindowPlaces.Window.Relationships, settings);
         this.bonds = bonds;
         Title = L10n.Tr("Relationships");
         Width = 980; Height = 640; MinWidth = 760; MinHeight = 460;
