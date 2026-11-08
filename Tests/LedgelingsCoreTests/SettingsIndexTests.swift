@@ -27,7 +27,7 @@ import Testing
         #expect(SettingsGroup.allCases.map { $0.pages } == [
             [.creatures, .actions, .sprites, .beds, .flowers, .calendar],
             [.chases, .play, .ballGames],
-            [.talk, .voice, .bonds, .relationships],
+            [.talk, .voice, .bonds, .relationships, .twists],
             [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud],
             [.costs, .chats],
         ])

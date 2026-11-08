@@ -84,7 +84,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
   writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames,
-  talk, voice, bonds, relationships, tools, reminders, clipboard, screenshots, dictation, translate, readaloud, costs, chats;
+  talk, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place;
   `productivity`, the old tools tab, still opens Reminders).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
@@ -99,6 +99,11 @@ with `scripts/make-app.sh`, installed and seen working.
   carries into a prompt, with its tokens; `--memory-seed [--dry-run]` reads the last `seedDays` of the chat
   log into it (the dry run sends nothing, touches no key, changes nothing); `--diary` writes every due
   pair's diary now; `--relationships --snapshot out.png` writes the Relationships window.
+- `--twist join|leave|back <name>` makes that change of the gang by hand, as if it had just
+  happened, has every conversation bring it up, and prints the roster and the news
+  (`gang Boo: away since 8 Nov`, `gang event left Boo today`); with `--converse` the lines follow
+  (`twist Blocky hears: News in the gang: …`, `twist built in: Blocky on left Boo`), with `--memory`
+  every pair's memory. It writes the event into `bonds.json`: back it up first.
 - `--garden-film out.mp4` hands five creatures a flower each and films them offscreen
   until all have planted, printing who planted what and why (`plant Blocky poppy floor`).
 - `--bed-film out.mp4` films one creature of each species offscreen from nightfall until all

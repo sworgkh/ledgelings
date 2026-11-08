@@ -222,6 +222,7 @@ extension Bonds {
                 return m.who == name ? tr("gave %@ a %@ at %@", others, flower, at) : tr("got a %@ from %@ at %@", flower, m.who, at)
             case .plane: return m.who == name ? tr("sent %@ a paper plane at %@", others, at) : tr("got a paper plane from %@ at %@", m.who, at)
             case .grab: return tr("grabbed the cursor at %@", at)
+            case .meet: return m.who == name ? tr("met %@ for the first time at %@", others, at) : tr("met the newcomer %@ at %@", m.who, at)
             case .talk: return ""
             }
         }

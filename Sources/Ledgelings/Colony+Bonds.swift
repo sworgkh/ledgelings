@@ -16,6 +16,7 @@ extension Colony {
         togetherPending = 0
         let names = creatures.indices.map { character(forCreature: $0).name }
         bonds.change { $0.liveTogether(seconds, names: names) }
+        observeGang()
     }
 
     /// What goes into creature `i`'s prompt about `j`: the bond and the story
@@ -30,6 +31,7 @@ extension Colony {
             parts.append(Bonds.memory(bonds.bond(a, b), speaker: a, other: b, budget: settings.memoryTokens))
             if settings.dayContextEnabled { parts.append(Bonds.daySoFar(of: a, in: bonds.book, items: settings.dayContextItems)) }
         }
+        parts.append(news(of: a, with: b))
         return parts.filter { !$0.isEmpty }.joined(separator: " ")
     }
 
@@ -44,6 +46,7 @@ extension Colony {
     /// their next story if they are due one. `kind`: `.tea` for a whole tea party.
     func talked(_ a: String, _ b: String, lines: [ChatLog.Line], as kind: Bonds.Moment.Kind = .talk) {
         guard !lines.isEmpty else { return }
+        firstMeeting(a, b)
         bonds.change { $0.talked(a, b, lines: lines, as: kind) }
         writePlotIfDue(a, b)
     }
@@ -54,6 +57,7 @@ extension Colony {
                 score: String? = nil, winners: [String]? = nil, asked: String? = nil) {
         guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
         let a = character(forCreature: i).name, b = character(forCreature: j).name
+        firstMeeting(a, b)
         bonds.change { $0.note(a, b, Bonds.Moment(time: Date(), kind: kind, who: a, detail: detail, score: score, winners: winners, asked: asked)) }
     }
 
@@ -90,7 +94,7 @@ extension Colony {
         let values = Bonds.plotValues(bond, a: (a, kind(ofCreature: i), character(forCreature: i).persona),
                                       b: (b, kind(ofCreature: j), character(forCreature: j).persona), length: length,
                                       story: telling)
-        let prompt = Banter.render(settings.plotPrompt, values)
+        let prompt = Gang.withNews(Banter.render(settings.plotPrompt, values), pairNews)
         plotting.insert(key)
         trace?("plot: asking for \(key), \(prompt.count / 4) tokens or so")
         Task { [weak self] in

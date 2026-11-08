@@ -116,6 +116,13 @@ chat log on your computer. Watch friendships form in the **Relationships** windo
 limit and budget is in Settings › Relationships, and *Deeds from Talk* in the menu turns
 the doing off.
 
+**Plot twists.** Switch a species on, raise the count or import a sprite, and the gang
+notices: for a few days they gossip about the newcomer, welcome it or eye it with
+suspicion, while it is shy or shows off. Take someone away and they miss it, wonder where
+it went, and the closest friends remember the day it left; bring it back and it is
+"Boo's back!". Every character has its own lines for it without a model too. Settings ›
+Plot twists.
+
 **Play with them.** *Creature Actions…* in the menu (or ⌃⌥L in any app on a Mac, Ctrl+Alt+L on Windows, or opening
 the app again, for when the menu bar has no room for the icon) opens a sheet of the same pixel
 paper as the letters, a creature peeking over the top: one picture for everything you

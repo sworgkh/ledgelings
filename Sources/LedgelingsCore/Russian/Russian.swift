@@ -29,5 +29,6 @@ extension Strings {
         "translate": ruTranslate,
         "readAloud": ruReadAloud,
         "relationships": ruRelationships,
+        "gang": ruGang,
     ]
 }

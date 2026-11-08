@@ -407,6 +407,19 @@ final class AppSettings: ObservableObject {
     @Published var seedDays: Int { didSet { save(seedDays, "seedDays") } }
     @Published var seedLines: Int { didSet { save(seedLines, "seedLines") } }
 
+    // MARK: Plot twists
+
+    static let twistDaysRange = 1...14
+    static let twistChanceRange = 5.0...100.0
+    /// When a newcomer joins the gang or someone leaves, the others talk about it for a while (`Gang`).
+    @Published var twistsEnabled: Bool { didSet { save(twistsEnabled, "twistsEnabled") } }
+    /// Days the news stays a topic.
+    @Published var twistDays: Int { didSet { save(twistDays, "twistDays") } }
+    /// Percent of conversations that bring the news up while it is new; it fades over the days.
+    @Published var twistChance: Double { didSet { save(twistChance, "twistChance") } }
+    /// Someone leaving (and coming back) is news too, not only a newcomer.
+    @Published var twistDepartures: Bool { didSet { save(twistDepartures, "twistDepartures") } }
+
     // MARK: Calendar
 
     /// Days before a holiday that the creatures start mentioning it.
@@ -994,6 +1007,12 @@ final class AppSettings: ObservableObject {
         // Two weeks, forty lines a pair: about 2 500 tokens a pair, a fraction of a cent.
         seedDays = clampInt("seedDays", 14, Self.seedDaysRange)
         seedLines = clampInt("seedLines", 40, Self.seedLinesRange)
+        twistsEnabled = defaults.object(forKey: "twistsEnabled") as? Bool ?? true
+        // Three days: long enough to be gossip, short enough to be over by next week.
+        twistDays = clampInt("twistDays", 3, Self.twistDaysRange)
+        // About one conversation in three on the first day, fading to none by the last.
+        twistChance = clamp("twistChance", 35, Self.twistChanceRange)
+        twistDepartures = defaults.object(forKey: "twistDepartures") as? Bool ?? true
         knowsTimeOfDay = defaults.object(forKey: "knowsTimeOfDay") as? Bool ?? true
         knowsDate = defaults.object(forKey: "knowsDate") as? Bool ?? true
         jewishHolidays = defaults.object(forKey: "jewishHolidays") as? Bool ?? true
