@@ -213,7 +213,9 @@ grant survives reinstalls. Until it is given the picker only copies, and says so
 **Screenshots** (macOS for now). **⌃⌥S** freezes every screen under a tiny pixel
 toolbar: a rectangle, a freehand lasso, the screen under the cursor or all monitors as
 one image; then boxes, arrows, a highlight, and a blur (pixel blocks, so the text cannot
-be read back) by rectangle or by brush, in six colours. Every button is an icon that
+be read back) by rectangle or by brush, in six colours; and text, typed in place, in a
+font, size and turn of your choice, changeable until the shot is taken (it always sits
+over a blur). ⌘Z undoes any step, ⇧⌘Z redoes it. Every button is an icon that
 names itself and its key on hover. ⏎ copies the PNG, ⌘S also saves it to
 ~/Desktop/Screenshots. **⌘⇧8** takes the full screen at once, **⌘⇧\\** the last
 rectangle again; all shortcuts and the folder are in Settings › Tools ›

@@ -4,7 +4,8 @@ import LedgelingsCore
 /// Puts the finished picture together from the frozen monitors: the area cut out (a
 /// lasso's outside left see-through), or every monitor stitched, then each mark drawn
 /// on in order. A blur is baked in: its blocks are averaged from what is under them
-/// by then, boxes and arrows included, so nothing hidden can be read back.
+/// by then, boxes and arrows included, so nothing hidden can be read back. Texts come
+/// last, over everything, so a blur never makes them hard to read.
 @MainActor
 enum ShotRenderer {
     /// What was taken: an area of one monitor, a loop on one, or all of them.
@@ -66,9 +67,9 @@ enum ShotRenderer {
             for (frame, place) in zip(frames, places) { draw(frame.image, in: place, context) }
         }
         context.resetClip()
-        for mark in marks {
+        for mark in Shot.drawingOrder(marks) {
             let scale = map.scale(at: mark.anchor)
-            draw(map.pixels(mark), in: context, size: size, block: Int((Shot.blurBlock * scale).rounded()))
+            draw(map.pixels(mark), in: context, size: size, block: Int((Shot.blurBlock * scale).rounded()), yDown: true)
         }
         return context.makeImage()
     }
@@ -89,7 +90,8 @@ enum ShotRenderer {
 
     /// One mark, already in the context's units. A blur needs the context's own pixels
     /// (`size` of them, `block` to a square); on screen it is drawn by `ShotCanvas` instead.
-    static func draw(_ mark: Shot.Mark, in context: CGContext, size: CGSize = .zero, block: Int = 0) {
+    /// `yDown`: the context counts y downwards, as the picture's does; words must know.
+    static func draw(_ mark: Shot.Mark, in context: CGContext, size: CGSize = .zero, block: Int = 0, yDown: Bool = false) {
         context.saveGState()
         defer { context.restoreGState() }
         // Square ends and sharp corners: nothing round, as in the creatures' sheets.
@@ -121,6 +123,8 @@ enum ShotRenderer {
             pixelate(context, cells: Shot.blurCells(r, block: block, size: size))
         case .brush(let points, let width):
             pixelate(context, cells: Shot.brushCells(points, width: width, block: block, size: size))
+        case .text(let t):
+            ShotText.draw(t, in: context, yDown: yDown)
         }
     }
 

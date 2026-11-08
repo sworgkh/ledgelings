@@ -6,7 +6,7 @@ import Testing
 @MainActor @Suite struct ShotToolbarTests {
     @Test func everyItemHasATooltip() {
         let model = ShotModel(colour: 0, thickness: 3)
-        #expect(ShotToolbar.items.count == Shot.Button.allCases.count + Shot.palette.count)
+        #expect(ShotToolbar.items.count == Shot.Button.allCases.count + Shot.palette.count + ShotText.fonts.count)
         for item in ShotToolbar.items {
             #expect(!ShotToolbar.tooltip(item, model).isEmpty, "\(item)")
         }

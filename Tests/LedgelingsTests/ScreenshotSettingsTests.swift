@@ -55,6 +55,144 @@ import Testing
         #expect(clamped.shotFullShortcut == .shotFull, "a shortcut with no Command, Control or Option is the standard one")
     }
 
+    @Test func theTextSettingsHaveDefaultsSurviveARelaunchAndAreClamped() {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        let s = AppSettings(defaults: defaults, keychain: Secrets())
+        #expect(s.shotTextFont == .rounded && s.shotTextSize == 24 && s.shotTextOutline && s.shotTextSnap == 15)
+        s.shotTextFont = .serif; s.shotTextSize = 48; s.shotTextOutline = false; s.shotTextSnap = 45
+        let again = AppSettings(defaults: defaults, keychain: Secrets())
+        #expect(again.shotTextFont == .serif && again.shotTextSize == 48 && !again.shotTextOutline && again.shotTextSnap == 45)
+        defaults.set(400, forKey: "shotTextSize"); defaults.set(1, forKey: "shotTextSnap"); defaults.set("comic", forKey: "shotTextFont")
+        let clamped = AppSettings(defaults: defaults, keychain: Secrets())
+        #expect(clamped.shotTextSize == 96 && clamped.shotTextSnap == 5 && clamped.shotTextFont == .rounded)
+    }
+
+    /// A session on one flat 2× screen, its whole screen chosen, the Text tool picked.
+    func session(_ settings: AppSettings) -> ShotSession {
+        let frame = ShotFrame(monitor: Shot.Monitor(frame: CGRect(x: 0, y: 0, width: 400, height: 300), scale: 2), image: flat(800, 600, 1))
+        let session = ShotSession(frames: [frame], settings: settings) { _ in }
+        session.startOffscreen(cursor: CGPoint(x: 200, y: 150), toolbar: CGSize(width: 100, height: 40))
+        session.act(.mode(.screen))
+        session.act(.tool(.text))
+        return session
+    }
+
+    @Test func aTextIsPlacedTypedChangedAndEveryStepUndoesAndRedoes() throws {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        let settings = AppSettings(defaults: defaults, keychain: Secrets())
+        let s = session(settings)
+        s.down(CGPoint(x: 100, y: 200)); s.up(CGPoint(x: 100, y: 200))
+        #expect(s.model.editing && s.model.marks.count == 1)
+        s.type("Moss")
+        _ = s.key(51, [])                                   // ⌫
+        _ = s.key(0, [], characters: "s")
+        #expect(s.model.selectedText?.string == "Moss")
+        _ = s.key(36, [])                                   // ⏎ ends it
+        #expect(!s.model.editing && s.model.selected == nil && s.model.marks.count == 1)
+        let placed = try #require(s.model.marks[0].text)
+        #expect(placed.size == 24 && placed.font == .rounded && placed.angle == 0)
+
+        // Click it, then: a turn, a size, a font, each its own step.
+        s.down(placed.centre); s.up(placed.centre)
+        #expect(s.model.editing)
+        _ = s.key(36, [])
+        s.down(placed.centre); s.dragged(CGPoint(x: placed.centre.x + 30, y: placed.centre.y)); s.up(CGPoint(x: placed.centre.x + 30, y: placed.centre.y))
+        #expect(s.model.selectedText?.centre.x == placed.centre.x + 30, "dragged 30 pt right")
+        _ = s.key(30, .command)                             // ⌘] turns right a step
+        #expect(s.model.selectedText?.angle == -15)
+        _ = s.key(24, .command)                             // ⌘+
+        #expect(s.model.selectedText?.size == 28)
+        s.act(.font(.serif))
+        #expect(s.model.selectedText?.font == .serif)
+        #expect(settings.shotTextSize == 28 && settings.shotTextFont == .serif, "the last size and font are kept")
+
+        // Back step by step: font, size, turn, move, typing, placing.
+        let steps: [(Shot.Text?) -> Bool] = [{ $0?.font == .rounded }, { $0?.size == 24 }, { $0?.angle == 0 }, { $0?.centre == placed.centre }]
+        for (n, check) in steps.enumerated() {
+            _ = s.key(6, .command)                          // ⌘Z
+            #expect(check(s.model.marks.first?.text), "undo \(n + 1)")
+        }
+        _ = s.key(6, .command)
+        #expect(s.model.marks.isEmpty, "placing it is undone too")
+        _ = s.key(6, [.command, .shift])                    // ⇧⌘Z
+        #expect(s.model.marks.first?.text?.string == "Moss")
+        for _ in 0..<4 { _ = s.key(6, [.command, .shift]) }
+        #expect(s.model.marks.first?.text?.font == .serif && s.model.marks.first?.text?.angle == -15)
+    }
+
+    @Test func escDropsATextAndAnEmptyOneLeavesNothing() {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        let s = session(AppSettings(defaults: defaults, keychain: Secrets()))
+        s.down(CGPoint(x: 100, y: 200)); s.up(CGPoint(x: 100, y: 200))
+        s.type("gone")
+        _ = s.key(53, [])                                   // ⎋
+        #expect(s.model.marks.isEmpty && !s.model.history.canUndo)
+        s.down(CGPoint(x: 100, y: 200)); s.up(CGPoint(x: 100, y: 200))
+        s.down(CGPoint(x: 300, y: 50)); s.up(CGPoint(x: 300, y: 50))     // a click outside, nothing typed
+        #expect(s.model.marks.isEmpty && !s.model.editing)
+        // Typing never picks a tool: T and B go into the text.
+        s.down(CGPoint(x: 100, y: 200)); s.up(CGPoint(x: 100, y: 200))
+        _ = s.key(17, [], characters: "T"); _ = s.key(11, [], characters: "b")
+        #expect(s.model.selectedText?.string == "Tb" && s.model.tool == .text)
+    }
+
+    /// Every pixel that is not the white page, and their bounds.
+    func inked(_ image: CGImage) -> (count: Int, bounds: CGRect) {
+        var count = 0, minX = Int.max, minY = Int.max, maxX = -1, maxY = -1
+        for y in 0..<image.height {
+            for x in 0..<image.width where pixel(image, x, y) != [255, 255, 255, 255] {
+                count += 1; minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+            }
+        }
+        return (count, count == 0 ? .null : CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1))
+    }
+
+    @Test func aTurnedTextIsDrawnInsideItsBoxAtTheMonitorsScale() throws {
+        let frame = ShotFrame(monitor: Shot.Monitor(frame: CGRect(x: 0, y: 0, width: 200, height: 150), scale: 2), image: flat(400, 300, 1))
+        let text = Shot.Text(string: "Moss\ngarden", centre: CGPoint(x: 100, y: 75), size: 24, font: .rounded, angle: 35, colour: 3)
+        let image = try #require(ShotRenderer.render([frame], area: .rect(frame.monitor.frame, monitor: 0), marks: [.text(text)]))
+        let ink = inked(image)
+        #expect(ink.count > 500, "the words are there: \(ink.count) pixels")
+        // In the picture's pixels: the middle at (200, 150), twice as big, its box turned with it.
+        let mapped = try #require(Shot.Mapping.area(frame.monitor.frame, scale: 2).pixels(.text(text)).text)
+        let box = ShotText.measure(mapped)
+        let bounds = mapped.bounds(box, yDown: true)
+        #expect(bounds.insetBy(dx: -1, dy: -1).contains(ink.bounds), "\(ink.bounds) inside \(bounds)")
+        // Turned, the ink is taller than one unturned line: the turn is in the picture.
+        var flat = mapped
+        flat.angle = 0
+        #expect(ink.bounds.height > ShotText.measure(flat).height)
+        // Every inked pixel is inside the turned box, not merely its upright bounds.
+        let inside = (0..<image.height).allSatisfy { y in
+            (0..<image.width).allSatisfy { x in
+                let l = mapped.local(CGPoint(x: CGFloat(x) + 0.5, y: CGFloat(y) + 0.5), yDown: true)
+                return pixel(image, x, y) == [255, 255, 255, 255] || (abs(l.x) <= box.width / 2 + 1.5 && abs(l.y) <= box.height / 2 + 1.5)
+            }
+        }
+        #expect(inside, "no ink outside the turned box")
+    }
+
+    @Test func aTextOverABlurStaysSharp() throws {
+        let frame = ShotFrame(monitor: Shot.Monitor(frame: CGRect(x: 0, y: 0, width: 200, height: 100), scale: 1), image: flat(200, 100, 1))
+        let text = Shot.Text(string: "WWW", centre: CGPoint(x: 100, y: 50), size: 40, font: .system, colour: 5, outline: false)
+        // Drawn first, blurred after: still the text's own black, never a grey block.
+        let image = try #require(ShotRenderer.render([frame], area: .rect(frame.monitor.frame, monitor: 0),
+                                                     marks: [.text(text), .blur(CGRect(x: 0, y: 0, width: 200, height: 100))]))
+        let black = (0..<image.height).flatMap { y in (0..<image.width).map { x in pixel(image, x, y) } }.filter { $0 == [28, 24, 36, 255] }
+        #expect(black.count > 200, "\(black.count) pixels of the text's black")
+    }
+
+    @Test func anOutlineIsTheOtherInk() {
+        #expect(ShotText.outlineColour(4) == ScreenOverlay.ink, "round white, dark ink")
+        #expect(ShotText.outlineColour(5) == CGColor(gray: 1, alpha: 1), "round black, white")
+    }
+
     @Test func screenshotsIsTheThirdTool() {
         #expect(Array(SettingsGroup.tools.pages.dropFirst().prefix(3)) == [.reminders, .clipboard, .screenshots])
     }

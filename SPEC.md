@@ -2107,12 +2107,39 @@ The geometry, stitching, blur and naming are `Shot` in the core.
   of the arrow, 0.6 of that each side), `H` highlight (filled, 35 % opaque), `X` blur
   rectangle, `F` freehand blur (a stroke `4 × shotThickness` wide). Colours `1`–`6`:
   `Shot.palette` red, yellow, green, blue, white, black; the last one picked is
-  `shotColour`. ⌘Z undoes the last mark. Square ends and sharp corners, nothing round.
-  A drag under 4 pt (8 for an arrow) leaves no mark.
+  `shotColour`. ⌘Z undoes the last change, ⇧⌘Z redoes it (`Shot.History`: every mark
+  drawn, and every text placed, typed, moved, turned, sized, recoloured, re-fonted or
+  deleted, is one step; picking R or L again forgets them). Square ends and sharp corners,
+  nothing round. A drag under 4 pt (8 for an arrow) leaves no mark.
+- **Text** (`T`, `Shot.Text`): a click places a text whose first line starts there and
+  types into it in place, in the mark colour, `shotTextFont` and `shotTextSize` (the last
+  used: the toolbar keeps both). Every key goes into the text while it is typed: ⏎ ends
+  it, ⇧⏎ a new line, ⎋ drops it (and any change since it was clicked), ⌫ ⌦ ← → edit,
+  ⌘V pastes; a click outside ends it. A text that is only spaces is not kept. It grows
+  right and down from its box's top-left corner. With the Text tool a click on a text
+  types into it again and a drag moves it; picked out it shows its turned box's rim, a
+  handle 18 pt above its top edge that turns it about its middle (⇧ snaps to multiples of
+  `shotTextSnap`) and one at its bottom-right corner that sizes it (12–96 pt, top-left
+  corner kept); ⌫ deletes it. ⌘F the next font, ⌘− ⌘+ a size down or up the steps
+  (`Shot.textSizes`), ⌘[ ⌘] a turn of `shotTextSnap` left or right, and a colour key, act on
+  the text picked out (or typed) and set the next text's. Fonts (`Shot.Font`): system,
+  rounded, monospaced and serif (the system font's designs, bold), and handwriting
+  (Bradley Hand, else Noteworthy, Chalkboard SE or Marker Felt; none, and it is not
+  offered). Lines start at the box's left; the box is the words plus 18 % of the size on
+  every side. With `shotTextOutline` a rim 13 % of the size wide round the letters, dark
+  ink round a light colour, white round a dark one. Texts are drawn after every other
+  mark (`Shot.drawingOrder`), so a blur is baked under them and they stay sharp; in the
+  picture they are drawn at the monitor's scale like any mark (size × scale, the middle
+  mapped), turned the same way as seen.
 - **The toolbar's buttons** (`Shot.Button`) are pixel pictures of what they do, never
   letters: a dashed rectangle, a loop, a monitor, two monitors; a box, an arrow, a
   highlighted line, a checkerboard, a brush; undo, a tick (⏎), a down-arrow into a tray
-  (⌘S), a cross (⎋). 11×11 pixels, 2 pt each, ink on the toolbar's cream. Resting the
+  (⌘S), a cross (⎋); for text an A with a text cursor (T), the font button (an Aa and the
+  font's name in that font, ⌘F), a small A with a minus (⌘−), the size in points, a big A
+  with a plus (⌘+), and a stepped arrow turning left (⌘[) and right (⌘]). The font button
+  opens a row of the fonts under the toolbar, each name in its own font, the one in use
+  picked out (the toolbar grows down for it; the system's menu would open under the
+  frozen screens). 11×11 pixels, 2 pt each, ink on the toolbar's cream. Resting the
   pointer on one (or on a colour square) puts a tag with its name and key on the hint
   line, under it: "Blur rectangle (X)", "Green (3)"; ⏎'s tag says what ⏎ does with the
   settings (copy, save, or both). Drawn in the toolbar itself, since the system's
@@ -3076,6 +3103,10 @@ An error for want of a model reads as that note, never as a server refusal.
 | shotThickness | 3 | 1–8 pt, clamped on load: boxes and arrows; the freehand blur is 4× |
 | shotColour | 0 | 0–5, the last colour picked (`Shot.palette`); out of range reads as 0 |
 | shotLastRect | empty | `x,y,w,h` in global points: the last rectangle taken from the toolbar |
+| shotTextFont | `rounded` | `system`, `rounded`, `mono`, `serif` or `hand`: a new text's font, the last picked on the toolbar; an unknown value reads as `rounded` |
+| shotTextSize | 24 | 12–96 pt, clamped on load: a new text's size, the last used on the toolbar |
+| shotTextOutline | true | texts get a rim in a contrasting colour, to read on any background |
+| shotTextSnap | 15 | 5–90°, clamped on load: what ⌘[ ⌘] and the turn buttons turn by, and ⇧'s steps on the handle |
 | dictationEnabled | true | dictation (§7.13); off, its shortcut is let go and the menu item hides |
 | dictationShortcutEnabled / dictationShortcutKeyCode / dictationShortcutModifiers | true / D / ⌃⌥ | start and stop, as `shortcut` |
 | dictationHoldToTalk | false | listen only while the shortcut is held; letting go sends |

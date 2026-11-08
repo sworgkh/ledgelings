@@ -23,7 +23,7 @@ public enum Shot {
 
     /// What a drag draws once the area is chosen.
     public enum Tool: String, CaseIterable, Sendable {
-        case box, arrow, highlight, blur, brush
+        case box, arrow, highlight, blur, brush, text
 
         /// The key that picks it on the toolbar: the arrow is the → key.
         public var key: String {
@@ -33,7 +33,30 @@ public enum Shot {
             case .highlight: "H"
             case .blur: "X"
             case .brush: "F"
+            case .text: "T"
             }
+        }
+    }
+
+    /// The fonts a text can be in: the Mac's own four designs and one written by hand
+    /// (left out where the Mac has no such font).
+    public enum Font: String, CaseIterable, Sendable {
+        case system, rounded, mono, serif, hand
+
+        public var title: String {
+            switch self {
+            case .system: tr("System")
+            case .rounded: tr("Rounded")
+            case .mono: tr("Monospaced")
+            case .serif: tr("Serif")
+            case .hand: tr("Handwriting")
+            }
+        }
+
+        /// The one after this among `fonts`, round to the first.
+        public func next(in fonts: [Font]) -> Font {
+            guard let i = fonts.firstIndex(of: self) else { return fonts.first ?? self }
+            return fonts[(i + 1) % fonts.count]
         }
     }
 
@@ -65,6 +88,32 @@ public enum Shot {
     public static let minimumSide: CGFloat = 4
     /// The highlight's fill: the colour, see-through.
     public static let highlightOpacity = 0.35
+    /// A text's size in points, and the steps the toolbar's smaller and bigger buttons take.
+    public static let textSizeRange = 12...96
+    public static let defaultTextSize = 24
+    public static let textSizes = [12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96]
+    /// The step a text turns by, with ⇧ while turning it by hand or with the turn buttons, in degrees.
+    public static let snapRange = 5...90
+    public static let defaultSnap = 15
+
+    /// The next size up or down the steps from `size`, kept in range.
+    public static func textSize(after size: Int, bigger: Bool) -> Int {
+        let next = bigger ? textSizes.first { $0 > size } : textSizes.last { $0 < size }
+        return next ?? (bigger ? textSizeRange.upperBound : textSizeRange.lowerBound)
+    }
+
+    /// An angle in degrees, -180 up to 180.
+    public static func normalised(_ degrees: Double) -> Double {
+        var d = degrees.truncatingRemainder(dividingBy: 360)
+        if d > 180 { d -= 360 } else if d <= -180 { d += 360 }
+        return d == -0 ? 0 : d
+    }
+
+    /// The nearest multiple of `step` degrees.
+    public static func snap(_ degrees: Double, step: Int) -> Double {
+        guard step > 0 else { return normalised(degrees) }
+        return normalised((degrees / Double(step)).rounded() * Double(step))
+    }
 
     // MARK: Monitors and areas
 
@@ -215,6 +264,8 @@ public enum Shot {
         case blur(CGRect)
         /// Pixelated along a stroke this wide.
         case brush([CGPoint], width: CGFloat)
+        /// Words, typed in place: always drawn over every other mark, a blur included.
+        case text(Text)
 
         /// Where it starts: what decides which monitor's scale it is drawn at.
         public var anchor: CGPoint {
@@ -222,8 +273,11 @@ public enum Shot {
             case .box(let r, _, _), .highlight(let r, _), .blur(let r): CGPoint(x: r.midX, y: r.midY)
             case .arrow(let from, _, _, _): from
             case .brush(let points, _): points.first ?? .zero
+            case .text(let t): t.centre
             }
         }
+
+        public var text: Text? { if case .text(let t) = self { t } else { nil } }
 
         /// The same mark with every point moved by `f` and every length times `scale`.
         public func mapped(_ f: (CGPoint) -> CGPoint, scale: CGFloat) -> Mark {
@@ -234,6 +288,10 @@ public enum Shot {
             case .highlight(let r, let c): return .highlight(rect(r), colour: c)
             case .blur(let r): return .blur(rect(r))
             case .brush(let points, let w): return .brush(points.map(f), width: w * scale)
+            case .text(var t):
+                t.centre = f(t.centre)
+                t.size *= scale
+                return .text(t)
             }
         }
 
@@ -243,7 +301,138 @@ public enum Shot {
             case .box(let r, _, _), .highlight(let r, _), .blur(let r): !isArea(r)
             case .arrow(let a, let b, _, _): hypot(b.x - a.x, b.y - a.y) < minimumSide * 2
             case .brush(let points, _): points.isEmpty
+            case .text(let t): t.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             }
+        }
+    }
+
+    /// The order marks are drawn in: every other mark as it was made, then the texts, so a
+    /// blur goes under a text and never over it.
+    public static func drawingOrder(_ marks: [Mark]) -> [Mark] {
+        marks.filter { $0.text == nil } + marks.filter { $0.text != nil }
+    }
+
+    /// Words on the picture: where their box's middle is, how big, in which font and
+    /// colour, and turned how far. Its box's size is measured by the app (fonts are
+    /// the Mac's); everything here takes it, in the text's own units.
+    public struct Text: Equatable, Sendable {
+        public var string: String
+        /// The middle of its box, in the mark's own units (y up on the screen).
+        public var centre: CGPoint
+        /// Points on the screen; pixels once mapped into the picture.
+        public var size: CGFloat
+        public var font: Font
+        /// Degrees, counter-clockwise as seen, -180 up to 180.
+        public var angle: Double
+        public var colour: Int
+        /// A rim in a contrasting colour, so it reads on any background.
+        public var outline: Bool
+
+        public init(string: String, centre: CGPoint, size: CGFloat, font: Font, angle: Double = 0, colour: Int, outline: Bool = true) {
+            self.string = string; self.centre = centre; self.size = size; self.font = font
+            self.angle = angle; self.colour = colour; self.outline = outline
+        }
+
+        private var radians: Double { angle * .pi / 180 }
+
+        /// A point given from the box's middle, unturned, y up, where it lands turned.
+        public func global(_ local: CGPoint, yDown: Bool = false) -> CGPoint {
+            let c = cos(radians), s = sin(radians)
+            let dx = local.x * c - local.y * s, dy = local.x * s + local.y * c
+            return CGPoint(x: centre.x + dx, y: yDown ? centre.y - dy : centre.y + dy)
+        }
+
+        /// Where `point` is from the box's middle, turned back, y up.
+        public func local(_ point: CGPoint, yDown: Bool = false) -> CGPoint {
+            let dx = point.x - centre.x, dy = yDown ? centre.y - point.y : point.y - centre.y
+            let c = cos(radians), s = sin(radians)
+            return CGPoint(x: dx * c + dy * s, y: -dx * s + dy * c)
+        }
+
+        /// The box's corners as seen: top-left, top-right, bottom-right, bottom-left.
+        public func corners(_ box: CGSize, yDown: Bool = false) -> [CGPoint] {
+            let w = box.width / 2, h = box.height / 2
+            return [CGPoint(x: -w, y: h), CGPoint(x: w, y: h), CGPoint(x: w, y: -h), CGPoint(x: -w, y: -h)].map { global($0, yDown: yDown) }
+        }
+
+        /// The smallest upright rectangle holding the turned box.
+        public func bounds(_ box: CGSize, yDown: Bool = false) -> CGRect {
+            let ps = corners(box, yDown: yDown)
+            let xs = ps.map(\.x), ys = ps.map(\.y)
+            return CGRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
+        }
+
+        /// Inside the turned box, or within `slop` of it.
+        public func contains(_ point: CGPoint, box: CGSize, slop: CGFloat = 0) -> Bool {
+            let p = local(point)
+            return abs(p.x) <= box.width / 2 + slop && abs(p.y) <= box.height / 2 + slop
+        }
+
+        /// The handle that turns it: `gap` above the middle of its top edge.
+        public func turnHandle(_ box: CGSize, gap: CGFloat = 18) -> CGPoint { global(CGPoint(x: 0, y: box.height / 2 + gap)) }
+        /// The handle that sizes it: its bottom-right corner.
+        public func sizeHandle(_ box: CGSize) -> CGPoint { global(CGPoint(x: box.width / 2, y: -box.height / 2)) }
+
+        /// Moved so its box's top-left corner stays where `old`'s was: a text grows to the
+        /// right and down as it is typed, sized or given another font.
+        public func keepingTopLeft(of old: Text, oldBox: CGSize, box: CGSize) -> Text {
+            let corner = old.global(CGPoint(x: -oldBox.width / 2, y: oldBox.height / 2))
+            var moved = self
+            moved.centre = .zero
+            let offset = moved.global(CGPoint(x: -box.width / 2, y: box.height / 2))
+            moved.centre = CGPoint(x: corner.x - offset.x, y: corner.y - offset.y)
+            return moved
+        }
+
+        /// The angle from the middle to `point`, in degrees counter-clockwise from the right.
+        public func bearing(_ point: CGPoint) -> Double { atan2(point.y - centre.y, point.x - centre.x) * 180 / .pi }
+
+        // Typing, with the caret counted in characters.
+
+        public mutating func insert(_ typed: String, at caret: inout Int) {
+            let at = string.index(string.startIndex, offsetBy: min(max(caret, 0), string.count))
+            string.insert(contentsOf: typed, at: at)
+            caret = min(max(caret, 0), string.count - typed.count) + typed.count
+        }
+
+        public mutating func deleteBackward(at caret: inout Int) {
+            guard caret > 0, caret <= string.count else { return }
+            string.remove(at: string.index(string.startIndex, offsetBy: caret - 1))
+            caret -= 1
+        }
+
+        public mutating func deleteForward(at caret: Int) {
+            guard caret >= 0, caret < string.count else { return }
+            string.remove(at: string.index(string.startIndex, offsetBy: caret))
+        }
+    }
+
+    /// Undo and redo for the marks: what they were before each change.
+    public struct History: Equatable, Sendable {
+        public private(set) var past: [[Mark]] = []
+        public private(set) var future: [[Mark]] = []
+        public init() {}
+
+        public var canUndo: Bool { !past.isEmpty }
+        public var canRedo: Bool { !future.isEmpty }
+
+        /// A change was made: `before` is how the marks were. Redo is gone.
+        public mutating func record(_ before: [Mark]) {
+            past.append(before)
+            future = []
+        }
+
+        /// The marks one change back, or nil with nothing to undo.
+        public mutating func undo(_ now: [Mark]) -> [Mark]? {
+            guard let last = past.popLast() else { return nil }
+            future.append(now)
+            return last
+        }
+
+        public mutating func redo(_ now: [Mark]) -> [Mark]? {
+            guard let next = future.popLast() else { return nil }
+            past.append(now)
+            return next
         }
     }
 

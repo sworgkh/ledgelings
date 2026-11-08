@@ -6,7 +6,9 @@ extension Shot {
     /// only the pictures stand where letters once did.
     public enum Button: String, CaseIterable, Sendable {
         case rectangle, lasso, screen, all
-        case box, arrow, highlight, blur, brush
+        case box, arrow, highlight, blur, brush, text
+        /// The text's font, a size down and up, and a turn either way.
+        case font, smaller, bigger, turnLeft, turnRight
         case undo, done, save, cancel
 
         public init(_ mode: Mode) {
@@ -25,6 +27,7 @@ extension Shot {
             case .highlight: self = .highlight
             case .blur: self = .blur
             case .brush: self = .brush
+            case .text: self = .text
             }
         }
 
@@ -40,6 +43,12 @@ extension Shot {
             case .highlight: Tool.highlight.key
             case .blur: Tool.blur.key
             case .brush: Tool.brush.key
+            case .text: Tool.text.key
+            case .font: "⌘F"
+            case .smaller: "⌘−"
+            case .bigger: "⌘+"
+            case .turnLeft: "⌘["
+            case .turnRight: "⌘]"
             case .undo: "⌘Z"
             case .done: "⏎"
             case .save: "⌘S"
@@ -48,8 +57,8 @@ extension Shot {
         }
 
         /// What it does, in plain words, then its key. `copies` and `saves` are what ⏎
-        /// does as Productivity tools › Screenshots says.
-        public func tooltip(copies: Bool = true, saves: Bool = false) -> String {
+        /// does as Productivity tools › Screenshots says; `step` is how far a turn goes.
+        public func tooltip(copies: Bool = true, saves: Bool = false, step: Int = Shot.defaultSnap) -> String {
             switch self {
             case .rectangle: tr("Rectangle (R)")
             case .lasso: tr("Lasso (L)")
@@ -60,6 +69,12 @@ extension Shot {
             case .highlight: tr("Highlight (H)")
             case .blur: tr("Blur rectangle (X)")
             case .brush: tr("Freehand blur (F)")
+            case .text: tr("Add text (T)")
+            case .font: tr("Choose the font (⌘F for the next one)")
+            case .smaller: tr("Smaller text (⌘−)")
+            case .bigger: tr("Bigger text (⌘+)")
+            case .turnLeft: tr("Turn the text %@° left (⌘[)", String(step))
+            case .turnRight: tr("Turn the text %@° right (⌘])", String(step))
             case .undo: tr("Undo the last mark (⌘Z)")
             case .done:
                 copies && saves ? tr("Copy and save it (⏎)") : saves ? tr("Save it (⏎)") : tr("Copy it (⏎ or ⌘C)")
@@ -189,6 +204,84 @@ extension Shot {
                 "++##++.....",
                 "...........",
             ]
+            case .text: [
+                "..#.....###",
+                ".###.....#.",
+                ".#.#.....#.",
+                "##.##....#.",
+                "#...#....#.",
+                "#####....#.",
+                "#...#....#.",
+                "#...#....#.",
+                "#...#....#.",
+                "#...#...###",
+                "...........",
+            ]
+            case .font: [
+                "...........",
+                "..#........",
+                ".###.......",
+                ".#.#.......",
+                "##.##..###.",
+                "#...#.....#",
+                "#####..####",
+                "#...#.#...#",
+                "#...#.#...#",
+                "#...#..####",
+                "...........",
+            ]
+            case .smaller: [
+                "...........",
+                "...........",
+                "...........",
+                "..#........",
+                ".###.......",
+                ".#.#.......",
+                "##.##..####",
+                "#####......",
+                "#...#......",
+                "#...#......",
+                "...........",
+            ]
+            case .bigger: [
+                "...#.......",
+                "..###......",
+                "..#.#......",
+                ".##.##.....",
+                ".#...#...#.",
+                ".#####..###",
+                "##...##..#.",
+                "#.....#....",
+                "#.....#....",
+                "#.....#....",
+                "...........",
+            ]
+            case .turnLeft: [
+                "...........",
+                "....####...",
+                "...#....#..",
+                "..#......#.",
+                "..#......#.",
+                "..#......#.",
+                "#####....#.",
+                ".###....#..",
+                "..#..###...",
+                "...........",
+                "...........",
+            ]
+            case .turnRight: [
+                "...........",
+                "...####....",
+                "..#....#...",
+                ".#......#..",
+                ".#......#..",
+                ".#......#..",
+                ".#....#####",
+                "..#....###.",
+                "...###..#..",
+                "...........",
+                "...........",
+            ]
             case .undo: [
                 "...#.......",
                 "..##.......",
@@ -256,4 +349,7 @@ extension Shot {
         default: tr("Black (6)")
         }
     }
+
+    /// A font in the toolbar's font menu: its name and the key that steps through them all.
+    public static func fontTooltip(_ font: Font) -> String { tr("%@ font (⌘F for the next one)", font.title) }
 }

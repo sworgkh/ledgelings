@@ -2,8 +2,8 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-/// Settings › Productivity tools › Screenshots: the tool and its shortcuts on the
-/// left; where a shot goes, how marks look and what the creatures do on the right.
+/// Settings › Productivity tools › Screenshots: the tool, its shortcuts and what the
+/// creatures do on the left; where a shot goes, how marks and texts look on the right.
 struct ScreenshotSettingsView: View {
     @ObservedObject var settings: AppSettings
     @State private var allowed = ShotCapture.allowed
@@ -22,7 +22,7 @@ struct ScreenshotSettingsView: View {
             } header: {
                 SettingsHeader("Screenshots")
             } footer: {
-                Text(tr("Every screen freezes and dims; drag an area (R), draw a loop (L), or take the screen (W) or all of them (A). Then box (B), arrow (→), highlight (H), blur (X) or blur by hand (F), in six colours (1–6); ⌘Z undoes. ⏎ takes it, ⌘C copies, ⌘S saves, ⎋ lets go. Pictures only, never video; nothing leaves this Mac."))
+                Text(tr("Every screen freezes and dims; drag an area (R), draw a loop (L), or take the screen (W) or all of them (A). Then box (B), arrow (→), highlight (H), blur (X), blur by hand (F) or text (T), in six colours (1–6); ⌘Z undoes, ⇧⌘Z redoes. ⏎ takes it, ⌘C copies, ⌘S saves, ⎋ lets go. Pictures only, never video; nothing leaves this Mac."))
             }
 
             Section {
@@ -55,6 +55,16 @@ struct ScreenshotSettingsView: View {
                 SettingsHeader("Shortcuts")
             } footer: {
                 Text(tr("They work in every app. Full screen and the last rectangle go straight to the clipboard or the folder, with no toolbar; with no rectangle taken yet, the last-rectangle keys open the toolbar. All monitors are stitched at each one's own sharpness."))
+            }
+            .disabled(!settings.shotEnabled)
+
+            Section {
+                Toggle(tr("Hide the creatures while capturing"), isOn: $settings.shotHideCreatures)
+                Toggle(tr("A creature brings the shot home"), isOn: $settings.shotCreatureBrings)
+            } header: {
+                SettingsHeader("Creatures")
+            } footer: {
+                Text(tr("Hidden, they are out of the picture too. Once it is taken, one hops up to where the toolbar was and carries a tiny picture of it back to its edge."))
             }
             .disabled(!settings.shotEnabled)
         } right: {
@@ -90,12 +100,20 @@ struct ScreenshotSettingsView: View {
             .disabled(!settings.shotEnabled)
 
             Section {
-                Toggle(tr("Hide the creatures while capturing"), isOn: $settings.shotHideCreatures)
-                Toggle(tr("A creature brings the shot home"), isOn: $settings.shotCreatureBrings)
+                Picker(tr("Font"), selection: $settings.shotTextFont) {
+                    ForEach(ShotText.fonts, id: \.self) { f in
+                        Text(f.title).font(Font(ShotText.nsFont(f, size: 13) as CTFont)).tag(f)
+                    }
+                }
+                SliderRow(tr("Size"), value: Binding(get: { Double(settings.shotTextSize) }, set: { settings.shotTextSize = Int($0) }),
+                          in: Double(Shot.textSizeRange.lowerBound)...Double(Shot.textSizeRange.upperBound), step: 2, unit: tr(" pt"))
+                Toggle(tr("An outline, so it reads on any background"), isOn: $settings.shotTextOutline)
+                SliderRow(tr("Turn in steps of"), value: Binding(get: { Double(settings.shotTextSnap) }, set: { settings.shotTextSnap = Int($0) }),
+                          in: Double(Shot.snapRange.lowerBound)...Double(Shot.snapRange.upperBound), step: 5, unit: "°")
             } header: {
-                SettingsHeader("Creatures")
+                SettingsHeader("Text")
             } footer: {
-                Text(tr("Hidden, they are out of the picture too. Once it is taken, one hops up to where the toolbar was and carries a tiny picture of it back to its edge."))
+                Text(tr("Click a text to change it: drag it, turn it by the handle above it (⇧ in steps), size it by its corner. A new one starts in the last font and size used."))
             }
             .disabled(!settings.shotEnabled)
         }

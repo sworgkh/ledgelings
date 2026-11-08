@@ -6,8 +6,9 @@ import SwiftUI
 /// One screenshot being taken with the toolbar (§7.12): every monitor frozen as it
 /// was, dimmed, a crosshair, and the pixel toolbar at the top of the screen under the
 /// cursor. First an area (R rectangle, L lasso, W the screen, A all monitors), then
-/// marks on it (B box, → arrow, H highlight, X blur, F freehand blur; 1–6 colours,
-/// ⌘Z undo). ⏎ takes it as the settings say, ⌘C copies it, ⌘S saves it; ⎋ lets go.
+/// marks on it (B box, → arrow, H highlight, X blur, F freehand blur, T text; 1–6
+/// colours, ⌘Z undo, ⇧⌘Z redo). ⏎ takes it as the settings say, ⌘C copies it, ⌘S
+/// saves it; ⎋ lets go. While a text is typed, every key goes into it instead.
 @MainActor
 final class ShotSession {
     /// How it was finished.
@@ -33,10 +34,21 @@ final class ShotSession {
         self.frames = frames
         self.done = done
         model = ShotModel(colour: settings.shotColour, thickness: settings.shotThickness)
+        model.font = ShotText.fonts.contains(settings.shotTextFont) ? settings.shotTextFont : .rounded
+        model.textSize = settings.shotTextSize
+        model.outline = settings.shotTextOutline
+        model.snap = settings.shotTextSnap
         model.pickColour = { [weak settings] in settings?.shotColour = $0 }
+        model.remember = { [weak settings] font, size in
+            if settings?.shotTextFont != font { settings?.shotTextFont = font }
+            if settings?.shotTextSize != size { settings?.shotTextSize = size }
+        }
         model.entersCopy = settings.shotCopy || !settings.shotSave
         model.entersSave = settings.shotSave
-        model.changed = { [weak self] in self?.panels.forEach { $0.canvas.needsDisplay = true } }
+        model.changed = { [weak self] in
+            self?.panels.forEach { $0.canvas.needsDisplay = true }
+            self?.fitToolbar()
+        }
         model.act = { [weak self] in self?.act($0) }
     }
 
@@ -82,26 +94,60 @@ final class ShotSession {
         spot = CGPoint(x: origin.x + size.width / 2, y: origin.y)
         panels[here].panel.makeKeyAndOrderFront(nil)
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let code = Int(event.keyCode), flags = event.modifierFlags
-            let handled = MainActor.assumeIsolated { self?.key(code, flags) ?? false }
+            let code = Int(event.keyCode), flags = event.modifierFlags, characters = event.characters
+            let handled = MainActor.assumeIsolated { self?.key(code, flags, characters: characters) ?? false }
             return handled ? nil : event
         }
         trace?("toolbar on \(frames[here].name.isEmpty ? "screen \(here + 1)" : frames[here].name) at (\(Int(origin.x)), \(Int(origin.y)))")
+    }
+
+    /// The font menu opens as a row under the toolbar: it grows downwards, its top staying put.
+    private var toolbarTall = false
+    private func fitToolbar() {
+        guard toolbar != nil, model.fontsOpen != toolbarTall else { return }
+        toolbarTall = model.fontsOpen
+        // SwiftUI lays the menu out on the next turn of the run loop.
+        DispatchQueue.main.async { [weak self] in
+            guard let toolbar = self?.toolbar else { return }
+            let height = toolbar.fittingSize.height, top = toolbar.frame.maxY
+            toolbar.frame = CGRect(x: toolbar.frame.minX, y: top - height, width: toolbar.frame.width, height: height)
+        }
     }
 
     // MARK: Keys
 
     private static let colourKeys = [kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5, kVK_ANSI_6]
 
-    /// A key pressed while the screens are frozen; false lets it through.
-    func key(_ code: Int, _ flags: NSEvent.ModifierFlags) -> Bool {
+    /// A key pressed while the screens are frozen; false lets it through. `characters`
+    /// is what it types, for a text being written.
+    func key(_ code: Int, _ flags: NSEvent.ModifierFlags, characters: String? = nil) -> Bool {
         let command = flags.contains(.command)
+        // The text's keys work whether it is being typed or not.
+        if command {
+            switch code {
+            case kVK_ANSI_Z: act(flags.contains(.shift) ? .redo : .undo); return true
+            case kVK_ANSI_LeftBracket: act(.turn(left: true)); return true
+            case kVK_ANSI_RightBracket: act(.turn(left: false)); return true
+            case kVK_ANSI_Minus, kVK_ANSI_KeypadMinus: act(.textSize(bigger: false)); return true
+            case kVK_ANSI_Equal, kVK_ANSI_KeypadPlus: act(.textSize(bigger: true)); return true
+            case kVK_ANSI_F: act(.nextFont); return true
+            default: break
+            }
+        }
+        if model.editing { return typing(code, flags, characters) }
+        if model.fontsOpen, code == kVK_Escape { model.fontsOpen = false; model.changed(); return true }
+        if model.selected != nil {
+            switch code {
+            case kVK_Escape: act(.endText); return true
+            case kVK_Delete, kVK_ForwardDelete: act(.deleteText); return true
+            default: break
+            }
+        }
         switch code {
         case kVK_Escape: act(.cancel)
         case kVK_Return, kVK_ANSI_KeypadEnter: act(.finish(.enter))
         case kVK_ANSI_C where command: act(.finish(.copy))
         case kVK_ANSI_S where command: act(.finish(.save))
-        case kVK_ANSI_Z where command: act(.undo)
         case kVK_ANSI_R: act(.mode(.rectangle))
         case kVK_ANSI_L: act(.mode(.lasso))
         case kVK_ANSI_W: act(.mode(.screen))
@@ -111,6 +157,7 @@ final class ShotSession {
         case kVK_ANSI_H: act(.tool(.highlight))
         case kVK_ANSI_X: act(.tool(.blur))
         case kVK_ANSI_F: act(.tool(.brush))
+        case kVK_ANSI_T: act(.tool(.text))
         default:
             if let n = Self.colourKeys.firstIndex(of: code) { act(.colour(n)); return true }
             return command ? false : true
@@ -118,17 +165,62 @@ final class ShotSession {
         return true
     }
 
+    /// A key while a text is typed: ⏎ ends it, ⇧⏎ starts a new line, ⎋ drops it,
+    /// ⌫ and ⌦ delete, ← and → move the caret, ⌘V pastes; the rest is typed.
+    private func typing(_ code: Int, _ flags: NSEvent.ModifierFlags, _ characters: String?) -> Bool {
+        let command = flags.contains(.command)
+        switch code {
+        case kVK_Escape: act(.dropText)
+        case kVK_Return, kVK_ANSI_KeypadEnter:
+            if flags.contains(.shift) { type("\n") } else { act(.endText) }
+        case kVK_Delete: edit { $0.deleteBackward(at: &self.model.caret) }
+        case kVK_ForwardDelete: edit { $0.deleteForward(at: self.model.caret) }
+        case kVK_LeftArrow: model.caret = max(0, model.caret - 1); model.changed()
+        case kVK_RightArrow: model.caret = min(model.selectedText?.string.count ?? 0, model.caret + 1); model.changed()
+        case kVK_UpArrow, kVK_DownArrow: break
+        case kVK_ANSI_C where command: act(.endText); act(.finish(.copy))
+        case kVK_ANSI_S where command: act(.endText); act(.finish(.save))
+        case kVK_ANSI_V where command:
+            if let pasted = NSPasteboard.general.string(forType: .string) { type(pasted.replacingOccurrences(of: "\r\n", with: "\n")) }
+        default:
+            guard !command, let characters else { return true }
+            // Arrows and function keys arrive as private-use characters; controls are not words.
+            let typed = String(characters.unicodeScalars.filter { $0.value >= 0x20 && $0.value != 0x7F && !(0xF700...0xF8FF).contains($0.value) })
+            if !typed.isEmpty { type(typed) }
+        }
+        return true
+    }
+
+    /// Types `words` at the caret of the text being written.
+    func type(_ words: String) {
+        guard model.editing else { return }
+        edit { $0.insert(words, at: &self.model.caret) }
+    }
+
+    /// Changes the selected text, its top-left corner staying where it was.
+    private func edit(_ change: (inout Shot.Text) -> Void) {
+        guard let i = model.selected, let old = model.marks[i].text else { return }
+        var text = old
+        change(&text)
+        model.marks[i] = .text(text.keepingTopLeft(of: old, oldBox: model.measure(old), box: model.measure(text)))
+        model.changed()
+    }
+
     /// Everything the toolbar and the keys can ask for.
     enum Request: Equatable {
-        case mode(Shot.Mode), tool(Shot.Tool), colour(Int), undo, finish(Action), cancel
+        case mode(Shot.Mode), tool(Shot.Tool), colour(Int), undo, redo, finish(Action), cancel
+        /// The text's font, the font menu, its size, a turn; ending, dropping or deleting the text.
+        case font(Shot.Font), nextFont, fontMenu, textSize(bigger: Bool), turn(left: Bool), endText, dropText, deleteText
     }
 
     func act(_ request: Request) {
         guard isUp else { return }
         switch request {
         case .mode(let mode):
+            endText()
             model.mode = mode
             model.marks = []
+            model.history = Shot.History()
             model.drag = nil
             switch mode {
             case .rectangle, .lasso:
@@ -143,17 +235,59 @@ final class ShotSession {
             trace?("mode \(mode.rawValue)")
         case .tool(let tool):
             guard model.stage == .marking else { NSSound.beep(); return }
+            if tool != .text { endText() }
             model.tool = tool
             trace?("tool \(tool.rawValue)")
         case .colour(let n):
             model.colour = n
             model.pickColour(n)
+            change { $0.colour = n }
             trace?("colour \(n + 1)")
-        case .undo:
-            guard !model.marks.isEmpty else { NSSound.beep(); return }
-            model.marks.removeLast()
-            trace?("undo, \(model.marks.count) marks left")
+        case .undo, .redo:
+            endText()
+            let back = request == .undo ? model.history.undo(model.marks) : model.history.redo(model.marks)
+            guard let back else { NSSound.beep(); return }
+            model.marks = back
+            trace?("\(request == .undo ? "undo" : "redo"), \(model.marks.count) marks")
+        case .font(let font):
+            model.font = font
+            model.fontsOpen = false
+            model.remember(font, model.textSize)
+            change(keepCorner: true) { $0.font = font }
+            trace?("font \(font.rawValue)")
+        case .nextFont:
+            act(.font((model.selectedText?.font ?? model.font).next(in: ShotText.fonts)))
+            return
+        case .fontMenu:
+            model.fontsOpen.toggle()
+        case .textSize(let bigger):
+            let size = Shot.textSize(after: Int((model.selectedText?.size ?? CGFloat(model.textSize)).rounded()), bigger: bigger)
+            model.textSize = size
+            model.remember(model.font, size)
+            change(keepCorner: true) { $0.size = CGFloat(size) }
+            trace?("text size \(size)")
+        case .turn(let left):
+            guard model.selected != nil else { NSSound.beep(); return }
+            change { $0.angle = Shot.normalised($0.angle + Double(left ? model.snap : -model.snap)) }
+            trace?("turn \(left ? "left" : "right") to \(Int(model.selectedText?.angle ?? 0))°")
+        case .endText:
+            endText()
+        case .dropText:
+            if let before = model.before { model.marks = before }
+            model.before = nil
+            model.selected = nil
+            model.editing = false
+            trace?("text dropped")
+        case .deleteText:
+            guard let i = model.selected else { return }
+            model.begin()
+            model.marks.remove(at: i)
+            model.selected = nil
+            model.editing = false
+            model.commit()
+            trace?("text deleted")
         case .finish(let action):
+            endText()
             finish(action)
         case .cancel:
             trace?("cancelled")
@@ -161,6 +295,26 @@ final class ShotSession {
             done(.cancelled)
         }
         model.changed()
+    }
+
+    /// One change to the selected text, undone in one step (while it is typed, with the typing).
+    private func change(keepCorner: Bool = false, _ f: (inout Shot.Text) -> Void) {
+        guard model.selected != nil else { return }
+        model.begin()
+        if keepCorner { edit(f) } else if let i = model.selected, var t = model.marks[i].text { f(&t); model.marks[i] = .text(t) }
+        if !model.editing { model.commit() }
+    }
+
+    /// The text being typed or selected is done with: kept if it says anything, one step to undo.
+    private func endText() {
+        guard let i = model.selected else { return }
+        if let t = model.marks[i].text, Shot.Mark.text(t).isTiny { model.marks.remove(at: i) }
+        let wrote = model.editing
+        model.selected = nil
+        model.editing = false
+        model.fontsOpen = false
+        model.commit()
+        if wrote { trace?("text done, \(model.marks.count) marks") }
     }
 
     private func choose(_ area: ShotRenderer.Area) {
@@ -177,14 +331,16 @@ final class ShotSession {
         if model.stage == .choosing || model.drag != nil { model.changed() }
     }
 
-    func down(_ p: CGPoint) {
+    func down(_ p: CGPoint, shift: Bool = false) {
         model.cursor = p
+        if model.stage == .marking, model.tool == .text { textDown(p); return }
         model.drag = ShotModel.Drag(start: p, now: p, lasso: Shot.Lasso(points: [p]), stroke: [p])
         model.changed()
     }
 
-    func dragged(_ p: CGPoint) {
+    func dragged(_ p: CGPoint, shift: Bool = false) {
         model.cursor = p
+        if model.gesture != nil { textDragged(p, shift: shift); return }
         guard var drag = model.drag else { return }
         drag.now = p
         drag.lasso.add(p)
@@ -193,7 +349,8 @@ final class ShotSession {
         model.changed()
     }
 
-    func up(_ p: CGPoint) {
+    func up(_ p: CGPoint, shift: Bool = false) {
+        if model.gesture != nil { textDragged(p, shift: shift); textUp(); return }
         dragged(p)
         guard let drag = model.drag else { return }
         model.drag = nil
@@ -211,9 +368,105 @@ final class ShotSession {
             }
         case .marking:
             if let mark = model.pending(drag), !mark.isTiny {
+                model.history.record(model.marks)
                 model.marks.append(mark)
                 trace?("mark \(model.tool.rawValue), \(model.marks.count) in all")
             }
+        }
+        model.changed()
+    }
+
+    // MARK: Texts with the mouse
+
+    /// A press with the Text tool: on the selected text's handles it turns or sizes it;
+    /// on a text it picks it up (a click without moving types into it); elsewhere it
+    /// ends the text being worked on, or, with none, starts a new one there.
+    private func textDown(_ p: CGPoint) {
+        if let i = model.selected, let t = model.marks[i].text {
+            let box = model.measure(t)
+            func near(_ q: CGPoint) -> Bool { hypot(q.x - p.x, q.y - p.y) <= 9 }
+            if near(t.turnHandle(box)) {
+                model.begin()
+                model.gesture = .turn(from: t.angle, bearing: t.bearing(p))
+                return
+            }
+            if near(t.sizeHandle(box)) {
+                model.begin()
+                let corner = t.global(CGPoint(x: -box.width / 2, y: box.height / 2))
+                model.gesture = .size(from: t, reach: max(hypot(p.x - corner.x, p.y - corner.y), 1))
+                return
+            }
+        }
+        if let i = model.marks.indices.last(where: { model.marks[$0].text.map { t in t.contains(p, box: model.measure(t), slop: 3) } ?? false }) {
+            if i != model.selected { endText() }
+            // Ending an empty text may have taken one off before it.
+            guard let j = model.marks.indices.last(where: { model.marks[$0].text.map { t in t.contains(p, box: model.measure(t), slop: 3) } ?? false }),
+                  let t = model.marks[j].text else { model.changed(); return }
+            model.selected = j
+            model.begin()
+            model.gesture = .move(from: t.centre, start: p, moved: false)
+            model.changed()
+            return
+        }
+        if model.selected != nil { endText(); model.changed(); return }
+        // A new text: its first line's middle where the click was, starting there.
+        model.begin()
+        var text = Shot.Text(string: "", centre: p, size: CGFloat(model.textSize), font: model.font, colour: model.colour, outline: model.outline)
+        let box = model.measure(text)
+        text.centre = CGPoint(x: p.x + box.width / 2 - ShotText.margin(text), y: p.y)
+        model.marks.append(.text(text))
+        model.selected = model.marks.count - 1
+        model.editing = true
+        model.caret = 0
+        trace?("text at (\(Int(p.x)), \(Int(p.y)))")
+        model.changed()
+    }
+
+    private func textDragged(_ p: CGPoint, shift: Bool) {
+        guard let gesture = model.gesture, let i = model.selected, var t = model.marks[i].text else { return }
+        switch gesture {
+        case .move(let from, let start, let moved):
+            let dx = p.x - start.x, dy = p.y - start.y
+            guard moved || hypot(dx, dy) >= 3 else { return }
+            model.gesture = .move(from: from, start: start, moved: true)
+            t.centre = CGPoint(x: from.x + dx, y: from.y + dy)
+        case .turn(let from, let bearing):
+            let angle = from + t.bearing(p) - bearing
+            t.angle = shift ? Shot.snap(angle, step: model.snap) : Shot.normalised(angle)
+        case .size(let from, let reach):
+            let box = model.measure(from)
+            let corner = from.global(CGPoint(x: -box.width / 2, y: box.height / 2))
+            let k = hypot(p.x - corner.x, p.y - corner.y) / reach
+            let size = min(max((from.size * k).rounded(), CGFloat(Shot.textSizeRange.lowerBound)), CGFloat(Shot.textSizeRange.upperBound))
+            var sized = from
+            sized.size = size
+            t = sized.keepingTopLeft(of: from, oldBox: box, box: model.measure(sized))
+        }
+        model.marks[i] = .text(t)
+        model.changed()
+    }
+
+    private func textUp() {
+        guard let gesture = model.gesture else { return }
+        model.gesture = nil
+        switch gesture {
+        case .move(_, _, let moved):
+            if moved {
+                if !model.editing { model.commit() }
+                trace?("text moved")
+            } else if !model.editing {
+                // A click on a text: type into it, the caret at its end.
+                model.editing = true
+                model.caret = model.selectedText?.string.count ?? 0
+                trace?("text editing")
+            }
+        case .turn:
+            if !model.editing { model.commit() }
+            trace?("text turned to \(Int(model.selectedText?.angle ?? 0))°")
+        case .size:
+            if let size = model.selectedText?.size { model.textSize = Int(size); model.remember(model.font, Int(size)) }
+            if !model.editing { model.commit() }
+            trace?("text sized to \(model.textSize) pt")
         }
         model.changed()
     }
@@ -265,6 +518,12 @@ final class ShotModel: ObservableObject {
         var lasso: Shot.Lasso
         var stroke: [CGPoint]
     }
+    /// What a press on a text is doing: moving it, turning it by its handle, sizing it by its corner.
+    enum Gesture {
+        case move(from: CGPoint, start: CGPoint, moved: Bool)
+        case turn(from: Double, bearing: Double)
+        case size(from: Shot.Text, reach: CGFloat)
+    }
 
     @Published var mode = Shot.Mode.rectangle
     @Published var tool = Shot.Tool.box
@@ -272,8 +531,25 @@ final class ShotModel: ObservableObject {
     @Published var thickness: Int
     @Published var stage = Stage.choosing
     @Published var marks: [Shot.Mark] = []
+    /// What the marks were before each change, for ⌘Z and ⇧⌘Z.
+    @Published var history = Shot.History()
     /// The toolbar item the pointer rests on, whose name and key show under it.
     @Published var hovered: ShotToolbar.Item?
+    /// A new text's font and size (the last used), whether texts get an outline, and the turn step.
+    @Published var font = Shot.Font.rounded
+    @Published var textSize = Shot.defaultTextSize
+    var outline = true
+    var snap = Shot.defaultSnap
+    /// The text picked out among `marks`, and whether it is being typed into.
+    @Published var selected: Int?
+    @Published var editing = false
+    /// The font menu stands open on the hint line.
+    @Published var fontsOpen = false
+    /// Where the caret is in the text being typed, in characters.
+    var caret = 0
+    var gesture: Gesture?
+    /// The marks as they were when the change under way began.
+    var before: [Shot.Mark]?
     /// Where each toolbar item stands, in the toolbar's points from its top-left.
     var places: [ShotToolbar.Item: CGRect] = [:]
     /// What ⏎ does, as Productivity tools › Screenshots says.
@@ -284,11 +560,26 @@ final class ShotModel: ObservableObject {
     var cursor = CGPoint.zero
     var changed: () -> Void = {}
     var pickColour: (Int) -> Void = { _ in }
+    /// Keeps the last font and size used.
+    var remember: (Shot.Font, Int) -> Void = { _, _ in }
     var act: (ShotSession.Request) -> Void = { _ in }
+    /// A text's box: the Mac's fonts measure it.
+    var measure: (Shot.Text) -> CGSize = { ShotText.measure($0) }
 
     init(colour: Int, thickness: Int) {
         self.colour = colour
         self.thickness = thickness
+    }
+
+    var selectedText: Shot.Text? { selected.flatMap { marks.indices.contains($0) ? marks[$0].text : nil } }
+
+    /// A change starts: the marks as they are are what undo goes back to.
+    func begin() { if before == nil { before = marks } }
+
+    /// The change is done: one step for undo, if anything changed.
+    func commit() {
+        if let before, before != marks { history.record(before) }
+        before = nil
     }
 
     /// The mark the drag would leave, in global points.
@@ -300,6 +591,7 @@ final class ShotModel: ObservableObject {
         case .highlight: return .highlight(rect, colour: colour)
         case .blur: return .blur(rect)
         case .brush: return .brush(drag.stroke, width: Shot.brushWidth(thickness: thickness))
+        case .text: return nil
         }
     }
 }
@@ -351,9 +643,18 @@ final class ShotCanvas: NSView {
     }
 
     override func mouseMoved(with event: NSEvent) { ShotCanvas.crosshair.set(); MainActor.assumeIsolated { session?.moved(global(event)) } }
-    override func mouseDown(with event: NSEvent) { MainActor.assumeIsolated { session?.down(global(event)) } }
-    override func mouseDragged(with event: NSEvent) { MainActor.assumeIsolated { session?.dragged(global(event)) } }
-    override func mouseUp(with event: NSEvent) { MainActor.assumeIsolated { session?.up(global(event)) } }
+    override func mouseDown(with event: NSEvent) {
+        let shift = event.modifierFlags.contains(.shift)
+        MainActor.assumeIsolated { session?.down(global(event), shift: shift) }
+    }
+    override func mouseDragged(with event: NSEvent) {
+        let shift = event.modifierFlags.contains(.shift)
+        MainActor.assumeIsolated { session?.dragged(global(event), shift: shift) }
+    }
+    override func mouseUp(with event: NSEvent) {
+        let shift = event.modifierFlags.contains(.shift)
+        MainActor.assumeIsolated { session?.up(global(event), shift: shift) }
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let session, let context = NSGraphicsContext.current?.cgContext else { return }
@@ -403,7 +704,7 @@ final class ShotCanvas: NSView {
 
         var marks = model.marks
         if let drag = model.drag, model.stage == .marking, let mark = model.pending(drag) { marks.append(mark) }
-        for mark in marks {
+        for mark in Shot.drawingOrder(marks) {
             let shown = mark.mapped(local, scale: 1)
             switch shown {
             case .blur(let r):
@@ -421,12 +722,44 @@ final class ShotCanvas: NSView {
             }
         }
 
+        if let t = model.selectedText, let shown = Shot.Mark.text(t).mapped(local, scale: 1).text {
+            selection(shown, box: model.measure(t), caret: model.editing ? model.caret : nil, context)
+        }
+
         // The size in the picture's pixels, under the area's bottom-right corner.
         if let r = sized, frame.monitor.frame.intersects(r) {
             let px = CGSize(width: (r.width * frame.monitor.scale).rounded(), height: (r.height * frame.monitor.scale).rounded())
             let corner = local(CGPoint(x: r.maxX, y: r.minY))
             label(Shot.sizeLabel(px), at: CGPoint(x: min(max(corner.x, 70), bounds.width - 4), y: max(corner.y - 6, 30)), context)
         }
+    }
+
+    /// The text picked out: its turned box's rim, a handle on a stalk above it that
+    /// turns it, one at its bottom-right corner that sizes it, and the caret while typed.
+    private static func selection(_ t: Shot.Text, box: CGSize, caret: Int?, _ context: CGContext) {
+        if let path = polygon(t.corners(box)) { rim(path, context) }
+        let top = t.global(CGPoint(x: 0, y: box.height / 2)), handle = t.turnHandle(box)
+        context.saveGState()
+        context.setLineCap(.square)
+        context.setStrokeColor(ScreenOverlay.ink)
+        context.setLineWidth(2)
+        context.strokeLineSegments(between: [top, handle])
+        context.restoreGState()
+        for p in [handle, t.sizeHandle(box)] {
+            pixelPlate(CGRect(x: (p.x - 5).rounded(), y: (p.y - 5).rounded(), width: 10, height: 10), context)
+        }
+        guard let caret else { return }
+        let (a, b) = ShotText.caret(t, at: caret)
+        let ends = [t.global(a), t.global(b)]
+        context.saveGState()
+        context.setLineCap(.butt)
+        context.setStrokeColor(CGColor(gray: 1, alpha: 1))
+        context.setLineWidth(4)
+        context.strokeLineSegments(between: ends)
+        context.setStrokeColor(ScreenOverlay.ink)
+        context.setLineWidth(2)
+        context.strokeLineSegments(between: ends)
+        context.restoreGState()
     }
 
     private static func polygon(_ points: [CGPoint], closed: Bool = true) -> CGPath? {
@@ -512,8 +845,10 @@ final class ShotCanvas: NSView {
 
 // MARK: The toolbar
 
-/// The toolbar in the game's style: pixel pictures for the areas, the marks, six
-/// colour squares, undo, and the three ways out; under it a line saying what to do.
+/// The toolbar in the game's style: pixel pictures for the areas, the marks, the
+/// text's font, size and turn, six colour squares, undo, and the three ways out; under
+/// it a line saying what to do. The font menu opens as a row of names under that line,
+/// each in its own font: a menu of the system's would open under the frozen screens.
 /// Hovering a button puts a tag with its name and key on that line instead: no
 /// letters to remember, and the system's tooltips would open under the frozen screens.
 struct ShotToolbar: View {
@@ -521,7 +856,7 @@ struct ShotToolbar: View {
 
     /// What the pointer can rest on.
     enum Item: Hashable {
-        case button(Shot.Button), colour(Int)
+        case button(Shot.Button), colour(Int), font(Shot.Font)
     }
 
     private static let ink = Color(cgColor: ScreenOverlay.ink)
@@ -542,6 +877,8 @@ struct ShotToolbar: View {
                         .opacity(model.stage == .marking ? 1 : 0.45)
                 }
                 gap
+                textControls
+                gap
                 HStack(spacing: 2) {
                     ForEach(Shot.palette.indices, id: \.self) { n in
                         let c = Shot.palette[n]
@@ -559,7 +896,7 @@ struct ShotToolbar: View {
                 }
                 gap
                 button(.undo) { model.act(.undo) }
-                    .opacity(model.marks.isEmpty ? 0.45 : 1)
+                    .opacity(model.history.canUndo || model.editing ? 1 : 0.45)
                 gap
                 button(.done, chosen: true) { model.act(.finish(.enter)) }
                 button(.save) { model.act(.finish(.save)) }
@@ -575,6 +912,9 @@ struct ShotToolbar: View {
                 }
             }
             .frame(height: 22)
+            if model.fontsOpen, let place = places[.button(.font)] {
+                fontMenu(under: place)
+            }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
         .background(PixelBox(style: .raised))
@@ -612,9 +952,62 @@ struct ShotToolbar: View {
         }
     }
 
+    /// The font, drawn in itself; the size a step down and up; a turn either way. Faint
+    /// until there is a text to work on or the Text tool is picked.
+    private var textControls: some View {
+        let font = model.selectedText?.font ?? model.font
+        let size = Int((model.selectedText?.size ?? CGFloat(model.textSize)).rounded())
+        let active = model.stage == .marking && (model.tool == .text || model.selected != nil)
+        return HStack(spacing: 4) {
+            Button { model.act(.fontMenu) } label: {
+                HStack(spacing: 6) {
+                    PixelIcon(rows: Shot.Button.font.icon)
+                    Text(font.title).font(Font(ShotText.nsFont(font, size: 13) as CTFont)).lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 7)
+                .frame(width: 136)
+            }
+            .buttonStyle(PixelButtonStyle(small: true, chosen: model.fontsOpen, square: true))
+            .tip(.button(.font), model)
+            button(.smaller) { model.act(.textSize(bigger: false)) }
+            Text(verbatim: "\(size)")
+                .font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+                .frame(width: 24)
+            button(.bigger) { model.act(.textSize(bigger: true)) }
+            button(.turnLeft) { model.act(.turn(left: true)) }
+                .opacity(model.selected == nil ? 0.45 : 1)
+            button(.turnRight) { model.act(.turn(left: false)) }
+                .opacity(model.selected == nil ? 0.45 : 1)
+        }
+        .opacity(active ? 1 : 0.45)
+    }
+
+    /// The fonts this Mac has, each name in its own font, the one in use picked out:
+    /// a row under the hint line, starting under the font button.
+    private func fontMenu(under place: CGRect) -> some View {
+        let current = model.selectedText?.font ?? model.font
+        return HStack(spacing: 4) {
+            Color.clear.frame(width: max(0, place.minX - 12), height: 1)
+            ForEach(ShotText.fonts, id: \.self) { f in
+                Button { model.act(.font(f)) } label: {
+                    Text(f.title).font(Font(ShotText.nsFont(f, size: 14) as CTFont)).lineLimit(1).fixedSize()
+                }
+                .buttonStyle(PixelButtonStyle(small: true, chosen: f == current))
+                .tip(.font(f), model)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
     private var gap: some View { Rectangle().fill(Self.faintInk).frame(width: 2, height: 22).padding(.horizontal, 3) }
 
     private var hint: String {
+        if model.editing { return tr("TYPING · ⇧⏎ NEW LINE · ⏎ DONE · ⎋ DROP IT · ⌘[ ⌘] TURN · ⌘− ⌘+ SIZE · ⌘F FONT") }
+        if model.selected != nil { return tr("DRAG TO MOVE · TOP HANDLE TURNS (⇧ IN STEPS) · CORNER SIZES · CLICK TO TYPE · ⌫ DELETE · ⎋ DONE") }
+        if model.stage == .marking, model.tool == .text {
+            return tr("TEXT · CLICK TO TYPE · CLICK A TEXT TO CHANGE IT · ⌘Z UNDO · ⇧⌘Z REDO · ⏎ COPY · ⎋ CANCEL")
+        }
         guard model.stage == .marking else {
             switch model.mode {
             case .lasso: return tr("DRAW A LOOP AROUND IT · ⏎ THE WHOLE SCREEN · ⎋ CANCEL")
@@ -627,13 +1020,14 @@ struct ShotToolbar: View {
     /// What resting on `item` says.
     static func tooltip(_ item: Item, _ model: ShotModel) -> String {
         switch item {
-        case .button(let b): b.tooltip(copies: model.entersCopy, saves: model.entersSave)
+        case .button(let b): b.tooltip(copies: model.entersCopy, saves: model.entersSave, step: model.snap)
         case .colour(let n): Shot.colourTooltip(n)
+        case .font(let f): Shot.fontTooltip(f)
         }
     }
 
-    /// Every item on the toolbar, in order.
-    static let items: [Item] = Shot.Button.allCases.map(Item.button) + Shot.palette.indices.map(Item.colour)
+    /// Every item on the toolbar, in order, the font menu's last.
+    static var items: [Item] { Shot.Button.allCases.map(Item.button) + Shot.palette.indices.map(Item.colour) + ShotText.fonts.map(Item.font) }
 
     static func title(_ tool: Shot.Tool) -> String {
         switch tool {
@@ -642,6 +1036,7 @@ struct ShotToolbar: View {
         case .highlight: tr("Highlight")
         case .blur: tr("Blur")
         case .brush: tr("Freehand blur")
+        case .text: tr("Text")
         }
     }
 }

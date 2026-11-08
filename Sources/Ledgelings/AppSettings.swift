@@ -533,6 +533,14 @@ final class AppSettings: ObservableObject {
     @Published var shotColour: Int { didSet { save(shotColour, "shotColour") } }
     /// The last rectangle taken, "x,y,w,h" in global points, for the last-rectangle shortcut; empty until there is one.
     @Published var shotLastRect: String { didSet { save(shotLastRect, "shotLastRect") } }
+    /// The font a new text starts in; the last one picked on the toolbar.
+    @Published var shotTextFont: Shot.Font { didSet { save(shotTextFont.rawValue, "shotTextFont") } }
+    /// A new text's size in points (`Shot.textSizeRange`); the last one used on the toolbar.
+    @Published var shotTextSize: Int { didSet { save(shotTextSize, "shotTextSize") } }
+    /// Texts get a rim in a contrasting colour, so they read on any background.
+    @Published var shotTextOutline: Bool { didSet { save(shotTextOutline, "shotTextOutline") } }
+    /// How far a text turns with ⇧ held or a turn button, in degrees (`Shot.snapRange`).
+    @Published var shotTextSnap: Int { didSet { save(shotTextSnap, "shotTextSnap") } }
     /// Why a screenshot shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var shotShortcutProblem = ""
 
@@ -1050,6 +1058,12 @@ final class AppSettings: ObservableObject {
         let colour = defaults.object(forKey: "shotColour") as? Int ?? 0
         shotColour = Shot.colourRange.contains(colour) ? colour : 0
         shotLastRect = defaults.string(forKey: "shotLastRect") ?? ""
+        shotTextFont = defaults.string(forKey: "shotTextFont").flatMap(Shot.Font.init(rawValue:)) ?? .rounded
+        let textSize = defaults.object(forKey: "shotTextSize") as? Int ?? Shot.defaultTextSize
+        shotTextSize = min(max(textSize, Shot.textSizeRange.lowerBound), Shot.textSizeRange.upperBound)
+        shotTextOutline = defaults.object(forKey: "shotTextOutline") as? Bool ?? true
+        let snap = defaults.object(forKey: "shotTextSnap") as? Int ?? Shot.defaultSnap
+        shotTextSnap = min(max(snap, Shot.snapRange.lowerBound), Shot.snapRange.upperBound)
         dictationEnabled = defaults.object(forKey: "dictationEnabled") as? Bool ?? true
         dictationShortcutEnabled = defaults.object(forKey: "dictationShortcutEnabled") as? Bool ?? true
         dictationShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "dictationShortcutKeyCode") as? Int,

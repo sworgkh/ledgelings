@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import LedgelingsCore
 
 /// The screenshot tool on the real screen, from a script.
@@ -10,7 +11,8 @@ import LedgelingsCore
 ///
 /// `--shot-demo` freezes the real screens with the toolbar, drags a rectangle in the
 /// middle of the main screen, draws a box, an arrow, a blur and a freehand blur,
-/// undoes one, copies, checks the clipboard holds that PNG, then takes the last
+/// undoes one, types a text over the blur and turns it 30°, copies, checks the
+/// clipboard holds that PNG with the text's pixels where it was put, then takes the last
 /// rectangle again with its shortcut's action; the clipboard and the settings it
 /// touched are put back. Each step is printed with its time; exit 1 if anything is wrong.
 @MainActor
@@ -33,6 +35,32 @@ enum ShotDemo {
         }
     }
 
+    /// How many pixels of `a` and `b` (the same size) differ clearly, where `inBox` says and elsewhere.
+    static func differences(_ a: CGImage, _ b: CGImage, inBox: (CGPoint) -> Bool) -> (Int, Int) {
+        func bytes(_ image: CGImage) -> [UInt8] {
+            let w = image.width, h = image.height
+            var data = [UInt8](repeating: 0, count: w * h * 4)
+            data.withUnsafeMutableBytes { raw in
+                let c = CGContext(data: raw.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+                c?.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+            }
+            return data
+        }
+        guard a.width == b.width, a.height == b.height else { return (0, -1) }
+        let x = bytes(a), y = bytes(b)
+        var inside = 0, outside = 0
+        for row in 0..<a.height {
+            for col in 0..<a.width {
+                let at = (row * a.width + col) * 4
+                let d = (0..<3).reduce(0) { $0 + abs(Int(x[at + $1]) - Int(y[at + $1])) }
+                guard d > 30 else { continue }
+                if inBox(CGPoint(x: CGFloat(col) + 0.5, y: CGFloat(row) + 0.5)) { inside += 1 } else { outside += 1 }
+            }
+        }
+        return (inside, outside)
+    }
+
     /// How many colours a 24×24 sample of the picture has: a refused capture is one flat colour.
     static func distinctColours(_ image: CGImage) -> Int {
         let n = 24
@@ -46,19 +74,20 @@ enum ShotDemo {
     }
 
     /// The settings the demo changes: put back after, and a key that was not saved before is removed again.
-    static let touched = ["shotCopy", "shotSave", "shotLastRect", "shotCreatureBrings", "shotColour"]
+    static let touched = ["shotCopy", "shotSave", "shotLastRect", "shotCreatureBrings", "shotColour", "shotTextFont", "shotTextSize"]
 
     static func run(settings: AppSettings, controller: ShotController, snapshot: URL?, defaults: UserDefaults = .standard) async -> Bool {
         let start = Date()
         func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "shot %5.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
         let board = ClipPaster.saved()
         let kept = (copy: settings.shotCopy, save: settings.shotSave, last: settings.shotLastRect, brings: settings.shotCreatureBrings,
-                    colour: settings.shotColour)
+                    colour: settings.shotColour, font: settings.shotTextFont, size: settings.shotTextSize)
         let unsaved = touched.filter { defaults.object(forKey: $0) == nil }
         defer {
             ClipPaster.restore(board)
             settings.shotCopy = kept.copy; settings.shotSave = kept.save; settings.shotLastRect = kept.last
             settings.shotCreatureBrings = kept.brings; settings.shotColour = kept.colour
+            settings.shotTextFont = kept.font; settings.shotTextSize = kept.size
             // Putting a value back saves it; one that was never saved goes again, so the default still decides.
             unsaved.forEach(defaults.removeObject(forKey:))
             log("clipboard and settings put back")
@@ -106,6 +135,44 @@ enum ShotDemo {
         expect(session.model.marks.count == 5, "five marks drawn (\(session.model.marks.count))")
         session.act(.undo)
         expect(session.model.marks.count == 4, "⌘Z took the highlight back")
+        // A text over the blur, typed, then turned two steps left while still typed.
+        session.act(.tool(.text)); session.act(.colour(4))
+        let at = CGPoint(x: c.x + 60, y: c.y + 100)
+        session.down(at); session.up(at)
+        for ch in "Moss 42" { _ = session.key(0, [], characters: String(ch)) }
+        _ = session.key(kVK_ANSI_LeftBracket, .command); _ = session.key(kVK_ANSI_LeftBracket, .command)
+        // Then real keys, through the keyboard: "!" typed, ⏎ ending it. Only while the frozen screen
+        // holds the keyboard, or they would land in whatever app is in front.
+        if NSApp.keyWindow is ShotPanel {
+            func press(_ code: Int, _ typed: String? = nil) {
+                for down in [true, false] {
+                    let event = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(code), keyDown: down)
+                    if let typed { event?.keyboardSetUnicodeString(stringLength: typed.utf16.count, unicodeString: Array(typed.utf16)) }
+                    event?.post(tap: .cghidEventTap)
+                }
+            }
+            press(kVK_ANSI_1, "!")
+            try? await Task.sleep(for: .milliseconds(300))
+            press(kVK_Return)
+            try? await Task.sleep(for: .milliseconds(300))
+        } else {
+            expect(false, "the frozen screen holds the keyboard")
+            _ = session.key(kVK_Return, [])
+        }
+        let text = session.model.marks.last?.text
+        expect(text?.string == "Moss 42!" && text?.angle == 30 && !session.model.editing,
+               "a text typed (the ! from the keyboard), turned 30° and ended by ⏎ (\(text.map { "\($0.string), \(Int($0.angle))°" } ?? "none"))")
+        expect(session.model.marks.count == 5, "five marks with the text")
+        // The font menu opens as a row under the toolbar, which grows down for it, and shuts again.
+        let closed = session.spot(of: .button(.font))
+        session.act(.fontMenu)
+        try? await Task.sleep(for: .milliseconds(500))
+        let serif = session.spot(of: .font(.serif))
+        expect(serif != nil && closed != nil && serif!.y < closed!.y - 20 && session.spot(of: .button(.font)) == closed,
+               "the font menu opens under the font button, the toolbar's top where it was")
+        session.act(.fontMenu)
+        try? await Task.sleep(for: .milliseconds(300))
+        let marks = session.model.marks, area = session.picture()?.1
         // The real pointer rests on the blur button: its tag says its name and key.
         if let spot = session.spot(of: .button(.blur)), let top = NSScreen.screens.first?.frame.maxY {
             let back = NSEvent.mouseLocation
@@ -133,6 +200,18 @@ enum ShotDemo {
         let png = NSPasteboard.general.data(forType: .png)
         let onBoard = png.flatMap { NSBitmapImageRep(data: $0) }
         expect(onBoard?.pixelsWide == want.0 && onBoard?.pixelsHigh == want.1, "the clipboard holds that PNG (\(onBoard.map { "\($0.pixelsWide)×\($0.pixelsHigh)" } ?? "none"))")
+        // The text is in that PNG: against the same shot without it, pixels differ inside its turned box and nowhere else.
+        if let copied = onBoard?.cgImage, let area, let text, let bare = ShotRenderer.render(session.frames, area: area, marks: marks.filter { $0.text == nil }) {
+            let mapped = ShotRenderer.mapping(area, frames: session.frames).pixels(.text(text)).text!
+            let box = ShotText.measure(mapped)
+            let (inside, outside) = differences(copied, bare) { p in
+                let l = mapped.local(p, yDown: true)
+                return abs(l.x) <= box.width / 2 + 2 && abs(l.y) <= box.height / 2 + 2
+            }
+            expect(inside > 300 && outside == 0, "the copied PNG has the text where it was put: \(inside) pixels in its box, \(outside) outside")
+        } else {
+            expect(false, "the copied PNG could be checked for the text")
+        }
         expect(!settings.shotLastRect.isEmpty, "the rectangle is remembered (\(settings.shotLastRect))")
 
         // The last rectangle again: straight to the output, the same size.
