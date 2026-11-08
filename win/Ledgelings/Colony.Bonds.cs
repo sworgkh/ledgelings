@@ -28,6 +28,7 @@ public sealed partial class Colony
         togetherPending = 0;
         var names = Enumerable.Range(0, creatures.Count).Select(i => CharacterFor(i).Name).ToList();
         Bonds.Change(book => book.LiveTogether(seconds, names));
+        ObserveGang();
     }
 
     /// <summary>What goes into creature <paramref name="i"/>'s prompt about <paramref name="j"/>: the bond and the story
@@ -44,6 +45,7 @@ public sealed partial class Colony
             parts.Add(Core.Bonds.Memory(Bonds.Bond(a, b), a, b, Settings.MemoryTokens));
             if (Settings.DayContextEnabled) parts.Add(Core.Bonds.DaySoFar(a, Bonds.Book, Settings.DayContextItems));
         }
+        parts.Add(News(a, b));
         return string.Join(" ", parts.Where(p => p.Length > 0));
     }
 
@@ -59,6 +61,7 @@ public sealed partial class Colony
     internal void Talked(string a, string b, IReadOnlyList<ChatLog.Line> lines, string kind = Core.Bonds.MomentKind.Talk)
     {
         if (lines.Count == 0) return;
+        FirstMeeting(a, b);
         Bonds.Change(book => book.Talked(a, b, lines, kind));
         WritePlotIfDue(a, b);
     }
@@ -70,6 +73,7 @@ public sealed partial class Colony
     {
         if (i < 0 || j < 0 || i >= creatures.Count || j >= creatures.Count || i == j) return;
         string a = CharacterFor(i).Name, b = CharacterFor(j).Name;
+        FirstMeeting(a, b);
         Bonds.Change(book => book.Note(a, b, new Core.Bonds.Moment(DateTimeOffset.Now, kind, a, detail, score, winners, asked)));
     }
 
@@ -110,7 +114,7 @@ public sealed partial class Colony
         var length = Settings.PlotLength;
         var values = Core.Bonds.PlotValues(bond, (a, KindOf(ai), CharacterFor(ai).Persona), (b, KindOf(bj), CharacterFor(bj).Persona), length,
                                            telling, DateTimeOffset.Now);
-        var prompt = Banter.Render(Settings.PlotPrompt, values);
+        var prompt = Gang.WithNews(Banter.Render(Settings.PlotPrompt, values), PairNews);
         plotting.Add(key);
         Trace?.Invoke($"plot: asking for {key}, {prompt.Length / 4} tokens or so");
         _ = WritePlot(service, a, b, key, prompt, length, telling);

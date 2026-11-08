@@ -24,8 +24,10 @@ public sealed partial class SettingsWindow
             bondBook = value;
             if (value is null) return;
             value.Changed += () => Dispatcher.BeginInvoke(RefreshBondList);
+            value.Changed += () => Dispatcher.BeginInvoke(RefreshGang);
             BondsPath.Text = value.File;
             RefreshBondList();
+            RefreshGang();
         }
     }
 
@@ -36,6 +38,7 @@ public sealed partial class SettingsWindow
         settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(AppSettings.Brain) or nameof(AppSettings.PlotsEnabled) or nameof(AppSettings.StorylinesEnabled)) RefreshBonds();
+            if (e.PropertyName is nameof(AppSettings.TwistDays) or nameof(AppSettings.TwistDepartures)) RefreshGang();
         };
         RefreshBonds();
         RefreshBondList();

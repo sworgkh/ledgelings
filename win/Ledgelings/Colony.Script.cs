@@ -21,6 +21,7 @@ public sealed partial class Colony
         var options = DeedOptions(speaker, listener, letter: false);
         if (flower is null && BuiltInInvitation(speaker, listener, options) is Deeds.Offer offer)
             return ReciteInvitation(offer, speaker, listener, options, situation);
+        if (flower is null && BuiltInTwist(speaker, listener) is { } twist) return SayBuiltIn(twist, speaker, listener, situation);
         Script script;
         try { script = Script.Parse(Settings.Script); }
         catch (Script.ParseException e) { TalkStatus = L10n.Tr("the built-in lines: %@", e.Message); return false; }
