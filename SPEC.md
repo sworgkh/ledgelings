@@ -2638,6 +2638,7 @@ Three import routes:
   name: pip
   kind: a fat green frog with big eyes            (optional)
   colour: #6cbf4a                                 (optional; `color:` too; six hex digits or the sheet is rejected)
+  paint: P #b06c4a                                (optional, any number; a letter and a fixed colour)
   character: Hopper: Bouncy and loud.             (optional, any number; "Name: persona")
   pose: idle
   <32 rows of 32 letters>
@@ -2649,17 +2650,23 @@ Three import routes:
   with a `colour` is always recoloured to it (§9.2), in the colony and on
   its settings card, instead of the creature's slot colour. Shipped:
   frog `#6cbf4a`, ghost `#cfd3ea`, slime `#4fd1a3`, robot `#9aa5b1`,
-  mushroom `#d9483b`, cactus `#3f8f6b`, beetle `#3f6cc9`, crystal `#b48cf0`,
-  sprout `#a3d14b`; the rest have none.
+  mushroom `#d9483b`, cactus `#6b9452`, beetle `#9c5c42`, crystal `#8cbcf6`,
+  sprout `#6aa252`; the rest have none.
 
   Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade, `k` eye
-  (black, blinks), `x` black that never blinks. `-`, `_` and space also mean
+  (black, blinks), `x` black that never blinks. A `paint:` line names another
+  letter (a letter or digit, not one of these) and a colour that stays as painted
+  when the species is recoloured: the cactus's pot and spines, the beetle's cream
+  band and spots, the orange feet of the four detailed species. A paint within 2 of
+  a palette colour in each channel is rejected, since recolouring would catch it.
+  `-`, `_` and space also mean
   nothing; a short row of nothing is padded; `#` lines are comments; an empty
   line is skipped. Rejected: a missing or unknown pose, a row that is not 32
   wide, an unknown letter, ink outside the body box (columns 6–27, rows 6–27,
   1-based), an empty pose, or no ink on row 27 (the floor). Eye variants are
   derived: for each vertical run of `k`, `half` keeps the lower half (rounded
-  up), `closed` keeps the bottom row; what the lid covers becomes body.
+  up), `closed` keeps the bottom row; what the lid covers becomes body, or the
+  paint just above the eye when there is one (the beetle's eyes on its head band).
   Pixels use the built-in palette, so recolouring (§9.2) works.
 - **PNG in the exact layout**: on magenta `#ff00ff` (tolerance 60 in RGB
   distance), 288×96 or a whole multiple of it (sampled down at cell centres),
@@ -2997,6 +3004,8 @@ An error for want of a model reads as that note, never as a server refusal.
 | Key | Default | Range / notes |
 |---|---|---|
 | language | the system's preferred language when the app has it, else `en` | `en`, `ru`; applied live (§1.2) |
+| rememberWindowPlaces | true | A dragged window or sheet reopens where it was let go (`WindowPlaces`) |
+| windowPlaces | `{}` | window name → `[x, y]`, its top-left in screen points (y up); a place whose top strip is on no screen now is ignored, and the window opens where it always did |
 | creatureCount | 3 | 1–24 |
 | colors | `#ff8a3d #3dc7b5 #ff6fa3 #ffd23d #9b7bff #7bd65a` | 1–12 hex colours; invalid ones dropped on load |
 | spriteKitForm | empty (no kind, name or colour; three empty characters) | JSON `{kind, name, colour, cast[{name, persona}]}`; the sprite kit's form (§9.1); a colour that is not hex is dropped and the cast cut or padded to three on load |

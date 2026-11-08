@@ -203,10 +203,11 @@ struct SettingsView: View {
                         startsAtLogin = LaunchAtLogin.isOn
                     }
                 LabeledContent(tr("Status")) { Text(loginStatus).foregroundStyle(.secondary) }
+                Toggle(tr("Remember where windows were moved"), isOn: $settings.rememberWindowPlaces)
             } header: {
                 SettingsHeader("Language and startup")
             } footer: {
-                Text(tr("Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the system's Login Items."))
+                Text(tr("Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the system's Login Items. A window or sheet you drag somewhere opens there next time, unless that screen is gone."))
             }
         }
         .onAppear { startsAtLogin = LaunchAtLogin.isOn; loginStatus = LaunchAtLogin.status }
@@ -402,9 +403,10 @@ final class SettingsWindowController {
             // Size it before centring: centring the small frame the controller starts
             // with, then growing, left half the window off the screen.
             made.setContentSize(Self.size)
-            made.center()
+            WindowPlacer.place(made, as: .settings, settings: settings) { made.center() }
             window = made
         }
+        if let window { WindowPlacer.watch(window, as: .settings, settings: settings) }
         // A menu-bar-only app is never frontmost on its own.
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)

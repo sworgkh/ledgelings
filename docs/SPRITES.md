@@ -51,6 +51,7 @@ creature than paint one.
 name: pip
 kind: a fat green frog with big eyes            (optional)
 colour: #6cbf4a                                 (optional; `color:` too; six hex digits)
+paint: P #b06c4a                                (optional, any number; a letter and a fixed colour)
 character: Hopper: Bouncy and loud.             (optional, any number; "Name: persona")
 pose: idle
 <32 rows of 32 letters>
@@ -66,6 +67,7 @@ pose: walk-0 … walk-3, jump, land, sleep-0, sleep-1
 | `s` | shade, a shadow along the bottom and right inside the outline |
 | `k` | an eye pixel, black. Make each eye a vertical block; the app blinks by lowering a lid over it |
 | `x` | black that never blinks (a mouth, a spot) |
+| any other letter or digit | a colour named by a `paint:` line, kept as painted when the species is recoloured (a flower pot, spots on a shell, orange feet). It must be at least 3 away from the palette colours in some channel, or recolouring would catch it. A lid over an eye on a paint is that paint |
 
 `#` lines are comments; a short row of nothing is padded. The rules the import checks:
 

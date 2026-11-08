@@ -208,62 +208,157 @@ def mushroom(top, cap_h, bottom, lf, rf, eye_h=None):
     return cap | stem, d, blocky_feet(lf, rf, bottom)
 
 
-def cactus(top, bottom, lf, rf, arms=(10, 8), eye_h=3):
-    """A thin column, half Blocky's width, with two small raised arms; `arms` are the elbow rows
-    below the top (left, right)."""
-    body = rect(12, top, 22, bottom) - {(22, top)}                          # one stepped corner on the crown
-    left, right = (top + a for a in arms)
-    body |= rect(8, left, 11, left + 2) | rect(8, left - 3, 10, left)       # out from the column, then up
-    body |= rect(23, right, 26, right + 2) | rect(24, right - 3, 26, right)
-    spines = {(8, left - 4): "o", (26, right - 4): "o"}
-    height = bottom - top + 1
-    eye_y = top + max(3, height // 4)                                       # 14-16 and 19-21: right of centre, clear of the edge
-    d = spines | {(x, y): "k" for x in (14, 15, 16, 19, 20, 21) for y in range(eye_y, eye_y + eye_h)}
-    return body, d, blocky_feet(lf, rf, bottom, xs=(11, 20))
+# ---- drawn creatures: traced by hand from a picture, one idle body per species, with fixed
+# colours (`paint:` letters) for what should not follow the species colour. Columns are x 5..26.
+# The other poses come from the idle body: rows dropped to squash it, rows repeated to stretch it.
+
+FEET = {"F": "#f0a038"}                                                     # orange, in every drawn creature
 
 
-def beetle(top, bottom, lf, rf, eye_h=None, reach=0):
-    """A wide shell with stepped corners, split down the back, and two antennae with square knobs.
-    `reach` tips the antennae outwards (+) or back towards each other (-)."""
-    shell = cut_rect(L, top, R, bottom, (4, 2, 1))
-    d = {(17, y): "o" for y in range(top, bottom)}                          # the split between the wing cases
-    for x0, out in ((15, -1), (19, 1)):                                     # stalks climb outwards to a knob
-        end = x0 + out * (2 + reach)
-        d |= {(x0, top - 1): "o", (x0, top - 2): "o", (x0 + out, top - 3): "o", (end, top - 4): "o"}
-        d |= {(x, y): "o" for x in (end, end + out) for y in (top - 5, top - 4)}
-    height = bottom - top + 1
-    h = eye_h or max(3, min(6, height // 3))
-    d |= eyes(17, top + max(3, height // 4), h, gap=4, w=3)
-    return shell, d, blocky_feet(lf, rf, bottom)
+def drawn(body: list[str], remove=(), repeat=(), lf=0, rf=0, eye_h=None, feet=(6, 13)):
+    """The idle body squashed (`remove`, rows of the drawing) or stretched (`repeat`), standing on two
+    orange feet (`lf`/`rf`: 0 down, 1 raised, None tucked away, as the jump does)."""
+    assert all(len(r) == 22 for r in body), [len(r) for r in body]
+    rows = [r for i, r in enumerate(body) if i not in remove]
+    for i in sorted(repeat, reverse=True):
+        at = i - sum(1 for k in remove if k < i)
+        rows.insert(at, rows[at])
+    bottom = FLOOR if lf is None and rf is None else FLOOR - 2
+    top = bottom - len(rows) + 1
+    assert top >= TOP, (top, len(rows))
+    g = {}
+    for k, r in enumerate(rows):
+        for c, ch in enumerate(r):
+            if ch != ".": g[(L + c, top + k)] = ch
+    if eye_h is not None: g = shut(g, eye_h)
+    for x0, up in ((L + feet[0], lf), (L + feet[1], rf)):
+        if up is None: continue
+        y = bottom + (0 if up else 1)
+        for dx, ch in enumerate("FFFF"): g[(x0 + dx, y)] = ch
+        for dx, ch in enumerate("oFFo"): g[(x0 + dx, y + 1)] = ch
+    return g
 
 
-def crystal(tip, shoulder, bottom, lf, rf, lean=0, eye_h=None):
-    """A square body under a stepped point: two rows of tip, then one pixel wider a row down to `shoulder`."""
-    mask = set()
-    for y in range(tip, shoulder):
-        hw = max(0, y - tip - 1)
-        cx = 16 + round(lean * (shoulder - y) / max(1, shoulder - tip))
-        mask |= rect(cx - hw, y, cx + hw, y)
-    mask |= rect(9, shoulder, 23, bottom)
-    h = eye_h or max(3, min(5, (bottom - tip + 1) // 4))
-    d = eyes(17, shoulder + 2, min(h, bottom - shoulder - 3), gap=2, w=3)
-    return mask, d, blocky_feet(lf, rf, bottom, xs=(10, 19))
+def shut(g: dict, keep: int) -> dict:
+    """Eyes lowered to their bottom `keep` rows; the lid is what is above the eye."""
+    g = dict(g)
+    for x in {x for (x, _), ch in g.items() if ch == "k"}:
+        ys = sorted(y for (xx, y), ch in g.items() if xx == x and ch == "k")
+        lid = g.get((x, ys[0] - 1), "b")
+        lid = lid if lid not in "kxo" else "b"
+        for y in ys[:max(0, len(ys) - keep)]: g[(x, y)] = lid
+    return g
 
 
-LEAF = [(8, 11), (8, 12), (8, 13), (9, 14), (11, 15)]                              # the left leaf's rows, leaning up and out
+def drawn_poses(body, squash, stretch, **kw):
+    """Every pose of a drawn creature: `squash` are rows to drop first, `stretch` rows to repeat for the jump."""
+    d = lambda n=0, **k: drawn(body, remove=squash[:n], **{**kw, **k})
+    return {"idle": d(), "walk-0": d(), "walk-1": d(1, rf=1), "walk-2": d(), "walk-3": d(lf=1),
+            "jump": drawn(body, repeat=stretch, lf=None, rf=None, **kw), "land": d(6, eye_h=1),
+            "sleep-0": d(3, eye_h=1), "sleep-1": d(4, eye_h=1)}
 
 
-def sprout(top, bottom, lf, rf, sway=0, wilt=False, eye_h=None):
-    """Blocky's square body with a two-leaf sprout on a short stem. `sway` leans the leaves;
-    `wilt` lets them hang down beside the stem, for sleep."""
-    body = rect(8, top, 23, bottom)
-    rows = LEAF[::-1] if wilt else LEAF
-    y = top - (6 if wilt else 7)                                            # the leaves' top row
-    leaves = set()
-    for k, (x0, x1) in enumerate(rows):
-        leaves |= rect(x0 + sway, y + k, x1 + sway, y + k) | rect(31 - x1 + sway, y + k, 31 - x0 + sway, y + k)
-    stem = rect(15, y + (0 if wilt else 4), 16, top - 1)
-    return body | stem | leaves, blocky_eyes(top, bottom - top + 1, eye_h), blocky_feet(lf, rf, bottom)
+# A green cactus with cream spines (W) in a brown pot: P pot, Q its light, R its dark.
+CACTUS = [
+    "..........W...........",
+    "........ooWooo........",
+    "......oolllbbboo......",
+    ".....WolllbbbbboW.....",
+    "..oo..olbbbbbbbo......",
+    ".olbo.obbkkbkkbo..oo..",
+    "Wobbo.obbkkbkkbo.olbo.",
+    ".obbo.oWbbbbbbbo.obboW",
+    ".osbo.obbbbbbbso.obso.",
+    ".osssssbbbbbbbsssssso.",
+    ".oooooossssssssoooooo.",
+    ".....oooooooooooo.....",
+    ".....oQQQQPPPPPPo.....",
+    ".....oQPPPPPPPPPo.....",
+    ".....oRRRRRRRRRRo.....",
+    "......oQPPPPPPRo......",
+    "......oQPPPPPPRo......",
+    "......oPPPPPPRRo......",
+    "......oRRRRRRRRo......",
+    ".......oooooooo.......",
+]
+CACTUS_PAINT = {"W": "#f2e3c2", "P": "#b06c4a", "Q": "#d4976a", "R": "#7a3e26"}
+
+# A brown beetle: a cream head band (C) with the eyes on it, cream-tipped feelers, two cream spots
+# with light middles, a split down the back, a stubby leg each side.
+BEETLE = [
+    "...ooo..........ooo...",
+    "...oCoo........ooCo...",
+    "....oCbo......obCo....",
+    ".....oboooooooobo.....",
+    "....ooCCCCCCCCCCoo....",
+    "...oCCCCCCkkCkkCCCo...",
+    "..oCCCCCCCkkCkkCCCCo..",
+    "..osssssssssssssssso..",
+    "..obbbCbbbbsbbbbbbbo..",
+    "..obbCbbbbbsbbbbbbbo..",
+    ".oobCbbbbbbsbbbbbbboo.",
+    "obobbCCCCbbsbCCCCbbobo",
+    "obobbCllCbbsbCllCbbobo",
+    "ooobbCllCbbsbCllCbsooo",
+    "..obbCCCCbbsbCCCCbso..",
+    "..obbbbbbbbsbbbbbsso..",
+    "..osbbbbbbbsbbbbssso..",
+    "...osbbbbbbsbbbssso...",
+    "....osssssssssssso....",
+    ".....oooooooooooo.....",
+]
+BEETLE_PAINT = {"C": "#f2e2c8"}
+
+# A light-blue crystal: a pale shard (P) up the middle of its point, a white glint (G), a little
+# shard on each side.
+CRYSTAL = [
+    ".........oooo.........",
+    "........olPPso........",
+    ".......ollPPsso.......",
+    ".....oolllPPsssoo.....",
+    "....oGllllPPssssso....",
+    "...oGGlllbPPbssssso...",
+    "...olGGlbbbbbbbbsso...",
+    "...olGbbbbbkkbkkbso...",
+    ".ooolbbbbbbkkbkkbsooo.",
+    "ollolbbbbbbbbbbbbsolso",
+    "oGlolbbbbbbbbbbbbsolso",
+    "olsosbbbbbbbbbbbssosso",
+    ".ooosbbbbbbbbbbbssooo.",
+    "...osbbbbbbbbbbbsso...",
+    "...osbbbbbbbbbbbsso...",
+    "...osbbbbbbbbbbbsso...",
+    "...ossbbbbbbbbbssso...",
+    "...osssssssssssssso...",
+    "....osssssssssssso....",
+    ".....oooooooooooo.....",
+]
+CRYSTAL_PAINT = {"P": "#dcf1fd", "G": "#f6fbff"}
+
+# A green rounded square with a white shine (H), two green leaves (G light, V, D dark) on a stem.
+SPROUT = [
+    "..ooooo........ooooo..",
+    "..oGGVVo......oVVGGo..",
+    "...oGDVVo....oVVDGo...",
+    "....oGVDVoVVoVDVGo....",
+    ".....oooooVVooooo.....",
+    ".........oVDo.........",
+    ".....oooooooooooo.....",
+    "....osllllllllllso....",
+    "...osbHHHbHHbbbbbso...",
+    "...olHbbbbbbbbbbbso...",
+    "...olHbbbbbkkbkkbso...",
+    "...olbbbbbbkkbkkbso...",
+    "...olbbbbbbbbbbbbso...",
+    "...olbbbbbbbbbbbbso...",
+    "...olbbbbbbbbbbbbso...",
+    "...olbbbbbbbbbbbbso...",
+    "...olbbbbbbbbbbbbso...",
+    "...olbbbbbbbbbbssso...",
+    "...osssssssssssssso...",
+    "....oooooooooooooo....",
+]
+SPROUT_PAINT = {"H": "#e6f4d2", "G": "#94d276", "V": "#68a04a", "D": "#3f6e3c"}
 
 
 CREATURES = {
@@ -341,63 +436,60 @@ CREATURES = {
          "land": mushroom(13, 6, 24, 0, 0, eye_h=3), "sleep-0": mushroom(9, 7, 24, 0, 0, eye_h=3), "sleep-1": mushroom(10, 7, 24, 0, 0, eye_h=3)},
     ),
     "cactus": (
-        "#3f8f6b",
+        "#6b9452",
         "a narrow little cactus with two raised arms and a few spines",
         [("Prickles", "Grumpy and dry, an old man of few words. Hates being watered, hugged or hurried."),
          ("Saguaro", "Very old and very slow, a deep-voiced desert elder who pauses a long time between words."),
          ("Tumble", "A cheerful, fast-talking little girl. Loves the sun on the screen and waves both arms at everyone.")],
-        {"idle": cactus(5, 24, 0, 0), "walk-0": cactus(5, 24, 0, 0), "walk-1": cactus(7, 24, 0, 1, arms=(9, 8)),
-         "walk-2": cactus(5, 24, 0, 0), "walk-3": cactus(5, 24, 1, 0, arms=(11, 7)), "jump": cactus(5, 26, None, None, arms=(8, 6), eye_h=4),
-         "land": cactus(13, 24, 0, 0, arms=(5, 4), eye_h=2), "sleep-0": cactus(9, 24, 0, 0, arms=(9, 8)),
-         "sleep-1": cactus(10, 24, 0, 0, arms=(9, 8))},
+        drawn_poses(CACTUS, squash=[7, 16, 8, 13, 15, 4], stretch=[7, 16], feet=(6, 12)), CACTUS_PAINT,
     ),
     "beetle": (
-        "#3f6cc9",
+        "#9c5c42",
         "a wide little beetle with a shell split down the back and two feelers",
         [("Click", "Tiny, fast and anxious, a nervous little boy. Talks in quick bursts and clicks when worried."),
          ("Scarab", "Grand and slow, an old lady who thinks she is royalty. Speaks of ancient sands."),
          ("Crumb", "A cheerful, busy little fellow. Counts things out loud, carries crumbs home and never stops.")],
-        {"idle": beetle(12, 24, 0, 0), "walk-0": beetle(12, 24, 0, 0), "walk-1": beetle(14, 24, 0, 1, reach=1),
-         "walk-2": beetle(12, 24, 0, 0), "walk-3": beetle(11, 24, 1, 0, reach=-1), "jump": beetle(10, 26, None, None, eye_h=4, reach=1),
-         "land": beetle(17, 24, 0, 0, eye_h=2, reach=1), "sleep-0": beetle(15, 24, 0, 0, eye_h=2, reach=-1),
-         "sleep-1": beetle(16, 24, 0, 0, eye_h=2, reach=-1)},
+        drawn_poses(BEETLE, squash=[15, 9, 16, 12, 10, 8], stretch=[9, 15], feet=(5, 13)), BEETLE_PAINT,
     ),
     "crystal": (
-        "#b48cf0",
+        "#8cbcf6",
         "a bright little crystal with a stepped, pointed top on a square body",
         [("Shard", "Bright and cheerful, a sparkling young girl. Everything is shiny, everything is wonderful."),
          ("Quartz", "Calm and slow, a deep-voiced old man. Thinks in millions of years."),
          ("Prism", "A fast-talking young show-off, he splits every topic into seven colours.")],
-        {"idle": crystal(5, 13, 24, 0, 0), "walk-0": crystal(5, 13, 24, 0, 0), "walk-1": crystal(7, 14, 24, 0, 1, lean=1),
-         "walk-2": crystal(5, 13, 24, 0, 0), "walk-3": crystal(5, 13, 24, 1, 0, lean=-1), "jump": crystal(5, 14, 26, None, None, eye_h=5),
-         "land": crystal(13, 18, 24, 0, 0, eye_h=2), "sleep-0": crystal(9, 15, 24, 0, 0, eye_h=3),
-         "sleep-1": crystal(10, 16, 24, 0, 0, eye_h=3)},
+        drawn_poses(CRYSTAL, squash=[14, 13, 15, 10, 16, 6], stretch=[14, 13], feet=(5, 13)), CRYSTAL_PAINT,
     ),
     "sprout": (
-        "#a3d14b",
+        "#6aa252",
         "a square little plant with a two-leaf sprout on its head",
         [("Sprout", "Young and cheerful, a tiny boy. Proud of his two leaves and wants to grow up fast."),
          ("Fern", "A shy, soft-spoken little girl. Leans towards the light and almost whispers."),
          ("Bud", "A hyper, impatient tiny kid who talks fast and asks if he is taller yet.")],
-        {"idle": sprout(12, 24, 0, 0), "walk-0": sprout(12, 24, 0, 0), "walk-1": sprout(13, 24, 0, 1, sway=1),
-         "walk-2": sprout(12, 24, 0, 0), "walk-3": sprout(12, 24, 1, 0, sway=-1), "jump": sprout(12, 26, None, None, eye_h=5),
-         "land": sprout(17, 24, 0, 0, eye_h=2), "sleep-0": sprout(14, 24, 0, 0, wilt=True, eye_h=3),
-         "sleep-1": sprout(15, 24, 0, 0, wilt=True, eye_h=3)},
+        drawn_poses(SPROUT, squash=[13, 14, 15, 12, 16, 17], stretch=[13, 14], feet=(5, 13)), SPROUT_PAINT,
     ),
 }
 
 
 def main() -> None:
     here = Path(__file__).parent
-    for name, (colour, kind, cast, poses) in CREATURES.items():
+    for name, (colour, kind, cast, poses, *paint) in CREATURES.items():
         lines = [f"name: {name}", f"kind: {kind}"] + ([f"colour: {colour}"] if colour else [])
         lines += [f"character: {n}: {p}" for n, p in cast]
+        paints = {**paint[0], **FEET} if paint else {}
+        lines += [f"paint: {k} {v}" for k, v in paints.items()]
         for pose in POSES:
-            mask, details, feet = poses[pose]
-            assert all(L <= x <= R and TOP <= y <= FLOOR for (x, y) in mask | set(details) | feet), (name, pose)
-            assert any(y == FLOOR for (_, y) in mask | feet), (name, pose, "not on the floor")
+            if paint:
+                g = poses[pose]
+                assert set(g.values()) <= set("oblsk") | set(paints), (name, pose, set(g.values()) - set("oblsk") - set(paints))
+                grid = ["".join(g.get((x, y), ".") for x in range(W)) for y in range(W)]
+                ink = set(g)
+            else:
+                mask, details, feet = poses[pose]
+                grid, ink = style(mask, details, feet), mask | set(details) | feet
+            assert all(L <= x <= R and TOP <= y <= FLOOR for (x, y) in ink), (name, pose)
+            assert any(y == FLOOR for (_, y) in ink), (name, pose, "not on the floor")
             lines.append(f"pose: {pose}")
-            lines += style(mask, details, feet)
+            lines += grid
         (here / f"{name}.txt").write_text("\n".join(lines) + "\n")
         print("wrote", name)
 

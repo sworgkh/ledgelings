@@ -16,7 +16,9 @@ import Foundation
 ///     ...
 ///
 /// Letters: `.` nothing, `o` outline, `b` body, `l` light, `s` shade,
-/// `k` eye (black; it blinks), `x` black that never blinks.
+/// `k` eye (black; it blinks), `x` black that never blinks. Any other letter is a
+/// fixed colour named by a line before the poses, `paint: p #a0603a` (a flower pot,
+/// spots on a shell): recolouring leaves it as painted.
 public enum SpriteText {
     public static let cell = 32
     /// x, y, width, height of the square the body must stay inside.
@@ -35,10 +37,21 @@ public enum SpriteText {
     /// What the kit's prompt says when the form has no description yet; in the current language.
     public static var describePlaceholder: String { tr("<describe your creature here>") }
 
-    public enum Ink: String, CaseIterable, Sendable {
-        case clear = ".", outline = "o", body = "b", light = "l", shade = "s", eye = "k", black = "x"
-        public var letter: Swift.Character { rawValue.first! }
-        public init?(letter: Swift.Character) { self.init(rawValue: String(letter)) }
+    public enum Ink: Hashable, Sendable {
+        case clear, outline, body, light, shade, eye, black
+        /// A fixed colour, by its letter in the sheet's `paints`.
+        case paint(Swift.Character)
+        static let fixed: [(Ink, Swift.Character)] = [(.clear, "."), (.outline, "o"), (.body, "b"), (.light, "l"),
+                                                      (.shade, "s"), (.eye, "k"), (.black, "x")]
+        public var letter: Swift.Character {
+            if case .paint(let c) = self { return c }
+            return Self.fixed.first { $0.0 == self }!.1
+        }
+        /// One of the seven fixed letters; a paint letter needs the sheet's `paints`.
+        public init?(letter: Swift.Character) {
+            guard let ink = Self.fixed.first(where: { $0.1 == letter })?.0 else { return nil }
+            self = ink
+        }
     }
 
     public struct Tint: Equatable, Sendable {
@@ -69,6 +82,7 @@ public enum SpriteText {
             case .light: light
             case .shade: shade
             case .eye, .black: Tint(r: 0, g: 0, b: 0)
+            case .paint: nil
             }
         }
     }
@@ -84,6 +98,8 @@ public enum SpriteText {
         public var colour: Tint?
         /// pose → 32 rows of 32 inks, eyes open.
         public var poses: [String: [[Ink]]]
+        /// letter → the fixed colour a `paint` ink stands for.
+        public var paints: [Swift.Character: Tint] = [:]
     }
 
     /// An RGBA sheet, 8 bits a channel, rows top to bottom.
@@ -105,16 +121,21 @@ public enum SpriteText {
         case notOnTheFloor(String)
         case empty(String)
         case badColour(String)
+        case badPaint(String)
+        case paintLikePalette(Swift.Character)
 
         public var description: String {
             switch self {
+            case .paintLikePalette(let c): tr("paint %@ is too close to a body colour: recolouring would change it", String(c))
+            case .badPaint(let value):
+                tr("paint should be a letter other than . o b l s k x and a colour, like `paint: p #a0603a`, not \"%@\"", value)
             case .badColour(let value): tr("colour must be six hex digits like #f0a0b0, not \"%@\"", value)
             case .noName: tr("the first line should be `name: something`")
             case .missingPose(let p): tr("pose %@ is missing", p)
             case .unknownPose(let p): tr("pose %@ is not one of %@", p, poses.joined(separator: ", "))
             case .wrongRowCount(let p, let n): tr("pose %@ has %d rows, not %d", p, n, cell)
             case .wrongRowLength(let p, let r, let n): tr("pose %@, row %d has %d letters, not %d", p, r + 1, n, cell)
-            case .strangeLetter(let p, let r, let c): tr("pose %@, row %d: `%@` is not one of . o b l s k x", p, r + 1, String(c))
+            case .strangeLetter(let p, let r, let c): tr("pose %@, row %d: `%@` is not one of . o b l s k x or a paint", p, r + 1, String(c))
             case .outsideTheBox(let p, let r, let c):
                 tr("pose %@ has ink at row %d, column %d, outside columns %d–%d and rows %d–%d",
                    p, r + 1, c + 1, box.x + 1, box.x + box.w, box.y + 1, box.y + box.h)
@@ -132,6 +153,7 @@ public enum SpriteText {
         var cast: [Character] = []
         var colour: Tint?
         var poses: [String: [[Ink]]] = [:]
+        var paints: [Swift.Character: Tint] = [:]
         var current: String?
         var rows: [[Ink]] = []
 
@@ -154,6 +176,16 @@ public enum SpriteText {
                 guard let tint = Tint(hex: value) else { throw ParseError.badColour(value) }
                 colour = tint; continue
             }
+            if let value = keyed(line, "paint") {
+                let parts = value.split(separator: " ", omittingEmptySubsequences: true)
+                guard parts.count == 2, parts[0].count == 1, let letter = parts[0].first, letter.isLetter || letter.isNumber,
+                      Ink(letter: letter) == nil, let tint = Tint(hex: String(parts[1])) else { throw ParseError.badPaint(value) }
+                // The app recolours whatever is close to the palette; a paint there would not stay put.
+                let palette = Palette.blocky
+                guard ![palette.body, palette.light, palette.shade, palette.outline].contains(where: { close($0, tint) })
+                else { throw ParseError.paintLikePalette(letter) }
+                paints[letter] = tint; continue
+            }
             if let value = keyed(line, "character") {
                 // "Name: what they are like" — the first colon splits them.
                 let parts = value.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
@@ -170,6 +202,7 @@ public enum SpriteText {
             var row: [Ink] = []
             for (column, letter) in raw.enumerated() {
                 if let ink = Ink(letter: letter) { row.append(ink) }
+                else if paints[letter] != nil { row.append(.paint(letter)) }
                 else if letter == " " || letter == "-" || letter == "_" { row.append(.clear) }
                 else if letter == "\t" || letter == "\r" { continue }
                 else { throw ParseError.strangeLetter(pose: pose, row: rows.count, letter: letter) }
@@ -183,7 +216,7 @@ public enum SpriteText {
         try finish()
         guard let name, !name.isEmpty else { throw ParseError.noName }
         for pose in Self.poses where poses[pose] == nil { throw ParseError.missingPose(pose) }
-        return Sheet(name: name, kind: kind, cast: cast, colour: colour, poses: poses)
+        return Sheet(name: name, kind: kind, cast: cast, colour: colour, poses: poses, paints: paints)
     }
 
     private static func keyed(_ line: String, _ key: String) -> String? {
@@ -209,7 +242,8 @@ public enum SpriteText {
     // MARK: Eyes
 
     /// The lids come down: `half` keeps the lower half of each vertical run of
-    /// eye pixels, `closed` keeps its bottom row. What the lid covers becomes body.
+    /// eye pixels, `closed` keeps its bottom row. What the lid covers becomes body, or the
+    /// paint above the eye when it sits on one (the beetle's cream head band).
     public static func variant(_ open: [[Ink]], _ variant: String) -> [[Ink]] {
         guard variant != "open" else { return open }
         var grid = open
@@ -222,7 +256,9 @@ public enum SpriteText {
                 while end < open.count, open[end][x] == .eye { end += 1 }
                 let run = end - y
                 let keep = variant == "closed" ? 1 : (run + 1) / 2
-                for row in y..<(end - keep) { grid[row][x] = .body }
+                var lid = Ink.body
+                if y > 0, case .paint = open[y - 1][x] { lid = open[y - 1][x] }
+                for row in y..<(end - keep) { grid[row][x] = lid }
                 y = end
             }
         }
@@ -241,7 +277,9 @@ public enum SpriteText {
                 let grid = variant(open, name)
                 for y in 0..<cell {
                     for x in 0..<cell {
-                        guard let tint = palette.tint(of: grid[y][x]) else { continue }
+                        let ink = grid[y][x]
+                        guard let tint = palette.tint(of: ink) ?? { if case .paint(let c) = ink { sheet.paints[c] } else { nil } }()
+                        else { continue }
                         let i = ((row * cell + y) * width + column * cell + x) * 4
                         rgba[i] = tint.r; rgba[i + 1] = tint.g; rgba[i + 2] = tint.b; rgba[i + 3] = 255
                     }

@@ -60,6 +60,8 @@ A character is a **name and a persona** in its species' cast, plus the species'
   line bottom-right, black square eyes (3 wide) right of centre a quarter down, 4×2
   feet, no mouth, no curves (curves become stepped corners). Six creatures drawn with
   curves and small eyes were once sent back as "a different style".
+  Detailed species (cactus, beetle, crystal, sprout, traced from the owner's chosen art) may carry
+  fixed-colour details outside the body palette (`paint:` letters in `sprites/text/make.py`).
 
 ## 4. Controls say what they do
 
@@ -149,6 +151,11 @@ with `scripts/make-app.sh`, installed and seen working.
   and has the dictation model write each down again; `--read-sheet "text" [--preset name] [--snapshot out.png] [--mute]`
   opens the sheet on the real screen, reads, writes the paper and closes. All priced under Read aloud. `--engine system`
   reads with the Mac's voices: no key, no keychain prompt, free (headless, with `brainProvider` set to `script`).
+- `--drag-check [name]` opens every window that moves (or the one named: settings, relationships, snippets, actions,
+  reminder, tools, translate, readAloud, clipPicker) on the real screen, drags it 90 points right and 70 down with real
+  mouse events, closes and reopens it, and prints each step (`drag tools: top-left (412, 801) → (502, 731), moved 90, -70; saved (502, 731)`,
+  `drag tools: reopened at (502, 731), where it was left`); exit 1 if one stayed put or forgot its place. Needs Accessibility
+  (as `--paste-check`), an unlocked screen, `LEDGELINGS_FAKE_TRANSLATE=1` and `brainProvider` = `script`; it saves places, so back up the preferences.
 - `--tools [--snapshot out.png]` opens the Tools screen on the real screen, prints each tile with its tag
   (`tools 1 translate: Type to translate (1 · ⌃⌥T)`), writes the paper to a PNG and closes.
 - `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
