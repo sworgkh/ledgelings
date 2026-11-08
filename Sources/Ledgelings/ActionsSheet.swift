@@ -54,7 +54,9 @@ final class ActionsController {
         // The middle of the screen the cursor is on, where the note opens too.
         let cursor = NSEvent.mouseLocation
         let screen = (NSScreen.screens.first { $0.frame.contains(cursor) } ?? NSScreen.main)?.visibleFrame ?? .zero
-        made.setFrameOrigin(CGPoint(x: (screen.midX - Self.size.width / 2).rounded(), y: (screen.midY - Self.size.height / 2).rounded()))
+        WindowPlacer.place(made, as: .actions, settings: settings) {
+            made.setFrameOrigin(CGPoint(x: (screen.midX - Self.size.width / 2).rounded(), y: (screen.midY - Self.size.height / 2).rounded()))
+        }
         window = made
         made.makeKeyAndOrderFront(nil)
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in

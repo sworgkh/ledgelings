@@ -83,7 +83,7 @@ final class ClipPickerController {
         previous = NSWorkspace.shared.frontmostApplication
         if previous?.bundleIdentifier == Bundle.main.bundleIdentifier { previous = nil }
         caret = ClipPaster.caret()
-        let screen = Self.screen(caret: caret)
+        let (screen, paper) = WindowPlacer.paper(.clipPicker, size: Self.size, screen: Self.screen(caret: caret), settings: settings)
         model.first = first
         model.query = ""
         model.refusal = ""
@@ -95,9 +95,9 @@ final class ClipPickerController {
         model.refresh(selectFirst: true)
         model.unfolded = !settings.clipAnimate
         let made = ClipPanel(frame: screen.visibleFrame)
-        let paper = CGRect(x: (screen.visibleFrame.width - Self.size.width) / 2, y: (screen.visibleFrame.height - Self.size.height) / 2,
-                           width: Self.size.width, height: Self.size.height).integral
         model.paper = paper
+        model.room = screen.visibleFrame.size
+        model.moved = { [settings] in WindowPlacer.paperMoved(.clipPicker, paper: $0, room: screen.visibleFrame, settings: settings) }
         let hosting = NSHostingView(rootView: ClipPickerView(model: model))
         hosting.frame = CGRect(origin: .zero, size: screen.visibleFrame.size)
         made.contentView = hosting
@@ -550,6 +550,9 @@ final class ClipPickerModel: ObservableObject {
     @Published var anchor = UnitPoint.center
     /// Where the paper sits in the panel, in the panel's points from its top-left.
     @Published var paper = CGRect.zero
+    /// The panel the paper is drawn in, and where the owner let go of it after a drag.
+    var room = CGSize.zero
+    var moved: (CGRect) -> Void = { _ in }
     @Published private(set) var counts = (recent: 0, snippets: 0)
     /// Rows get a translate button (⌘T): the translator is on and so is its button.
     @Published var translateOn = false
@@ -661,6 +664,7 @@ struct ClipPickerView: View {
             Color.black.opacity(0.001).onTapGesture { model.close() }
             sheet
                 .frame(width: paper.width, height: paper.height)
+                .paperDrag($model.paper, room: model.room, enabled: model.unfolded) { model.moved($0) }
                 .scaleEffect(model.unfolded ? 1 : 0.06, anchor: model.anchor)
                 .opacity(model.unfolded ? 1 : 0)
                 .offset(x: paper.minX, y: paper.minY)

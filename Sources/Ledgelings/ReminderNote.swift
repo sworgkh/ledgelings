@@ -13,12 +13,14 @@ final class ReminderNoteController {
     static let pixel: CGFloat = 3
 
     private let reminders: ReminderBook
+    private let settings: AppSettings
     /// Someone on screen to peek over the paper: a name and an idle frame.
     private let keeper: () -> (name: String, face: CGImage?)?
     private var window: NoteWindow?
 
-    init(reminders: ReminderBook, keeper: @escaping () -> (name: String, face: CGImage?)?) {
+    init(reminders: ReminderBook, settings: AppSettings, keeper: @escaping () -> (name: String, face: CGImage?)?) {
         self.reminders = reminders
+        self.settings = settings
         self.keeper = keeper
     }
 
@@ -36,7 +38,9 @@ final class ReminderNoteController {
         // The middle of the screen the cursor is on, where the letters open too.
         let cursor = NSEvent.mouseLocation
         let screen = (NSScreen.screens.first { $0.frame.contains(cursor) } ?? NSScreen.main)?.visibleFrame ?? .zero
-        made.setFrameOrigin(CGPoint(x: (screen.midX - Self.size.width / 2).rounded(), y: (screen.midY - Self.size.height / 2).rounded()))
+        WindowPlacer.place(made, as: .reminder, settings: settings) {
+            made.setFrameOrigin(CGPoint(x: (screen.midX - Self.size.width / 2).rounded(), y: (screen.midY - Self.size.height / 2).rounded()))
+        }
         window = made
         NSApp.activate(ignoringOtherApps: true)
         made.makeKeyAndOrderFront(nil)
@@ -54,6 +58,9 @@ final class ReminderNoteController {
             window.animator().alphaValue = 0
         }, completionHandler: { window.close() })
     }
+
+    /// Away without a reminder, as Cancel does.
+    func close() { dismiss() }
 
     private func dismiss() {
         window?.close()

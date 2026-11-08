@@ -139,4 +139,41 @@ import Testing
         #expect(sheet.kind == nil && sheet.cast.isEmpty)
         #expect(SpriteText.atlas(name: "boxy")["kind"] == nil)
     }
+
+    /// The idle grid with a cream band (C) over the eyes and one pot pixel (P).
+    static func painted() -> [String] {
+        var g = grid()
+        func put(_ x: Int, _ y: Int, _ c: Swift.Character) { var row = Array(g[y]); row[x] = c; g[y] = String(row) }
+        put(14, 20, "C"); put(17, 20, "C"); put(12, 24, "P")
+        return g
+    }
+
+    @Test func aPaintKeepsItsOwnColourInTheSheet() throws {
+        let text = Self.text(grid: Self.painted()).replacingOccurrences(of: "name: boxy\n", with: "name: boxy\npaint: C #f2e2c8\npaint: P #b06c4a\n")
+        let sheet = try SpriteText.parse(text)
+        #expect(sheet.paints == ["C": SpriteText.Tint(hex: "#f2e2c8")!, "P": SpriteText.Tint(hex: "#b06c4a")!])
+        #expect(sheet.poses["idle"]?[24][12] == .paint("P"))
+        let image = SpriteText.pixels(sheet, palette: .blocky)
+        let i = (24 * image.width + 12) * 4
+        #expect(Array(image.rgba[i..<(i + 4)]) == [0xb0, 0x6c, 0x4a, 255])
+    }
+
+    @Test func aLidOverAnEyeOnAPaintIsThatPaint() throws {
+        let text = Self.text(grid: Self.painted()).replacingOccurrences(of: "name: boxy\n", with: "name: boxy\npaint: C #f2e2c8\npaint: P #b06c4a\n")
+        let open = try #require(try SpriteText.parse(text).poses["idle"])
+        let closed = SpriteText.variant(open, "closed")
+        #expect(closed[21][14] == .paint("C"), "the cream band comes down over the eye")
+        #expect(closed[22][14] == .eye)
+    }
+
+    @Test func aPaintMustBeANewLetterAndAColourAwayFromThePalette() {
+        for line in ["paint: o #123456", "paint: PP #123456", "paint: P blue", "paint: P"] {
+            #expect(throws: SpriteText.ParseError.badPaint(String(line.dropFirst(7)))) {
+                try SpriteText.parse(Self.text().replacingOccurrences(of: "name: boxy\n", with: "name: boxy\n\(line)\n"))
+            }
+        }
+        #expect(throws: SpriteText.ParseError.paintLikePalette("P")) {
+            try SpriteText.parse(Self.text().replacingOccurrences(of: "name: boxy\n", with: "name: boxy\npaint: P #ff8b3e\n"))
+        }
+    }
 }

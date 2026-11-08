@@ -13,6 +13,11 @@ final class AppSettings: ObservableObject {
 
     /// What the app and the creatures speak; the app hands it to `Language.choose`. Prompts and built-in lines the user
     /// never edited follow it; edited ones stay as they were written.
+    /// A window or sheet the owner dragged somewhere reopens there (`WindowPlaces`).
+    @Published var rememberWindowPlaces: Bool { didSet { save(rememberWindowPlaces, "rememberWindowPlaces") } }
+    /// Each moved window's top-left in screen points, by `WindowPlaces.Window.rawValue`: [x, y].
+    @Published var windowPlaces: [String: [Double]] { didSet { save(windowPlaces, "windowPlaces") } }
+
     @Published var language: Language {
         didSet {
             save(language.rawValue, "language")
@@ -763,6 +768,9 @@ final class AppSettings: ObservableObject {
         // The system's language when the app speaks it, English otherwise; saved once chosen in the menu.
         let language = defaults.string(forKey: "language").flatMap(Language.init(rawValue:)) ?? Language.preferred()
         self.language = language
+        // On: the owner asked for windows that stay where they were put.
+        rememberWindowPlaces = defaults.object(forKey: "rememberWindowPlaces") as? Bool ?? true
+        windowPlaces = (defaults.dictionary(forKey: "windowPlaces") as? [String: [Double]] ?? [:]).filter { $0.value.count == 2 }
         creatureCount = min(max(count, Self.countRange.lowerBound), Self.countRange.upperBound)
         homeScreen = defaults.string(forKey: "homeScreen") ?? HomeScreen.all
         homeScreenName = defaults.string(forKey: "homeScreenName") ?? ""
@@ -1291,6 +1299,18 @@ final class AppSettings: ObservableObject {
     func liveOn(_ monitor: HomeScreen.Monitor?) {
         homeScreenName = monitor?.name ?? ""
         homeScreen = monitor?.id ?? HomeScreen.all
+    }
+
+    /// Where `window` was last moved to, when that is remembered.
+    func place(of window: WindowPlaces.Window) -> CGPoint? {
+        guard rememberWindowPlaces, window.remembered, let p = windowPlaces[window.rawValue], p.count == 2 else { return nil }
+        return CGPoint(x: p[0], y: p[1])
+    }
+
+    /// The owner moved `window`: its top-left now, kept for next time.
+    func moved(_ window: WindowPlaces.Window, topLeft: CGPoint) {
+        guard rememberWindowPlaces, window.remembered else { return }
+        windowPlaces[window.rawValue] = [topLeft.x.rounded(), topLeft.y.rounded()]
     }
 
     private func save(_ value: Any, _ key: String) { defaults.set(value, forKey: key) }

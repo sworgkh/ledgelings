@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         openRelationships: { [weak self] in self?.relationshipsWindow.show() },
         seedMemory: { [weak self] dryRun in await self?.seedMemory(dryRun: dryRun) ?? "" })
     private lazy var relationshipsWindow = RelationshipsWindowController(settings: settings, bonds: bonds)
-    private lazy var note = ReminderNoteController(reminders: reminders, keeper: { [weak self] in self?.colony?.noteKeeper() })
+    private lazy var note = ReminderNoteController(reminders: reminders, settings: settings, keeper: { [weak self] in self?.colony?.noteKeeper() })
     private lazy var actions = ActionsController(settings: settings, colony: { [weak self] in self?.colony },
                                                  addReminder: { [weak self] in self?.openReminders() },
                                                  open: { [weak self] in self?.follow($0) })
@@ -344,6 +344,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         // `--tools [--snapshot out.png]`: the Tools screen on the real screen, written to a PNG, then closed.
+        // `--drag-check`: every window that moves, dragged on the real screen and reopened (`DragCheck`).
+        if args.contains("--drag-check") {
+            let (settings, tools, translate, readAloud, picker, actions, note) = (settings, toolsScreen, translate, readAloud, picker, actions, note)
+            let (settingsWindow, relationships, snippets) = (settingsWindow, relationshipsWindow, snippetsWindow)
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                let targets: [DragCheck.Target] = [
+                    .init(window: .settings, open: { settingsWindow.show() }, close: { DragCheck.close(titled: tr("Ledgelings Settings")) },
+                          place: { DragCheck.titled(tr("Ledgelings Settings")) }),
+                    .init(window: .relationships, open: { relationships.show() }, close: { DragCheck.close(titled: tr("Relationships")) },
+                          place: { DragCheck.titled(tr("Relationships")) }),
+                    .init(window: .snippets, open: { snippets.show() }, close: { DragCheck.close(titled: tr("Snippets")) },
+                          place: { DragCheck.titled(tr("Snippets")) }),
+                    .init(window: .actions, open: { actions.show() }, close: { if actions.isUp { actions.toggle() } }, place: { DragCheck.note() }),
+                    .init(window: .reminder, open: { note.show() }, close: { note.close() }, place: { DragCheck.note() }),
+                    .init(window: .tools, open: { tools.show() }, close: { tools.close() }, place: { DragCheck.paper(tools.model.paper) }),
+                    .init(window: .translate, open: { translate.sheet.show() }, close: { translate.sheet.close() },
+                          place: { DragCheck.paper(translate.sheet.model.paper) }),
+                    .init(window: .readAloud, open: { readAloud.sheet.show(text: nil, start: false) }, close: { readAloud.sheet.close() },
+                          place: { DragCheck.paper(readAloud.sheet.model.paper) }),
+                    .init(window: .clipPicker, open: { picker.show(.recent) }, close: { picker.close() }, place: { DragCheck.paper(picker.model.paper) }),
+                ]
+                let only = value("--drag-check").flatMap(WindowPlaces.Window.init(rawValue:))
+                exit(await DragCheck.run(targets.filter { only == nil || $0.window == only }, settings: settings) ? 0 : 1)
+            }
+        }
         if args.contains("--tools") {
             let toolsScreen = toolsScreen
             Task { @MainActor in

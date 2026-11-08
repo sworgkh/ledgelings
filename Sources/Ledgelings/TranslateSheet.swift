@@ -73,11 +73,11 @@ final class TranslateSheetController {
         model.state = .idle
         model.status = ""
         guard panel == nil else { edited(now: true); return }
-        let screen = given ?? ClipPickerController.screen(caret: caret)
+        let (screen, paper) = WindowPlacer.paper(.translate, size: Self.size, screen: given ?? ClipPickerController.screen(caret: caret), settings: settings)
         let made = ClipPanel(frame: screen.visibleFrame)
-        let paper = CGRect(x: (screen.visibleFrame.width - Self.size.width) / 2, y: (screen.visibleFrame.height - Self.size.height) / 2,
-                           width: Self.size.width, height: Self.size.height).integral
         model.paper = paper
+        model.room = screen.visibleFrame.size
+        model.moved = { [settings] in WindowPlacer.paperMoved(.translate, paper: $0, room: screen.visibleFrame, settings: settings) }
         model.unfolded = !settings.clipAnimate
         let hosting = NSHostingView(rootView: TranslateSheetView(model: model))
         hosting.frame = CGRect(origin: .zero, size: screen.visibleFrame.size)
@@ -390,6 +390,9 @@ final class TranslateSheetModel: ObservableObject {
     @Published var unfolded = true
     @Published var anchor = UnitPoint.center
     @Published var paper = CGRect.zero
+    /// The panel the paper is drawn in, and where the owner let go of it after a drag.
+    var room = CGSize.zero
+    var moved: (CGRect) -> Void = { _ in }
     /// The text box, for the keys a menu-bar app has no Edit menu for.
     weak var textView: NSTextView?
     var cursorAtEnd = true
@@ -440,6 +443,7 @@ struct TranslateSheetView: View {
             Color.black.opacity(0.001).onTapGesture { model.close() }
             sheet
                 .frame(width: paper.width, height: paper.height)
+                .paperDrag($model.paper, room: model.room, enabled: model.unfolded) { model.moved($0) }
                 .scaleEffect(model.unfolded ? 1 : 0.06, anchor: model.anchor)
                 .opacity(model.unfolded ? 1 : 0)
                 .offset(x: paper.minX, y: paper.minY)

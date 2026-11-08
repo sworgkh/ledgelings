@@ -34,7 +34,11 @@ extension Strings {
         "pose %@ is not one of %@": "поза %@ — не из списка: %@",
         "pose %@ has %d rows, not %d": "в позе %@ строк: %d, а нужно %d",
         "pose %@, row %d has %d letters, not %d": "поза %@, строка %d: символов %d, а нужно %d",
-        "pose %@, row %d: `%@` is not one of . o b l s k x": "поза %@, строка %d: `%@` — не из . o b l s k x",
+        "pose %@, row %d: `%@` is not one of . o b l s k x or a paint": "поза %@, строка %d: `%@` — не из . o b l s k x и не краска",
+        "paint should be a letter other than . o b l s k x and a colour, like `paint: p #a0603a`, not \"%@\"":
+            "краска — это буква, кроме . o b l s k x, и цвет, например `paint: p #a0603a`, а не «%@»",
+        "paint %@ is too close to a body colour: recolouring would change it":
+            "краска %@ слишком похожа на цвет тела: перекраска её изменит",
         "pose %@ has ink at row %d, column %d, outside columns %d–%d and rows %d–%d":
             "в позе %@ закрашен пиксель в строке %d, столбце %d — за пределами столбцов %d–%d и строк %d–%d",
         "pose %@ does not stand on the floor: row %d is empty": "поза %@ не стоит на полу: строка %d пустая",

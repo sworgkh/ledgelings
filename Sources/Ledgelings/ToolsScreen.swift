@@ -60,11 +60,12 @@ final class ToolsScreenController {
             ToolsScreenModel.Tile(tool: tool, number: i + 1, on: isOn(tool), shortcut: shortcutLabel(tool))
         }
         model.chosen = model.tiles.firstIndex { $0.on } ?? 0
-        let screen = ClipPickerController.screen(caret: ClipPaster.caret())
         let size = Self.size(tiles: tools.count)
+        let (screen, paper) = WindowPlacer.paper(.tools, size: size, screen: ClipPickerController.screen(caret: ClipPaster.caret()), settings: settings)
         let made = ClipPanel(frame: screen.visibleFrame)
-        model.paper = CGRect(x: (screen.visibleFrame.width - size.width) / 2, y: (screen.visibleFrame.height - size.height) / 2,
-                             width: size.width, height: size.height).integral
+        model.paper = paper
+        model.room = screen.visibleFrame.size
+        model.moved = { [settings] in WindowPlacer.paperMoved(.tools, paper: $0, room: screen.visibleFrame, settings: settings) }
         let hosting = NSHostingView(rootView: ToolsScreenView(model: model))
         hosting.frame = CGRect(origin: .zero, size: screen.visibleFrame.size)
         made.contentView = hosting
@@ -146,6 +147,9 @@ final class ToolsScreenModel: ObservableObject {
     @Published var tiles: [Tile] = []
     @Published var chosen = 0
     @Published var paper = CGRect.zero
+    /// The panel the paper is drawn in, and where the owner let go of it after a drag.
+    var room = CGSize.zero
+    var moved: (CGRect) -> Void = { _ in }
     var choose: (Int) -> Void = { _ in }
     var close: () -> Void = {}
 }
@@ -159,7 +163,9 @@ struct ToolsScreenView: View {
         let paper = model.paper
         ZStack(alignment: .topLeading) {
             Color.black.opacity(0.001).onTapGesture { model.close() }
-            sheet.frame(width: paper.width, height: paper.height).offset(x: paper.minX, y: paper.minY)
+            sheet.frame(width: paper.width, height: paper.height)
+                .paperDrag($model.paper, room: model.room) { model.moved($0) }
+                .offset(x: paper.minX, y: paper.minY)
         }
     }
 

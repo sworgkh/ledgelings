@@ -85,11 +85,11 @@ final class ReadAloudSheetController {
         }
         model.readers = [""] + readers()
         guard panel == nil else { if start { readNow() }; return }
-        let screen = given ?? ClipPickerController.screen(caret: ClipPaster.caret())
+        let (screen, paper) = WindowPlacer.paper(.readAloud, size: Self.size, screen: given ?? ClipPickerController.screen(caret: ClipPaster.caret()), settings: settings)
         let made = ClipPanel(frame: screen.visibleFrame)
-        let paper = CGRect(x: (screen.visibleFrame.width - Self.size.width) / 2, y: (screen.visibleFrame.height - Self.size.height) / 2,
-                           width: Self.size.width, height: Self.size.height).integral
         model.paper = paper
+        model.room = screen.visibleFrame.size
+        model.moved = { [settings] in WindowPlacer.paperMoved(.readAloud, paper: $0, room: screen.visibleFrame, settings: settings) }
         model.unfolded = !settings.clipAnimate
         let hosting = NSHostingView(rootView: ReadAloudSheetView(model: model, player: player))
         hosting.frame = CGRect(origin: .zero, size: screen.visibleFrame.size)
@@ -350,6 +350,9 @@ final class ReadAloudSheetModel: ObservableObject {
     @Published var unfolded = true
     @Published var anchor = UnitPoint.center
     @Published var paper = CGRect.zero
+    /// The panel the paper is drawn in, and where the owner let go of it after a drag.
+    var room = CGSize.zero
+    var moved: (CGRect) -> Void = { _ in }
     weak var textView: NSTextView?
 
     var act: (ReadAloud.Button) -> Void = { _ in }
@@ -389,6 +392,7 @@ struct ReadAloudSheetView: View {
             Color.black.opacity(0.001).onTapGesture { model.close() }
             sheet
                 .frame(width: paper.width, height: paper.height)
+                .paperDrag($model.paper, room: model.room, enabled: model.unfolded) { model.moved($0) }
                 .scaleEffect(model.unfolded ? 1 : 0.06, anchor: model.anchor)
                 .opacity(model.unfolded ? 1 : 0)
                 .offset(x: paper.minX, y: paper.minY)

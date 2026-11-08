@@ -26,9 +26,10 @@ final class RelationshipsWindowController {
             made.styleMask = [.titled, .closable, .resizable]
             made.isReleasedWhenClosed = false
             made.setContentSize(Self.size)
-            made.center()
+            WindowPlacer.place(made, as: .relationships, settings: settings) { made.center() }
             window = made
         }
+        if let window { WindowPlacer.watch(window, as: .relationships, settings: settings) }
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
     }

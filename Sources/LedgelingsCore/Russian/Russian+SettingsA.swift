@@ -108,7 +108,8 @@ extension Strings {
         "click a picture, or press its letter · %@ opens and closes this": "нажмите на картинку или её букву · %@ открывает и закрывает лист",
         "Start Ledgelings when you log in": "Запускать Ledgelings при входе в систему",
         "Language and startup": "Язык и запуск",
-        "Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the system's Login Items.": "Меню, настройки и речь существ. Изменённые вами промпты не меняются. Запуск — через системные объекты входа.",
+        "Menus, settings and what the creatures say. Prompts you edited stay as written. Login uses the system's Login Items. A window or sheet you drag somewhere opens there next time, unless that screen is gone.": "Меню, настройки и речь существ. Изменённые вами промпты не меняются. Запуск — через системные объекты входа. Окно или лист, которые вы перетащили, в следующий раз откроются там же, если этот экран ещё подключён.",
+        "Remember where windows were moved": "Помнить, куда передвинуты окна",
 
         // Talk
         "Creatures talk when they bump into each other": "Существа разговаривают при встрече",
