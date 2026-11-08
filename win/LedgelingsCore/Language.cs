@@ -200,6 +200,16 @@ public sealed class Shared
     public string[] BedSettleAnyone { get; init; } = Array.Empty<string>();
     public Dictionary<string, string[]> BedMovedLines { get; init; } = new();
     public string[] BedMovedAnyone { get; init; } = Array.Empty<string>();
+    /// <summary>The plot twists' lines (SPEC §6.5.2.4): about someone new, gone, back, and its own arrival; by character, and for anyone.</summary>
+    public Dictionary<string, string> GangNew { get; init; } = new();
+    public Dictionary<string, string> GangGone { get; init; } = new();
+    public Dictionary<string, string> GangBack { get; init; } = new();
+    public Dictionary<string, string> GangArrival { get; init; } = new();
+    public string[] GangNewAnyone { get; init; } = Array.Empty<string>();
+    public string[] GangGoneAnyone { get; init; } = Array.Empty<string>();
+    public string[] GangBackAnyone { get; init; } = Array.Empty<string>();
+    public string[] GangArrivalAnyone { get; init; } = Array.Empty<string>();
+    public string[] GangBackSelfAnyone { get; init; } = Array.Empty<string>();
     /// <summary>The play lines (SPEC §7.10): as a game starts, by character and game (and for anyone, by game),
     /// and once it is over.</summary>
     public Dictionary<string, Dictionary<string, string>> PlayStart { get; init; } = new();
@@ -274,6 +284,7 @@ public sealed class Shared
         var revenge = Get(root, "revenge");
         string[] allMoods = { "good", "neutral", "bad" };
         var beds = Get(root, "beds");
+        var gang = Get(root, "gang");
         var plays = Get(root, "plays");
         var clipHelper = Get(root, "clipHelper");
         var playStart = Get(plays, "start");
@@ -313,6 +324,15 @@ public sealed class Shared
             BedSettleAnyone = List(Get(beds, "settleAnyone")),
             BedMovedLines = Lists(Get(beds, "moved")),
             BedMovedAnyone = List(Get(beds, "movedAnyone")),
+            GangNew = Map(Get(gang, "new")),
+            GangGone = Map(Get(gang, "gone")),
+            GangBack = Map(Get(gang, "back")),
+            GangArrival = Map(Get(gang, "arrival")),
+            GangNewAnyone = List(Get(gang, "newAnyone")),
+            GangGoneAnyone = List(Get(gang, "goneAnyone")),
+            GangBackAnyone = List(Get(gang, "backAnyone")),
+            GangArrivalAnyone = List(Get(gang, "arrivalAnyone")),
+            GangBackSelfAnyone = List(Get(gang, "backSelfAnyone")),
             PlayStart = playStart.ValueKind == JsonValueKind.Object ? playStart.EnumerateObject().ToDictionary(p => p.Name, p => Map(p.Value)) : new(),
             PlayStartAnyone = Map(Get(plays, "startAnyone")),
             PlayDone = Lists(Get(plays, "done")),

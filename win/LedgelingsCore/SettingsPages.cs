@@ -9,7 +9,7 @@ public enum SettingsPage
 {
     Creatures, Actions, Sprites, Beds, Flowers, Calendar,
     Chases, Play, BallGames,
-    Talk, Voice, Bonds, Relationships,
+    Talk, Voice, Bonds, Relationships, Twists,
     Tools, Reminders, Clipboard, Dictation, Translate, ReadAloud,
     Costs, Chats,
 }
@@ -28,6 +28,7 @@ public static class SettingsPages
         SettingsPage.BallGames => "Ball games",
         SettingsPage.Tools => "Tools screen",
         SettingsPage.ReadAloud => "Read aloud",
+        SettingsPage.Twists => "Plot twists",
         _ => page.ToString(),
     };
 
@@ -37,7 +38,7 @@ public static class SettingsPages
     {
         SettingsPage.Creatures or SettingsPage.Actions or SettingsPage.Sprites or SettingsPage.Beds or SettingsPage.Flowers or SettingsPage.Calendar => SettingsGroup.CreaturesAndWorld,
         SettingsPage.Chases or SettingsPage.Play or SettingsPage.BallGames => SettingsGroup.Games,
-        SettingsPage.Talk or SettingsPage.Voice or SettingsPage.Bonds or SettingsPage.Relationships => SettingsGroup.TalkAndFriends,
+        SettingsPage.Talk or SettingsPage.Voice or SettingsPage.Bonds or SettingsPage.Relationships or SettingsPage.Twists => SettingsGroup.TalkAndFriends,
         SettingsPage.Costs or SettingsPage.Chats => SettingsGroup.MoneyAndHistory,
         _ => SettingsGroup.Tools,
     };

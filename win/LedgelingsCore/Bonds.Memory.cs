@@ -264,6 +264,8 @@ public static partial class Bonds
                 case MomentKind.Plane:
                     return m.Who == name ? L10n.Tr("sent %@ a paper plane at %@", others, time) : L10n.Tr("got a paper plane from %@ at %@", m.Who, time);
                 case MomentKind.Grab: return L10n.Tr("grabbed the cursor at %@", time);
+                case MomentKind.Meet:
+                    return m.Who == name ? L10n.Tr("met %@ for the first time at %@", others, time) : L10n.Tr("met the newcomer %@ at %@", m.Who, time);
                 default: return "";
             }
         }).ToList();

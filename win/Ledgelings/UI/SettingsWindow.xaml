@@ -1071,6 +1071,65 @@
         </Grid>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Plot twists">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <!-- Two columns, as the Mac's: the settings on the left, the news and the gang on the right. -->
+        <Grid Margin="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid.Resources>
+            <Style x:Key="Over" TargetType="TextBlock">
+              <Setter Property="TextWrapping" Value="Wrap"/>
+              <Setter Property="Margin" Value="0,6,0,0"/>
+            </Style>
+            <Style x:Key="Shown" TargetType="TextBlock">
+              <Setter Property="Width" Value="64"/>
+              <Setter Property="TextAlignment" Value="Right"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="DockPanel.Dock" Value="Right"/>
+            </Style>
+          </Grid.Resources>
+          <StackPanel Grid.Column="0">
+            <GroupBox ui:Tr.Header="Plot twists">
+              <StackPanel>
+                <CheckBox ui:Tr.Content="A newcomer or a departure is news for days" IsChecked="{Binding TwistsEnabled, Mode=TwoWay}"/>
+                <CheckBox ui:Tr.Content="Someone leaving is news too" IsChecked="{Binding TwistDepartures, Mode=TwoWay}" IsEnabled="{Binding TwistsEnabled}" Margin="0,4,0,0"/>
+                <TextBlock ui:Tr.Text="The news stays a topic for" Style="{StaticResource Over}"/>
+                <DockPanel IsEnabled="{Binding TwistsEnabled}">
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding TwistDays}"/>
+                  <Slider Minimum="1" Maximum="14" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding TwistDays, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock ui:Tr.Text="Conversations that bring it up at first" Style="{StaticResource Over}"/>
+                <DockPanel IsEnabled="{Binding TwistsEnabled}">
+                  <TextBlock Style="{StaticResource Shown}" Text="{Binding TwistChance, StringFormat={}{0:0}%}"/>
+                  <Slider Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding TwistChance, Mode=TwoWay}"/>
+                </DockPanel>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="When a character new to the gang turns up (a species switched on, more creatures, an imported sprite, a new one in an update), or one leaves, the others talk about it: welcome, suspicion, gossip, missing someone. The chance fades to nothing as the news gets old. Sleeping or moving to another monitor is not leaving."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="What it does">
+              <TextBlock TextWrapping="Wrap" Foreground="Gray" ui:Tr.Text="The news rides in the prompts already sent (talk, tea, letters, stories, the diary), so it costs a few tokens and no call of its own. Without a model each character has a line of its own about someone new, someone gone and someone back. A newcomer's first meeting with each of the others is kept in their storyline, and a departure in the closest friends' memory."/>
+            </GroupBox>
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+            <GroupBox ui:Tr.Header="News in the gang">
+              <StackPanel>
+                <TextBlock x:Name="GangNews" TextWrapping="Wrap"/>
+                <Button x:Name="ForgetNews" ui:Tr.Content="Forget the News" Click="ForgetNews_Click" HorizontalAlignment="Right" Margin="0,8,0,0" Padding="8,2"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="A change counts once it has held for two minutes. Forget the News ends every topic now; the gang is still remembered."/>
+              </StackPanel>
+            </GroupBox>
+            <GroupBox ui:Tr.Header="The gang">
+              <StackPanel>
+                <TextBlock x:Name="GangMembers" TextWrapping="Wrap"/>
+                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Everyone who has ever been on screen, kept by name in bonds.json: a rename is a newcomer."/>
+              </StackPanel>
+            </GroupBox>
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Calendar">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">

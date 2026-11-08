@@ -14,7 +14,6 @@ public static partial class WindowsStrings
         ["Add a Reminder"] = "Добавить напоминание",
         ["Every call to a model, text or voice, is priced as OpenRouter reports it; LM Studio, a local speech server and Windows' own voices are free."] = "Каждый вызов модели, текстовой или речевой, оценивается так, как сообщает OpenRouter; LM Studio, локальный речевой сервер и собственные голоса Windows бесплатны.",
         ["A paper note: Add a Reminder… (%@ anywhere, or the tray menu) opens a sheet of the same paper to write a reminder on; off, it opens this tab."] = "Бумажная записка: «Добавить напоминание…» (%@ где угодно или меню в трее) открывает лист той же бумаги, чтобы написать напоминание; если выключено, открывается эта вкладка.",
-        ["Text"] = "Текст",
         ["All files"] = "Все файлы",
         ["the clipboard is busy; try again"] = "буфер обмена занят; попробуйте ещё раз",
         ["Sprite sheets"] = "Листы спрайтов",

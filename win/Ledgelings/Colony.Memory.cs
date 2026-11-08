@@ -65,7 +65,7 @@ public sealed partial class Colony
         var key = Core.Bonds.Key(a, b);
         if (Settings.ChatClient() is not ChatClient service || Bonds.Bond(a, b) is not Core.Bonds.Bond bond || writingMemory.Contains(key)) return;
         var values = Core.Bonds.MemoryValues(bond, Who(bond.Names[0]), Who(bond.Names[1]), TodaysLines(a, b), Settings.StoryWords, Settings.MemoryFacts);
-        var prompt = Banter.Render(Core.Bonds.DiaryPrompt, values);
+        var prompt = Gang.WithNews(Banter.Render(Core.Bonds.DiaryPrompt, values), PairNews);
         writingMemory.Add(key);
         Trace?.Invoke($"memory {key}: writing the diary, {Core.Bonds.Tokens(prompt)} tokens or so");
         _ = Write();

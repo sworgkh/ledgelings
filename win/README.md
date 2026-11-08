@@ -24,7 +24,10 @@ match, from a closed list checked against what is possible and the owner's limit
 in each character's own words; the tray's *Deeds from Talk*), games in their day (each game's score, winners and who
 asked for it, for every pair of players), and long-term memory between pairs (facts, a games record, a line a day, the
 block every prompt carries within its token budget, the nightly diary, and the seed that reads the chat log's past in),
-all on the Relationships tab, with every pair's memory in the *Relationships…* window.
+all on the Relationships tab, with every pair's memory in the *Relationships…* window;
+and plot twists (a newcomer to the gang, or someone gone, is news for a few days: gossip, welcomes and missing them in
+every character's own words, a first meeting in each storyline, a departure in the closest friends' memory; the
+Plot twists tab).
 
 ## Stack
 
@@ -218,7 +221,7 @@ core tests are the Swift tests line for line.
   with the Mac's video APIs.
 - **The command-line checks** (`--settings … --snapshot`, `--actions --activities`, `--screens`, `--say`, `--cast`,
   `--converse` (and `--converse --invite`), `--tea`, `--plot`, `--remind`, `--note`, `--memory`, `--memory-seed`, `--diary`,
-  `--relationships --snapshot`, `--invite-film`); the seed runs from the Relationships tab, its log on the console. A Windows colony always
+  `--relationships --snapshot`, `--invite-film`, `--twist`); the seed runs from the Relationships tab, its log on the console. A Windows colony always
   opens real overlay windows, so the Mac's colony-level tests (`ColonyTalkTests`)
   are not ported either (nor the Mac's colony-level play tests in `PlaySettingsTests` and `RelationshipsSettingsTests`, nor
   `HomeScreenSettingsTests` beyond its settings test); the core tests are, `PlaysTests` and `HomeScreenTests` among them.

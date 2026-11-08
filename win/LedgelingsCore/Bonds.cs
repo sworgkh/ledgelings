@@ -108,6 +108,8 @@ public static partial class Bonds
     public sealed partial class Book
     {
         public Dictionary<string, Bond> Bonds { get; set; } = new();
+        /// <summary>Who has ever been on screen, and how the gang changed lately (<see cref="Gang"/>).</summary>
+        public Gang.Roster Gang { get; set; } = new();
 
         public Bond? Bond(string a, string b) => Bonds.TryGetValue(Key(a, b), out var bond) ? bond : null;
 
