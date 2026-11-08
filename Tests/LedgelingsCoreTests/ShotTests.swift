@@ -184,6 +184,130 @@ import Testing
     }
 }
 
+@Suite struct ShotTextTests {
+    static let text = Shot.Text(string: "Hi", centre: CGPoint(x: 150, y: 350), size: 24, font: .rounded, angle: 30, colour: 2)
+
+    @Test func aTextMarkScalesBetweenA2xAndA1xScreen() {
+        let laptop = Shot.Monitor(frame: CGRect(x: 0, y: 0, width: 1440, height: 900), scale: 2)
+        let monitor = Shot.Monitor(frame: CGRect(x: 1440, y: -180, width: 1920, height: 1080), scale: 1)
+        // An area on the 2× laptop: the middle in its pixels, the size twice as big, the turn the same.
+        let area = Shot.Mapping.area(CGRect(x: 100, y: 100, width: 400, height: 300), scale: 2)
+        #expect(area.pixels(.text(Self.text)) == .text(Shot.Text(string: "Hi", centre: CGPoint(x: 100, y: 100), size: 48, font: .rounded, angle: 30, colour: 2)))
+        // Every monitor: on the 1× one it keeps its size, 10 pt in from its top-left is pixel 2880 + 10.
+        var there = Self.text
+        there.centre = CGPoint(x: 1450, y: 890)
+        let all = Shot.Mapping.all([laptop, monitor])
+        #expect(all.pixels(.text(there)).text?.size == 24)
+        #expect(all.pixels(.text(there)).text?.centre == CGPoint(x: 2890, y: 10))
+        #expect(all.pixels(.text(Self.text)).text?.size == 48)
+    }
+
+    @Test func aTurnedBoxHasItsCornersTurned() {
+        var t = Self.text
+        t.centre = .zero
+        t.angle = 90
+        let box = CGSize(width: 100, height: 20)
+        // A quarter turn counter-clockwise: the top-left corner goes to the bottom-left of the screen.
+        let corners = t.corners(box)
+        #expect(abs(corners[0].x + 10) < 0.001 && abs(corners[0].y + 50) < 0.001)
+        #expect(abs(t.bounds(box).width - 20) < 0.001 && abs(t.bounds(box).height - 100) < 0.001)
+        #expect(t.contains(CGPoint(x: 0, y: 45), box: box))
+        #expect(!t.contains(CGPoint(x: 45, y: 0), box: box))
+        // Counted y down, as a picture is, the same corner is upside down.
+        let down = t.corners(box, yDown: true)
+        #expect(abs(down[0].x + 10) < 0.001 && abs(down[0].y - 50) < 0.001)
+        // A point goes out and back.
+        let p = CGPoint(x: 12, y: -7)
+        let back = t.local(t.global(p))
+        #expect(abs(back.x - p.x) < 0.001 && abs(back.y - p.y) < 0.001)
+        #expect(abs(t.turnHandle(box, gap: 10).x + 20) < 0.001)
+    }
+
+    @Test func aTextGrowsFromItsTopLeftCorner() {
+        let old = Self.text, box = CGSize(width: 40, height: 30)
+        var longer = old
+        longer.string = "Hi there"
+        let moved = longer.keepingTopLeft(of: old, oldBox: box, box: CGSize(width: 120, height: 30))
+        let a = old.global(CGPoint(x: -20, y: 15)), b = moved.global(CGPoint(x: -60, y: 15))
+        #expect(abs(a.x - b.x) < 0.001 && abs(a.y - b.y) < 0.001)
+        #expect(moved.centre != old.centre)
+    }
+
+    @Test func turnsSnapAndStayInRange() {
+        #expect(Shot.snap(22, step: 15) == 15)
+        #expect(Shot.snap(23, step: 15) == 30)
+        #expect(Shot.snap(-8, step: 15) == -15)
+        #expect(Shot.snap(184, step: 15) == 180)
+        #expect(Shot.normalised(190) == -170)
+        #expect(Shot.normalised(-180) == 180)
+        #expect(Shot.normalised(720) == 0)
+    }
+
+    @Test func sizesStepThroughTheList() {
+        #expect(Shot.textSize(after: 24, bigger: true) == 28)
+        #expect(Shot.textSize(after: 24, bigger: false) == 20)
+        #expect(Shot.textSize(after: 25, bigger: false) == 24)
+        #expect(Shot.textSize(after: 96, bigger: true) == 96)
+        #expect(Shot.textSize(after: 12, bigger: false) == 12)
+        #expect(Shot.textSizes.allSatisfy(Shot.textSizeRange.contains))
+    }
+
+    @Test func typingInsertsAndDeletesAtTheCaret() {
+        var t = Self.text, caret = 1
+        t.insert("ey", at: &caret)
+        #expect(t.string == "Heyi" && caret == 3)
+        t.deleteBackward(at: &caret)
+        #expect(t.string == "Hei" && caret == 2)
+        t.deleteForward(at: caret)
+        #expect(t.string == "He" && caret == 2)
+        t.deleteForward(at: caret)
+        #expect(t.string == "He")
+        caret = 0
+        t.deleteBackward(at: &caret)
+        #expect(t.string == "He" && caret == 0)
+        var blank = Self.text
+        blank.string = " \n "
+        #expect(Shot.Mark.text(blank).isTiny)
+        #expect(!Shot.Mark.text(Self.text).isTiny)
+    }
+
+    @Test func textsAreDrawnLastSoABlurGoesUnderThem() {
+        let blur = Shot.Mark.blur(CGRect(x: 0, y: 0, width: 50, height: 50))
+        let box = Shot.Mark.box(CGRect(x: 0, y: 0, width: 50, height: 50), colour: 0, thickness: 2)
+        #expect(Shot.drawingOrder([.text(Self.text), blur, box]) == [blur, box, .text(Self.text)])
+    }
+
+    @Test func undoAndRedoWalkThroughTheChanges() {
+        var history = Shot.History()
+        let one: [Shot.Mark] = [.text(Self.text)]
+        var turned = Self.text
+        turned.angle = 45
+        let two: [Shot.Mark] = [.text(turned)]
+        history.record([])
+        history.record(one)
+        #expect(history.undo(two) == one)
+        #expect(history.undo(one) == [])
+        #expect(history.undo([]) == nil)
+        #expect(history.redo([]) == one)
+        #expect(history.redo(one) == two)
+        #expect(history.redo(two) == nil)
+        // A new change after an undo drops what could be redone.
+        _ = history.undo(two)
+        history.record(one)
+        #expect(!history.canRedo && history.canUndo)
+    }
+
+    @Test func fontsStepRoundAndHaveNames() {
+        #expect(Shot.Font.system.next(in: Shot.Font.allCases) == .rounded)
+        #expect(Shot.Font.hand.next(in: Shot.Font.allCases) == .system)
+        #expect(Shot.Font.hand.next(in: [.system, .serif]) == .system)
+        for f in Shot.Font.allCases {
+            #expect(!f.title.isEmpty)
+            #expect(Shot.fontTooltip(f).contains("⌘F"))
+        }
+    }
+}
+
 @Suite struct ShotButtonTests {
     @Test func everyToolbarButtonHasAPictureAndATooltip() {
         for button in Shot.Button.allCases {
@@ -202,6 +326,17 @@ import Testing
     @Test func noTwoButtonsLookAlike() {
         let pictures = Shot.Button.allCases.map { $0.icon.joined() }
         #expect(Set(pictures).count == pictures.count)
+    }
+
+    @Test func theTextsButtonsTellTheirKeysAndTheTurnItsStep() {
+        Language.$override.withValue(.english) {
+            #expect(Shot.Button.text.tooltip() == "Add text (T)")
+            #expect(Shot.Button.turnLeft.tooltip(step: 30) == "Turn the text 30° left (⌘[)")
+            #expect(Shot.Button.turnRight.tooltip() == "Turn the text 15° right (⌘])")
+        }
+        // T is no other button's key.
+        let keys = Shot.Button.allCases.map(\.key)
+        #expect(Set(keys).count == keys.count)
     }
 
     @Test func everyModeAndToolHasItsButton() {

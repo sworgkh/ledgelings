@@ -155,11 +155,15 @@ with `scripts/make-app.sh`, installed and seen working.
   shows the screen (`shot Built-in Retina Display: 3024×1964 px at 2×, 412 colours in a sample`); exit 1 if
   not. Like `--paste-check`, from a terminal it borrows the terminal's permission.
 - `--shot-demo [--snapshot out.png]` takes a toolbar shot of the real screens (a rectangle, box, arrow,
-  blur, hand blur, an undo, the real pointer resting on the blur button for its tag, ⌘C), checks the clipboard holds that PNG, takes the last rectangle again, and
+  blur, hand blur, an undo, a text typed and turned 30° with its last key and ⏎ pressed on the real keyboard, the real pointer
+  resting on the blur button for its tag, ⌘C), checks the clipboard holds that PNG with the text's pixels inside its turned box
+  and nowhere else, takes the last rectangle again, and
   puts the clipboard and settings back; each step with its time. Exit 1 if wrong.
 - `--shot-film out.mp4` films the screenshot tool offscreen on two simulated monitors (2× and 1×), writing the
   toolbar beside the film as it stands (`…-toolbar.png`) and with a hover tag (`…-toolbar-tip.png`): a
-  rectangle with marks and blurs, a lasso, all monitors, the last rectangle again; writes each PNG beside
+  rectangle with marks and blurs and a text typed over the blur, given another font, made bigger and turned by
+  its handle (stills `…-text-typed.png`, `…-text-font.png`, `…-text-size.png`, `…-text-turned.png`, `…-text-done.png`,
+  and the font menu `…-toolbar-fonts.png`), a lasso, all monitors, the last rectangle again; writes each PNG beside
   the film and prints each step (`film 7.40 taken 800×520 px, 4 marks`).
 - `--mic-check` prints whether this build may use the microphone and records 1.5 s (`mic heard 1.50 s, 24000 samples
   at 16000 Hz, loudest 0.41`); exit 1 if refused or silent. Like `--paste-check`, from a terminal it borrows the

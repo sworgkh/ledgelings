@@ -793,11 +793,23 @@ key ("Blur rectangle (X)"). The keys below do the same without the mouse.
 | `A` | All monitors in one picture, each at its own sharpness (a Retina screen beside a plain one keeps both as they are) |
 | `B` · `→` · `H` | Once there is an area: a box, an arrow, a translucent highlight |
 | `X` · `F` | Blur a rectangle, or blur by hand with a brush four times the line's width. The blur is big square blocks baked into the picture: what was under it cannot be read back |
-| `1`–`6` | Red, yellow, green, blue, white, black; the toolbar remembers the last one |
-| ⌘Z | Undo the last mark |
+| `T` | Text: click where the words go and type, in the mark colour. ⏎ ends it, ⇧⏎ starts a new line, ⎋ drops it; a click elsewhere ends it too. While a text is typed every key goes into it |
+| ⌘F · ⌘− ⌘+ · ⌘[ ⌘] | The text's next font · a size down or up (12 to 96 pt) · a turn left or right by the step set below. They work while typing, and on a text clicked or dragged |
+| `1`–`6` | Red, yellow, green, blue, white, black; the toolbar remembers the last one. With a text picked out, it changes colour too |
+| ⌘Z · ⇧⌘Z | Undo the last change (a mark, a text placed, typed, moved, turned, sized or given a font) · redo it |
 | ⏎ | Take it: to the clipboard and/or the folder, as set below. With no area chosen, the whole screen under the cursor |
 | ⌘C · ⌘S | Copy only · save (and copy, if copying is on) |
 | ⎋ | Let go, at any step; ⌃⌥S again does the same |
+
+**Texts** stay changeable until the shot is taken. With the Text tool, click a text to type
+into it again, or drag it to move it; picked out, it shows a rim, a handle on a stalk above
+it that turns it (hold ⇧ to turn in steps) and a handle at its bottom-right corner that
+sizes it; ⌫ deletes it, ⎋ lets it go. The toolbar's text buttons are a font button (its
+name in its own font; click it for a row of the Mac's fonts under the toolbar: System,
+Rounded, Monospaced, Serif and, where the Mac has one, Handwriting), smaller, the size,
+bigger, and a turn either way. Words are always drawn over every other mark, so a blur
+goes under a text and never over it. In the picture they are drawn at the screen's own
+sharpness, turned exactly as shown.
 
 A toast says what happened (*Copied 1280×720*, *Saved Screenshot 2026-10-18 14.03.22.png*)
 and a creature hops up to where the toolbar was and carries a tiny picture of the shot
@@ -812,6 +824,8 @@ back to its edge. A copy also lands in the clipboard history as a picture.
 | **Full screen at once** (`shotFullShortcut…`) | on, ⌘⇧8 | | ⌘⇧\* on the keyboard. Straight to the output, no toolbar |
 | **Full screen takes** (`shotFullScope`) | All screens, in one picture | or *The screen under the cursor* | With one monitor they are the same |
 | **The last rectangle again** (`shotLastShortcut…`) | on, ⌘⇧\\ | | The same screen area as the last rectangle dragged on the toolbar, straight out. Safari uses ⌘⇧\\ for its tab overview: while this is on, it is ours |
+| **Hide the creatures while capturing** (`shotHideCreatures`) | on | | Hidden from the screen and left out of the picture |
+| **A creature brings the shot home** (`shotCreatureBrings`) | on | | One hops to the toolbar's spot, picks up an 18×14-pixel picture of the shot and carries it home |
 
 A shortcut another app already holds is refused, and a red line under the shortcuts says which.
 
@@ -824,8 +838,10 @@ A shortcut another app already holds is refused, and a red line under the shortc
 | **Folder** (`shotFolder`) | `~/Desktop/Screenshots` | **Choose…**, **Show** | Made on the first save. Files are named for their time: `Screenshot 2026-10-18 14.03.22.png`, then ` (2)`… if taken |
 | **Line thickness** (`shotThickness`) | 3 pt | 1 to 8 pt | Boxes and arrows; the hand blur is four times as wide |
 | **Colour** (`shotColour`) | red | six squares | The toolbar starts on it; picking one on the toolbar changes it |
-| **Hide the creatures while capturing** (`shotHideCreatures`) | on | | Hidden from the screen and left out of the picture |
-| **A creature brings the shot home** (`shotCreatureBrings`) | on | | One hops to the toolbar's spot, picks up an 18×14-pixel picture of the shot and carries it home |
+| **Font** (`shotTextFont`) | Rounded | System, Rounded, Monospaced, Serif, Handwriting | A new text starts in it; picking a font on the toolbar changes it. Handwriting is the Mac's Bradley Hand (else Noteworthy, Chalkboard or Marker Felt); a Mac with none of them has no Handwriting |
+| **Size** (`shotTextSize`) | 24 pt | 12 to 96 pt | A new text's size; the last size used on the toolbar changes it |
+| **An outline, so it reads on any background** (`shotTextOutline`) | on | | A rim round the letters: dark round light colours, white round dark ones |
+| **Turn in steps of** (`shotTextSnap`) | 15° | 5° to 90°, in fives | How far ⌘[ ⌘] and the turn buttons turn a text, and the steps it turns in while ⇧ is held on its handle |
 
 The last rectangle (`shotLastRect`) is remembered across relaunches; it has no switch.
 

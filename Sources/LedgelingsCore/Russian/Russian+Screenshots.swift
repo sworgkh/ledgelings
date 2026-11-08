@@ -36,6 +36,26 @@ extension Strings {
             "ВЫДЕЛИ ОБЛАСТЬ · W ЭКРАН · A ВСЕ ЭКРАНЫ · ⏎ ВЕСЬ ЭКРАН · ⎋ ОТМЕНА",
         "DRAW A LOOP AROUND IT · ⏎ THE WHOLE SCREEN · ⎋ CANCEL": "ОБВЕДИ ПЕТЛЁЙ · ⏎ ВЕСЬ ЭКРАН · ⎋ ОТМЕНА",
         "%@ · 1–6 COLOUR · ⌘Z UNDO · ⏎ COPY · ⌘S SAVE · ⎋ CANCEL": "%@ · 1–6 ЦВЕТ · ⌘Z ОТМЕНИТЬ · ⏎ КОПИЯ · ⌘S СОХРАНИТЬ · ⎋ ОТМЕНА",
+        // Text
+        "Text": "Текст",
+        "Add text (T)": "Добавить текст (T)",
+        "Choose the font (⌘F for the next one)": "Выбрать шрифт (⌘F — следующий)",
+        "Smaller text (⌘−)": "Текст мельче (⌘−)",
+        "Bigger text (⌘+)": "Текст крупнее (⌘+)",
+        "Turn the text %@° left (⌘[)": "Повернуть текст на %@° влево (⌘[)",
+        "Turn the text %@° right (⌘])": "Повернуть текст на %@° вправо (⌘])",
+        "%@ font (⌘F for the next one)": "Шрифт «%@» (⌘F — следующий)",
+        "System": "Системный",
+        "Rounded": "Округлый",
+        "Monospaced": "Моноширинный",
+        "Serif": "С засечками",
+        "Handwriting": "Рукописный",
+        "TYPING · ⇧⏎ NEW LINE · ⏎ DONE · ⎋ DROP IT · ⌘[ ⌘] TURN · ⌘− ⌘+ SIZE · ⌘F FONT":
+            "ПЕЧАТАЕШЬ · ⇧⏎ НОВАЯ СТРОКА · ⏎ ГОТОВО · ⎋ УБРАТЬ · ⌘[ ⌘] ПОВОРОТ · ⌘− ⌘+ РАЗМЕР · ⌘F ШРИФТ",
+        "DRAG TO MOVE · TOP HANDLE TURNS (⇧ IN STEPS) · CORNER SIZES · CLICK TO TYPE · ⌫ DELETE · ⎋ DONE":
+            "ТАЩИ, ЧТОБЫ ДВИГАТЬ · ВЕРХНЯЯ РУЧКА ПОВОРАЧИВАЕТ (⇧ ШАГАМИ) · УГОЛ МЕНЯЕТ РАЗМЕР · ЩЕЛЧОК — ПЕЧАТАТЬ · ⌫ УДАЛИТЬ · ⎋ ГОТОВО",
+        "TEXT · CLICK TO TYPE · CLICK A TEXT TO CHANGE IT · ⌘Z UNDO · ⇧⌘Z REDO · ⏎ COPY · ⎋ CANCEL":
+            "ТЕКСТ · ЩЕЛЧОК — ПЕЧАТАТЬ · ЩЕЛЧОК ПО ТЕКСТУ — ИЗМЕНИТЬ · ⌘Z ОТМЕНИТЬ · ⇧⌘Z ВЕРНУТЬ · ⏎ КОПИЯ · ⎋ ОТМЕНА",
         // Toasts and trouble
         "Copied %@": "Скопировано %@",
         "Saved %@": "Сохранено: %@",
@@ -50,8 +70,8 @@ extension Strings {
         "Screenshot tool": "Снимки экрана",
         "Needs Screen Recording, to see the screen. Until then a shot only says so.":
             "Нужна запись экрана, чтобы видеть экран. А пока снимок только скажет об этом.",
-        "Every screen freezes and dims; drag an area (R), draw a loop (L), or take the screen (W) or all of them (A). Then box (B), arrow (→), highlight (H), blur (X) or blur by hand (F), in six colours (1–6); ⌘Z undoes. ⏎ takes it, ⌘C copies, ⌘S saves, ⎋ lets go. Pictures only, never video; nothing leaves this Mac.":
-            "Все экраны замирают и темнеют; выдели область (R), обведи петлёй (L) или возьми экран (W) или все сразу (A). Потом рамка (B), стрелка (→), выделение цветом (H), размытие (X) или размытие кистью (F), шесть цветов (1–6); ⌘Z отменяет. ⏎ готово, ⌘C копирует, ⌘S сохраняет, ⎋ отпускает. Только картинки, без видео; ничего не уходит с этого Mac.",
+        "Every screen freezes and dims; drag an area (R), draw a loop (L), or take the screen (W) or all of them (A). Then box (B), arrow (→), highlight (H), blur (X), blur by hand (F) or text (T), in six colours (1–6); ⌘Z undoes, ⇧⌘Z redoes. ⏎ takes it, ⌘C copies, ⌘S saves, ⎋ lets go. Pictures only, never video; nothing leaves this Mac.":
+            "Все экраны замирают и темнеют; выдели область (R), обведи петлёй (L) или возьми экран (W) или все сразу (A). Потом рамка (B), стрелка (→), выделение цветом (H), размытие (X), размытие кистью (F) или текст (T), шесть цветов (1–6); ⌘Z отменяет, ⇧⌘Z возвращает. ⏎ готово, ⌘C копирует, ⌘S сохраняет, ⎋ отпускает. Только картинки, без видео; ничего не уходит с этого Mac.",
         "Capture with the toolbar": "Снимок с панелью",
         "Full screen at once": "Весь экран сразу",
         "Full screen takes": "Весь экран — это",
@@ -73,6 +93,12 @@ extension Strings {
         "Marks": "Пометки",
         "Boxes and arrows are this thick; blurring by hand is four times as wide. A blur is big square blocks, baked into the picture, so the words under it cannot be read back. The toolbar starts on the last colour picked.":
             "Такой толщины рамки и стрелки; кисть размытия вчетверо шире. Размытие — крупные квадраты, впечённые в картинку, так что слова под ним не прочитать. Панель начинает с последнего выбранного цвета.",
+        "Font": "Шрифт",
+        "Size": "Размер",
+        "An outline, so it reads on any background": "Обводка, чтобы читалось на любом фоне",
+        "Turn in steps of": "Поворот шагами по",
+        "Click a text to change it: drag it, turn it by the handle above it (⇧ in steps), size it by its corner. A new one starts in the last font and size used.":
+            "Щёлкни по тексту, чтобы его изменить: тащи его, поворачивай за ручку над ним (с ⇧ шагами), меняй размер за угол. Новый начинается с последних шрифта и размера.",
         "Hide the creatures while capturing": "Прятать существ во время снимка",
         "A creature brings the shot home": "Существо уносит снимок домой",
         "Hidden, they are out of the picture too. Once it is taken, one hops up to where the toolbar was and carries a tiny picture of it back to its edge.":

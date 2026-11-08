@@ -5,7 +5,8 @@ import LedgelingsCore
 
 /// The screenshot tool filmed offscreen on two simulated monitors side by side, the
 /// left one 2× and the right one 1×: a rectangle with a box, an arrow, a blur over a
-/// card number and a freehand blur over a password; a lasso; all monitors at once;
+/// card number and a freehand blur over a password, then a text typed over the blur,
+/// given another font, made bigger and turned by its handle; a lasso; all monitors at once;
 /// then the last rectangle again with no toolbar. A creature carries each shot home.
 /// Every step is printed with its time, and every picture is written beside the film.
 ///
@@ -82,6 +83,7 @@ enum ShotFilm {
         var frame = 0
         var session: ShotSession?
         var toolbarKey = ""
+        var toolbarFit: CGFloat = 1
         let blocks: [CGImage?] = frames.map { ShotRenderer.blocky($0.image, block: Shot.blurBlock * $0.monitor.scale) }
         var toastUntil = 0.0
 
@@ -97,11 +99,17 @@ enum ShotFilm {
             }
             if let session, session.isUp {
                 let m = session.model
-                let key = "\(m.mode)\(m.tool)\(m.colour)\(m.stage)\(m.marks.isEmpty)\(String(describing: m.hovered))"
+                let text = m.selectedText.map { "\($0.font)\($0.size)" } ?? ""
+                let key = "\(m.mode)\(m.tool)\(m.colour)\(m.stage)\(m.history.canUndo)\(String(describing: m.hovered))"
+                    + "\(m.font)\(m.textSize)\(m.fontsOpen)\(String(describing: m.selected))\(m.editing)\(text)"
                 if key != toolbarKey {
                     toolbarKey = key
-                    let image = try await picture(ShotToolbar(model: m))
+                    let (image, size) = try await toolbarPicture(m)
+                    // The font menu makes it taller: it grows downwards, its top staying put.
+                    let top = toolbar.position.y + toolbar.bounds.height * toolbarFit
                     toolbar.contents = image
+                    toolbar.bounds = CGRect(origin: .zero, size: size)
+                    toolbar.position.y = top - size.height * toolbarFit
                 }
                 toolbar.isHidden = false
             } else {
@@ -133,6 +141,7 @@ enum ShotFilm {
             defer { CATransaction.commit() }
             toolbar.bounds = CGRect(origin: .zero, size: size)
             toolbar.transform = CATransform3DMakeScale(fit, fit, 1)
+            toolbarFit = fit
             let shown = CGSize(width: size.width * fit, height: size.height * fit)
             made.startOffscreen(cursor: CGPoint(x: left.frame.midX, y: left.frame.midY), toolbar: shown)
             let origin = Shot.toolbarOrigin(cursorX: left.frame.midX, screen: left.frame, size: shown)
@@ -157,15 +166,15 @@ enum ShotFilm {
             }
             colony.shotCarrierCome(to: spot, picture: ShotRenderer.thumbnail(image, size: colony.planeCell))
         }
-        func drag(_ s: ShotSession, _ a: CGPoint, _ b: CGPoint, seconds: Double = 0.7, path: ((Double) -> CGPoint)? = nil) async throws {
-            s.down(a)
+        func drag(_ s: ShotSession, _ a: CGPoint, _ b: CGPoint, seconds: Double = 0.7, shift: Bool = false, path: ((Double) -> CGPoint)? = nil) async throws {
+            s.down(a, shift: shift)
             let steps = Int(seconds * Double(Promo.fps))
             for k in 1...steps {
                 let u = Double(k) / Double(steps)
-                s.dragged(path?(u) ?? CGPoint(x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u))
+                s.dragged(path?(u) ?? CGPoint(x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u), shift: shift)
                 try await draw()
             }
-            s.up(path?(1) ?? b)
+            s.up(path?(1) ?? b, shift: shift)
             try await wait(0.3)
         }
         func waitForCarrier() async throws {
@@ -186,6 +195,44 @@ enum ShotFilm {
         s.act(.tool(.brush))
         try await drag(s, CGPoint(x: 100, y: 164), CGPoint(x: 380, y: 160), seconds: 0.9) { u in CGPoint(x: 100 + 280 * u, y: 161 + 3 * sin(u * 9)) }
         try await wait(0.6)
+        // A text over the card's blur: typed, given another font, made bigger, turned by its handle.
+        func still(_ what: String) {
+            if let image = paint(frames[0], session: s, blocks: blocks[0]) { write(image, what) }
+        }
+        s.act(.tool(.text)); s.act(.colour(4))
+        try await wait(0.4)
+        s.down(CGPoint(x: 120, y: 214)); s.up(CGPoint(x: 120, y: 214))
+        for c in "Card hidden" {
+            s.type(String(c))
+            try await wait(0.07)
+        }
+        try await wait(0.4)
+        still("text-typed")
+        s.act(.fontMenu)
+        try await wait(0.8)
+        write(try await toolbarPicture(s.model).0, "toolbar-fonts")
+        let hand = ShotText.fonts.contains(.hand) ? Shot.Font.hand : .serif
+        s.act(.font(hand))
+        try await wait(0.6)
+        still("text-font")
+        for _ in 0..<3 {
+            s.act(.textSize(bigger: true))
+            try await wait(0.3)
+        }
+        still("text-size")
+        if let t = s.model.selectedText {
+            let box = s.model.measure(t), from = t.turnHandle(box)
+            let radius = hypot(from.x - t.centre.x, from.y - t.centre.y), start = t.bearing(from) * .pi / 180
+            log("turning by the handle, ⇧ held")
+            try await drag(s, from, from, seconds: 0.9, shift: true) { u in
+                let a = start + 0.21 * u
+                return CGPoint(x: t.centre.x + radius * cos(a), y: t.centre.y + radius * sin(a))
+            }
+        }
+        still("text-turned")
+        s.act(.endText)
+        try await wait(0.6)
+        still("text-done")
         // The toolbar as it stands, then resting on a button or two: each one's name and key.
         write(try await picture(ShotToolbar(model: s.model)), "toolbar")
         for item: ShotToolbar.Item in [.button(.blur), .button(.done), .colour(2)] {
@@ -242,6 +289,23 @@ enum ShotFilm {
         c.scaleBy(x: k, y: k)
         ShotCanvas.paint(c, frame: f, model: session.model, frames: session.frames, blocks: blocks)
         return c.makeImage()
+    }
+
+    /// The toolbar drawn offscreen, and its size in points once laid out (the font menu makes it taller).
+    private static func toolbarPicture(_ model: ShotModel) async throws -> (CGImage, CGSize) {
+        let hosting = NSHostingView(rootView: ShotToolbar(model: model))
+        hosting.frame = CGRect(origin: .zero, size: hosting.fittingSize)
+        let window = NSWindow(contentRect: hosting.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = hosting
+        // SwiftUI draws on the next turns of the run loop; the menu needs the button's place first.
+        try? await Task.sleep(for: .milliseconds(300))
+        hosting.frame = CGRect(origin: .zero, size: hosting.fittingSize)
+        try? await Task.sleep(for: .milliseconds(100))
+        hosting.layoutSubtreeIfNeeded()
+        guard let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else { throw CocoaError(.fileWriteUnknown) }
+        hosting.cacheDisplay(in: hosting.bounds, to: rep)
+        guard let image = rep.cgImage else { throw CocoaError(.fileWriteUnknown) }
+        return (image, hosting.bounds.size)
     }
 
     private static func toolbarSize(_ model: ShotModel) async throws -> CGSize {
