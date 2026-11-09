@@ -78,9 +78,7 @@ public sealed partial class Colony
     /// speech bubble. Shift is also how you get close enough to right-click one.</summary>
     private void UpdateClickability(Pt cursor, bool shift)
     {
-        var under = CreatureAt(cursor);
-        var target = held is not null || (under is int i && (shift || creatures[i].IsSleeping)) || BubbleAt(cursor) is not null
-                     || LetterContains(cursor) || BedAt(cursor) is not null;
+        var target = TakesClick(cursor, shift);
         foreach (var overlay in overlays) overlay.SetClickable(target && overlay.Monitor.Frame.Contains(cursor));
     }
 }

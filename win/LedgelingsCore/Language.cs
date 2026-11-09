@@ -222,6 +222,10 @@ public sealed class Shared
     /// <summary>What the creature bringing the clipboard picker says (SPEC §7.11.1): by character, and for anyone.</summary>
     public Dictionary<string, string[]> ClipHelperLines { get; init; } = new();
     public string[] ClipHelperAnyone { get; init; } = Array.Empty<string>();
+    /// <summary>What the divers say (SPEC §7.19), by character and kind (<c>in</c>, <c>see</c>, <c>fish</c>, <c>octopus</c>,
+    /// <c>air</c>, <c>out</c>), and for anyone, by kind.</summary>
+    public Dictionary<string, Dictionary<string, string[]>> DiveLines { get; init; } = new();
+    public Dictionary<string, string[]> DiveAnyone { get; init; } = new();
     /// <summary>The deeds' built-in lines (<c>deeds</c>): by character, and for anyone; null where there are none.</summary>
     public Dictionary<string, DeedVoice> DeedVoices { get; init; } = new();
     public DeedVoice? DeedsAnyone { get; init; }
@@ -287,6 +291,8 @@ public sealed class Shared
         var gang = Get(root, "gang");
         var plays = Get(root, "plays");
         var clipHelper = Get(root, "clipHelper");
+        var dive = Get(root, "dive");
+        var diveLines = Get(dive, "lines");
         var playStart = Get(plays, "start");
         var playCheer = Get(plays, "cheer");
         var deeds = Get(root, "deeds");
@@ -344,6 +350,8 @@ public sealed class Shared
             DeedsAnyone = Deed(Get(deeds, "anyone")),
             ClipHelperLines = Lists(Get(clipHelper, "lines")),
             ClipHelperAnyone = List(Get(clipHelper, "anyone")),
+            DiveLines = diveLines.ValueKind == JsonValueKind.Object ? diveLines.EnumerateObject().ToDictionary(p => p.Name, p => Lists(p.Value)) : new(),
+            DiveAnyone = Lists(Get(dive, "anyone")),
             RevengeLinesByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lines"))),
             RevengeAnyoneByMood = allMoods.ToDictionary(m => m, m => List(Get(Get(revenge, m), "anyone"))),
             RevengeLastWordsByMood = allMoods.ToDictionary(m => m, m => Lists(Get(Get(revenge, m), "lastWords"))),

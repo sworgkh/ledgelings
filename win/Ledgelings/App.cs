@@ -67,6 +67,7 @@ public sealed partial class App : Application
         StartTranslate();
         StartReadAloud();
         StartToolsScreen();
+        StartActivities();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
     }
 
@@ -106,6 +107,7 @@ public sealed partial class App : Application
         var keys = ShortcutTitle;
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
+        AddActivityItems(items);
         AddToolsItem(items);
         AddClipboardItems(items);
         AddDictationItems(items);
@@ -180,7 +182,7 @@ public sealed partial class App : Application
     private SettingsWindow? EnsureSettingsWindow()
     {
         if (settings is null || history is null || library is null || spend is null) return null;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, SeedMemory = SeedMemory, OpenRelationships = OpenRelationships, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, StartDive = () => colony?.StartDive() ?? false, SeedMemory = SeedMemory, OpenRelationships = OpenRelationships, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
         AttachClipboard(settingsWindow);
         AttachReadAloud(settingsWindow);
@@ -195,6 +197,7 @@ public sealed partial class App : Application
         StopTranslate();
         StopReadAloud();
         StopToolsScreen();
+        StopActivities();
         StopShortcut();
         StopClipboard();
         colony?.Dispose();

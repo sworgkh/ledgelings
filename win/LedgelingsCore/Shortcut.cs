@@ -33,6 +33,9 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
     public static readonly Shortcut ReadAloud = new(0x52, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift);
     /// <summary>The Tools screen: Ctrl+Alt+K, as on the Mac.</summary>
     public static readonly Shortcut Tools = new(0x4B, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>Stop activity: Ctrl+Alt+Esc, Esc for "stop", as on the Mac. Not Ctrl+Shift+Esc, Windows' Task Manager,
+    /// nor Ctrl+Esc or Alt+Esc, its Start menu and window switching.</summary>
+    public static readonly Shortcut StopActivity = new(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option);
 
     /// <summary>As it was saved, or the standard one when what was saved cannot be a shortcut.</summary>
     public static Shortcut Saved(int? keyCode, int? modifiers) => Saved(keyCode, modifiers, Standard);

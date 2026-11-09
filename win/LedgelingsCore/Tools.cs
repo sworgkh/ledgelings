@@ -5,12 +5,12 @@ namespace Ledgelings.Core;
 /// one small sheet, a big pixel picture each, its name and its keys. A click, its number, or the arrows and
 /// Enter start it; a tool that is switched off is greyed, its tag saying where to switch it on.
 /// Windows has no screenshot tool yet, so its screen has no Screenshot, Full screen or Last rectangle tile.
-/// Read aloud (0.63) is last, so every older tile keeps its number key.
+/// Read aloud (0.63) and Scuba diving (0.67) are last, so every older tile keeps its number key.
 /// </summary>
 public static class Tools
 {
-    /// <summary>The codes saved are the Mac's: <c>translate</c>, <c>dictation</c>, <c>clipHistory</c>, <c>snippets</c>, <c>reminder</c>, <c>readAloud</c>.</summary>
-    public enum Tool { Translate, Dictation, ClipHistory, Snippets, Reminder, ReadAloud }
+    /// <summary>The codes saved are the Mac's: <c>translate</c>, <c>dictation</c>, <c>clipHistory</c>, <c>snippets</c>, <c>reminder</c>, <c>readAloud</c>, <c>dive</c>.</summary>
+    public enum Tool { Translate, Dictation, ClipHistory, Snippets, Reminder, ReadAloud, Dive }
 
     public static IReadOnlyList<Tool> All { get; } = Enum.GetValues<Tool>();
 
@@ -21,6 +21,7 @@ public static class Tools
         Tool.ClipHistory => "clipHistory",
         Tool.Snippets => "snippets",
         Tool.Reminder => "reminder",
+        Tool.Dive => "dive",
         _ => "readAloud",
     };
 
@@ -33,6 +34,7 @@ public static class Tools
         Tool.ClipHistory => "CLIPBOARD HISTORY",
         Tool.Snippets => "SNIPPETS",
         Tool.Reminder => "ADD A REMINDER",
+        Tool.Dive => "SCUBA DIVING",
         _ => "READ ALOUD",
     });
 
@@ -44,6 +46,7 @@ public static class Tools
         Tool.ClipHistory => "Your recent copies, to paste again",
         Tool.Snippets => "The snippets, to paste",
         Tool.Reminder => "A reminder, thrown at you by paper plane",
+        Tool.Dive => "Water over the screen and a dive among the fish; again to stop",
         _ => "Paste text and hear it read",
     });
 
@@ -54,6 +57,7 @@ public static class Tools
         Tool.Dictation => SettingsPage.Dictation,
         Tool.ClipHistory or Tool.Snippets => SettingsPage.Clipboard,
         Tool.Reminder => SettingsPage.Reminders,
+        Tool.Dive => SettingsPage.Diving,
         _ => SettingsPage.ReadAloud,
     };
 
@@ -72,6 +76,7 @@ public static class Tools
         Tool.ClipHistory => new[] { "...###.....", "####.####..", "#.......#..", "#.#####.#..", "#.......#..", "#.###...#..", "#.......#..", "#.#####.#..", "#.......#..", "#########..", "..........." },
         Tool.Snippets => new[] { "#########..", "#.......##.", "#.#####.#.#", "#.......###", "#.#####...#", "#.........#", "#.###.....#", "#.........#", "#.#####...#", "#.........#", "###########" },
         Tool.ReadAloud => ReadAloud.Speaker,
+        Tool.Dive => new[] { "...........", "...........", ".....####..", "#...#....#.", "##.#...#..#", "#.#.......#", "##.#......#", "#...#....#.", ".....####..", "...........", "#.#.#.#.#.#" },
         _ => new[] { "..........#", "........##.", "......##.#.", "....##..#..", "..##...#...", "##....#....", "..##.#.....", "....##.....", "....#.#....", "....#..#...", "....#......" },
     };
 

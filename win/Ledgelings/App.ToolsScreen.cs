@@ -26,6 +26,7 @@ public sealed partial class App
                     case Tools.Tool.ClipHistory: clipPicker?.Show(ClipPicker.Group.Recent); break;
                     case Tools.Tool.Snippets: clipPicker?.Show(ClipPicker.Group.Snippets); break;
                     case Tools.Tool.ReadAloud: ShowReadAloud(); break;
+                    case Tools.Tool.Dive: ToggleDive(); break;
                     default: AddAReminder(); break;
                 }
             },
@@ -36,6 +37,7 @@ public sealed partial class App
                 Tools.Tool.ClipHistory => s.ClipboardEnabled && s.ClipHistoryEnabled && clipPicker is not null,
                 Tools.Tool.Snippets => s.ClipboardEnabled && clipPicker is not null,
                 Tools.Tool.ReadAloud => s.ReadAloudEnabled && readAloudSheet is not null,
+                Tools.Tool.Dive => true,
                 _ => s.RemindersEnabled,
             },
             ShortcutLabel = tool => tool switch

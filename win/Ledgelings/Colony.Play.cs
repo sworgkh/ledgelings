@@ -83,7 +83,7 @@ public sealed partial class Colony
     private void UpdatePlay(double dt)
     {
         if (play is not null) { RunPlay(dt); return; }
-        if (!Settings.PlayEnabled || IsNight || hideout.IsActive || CurrentGrab is not null || held is not null) return;
+        if (!Settings.PlayEnabled || dive is not null || IsNight || hideout.IsActive || CurrentGrab is not null || held is not null) return;
         if (PlayEveryWas != Settings.PlayEveryMinutes || NextPlayAt is null)
         {
             PlayEveryWas = Settings.PlayEveryMinutes;
@@ -121,7 +121,7 @@ public sealed partial class Colony
     /// most players (or <paramref name="count"/>).</summary>
     public bool StartPlay(Plays.Kind? kind, int? chosen = null, int? count = null)
     {
-        if (play is not null || hideout.IsActive) return false;
+        if (play is not null || dive is not null || hideout.IsActive) return false;
         var free = Enumerable.Range(0, creatures.Count).Where(FreeToPlay).ToList();
         int? first = chosen is int c && free.Contains(c) ? c : free.Count > 0 ? rng.Pick(free) : null;
         if (first is not int initiator) { TalkStatus = L10n.Tr("nobody is free to play"); return false; }
@@ -183,7 +183,7 @@ public sealed partial class Colony
     /// invitation it was, for their memory.</summary>
     public bool StartPlay(Plays.Kind kind, int[] pair, string? asked)
     {
-        if (play is not null || hideout.IsActive || pair.Length != 2 || !pair.All(FreeToPlay)) return false;
+        if (play is not null || dive is not null || hideout.IsActive || pair.Length != 2 || !pair.All(FreeToPlay)) return false;
         var players = pair;
         if (kind.IsTeamGame())
         {

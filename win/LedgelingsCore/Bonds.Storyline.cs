@@ -22,10 +22,12 @@ public static partial class Bonds
     public static class MomentKind
     {
         public const string Talk = "talk", Tea = "tea", Flower = "flower", Plane = "plane", Grab = "grab", Play = "play";
+        /// <summary>A dive together (<see cref="Core.Dive"/>); <c>Detail</c> is what they saw: "a turtle, a crab".</summary>
+        public const string Dive = "dive";
         /// <summary>The first time a newcomer to the gang met this one (<see cref="Gang"/>); <c>Who</c> is the newcomer.</summary>
         public const string Meet = "meet";
         /// <summary>In the order the tally and the folding list them.</summary>
-        public static readonly IReadOnlyList<string> All = new[] { Talk, Tea, Flower, Plane, Grab, Play, Meet };
+        public static readonly IReadOnlyList<string> All = new[] { Talk, Tea, Flower, Plane, Grab, Play, Dive, Meet };
     }
 
     public sealed record Moment
@@ -144,6 +146,7 @@ public static partial class Bonds
         MomentKind.Plane => L10n.TrCount(n, "paper plane", "paper planes"),
         MomentKind.Grab => L10n.TrCount(n, "cursor grab", "cursor grabs"),
         MomentKind.Play => L10n.TrCount(n, "game", "games"),
+        MomentKind.Dive => L10n.TrCount(n, "dive", "dives"),
         MomentKind.Meet => L10n.TrCount(n, "first meeting", "first meetings"),
         _ => L10n.TrCount(n, "talk", "talks"),
     };
@@ -160,6 +163,8 @@ public static partial class Bonds
             MomentKind.Plane => L10n.Tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.Who, other, said),
             MomentKind.Grab => L10n.Tr("%1$@ grabbed the cursor while %2$@ looked on", moment.Who, other),
             MomentKind.Meet => L10n.Tr("%1$@, new to the gang, met %2$@ for the first time", moment.Who, other),
+            MomentKind.Dive => (moment.Detail ?? "").Length == 0 ? L10n.Tr("%1$@ and %2$@ went diving together", moment.Who, other)
+                : L10n.Tr("%1$@ and %2$@ went diving together and saw %3$@", moment.Who, other, moment.Detail!),
             MomentKind.Play => Result(moment) is string r
                 ? L10n.Tr("%1$@ and %2$@ played: %3$@", moment.Who, other, Plays.Name(moment.Detail)) + " (" + r + ")"
                 : L10n.Tr("%1$@ and %2$@ played: %3$@", moment.Who, other, Plays.Name(moment.Detail)),
@@ -284,6 +289,11 @@ public static partial class Bonds
                 {
                     L10n.Tr("%2$@ wants a rematch of %3$@ with %1$@, after %4$@.", who, other, Plays.Name(moment.Detail), when),
                     L10n.Tr("%1$@ has been practising since %3$@ with %2$@ %4$@, and means to win next time.", who, other, Plays.Name(moment.Detail), when),
+                },
+                MomentKind.Dive => new[]
+                {
+                    L10n.Tr("%2$@ keeps telling everyone about the dive with %1$@ %3$@.", who, other, when),
+                    L10n.Tr("%1$@ wants to go diving with %2$@ again, after %3$@.", who, other, when),
                 },
                 MomentKind.Grab => new[]
                 {

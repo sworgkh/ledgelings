@@ -238,7 +238,7 @@ public static partial class Bonds
                 if (m.Kind == MomentKind.Grab && m.Who != name) continue;
                 // One game is a moment of every pair that played it: it is told once, with everyone.
                 var k = seen.FindIndex(s => s.Moment.Kind == m.Kind && s.Moment.Detail == m.Detail
-                                            && Math.Abs((s.Moment.Time - m.Time).TotalSeconds) < 120 && (m.Kind == MomentKind.Play || m.Kind == MomentKind.Grab));
+                                            && Math.Abs((s.Moment.Time - m.Time).TotalSeconds) < 120 && (m.Kind == MomentKind.Play || m.Kind == MomentKind.Grab || m.Kind == MomentKind.Dive));
                 if (k >= 0)
                 {
                     if (!seen[k].With.Contains(other)) seen[k].With.Add(other);
@@ -258,6 +258,9 @@ public static partial class Bonds
                     var played = L10n.Tr("played %@ with %@ at %@", Plays.Name(m.Detail), others, time);
                     return Result(m) is string r ? played + " (" + r + ")" : played;
                 case MomentKind.Tea: return L10n.Tr("had tea with %@ at %@", others, time);
+                case MomentKind.Dive:
+                    var saw = m.Detail ?? "";
+                    return saw.Length == 0 ? L10n.Tr("went diving with %@ at %@", others, time) : L10n.Tr("went diving with %@ at %@ and saw %@", others, time, saw);
                 case MomentKind.Flower:
                     var flower = Gifts.Name(m.Detail ?? "");
                     return m.Who == name ? L10n.Tr("gave %@ a %@ at %@", others, flower, time) : L10n.Tr("got a %@ from %@ at %@", flower, m.Who, time);
