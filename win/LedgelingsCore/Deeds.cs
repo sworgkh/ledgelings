@@ -43,6 +43,7 @@ public static partial class Deeds
                 "football" or "футбол" => Plays.Kind.Soccer,
                 "баскетбол" or "hoops" => Plays.Kind.Basketball,
                 "бейсбол" => Plays.Kind.Baseball,
+                "surfing" or "серфинг" or "сёрфинг" or "волны" => Plays.Kind.Surf,
                 _ => null,
             };
             return alias is Plays.Kind a ? Game(a) : null;
@@ -55,6 +56,7 @@ public static partial class Deeds
             Plays.Kind.Basketball => L10n.Tr("Basketball"),
             Plays.Kind.Soccer => L10n.Tr("Soccer"),
             Plays.Kind.Baseball => L10n.Tr("Baseball"),
+            Plays.Kind.Surf => L10n.Tr("Surfing"),
             Plays.Kind k => k.Title(),
             null => L10n.Tr("Tea together"),
         };
@@ -65,7 +67,7 @@ public static partial class Deeds
 
     /// <summary>The games one can be invited to: the ones two or more play. The rope and
     /// the parachute are played alone.</summary>
-    public static readonly IReadOnlyList<Plays.Kind> Invitable = new[] { Plays.Kind.Tag, Plays.Kind.Basketball, Plays.Kind.Soccer, Plays.Kind.Baseball };
+    public static readonly IReadOnlyList<Plays.Kind> Invitable = new[] { Plays.Kind.Tag, Plays.Kind.Basketball, Plays.Kind.Soccer, Plays.Kind.Baseball, Plays.Kind.Surf };
 
     /// <summary>One deed. A proposal to play or have tea is an invitation: it happens only
     /// once the other says yes. <paramref name="Verb"/> is the kind of deed, for limits and for the trace;
@@ -353,12 +355,21 @@ public static partial class Deeds
         VoicesIn(Languages.Current).TryGetValue(name, out var v) ? v : AnyoneIn(Languages.Current);
 
     /// <summary><paramref name="sender"/>'s invitation to <paramref name="reader"/>.</summary>
-    public static string InviteLine(string sender, string reader, Offer offer) =>
-        CursorMoods.Current.Adjust(Banter.Render(VoiceOf(sender).Invite, new Dictionary<string, string> { ["reader"] = reader, ["game"] = offer.Word }));
+    public static string InviteLine(string sender, string reader, Offer offer)
+    {
+        // Surfing has lines of its own, in each voice.
+        var line = offer.Kind == Plays.Kind.Surf ? Plays.SurfVoiceOf(sender).Invite : VoiceOf(sender).Invite;
+        return CursorMoods.Current.Adjust(Banter.Render(line, new Dictionary<string, string> { ["reader"] = reader, ["game"] = offer.Word }));
+    }
 
     /// <summary><paramref name="writer"/>'s answer to <paramref name="inviter"/>'s invitation.</summary>
     public static string AnswerLine(string writer, string inviter, Offer offer, bool yes)
     {
+        if (offer.Kind == Plays.Kind.Surf)
+        {
+            var surf = Plays.SurfVoiceOf(writer);
+            return CursorMoods.Current.Adjust(Banter.Render(yes ? surf.Yes : surf.No, new Dictionary<string, string> { ["reader"] = inviter, ["game"] = offer.Word }));
+        }
         var v = VoiceOf(writer);
         return CursorMoods.Current.Adjust(Banter.Render(yes ? v.Yes : v.No, new Dictionary<string, string> { ["reader"] = inviter, ["game"] = offer.Word }));
     }

@@ -30,6 +30,8 @@ public sealed partial class Colony
         public Plays.Pitch? Pitch;
         public Plays.Soccer? Soccer;
         public Plays.Baseball? Baseball;
+        public Plays.Surf? Surf;
+        public Surfing? Surfing;
         public BallGame? BallGame;
         /// <summary>Where the players are going before it starts: leaping to a floor or the ceiling.</summary>
         public Dictionary<int, EdgeWorld.Spot> Reaching = new();
@@ -151,6 +153,7 @@ public sealed partial class Colony
                 }
                 case Plays.Kind.Soccer:
                 case Plays.Kind.Baseball:
+                case Plays.Kind.Surf:
                     tries.Add((asked, Plays.Joining(initiator, Crowd(initiator),
                         count ?? (Settings.BallGamePlayers.TryGetValue(asked, out var most) ? most : 6))));
                     break;
@@ -266,6 +269,9 @@ public sealed partial class Colony
             case Plays.Kind.Baseball:
                 if (!BeginBaseball(session)) return false;
                 break;
+            case Plays.Kind.Surf:
+                if (!BeginSurf(session)) return false;
+                break;
         }
         foreach (var p in players) busy.Add(p);
         foreach (var (i, to) in session.Reaching) creatures[i].Leap(to);
@@ -334,6 +340,9 @@ public sealed partial class Colony
             case Plays.Kind.Soccer:
                 if (!StartSoccer(session)) { EndPlay(false); return; }
                 break;
+            case Plays.Kind.Surf:
+                if (!StartSurf(session)) { EndPlay(false); return; }
+                break;
         }
         StartLine(session);
     }
@@ -369,6 +378,7 @@ public sealed partial class Colony
             case Plays.Kind.Basketball: RunBasketball(session, dt); break;
             case Plays.Kind.Soccer: RunSoccer(session, dt); break;
             case Plays.Kind.Baseball: RunBaseball(session, dt); break;
+            case Plays.Kind.Surf: RunSurf(session, dt); break;
         }
     }
 
@@ -605,6 +615,12 @@ public sealed partial class Colony
             case Plays.Kind.Soccer:
                 if (s.Soccer is not { } m) return (null, null);
                 return (SoccerScore(m), m.Lineup == Plays.Lineup.Solo ? null : m.Winners.Select(Name).OrderBy(n => n, StringComparer.Ordinal).ToList());
+            case Plays.Kind.Surf:
+            {
+                if (s.Surf is not { } g) return (null, null);
+                var score = string.Join("-", g.Riders.Select(r => $"{r.Score}"));
+                return (score, g.Riders.Count < 2 ? null : g.Winners.Select(Name).OrderBy(n => n, StringComparer.Ordinal).ToList());
+            }
             default:
             {
                 if (s.Baseball is not { } g || g.Lineup == Plays.Lineup.Solo) return (s.Baseball is { } solo ? BaseballScore(solo) : null, null);
@@ -689,8 +705,7 @@ public sealed partial class Colony
                 if (service.Kind == ChatClient.Provider.LmStudio) usage.Cost = 0;       // a local model is free
                 cost = usage.Cost;
                 tokens = usage.PromptTokens + usage.CompletionTokens;
-                Spend.Record(service.Kind, service.Model, usage,
-                             kind.IsTeamGame() ? Core.Spend.Purpose.BallGames : Core.Spend.Purpose.Plays);
+                Spend.Record(service.Kind, service.Model, usage, kind.SpendPurpose());
             }
             line = Banter.CleanLine(answer.Text, name, cut: answer.Cut);
         }
@@ -810,6 +825,10 @@ public sealed partial class Colony
             }
             case Plays.Kind.Soccer:
             case Plays.Kind.Baseball:
+                props.AddRange(BallGameProps(s));
+                break;
+            case Plays.Kind.Surf:
+                props.AddRange(SurfProps(s));
                 props.AddRange(BallGameProps(s));
                 break;
         }

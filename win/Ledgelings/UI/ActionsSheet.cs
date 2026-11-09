@@ -116,6 +116,7 @@ public static class ActivityRows
         Plays.Kind.Parachute => L10n.Tr("PARACHUTE"),
         Plays.Kind.Soccer => L10n.Tr("SOCCER"),
         Plays.Kind.Baseball => L10n.Tr("BASEBALL"),
+        Plays.Kind.Surf => L10n.Tr("SURFING"),
         _ => L10n.Tr("BASKETBALL"),
     };
 
@@ -126,6 +127,7 @@ public static class ActivityRows
         Plays.Kind.Parachute => L10n.Tr("Up to the ceiling, then down slowly under a little parachute."),
         Plays.Kind.Soccer => L10n.Tr("Everyone free, on the widest floor: alone, one-on-one, one goal for three, teams of friends."),
         Plays.Kind.Baseball => L10n.Tr("Bases on the screen's edges, hit, catch and run by hopping edge to edge."),
+        Plays.Kind.Surf => L10n.Tr("The tide comes in along the bottom edge: waves to ride, tricks, wipe-outs, a score."),
         _ => L10n.Tr("A hoop on the wall and a few throws; two friends take turns."),
     };
 
@@ -136,6 +138,7 @@ public static class ActivityRows
         Plays.Kind.Parachute => System.Windows.Input.Key.U,
         Plays.Kind.Soccer => System.Windows.Input.Key.G,
         Plays.Kind.Baseball => System.Windows.Input.Key.I,
+        Plays.Kind.Surf => System.Windows.Input.Key.V,
         _ => System.Windows.Input.Key.B,
     };
 
@@ -794,12 +797,16 @@ public sealed class ActionsSheet : Window
         }
         face.Children.Add(holder);
         var words = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
-        words.Children.Add(new TextBlock { Text = title, FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim });
-        words.Children.Add(new TextBlock
+        // The name leads the line, so a row is two lines in all: eight rows share the page.
+        var text = new TextBlock
         {
-            Text = what, FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = softInk,
-            TextWrapping = TextWrapping.Wrap, MaxHeight = 24, Margin = new Thickness(0, 1, 0, 0),
-        });
+            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = softInk,
+            TextWrapping = TextWrapping.Wrap, MaxHeight = Math.Max(24, height - 8),
+        };
+        text.Inlines.Add(new System.Windows.Documents.Run(title) { FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim });
+        text.Inlines.Add(new System.Windows.Documents.Run("  "));
+        text.Inlines.Add(new System.Windows.Documents.Run(what));
+        words.Children.Add(text);
         Grid.SetColumn(words, 1);
         face.Children.Add(words);
         var right = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 12, 0) };

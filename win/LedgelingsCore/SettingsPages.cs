@@ -8,7 +8,7 @@ namespace Ledgelings.Core;
 public enum SettingsPage
 {
     Creatures, Actions, Sprites, Beds, Flowers, Calendar,
-    Chases, Play, BallGames, Diving,
+    Chases, Play, BallGames, Surfing, Diving,
     Talk, Voice, Bonds, Relationships, Twists,
     Tools, Reminders, Clipboard, Dictation, Translate, ReadAloud,
     Costs, Chats,
@@ -37,7 +37,7 @@ public static class SettingsPages
     public static SettingsGroup Group(this SettingsPage page) => page switch
     {
         SettingsPage.Creatures or SettingsPage.Actions or SettingsPage.Sprites or SettingsPage.Beds or SettingsPage.Flowers or SettingsPage.Calendar => SettingsGroup.CreaturesAndWorld,
-        SettingsPage.Chases or SettingsPage.Play or SettingsPage.BallGames or SettingsPage.Diving => SettingsGroup.Games,
+        SettingsPage.Chases or SettingsPage.Play or SettingsPage.BallGames or SettingsPage.Surfing or SettingsPage.Diving => SettingsGroup.Games,
         SettingsPage.Talk or SettingsPage.Voice or SettingsPage.Bonds or SettingsPage.Relationships or SettingsPage.Twists => SettingsGroup.TalkAndFriends,
         SettingsPage.Costs or SettingsPage.Chats => SettingsGroup.MoneyAndHistory,
         _ => SettingsGroup.Tools,

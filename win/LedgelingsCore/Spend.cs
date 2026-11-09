@@ -17,7 +17,7 @@ public static class Spend
 
     /// <summary>Which feature made a call. Every model call is recorded with one, so the
     /// Costs tab can say what each feature costs, not just each model.</summary>
-    public enum Purpose { Talk, Planes, Voice, Casting, Plots, Reminders, Complaints, TeaParties, Revenge, CreatureRefine, Plays, BallGames, Memory, MemorySeed, Dictation, Translation, Autocomplete, ReadAloud }
+    public enum Purpose { Talk, Planes, Voice, Casting, Plots, Reminders, Complaints, TeaParties, Revenge, CreatureRefine, Plays, BallGames, Memory, MemorySeed, Dictation, Translation, Autocomplete, ReadAloud, Surfing }
 
     /// <summary>What records written before features were labelled are shown as.</summary>
     public static string UnlabelledPurpose => L10n.Tr("Earlier, unlabelled");
@@ -148,6 +148,7 @@ public static class SpendPurposeExtensions
         Spend.Purpose.Translation => L10n.Tr("Translation"),
         Spend.Purpose.Autocomplete => L10n.Tr("Autocomplete"),
         Spend.Purpose.ReadAloud => L10n.Tr("Read aloud"),
+        Spend.Purpose.Surfing => L10n.Tr("Surfing"),
         _ => L10n.Tr("Revenge"),
     };
 

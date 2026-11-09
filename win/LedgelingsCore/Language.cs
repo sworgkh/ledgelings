@@ -226,6 +226,9 @@ public sealed class Shared
     /// <c>air</c>, <c>out</c>), and for anyone, by kind.</summary>
     public Dictionary<string, Dictionary<string, string[]>> DiveLines { get; init; } = new();
     public Dictionary<string, string[]> DiveAnyone { get; init; } = new();
+    /// <summary>Surfing's lines (<c>surf</c>): each character's start, wave, wipeout, trick, win, invite, yes and no, and for anyone.</summary>
+    public Dictionary<string, Dictionary<string, string>> SurfVoices { get; init; } = new();
+    public Dictionary<string, string>? SurfAnyone { get; init; }
     /// <summary>The deeds' built-in lines (<c>deeds</c>): by character, and for anyone; null where there are none.</summary>
     public Dictionary<string, DeedVoice> DeedVoices { get; init; } = new();
     public DeedVoice? DeedsAnyone { get; init; }
@@ -297,6 +300,8 @@ public sealed class Shared
         var playCheer = Get(plays, "cheer");
         var deeds = Get(root, "deeds");
         var deedVoices = Get(deeds, "voices");
+        var surf = Get(root, "surf");
+        var surfVoices = Get(surf, "voices");
         return new Shared
         {
             Strings = Map(Get(root, "strings")),
@@ -348,6 +353,8 @@ public sealed class Shared
             DeedVoices = deedVoices.ValueKind == JsonValueKind.Object
                 ? deedVoices.EnumerateObject().Where(p => Deed(p.Value) is not null).ToDictionary(p => p.Name, p => Deed(p.Value)!) : new(),
             DeedsAnyone = Deed(Get(deeds, "anyone")),
+            SurfVoices = surfVoices.ValueKind == JsonValueKind.Object ? surfVoices.EnumerateObject().ToDictionary(p => p.Name, p => Map(p.Value)) : new(),
+            SurfAnyone = Get(surf, "anyone").ValueKind == JsonValueKind.Object ? Map(Get(surf, "anyone")) : null,
             ClipHelperLines = Lists(Get(clipHelper, "lines")),
             ClipHelperAnyone = List(Get(clipHelper, "anyone")),
             DiveLines = diveLines.ValueKind == JsonValueKind.Object ? diveLines.EnumerateObject().ToDictionary(p => p.Name, p => Lists(p.Value)) : new(),

@@ -3,16 +3,16 @@ namespace Ledgelings.Core;
 /// <summary>
 /// Plays (SPEC §7.10): now and then a creature stops walking and plays, the way the worms in Worms
 /// fool about between turns, with nobody hurt. Tag round the edges, a swing on a ninja rope, a
-/// parachute jump from the ceiling, a few throws at a hoop on a wall; and soccer and baseball for a crowd
-/// (<c>Plays.Soccer.cs</c>, <c>Plays.Baseball.cs</c>). Closer pairs play more often,
+/// parachute jump from the ceiling, a few throws at a hoop on a wall; soccer and baseball for a crowd
+/// (<c>Plays.Soccer.cs</c>, <c>Plays.Baseball.cs</c>), and surfing on a wave along the bottom edge (<c>Plays.Surf.cs</c>). Closer pairs play more often,
 /// and only friends play together. Everything here is pure: the colony asks each game where the
 /// creature and the props are, frame by frame. The macOS app's <c>Plays.swift</c>.
 /// </summary>
 public static partial class Plays
 {
-    public enum Kind { Tag, Rope, Parachute, Basketball, Soccer, Baseball }
+    public enum Kind { Tag, Rope, Parachute, Basketball, Soccer, Baseball, Surf }
 
-    public static readonly IReadOnlyList<Kind> AllKinds = new[] { Kind.Tag, Kind.Rope, Kind.Parachute, Kind.Basketball, Kind.Soccer, Kind.Baseball };
+    public static readonly IReadOnlyList<Kind> AllKinds = new[] { Kind.Tag, Kind.Rope, Kind.Parachute, Kind.Basketball, Kind.Soccer, Kind.Baseball, Kind.Surf };
 
     /// <summary>"tag", "basketball": as the Mac writes it into a storyline moment.</summary>
     public static string Raw(this Kind kind) => kind.ToString().ToLowerInvariant();
@@ -23,8 +23,8 @@ public static partial class Plays
     public static bool NeedsPair(this Kind kind) => kind == Kind.Tag;
     /// <summary>Can be played by two: tag, and turns at the hoop.</summary>
     public static bool CanPair(this Kind kind) => kind is Kind.Tag or Kind.Basketball;
-    /// <summary>Played by however many are free, one to a crowd: soccer and baseball.</summary>
-    public static bool IsTeamGame(this Kind kind) => kind is Kind.Soccer or Kind.Baseball;
+    /// <summary>Played by however many are free, one to a crowd: soccer, baseball and surfing.</summary>
+    public static bool IsTeamGame(this Kind kind) => kind is Kind.Soccer or Kind.Baseball or Kind.Surf;
     public static bool CanSolo(this Kind kind) => !kind.NeedsPair() && !kind.IsTeamGame();
 
     /// <summary>In words, for a prompt and a storyline: "a game of catch me if you can".</summary>
@@ -35,6 +35,7 @@ public static partial class Plays
         Kind.Parachute => L10n.Tr("a parachute jump from the ceiling"),
         Kind.Soccer => L10n.Tr("a game of soccer"),
         Kind.Baseball => L10n.Tr("a game of baseball"),
+        Kind.Surf => L10n.Tr("surfing on a wave along the bottom edge"),
         _ => L10n.Tr("a game of basketball"),
     };
 
@@ -613,17 +614,18 @@ public static partial class Plays
 
     // MARK: Words
 
-    /// <summary>Each character's English start lines for the first games and the ball games, in one table.
-    /// Made on first use: the two tables are in other files, whose statics may not be set yet.</summary>
+    /// <summary>Each character's English start lines for the first games, the ball games and surfing, in one table.
+    /// Made on first use: the tables are in other files, whose statics may not be set yet.</summary>
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> EnglishStart => englishStart ??=
         EnglishStartLines.ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<string, string>)kv.Value
             .Concat(EnglishBallStartLines.TryGetValue(kv.Key, out var ball) ? ball : new Dictionary<string, string>())
+            .Concat(EnglishSurfVoices.TryGetValue(kv.Key, out var surf) ? new Dictionary<string, string> { [Kind.Surf.Raw()] = surf.Start } : new Dictionary<string, string>())
             .ToDictionary(p => p.Key, p => p.Value));
 
     private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>? englishStart;
 
     public static IReadOnlyDictionary<string, string> EnglishAllStartAnyone => englishAllStartAnyone ??=
-        EnglishStartAnyone.Concat(EnglishBallStartAnyone).ToDictionary(p => p.Key, p => p.Value);
+        EnglishStartAnyone.Concat(EnglishBallStartAnyone).Append(KeyValuePair.Create(Kind.Surf.Raw(), EnglishSurfAnyone.Start)).ToDictionary(p => p.Key, p => p.Value);
 
     private static IReadOnlyDictionary<string, string>? englishAllStartAnyone;
 

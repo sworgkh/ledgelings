@@ -1962,7 +1962,7 @@ canopy (`chute`) over the head at `size · open`, turned with the creature (its 
 floats that much higher); the hoop and ball; a sweat `drop` after tag. Props are drawn
 behind the creatures, the ball in front.
 
-**Surfing** (`Plays.Surf`, `Plays+Surf.swift`; a crowd game like the ball games:
+**Surfing** (`Plays.Surf`, `Plays+Surf.swift`, since 0.68.0 on macOS and Windows, `Plays.Surf.cs`; the films are Mac only; a crowd game like the ball games:
 `isTeamGame`, `surfEveryMinutes` between sessions, `surfPlayers` at most). Everyone
 leaps to the soccer pitch (the widest floor) and takes off (`playing`). The tide comes
 in over 1.5 s: calm water `1.2` creature heights deep (`AppSettings.surfDepth`) from the

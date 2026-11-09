@@ -283,7 +283,8 @@ public class PlaysTests
     public void EveryCharacterHasALineForEveryGameAndTwoForTheEndInEveryLanguage()
     {
         var swift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+Lines.swift"))
-            + File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+BallLines.swift"));
+            + File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+BallLines.swift"))
+            + File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+SurfLines.swift"));
         var names = Shipped();
         Assert.Equal(39, names.Count);
         foreach (var language in Languages.All)
@@ -326,6 +327,7 @@ public class PlaysTests
     public void EveryCharacterCheersInItsOwnVoiceAtEveryBigMoment()
     {
         var swift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+BallLines.swift"));
+        var surfSwift = File.ReadAllText(Path.Combine(Root, "Sources/LedgelingsCore/Plays+SurfLines.swift"));
         var moments = Enum.GetValues<Plays.Moment>();
         foreach (var language in Languages.All)
         {
@@ -334,7 +336,7 @@ public class PlaysTests
                 foreach (var moment in moments)
                 {
                     Assert.False(string.IsNullOrEmpty(cheers[name].GetValueOrDefault(moment.Raw())), $"{name} {moment} {language}");
-                    if (language == Language.English) Assert.Contains("\"" + cheers[name][moment.Raw()] + "\"", swift);    // word for word
+                    if (language == Language.English) Assert.Contains("\"" + cheers[name][moment.Raw()] + "\"", swift + surfSwift);    // word for word
                 }
             foreach (var moment in moments) Assert.True(Plays.CheerAnyoneIn(language).ContainsKey(moment.Raw()));
         }

@@ -17,7 +17,7 @@ public class PlaySettingsTests
         Assert.True(s.ParachuteFallSpeed == 70 && s.BallBounce == 60 && s.BasketballThrows == 3);
         Assert.True(s.EnabledPlays.SetEquals(Plays.AllKinds));
         s.PlayEnabled = false; s.PlayTagEnabled = false; s.PlayRopeEnabled = false; s.PlayParachuteEnabled = false;
-        s.PlayBasketballEnabled = false; s.PlayTalk = false; s.PlaySoccerEnabled = false; s.PlayBaseballEnabled = false;
+        s.PlayBasketballEnabled = false; s.PlayTalk = false; s.PlaySoccerEnabled = false; s.PlayBaseballEnabled = false; s.PlaySurfEnabled = false;
         s.PlayEveryMinutes = 12; s.PlayBondBoost = 250; s.TagSeconds = 60;
         s.ParachuteFallSpeed = 40; s.BallBounce = 80; s.BasketballThrows = 7;
         var again = new AppSettings(store, secrets);
@@ -42,7 +42,8 @@ public class PlaySettingsTests
         Assert.True(s.PlaySoccerEnabled && s.PlayBaseballEnabled);
         Assert.True(s.SoccerEveryMinutes == 20 && s.BaseballEveryMinutes == 20 && s.SoccerMinutes == 2 && s.SoccerGoals == 3);
         Assert.True(s.BaseballInnings == 2 && s.SoccerPlayers == 6 && s.BaseballPlayers == 6);
-        Assert.True(s.BallGamePlayers[Plays.Kind.Soccer] == 6 && s.BallGamePlayers[Plays.Kind.Baseball] == 6 && s.BallGameEvery(Plays.Kind.Baseball) == 20);
+        Assert.True(s.BallGamePlayers[Plays.Kind.Soccer] == 6 && s.BallGamePlayers[Plays.Kind.Baseball] == 6 && s.BallGamePlayers[Plays.Kind.Surf] == 5);
+        Assert.True(s.BallGameEvery(Plays.Kind.Baseball) == 20 && s.BallGameEvery(Plays.Kind.Surf) == 30);
         s.PlaySoccerEnabled = false; s.PlayBaseballEnabled = false;
         s.SoccerEveryMinutes = 45; s.BaseballEveryMinutes = 90; s.SoccerMinutes = 4.5; s.SoccerGoals = 5;
         s.BaseballInnings = 4; s.SoccerPlayers = 3; s.BaseballPlayers = 9;
@@ -62,9 +63,12 @@ public class PlaySettingsTests
     {
         var s = new AppSettings(new MemorySettingsStore(), new MemorySecretStore());
         var ended = new Dictionary<Plays.Kind, double>();
-        Assert.True(Colony.BallGamesDueAt(s, ended, 0).SetEquals(new[] { Plays.Kind.Soccer, Plays.Kind.Baseball }));
+        Assert.True(Colony.BallGamesDueAt(s, ended, 0).SetEquals(new[] { Plays.Kind.Soccer, Plays.Kind.Baseball, Plays.Kind.Surf }));
         ended[Plays.Kind.Soccer] = 100;
-        Assert.True(Colony.BallGamesDueAt(s, ended, 100).SetEquals(new[] { Plays.Kind.Baseball }), "soccer only every so often");
+        ended[Plays.Kind.Surf] = 100;
+        Assert.True(Colony.BallGamesDueAt(s, ended, 100).SetEquals(new[] { Plays.Kind.Baseball }), "soccer and surfing only every so often");
+        Assert.DoesNotContain(Plays.Kind.Surf, Colony.BallGamesDueAt(s, ended, 100 + 20 * 60));                      // surfing every 30 minutes
+        Assert.Contains(Plays.Kind.Surf, Colony.BallGamesDueAt(s, ended, 100 + 30 * 60));
         Assert.Contains(Plays.Kind.Soccer, Colony.BallGamesDueAt(s, ended, 100 + 20 * 60));
         s.PlayBaseballEnabled = false;
         Assert.DoesNotContain(Plays.Kind.Baseball, Colony.BallGamesDueAt(s, ended, 0));
