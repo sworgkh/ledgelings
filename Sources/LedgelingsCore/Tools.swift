@@ -6,7 +6,7 @@ import Foundation
 /// its tag saying where to switch it on.
 public enum Tools {
     public enum Tool: String, CaseIterable, Sendable {
-        case translate, dictation, screenshot, fullScreen, lastRectangle, clipHistory, snippets, reminder, readAloud
+        case translate, dictation, screenshot, fullScreen, lastRectangle, clipHistory, snippets, reminder, readAloud, dive
 
         public var title: String {
             switch self {
@@ -19,6 +19,7 @@ public enum Tools {
             case .clipHistory: tr("CLIPBOARD HISTORY")
             case .snippets: tr("SNIPPETS")
             case .reminder: tr("ADD A REMINDER")
+            case .dive: tr("SCUBA DIVING")
             }
         }
 
@@ -34,6 +35,7 @@ public enum Tools {
             case .clipHistory: tr("Your recent copies, to paste again")
             case .snippets: tr("The snippets, to paste")
             case .reminder: tr("A reminder, thrown at you by paper plane")
+            case .dive: tr("Water over the screen and a dive among the fish; again to stop")
             }
         }
 
@@ -46,6 +48,7 @@ public enum Tools {
             case .screenshot, .fullScreen, .lastRectangle: .screenshots
             case .clipHistory, .snippets: .clipboard
             case .reminder: .reminders
+            case .dive: .diving
             }
         }
 
@@ -66,6 +69,7 @@ public enum Tools {
             case .lastRectangle: ["##.###.....", "#.........#", "....######.", "#...#....#.", "#...#....#.", "....#..#.#.", "#...#.##.#.", "#...#....#.", "....######.", "#..........", "..##.###.##"]
             case .clipHistory: ["...###.....", "####.####..", "#.......#..", "#.#####.#..", "#.......#..", "#.###...#..", "#.......#..", "#.#####.#..", "#.......#..", "#########..", "..........."]
             case .snippets: ["#########..", "#.......##.", "#.#####.#.#", "#.......###", "#.#####...#", "#.........#", "#.###.....#", "#.........#", "#.#####...#", "#.........#", "###########"]
+            case .dive: ["...........", "...........", ".....####..", "#...#....#.", "##.#...#..#", "#.#.......#", "##.#......#", "#...#....#.", ".....####..", "...........", "#.#.#.#.#.#"]
             case .reminder: ["..........#", "........##.", "......##.#.", "....##..#..", "..##...#...", "##....#....", "..##.#.....", "....##.....", "....#.#....", "....#..#...", "....#......"]
             }
         }

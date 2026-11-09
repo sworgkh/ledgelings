@@ -30,5 +30,6 @@ extension Strings {
         "readAloud": ruReadAloud,
         "relationships": ruRelationships,
         "gang": ruGang,
+        "diving": ruDiving,
     ]
 }

@@ -1,0 +1,71 @@
+# sea — what the divers meet under the water and what they wear (Dive):
+# three fish with a real tail flick, a jellyfish, a crab, a turtle, an octopus
+# and its ink, air bubbles, a diver's splash, the scuba gear (mask and tank,
+# props laid over any body) and a coral clump. Traced by hand from Wixel's
+# pictures into Blocky's rules: flat patches, a 1px outline in a dark tint of
+# the colour beside it, a light line top-left, a shade line bottom-right, black
+# square eyes, no curves. Everything faces right.
+#
+#   python -m spritetool build sprites/sea.yaml
+
+version: 1
+name: sea
+output: Sources/Ledgelings/Resources/sprites
+
+grid:
+  cell: [32, 28]
+  content_box: [0, 0, 32, 28]
+
+background:
+  color: "#ff00ff"
+  tolerance: 60
+
+painter: sea
+
+style: >-
+  pixel art, flat colour, 1px outline in a dark tint of each patch's colour,
+  sea life seen from the side, facing right, black square eyes, no mouth
+
+poses:
+  - {name: fish-a-0, prompt: a teal fish with a pale belly}
+  - {name: fish-a-1, prompt: a teal fish with a pale belly}
+  - {name: fish-b-0, prompt: a tall yellow fish with a dark stripe}
+  - {name: fish-b-1, prompt: a tall yellow fish with a dark stripe}
+  - {name: fish-c-0, prompt: a small slim coral fish}
+  - {name: fish-c-1, prompt: a small slim coral fish}
+  - {name: jelly-0, prompt: a pink jellyfish, its bell open and squeezed}
+  - {name: jelly-1, prompt: a pink jellyfish, its bell open and squeezed}
+  - {name: crab-0, prompt: a red crab walking, then claws raised}
+  - {name: crab-1, prompt: a red crab walking, then claws raised}
+  - {name: turtle-0, prompt: a sea turtle from the side, flippers down and up}
+  - {name: turtle-1, prompt: a sea turtle from the side, flippers down and up}
+  - {name: octopus-0, prompt: a purple octopus, arms curled and spread}
+  - {name: octopus-1, prompt: a purple octopus, arms curled and spread}
+  - {name: ink, prompt: a dark puff of ink}
+  - {name: bubble-0, prompt: an air bubble}
+  - {name: bubble-1, prompt: an air bubble}
+  - {name: bubble-2, prompt: an air bubble}
+  - {name: splash-0, prompt: the splash of a diver going in}
+  - {name: splash-1, prompt: the splash of a diver going in}
+  - {name: mask, prompt: a diving mask, glass and strap}
+  - {name: tank, prompt: a yellow air tank}
+  - {name: coral, prompt: a pink coral clump on a rock}
+
+animations:
+  fish-a: {frames: [fish-a-0, fish-a-1], fps: 4, loop: true}
+  fish-b: {frames: [fish-b-0, fish-b-1], fps: 4, loop: true}
+  fish-c: {frames: [fish-c-0, fish-c-1], fps: 4, loop: true}
+  jelly: {frames: [jelly-0, jelly-1], fps: 2, loop: true}
+  crab: {frames: [crab-0, crab-1], fps: 4, loop: true}
+  turtle: {frames: [turtle-0, turtle-1], fps: 2, loop: true}
+  octopus: {frames: [octopus-0], fps: 1, loop: true}
+  octopus-up: {frames: [octopus-1], fps: 1, loop: true}
+  crab-up: {frames: [crab-1], fps: 1, loop: true}
+  ink: {frames: [ink], fps: 1, loop: true}
+  bubble-0: {frames: [bubble-0], fps: 1, loop: true}
+  bubble-1: {frames: [bubble-1], fps: 1, loop: true}
+  bubble-2: {frames: [bubble-2], fps: 1, loop: true}
+  splash: {frames: [splash-0, splash-1], fps: 6, loop: true}
+  mask: {frames: [mask], fps: 1, loop: true}
+  tank: {frames: [tank], fps: 1, loop: true}
+  coral: {frames: [coral], fps: 1, loop: true}

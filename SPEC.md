@@ -2416,7 +2416,7 @@ since 0.63.0, no screenshots there yet, reordered with Move up and Move down): *
 **Tools…** menu item, or the wrench picture on the Creature Actions sheet's title line (K).
 A tile each, four to a row, in the order of Settings › Tools › Tools screen
 (`Tools.Tool`, the codes `translate`, `dictation`, `screenshot`, `fullScreen`,
-`lastRectangle`, `clipHistory`, `snippets`, `reminder`, `readAloud`; a tool added later goes at
+`lastRectangle`, `clipHistory`, `snippets`, `reminder`, `readAloud`, `dive`; a tool added later goes at
 the end of a list arranged before it, once: `toolsScreenKnown`): its 11×11 picture drawn ×2 in the
 game's style, its name, its own shortcut under it, its number in the corner.
 
@@ -2508,6 +2508,67 @@ provider, the voice, the time to the first sound, the length and the price. `--r
 a,b]` asks each candidate for the same English, Russian and Hebrew paragraph without playing it and
 has the dictation model write each down again. `--read-sheet "text" [--preset name] [--snapshot
 out.png] [--mute]` opens the sheet on the real screen, reads, writes the paper and closes.
+
+### 7.17 Scuba diving and Stop activity
+
+Started **by hand only** (`Dive`, `Colony+Dive`, since 0.67.0 on macOS): never on its own, whatever
+the games' clock says. From the Creature Actions sheet's Activities page (*SCUBA DIVING*, key D: a
+second press stops it), the **SCUBA DIVING** tile of the Tools screen (`dive`, again to stop), the
+menu's **Go Scuba Diving** / **Out of the Water**, or **Start a dive now** on Settings › Diving.
+While a dive is on, no game starts; a game going on when it starts is broken off.
+
+- **The water** (`diveWaterShare`, ⅓ by default) rises from the bottom edge of the creatures' home
+  monitor (the one most of them are on), or of every monitor (`diveAllScreens`), over
+  `Dive.riseSeconds` = 2.5 s, and drains over 2.5 s at the end. It is pixel art drawn into the
+  overlay (`WaterPainter`), one water pixel per sea-life pixel, at the creatures' size: no window,
+  so every click and key goes through it to the apps below; only a creature or its bubble takes a
+  click, as anywhere. Two pictures: behind the creatures the water (`diveWaterOpacity`, 0.3: the
+  desktop reads through it), a deeper band on the floor, slanting light rays from the surface and
+  caustics (a moving net of light, bright on the floor and faint above); over them a thin tint (so a
+  diver looks under water), the wavy surface with a foam line, and the bubbles.
+- **The divers**: up to `diveDivers` (3) who are free (as for a game), on the water's monitor
+  first. Each puts on the gear while the water rises (the sea sheet's `mask`, a frame round where
+  the eyes are, so they show through, and `tank` on the back, fading in: props over any species),
+  then jumps in one after another, 0.45 s apart, a 0.8 s arc to the surface and a splash. Under
+  water it swims (the walk pose, tilted to its course, ±0.5 rad) at 60 pt/s to one spot after
+  another, breathing out a bubble every 0.5–1.1 s; every 16–32 s it swims up for air and bobs at
+  the surface for 1.6 s. When the dive is over (`diveMinutes`, 3 min, after the water is up) the
+  water drains and they sink with it to the floor, land, and drip for 3 s (two drops each).
+- **The sea life** (`Dive.Life`, the sheet `sea`, traced from Wixel's pictures into Blocky's rules,
+  facing right and mirrored to swim left; it is not a character and says nothing): `diveSeaLife`
+  (12) fish of three kinds in schools of 2–4, each school heading for a spot and then another,
+  keeping apart; a jellyfish pulsing up and drifting down; a crab walking the floor about its patch;
+  a turtle rowing from end to end; an octopus on the floor; seaweed every 60–140 pt along every
+  floor, swaying more towards its tip, and a coral clump at every third strand. A diver within
+  70 pt frightens it for 1.2 s: fish dart away, the crab raises its claws and scuttles off, the
+  octopus spreads its arms, puffs ink and jets up and away for 2.5 s, then settles.
+- **Words** (`diveTalk`, with `talkEnabled`): built-in lines only, one each in every character's
+  voice, English and Russian (`Dive.englishLines`, `russianLines`, `anyone` for a character the
+  user made): `in` as the first one jumps in, `see` when a diver comes within 110 pt of something it
+  has not pointed at for 25 s (`{what}`: *a turtle*, *a school of fish*), `fish` when the fish
+  scatter round it, `octopus` when the octopus gives it a fright, `air` at the surface, `out` as
+  they climb out. At most one line every 6 s, except `in`, `octopus` and `out`. No model is called.
+- **Memory**: a dive the water filled for is a `dive` moment of every pair of divers, its detail
+  what they saw (*a school of fish, a turtle*): in their storyline, the day's memory (*went diving
+  with Pip at 14:02 and saw a turtle*) and the tally.
+
+**Stop activity** (`Activities`): anything that runs on the screen for a while registers how to
+tell it is running and how to stop it (the dive, a game from Plays, the surf). **⌃⌥⎋** from any app
+(`stopActivityShortcut`, rebindable; not ⌥⌘⎋, the Mac's Force Quit) and the menu's **Stop Activity
+(⌃⌥⎋)** stop everything at once: the water, the fish and the gear are gone on the next frame (within
+half a second) and the creatures drop back onto their edges. With **Stop when I use the computer**
+(`stopOnUse`, on), a real key press or a click anywhere but on a creature stops it too; moving the
+mouse does not, nor anything in the first 0.6 s (the press that started it) (`UsePolicy`). It asks
+the system how long ago the last key and click were, ten times a second, which needs no permission.
+
+`--dive-film out.mp4` films a dive offscreen with five creatures, three diving, a window of another
+app under the water and a click through to it, the draining and the climb out; then a second dive
+ended by Stop activity, printing how long the screen took to clear (`stop activity: water, fish and
+gear gone after 0.03 s`), each step with its time, and stills beside the film (`…-rising.png`,
+`…-splash.png`, `…-under.png`, `…-clicked.png`, `…-draining.png`, `…-out.png`, `…-stopped.png`).
+Exit 1 if the water is not the set share, a click was taken, or the screen did not clear in time.
+`--dive [--stop-after seconds]` runs a dive on the real screen, each step on stderr, and quits once
+they are out, or presses Stop activity after that many seconds and prints how long the screen took to clear.
 
 ## 8. The brain: chat client
 
@@ -3040,6 +3101,15 @@ An error for want of a model reads as that note, never as a server refusal.
 | soccerGoals | 3 | 1–10, clamped on load: goals that win |
 | baseballInnings | 2 | 1–9, clamped on load |
 | soccerPlayers, baseballPlayers | 6 | 1–10, clamped on load: the most who join |
+| stopActivityShortcutEnabled, stopActivityShortcutKeyCode, stopActivityShortcutModifiers | true, ⌃⌥⎋ | Stop activity from any app (§7.17): ends a dive, a surf or a game at once |
+| stopOnUse | true | a real key press or a click anywhere but on a creature stops a running activity; moving the mouse does not |
+| diveWaterShare | ⅓ | 0.15–0.6, clamped on load: how much of the screen the dive's water covers, from the bottom |
+| diveWaterOpacity | 0.3 | 0.1–0.7, clamped on load: how much the water shows; the desktop reads through it |
+| diveMinutes | 3 | 0.5–15 min, clamped on load: once the water is up |
+| diveDivers | 3 | 1–8, clamped on load: the most who dive |
+| diveSeaLife | 12 | 3–40, clamped on load: fish, in schools; the jellyfish, crab, turtle and octopus always come |
+| diveAllScreens | false | the water on every monitor, not only the creatures' home one |
+| diveTalk | true | the divers say a line in their own voice; needs `talkEnabled` |
 | revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |

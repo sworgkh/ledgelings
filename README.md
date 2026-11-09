@@ -105,6 +105,14 @@ and a ball out of the top of the screen is a home run with fireworks. Tackles ta
 ball, never the player. Each celebrates and grumbles in its own voice, a pixel
 scoreboard keeps count. Settings › Ball games; both are in *Activities…*.
 
+**Scuba diving, by hand only.** Start it from Creature Actions › Activities (D), the Tools
+screen or the menu: see-through pixel water rises over the bottom third of the screen, with
+light rays, caustics and swaying seaweed; a few creatures put on a mask and a tank, jump in with
+a splash and swim among fish, a jellyfish, a crab, a turtle and an octopus, pointing things out
+in their own voices, coming up for air, and climbing out dripping at the end. Clicks go straight
+through the water to your apps. **Stop activity (⌃⌥⎋)** ends a dive or a game at once, and so
+does any key press or click while *Stop when I use the computer* is on (Settings › Games › Diving).
+
 **They do what they say, and remember.** A letter that asks "soccer?" gets a written yes
 or no, and a yes walks them to the pitch: from talk and letters they can invite each other
 to a game or tea, accept or decline, bring a flower, write back, visit, follow or go to

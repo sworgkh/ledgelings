@@ -26,7 +26,7 @@ import Testing
     @Test func theFiveGroupsAreAsDrawn() {
         #expect(SettingsGroup.allCases.map { $0.pages } == [
             [.creatures, .actions, .sprites, .beds, .flowers, .calendar],
-            [.chases, .play, .ballGames],
+            [.chases, .play, .ballGames, .diving],
             [.talk, .voice, .bonds, .relationships, .twists],
             [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud],
             [.costs, .chats],

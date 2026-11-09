@@ -294,6 +294,36 @@ final class AppSettings: ObservableObject {
     @Published var baseballInnings: Int { didSet { save(baseballInnings, "baseballInnings") } }
     @Published var baseballPlayers: Int { didSet { save(baseballPlayers, "baseballPlayers") } }
 
+    // MARK: Diving and Stop activity
+
+    /// Stop activity (⌃⌥⎋): from any app, ends a dive, a surf or a game at once.
+    @Published var stopActivityShortcutEnabled: Bool { didSet { save(stopActivityShortcutEnabled, "stopActivityShortcutEnabled") } }
+    @Published var stopActivityShortcut: Shortcut {
+        didSet { save(stopActivityShortcut.keyCode, "stopActivityShortcutKeyCode"); save(stopActivityShortcut.modifiers.rawValue, "stopActivityShortcutModifiers") }
+    }
+    /// Why the Stop activity shortcut does nothing, when the system refused it. Not saved.
+    @Published var stopActivityShortcutProblem = ""
+    /// A real key press, or a click anywhere but on a creature, stops a running activity.
+    @Published var stopOnUse: Bool { didSet { save(stopOnUse, "stopOnUse") } }
+    /// Scuba diving (started by hand only): how much of the screen the water covers, from the bottom.
+    @Published var diveWaterShare: Double { didSet { save(diveWaterShare, "diveWaterShare") } }
+    /// How see-through the water is: 0 is clear glass, 1 would hide the apps under it.
+    @Published var diveWaterOpacity: Double { didSet { save(diveWaterOpacity, "diveWaterOpacity") } }
+    @Published var diveMinutes: Double { didSet { save(diveMinutes, "diveMinutes") } }
+    @Published var diveDivers: Int { didSet { save(diveDivers, "diveDivers") } }
+    /// How many fish swim, in all; the turtle, jellyfish, crab and octopus come once there are enough.
+    @Published var diveSeaLife: Int { didSet { save(diveSeaLife, "diveSeaLife") } }
+    /// The water covers the creatures' home monitor only, or every monitor.
+    @Published var diveAllScreens: Bool { didSet { save(diveAllScreens, "diveAllScreens") } }
+    /// The divers say a line as they jump in, when they see something, and as they climb out.
+    @Published var diveTalk: Bool { didSet { save(diveTalk, "diveTalk") } }
+
+    static let diveWaterShareRange = 0.15...0.6
+    static let diveWaterOpacityRange = 0.1...0.7
+    static let diveMinutesRange = 0.5...15.0
+    static let diveDiversRange = 1...8
+    static let diveSeaLifeRange = 3...40
+
     /// The most who may join `kind`, a ball game.
     var ballGamePlayers: [Plays.Kind: Int] { [.soccer: soccerPlayers, .baseball: baseballPlayers] }
     /// The fewest minutes between two of `kind`, a ball game.
@@ -920,6 +950,25 @@ final class AppSettings: ObservableObject {
         soccerPlayers = min(max(soccerJoin, Self.ballPlayersRange.lowerBound), Self.ballPlayersRange.upperBound)
         let baseballJoin = defaults.object(forKey: "baseballPlayers") as? Int ?? 6
         baseballPlayers = min(max(baseballJoin, Self.ballPlayersRange.lowerBound), Self.ballPlayersRange.upperBound)
+        stopActivityShortcutEnabled = defaults.object(forKey: "stopActivityShortcutEnabled") as? Bool ?? true
+        stopActivityShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "stopActivityShortcutKeyCode") as? Int,
+                                        savedModifiers: defaults.object(forKey: "stopActivityShortcutModifiers") as? Int, standard: .stopActivity)
+        stopOnUse = defaults.object(forKey: "stopOnUse") as? Bool ?? true
+        // A third of the screen, as the owner asked; light enough to read the apps through.
+        let share = defaults.object(forKey: "diveWaterShare") as? Double ?? 1.0 / 3
+        diveWaterShare = min(max(share, Self.diveWaterShareRange.lowerBound), Self.diveWaterShareRange.upperBound)
+        let opacity = defaults.object(forKey: "diveWaterOpacity") as? Double ?? 0.3
+        diveWaterOpacity = min(max(opacity, Self.diveWaterOpacityRange.lowerBound), Self.diveWaterOpacityRange.upperBound)
+        // Three minutes: long enough to see everything once, short enough to watch to the end.
+        let minutes = defaults.object(forKey: "diveMinutes") as? Double ?? 3
+        diveMinutes = min(max(minutes, Self.diveMinutesRange.lowerBound), Self.diveMinutesRange.upperBound)
+        let divers = defaults.object(forKey: "diveDivers") as? Int ?? 3
+        diveDivers = min(max(divers, Self.diveDiversRange.lowerBound), Self.diveDiversRange.upperBound)
+        // Twelve fish: three small schools, and everyone else besides.
+        let life = defaults.object(forKey: "diveSeaLife") as? Int ?? 12
+        diveSeaLife = min(max(life, Self.diveSeaLifeRange.lowerBound), Self.diveSeaLifeRange.upperBound)
+        diveAllScreens = defaults.object(forKey: "diveAllScreens") as? Bool ?? false
+        diveTalk = defaults.object(forKey: "diveTalk") as? Bool ?? true
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
         // Before species existed, one cast served everyone: it was blocky's.
         if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {

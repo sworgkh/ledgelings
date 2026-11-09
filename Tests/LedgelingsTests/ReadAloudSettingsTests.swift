@@ -73,7 +73,7 @@ import Testing
         defaults.set(["translate", "dictation", "reminder"], forKey: "toolsScreenTools")
         defaults.removeObject(forKey: "toolsScreenKnown")    // as 0.62 left it
         let s = AppSettings(defaults: defaults, keychain: Secrets())
-        #expect(s.toolsScreenTools == ["translate", "dictation", "reminder", "readAloud"])
+        #expect(s.toolsScreenTools == ["translate", "dictation", "reminder", "readAloud", "dive"])
         s.toolsScreenTools = ["translate", "dictation", "reminder"]
         #expect(AppSettings(defaults: defaults, keychain: Secrets()).toolsScreenTools == ["translate", "dictation", "reminder"], "off stays off")
         #expect(SettingsGroup.tools.pages.last == .readAloud)

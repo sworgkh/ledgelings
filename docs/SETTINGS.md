@@ -349,6 +349,24 @@ games.
 | **Innings** (`baseballInnings`) | 2 | 1 to 9 | Each side bats once an inning; alone, 4 practice swings an inning |
 | **Soccer players at most** (`soccerPlayers`), **Baseball players at most** (`baseballPlayers`) | 6 | 1 to 10 | Who joins: the one who starts it, then the closest friends, then anyone free |
 
+## Diving tab
+
+Scuba diving, which only ever starts by hand (the Activities page's *SCUBA DIVING*, key D; the
+Tools screen; the menu's *Go Scuba Diving*; or *Start a dive now* here), on the left; Stop
+activity, the way to end a dive, a surf or a game from any app, on the right.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Water height** (`diveWaterShare`) | ⅓ of the screen | 15 to 60 % of its height | From the bottom edge up; it is only drawn, so clicks go through it |
+| **Water shows** (`diveWaterOpacity`) | 30 % | 10 to 70 % | Lower: more of the apps under it show through |
+| **Water on** (`diveAllScreens`) | the creatures' home monitor | or every monitor | The home one is the monitor most of them are on |
+| **A dive lasts** (`diveMinutes`) | 3 min | 0.5 to 15, in halves | Once the water is up; then it drains and they climb out dripping |
+| **Divers at most** (`diveDivers`) | 3 | 1 to 8 | Whoever is free, on the water's monitor first |
+| **Fish** (`diveSeaLife`) | 12 | 3 to 40 | In schools of 2–4; a jellyfish, a crab, a turtle and an octopus always come |
+| **The divers say what they see** (`diveTalk`) | on | | Built-in lines, each in its own voice; needs Talk on |
+| **Stop activity** (`stopActivityShortcutEnabled`, `stopActivityShortcutKeyCode`, `stopActivityShortcutModifiers`) | on, ⌃⌥⎋ | any key with ⌘, ⌃ or ⌥ | From any app: whatever runs (a dive, a surf, a game) stops at once; also the menu's *Stop Activity* |
+| **Stop when I use the computer** (`stopOnUse`) | on | | A key press, or a click anywhere but on a creature, stops it; moving the mouse does not |
+
 ## Sprites tab
 
 Every species the app knows, built in or imported, as a card showing its idle pose.

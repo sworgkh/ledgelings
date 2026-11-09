@@ -5,6 +5,13 @@ import LedgelingsCore
 extension Colony {
 
     /// The topmost creature whose body is under `point`.
+    /// Whether a click at `point` is the creatures' to take; anywhere else (the
+    /// dive's water too) it goes through to the app below.
+    func takesClick(at cursor: CGPoint, shift: Bool) -> Bool {
+        held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
+            || bubble(at: cursor) != nil || letterContains(cursor) || bed(at: cursor) != nil
+    }
+
     func creature(at point: CGPoint) -> Int? {
         creatures.indices.reversed().first { i in
             guard !hideout.isInside(i) else { return false }
@@ -69,8 +76,7 @@ extension Colony {
     /// can act on: any sleeper, any creature at all while Shift is down, or a
     /// speech bubble, or a reminder's open letter. Shift is also how you get close enough to right-click one.
     func updateClickability(cursor: CGPoint, shift: Bool) {
-        let target = held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
-            || bubble(at: cursor) != nil || letterContains(cursor) || bed(at: cursor) != nil
+        let target = takesClick(at: cursor, shift: shift)
         for overlay in overlays { overlay.setClickable(target && overlay.display.frame.contains(cursor)) }
     }
 }

@@ -68,7 +68,7 @@ extension Colony {
     /// Every frame: start a game when one is due, and run the one going on.
     func updatePlay(dt: Double) {
         if play != nil { runPlay(dt: dt); return }
-        guard settings.playEnabled, !isNight, !hideout.isActive, grab == nil, held == nil else { return }
+        guard settings.playEnabled, dive == nil, !isNight, !hideout.isActive, grab == nil, held == nil else { return }
         if playEveryWas != settings.playEveryMinutes || nextPlayAt == nil {
             playEveryWas = settings.playEveryMinutes
             nextPlayAt = elapsed + Plays.wait(everyMinutes: settings.playEveryMinutes, boost: settings.playBondBoost,
@@ -108,7 +108,7 @@ extension Colony {
     /// players (or `count`, as the film asks).
     @discardableResult
     func startPlay(_ kind: Plays.Kind?, by chosen: Int? = nil, count: Int? = nil) -> Bool {
-        guard play == nil, !hideout.isActive else { return false }
+        guard play == nil, dive == nil, !hideout.isActive else { return false }
         let free = creatures.indices.filter(freeToPlay)
         guard let first = chosen.flatMap({ free.contains($0) ? $0 : nil }) ?? free.randomElement(using: &rng) else { talkStatus = tr("nobody is free to play"); return false }
         func partners(of i: Int) -> [(index: Int, closeness: Double)] {

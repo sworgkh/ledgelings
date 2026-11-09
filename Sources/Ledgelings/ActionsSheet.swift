@@ -29,6 +29,7 @@ final class ActionsController {
         model.open = { [weak self] in self?.follow($0) }
         model.hide = { [weak self] in self?.hide(minutes: $0) }
         model.play = { [weak self] in self?.play($0) }
+        model.byHand = { [weak self] in self?.byHand($0) }
         model.chooseScreen = { [weak self] in self?.chooseScreen() }
     }
 
@@ -84,6 +85,7 @@ final class ActionsController {
         s.playOn = settings.playEnabled
         s.playsOff = Set(Plays.Kind.allCases.filter { !settings.playEnabled || !settings.enabledPlays.contains($0) })
         s.mood = settings.cursorMood
+        s.stopShortcut = settings.stopActivityShortcutEnabled ? GlobalShortcut.label(settings.stopActivityShortcut) : ""
         s.language = settings.language
         s.screen = ScreenChoice.isOffered ? Self.screenTitle(settings) : nil
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
@@ -100,6 +102,7 @@ final class ActionsController {
         s.teaOn = colony.teaParty != nil || colony.teaInvite != nil
         s.planeInAir = colony.airmail != nil
         s.playing = colony.play != nil
+        s.diving = colony.isDiving
         s.planted = colony.garden.beds.count
         s.hiding = colony.isHiding
         s.hideLeft = colony.isHiding ? Int(colony.hideout.remaining(at: colony.elapsed).rounded(.up)) : 0
@@ -204,6 +207,20 @@ final class ActionsController {
         after(colony.startPlay(kind) ? tr("Off they go: %@.", kind.title) : tr("No game: %@.", colony.talkStatus))
     }
 
+    /// Started by hand, from the Activities page: on if it is off, stopped at once if it is on.
+    private func byHand(_ activity: HandActivity) {
+        guard let colony = colony() else { return }
+        switch activity {
+        case .dive:
+            if colony.isDiving {
+                colony.stopDive()
+                after(tr("Out of the water."))
+            } else {
+                after(colony.startDive() ? tr("Masks on: into the water!") : tr("No dive: %@.", colony.talkStatus))
+            }
+        }
+    }
+
     private func hide(minutes: Double?) {
         guard let colony = colony() else { return }
         model.choosingHide = false
@@ -281,6 +298,9 @@ struct ActionsState: Equatable {
     /// Games switched off in settings (all of them while play is off).
     var playsOff: Set<Plays.Kind> = []
     var playing = false
+    var diving = false
+    /// Stop activity's shortcut as drawn, empty while it is off.
+    var stopShortcut = ""
     var mood = CursorMood.bad
     var language = Language.english
     /// The screen button's words; nil with one monitor, when there is nothing to choose.
@@ -406,6 +426,50 @@ extension Plays.Kind {
     }
 }
 
+/// What only ever starts by hand, listed under the games on the Activities
+/// page: a press starts it, a second press (or Stop activity) stops it.
+enum HandActivity: CaseIterable {
+    case dive
+
+    var activityTitle: String {
+        switch self {
+        case .dive: tr("SCUBA DIVING")
+        }
+    }
+
+    var activityLine: String {
+        switch self {
+        case .dive: tr("Water over the bottom of the screen; a few put on masks and dive among fish, a turtle and an octopus.")
+        }
+    }
+
+    var activityKey: Swift.Character {
+        switch self {
+        case .dive: "d"
+        }
+    }
+
+    func isRunning(in s: ActionsState) -> Bool {
+        switch self {
+        case .dive: s.diving
+        }
+    }
+
+    /// What its row says on hover: start it, or stop it, with its keys.
+    func activityTip(in s: ActionsState) -> String {
+        let key = String(activityKey).uppercased()
+        if isRunning(in: s) { return s.stopShortcut.isEmpty ? tr("Stop now (%@)", key) : tr("Stop now (%@ · %@)", key, s.stopShortcut) }
+        return tr("Start now: %@ (%@)", tr("scuba diving"), key)
+    }
+
+    /// Why it cannot start now, or nil.
+    func activityDetail(in s: ActionsState) -> String? {
+        if isRunning(in: s) { return nil }
+        if s.hiding { return tr("they are hiding") }
+        return nil
+    }
+}
+
 /// One tile on the sheet, in the order they are laid out, four to a row.
 enum ActionsTile: CaseIterable {
     case jump, talk, tea, plane, reminder, hide, sleep, flowers
@@ -488,6 +552,7 @@ final class ActionsModel: ObservableObject {
     /// The main sheet, or its Activities page.
     @Published var page = ActionsPage.main
     var play: (Plays.Kind) -> Void = { _ in }
+    var byHand: (HandActivity) -> Void = { _ in }
     var chooseScreen: () -> Void = {}
 }
 
@@ -523,6 +588,13 @@ enum ActionIcons {
         made[.basketball] = props?.frame(animation: "hoop", time: 0)
         made[.soccer] = props?.frame(animation: "net", time: 0)
         made[.baseball] = props?.frame(animation: "bat", time: 0)
+        return made.compactMapValues { trimmed($0) }
+    }()
+
+    /// Each hand-started activity's picture: a fish for the dive.
+    static let byHand: [HandActivity: CGImage] = {
+        var made: [HandActivity: CGImage] = [:]
+        made[.dive] = (try? SpriteAtlas(named: "sea"))?.frames().frame(animation: "fish-a", time: 0)
         return made.compactMapValues { trimmed($0) }
     }()
 
@@ -769,38 +841,67 @@ struct ActionsSheetView: View {
 }
 
 extension ActionsSheetView {
-    static let activityRow: CGFloat = 50
+    /// Room for every game and every hand-started activity, the line and the buttons:
+    /// as tall as the page allows, 42 at most.
+    static var activityRow: CGFloat {
+        let n = CGFloat(activityRows)
+        return min(42, ((activityRoom - (n - 1) * activityGap) / n).rounded(.down))
+    }
+    /// What the rows, the line and the gap to the buttons share under the title.
+    static let activityRoom: CGFloat = 350 - activityLineHeight - activitiesFooterGap
     static let activityGap: CGFloat = 3
     static let activityLineHeight: CGFloat = 24
     static let activitiesFooterGap: CGFloat = 11
 
     /// The Activities page: a row per game, its picture, name and what happens, and Play Now.
     var activities: some View {
-        // Six rows of 50 leave room for the line, and the buttons sit where the sheet's own do.
+        // The rows share what the line and the buttons leave, so the buttons sit where the sheet's own do.
         VStack(alignment: .leading, spacing: Self.activityGap) {
             ForEach(Plays.Kind.allCases, id: \.self) { activityRow($0) }
+            ForEach(HandActivity.allCases, id: \.self) { handRow($0) }
         }
+    }
+
+    /// The rows on the Activities page: every game, then what starts by hand only.
+    static var activityRows: Int { Plays.Kind.allCases.count + HandActivity.allCases.count }
+
+    private func handRow(_ activity: HandActivity) -> some View {
+        let s = model.state, why = activity.activityDetail(in: s), on = activity.isRunning(in: s)
+        return Button { model.byHand(activity) } label: {
+            rowLabel(picture: ActionIcons.byHand[activity], title: activity.activityTitle, line: activity.activityLine,
+                     action: on ? tr("STOP") : tr("START"), detail: why ?? String(activity.activityKey).uppercased())
+        }
+        .buttonStyle(PixelTileStyle(chosen: on))
+        .keyboardShortcut(KeyEquivalent(activity.activityKey), modifiers: [])
+        .help(activity.activityTip(in: s))
+        .disabled(why != nil)
+        .opacity(why == nil ? 1 : 0.45)
+    }
+
+    private func rowLabel(picture: CGImage?, title: String, line: String, action: String, detail: String) -> some View {
+        HStack(spacing: 12) {
+            activityPicture(picture).frame(width: 56, height: 30)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                Text(line).font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color(cgColor: ScreenOverlay.softInk)).lineLimit(2).minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: 6)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(action).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                Text(detail).font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color(cgColor: ScreenOverlay.faintInk)).lineLimit(1)
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(width: ActionsController.size.width - 66, height: Self.activityRow, alignment: .leading)
     }
 
     private func activityRow(_ kind: Plays.Kind) -> some View {
         let s = model.state, why = kind.activityDetail(in: s)
         return Button { model.play(kind) } label: {
-            HStack(spacing: 12) {
-                activityPicture(ActionIcons.games[kind]).frame(width: 64, height: 40)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(kind.activityTitle).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
-                    Text(kind.activityLine).font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Color(cgColor: ScreenOverlay.softInk)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 6)
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text(tr("PLAY NOW")).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
-                    Text(why ?? String(kind.activityKey).uppercased()).font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Color(cgColor: ScreenOverlay.faintInk)).lineLimit(1)
-                }
-            }
-            .padding(.horizontal, 12)
-            .frame(width: ActionsController.size.width - 66, height: Self.activityRow, alignment: .leading)
+            rowLabel(picture: ActionIcons.games[kind], title: kind.activityTitle, line: kind.activityLine,
+                     action: tr("PLAY NOW"), detail: why ?? String(kind.activityKey).uppercased())
         }
         .buttonStyle(PixelTileStyle(chosen: false))
         .keyboardShortcut(KeyEquivalent(kind.activityKey), modifiers: [])

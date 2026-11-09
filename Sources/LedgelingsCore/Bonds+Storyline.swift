@@ -17,6 +17,8 @@ extension Bonds {
     public struct Moment: Codable, Equatable, Sendable {
         public enum Kind: String, Codable, CaseIterable, Sendable {
             case talk, tea, flower, plane, grab, play
+            /// A dive together (`Dive`); `detail` is what they saw: "a turtle, a crab".
+            case dive
             /// The first time a newcomer to the gang met this one (`Gang`); `who` is the newcomer.
             case meet
         }
@@ -134,6 +136,7 @@ extension Bonds {
         case .plane: trCount(n, "paper plane", "paper planes")
         case .grab: trCount(n, "cursor grab", "cursor grabs")
         case .play: trCount(n, "game", "games")
+        case .dive: trCount(n, "dive", "dives")
         case .meet: trCount(n, "first meeting", "first meetings")
         }
     }
@@ -149,6 +152,10 @@ extension Bonds {
         case .plane: return tr("%1$@ sent %2$@ a paper plane: \"%3$@\"", moment.who, other, said)
         case .grab: return tr("%1$@ grabbed the cursor while %2$@ looked on", moment.who, other)
         case .meet: return tr("%1$@, new to the gang, met %2$@ for the first time", moment.who, other)
+        case .dive:
+            let saw = moment.detail ?? ""
+            return saw.isEmpty ? tr("%1$@ and %2$@ went diving together", moment.who, other)
+                : tr("%1$@ and %2$@ went diving together and saw %3$@", moment.who, other, saw)
         case .play:
             let played = tr("%1$@ and %2$@ played: %3$@", moment.who, other, Plays.name(of: moment.detail))
             return result(moment).map { played + " (" + $0 + ")" } ?? played
@@ -258,6 +265,9 @@ extension Bonds {
                 let game = Plays.name(of: moment.detail)
                 choices = [tr("%2$@ wants a rematch of %3$@ with %1$@, after %4$@.", who, other, game, when),
                            tr("%1$@ has been practising since %3$@ with %2$@ %4$@, and means to win next time.", who, other, game, when)]
+            case .dive:
+                choices = [tr("%2$@ keeps telling everyone about the dive with %1$@ %3$@.", who, other, when),
+                           tr("%1$@ wants to go diving with %2$@ again, after %3$@.", who, other, when)]
             case .meet:
                 choices = [tr("%2$@ has been sizing up the newcomer %1$@ ever since they met %3$@.", who, other, when),
                            tr("%1$@ is new to the gang and hopes %2$@ will show them around, after meeting %3$@.", who, other, when)]
