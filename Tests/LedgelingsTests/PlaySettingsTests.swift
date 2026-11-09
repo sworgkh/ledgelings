@@ -21,7 +21,7 @@ import Testing
         #expect(s.parachuteFallSpeed == 70 && s.ballBounce == 60 && s.basketballThrows == 3)
         #expect(s.enabledPlays == Set(Plays.Kind.allCases))
         s.playEnabled = false; s.playTagEnabled = false; s.playRopeEnabled = false; s.playParachuteEnabled = false
-        s.playBasketballEnabled = false; s.playTalk = false; s.playSoccerEnabled = false; s.playBaseballEnabled = false
+        s.playBasketballEnabled = false; s.playTalk = false; s.playSoccerEnabled = false; s.playBaseballEnabled = false; s.playSurfEnabled = false
         s.playEveryMinutes = 12; s.playBondBoost = 250; s.tagSeconds = 60
         s.parachuteFallSpeed = 40; s.ballBounce = 80; s.basketballThrows = 7
         let again = AppSettings(defaults: defaults, keychain: Keychain(service: name))
@@ -46,7 +46,7 @@ import Testing
         #expect(s.playSoccerEnabled && s.playBaseballEnabled)
         #expect(s.soccerEveryMinutes == 20 && s.baseballEveryMinutes == 20 && s.soccerMinutes == 2 && s.soccerGoals == 3)
         #expect(s.baseballInnings == 2 && s.soccerPlayers == 6 && s.baseballPlayers == 6)
-        #expect(s.ballGamePlayers == [.soccer: 6, .baseball: 6] && s.ballGameEvery(.baseball) == 20)
+        #expect(s.ballGamePlayers == [.soccer: 6, .baseball: 6, .surf: 5] && s.ballGameEvery(.baseball) == 20)
         s.playSoccerEnabled = false; s.playBaseballEnabled = false
         s.soccerEveryMinutes = 45; s.baseballEveryMinutes = 90; s.soccerMinutes = 4.5; s.soccerGoals = 5
         s.baseballInnings = 4; s.soccerPlayers = 3; s.baseballPlayers = 9
@@ -59,6 +59,49 @@ import Testing
         let clamped = AppSettings(defaults: defaults, keychain: Keychain(service: name))
         #expect(clamped.soccerEveryMinutes == 2 && clamped.baseballEveryMinutes == 240 && clamped.soccerMinutes == 10)
         #expect(clamped.soccerGoals == 1 && clamped.baseballInnings == 9 && clamped.soccerPlayers == 1 && clamped.baseballPlayers == 10)
+    }
+
+    @Test func theSurfingSettingsHaveDefaultsSurviveARelaunchAndAreClamped() {
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        let s = AppSettings(defaults: defaults, keychain: Keychain(service: name))
+        #expect(s.playSurfEnabled && s.enabledPlays.contains(.surf))
+        #expect(s.surfEveryMinutes == 30 && s.surfMinutes == 2 && s.surfWaves == 5 && s.surfWaveHeight == 2 && s.surfPlayers == 5)
+        #expect(s.surfWaterOpacity == 55 && s.ballGameEvery(.surf) == 30)
+        s.playSurfEnabled = false; s.surfEveryMinutes = 60; s.surfMinutes = 3.5; s.surfWaves = 9; s.surfWaveHeight = 3; s.surfPlayers = 2
+        s.surfWaterOpacity = 40
+        let again = AppSettings(defaults: defaults, keychain: Keychain(service: name))
+        #expect(!again.playSurfEnabled && !again.enabledPlays.contains(.surf))
+        #expect(again.surfEveryMinutes == 60 && again.surfMinutes == 3.5 && again.surfWaves == 9 && again.surfWaveHeight == 3 && again.surfPlayers == 2)
+        #expect(again.surfWaterOpacity == 40)
+        for (key, value) in [("surfEveryMinutes", 0.0), ("surfMinutes", 99), ("surfWaveHeight", 0.1), ("surfWaterOpacity", 100)] { defaults.set(value, forKey: key) }
+        for (key, value) in [("surfWaves", 0), ("surfPlayers", 40)] { defaults.set(value, forKey: key) }
+        let clamped = AppSettings(defaults: defaults, keychain: Keychain(service: name))
+        #expect(clamped.surfEveryMinutes == 2 && clamped.surfMinutes == 10 && clamped.surfWaveHeight == 1 && clamped.surfWaterOpacity == 90)
+        #expect(clamped.surfWaves == 1 && clamped.surfPlayers == 10)
+    }
+
+    @Test func surfingIsPlayedToTheEndInTheColonyAndStopsAtOnce() throws {
+        let alone = try playToTheEnd(.surf, creatures: 1)
+        #expect(alone.contains { $0.contains("tide comes in") } && alone.contains { $0.contains("surf over") })
+        let two = try playToTheEnd(.surf, creatures: 2)
+        #expect(two.contains { $0.contains("catches the wave") } && two.contains { $0.contains("won by") })
+        // Stop activity: everything off the screen in the same frame.
+        let w = try world()
+        defer { w.forget() }
+        w.settings.creatureCount = 2
+        w.colony.applySettings()
+        var waited = 0.0
+        while !w.colony.startPlay(.surf), waited < 20 { w.step(0.5); waited += 0.5 }
+        while w.colony.play?.surf?.wave == nil, waited < 60 { w.step(0.1); waited += 0.1 }
+        #expect(w.colony.playProps().contains { $0.size != nil && $0.opacity < 1 }, "the water, see-through")
+        let activities = Activities()
+        activities.register(.surf, isRunning: { w.colony.play?.kind == .surf }, stop: { w.colony.stopSurf() })
+        #expect(activities.isRunning(.surf) && activities.running == [.surf])
+        #expect(activities.stopAll() == [.surf])
+        #expect(w.colony.play == nil && w.colony.playProps().isEmpty && w.colony.busy.isEmpty, "the sea is gone at once")
+        #expect(!activities.isRunning)
     }
 
     /// A ball game played in the colony from start to end: everyone free joins, each one
@@ -111,9 +154,10 @@ import Testing
     @Test func aBallGameWaitsItsTurn() throws {
         let w = try world()
         defer { w.forget() }
-        #expect(w.colony.ballGamesDue == [.soccer, .baseball])
+        #expect(w.colony.ballGamesDue == [.soccer, .baseball, .surf])
         w.colony.ballGameEnded[.soccer] = w.colony.elapsed
-        #expect(w.colony.ballGamesDue == [.baseball], "soccer only every so often")
+        w.colony.ballGameEnded[.surf] = w.colony.elapsed
+        #expect(w.colony.ballGamesDue == [.baseball], "soccer and surfing only every so often")
         w.settings.playBaseballEnabled = false
         #expect(w.colony.ballGamesDue.isEmpty)
     }

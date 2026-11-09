@@ -10,7 +10,7 @@ import LedgelingsCore
 /// (letter)`, `deed Unit 7 accepts soccer from Blocky`, `play soccer result: 2-1…`),
 /// then what the two remember of it.
 ///
-///     Ledgelings --invite-film build/invite.mp4 [soccer|tag|basketball|baseball|tea]
+///     Ledgelings --invite-film build/invite.mp4 [soccer|tag|basketball|baseball|surf|tea]
 @MainActor
 enum InviteFilm {
     static func run(output: URL, offer: Deeds.Offer) async throws {
@@ -29,6 +29,7 @@ enum InviteFilm {
         settings.teaPartiesEnabled = offer == .tea
         settings.dayMinutes = 30; settings.nightMinutes = 30
         settings.soccerMinutes = 1; settings.soccerGoals = 2; settings.baseballInnings = 1
+        settings.surfMinutes = 1; settings.surfWaves = 2
         let colony = try Colony(settings: settings, history: ChatHistory(directory: scratch.appendingPathComponent("chats")),
                                 library: SpriteLibrary(directory: scratch.appendingPathComponent("sprites")),
                                 spend: SpendLedger(directory: scratch),

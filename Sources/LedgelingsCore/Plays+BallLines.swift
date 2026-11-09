@@ -10,6 +10,8 @@ extension Plays {
     /// A moment in a ball game worth a line.
     public enum Moment: String, CaseIterable, Sendable {
         case goal, homeRun, oops, wander
+        /// Surfing (`Plays+SurfLines.swift`): catching a wave, wiping out, a trick landed, winning.
+        case wave, wipeout, trick, surfWin
 
         /// What just happened, for the model's prompt.
         public var happening: String {
@@ -18,15 +20,21 @@ extension Plays {
             case .homeRun: tr("you have just hit a home run, right off the top of the screen")
             case .oops: tr("you have just missed the ball in a silly way")
             case .wander: tr("you are wandering off in the middle of the game to look at something")
+            case .wave: tr("you have just caught a wave and are riding it")
+            case .wipeout: tr("you have just wiped out and tumbled into the water")
+            case .trick: tr("you have just landed a trick on the wave")
+            case .surfWin: tr("you have just won the surfing with the best score")
             }
         }
 
         /// Worth a line from the model, when one does the talking: the high points only.
-        public var asksTheModel: Bool { self == .goal || self == .homeRun }
+        public var asksTheModel: Bool { self == .goal || self == .homeRun || self == .surfWin }
     }
 
-    public static let cheerSets = Translated(english: englishCheerLines, [.russian: russianCheerLines])
-    public static let cheerAnyone = Translated(english: englishCheerAnyone, [.russian: russianCheerAnyone])
+    public static let cheerSets = Translated(english: together(englishCheerLines, surfMoments(englishSurfVoices)),
+                                             [.russian: together(russianCheerLines, surfMoments(russianSurfVoices))])
+    public static let cheerAnyone = Translated(english: englishCheerAnyone.merging(englishSurfAnyone.moments) { a, _ in a },
+                                               [.russian: russianCheerAnyone.merging(russianSurfAnyone.moments) { a, _ in a }])
 
     /// The line `name` says at `moment`.
     public static func cheerLine(by name: String, _ moment: Moment) -> String {

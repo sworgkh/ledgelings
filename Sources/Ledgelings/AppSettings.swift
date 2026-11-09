@@ -324,10 +324,35 @@ final class AppSettings: ObservableObject {
     static let diveDiversRange = 1...8
     static let diveSeaLifeRange = 3...40
 
-    /// The most who may join `kind`, a ball game.
-    var ballGamePlayers: [Plays.Kind: Int] { [.soccer: soccerPlayers, .baseball: baseballPlayers] }
-    /// The fewest minutes between two of `kind`, a ball game.
-    func ballGameEvery(_ kind: Plays.Kind) -> Double { kind == .baseball ? baseballEveryMinutes : soccerEveryMinutes }
+    /// Minutes a surfing session lasts at most.
+    static let surfMinutesRange = 0.5...10.0
+    /// Waves in a session.
+    static let surfWavesRange = 1...20
+    /// How tall a wave stands, in creature heights.
+    static let surfWaveHeightRange = 1.0...4.0
+    /// How solid the water is drawn, in percent: the desktop shows through the rest.
+    static let surfWaterOpacityRange = 20.0...90.0
+    /// The calm water's depth, in creature heights: a little over one, so a board floats above the floor.
+    static let surfDepth: CGFloat = 1.2
+    /// Surfing on a wave along the bottom edge, for however many are free (Plays+Surf).
+    @Published var playSurfEnabled: Bool { didSet { save(playSurfEnabled, "playSurfEnabled") } }
+    @Published var surfEveryMinutes: Double { didSet { save(surfEveryMinutes, "surfEveryMinutes") } }
+    @Published var surfMinutes: Double { didSet { save(surfMinutes, "surfMinutes") } }
+    @Published var surfWaves: Int { didSet { save(surfWaves, "surfWaves") } }
+    @Published var surfWaveHeight: Double { didSet { save(surfWaveHeight, "surfWaveHeight") } }
+    @Published var surfPlayers: Int { didSet { save(surfPlayers, "surfPlayers") } }
+    @Published var surfWaterOpacity: Double { didSet { save(surfWaterOpacity, "surfWaterOpacity") } }
+
+    /// The most who may join `kind`, a ball game or surfing.
+    var ballGamePlayers: [Plays.Kind: Int] { [.soccer: soccerPlayers, .baseball: baseballPlayers, .surf: surfPlayers] }
+    /// The fewest minutes between two of `kind`, a ball game or surfing.
+    func ballGameEvery(_ kind: Plays.Kind) -> Double {
+        switch kind {
+        case .baseball: baseballEveryMinutes
+        case .surf: surfEveryMinutes
+        default: soccerEveryMinutes
+        }
+    }
 
     /// The games switched on, whether or not play itself is.
     var enabledPlays: Set<Plays.Kind> {
@@ -338,6 +363,7 @@ final class AppSettings: ObservableObject {
         if playBasketballEnabled { on.insert(.basketball) }
         if playSoccerEnabled { on.insert(.soccer) }
         if playBaseballEnabled { on.insert(.baseball) }
+        if playSurfEnabled { on.insert(.surf) }
         return on
     }
     /// The user's own cast per species; a species not listed uses its sheet's cast.
@@ -969,6 +995,24 @@ final class AppSettings: ObservableObject {
         diveSeaLife = min(max(life, Self.diveSeaLifeRange.lowerBound), Self.diveSeaLifeRange.upperBound)
         diveAllScreens = defaults.object(forKey: "diveAllScreens") as? Bool ?? false
         diveTalk = defaults.object(forKey: "diveTalk") as? Bool ?? true
+        playSurfEnabled = defaults.object(forKey: "playSurfEnabled") as? Bool ?? true
+        // 30 minutes: the sea fills the bottom of the screen, so it comes now and then, not with every game.
+        let surfEvery = defaults.object(forKey: "surfEveryMinutes") as? Double ?? 30
+        surfEveryMinutes = min(max(surfEvery, Self.ballGameEveryRange.lowerBound), Self.ballGameEveryRange.upperBound)
+        // Two minutes or five waves: each surfer gets a few rides, and it is over before it is in the way.
+        let surfLength = defaults.object(forKey: "surfMinutes") as? Double ?? 2
+        surfMinutes = min(max(surfLength, Self.surfMinutesRange.lowerBound), Self.surfMinutesRange.upperBound)
+        let waves = defaults.object(forKey: "surfWaves") as? Int ?? 5
+        surfWaves = min(max(waves, Self.surfWavesRange.lowerBound), Self.surfWavesRange.upperBound)
+        // Two creatures tall: a wave worth riding that still leaves most of the screen clear.
+        let waveHeight = defaults.object(forKey: "surfWaveHeight") as? Double ?? 2
+        surfWaveHeight = min(max(waveHeight, Self.surfWaveHeightRange.lowerBound), Self.surfWaveHeightRange.upperBound)
+        // 55 %: plainly water, and the windows under it stay readable.
+        let waterOpacity = defaults.object(forKey: "surfWaterOpacity") as? Double ?? 55
+        surfWaterOpacity = min(max(waterOpacity, Self.surfWaterOpacityRange.lowerBound), Self.surfWaterOpacityRange.upperBound)
+        // Five: room for everyone to wait for a wave along the floor.
+        let surfJoin = defaults.object(forKey: "surfPlayers") as? Int ?? 5
+        surfPlayers = min(max(surfJoin, Self.ballPlayersRange.lowerBound), Self.ballPlayersRange.upperBound)
         var casts = defaults.data(forKey: "casts").flatMap { try? JSONDecoder().decode([String: [Character]].self, from: $0) } ?? [:]
         // Before species existed, one cast served everyone: it was blocky's.
         if casts.isEmpty, let old = defaults.data(forKey: "characters").flatMap({ try? JSONDecoder().decode([Character].self, from: $0) }), !old.isEmpty {

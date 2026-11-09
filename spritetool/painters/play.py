@@ -2,7 +2,10 @@
 thrown at, a parachute, a grappling hook and the links of its rope, a drop of
 sweat for whoever is out of breath after a game of tag; a soccer ball and the
 little net it is shot into; a baseball, its bat, and the bases (one with a
-pennant for a ghost runner standing on it).
+pennant for a ghost runner standing on it); for surfing, a surfboard in 45
+colourways (nine colours, five stripe patterns: one for each character), a
+splash rising and falling in three frames, and a puff of spray behind a board
+(traced by hand from the owner's chosen Wixel board and splash).
 
 Each prop is a glyph of material letters; the painter shades every patch of
 one material the way the creature's body is shaded (a light line along the
@@ -263,8 +266,9 @@ def ball(spin: int) -> list[str]:
     return ["".join(r) for r in rows], seams
 
 
-def paint_glyph(img: Image.Image, cx: int, cy: int, glyph: list[str], ox: int, oy: int, seams=()) -> None:
+def paint_glyph(img: Image.Image, cx: int, cy: int, glyph: list[str], ox: int, oy: int, seams=(), materials=None) -> None:
     """Paint `glyph` with its top-left at (ox, oy) inside the cell at (cx, cy)."""
+    MATERIALS = materials or globals()["MATERIALS"]
     ink: dict[tuple[int, int], str] = {}
     for y, row in enumerate(glyph):
         for x, c in enumerate(row):
@@ -300,6 +304,118 @@ def paint_glyph(img: Image.Image, cx: int, cy: int, glyph: list[str], ox: int, o
     for (x, y), c in ink.items():
         if c in THREADS:
             img.putpixel((cx + x, cy + y), THREADS[c])
+
+
+# Surfing. The board lies along the water seen a little from above, as the
+# owner's chosen board: a pointed nose on the right, a fish tail notched on the
+# left, a stripe. Nine colours, five stripes (down the middle, two thin ones,
+# a band across, nose and tail, a cross): 45 boards, `board-0` to `board-44`,
+# colour = n % 9, stripe = n // 9 (the app's `Plays.Surf.board(of:)` gives
+# every character its own).
+BOARD = [
+    "..fffffffffffffff.......",
+    "ffffffffffffffffffff....",
+    ".ffffffffffffffffffffff.",
+    ".ffffffffffffffffffffff.",
+    "ffffffffffffffffffff....",
+    "..fffffffffffffff.......",
+]
+BOARD_COLOURS = [
+    (246, 104, 82),   # coral, the chosen board's own
+    (78, 158, 238),   # sky
+    (246, 198, 58),   # sun
+    (108, 196, 88),   # leaf
+    (158, 110, 218),  # plum
+    (238, 120, 178),  # pink
+    (58, 186, 176),   # teal
+    (238, 148, 48),   # orange
+    (226, 226, 214),  # sand
+]
+BOARD_STRIPE = (250, 244, 226)
+BOARD_STRIPE_ON_SAND = (214, 72, 62)
+BOARDS = len(BOARD_COLOURS) * 5
+
+
+def board(n: int) -> tuple[list[str], dict]:
+    colour = BOARD_COLOURS[n % len(BOARD_COLOURS)]
+    stripe = BOARD_STRIPE_ON_SAND if n % len(BOARD_COLOURS) == len(BOARD_COLOURS) - 1 else BOARD_STRIPE
+    rows = [list(r) for r in BOARD]
+    pattern = n // len(BOARD_COLOURS)
+    if pattern == 0:
+        cells = [(x, y) for y in (2, 3) for x in range(3, 20)]
+    elif pattern == 1:
+        cells = [(x, y) for y in (1, 4) for x in range(3, 18)]
+    elif pattern == 2:
+        cells = [(x, y) for y in range(6) for x in (8, 9, 10)] + [(x, y) for y in (2, 3) for x in (20, 21)]
+    elif pattern == 3:
+        cells = [(x, y) for y in range(6) for x in (0, 1, 2, 3)] + [(x, y) for y in range(6) for x in range(15, 23)]
+    else:
+        cells = [(x, y) for y in (2, 3) for x in range(3, 20)] + [(x, y) for y in range(6) for x in (11, 12)]
+    for x, y in cells:
+        if rows[y][x] == "f":
+            rows[y][x] = "s"
+    return ["".join(r) for r in rows], {"f": colour, "s": stripe}
+
+
+# The splash, traced from the chosen Wixel splash: a crown of jets out of a
+# little pool, drops flying; rising, at its height, and falling back.
+WATER = (64, 158, 232)
+SPRAY = (150, 218, 250)
+SPLASH_MATERIALS = {"a": WATER, "w": SPRAY}
+SPLASH = [
+    [
+        "................",
+        "................",
+        "................",
+        "................",
+        ".......a........",
+        "...a...a...a....",
+        "....a..a..a.....",
+        "....aa.a.aa.....",
+        "...aaaawaaaa....",
+        "..aaawwwwwaaa...",
+        "...aaaaaaaaa....",
+    ],
+    [
+        "a......a.......a",
+        "................",
+        "...a...w...a....",
+        "....a..a..a.....",
+        "a...aa.a.aa...a.",
+        "....aa.a.aa.....",
+        "...aaa.a.aaa....",
+        "..aaaawwwaaaa...",
+        ".aaawwwwwwwaaaa.",
+        "..aaaaaaaaaaaa..",
+        "................",
+    ],
+    [
+        "................",
+        "................",
+        "..a..........a..",
+        "................",
+        "a....a....a....a",
+        "................",
+        "...a........a...",
+        "................",
+        ".aaaawwwwwwaaaa.",
+        "aaaaaaaaaaaaaaaa",
+        "................",
+    ],
+]
+# A puff of spray thrown up behind a riding board.
+SPRAY_PUFF = [
+    [
+        "..w...",
+        ".www.w",
+        "wwwww.",
+    ],
+    [
+        ".w..w.",
+        "..ww..",
+        ".wwww.",
+    ],
+]
 
 
 def centred(glyph: list[str]) -> tuple[int, int]:
@@ -355,6 +471,16 @@ def paint_pose(img: Image.Image, cx: int, cy: int, pose: str) -> None:
     elif pose in ("base", "base-taken"):
         glyph = base(pose == "base-taken")
         paint_glyph(img, cx, cy, glyph, BASE_X, BASE_ROW + 3 - len(glyph))
+    elif pose.startswith("board-"):
+        glyph, materials = board(int(pose[6:]))
+        paint_glyph(img, cx, cy, glyph, *centred(glyph), materials=materials)
+    elif pose.startswith("splash-"):
+        glyph = SPLASH[int(pose[7:])]
+        # The pool on the cell's bottom rows, so it sits on the water's top.
+        paint_glyph(img, cx, cy, glyph, (CELL_W - len(glyph[0])) // 2, CELL_H - 1 - len(glyph), materials=SPLASH_MATERIALS)
+    elif pose.startswith("spray-"):
+        glyph = SPRAY_PUFF[int(pose[6:])]
+        paint_glyph(img, cx, cy, glyph, *centred(glyph), materials=SPLASH_MATERIALS)
     else:
         raise ValueError(f"the play painter cannot draw {pose!r}")
 

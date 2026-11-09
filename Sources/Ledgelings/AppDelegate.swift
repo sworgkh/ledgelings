@@ -142,6 +142,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--surf-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/surf.mp4"
+            Task { @MainActor in
+                do { try await SurfFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings surf film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--play-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/play.mp4"
@@ -441,7 +451,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--converse`: one conversation, every line and voice cue on stderr with
         // the time since it started, then quit once the pair is let go.
-        // `--invite soccer|tag|basketball|baseball|tea`: it opens with that
+        // `--invite soccer|tag|basketball|baseball|surf|tea`: it opens with that
         // invitation, and runs on until what was agreed has started (or lapsed).
         if CommandLine.arguments.contains("--converse"), let colony {
             let start = Date(), args = CommandLine.arguments
@@ -1052,6 +1062,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// shortcut, the menu) and the use watch call them all.
     private func setUpActivities() {
         let activities = Activities.shared
+        // Surfing is a game, but its water and score go with it at once.
+        activities.register(.surf, isRunning: { [weak self] in self?.colony?.play?.kind == .surf }, stop: { [weak self] in
+            self?.colony?.stopSurf(); self?.colony?.render()
+        })
         activities.register(.dive, isRunning: { [weak self] in self?.colony?.isDiving == true }, stop: { [weak self] in self?.colony?.stopDive() })
         activities.register(.game, isRunning: { [weak self] in self?.colony?.play != nil }, stop: { [weak self] in
             self?.colony?.endPlay(completed: false); self?.colony?.render()

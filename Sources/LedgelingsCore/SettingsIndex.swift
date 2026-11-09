@@ -4,7 +4,7 @@ import Foundation
 /// order of `allCases`; `named` is what `--settings <name>` opens.
 public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
-    case chases, play, ballGames, diving
+    case chases, play, ballGames, surfing, diving
     case talk, voice, bonds, relationships, twists
     case tools, reminders, clipboard, screenshots, dictation, translate, readAloud
     case costs, chats
@@ -20,6 +20,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .chases: tr("Chases")
         case .play: tr("Play")
         case .ballGames: tr("Ball games")
+        case .surfing: tr("Surfing")
         case .diving: tr("Diving")
         case .talk: tr("Talk")
         case .voice: tr("Voice")
@@ -41,7 +42,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     public var group: SettingsGroup {
         switch self {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
-        case .chases, .play, .ballGames, .diving: .games
+        case .chases, .play, .ballGames, .surfing, .diving: .games
         case .talk, .voice, .bonds, .relationships, .twists: .talkAndFriends
         case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
@@ -189,7 +190,7 @@ public enum SettingsIndex {
 
         // play
         Section(.play, "Playing", labels: ["They play now and then"], footer: "Now and then a creature stops walking and plays, the way the worms in Worms fool about between turns, with nobody hurt. One game at a time, never in the middle of a talk, a tea party, a flower, a plane, a grab or sleep; the players are left alone until it is over.", keys: ["playEnabled"]),
-        Section(.play, "Which games", labels: ["Catch me if you can (two)", "Ninja rope swing", "Parachute jump", "Basketball (alone, or two taking turns)", "Soccer (anyone free, in teams)", "Baseball (anyone free, round every edge)"], footer: "Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer and baseball are for whoever is free, and have a tab of their own: Ball games. Off, a game is never played, and its row on the Activities page is greyed.", keys: ["playBaseballEnabled", "playBasketballEnabled", "playParachuteEnabled", "playRopeEnabled", "playSoccerEnabled", "playTagEnabled"]),
+        Section(.play, "Which games", labels: ["Catch me if you can (two)", "Ninja rope swing", "Parachute jump", "Basketball (alone, or two taking turns)", "Soccer (anyone free, in teams)", "Baseball (anyone free, round every edge)", "Surfing (anyone free, on the bottom edge)"], footer: "Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer, baseball and surfing are for whoever is free, and have pages of their own: Ball games and Surfing. Off, a game is never played, and its row on the Activities page is greyed.", keys: ["playBaseballEnabled", "playBasketballEnabled", "playParachuteEnabled", "playRopeEnabled", "playSoccerEnabled", "playSurfEnabled", "playTagEnabled"]),
         Section(.play, "How often", labels: ["A game about every", "Friends play more often by"], keys: ["playBondBoost", "playEveryMinutes"]),
         Section(.play, "How the games go", labels: ["Tag lasts", "Parachute comes down at", "Ball keeps on each bounce", "Throws at the hoop each"], keys: ["ballBounce", "basketballThrows", "parachuteFallSpeed", "tagSeconds"]),
         Section(.play, "Talking about it", labels: ["Say something as a game starts and ends"], footer: "Whoever starts a game says so in its own voice, and someone has the last word when it is over. With a model set up on the Talk tab, the first line is written by the model (counted under Plays, or Soccer and baseball, on the Costs tab), and a goal's or a home run's cheer too; otherwise, and for the last word, built-in lines. Needs Talk on.", keys: ["playTalk"]),
@@ -200,6 +201,10 @@ public enum SettingsIndex {
         Section(.ballGames, "The props", footer: "Drawn like the creatures, and the same for every species, your own imported ones too."),
         Section(.ballGames, "Baseball", labels: ["Baseball (anyone free, round every edge)", "Baseball at most every", "Innings", "Baseball players at most"], footer: "Home where the batter stands, the bases on the three edges furthest apart, the pitcher on the batter's floor. One practises; two to five bat in turn, a runner who must bat again leaving a pennant on its base; six or more play as two teams. Out over the top of the screen is a home run.", keys: ["baseballEveryMinutes", "baseballInnings", "baseballPlayers", "playBaseballEnabled"]),
         Section(.ballGames, "Who plays"),
+        // surfing
+        Section(.surfing, "Surfing", labels: ["Surfing (anyone free, on the bottom edge)", "Surfing at most every", "A session lasts up to", "Waves in a session", "Surfers at most"], footer: SurfingText.session, keys: ["playSurfEnabled", "surfEveryMinutes", "surfMinutes", "surfPlayers", "surfWaves"]),
+        Section(.surfing, "The waves", labels: ["Wave height", "Water opacity"], footer: SurfingText.waves, keys: ["surfWaterOpacity", "surfWaveHeight"]),
+        Section(.surfing, "The boards", footer: SurfingText.boards),
         // diving
         Section(.diving, "The water", labels: ["Water height", "Water shows", "Water on", "The creatures' home monitor", "Every monitor"], footer: "It rises from the bottom edge and is only drawn: clicks and keys go through it to the apps below. The less it shows, the more of them you see through it.", keys: ["diveAllScreens", "diveWaterOpacity", "diveWaterShare"]),
         Section(.diving, "The dive", labels: ["A dive lasts", "Divers at most", "Fish", "The divers say what they see", "Start a dive now"], footer: "Whoever is free puts on a mask and a tank and jumps in; they swim among the fish, a jellyfish, a crab, a turtle and an octopus, come up for air now and then, and climb out dripping when it is over. What they saw together goes into their memory. It never starts by itself.", keys: ["diveDivers", "diveMinutes", "diveSeaLife", "diveTalk"]),
@@ -288,4 +293,11 @@ public enum SettingsIndex {
         // chats
         Section(.chats, "Chats", labels: ["Open in Finder"]),
     ]
+}
+
+/// The Surfing page's footers, here so the page and the search say the same.
+public enum SurfingText {
+    public static let session = "Whoever is free leaps to the widest floor, the bottom edge, and the tide comes in. They paddle out, wait, and ride the waves that roll along it: ten points a second on a wave, more for a hop or a spin landed, nothing for a ride that ends in a wipe-out. It ends after the waves set here, or when the time is up, and the tide goes out again. Stop activity (its shortcut, or the menu) clears it off the screen at once."
+    public static let waves = "How tall a wave stands over the calm water, in creature heights, and how solid the water is drawn: the windows under it show through the rest, and every click goes through it to them. The creatures and their boards stay solid."
+    public static let boards = "Every character paddles out on its own board: nine colours, five stripes."
 }
