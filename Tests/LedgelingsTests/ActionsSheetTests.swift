@@ -92,14 +92,20 @@ import Testing
         for kind in Plays.Kind.allCases {
             #expect(kind.activityTip.hasPrefix("Start now: ") && kind.activityTip.hasSuffix("(\(String(kind.activityKey).uppercased()))"), "\(kind.activityTip)")
         }
+        for activity in HandActivity.allCases {
+            let key = String(activity.activityKey).uppercased()
+            #expect(activity.activityTip(in: ActionsState()).hasSuffix("(\(key))"))
+            var running = ActionsState(); running.diving = true; running.stopShortcut = "⌃⌥⎋"
+            #expect(activity.activityTip(in: running) == "Stop now (\(key) · ⌃⌥⎋)")
+        }
         #expect(ActionsPage.backTip.contains("(←)") && ActionsPage.doneTip.contains("(Return)") && !ActionsPage.gamesTip.isEmpty)
     }
 
     @MainActor @Test func theActivitiesPageFitsTheSheetWithItsButtonsWhereTheSheetsOwnAre() {
         // Under the title (24), with 8 + 6 around the line: the rows, the line and the gap to the buttons
         // get what the main page's tiles, line and switches leave its footer, 350 points.
-        let rows = CGFloat(Plays.Kind.allCases.count) * ActionsSheetView.activityRow
-            + CGFloat(Plays.Kind.allCases.count - 1) * ActionsSheetView.activityGap
+        let n = ActionsSheetView.activityRows
+        let rows = CGFloat(n) * ActionsSheetView.activityRow + CGFloat(n - 1) * ActionsSheetView.activityGap
         #expect(rows + ActionsSheetView.activityLineHeight + ActionsSheetView.activitiesFooterGap <= 350, "\(rows)")
     }
 }

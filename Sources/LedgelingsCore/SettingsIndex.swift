@@ -4,7 +4,7 @@ import Foundation
 /// order of `allCases`; `named` is what `--settings <name>` opens.
 public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
-    case chases, play, ballGames
+    case chases, play, ballGames, diving
     case talk, voice, bonds, relationships, twists
     case tools, reminders, clipboard, screenshots, dictation, translate, readAloud
     case costs, chats
@@ -20,6 +20,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .chases: tr("Chases")
         case .play: tr("Play")
         case .ballGames: tr("Ball games")
+        case .diving: tr("Diving")
         case .talk: tr("Talk")
         case .voice: tr("Voice")
         case .bonds: tr("Bonds")
@@ -40,7 +41,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     public var group: SettingsGroup {
         switch self {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
-        case .chases, .play, .ballGames: .games
+        case .chases, .play, .ballGames, .diving: .games
         case .talk, .voice, .bonds, .relationships, .twists: .talkAndFriends
         case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
@@ -199,6 +200,11 @@ public enum SettingsIndex {
         Section(.ballGames, "The props", footer: "Drawn like the creatures, and the same for every species, your own imported ones too."),
         Section(.ballGames, "Baseball", labels: ["Baseball (anyone free, round every edge)", "Baseball at most every", "Innings", "Baseball players at most"], footer: "Home where the batter stands, the bases on the three edges furthest apart, the pitcher on the batter's floor. One practises; two to five bat in turn, a runner who must bat again leaving a pennant on its base; six or more play as two teams. Out over the top of the screen is a home run.", keys: ["baseballEveryMinutes", "baseballInnings", "baseballPlayers", "playBaseballEnabled"]),
         Section(.ballGames, "Who plays"),
+        // diving
+        Section(.diving, "The water", labels: ["Water height", "Water shows", "Water on", "The creatures' home monitor", "Every monitor"], footer: "It rises from the bottom edge and is only drawn: clicks and keys go through it to the apps below. The less it shows, the more of them you see through it.", keys: ["diveAllScreens", "diveWaterOpacity", "diveWaterShare"]),
+        Section(.diving, "The dive", labels: ["A dive lasts", "Divers at most", "Fish", "The divers say what they see", "Start a dive now"], footer: "Whoever is free puts on a mask and a tank and jumps in; they swim among the fish, a jellyfish, a crab, a turtle and an octopus, come up for air now and then, and climb out dripping when it is over. What they saw together goes into their memory. It never starts by itself.", keys: ["diveDivers", "diveMinutes", "diveSeaLife", "diveTalk"]),
+        Section(.diving, "Stop activity", labels: ["Stop activity", "Stop when I use the computer"], footer: "The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. With Stop when I use the computer on, a key press, or a click anywhere but on a creature, ends it too; moving the mouse does not. The menu has Stop activity as well.", keys: ["stopActivityShortcutEnabled", "stopActivityShortcutKeyCode", "stopActivityShortcutModifiers", "stopOnUse"]),
+        Section(.diving, "Under the water", footer: "Drawn like the creatures. The sea life is not a character: it says nothing, but fish scatter from a diver, the crab raises its claws and the octopus inks and jets off."),
 
         // talk
         Section(.talk, "Talk", labels: ["Creatures talk when they bump into each other", "Bubble stays", "Not repeating their last", "off", "Paper planes", "A paper plane every"], footer: "Two creatures meeting on the same edge trade a line and a reply. Every third meeting of a pair, one gives the other a flower (the Flowers tab). Every so often one folds a note into a paper plane and throws it to another; its own wind swirls it across the screen, the catcher reads it out, thinks aloud about it and throws one answer back. \"Make Someone Talk\" and \"Send a Paper Plane\" in the menu work at any time. Longer lines stay up a little longer; a click on a bubble closes it. Each creature remembers its last lines and says something else until it has run through the rest; a model is shown them and asked for something new.", keys: ["bubbleSeconds", "lineMemory", "planeMinutes", "planesEnabled", "talkEnabled"]),

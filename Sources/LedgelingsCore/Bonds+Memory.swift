@@ -201,7 +201,7 @@ extension Bonds {
                 if m.kind == .grab && m.who != name { continue }
                 // One game is a moment of every pair that played it: it is told once, with everyone.
                 if let k = seen.firstIndex(where: { $0.moment.kind == m.kind && $0.moment.detail == m.detail
-                                                    && abs($0.moment.time.timeIntervalSince(m.time)) < 120 && (m.kind == .play || m.kind == .grab) }) {
+                                                    && abs($0.moment.time.timeIntervalSince(m.time)) < 120 && (m.kind == .play || m.kind == .grab || m.kind == .dive) }) {
                     if !seen[k].with.contains(other) { seen[k].with.append(other) }
                     continue
                 }
@@ -217,6 +217,9 @@ extension Bonds {
                 let played = tr("played %@ with %@ at %@", Plays.name(of: m.detail), others, at)
                 return result(m).map { played + " (" + $0 + ")" } ?? played
             case .tea: return tr("had tea with %@ at %@", others, at)
+            case .dive:
+                let saw = m.detail ?? ""
+                return saw.isEmpty ? tr("went diving with %@ at %@", others, at) : tr("went diving with %@ at %@ and saw %@", others, at, saw)
             case .flower:
                 let flower = Gifts.name(of: m.detail ?? "")
                 return m.who == name ? tr("gave %@ a %@ at %@", others, flower, at) : tr("got a %@ from %@ at %@", flower, m.who, at)

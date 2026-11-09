@@ -343,3 +343,37 @@ def test_the_net_and_the_bases_sit_where_the_app_expects_them():
     assert taken.getchannel("A").getbbox()[1] < base.getchannel("A").getbbox()[1]
     # Two soccer frames, so the ball turns.
     assert cell("soccer-0").tobytes() != cell("soccer-1").tobytes()
+
+
+SEA = Path(__file__).resolve().parents[2] / "sprites" / "sea.yaml"
+
+
+def test_the_sea_is_painted_in_blocky_rules_and_the_mask_leaves_the_eyes_showing():
+    from spritetool.painters import sea as painter
+
+    recipe = load_recipe(SEA)
+    sheet = key_out(get_painter("sea")(recipe), recipe.background, recipe.tolerance)
+    names = [p for p, _ in recipe.poses]
+
+    def cell(pose):
+        x, y, w, h = recipe.cell_rect(names.index(pose), 0)
+        return sheet.crop((x, y, x + w, y + h))
+
+    for pose in names:
+        assert cell(pose).getchannel("A").getbbox(), pose
+    # Every animal moves between two different frames: a tail flick, not a mirror.
+    for animal in ("fish-a", "fish-b", "fish-c", "jelly", "crab", "turtle", "octopus"):
+        a, b = cell(f"{animal}-0"), cell(f"{animal}-1")
+        assert a.tobytes() != b.tobytes(), animal
+        assert a.transpose(0).tobytes() != b.tobytes(), f"{animal}'s second frame is only the first mirrored"
+    # The fish's body has a dark outline round it and black square eyes.
+    fish = cell("fish-a-0")
+    left, top, right, bottom = fish.getchannel("A").getbbox()
+    assert fish.getpixel((left, top + 3))[:3] == painter.outline(painter.TEAL)
+    # The mask, laid over a creature's 32x32 cell centred on it, leaves Blocky's
+    # eyes (columns 14-16 and 20-22, rows 10-15) bare: the frame goes round them.
+    mask = cell("mask")
+    for x in list(range(14, 17)) + list(range(20, 23)):
+        for y in range(10, 16):
+            assert mask.getpixel((x, y - 2))[3] == 0, f"the mask covers an eye at {(x, y)}"
+    assert mask.getpixel((12, 8))[3] and mask.getpixel((24, 13))[3], "but frames them"

@@ -63,10 +63,11 @@ final class OverlayView: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func mouseDown(with event: NSEvent) {
+        UseWatch.ownClick = Date()
         if event.modifierFlags.contains(.control) { onHand?(.secondaryDown(NSEvent.mouseLocation)); return }
         onHand?(.down(NSEvent.mouseLocation, shift: event.modifierFlags.contains(.shift)))
     }
     override func mouseDragged(with event: NSEvent) { onHand?(.dragged(NSEvent.mouseLocation)) }
     override func mouseUp(with event: NSEvent) { onHand?(.up(NSEvent.mouseLocation)) }
-    override func rightMouseDown(with event: NSEvent) { onHand?(.secondaryDown(NSEvent.mouseLocation)) }
+    override func rightMouseDown(with event: NSEvent) { UseWatch.ownClick = Date(); onHand?(.secondaryDown(NSEvent.mouseLocation)) }
 }

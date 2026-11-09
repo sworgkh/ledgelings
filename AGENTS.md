@@ -85,7 +85,7 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
-  writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames,
+  writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames, diving,
   talk, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place;
   `productivity`, the old tools tab, still opens Reminders).
@@ -116,6 +116,12 @@ with `scripts/make-app.sh`, installed and seen working.
   (`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`, `play tag over after 7 touches`);
   soccer or baseball alone is played by 1, 2, 3 and 5 creatures in turn (`play soccer Unit 7 scores 0-2`,
   `play baseball Unit 7 runs to second`).
+- `--dive-film out.mp4` films a scuba dive offscreen (water rising, the gear, jumps, sea life, a click through the
+  water into a window below, the draining, the climb out), then a second dive ended by Stop activity, printing each
+  step and how long the screen took to clear (`stop activity: water, fish and gear gone after 0.03 s`); stills beside it.
+  `--dive [--stop-after 8]` runs one on the real screen, printing each step, and quits once they are out (or after
+  pressing Stop activity, printing how long the screen took to clear).
+  `--shortcut` lists `shortcut ⌃⌥⎋ stop activity registered`; pressing it prints `shortcut pressed: stop activity (…)`.
 - `--screens` prints every monitor (id, name, frame, `home`), the choice, the colony's bounds and
   where each creature is; `--screens all|N` also makes the choice live (N = monitor number left to
   right, from 1; saved like the menu does), prints every step of the move (`move Blocky hops off DELL U2415 (1)`,

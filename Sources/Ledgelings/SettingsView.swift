@@ -53,6 +53,8 @@ struct SettingsView: View {
     var seedMemory: (Bool) async -> String = { _ in "" }
     /// Read aloud, for its page's readers and Try it; nil in a test.
     var readAloud: ReadAloudController? = nil
+    /// Start a dive now, from the Diving page.
+    var startDive: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 0) {
@@ -94,6 +96,7 @@ struct SettingsView: View {
         case .chases: ChasesSettingsView(settings: settings, library: library, hunts: hunts)
         case .play: PlaySettingsView(settings: settings)
         case .ballGames: BallGamesSettingsView(settings: settings)
+        case .diving: DivingSettingsView(settings: settings, start: startDive)
         case .talk: TalkSettingsView(settings: settings, library: library, voice: voice)
         case .voice: VoiceSettingsView(settings: settings, voice: voice)
         case .bonds: BondsSettingsView(settings: settings, bonds: bonds)
@@ -316,21 +319,24 @@ struct SliderRow: View {
     let unit: String
     /// What to print instead of "0" when zero means off.
     var zero: String? = nil
+    /// Shown times this: a share as a percentage.
+    var scale: Double = 1
 
-    init(_ title: String, value: Binding<Double>, in range: ClosedRange<Double>, step: Double, unit: String, zero: String? = nil) {
+    init(_ title: String, value: Binding<Double>, in range: ClosedRange<Double>, step: Double, unit: String, zero: String? = nil, scale: Double = 1) {
         self.title = title
         _value = value
         self.range = range
         self.step = step
         self.unit = unit
         self.zero = zero
+        self.scale = scale
     }
 
     var body: some View {
         LabeledContent(title) {
             HStack {
                 Slider(value: $value, in: range, step: step)
-                Text(value == 0 && zero != nil ? zero! : String(format: "%g", value) + unit)
+                Text(value == 0 && zero != nil ? zero! : String(format: "%g", scale == 1 ? value : (value * scale).rounded()) + unit)
                     .monospacedDigit()
                     .frame(width: 70, alignment: .trailing)
             }
@@ -363,6 +369,7 @@ final class SettingsWindowController {
     private var retitle: AnyCancellable?
     /// Set once Read aloud is made, before the window first opens.
     var readAloud: ReadAloudController?
+    var startDive: (() -> Void)?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
          reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, clips: ClipBook, send: @escaping (Reminders.Reminder) -> Void,
@@ -394,7 +401,7 @@ final class SettingsWindowController {
             if let first = SettingsIndex.search(search).first { navigation.open(first) }
         }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }

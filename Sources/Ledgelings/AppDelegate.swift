@@ -42,6 +42,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                           watcher: { [weak self] in self?.clipWatcher }, helper: { [weak self] in self?.colony })
     private var statusItem: NSStatusItem?
     private var shortcut: GlobalShortcut?
+    /// Stop activity from any app (⌃⌥⎋), and the watch that stops one when the owner uses the computer.
+    private var stopShortcut: GlobalShortcut?
+    private var useWatch: UseWatch?
     private var shortcutShown: AnyCancellable?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -50,6 +53,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let voiceItem = NSMenuItem(title: "", action: #selector(toggleVoice), keyEquivalent: "v")
     private let revengeItem = NSMenuItem(title: "", action: #selector(toggleRevenge), keyEquivalent: "")
     private let activitiesItem = NSMenuItem(title: "", action: #selector(openActivities), keyEquivalent: "")
+    private let diveItem = NSMenuItem(title: "", action: #selector(toggleDive), keyEquivalent: "")
+    private let stopActivityItem = NSMenuItem(title: "", action: #selector(stopActivity), keyEquivalent: "")
     private let deedsItem = NSMenuItem(title: "", action: #selector(toggleDeeds), keyEquivalent: "")
     private let relationshipsItem = NSMenuItem(title: "", action: #selector(openRelationships), keyEquivalent: "")
     private let pointer = SystemPointer()
@@ -148,6 +153,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--dive-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/dive.mp4"
+            Task { @MainActor in
+                do { try await DiveFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings dive film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--screens-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/screens.mp4"
@@ -242,6 +257,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         clipShortcuts = ClipShortcuts(settings: settings, book: clips, open: { [weak self] in self?.clipShortcutPressed($0) },
                                       paste: { [weak self] in self?.picker.pasteNow($0) })
         shortcut = GlobalShortcut(settings: settings) { [weak self] in self?.shortcutPressed() }
+        setUpActivities()
         shots.takeShortcuts { [weak self] in self?.shotShortcutPressed($0) }
         dictation.takeShortcut { [weak self] in self?.dictationShortcutPressed() }
         translate.takeShortcuts { [weak self] in self?.translateShortcutPressed($0) }
@@ -286,6 +302,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let translateState = !settings.translateEnabled || !on ? "off" : problem.isEmpty ? "registered" : "refused: \(problem)"
                 FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(key)) \(name) \(translateState)\n".utf8))
             }
+            let stopState = !settings.stopActivityShortcutEnabled ? "off"
+                : settings.stopActivityShortcutProblem.isEmpty ? "registered" : "refused: \(settings.stopActivityShortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.stopActivityShortcut)) stop activity \(stopState)\n".utf8))
             let readState = !settings.readAloudEnabled || !settings.readAloudShortcutEnabled ? "off"
                 : settings.readAloudShortcutProblem.isEmpty ? "registered" : "refused: \(settings.readAloudShortcutProblem)"
             FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.readAloudShortcut)) read aloud \(readState)\n".utf8))
@@ -515,6 +534,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--tea`: a tea party now, every line and voice cue on stderr with the
         // time since it started, then quit once the pair has walked on.
+        // `--dive [--stop-after seconds]`: a dive on the real screen, every step on stderr with its time; quits once
+        // everyone is out, or presses Stop activity after that many seconds.
+        if CommandLine.arguments.contains("--dive"), let colony {
+            let start = Date(), args = CommandLine.arguments
+            func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "dive %7.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
+            colony.trace = { if $0.hasPrefix("dive") || $0.hasPrefix("say") { log($0) } }
+            Activities.shared.trace = { log($0) }
+            let stopAfter = args.firstIndex(of: "--stop-after").flatMap { args.indices.contains($0 + 1) ? Double(args[$0 + 1]) : nil }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                guard colony.startDive() else { log("no dive: \(colony.talkStatus)"); exit(1) }
+                var stopped: Date?
+                while true {
+                    try? await Task.sleep(for: .seconds(0.05))
+                    if let stopAfter, stopped == nil, Date().timeIntervalSince(start) > stopAfter + 1 {
+                        stopped = Date()
+                        Activities.shared.stopAll()
+                    }
+                    if !colony.isDiving, colony.overlays.allSatisfy({ !$0.hasWater }) {
+                        if let stopped { log(String(format: "stop activity: the screen clear after %.2f s", Date().timeIntervalSince(stopped))) }
+                        try? await Task.sleep(for: .seconds(stopped == nil ? 3.5 : 0.5))
+                        exit(0)
+                    }
+                }
+            }
+        }
         if CommandLine.arguments.contains("--tea"), let colony {
             let start = Date()
             colony.trace = { line in
@@ -669,6 +714,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(actionsItem)
         activitiesItem.target = self
         menu.addItem(activitiesItem)
+        for item in [diveItem, stopActivityItem] {
+            item.target = self
+            menu.addItem(item)
+        }
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
         for item in [toolsItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem, readAloudItem, stopReadingItem] {
@@ -725,6 +774,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         voiceItem.title = tr("Hear Them Talk")
         revengeItem.title = tr("Cursor Revenge")
         activitiesItem.title = tr("Activities…")
+        diveItem.title = colony?.isDiving == true ? tr("Out of the Water") : tr("Go Scuba Diving")
+        stopActivityItem.title = settings.stopActivityShortcutEnabled
+            ? tr("Stop Activity (%@)", GlobalShortcut.label(settings.stopActivityShortcut)) : tr("Stop Activity")
+        stopActivityItem.isEnabled = Activities.shared.isRunning
         chatsItem.title = tr("Chat History…")
         deedsItem.title = tr("Deeds from Talk")
         relationshipsItem.title = tr("Relationships…")
@@ -950,6 +1003,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .clipHistory: picker.show(.recent)
             case .snippets: picker.show(.snippets)
             case .reminder: openReminders()
+            case .dive: toggleDive()
             }
         }
         toolsScreen.isOn = { [weak self] tool in
@@ -961,6 +1015,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .screenshot, .fullScreen, .lastRectangle: return s.shotEnabled
             case .clipHistory, .snippets: return s.clipboardEnabled
             case .reminder: return s.remindersEnabled
+            case .dive: return true
             }
         }
         toolsScreen.shortcutLabel = { [weak self] tool in
@@ -974,7 +1029,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .lastRectangle: (s.shotLastShortcutEnabled, s.shotLastShortcut)
             case .clipHistory: (s.clipHistoryShortcutEnabled, s.clipHistoryShortcut)
             case .snippets: (s.clipSnippetsShortcutEnabled, s.clipSnippetsShortcut)
-            case .reminder: nil
+            case .reminder, .dive: nil
             }
             return pair.flatMap { $0.0 ? GlobalShortcut.label($0.1) : nil }
         }
@@ -992,6 +1047,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }
     /// The games, on the Actions sheet's inner page: Play Now for each, and games on or off.
     @objc private func openActivities() { actions.show(page: .activities) }
+
+    /// Everything that runs for a while registers its stop; Stop activity (the
+    /// shortcut, the menu) and the use watch call them all.
+    private func setUpActivities() {
+        let activities = Activities.shared
+        activities.register(.dive, isRunning: { [weak self] in self?.colony?.isDiving == true }, stop: { [weak self] in self?.colony?.stopDive() })
+        activities.register(.game, isRunning: { [weak self] in self?.colony?.play != nil }, stop: { [weak self] in
+            self?.colony?.endPlay(completed: false); self?.colony?.render()
+        })
+        stopShortcut = GlobalShortcut(settings: settings, enabled: settings.$stopActivityShortcutEnabled, shortcut: settings.$stopActivityShortcut,
+                                      problem: { [weak settings] in if settings?.stopActivityShortcutProblem != $0 { settings?.stopActivityShortcutProblem = $0 } },
+                                      pressed: { [weak self] in self?.stopActivity() })
+        useWatch = UseWatch(settings: settings)
+        settingsWindow.startDive = { [weak self] in self?.colony?.startDive() }
+    }
+
+    @objc private func toggleDive() {
+        guard let colony else { return }
+        if colony.isDiving { colony.stopDive() } else if !colony.startDive() { NSSound.beep() }
+    }
+
+    /// Stop activity: whatever runs stops at once.
+    @objc private func stopActivity() {
+        let stopped = Activities.shared.stopAll()
+        if CommandLine.arguments.contains("--shortcut") {
+            FileHandle.standardError.write(Data("shortcut pressed: stop activity (\(stopped.isEmpty ? "nothing running" : stopped.map(\.rawValue).joined(separator: ", ")))\n".utf8))
+            exit(0)
+        }
+    }
 
     /// A creature holding the cursor lets go the moment the screen sleeps or locks,
     /// the user switches away, or the app quits.

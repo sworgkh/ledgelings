@@ -42,6 +42,9 @@ public struct Shortcut: Equatable, Sendable {
     /// Read aloud: Control-Option-R, R for read.
     public static let readAloud = Shortcut(keyCode: 15, modifiers: [.control, .option])
 
+    /// Stop activity: Control-Option-Escape, Escape for "stop", beside the others. Not ⌥⌘⎋, the Mac's Force Quit.
+    public static let stopActivity = Shortcut(keyCode: 53, modifiers: [.control, .option])
+
     public var keyCode: Int
     public var modifiers: Modifiers
 

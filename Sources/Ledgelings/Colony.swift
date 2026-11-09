@@ -174,6 +174,13 @@ final class Colony: NSObject {
     var fadingBoard: (prop: PropSnapshot, until: Double)?
     /// When the last line of a ball game was said: small moments keep quiet if one was just said.
     var lastBallLine = -100.0
+    /// The dive going on, if any (`Colony+Dive`): started by hand only.
+    var dive: DiveSession?
+    /// Divers just out of the water, dripping until then.
+    var dripping: [Int: Double] = [:]
+    /// The sea life's and the gear's sheet.
+    let seaFrames: SpriteAtlas.Frames
+    let seaCell: CGSize
     /// Pixel text drawn once per wording (`PixelText`).
     var pixelTexts: [String: CGImage] = [:]
     /// The house they hide in when asked to go away for a while.
@@ -283,6 +290,9 @@ final class Colony: NSObject {
         let props = try SpriteAtlas(named: "play")
         playFrames = props.frames()
         playCell = props.cellSize
+        let sea = try SpriteAtlas(named: "sea")
+        seaFrames = sea.frames()
+        seaCell = sea.cellSize
         clock = DayNight(day: settings.dayMinutes * 60, night: settings.nightMinutes * 60)
         super.init()
 
@@ -447,6 +457,7 @@ final class Colony: NSObject {
         sayScheduledLines()
         updateTeaParty()
         updatePlay(dt: dt)
+        updateDive(dt: dt)
         updateMoves(dt: dt)
         updateClipHelp(dt: dt)
         updateShotCarry(dt: dt)
@@ -496,13 +507,15 @@ final class Colony: NSObject {
         }
         let z = zFrames.frame(animation: "float", time: 0)
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
+        let water = waterSnapshots()
         let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
-        let props = playProps() + moveProps()
+        let props = playProps() + moveProps() + diveProps()
         for overlay in overlays {
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
                            plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,
-                           garden: planted, beds: sleepers, bedCell: bedCell, props: props, propCell: playCell)
+                           garden: planted, beds: sleepers, bedCell: bedCell, props: props, propCell: playCell,
+                           water: water)
         }
     }
 }

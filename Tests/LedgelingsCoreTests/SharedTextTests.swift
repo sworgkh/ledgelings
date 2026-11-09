@@ -45,6 +45,7 @@ import Testing
             "beds": ["settle": Beds.settleSets(l), "settleAnyone": Beds.settleAnyone(l),
                      "moved": Beds.movedSets(l), "movedAnyone": Beds.movedAnyone(l)],
             "clipHelper": ["lines": ClipHelper.lineSets(l), "anyone": ClipHelper.anyoneLines(l)],
+            "dive": ["lines": Dive.lineSets(l), "anyone": Dive.anyoneSets(l)],
             "gang": ["new": Gang.newSets(l), "newAnyone": Gang.newAnyone(l), "gone": Gang.goneSets(l), "goneAnyone": Gang.goneAnyone(l),
                      "back": Gang.backSets(l), "backAnyone": Gang.backAnyone(l), "arrival": Gang.arrivalSets(l),
                      "arrivalAnyone": Gang.arrivalAnyone(l), "backSelfAnyone": Gang.backSelfAnyone(l)],

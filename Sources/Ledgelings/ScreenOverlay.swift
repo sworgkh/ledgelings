@@ -166,6 +166,10 @@ final class ScreenOverlay {
     private var flowerBeds: [CALayer] = []
     private var sleeperBeds: [CALayer] = []
     private var propLayers: [CALayer] = []
+    /// The dive's water: behind the creatures, and a tint with the surface over them.
+    private var waterLayers: [(back: CALayer, front: CALayer)] = []
+    /// Whether any water is on this monitor now.
+    var hasWater: Bool { !waterLayers.isEmpty }
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String, shown: Int)] = [:]
     private var sparkLayers: [CALayer] = []
     private lazy var house: CALayer = {
@@ -266,7 +270,9 @@ final class ScreenOverlay {
                 house inHouse: HouseSnapshot? = nil, houseCell: CGSize = .zero,
                 plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
                 tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = [],
-                beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero, props: [PropSnapshot] = [], propCell: CGSize = .zero) {
+                beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero, props: [PropSnapshot] = [], propCell: CGSize = .zero,
+                water: [WaterSnapshot] = []) {
+        renderWater(water)
         renderFlight(inFlight, flowerCell: flowerCell)
         renderStanding(garden, cell: flowerCell, pool: &flowerBeds)
         renderStanding(beds, cell: bedCell, pool: &sleeperBeds)
@@ -517,6 +523,37 @@ final class ScreenOverlay {
     }
 
     /// A game's props, pooled: a rope is many links, so the pool grows to the longest and stays.
+    /// The water on this monitor, if a dive covers it. Pictures, not a window:
+    /// clicks go through to the apps below as everywhere else on the glass.
+    private func renderWater(_ water: [WaterSnapshot]) {
+        let here = water.filter { $0.pool.intersects(display.frame) }
+        while waterLayers.count < here.count {
+            let back = CALayer(), front = CALayer()
+            for (layer, z) in [(back, -0.8), (front, 1.5)] {
+                layer.magnificationFilter = .nearest
+                layer.anchorPoint = .zero
+                layer.zPosition = CGFloat(z)
+                layer.actions = ["contents": NSNull(), "position": NSNull(), "bounds": NSNull()]
+                root.addSublayer(layer)
+            }
+            waterLayers.append((back, front))
+        }
+        while waterLayers.count > here.count {
+            let gone = waterLayers.removeLast()
+            gone.back.removeFromSuperlayer(); gone.front.removeFromSuperlayer()
+        }
+        let origin = display.frame.origin
+        for (layers, w) in zip(waterLayers, here) {
+            let frame = WaterPainter.layout(w).frame
+            for layer in [layers.back, layers.front] {
+                layer.position = CGPoint(x: frame.minX - origin.x, y: frame.minY - origin.y)
+                layer.bounds = CGRect(origin: .zero, size: frame.size)
+            }
+            layers.back.contents = WaterPainter.back(w)
+            layers.front.contents = WaterPainter.front(w)
+        }
+    }
+
     private func renderProps(_ props: [PropSnapshot], cell: CGSize) {
         let origin = display.frame.origin
         while propLayers.count < props.count {
@@ -652,6 +689,7 @@ final class ScreenOverlay {
         plate.borderColor = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.35)
         plate.borderWidth = 1
         plate.cornerRadius = 6
+        plate.zPosition = 3                       // over the dive's water and its surface
 
         let label = CATextLayer()
         label.actions = Self.noAnimations
