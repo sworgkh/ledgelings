@@ -26,10 +26,11 @@ struct PlaySettingsView: View {
                 Toggle(tr("Basketball (alone, or two taking turns)"), isOn: $settings.playBasketballEnabled)
                 Toggle(tr("Soccer (anyone free, in teams)"), isOn: $settings.playSoccerEnabled)
                 Toggle(tr("Baseball (anyone free, round every edge)"), isOn: $settings.playBaseballEnabled)
+                Toggle(tr("Surfing (anyone free, on the bottom edge)"), isOn: $settings.playSurfEnabled)
             } header: {
                 SettingsHeader("Which games")
             } footer: {
-                Text(tr("Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer and baseball are for whoever is free, and have a tab of their own: Ball games. Off, a game is never played, and its row on the Activities page is greyed."))
+                Text(tr("Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer, baseball and surfing are for whoever is free, and have pages of their own: Ball games and Surfing. Off, a game is never played, and its row on the Activities page is greyed."))
             }
             .disabled(!settings.playEnabled)
 

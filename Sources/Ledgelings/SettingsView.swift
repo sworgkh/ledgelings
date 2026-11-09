@@ -96,6 +96,7 @@ struct SettingsView: View {
         case .chases: ChasesSettingsView(settings: settings, library: library, hunts: hunts)
         case .play: PlaySettingsView(settings: settings)
         case .ballGames: BallGamesSettingsView(settings: settings)
+        case .surfing: SurfingSettingsView(settings: settings)
         case .diving: DivingSettingsView(settings: settings, start: startDive)
         case .talk: TalkSettingsView(settings: settings, library: library, voice: voice)
         case .voice: VoiceSettingsView(settings: settings, voice: voice)

@@ -45,12 +45,12 @@ import Testing
         var picked: Set<Plays.Kind> = []
         for _ in 0..<200 {
             if let game = Plays.chooseTeamGame(initiator: 0, crowd: crowd, enabled: Set(Plays.Kind.allCases),
-                                               maxPlayers: [.soccer: 4, .baseball: 2], using: &rng) {
+                                               maxPlayers: [.soccer: 4, .baseball: 2, .surf: 3], using: &rng) {
                 picked.insert(game.kind)
-                #expect(game.players.count == (game.kind == .soccer ? 4 : 2))
+                #expect(game.players.count == [.soccer: 4, .baseball: 2, .surf: 3][game.kind])
             }
         }
-        #expect(picked == [.soccer, .baseball])
+        #expect(picked == [.soccer, .baseball, .surf])
         #expect(Plays.chooseTeamGame(initiator: 0, crowd: crowd, enabled: [.tag, .rope], maxPlayers: [:], using: &rng) == nil)
         #expect(Plays.teamChance(crowd: 0) < Plays.teamChance(crowd: 4), "a crowd plays together more")
         // The old games never pick a team game for one or two.

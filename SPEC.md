@@ -780,7 +780,7 @@ Every model call, whether or not its line was usable, appends one record to
 model), `casting` (Cast with Model), `plots` (a pair's next story, §6.5.2), `reminders`
 (a reminder's note, §7.7), `complaints` (a creature telling the user off, §4.7.1), `teaParties`
 (the stories and answers at a tea party, §7.8), `revenge`, `creatureRefine` (the sprite kit's
-Refine with AI, §9.1), `plays` (a game's opening line, §7.10). Recording a call requires one. Records from
+Refine with AI, §9.1), `plays` (a game's opening line, §7.10), `surfing` (a surfing session's opening line and its winner's cheer, §7.10). Recording a call requires one. Records from
 before v0.18 have none and are summed as "Earlier, unlabelled"; an unknown value
 from a newer build is shown as written.
 
@@ -1824,6 +1824,7 @@ each other enabled solo game is tried in turn.
 | basketball (`playBasketballEnabled`) | 1, or 2 friends taking turns | a floor ≥ 260 pt with a wall rising from an end | A hoop on the wall further from the initiator; `basketballThrows` throws each |
 | soccer (`playSoccerEnabled`) | 1 to `soccerPlayers` | the widest floor ≥ 300 pt | Below, **Ball games** |
 | baseball (`playBaseballEnabled`) | 1 to `baseballPlayers` | home on a floor ≥ 420 pt, three other edges ≥ 80 pt | Below, **Ball games** |
+| surf (`playSurfEnabled`) | 1 to `surfPlayers` | the widest floor ≥ 300 pt (the bottom edge) | Below, **Surfing** |
 
 **Rope.** Planned from the creature's centre `P` on a floor running `[a, b]`, under a
 ceiling at `Y` (the screen edge): `H = Y − P.y`, rope length `L = H − 2.5 · half size`
@@ -1961,11 +1962,57 @@ canopy (`chute`) over the head at `size · open`, turned with the creature (its 
 floats that much higher); the hoop and ball; a sweat `drop` after tag. Props are drawn
 behind the creatures, the ball in front.
 
-`--play-film out.mp4 [tag|rope|parachute|basketball|soccer|baseball]` films each game (or one)
+**Surfing** (`Plays.Surf`, `Plays+Surf.swift`; a crowd game like the ball games:
+`isTeamGame`, `surfEveryMinutes` between sessions, `surfPlayers` at most). Everyone
+leaps to the soccer pitch (the widest floor) and takes off (`playing`). The tide comes
+in over 1.5 s: calm water `1.2` creature heights deep (`AppSettings.surfDepth`) from the
+screen's floor; riders float on it. Each paddles (140 pt/s, pose `walk`) to its lineup
+spot, spread over the 30 % of the floor nearest the end the waves come from (one end,
+picked at random per session), and waits bobbing (±1.5 pt). A wave is a crest at `c`
+moving `way` at 170 pt/s; the water's lift at `x`, `d = (x − c) · way`, is
+`H · (1 − d/F)³` on the face (`0 ≤ d < F = 1.6 H`) and `H · (½ + ½ cos(π d / B))` on the
+back (`B = 2.8 H`), `H = surfWaveHeight` creature heights. The first wave comes 1 s after
+the tide is in, each next one 2.5 s after the last has rolled off the far end, once all
+are waiting (8 s at most). As the face reaches a waiting rider (`0 < d < F/2`) it catches
+the wave with chance 0.75 if fewer than two ride it, else lets it roll by. A rider rides
+at `c + way · F · (p ± 0.12 sin 2.2t)`, `p` 0.62 for the first on the wave and 0.18 for
+the second (up by the curl), its board along the water's slope, leaning at most 0.42 rad.
+Riding, it scores 10 a second; after its first second, 0.35 times a second it tries a
+trick (0.7 s: a hop, 1.6 half sizes up, or a spin, a whole turn), landed with chance 0.8
+for 20 (hop) or 35 (spin); 0.03 times a second, or a trick gone wrong, it wipes out: a
+splash where it was, 1.4 s tumbling half under, carried on and slowing, the board
+bobbing where it was lost, the ride's points gone; then it paddles back. At the far end
+it kicks out and the ride is banked. After `surfWaves` waves, or `surfMinutes` after the
+tide came in, no wave starts; once the last has gone and nobody is under, the best score
+wins (none alone) and the tide goes out over 1.5 s, setting everyone on the floor.
+
+Drawn: the water is one picture made each frame in square pixels at the players' scale,
+behind them, at `surfWaterOpacity` %: a deep band, the body, a 1-pixel dark top with a
+light line under it, light streaks slanting up the wave, foam along the crest's back and
+at the foot of the face, ripples drifting on the calm water, the lip thrown forward
+`0.6 H` off the crest and dropping `0.4 H`, a foam hook at its tip and spray off it, and
+splash drops (particles: 14 per wipe-out, falling at 0.6 g). The palette is traced flat
+from the owner's chosen Wixel wave. Each character's board (`board-0`…`board-44` on the
+`play` sheet, `Plays.Surf.boards`: nine colours, five stripes, no two characters alike)
+under its feet, a `spray` puff off a riding board's tail, a `splash` (3 frames) at 1.6×
+on a wipe-out with *WIPEOUT!* over it, and the scoreboard `SURF Blocky 120 · Pip 85`.
+Lines: a start line, and *wave* (catching one), *wipeout*, *trick*, *surfWin* moments for
+each character (`Plays+SurfLines.swift`, Russian in `Plays+SurfRussian.swift`, exported
+under `surf`); with a model the start line and the win's cheer are calls, purpose
+`surfing`. An invitation to surf (`DO: invite surf`, also *surfing*, *серфинг*) is in the
+inviter's own surf words, and so are the answers. **Stop activity** (`Activities`) ends
+it at once: `stopSurf` lets everyone go and drops the fading score, so nothing of it is
+drawn on the next frame.
+
+`--play-film out.mp4 [tag|rope|parachute|basketball|soccer|baseball|surf]` films each game (or one)
 offscreen with four creatures, the first two old friends, printing each step
-(`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`). Soccer or
-baseball alone is played four times among five creatures, by 1, 2, 3 and 5
-(`play soccer Unit 7 scores 0-2`, `play baseball Unit 7 runs to second`).
+(`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`). Soccer,
+baseball or surfing alone is played four times among five creatures, by 1, 2, 3 and 5
+(`play soccer Unit 7 scores 0-2`, `play baseball Unit 7 runs to second`,
+`play surf Hopper rides it out: 84 points`). `--surf-film out.mp4` films a session of
+three over a pretend window, writes stills beside it (`…-riding.png`, `…-trick.png`,
+`…-wipeout.png`, `…-board.png`, `…-stopped.png`), presses Stop activity on the third
+wave and exits 1 unless everything is gone within 0.5 s.
 
 ### 7.11 The clipboard
 
@@ -3111,6 +3158,13 @@ An error for want of a model reads as that note, never as a server refusal.
 | diveSeaLife | 12 | 3–40, clamped on load: fish, in schools; the jellyfish, crab, turtle and octopus always come |
 | diveAllScreens | false | the water on every monitor, not only the creatures' home one |
 | diveTalk | true | the divers say a line in their own voice; needs `talkEnabled` |
+| playSurfEnabled | true | surfing on or off (§7.10) |
+| surfEveryMinutes | 30 | 2–240 min, clamped on load: the least time after a session before another |
+| surfMinutes | 2 | 0.5–10 min, clamped on load: no wave starts after it |
+| surfWaves | 5 | 1–20, clamped on load: waves in a session |
+| surfWaveHeight | 2 | 1–4 creature heights, clamped on load |
+| surfPlayers | 5 | 1–10, clamped on load: the most who surf |
+| surfWaterOpacity | 55 | 20–90 %, clamped on load: how solid the water is drawn |
 | revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |

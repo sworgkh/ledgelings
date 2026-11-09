@@ -389,6 +389,7 @@ extension Plays.Kind {
         case .basketball: tr("BASKETBALL")
         case .soccer: tr("SOCCER")
         case .baseball: tr("BASEBALL")
+        case .surf: tr("SURFING")
         }
     }
 
@@ -400,6 +401,7 @@ extension Plays.Kind {
         case .basketball: tr("A hoop on the wall and a few throws; two friends take turns.")
         case .soccer: tr("Everyone free, on the widest floor: alone, one-on-one, one goal for three, teams of friends.")
         case .baseball: tr("Bases on the screen's edges, hit, catch and run by hopping edge to edge.")
+        case .surf: tr("The tide comes in along the bottom edge: waves to ride, tricks, wipe-outs, a score.")
         }
     }
 
@@ -411,6 +413,7 @@ extension Plays.Kind {
         case .basketball: "b"
         case .soccer: "g"
         case .baseball: "i"
+        case .surf: "v"
         }
     }
 
@@ -578,7 +581,7 @@ enum ActionIcons {
         return made.compactMapValues { trimmed($0) }
     }()
 
-    /// Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop, the net, the bat.
+    /// Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop, the net, the bat, Blocky's surfboard.
     static let games: [Plays.Kind: CGImage] = {
         var made: [Plays.Kind: CGImage] = [:]
         let props = (try? SpriteAtlas(named: "play"))?.frames()
@@ -588,6 +591,7 @@ enum ActionIcons {
         made[.basketball] = props?.frame(animation: "hoop", time: 0)
         made[.soccer] = props?.frame(animation: "net", time: 0)
         made[.baseball] = props?.frame(animation: "bat", time: 0)
+        made[.surf] = props?.frame(animation: "board-\(Plays.Surf.board(of: "Blocky"))", time: 0)
         return made.compactMapValues { trimmed($0) }
     }()
 
@@ -881,11 +885,11 @@ extension ActionsSheetView {
     private func rowLabel(picture: CGImage?, title: String, line: String, action: String, detail: String) -> some View {
         HStack(spacing: 12) {
             activityPicture(picture).frame(width: 56, height: 30)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(title).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
-                Text(line).font(.system(size: 9, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Color(cgColor: ScreenOverlay.softInk)).lineLimit(2).minimumScaleFactor(0.8)
-            }
+            // The name leads the line, so a row is two lines in all: eight rows share the page.
+            (Text(title).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundColor(PixelBox.rim)
+                + Text("  ")
+                + Text(line).font(.system(size: 9, weight: .semibold, design: .monospaced)).foregroundColor(Color(cgColor: ScreenOverlay.softInk)))
+                .lineLimit(2).minimumScaleFactor(0.8)
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(action).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
@@ -912,7 +916,7 @@ extension ActionsSheetView {
 
     @ViewBuilder private func activityPicture(_ image: CGImage?) -> some View {
         if let image {
-            let scale = max(1, min(64 / CGFloat(image.width), 40 / CGFloat(image.height)).rounded(.down))
+            let scale = max(1, min(64 / CGFloat(image.width), 36 / CGFloat(image.height)).rounded(.down))
             Image(decorative: image, scale: 1).resizable().interpolation(.none)
                 .frame(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
         }

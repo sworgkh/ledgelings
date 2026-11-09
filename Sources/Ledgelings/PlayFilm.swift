@@ -3,13 +3,13 @@ import QuartzCore
 import LedgelingsCore
 
 /// Every game played once (or just one), filmed offscreen with four creatures
-/// of different species: tag, the rope, the parachute, basketball, soccer and
-/// baseball, one after another, every step printed with its time. The first
-/// two are made friends first, so they take turns at the hoop and play on one
-/// side. Soccer or baseball alone is played four times, with five creatures
-/// about: by one, two, three and all five.
+/// of different species: tag, the rope, the parachute, basketball, soccer,
+/// baseball and surfing, one after another, every step printed with its time.
+/// The first two are made friends first, so they take turns at the hoop and
+/// play on one side. Soccer, baseball or surfing alone is played four times,
+/// with five creatures about: by one, two, three and all five.
 ///
-///     Ledgelings --play-film build/play.mp4 [tag|rope|parachute|basketball|soccer|baseball]
+///     Ledgelings --play-film build/play.mp4 [tag|rope|parachute|basketball|soccer|baseball|surf]
 @MainActor
 enum PlayFilm {
     static func run(output: URL, only: Plays.Kind?) async throws {
@@ -30,6 +30,7 @@ enum PlayFilm {
         settings.dayMinutes = 30; settings.nightMinutes = 30
         // Short matches, to see each one through.
         settings.soccerMinutes = 1; settings.soccerGoals = 2; settings.baseballInnings = 1
+        settings.surfMinutes = 1; settings.surfWaves = 3
         let colony = try Colony(settings: settings, history: ChatHistory(directory: scratch.appendingPathComponent("chats")),
                                 library: SpriteLibrary(directory: scratch.appendingPathComponent("sprites")),
                                 spend: SpendLedger(directory: scratch),
@@ -63,7 +64,7 @@ enum PlayFilm {
                 // A beat between games, then the next.
                 if let next = queue.first, t >= (idleSince ?? 1) + 1.5 {
                     // The friends play tag and basketball together; the others swing and jump.
-                    let by: [Plays.Kind: Int] = [.tag: 0, .rope: 2, .parachute: 3, .basketball: 0, .soccer: 0, .baseball: 0]
+                    let by: [Plays.Kind: Int] = [.tag: 0, .rope: 2, .parachute: 3, .basketball: 0, .soccer: 0, .baseball: 0, .surf: 0]
                     // In a transaction of its own: a line said outside one would open an implicit
                     // transaction that holds back every frame after it.
                     CATransaction.begin(); CATransaction.setDisableActions(true)

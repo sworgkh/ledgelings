@@ -16,6 +16,10 @@ import Testing
         ["topics": v.topics, "notes": v.notes, "musings": v.musings, "replies": v.replies]
     }
 
+    static func surf(_ v: Plays.SurfVoice) -> [String: String] {
+        ["start": v.start, "wave": v.wave, "wipeout": v.wipeout, "trick": v.trick, "win": v.win, "invite": v.invite, "yes": v.yes, "no": v.no]
+    }
+
     static func export(_ l: Language) -> [String: Any] {
         [
             "language": l.code,
@@ -52,6 +56,7 @@ import Testing
             "plays": ["start": Plays.startSets(l), "startAnyone": Plays.startAnyone(l),
                       "done": Plays.doneSets(l), "doneAnyone": Plays.doneAnyone(l),
                       "cheer": Plays.cheerSets(l), "cheerAnyone": Plays.cheerAnyone(l)],
+            "surf": ["voices": Plays.surfVoiceSets(l).mapValues(surf), "anyone": surf(Plays.surfAnyones(l))],
             "deeds": ["voices": Deeds.voiceSets(l).mapValues { ["invite": $0.invite, "yes": $0.yes, "no": $0.no] },
                       "anyone": ["invite": Deeds.anyones(l).invite, "yes": Deeds.anyones(l).yes, "no": Deeds.anyones(l).no]],
             "holidays": Almanac.holidayNames[l] ?? [:],

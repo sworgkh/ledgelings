@@ -2,7 +2,9 @@
 # frames, the hoop it is thrown at (and its net swishing), a parachute, a
 # grappling hook and the links of its rope, a drop of sweat for whoever is
 # out of breath after tag; a soccer ball turning in two frames and its net; a
-# baseball, a bat, and a base (with a pennant when a ghost runner holds it).
+# baseball, a bat, and a base (with a pennant when a ghost runner holds it);
+# a surfboard for each character (nine colours, five stripes), a splash in
+# three frames and a puff of spray, traced from the owner's chosen Wixel art.
 # Props, not poses: every species, an imported one too, plays with the same
 # ones. Blocky's rules throughout: flat patches, a 1px outline in a dark tint
 # of the colour beside it, a light line top-left, a shade line bottom-right,
@@ -47,6 +49,56 @@ poses:
   - {name: bat, prompt: a wooden baseball bat standing up, barrel at the top}
   - {name: base, prompt: a flat white base bag}
   - {name: base-taken, prompt: the same base with a little red pennant on a stick}
+  - {name: board-0, prompt: a surfboard lying along the water, colourway 0}
+  - {name: board-1, prompt: a surfboard lying along the water, colourway 1}
+  - {name: board-2, prompt: a surfboard lying along the water, colourway 2}
+  - {name: board-3, prompt: a surfboard lying along the water, colourway 3}
+  - {name: board-4, prompt: a surfboard lying along the water, colourway 4}
+  - {name: board-5, prompt: a surfboard lying along the water, colourway 5}
+  - {name: board-6, prompt: a surfboard lying along the water, colourway 6}
+  - {name: board-7, prompt: a surfboard lying along the water, colourway 7}
+  - {name: board-8, prompt: a surfboard lying along the water, colourway 8}
+  - {name: board-9, prompt: a surfboard lying along the water, colourway 9}
+  - {name: board-10, prompt: a surfboard lying along the water, colourway 10}
+  - {name: board-11, prompt: a surfboard lying along the water, colourway 11}
+  - {name: board-12, prompt: a surfboard lying along the water, colourway 12}
+  - {name: board-13, prompt: a surfboard lying along the water, colourway 13}
+  - {name: board-14, prompt: a surfboard lying along the water, colourway 14}
+  - {name: board-15, prompt: a surfboard lying along the water, colourway 15}
+  - {name: board-16, prompt: a surfboard lying along the water, colourway 16}
+  - {name: board-17, prompt: a surfboard lying along the water, colourway 17}
+  - {name: board-18, prompt: a surfboard lying along the water, colourway 18}
+  - {name: board-19, prompt: a surfboard lying along the water, colourway 19}
+  - {name: board-20, prompt: a surfboard lying along the water, colourway 20}
+  - {name: board-21, prompt: a surfboard lying along the water, colourway 21}
+  - {name: board-22, prompt: a surfboard lying along the water, colourway 22}
+  - {name: board-23, prompt: a surfboard lying along the water, colourway 23}
+  - {name: board-24, prompt: a surfboard lying along the water, colourway 24}
+  - {name: board-25, prompt: a surfboard lying along the water, colourway 25}
+  - {name: board-26, prompt: a surfboard lying along the water, colourway 26}
+  - {name: board-27, prompt: a surfboard lying along the water, colourway 27}
+  - {name: board-28, prompt: a surfboard lying along the water, colourway 28}
+  - {name: board-29, prompt: a surfboard lying along the water, colourway 29}
+  - {name: board-30, prompt: a surfboard lying along the water, colourway 30}
+  - {name: board-31, prompt: a surfboard lying along the water, colourway 31}
+  - {name: board-32, prompt: a surfboard lying along the water, colourway 32}
+  - {name: board-33, prompt: a surfboard lying along the water, colourway 33}
+  - {name: board-34, prompt: a surfboard lying along the water, colourway 34}
+  - {name: board-35, prompt: a surfboard lying along the water, colourway 35}
+  - {name: board-36, prompt: a surfboard lying along the water, colourway 36}
+  - {name: board-37, prompt: a surfboard lying along the water, colourway 37}
+  - {name: board-38, prompt: a surfboard lying along the water, colourway 38}
+  - {name: board-39, prompt: a surfboard lying along the water, colourway 39}
+  - {name: board-40, prompt: a surfboard lying along the water, colourway 40}
+  - {name: board-41, prompt: a surfboard lying along the water, colourway 41}
+  - {name: board-42, prompt: a surfboard lying along the water, colourway 42}
+  - {name: board-43, prompt: a surfboard lying along the water, colourway 43}
+  - {name: board-44, prompt: a surfboard lying along the water, colourway 44}
+  - {name: splash-0, prompt: a splash rising out of the water}
+  - {name: splash-1, prompt: the splash at its height, drops flying}
+  - {name: splash-2, prompt: the splash falling back, drops coming down}
+  - {name: spray-0, prompt: a puff of white spray}
+  - {name: spray-1, prompt: the puff breaking up}
 
 animations:
   ball: {frames: [ball-0, ball-1], fps: 8, loop: true}
@@ -62,3 +114,50 @@ animations:
   bat: {frames: [bat], fps: 1, loop: true}
   base: {frames: [base], fps: 1, loop: true}
   base-taken: {frames: [base-taken], fps: 1, loop: true}
+  board-0: {frames: [board-0], fps: 1, loop: true}
+  board-1: {frames: [board-1], fps: 1, loop: true}
+  board-2: {frames: [board-2], fps: 1, loop: true}
+  board-3: {frames: [board-3], fps: 1, loop: true}
+  board-4: {frames: [board-4], fps: 1, loop: true}
+  board-5: {frames: [board-5], fps: 1, loop: true}
+  board-6: {frames: [board-6], fps: 1, loop: true}
+  board-7: {frames: [board-7], fps: 1, loop: true}
+  board-8: {frames: [board-8], fps: 1, loop: true}
+  board-9: {frames: [board-9], fps: 1, loop: true}
+  board-10: {frames: [board-10], fps: 1, loop: true}
+  board-11: {frames: [board-11], fps: 1, loop: true}
+  board-12: {frames: [board-12], fps: 1, loop: true}
+  board-13: {frames: [board-13], fps: 1, loop: true}
+  board-14: {frames: [board-14], fps: 1, loop: true}
+  board-15: {frames: [board-15], fps: 1, loop: true}
+  board-16: {frames: [board-16], fps: 1, loop: true}
+  board-17: {frames: [board-17], fps: 1, loop: true}
+  board-18: {frames: [board-18], fps: 1, loop: true}
+  board-19: {frames: [board-19], fps: 1, loop: true}
+  board-20: {frames: [board-20], fps: 1, loop: true}
+  board-21: {frames: [board-21], fps: 1, loop: true}
+  board-22: {frames: [board-22], fps: 1, loop: true}
+  board-23: {frames: [board-23], fps: 1, loop: true}
+  board-24: {frames: [board-24], fps: 1, loop: true}
+  board-25: {frames: [board-25], fps: 1, loop: true}
+  board-26: {frames: [board-26], fps: 1, loop: true}
+  board-27: {frames: [board-27], fps: 1, loop: true}
+  board-28: {frames: [board-28], fps: 1, loop: true}
+  board-29: {frames: [board-29], fps: 1, loop: true}
+  board-30: {frames: [board-30], fps: 1, loop: true}
+  board-31: {frames: [board-31], fps: 1, loop: true}
+  board-32: {frames: [board-32], fps: 1, loop: true}
+  board-33: {frames: [board-33], fps: 1, loop: true}
+  board-34: {frames: [board-34], fps: 1, loop: true}
+  board-35: {frames: [board-35], fps: 1, loop: true}
+  board-36: {frames: [board-36], fps: 1, loop: true}
+  board-37: {frames: [board-37], fps: 1, loop: true}
+  board-38: {frames: [board-38], fps: 1, loop: true}
+  board-39: {frames: [board-39], fps: 1, loop: true}
+  board-40: {frames: [board-40], fps: 1, loop: true}
+  board-41: {frames: [board-41], fps: 1, loop: true}
+  board-42: {frames: [board-42], fps: 1, loop: true}
+  board-43: {frames: [board-43], fps: 1, loop: true}
+  board-44: {frames: [board-44], fps: 1, loop: true}
+  splash: {frames: [splash-0, splash-1, splash-2], fps: 8, loop: false}
+  spray: {frames: [spray-0, spray-1], fps: 10, loop: true}

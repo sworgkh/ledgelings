@@ -21,12 +21,18 @@ extension Deeds {
 
     /// `sender`'s invitation to `reader`.
     public static func inviteLine(by sender: String, to reader: String, _ offer: Offer) -> String {
-        CursorMood.current.adjust(Banter.render(voice(of: sender).invite, ["reader": reader, "game": offer.word]))
+        // Surfing has lines of its own, in each voice.
+        let line = offer == .game(.surf) ? Plays.surfVoice(of: sender).invite : voice(of: sender).invite
+        return CursorMood.current.adjust(Banter.render(line, ["reader": reader, "game": offer.word]))
     }
 
     /// `writer`'s answer to `inviter`'s invitation.
     public static func answerLine(by writer: String, to inviter: String, _ offer: Offer, yes: Bool) -> String {
         let v = voice(of: writer)
+        if offer == .game(.surf) {
+            let surf = Plays.surfVoice(of: writer)
+            return CursorMood.current.adjust(Banter.render(yes ? surf.yes : surf.no, ["reader": inviter, "game": offer.word]))
+        }
         return CursorMood.current.adjust(Banter.render(yes ? v.yes : v.no, ["reader": inviter, "game": offer.word]))
     }
 

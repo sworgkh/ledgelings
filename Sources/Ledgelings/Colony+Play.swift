@@ -24,6 +24,8 @@ extension Colony {
         var pitch: Plays.Pitch?
         var soccer: Plays.Soccer?
         var baseball: Plays.Baseball?
+        var surf: Plays.Surf?
+        var surfing: Surfing?
         var ballGame: BallGame?
         /// Where the players are going before it starts: leaping to a floor or the ceiling.
         var reaching: [Int: EdgeWorld.Spot] = [:]
@@ -128,7 +130,7 @@ extension Colony {
                 tries = [(.basketball, [first] + (friend.map { [$0.index] } ?? []))]
             case .rope, .parachute:
                 tries = [(kind, [first])]
-            case .soccer, .baseball:
+            case .soccer, .baseball, .surf:
                 tries = [(kind, Plays.joining(initiator: first, crowd: crowd(of: first), max: count ?? settings.ballGamePlayers[kind] ?? 6))]
             }
         } else {
@@ -222,6 +224,8 @@ extension Colony {
             guard beginSoccer(&session) else { return false }
         case .baseball:
             guard beginBaseball(&session) else { return false }
+        case .surf:
+            guard beginSurf(&session) else { return false }
         }
         busy.formUnion(players)
         for (i, to) in session.reaching { creatures[i].leap(to: to) }
@@ -279,6 +283,8 @@ extension Colony {
                                         fallSpeed: CGFloat(settings.parachuteFallSpeed))
         case .soccer:
             guard startSoccer(&session) else { return endPlay(completed: false) }
+        case .surf:
+            guard startSurf(&session) else { return endPlay(completed: false) }
         case .tag, .basketball, .baseball:
             break
         }
@@ -318,6 +324,7 @@ extension Colony {
         case .basketball: runBasketball(&session, dt: dt)
         case .soccer: runSoccer(&session, dt: dt)
         case .baseball: runBaseball(&session, dt: dt)
+        case .surf: runSurf(&session, dt: dt)
         }
         if play?.serial == session.serial { play = session }
     }
@@ -527,6 +534,10 @@ extension Colony {
                 ? s.players.map { ([$0], g.runsBy[$0, default: 0]) }
                 : g.sides.indices.map { (g.sides[$0], g.sideRuns.indices.contains($0) ? g.sideRuns[$0] : 0) }
             return (baseballScore(g), won(sides))
+        case .surf:
+            guard let g = s.surf else { return (nil, nil) }
+            let score = g.riders.map { "\($0.score)" }.joined(separator: "-")
+            return (score, g.riders.count < 2 ? nil : g.winners.map(name).sorted())
         }
     }
 
@@ -587,7 +598,7 @@ extension Colony {
                     cost = usage.cost
                     tokens = usage.promptTokens + usage.completionTokens
                     self?.spend.record(provider: service.provider, model: service.model, usage: usage,
-                                       purpose: s.kind.isTeamGame ? .ballGames : .plays)
+                                       purpose: s.kind.spendPurpose)
                 }
                 line = Banter.cleanLine(answer.text, speaker: me.name, cut: answer.cut)
             } catch {
@@ -695,6 +706,8 @@ extension Colony {
             }
         case .soccer, .baseball:
             props += ballGameProps(s)
+        case .surf:
+            props += surfProps(s) + ballGameProps(s)
         }
         return props + fading
     }

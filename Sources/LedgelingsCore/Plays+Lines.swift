@@ -11,10 +11,12 @@ extension Plays {
         detail.flatMap(Kind.init(rawValue:))?.title ?? (detail ?? "")
     }
 
-    public static let startSets = Translated(english: together(englishStartLines, englishBallStartLines),
-                                             [.russian: together(russianStartLines, russianBallStartLines)])
-    public static let startAnyone = Translated(english: englishStartAnyone.merging(englishBallStartAnyone) { a, _ in a },
-                                               [.russian: russianStartAnyone.merging(russianBallStartAnyone) { a, _ in a }])
+    public static let startSets = Translated(english: together(together(englishStartLines, englishBallStartLines), surfStarts(englishSurfVoices)),
+                                             [.russian: together(together(russianStartLines, russianBallStartLines), surfStarts(russianSurfVoices))])
+    public static let startAnyone = Translated(english: englishStartAnyone.merging(englishBallStartAnyone) { a, _ in a }
+                                                   .merging([Kind.surf.rawValue: englishSurfAnyone.start]) { a, _ in a },
+                                               [.russian: russianStartAnyone.merging(russianBallStartAnyone) { a, _ in a }
+                                                   .merging([Kind.surf.rawValue: russianSurfAnyone.start]) { a, _ in a }])
 
     /// Each character's lines for the first games and the ball games, in one table.
     static func together(_ a: [String: [String: String]], _ b: [String: [String: String]]) -> [String: [String: String]] {

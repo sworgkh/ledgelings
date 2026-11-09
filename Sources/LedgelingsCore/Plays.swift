@@ -2,8 +2,9 @@ import CoreGraphics
 import Foundation
 
 /// Plays: now and then a creature stops walking and plays, the way the worms
-/// in Worms fool about between turns, with nobody hurt. Four games here, and
-/// two ball games for a crowd (`Plays+Soccer.swift`, `Plays+Baseball.swift`):
+/// in Worms fool about between turns, with nobody hurt. Four games here, two
+/// ball games for a crowd (`Plays+Soccer.swift`, `Plays+Baseball.swift`) and
+/// surfing on a wave along the bottom edge (`Plays+Surf.swift`):
 ///
 /// - **tag** (catch me if you can): two of them chase each other round the
 ///   edges; a touch makes the other one "it"; when the time is up both stand
@@ -26,14 +27,14 @@ import Foundation
 public enum Plays {
 
     public enum Kind: String, CaseIterable, Codable, Sendable {
-        case tag, rope, parachute, basketball, soccer, baseball
+        case tag, rope, parachute, basketball, soccer, baseball, surf
 
         /// Needs two: tag.
         public var needsPair: Bool { self == .tag }
         /// Can be played by two: tag, and turns at the hoop.
         public var canPair: Bool { self == .tag || self == .basketball }
-        /// Played by however many are free, one to a crowd: soccer and baseball.
-        public var isTeamGame: Bool { self == .soccer || self == .baseball }
+        /// Played by however many are free, one to a crowd: soccer, baseball and surfing.
+        public var isTeamGame: Bool { self == .soccer || self == .baseball || self == .surf }
         public var canSolo: Bool { !needsPair && !isTeamGame }
 
         /// In words, for a prompt and a storyline: "a game of tag".
@@ -45,6 +46,7 @@ public enum Plays {
             case .basketball: tr("a game of basketball")
             case .soccer: tr("a game of soccer")
             case .baseball: tr("a game of baseball")
+            case .surf: tr("surfing on a wave along the bottom edge")
             }
         }
     }

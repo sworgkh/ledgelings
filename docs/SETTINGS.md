@@ -4,7 +4,7 @@ Every setting is saved as you change it and applied live; nothing needs a restar
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
 Settings…*. A sidebar lists the pages under five headings: *Creatures &
 world* (**Creatures**, **Actions**, **Sprites**, **Beds**, **Flowers**, **Calendar**), *Games* (**Chases**, **Play**,
-**Ball games**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Tools screen**, **Reminders**,
+**Ball games**, **Surfing**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Tools screen**, **Reminders**,
 **Clipboard**, **Screenshots**, **Dictation**, **Translate**) and *Money & history* (**Costs**, **Chats**); on the Mac each page is two
 columns that fit on one screen. The search box at its top (⌘F) finds any setting by the words
 of its label, its section or its footer, in Russian or English: click a place (⏎ for the first)
@@ -325,7 +325,7 @@ so their next story can bring it up.
 | **Parachute comes down at** (`parachuteFallSpeed`) | 70 pt/s | 30 to 200, in fives | About ten seconds down a laptop screen |
 | **Ball keeps on each bounce** (`ballBounce`) | 60 % | 0 to 90, in fives | 0: it drops dead; 90: it bounces for a long time |
 | **Throws at the hoop each** (`basketballThrows`) | 3 | 1 to 10 | Two players take turns, so twice as many throws |
-| **Say something as a game starts and ends** (`playTalk`) | on | | The one who starts says so in its own voice; someone has the last word. With a model set up the first line is written by it, counted as **Plays** (or **Soccer and baseball**) on the Costs tab, and so is a goal's or a home run's cheer; the last word and the small moments are built-in lines. Needs *Talk* on |
+| **Say something as a game starts and ends** (`playTalk`) | on | | The one who starts says so in its own voice; someone has the last word. With a model set up the first line is written by it, counted as **Plays** (or **Soccer and baseball**, or **Surfing**) on the Costs tab, and so is a goal's or a home run's cheer, and a surfing win's; the last word and the small moments are built-in lines. Needs *Talk* on |
 
 The props (ball, hoop, parachute, hook and rope, the drop of sweat) are drawn in
 Blocky's pixel style and are the same for every species, your own imported ones too.
@@ -366,6 +366,26 @@ activity, the way to end a dive, a surf or a game from any app, on the right.
 | **The divers say what they see** (`diveTalk`) | on | | Built-in lines, each in its own voice; needs Talk on |
 | **Stop activity** (`stopActivityShortcutEnabled`, `stopActivityShortcutKeyCode`, `stopActivityShortcutModifiers`) | on, ⌃⌥⎋ | any key with ⌘, ⌃ or ⌥ | From any app: whatever runs (a dive, a surf, a game) stops at once; also the menu's *Stop Activity* |
 | **Stop when I use the computer** (`stopOnUse`) | on | | A key press, or a click anywhere but on a creature, stops it; moving the mouse does not |
+
+## Surfing page
+
+The tide comes in along the widest floor (the screen's bottom edge) and waves roll
+along it; whoever is free paddles out on its own board, waits, and rides them. Two ride
+a wave at most, the others wait their turn. Ten points a second on a wave, 20 for a hop
+and 35 for a spin landed; a wipe-out (a splash, a tumble under) loses that ride's points.
+It ends after the waves set here or when the time is up, and the tide goes out. Switched
+on or off on the Play tab too, and on the Activities page (*SURFING*, key V). **Stop
+activity** (its shortcut or the menu) clears the water, the boards and the score at once.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Surfing (anyone free, on the bottom edge)** (`playSurfEnabled`) | on | | Surfing on or off |
+| **Surfing at most every** (`surfEveryMinutes`) | 30 min | 2 to 240 | It may be picked only this long after the last session ended, as a ball game |
+| **A session lasts up to** (`surfMinutes`) | 2 min | 0.5 to 10, in halves | No wave starts after that; the last one is ridden out |
+| **Waves in a session** (`surfWaves`) | 5 | 1 to 20 | Or until the time is up |
+| **Surfers at most** (`surfPlayers`) | 5 | 1 to 10 | Who joins: the one who starts it, then the closest friends, then anyone free |
+| **Wave height** (`surfWaveHeight`) | 2 creatures | 1 to 4, in halves | Over calm water a little over one creature deep |
+| **Water opacity** (`surfWaterOpacity`) | 55 % | 20 to 90, in fives | How solid the water is drawn; the windows under it show through, every click goes through to them. Creatures and boards stay solid |
 
 ## Sprites tab
 
@@ -572,7 +592,7 @@ own lines and what kind of moment each was are sent.
 | **Days read back** | 14 | 1 to 60 | `seedDays` |
 | **Lines shown per pair** | 40 | 5 to 200 | `seedLines`; about 2 500 tokens a pair at 40 |
 
-Flags: `--invite-film out.mp4 [soccer|tag|basketball|baseball|tea]` films a letter
+Flags: `--invite-film out.mp4 [soccer|tag|basketball|baseball|surf|tea]` films a letter
 invitation, the yes and the game offscreen; `--converse --invite soccer` opens a real
 conversation with that invitation and waits for the deed; `--memory [name]` prints every
 pair's memory and the block each carries; `--memory-seed [--dry-run]` reads the past in;

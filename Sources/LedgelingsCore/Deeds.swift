@@ -38,6 +38,7 @@ public enum Deeds {
             let aliases: [String: Plays.Kind] = [
                 "catch": .tag, "салки": .tag, "догонялки": .tag, "football": .soccer, "футбол": .soccer,
                 "баскетбол": .basketball, "бейсбол": .baseball, "hoops": .basketball,
+                "surfing": .surf, "серфинг": .surf, "сёрфинг": .surf, "волны": .surf,
             ]
             guard let kind = aliases[w] else { return nil }
             self = .game(kind)
@@ -50,6 +51,7 @@ public enum Deeds {
             case .game(.basketball): tr("Basketball")
             case .game(.soccer): tr("Soccer")
             case .game(.baseball): tr("Baseball")
+            case .game(.surf): tr("Surfing")
             case .game(let kind): kind.title
             case .tea: tr("Tea together")
             }
@@ -66,7 +68,7 @@ public enum Deeds {
 
     /// The games one can be invited to: the ones two or more play. The rope and
     /// the parachute are played alone.
-    public static let invitable: [Plays.Kind] = [.tag, .basketball, .soccer, .baseball]
+    public static let invitable: [Plays.Kind] = [.tag, .basketball, .soccer, .baseball, .surf]
 
     /// One deed. A proposal to play or have tea is an invitation: it happens only
     /// once the other says yes.

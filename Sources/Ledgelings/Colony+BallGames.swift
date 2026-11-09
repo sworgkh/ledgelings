@@ -271,7 +271,7 @@ extension Colony {
         s.ballGame?.banner = (image, size, at, elapsed, elapsed + 1.8)
     }
 
-    private func runExtras(_ s: inout PlaySession) {
+    func runExtras(_ s: inout PlaySession) {
         guard var extras = s.ballGame else { return }
         while let next = extras.fireworks.first, next.at <= elapsed {
             extras.fireworks.removeFirst()
@@ -313,7 +313,7 @@ extension Colony {
         }
         let vars = ["speaker": me.name, "speakerKind": Banter.spoken(kind(ofCreature: i)), "speakerPersona": Banter.persona(me.persona),
                     "play": s.kind.title, "moment": moment.happening, "score": score, "situation": situation.joined(separator: " ")]
-        let serial = s.serial
+        let serial = s.serial, purpose = s.kind.spendPurpose
         Task { [weak self] in
             var line = "", cost: Double?, tokens: Int?
             do {
@@ -322,7 +322,7 @@ extension Colony {
                     if service.provider == .lmStudio { usage.cost = 0 }       // a local model is free
                     cost = usage.cost
                     tokens = usage.promptTokens + usage.completionTokens
-                    self?.spend.record(provider: service.provider, model: service.model, usage: usage, purpose: .ballGames)
+                    self?.spend.record(provider: service.provider, model: service.model, usage: usage, purpose: purpose)
                 }
                 line = Banter.cleanLine(answer.text, speaker: me.name, cut: answer.cut)
             } catch {
@@ -400,6 +400,9 @@ extension Colony {
             if let at = g.ballPosition {
                 props.append(PropSnapshot(image: image("baseball"), position: at, rotation: 0, scale: scale, inFront: true))
             }
+            props.append(board(g.board(name), at: extras?.boardAt, scale: scale))
+        }
+        if let g = s.surf {
             props.append(board(g.board(name), at: extras?.boardAt, scale: scale))
         }
         if let b = extras?.banner {

@@ -103,6 +103,306 @@
       "y": 0,
       "w": 32,
       "h": 28
+    },
+    "board-0": {
+      "x": 480,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-1": {
+      "x": 512,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-2": {
+      "x": 544,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-3": {
+      "x": 576,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-4": {
+      "x": 608,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-5": {
+      "x": 640,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-6": {
+      "x": 672,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-7": {
+      "x": 704,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-8": {
+      "x": 736,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-9": {
+      "x": 768,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-10": {
+      "x": 800,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-11": {
+      "x": 832,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-12": {
+      "x": 864,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-13": {
+      "x": 896,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-14": {
+      "x": 928,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-15": {
+      "x": 960,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-16": {
+      "x": 992,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-17": {
+      "x": 1024,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-18": {
+      "x": 1056,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-19": {
+      "x": 1088,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-20": {
+      "x": 1120,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-21": {
+      "x": 1152,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-22": {
+      "x": 1184,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-23": {
+      "x": 1216,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-24": {
+      "x": 1248,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-25": {
+      "x": 1280,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-26": {
+      "x": 1312,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-27": {
+      "x": 1344,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-28": {
+      "x": 1376,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-29": {
+      "x": 1408,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-30": {
+      "x": 1440,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-31": {
+      "x": 1472,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-32": {
+      "x": 1504,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-33": {
+      "x": 1536,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-34": {
+      "x": 1568,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-35": {
+      "x": 1600,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-36": {
+      "x": 1632,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-37": {
+      "x": 1664,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-38": {
+      "x": 1696,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-39": {
+      "x": 1728,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-40": {
+      "x": 1760,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-41": {
+      "x": 1792,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-42": {
+      "x": 1824,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-43": {
+      "x": 1856,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "board-44": {
+      "x": 1888,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "splash-0": {
+      "x": 1920,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "splash-1": {
+      "x": 1952,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "splash-2": {
+      "x": 1984,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "spray-0": {
+      "x": 2016,
+      "y": 0,
+      "w": 32,
+      "h": 28
+    },
+    "spray-1": {
+      "x": 2048,
+      "y": 0,
+      "w": 32,
+      "h": 28
     }
   },
   "animations": {
@@ -197,6 +497,338 @@
         "base-taken"
       ],
       "fps": 1.0,
+      "loop": true
+    },
+    "board-0": {
+      "frames": [
+        "board-0"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-1": {
+      "frames": [
+        "board-1"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-2": {
+      "frames": [
+        "board-2"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-3": {
+      "frames": [
+        "board-3"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-4": {
+      "frames": [
+        "board-4"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-5": {
+      "frames": [
+        "board-5"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-6": {
+      "frames": [
+        "board-6"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-7": {
+      "frames": [
+        "board-7"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-8": {
+      "frames": [
+        "board-8"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-9": {
+      "frames": [
+        "board-9"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-10": {
+      "frames": [
+        "board-10"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-11": {
+      "frames": [
+        "board-11"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-12": {
+      "frames": [
+        "board-12"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-13": {
+      "frames": [
+        "board-13"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-14": {
+      "frames": [
+        "board-14"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-15": {
+      "frames": [
+        "board-15"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-16": {
+      "frames": [
+        "board-16"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-17": {
+      "frames": [
+        "board-17"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-18": {
+      "frames": [
+        "board-18"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-19": {
+      "frames": [
+        "board-19"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-20": {
+      "frames": [
+        "board-20"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-21": {
+      "frames": [
+        "board-21"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-22": {
+      "frames": [
+        "board-22"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-23": {
+      "frames": [
+        "board-23"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-24": {
+      "frames": [
+        "board-24"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-25": {
+      "frames": [
+        "board-25"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-26": {
+      "frames": [
+        "board-26"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-27": {
+      "frames": [
+        "board-27"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-28": {
+      "frames": [
+        "board-28"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-29": {
+      "frames": [
+        "board-29"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-30": {
+      "frames": [
+        "board-30"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-31": {
+      "frames": [
+        "board-31"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-32": {
+      "frames": [
+        "board-32"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-33": {
+      "frames": [
+        "board-33"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-34": {
+      "frames": [
+        "board-34"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-35": {
+      "frames": [
+        "board-35"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-36": {
+      "frames": [
+        "board-36"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-37": {
+      "frames": [
+        "board-37"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-38": {
+      "frames": [
+        "board-38"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-39": {
+      "frames": [
+        "board-39"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-40": {
+      "frames": [
+        "board-40"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-41": {
+      "frames": [
+        "board-41"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-42": {
+      "frames": [
+        "board-42"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-43": {
+      "frames": [
+        "board-43"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "board-44": {
+      "frames": [
+        "board-44"
+      ],
+      "fps": 1.0,
+      "loop": true
+    },
+    "splash": {
+      "frames": [
+        "splash-0",
+        "splash-1",
+        "splash-2"
+      ],
+      "fps": 8.0,
+      "loop": false
+    },
+    "spray": {
+      "frames": [
+        "spray-0",
+        "spray-1"
+      ],
+      "fps": 10.0,
       "loop": true
     }
   }

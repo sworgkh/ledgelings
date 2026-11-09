@@ -96,8 +96,8 @@ extension Strings {
             "Дом — там, где стоит отбивающий, базы — на трёх самых дальних друг от друга краях, подающий — на полу отбивающего. Один тренируется; от двух до пяти отбивают по очереди, и бегущий, которому снова отбивать, оставляет на базе флажок; шесть и больше играют двумя командами. Мяч за верхним краем экрана — хоум-ран.",
         "Whoever is free joins, closest friends first, up to the most set here; playing together brings them closer. A ball game may come up only this many minutes after the last one ended. A scoreboard sits at the top of the screen while it lasts. Their lines come with Say something on the Play tab.":
             "Присоединяются все свободные, сначала лучшие друзья, но не больше, чем задано здесь; общая игра сближает. Игра с мячом случается не раньше, чем через столько минут после прошлой. Пока она идёт, вверху экрана висит табло. Реплики — с «Говорить что-нибудь» на вкладке «Игры».",
-        "Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer and baseball are for whoever is free, and have a tab of their own: Ball games. Off, a game is never played, and its row on the Activities page is greyed.":
-            "Салки — на двоих: они гоняются друг за другом по краям, и касание делает водящим другого. Верёвку цепляют за потолок, чтобы пролететь над полом; прыжок с парашютом начинается с потолка; кольцо вешают на стену в конце пола. В футбол и бейсбол играют все, кто свободен; у них своя вкладка — «Игры с мячом». Выключенная игра не случается никогда, а её строка на странице «Занятия» серая.",
+        "Tag is for two: they chase each other round the edges, and a touch makes the other one \"it\". The rope is fired at the ceiling to swing across the floor; the parachute jump starts from the ceiling; the hoop goes on a wall at the end of a floor. Soccer, baseball and surfing are for whoever is free, and have pages of their own: Ball games and Surfing. Off, a game is never played, and its row on the Activities page is greyed.":
+            "Салки — на двоих: они гоняются друг за другом по краям, и касание делает водящим другого. Верёвку цепляют за потолок, чтобы пролететь над полом; прыжок с парашютом начинается с потолка; кольцо вешают на стену в конце пола. В футбол, бейсбол и серфинг играют все, кто свободен; у них свои страницы — «Игры с мячом» и «Серфинг». Выключенная игра не случается никогда, а её строка на странице «Занятия» серая.",
         "A game about every": "Игра примерно раз в",
         "Friends play more often by": "Друзья играют чаще на",
         "How often": "Как часто",
@@ -117,5 +117,33 @@ extension Strings {
         "The props": "Реквизит",
         "Drawn like the creatures, and the same for every species, your own imported ones too.":
             "Нарисован как сами существа и одинаков для всех видов, в том числе ваших импортированных.",
+        // Surfing
+        "surfing on a wave along the bottom edge": "серфинг на волне вдоль нижнего края",
+        "Surfing": "Серфинг",
+        "SURF": "СЕРФ",
+        "SURFING": "СЕРФИНГ",
+        "WIPEOUT!": "ПЛЮХ!",
+        "The tide comes in along the bottom edge: waves to ride, tricks, wipe-outs, a score.":
+            "Вдоль нижнего края приходит прилив: волны, трюки, падения, счёт.",
+        "you have just caught a wave and are riding it": "ты только что поймал волну и едешь на ней",
+        "you have just wiped out and tumbled into the water": "ты только что упал с доски и кувырнулся в воду",
+        "you have just landed a trick on the wave": "ты только что сделал трюк на волне и удержался",
+        "you have just won the surfing with the best score": "ты только что выиграл серфинг с лучшим счётом",
+        "Surfing (anyone free, on the bottom edge)": "Серфинг (все свободные, на нижнем краю)",
+        "Surfing at most every": "Серфинг не чаще чем раз в",
+        "A session lasts up to": "Заход длится до",
+        "Waves in a session": "Волн за заход",
+        "Surfers at most": "Серферов не больше",
+        "The waves": "Волны",
+        "Wave height": "Высота волны",
+        " creatures": " существ",
+        "The boards": "Доски",
+        "Whoever is free leaps to the widest floor, the bottom edge, and the tide comes in. They paddle out, wait, and ride the waves that roll along it: ten points a second on a wave, more for a hop or a spin landed, nothing for a ride that ends in a wipe-out. It ends after the waves set here, or when the time is up, and the tide goes out again. Stop activity (its shortcut, or the menu) clears it off the screen at once.":
+            "Все свободные перепрыгивают на самый широкий пол — нижний край, и приходит прилив. Они выгребают, ждут и катаются на волнах, что катятся вдоль него: десять очков в секунду на волне, больше за прыжок или разворот, ничего за заезд, который кончился падением. Всё заканчивается после заданного здесь числа волн или когда выйдет время, и прилив уходит. «Остановить занятие» (сочетание клавиш или меню) сразу убирает всё с экрана.",
+        "How tall a wave stands over the calm water, in creature heights, and how solid the water is drawn: the windows under it show through the rest, and every click goes through it to them. The creatures and their boards stay solid.":
+            "Насколько волна поднимается над спокойной водой, в ростах существа, и насколько плотно нарисована вода: сквозь остальное видны окна под ней, и каждый щелчок проходит к ним. Существа и их доски остаются плотными.",
+        "Water opacity": "Плотность воды",
+        "Every character paddles out on its own board: nine colours, five stripes.":
+            "У каждого персонажа своя доска: девять цветов, пять видов полос.",
     ]
 }

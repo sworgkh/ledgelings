@@ -85,7 +85,7 @@ The owner judges the running app, not the diff: a change is done when it is buil
 with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
-  writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames, diving,
+  writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames, surfing, diving,
   talk, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place;
   `productivity`, the old tools tab, still opens Reminders).
@@ -95,7 +95,7 @@ with `scripts/make-app.sh`, installed and seen working.
   time, then quits once the pair is let go: the way to measure dialogue timing.
   `--converse --invite soccer` opens it with that invitation and waits for the deed
   (`deed Blocky asks Boo: soccer`, `deed Boo accepts soccer from Blocky`, `deed Blocky & Boo start: invite soccer`).
-- `--invite-film out.mp4 [soccer|tag|basketball|baseball|tea]` films a letter invitation offscreen, the
+- `--invite-film out.mp4 [soccer|tag|basketball|baseball|surf|tea]` films a letter invitation offscreen, the
   letter written back yes and the game played, printing each step and what the pair remembers of it.
 - `--memory [name]` prints every pair's memory (bond, story, facts, games, last days) and the block each
   carries into a prompt, with its tokens; `--memory-seed [--dry-run]` reads the last `seedDays` of the chat
@@ -111,11 +111,15 @@ with `scripts/make-app.sh`, installed and seen working.
 - `--bed-film out.mp4` films one creature of each species offscreen from nightfall until all
   are asleep in their beds, then drags one bed to the ceiling, printing each step
   (`bed Blocky walks to crate (floor)`, `bed Morel moved …`).
-- `--play-film out.mp4 [tag|rope|parachute|basketball|soccer|baseball]` films each game (or one) offscreen with
+- `--play-film out.mp4 [tag|rope|parachute|basketball|soccer|baseball|surf]` films each game (or one) offscreen with
   four creatures, the first two old friends, and prints each step with its time
   (`play rope Hopper fires at (639, 576)`, `play basketball Blocky scores`, `play tag over after 7 touches`);
-  soccer or baseball alone is played by 1, 2, 3 and 5 creatures in turn (`play soccer Unit 7 scores 0-2`,
-  `play baseball Unit 7 runs to second`).
+  soccer, baseball or surfing alone is played by 1, 2, 3 and 5 creatures in turn (`play soccer Unit 7 scores 0-2`,
+  `play baseball Unit 7 runs to second`, `play surf Hopper rides it out: 84 points`).
+- `--surf-film out.mp4` films three surfing offscreen over a pretend window (its text must stay readable through the
+  water), printing each step (`surf 13.00  play surf Blocky catches the wave`), writes stills beside it (`…-riding.png`,
+  `…-trick.png`, `…-wipeout.png`, `…-board.png`, `…-stopped.png`) and presses Stop activity on the third wave; exit 1
+  unless the water, boards and score are gone within 0.5 s.
 - `--dive-film out.mp4` films a scuba dive offscreen (water rising, the gear, jumps, sea life, a click through the
   water into a window below, the draining, the climb out), then a second dive ended by Stop activity, printing each
   step and how long the screen took to clear (`stop activity: water, fish and gear gone after 0.03 s`); stills beside it.
