@@ -15,13 +15,13 @@ public static partial class WindowsStrings
         new Dictionary<string, IReadOnlyDictionary<string, string>>
         {
             ["app"] = RuApp,
-            ["settings"] = RuSettings,
-            ["runtime"] = RuRuntime,
+            ["settings"] = RuSettings!,
+            ["runtime"] = RuRuntime!,
             ["core"] = RuCore,
             ["clipboard"] = RuClipboard,
-            ["dictation"] = RuDictation,
-            ["translate"] = RuTranslate,
-            ["readAloud"] = RuReadAloud!,      // set by its own file before the parts are first built
+            ["dictation"] = RuDictation!,
+            ["translate"] = RuTranslate!,
+            ["readAloud"] = RuReadAloud!,      // each set by its own file before the parts are first built
         });
 
     private static readonly Lazy<Dictionary<string, string>> russian = new(() =>

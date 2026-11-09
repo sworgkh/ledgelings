@@ -48,14 +48,14 @@ public class BallGamesTests
         Assert.Equal(new[] { 0 }, Plays.Joining(0, crowd, 1));                   // alone
         var rng = new Random(2);
         var picked = new HashSet<Plays.Kind>();
-        var most = new Dictionary<Plays.Kind, int> { [Plays.Kind.Soccer] = 4, [Plays.Kind.Baseball] = 2 };
+        var most = new Dictionary<Plays.Kind, int> { [Plays.Kind.Soccer] = 4, [Plays.Kind.Baseball] = 2, [Plays.Kind.Surf] = 3 };
         for (int n = 0; n < 200; n++)
         {
             if (Plays.ChooseTeamGame(0, crowd, Plays.AllKinds.ToHashSet(), most, rng) is not { } game) continue;
             picked.Add(game.Kind);
-            Assert.Equal(game.Kind == Plays.Kind.Soccer ? 4 : 2, game.Players.Length);
+            Assert.Equal(most[game.Kind], game.Players.Length);
         }
-        Assert.True(picked.SetEquals(new[] { Plays.Kind.Soccer, Plays.Kind.Baseball }));
+        Assert.True(picked.SetEquals(new[] { Plays.Kind.Soccer, Plays.Kind.Baseball, Plays.Kind.Surf }));
         Assert.Null(Plays.ChooseTeamGame(0, crowd, new HashSet<Plays.Kind> { Plays.Kind.Tag, Plays.Kind.Rope }, new Dictionary<Plays.Kind, int>(), rng));
         Assert.True(Plays.TeamChance(0) < Plays.TeamChance(4), "a crowd plays together more");
         // The old games never pick a team game for one or two.

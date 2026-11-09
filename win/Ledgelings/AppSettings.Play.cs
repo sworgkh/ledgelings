@@ -3,7 +3,7 @@ using Ledgelings.Core;
 namespace Ledgelings;
 
 /// <summary>Plays (SPEC §7.10): now and then, and more between friends, they play: tag, a rope swing,
-/// a parachute jump, basketball; soccer and baseball for whoever is free.</summary>
+/// a parachute jump, basketball; soccer, baseball and surfing (<c>AppSettings.Surf</c>) for whoever is free.</summary>
 public sealed partial class AppSettings
 {
     /// <summary>Average minutes between games, before close friends shorten it.</summary>
@@ -97,12 +97,17 @@ public sealed partial class AppSettings
     public int BaseballInnings { get => baseballInnings; set => Put(ref baseballInnings, Math.Clamp(value, BaseballInningsMin, BaseballInningsMax), "baseballInnings"); }
     public int BaseballPlayers { get => baseballPlayers; set => Put(ref baseballPlayers, Math.Clamp(value, BallPlayersMin, BallPlayersMax), "baseballPlayers"); }
 
-    /// <summary>The most who may join each ball game.</summary>
+    /// <summary>The most who may join each ball game, and surfing.</summary>
     public IReadOnlyDictionary<Plays.Kind, int> BallGamePlayers =>
-        new Dictionary<Plays.Kind, int> { [Plays.Kind.Soccer] = soccerPlayers, [Plays.Kind.Baseball] = baseballPlayers };
+        new Dictionary<Plays.Kind, int> { [Plays.Kind.Soccer] = soccerPlayers, [Plays.Kind.Baseball] = baseballPlayers, [Plays.Kind.Surf] = surfPlayers };
 
-    /// <summary>The fewest minutes between two of <paramref name="kind"/>, a ball game.</summary>
-    public double BallGameEvery(Plays.Kind kind) => kind == Plays.Kind.Baseball ? baseballEveryMinutes : soccerEveryMinutes;
+    /// <summary>The fewest minutes between two of <paramref name="kind"/>, a ball game or surfing.</summary>
+    public double BallGameEvery(Plays.Kind kind) => kind switch
+    {
+        Plays.Kind.Baseball => baseballEveryMinutes,
+        Plays.Kind.Surf => surfEveryMinutes,
+        _ => soccerEveryMinutes,
+    };
 
     /// <summary>The games switched on, whether or not play itself is.</summary>
     public IReadOnlySet<Plays.Kind> EnabledPlays
@@ -116,6 +121,7 @@ public sealed partial class AppSettings
             if (playBasketballEnabled) on.Add(Plays.Kind.Basketball);
             if (playSoccerEnabled) on.Add(Plays.Kind.Soccer);
             if (playBaseballEnabled) on.Add(Plays.Kind.Baseball);
+            if (playSurfEnabled) on.Add(Plays.Kind.Surf);
             return on;
         }
     }

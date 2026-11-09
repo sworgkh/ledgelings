@@ -171,7 +171,7 @@ public class DiveTests
         Assert.Equal(Tools.Tool.Dive, Tools.All[^1]);                                     // last, so every older tile keeps its number key
         Assert.Equal(SettingsPage.Diving, Tools.Tool.Dive.Page());
         Assert.Equal("dive", Tools.Tool.Dive.Code());
-        Assert.Equal(new[] { SettingsPage.Chases, SettingsPage.Play, SettingsPage.BallGames, SettingsPage.Diving }, SettingsGroup.Games.Pages());
+        Assert.Equal(new[] { SettingsPage.Chases, SettingsPage.Play, SettingsPage.BallGames, SettingsPage.Surfing, SettingsPage.Diving }, SettingsGroup.Games.Pages());
         Assert.Equal(SettingsPage.Diving, SettingsPages.Named("diving"));
         Assert.Equal(new Shortcut(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option), Shortcut.StopActivity);
         Assert.True(Shortcut.StopActivity.IsUsable);

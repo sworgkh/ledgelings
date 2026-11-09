@@ -2,7 +2,7 @@ using Ledgelings.Core;
 
 namespace Ledgelings;
 
-/// <summary>Stop activity (SPEC §7.17): the registry's entries for the dive and the games, the shortcut from any
+/// <summary>Stop activity (SPEC §7.17): the registry's entries for the surf, the dive and the games, the shortcut from any
 /// app (Ctrl+Alt+Esc), the tray's Go Scuba Diving and Stop Activity, and the watch that stops one when the owner
 /// uses the computer.</summary>
 public sealed partial class App
@@ -14,6 +14,8 @@ public sealed partial class App
     {
         if (settings is null || colony is null) return;
         var c = colony;
+        // Surfing is a game, but its water and score go with it at once.
+        Activities.Shared.Register(Activities.Kind.Surf, () => c.CurrentPlay?.Kind == Plays.Kind.Surf, c.StopSurf);
         Activities.Shared.Register(Activities.Kind.Dive, () => c.IsDiving, c.StopDive);
         Activities.Shared.Register(Activities.Kind.Game, () => c.CurrentPlay is not null, () => c.EndPlay(false));
         settings.PropertyChanged += (_, e) =>

@@ -172,7 +172,7 @@ public static class ClipPaster
                               IReadOnlyList<(string Type, byte[] Data)>? Images = null);
 
     /// <summary>The clipboard is shared and often busy for a moment: a few tries, then nothing.</summary>
-    public static T? Retry<T>(Func<T> read) where T : class
+    public static T? Retry<T>(Func<T?> read) where T : class
     {
         for (var i = 0; i < 5; i++)
         {

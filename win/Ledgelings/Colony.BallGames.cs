@@ -346,7 +346,7 @@ public sealed partial class Colony
 
     // MARK: Words
 
-    /// <summary>A line at a big moment: built in, or from the model for a goal or a home run.</summary>
+    /// <summary>A line at a big moment: built in, or from the model for a goal, a home run or the surfing's win.</summary>
     private void BallLine(Plays.Moment moment, int i, PlaySession s, string score)
     {
         if (!PlayCanTalk || i < 0 || i >= creatures.Count) return;
@@ -372,10 +372,10 @@ public sealed partial class Colony
             ["speaker"] = me.Name, ["speakerKind"] = Banter.Spoken(KindOf(i)), ["speakerPersona"] = Banter.Persona(me.Persona),
             ["play"] = s.Kind.Title(), ["moment"] = moment.Happening(), ["score"] = score, ["situation"] = situation,
         };
-        _ = BallLineByModel(service, s.Serial, i, me.Name, builtIn, situation, vars);
+        _ = BallLineByModel(service, s.Serial, s.Kind.SpendPurpose(), i, me.Name, builtIn, situation, vars);
     }
 
-    private async Task BallLineByModel(ChatClient service, int serial, int i, string name, string builtIn, string situation,
+    private async Task BallLineByModel(ChatClient service, int serial, Core.Spend.Purpose purpose, int i, string name, string builtIn, string situation,
                                        Dictionary<string, string> vars)
     {
         var line = "";
@@ -389,7 +389,7 @@ public sealed partial class Colony
                 if (service.Kind == ChatClient.Provider.LmStudio) usage.Cost = 0;       // a local model is free
                 cost = usage.Cost;
                 tokens = usage.PromptTokens + usage.CompletionTokens;
-                Spend.Record(service.Kind, service.Model, usage, Core.Spend.Purpose.BallGames);
+                Spend.Record(service.Kind, service.Model, usage, purpose);
             }
             line = Banter.CleanLine(answer.Text, name, cut: answer.Cut);
         }
@@ -466,6 +466,7 @@ public sealed partial class Colony
             if (bb.BallPosition is { } at) props.Add(new PropSnapshot(Image("baseball"), at, 0, scale, InFront: true));
             props.Add(Board(bb.Board(PlayerName), extras?.BoardAt, scale));
         }
+        if (s.Surf is { } surf) props.Add(Board(surf.Board(PlayerName), extras?.BoardAt, scale));
         if (extras?.Banner is { } banner)
         {
             var age = Elapsed - banner.Since;

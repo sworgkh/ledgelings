@@ -6,14 +6,19 @@ namespace Ledgelings.Core;
 /// a strike-out) and wandering off mid-game. The Russian comes from <see cref="Shared"/>.</summary>
 public static partial class Plays
 {
-    /// <summary>A moment in a ball game worth a line.</summary>
-    public enum Moment { Goal, HomeRun, Oops, Wander }
+    /// <summary>A moment in a ball game worth a line; and surfing's (<c>Plays.SurfLines.cs</c>): catching a wave,
+    /// wiping out, a trick landed, winning.</summary>
+    public enum Moment { Goal, HomeRun, Oops, Wander, Wave, Wipeout, Trick, SurfWin }
 
     public static string Raw(this Moment m) => m switch
     {
         Moment.Goal => "goal",
         Moment.HomeRun => "homeRun",
         Moment.Oops => "oops",
+        Moment.Wave => "wave",
+        Moment.Wipeout => "wipeout",
+        Moment.Trick => "trick",
+        Moment.SurfWin => "surfWin",
         _ => "wander",
     };
 
@@ -23,19 +28,37 @@ public static partial class Plays
         Moment.Goal => L10n.Tr("you have just scored a goal"),
         Moment.HomeRun => L10n.Tr("you have just hit a home run, right off the top of the screen"),
         Moment.Oops => L10n.Tr("you have just missed the ball in a silly way"),
+        Moment.Wave => L10n.Tr("you have just caught a wave and are riding it"),
+        Moment.Wipeout => L10n.Tr("you have just wiped out and tumbled into the water"),
+        Moment.Trick => L10n.Tr("you have just landed a trick on the wave"),
+        Moment.SurfWin => L10n.Tr("you have just won the surfing with the best score"),
         _ => L10n.Tr("you are wandering off in the middle of the game to look at something"),
     };
 
     /// <summary>Worth a line from the model, when one does the talking: the high points only.</summary>
-    public static bool AsksTheModel(this Moment m) => m is Moment.Goal or Moment.HomeRun;
+    public static bool AsksTheModel(this Moment m) => m is Moment.Goal or Moment.HomeRun or Moment.SurfWin;
 
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> CheerLinesIn(Language l) =>
         Shared.In(l)?.PlayCheer is { Count: > 0 } t
             ? t.ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<string, string>)kv.Value)
-            : EnglishCheerLines;
+            : EnglishCheer;
 
     public static IReadOnlyDictionary<string, string> CheerAnyoneIn(Language l) =>
-        Shared.In(l)?.PlayCheerAnyone is { Count: > 0 } t ? t : EnglishCheerAnyone;
+        Shared.In(l)?.PlayCheerAnyone is { Count: > 0 } t ? t : EnglishAllCheerAnyone;
+
+    /// <summary>Each character's English big moments, the ball games' and surfing's, in one table. Made on first use:
+    /// the surf lines are in another file, whose statics may not be set yet.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> EnglishCheer => englishCheer ??=
+        EnglishCheerLines.ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<string, string>)kv.Value
+            .Concat(EnglishSurfVoices.TryGetValue(kv.Key, out var surf) ? surf.Moments : new Dictionary<string, string>())
+            .ToDictionary(p => p.Key, p => p.Value));
+
+    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>? englishCheer;
+
+    public static IReadOnlyDictionary<string, string> EnglishAllCheerAnyone => englishAllCheerAnyone ??=
+        EnglishCheerAnyone.Concat(EnglishSurfAnyone.Moments).ToDictionary(p => p.Key, p => p.Value);
+
+    private static IReadOnlyDictionary<string, string>? englishAllCheerAnyone;
 
     /// <summary>The line <paramref name="name"/> says at <paramref name="moment"/>.</summary>
     public static string CheerLine(string name, Moment moment)

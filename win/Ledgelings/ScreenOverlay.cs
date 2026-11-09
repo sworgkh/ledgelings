@@ -97,7 +97,7 @@ public sealed partial class ScreenOverlay : IDisposable
                        TeaTableSnapshot? tea = null, Size teaCell = default,
                        IReadOnlyList<PlantedSnapshot>? beds = null, Size bedCell = default,
                        IReadOnlyList<PropSnapshot>? props = null, Size propCell = default,
-                       IReadOnlyList<WaterSnapshot>? water = null)
+                       IReadOnlyList<WaterSnapshot>? water = null, SurfWaterSnapshot? surf = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
         // Bottom to top, as the Mac layers them: the tea table, the house, the planted flowers, then the creatures.
@@ -106,6 +106,7 @@ public sealed partial class ScreenOverlay : IDisposable
         AddGarden(ops, garden, flowerCell);      // behind the creatures, who walk past in front
         AddGarden(ops, beds, bedCell);           // the sleepers' beds stand on their edge the same way, sleepers in front
         AddWater(ops, water, front: false);      // the dive's water and its life, behind the divers
+        AddSurfWater(ops, surf);                 // the surfing's sea, behind the boards and the riders
         AddProps(ops, props, propCell, inFront: false);      // the hoop, the rope, the parachute: behind the players
         var newBubbles = new Dictionary<int, (RectangleF, string, SizeF)>();
         var talk = new List<(Rectangle, Action<Graphics>)>();     // the bubbles go over everything but the mail

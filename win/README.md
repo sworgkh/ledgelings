@@ -17,7 +17,9 @@ creatures from the sprite kit, planting flowers where each character likes (the
 Flowers tab), complaints when pushed around, tea parties, voices (Windows' own,
 OpenRouter or a local speech server), the Costs tab, every character's own bed at a place it learns (the Beds tab), and
 the plays: tag, a ninja rope, a parachute jump and basketball, more often between friends (the Play tab, and the
-Activities page of Creature Actions), soccer and baseball for whoever is free, with a scoreboard (the Ball games tab), scuba diving started by hand only
+Activities page of Creature Actions), soccer and baseball for whoever is free, with a scoreboard (the Ball games tab), surfing on a wave along the
+bottom edge for whoever is free (see-through pixel water, every character on its own board, tricks and wipe-outs, a score;
+the Surfing tab, key V on the Activities page), scuba diving started by hand only
 (see-through water over the bottom of the screen, sea life, divers in masks; the Diving tab) with **Stop activity**
 (Ctrl+Alt+Esc, or any key or click while *Stop when I use the computer* is on), and keeping them all to one monitor (the `SCREEN` button on Creature
 Actions, the tray's *Screen*, *Live on* on the Creatures tab), the rest parachuting over;
