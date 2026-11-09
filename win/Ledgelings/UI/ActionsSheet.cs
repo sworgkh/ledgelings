@@ -15,7 +15,8 @@ public sealed record ActionsState(
     int Planted = 0, bool Hiding = false, int HideLeft = 0,
     bool TalkOn = true, bool VoiceOn = false, bool RevengeOn = true,
     CursorMood Mood = CursorMood.Bad, Language Language = Language.English,
-    bool PlayOn = true, IReadOnlySet<Plays.Kind>? PlaysOff = null, bool Playing = false)
+    bool PlayOn = true, IReadOnlySet<Plays.Kind>? PlaysOff = null, bool Playing = false,
+    bool Diving = false, string StopShortcut = "")
 {
     /// <summary>Games switched off in settings (all of them while play is off).</summary>
     public IReadOnlySet<Plays.Kind> Off => PlaysOff ?? new HashSet<Plays.Kind>();
@@ -106,7 +107,7 @@ public static class ActivitiesTips
 }
 
 /// <summary>A game as a row of the Activities page: what it is called, a line on what happens, and the key that plays it.</summary>
-public static class Activities
+public static class ActivityRows
 {
     public static string ActivityTitle(this Plays.Kind kind) => kind switch
     {
@@ -144,6 +145,35 @@ public static class Activities
     /// <summary>Why Play Now is greyed, or null when it is not.</summary>
     public static string? ActivityDetail(this Plays.Kind kind, ActionsState s) =>
         s.Hiding ? L10n.Tr("they are hiding") : s.Off.Contains(kind) ? L10n.Tr("off in settings") : s.Playing ? L10n.Tr("one at a time") : null;
+}
+
+/// <summary>What only ever starts by hand, listed under the games on the Activities page: a press starts it, a second
+/// press (or Stop activity) stops it.</summary>
+public enum HandActivity { Dive }
+
+public static class HandActivities
+{
+    public static readonly IReadOnlyList<HandActivity> All = Enum.GetValues<HandActivity>();
+
+    public static string ActivityTitle(this HandActivity a) => L10n.Tr("SCUBA DIVING");
+
+    public static string ActivityLine(this HandActivity a) =>
+        L10n.Tr("Water over the bottom of the screen; a few put on masks and dive among fish, a turtle and an octopus.");
+
+    public static Key ActivityKey(this HandActivity a) => System.Windows.Input.Key.D;
+
+    public static bool IsRunning(this HandActivity a, ActionsState s) => s.Diving;
+
+    /// <summary>What its row says on hover: start it, or stop it, with its keys.</summary>
+    public static string ActivityTip(this HandActivity a, ActionsState s)
+    {
+        var key = a.ActivityKey().ToString();
+        if (a.IsRunning(s)) return s.StopShortcut.Length == 0 ? L10n.Tr("Stop now (%@)", key) : L10n.Tr("Stop now (%@ · %@)", key, s.StopShortcut);
+        return L10n.Tr("Start now: %@ (%@)", L10n.Tr("scuba diving"), key);
+    }
+
+    /// <summary>Why it cannot start now, or null.</summary>
+    public static string? ActivityDetail(this HandActivity a, ActionsState s) => !a.IsRunning(s) && s.Hiding ? L10n.Tr("they are hiding") : null;
 }
 
 /// <summary>One tile on the sheet, in the order they are laid out, four to a row.</summary>
@@ -222,8 +252,11 @@ public sealed class ActionsSheet : Window
 {
     public const double SheetWidth = 564, SheetHeight = 548;
     private const double Headroom = 54, TileWidth = 114, TileHeight = 126, Gap = 10;
-    /// <summary>Six rows of 50 leave room for the line, and the buttons sit where the sheet's own do.</summary>
-    public const double ActivityRowHeight = 50, ActivityGap = 3, ActivityLineHeight = 24, ActivitiesFooterGap = 11;
+    public const double ActivityGap = 3, ActivityLineHeight = 24, ActivitiesFooterGap = 11;
+    /// <summary>The rows on the Activities page: every game, then what starts by hand only.</summary>
+    public static int ActivityRows => Plays.AllKinds.Count + HandActivities.All.Count;
+    /// <summary>The rows share what the line and the buttons leave, so the buttons sit where the sheet's own do: 42 at most.</summary>
+    public static double ActivityRowHeight => Math.Min(42, Math.Floor((350 - ActivityLineHeight - ActivitiesFooterGap - (ActivityRows - 1) * ActivityGap) / ActivityRows));
 
     /// <summary>What the hide row offers, in minutes; null means "until tomorrow at eight". In the current language.</summary>
     public static IReadOnlyList<(string Title, double? Minutes)> HideChoices => new (string, double?)[]
@@ -248,6 +281,7 @@ public sealed class ActionsSheet : Window
     private readonly Grid root = new() { Width = SheetWidth, Height = SheetHeight };
     private readonly List<(ActionsTile Tile, PixelButton Button, TextBlock Title, TextBlock Detail)> tiles = new();
     private readonly List<(Plays.Kind Kind, PixelButton Button, TextBlock Detail)> rows = new();
+    private readonly List<(HandActivity Activity, PixelButton Button, TextBlock Action, TextBlock Detail)> handRows = new();
     /// <summary>The sheet, or its Activities page.</summary>
     private ActionsPage page;
     private readonly ContentControl line = new() { Height = 30, Margin = new Thickness(0, 0, 0, 12) };
@@ -331,6 +365,8 @@ public sealed class ActionsSheet : Window
                 if (e.Key == System.Windows.Input.Key.Enter) { e.Handled = true; Close(); return; }
                 foreach (var kind in Plays.AllKinds)
                     if (kind.ActivityKey() == e.Key && kind.ActivityDetail(state) is null) { e.Handled = true; Play(kind); return; }
+                foreach (var activity in HandActivities.All)
+                    if (activity.ActivityKey() == e.Key && activity.ActivityDetail(state) is null) { e.Handled = true; ByHand(activity); return; }
                 return;
             }
             if (e.Key == System.Windows.Input.Key.A) { e.Handled = true; GoTo(ActionsPage.Activities); return; }
@@ -353,6 +389,7 @@ public sealed class ActionsSheet : Window
         (line.Parent as Panel)?.Children.Remove(line);
         tiles.Clear();
         rows.Clear();
+        handRows.Clear();
         switches.Clear();
         hideRow.Children.Clear();
         var paper = new Image
@@ -566,7 +603,9 @@ public sealed class ActionsSheet : Window
             Mood: settings.CursorMood, Language: settings.Language,
             PlayOn: settings.PlayEnabled,
             PlaysOff: Plays.AllKinds.Where(k => !settings.PlayEnabled || !settings.EnabledPlays.Contains(k)).ToHashSet(),
-            Playing: colony.CurrentPlay is not null);
+            Playing: colony.CurrentPlay is not null,
+            Diving: colony.IsDiving,
+            StopShortcut: settings.StopActivityShortcutEnabled ? ShortcutKeys.Label(settings.StopActivityShortcut) : "");
         foreach (var (flipped, button) in switches)
         {
             button.Content = flipped.Title(state);
@@ -590,6 +629,17 @@ public sealed class ActionsSheet : Window
             button.IsEnabled = enabled;
             button.Opacity = enabled ? 1 : 0.45;
             button.Chosen = tile == ActionsTile.Hide && (choosingHide || state.Hiding);
+        }
+        foreach (var (activity, button, action, detail) in handRows)
+        {
+            var why = activity.ActivityDetail(state);
+            var on = activity.IsRunning(state);
+            action.Text = on ? L10n.Tr("STOP") : L10n.Tr("START");
+            detail.Text = why ?? activity.ActivityKey().ToString();
+            button.IsEnabled = why is null;
+            button.Opacity = why is null ? 1 : 0.45;
+            button.Chosen = on;
+            button.ToolTip = activity.ActivityTip(state);
         }
         foreach (var (kind, button, detail) in rows)
         {
@@ -683,6 +733,7 @@ public sealed class ActionsSheet : Window
         });
         var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
         foreach (var kind in Plays.AllKinds) list.Children.Add(ActivityRow(kind, list.Children.Count == 0 ? 0 : ActivityGap));
+        foreach (var activity in HandActivities.All) list.Children.Add(HandRow(activity, ActivityGap));
         sheet.Children.Add(list);
         line.Height = ActivityLineHeight;
         line.Margin = new Thickness(0, 0, 0, 6);
@@ -705,14 +756,34 @@ public sealed class ActionsSheet : Window
 
     private PixelButton ActivityRow(Plays.Kind kind, double top)
     {
-        var face = new Grid { Width = SheetWidth - 66, Height = ActivityRowHeight };
+        var (face, _, detail) = RowFace(ActionIcons.Game(kind), kind.ActivityTitle(), kind.ActivityLine(), L10n.Tr("PLAY NOW"));
+        var button = new PixelButton { Content = face, Padding = new Thickness(0), Margin = new Thickness(0, top, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, ToolTip = kind.ActivityTip() };
+        button.Click += (_, _) => Play(kind);
+        rows.Add((kind, button, detail));
+        return button;
+    }
+
+    private PixelButton HandRow(HandActivity activity, double top)
+    {
+        var (face, action, detail) = RowFace(ActionIcons.ByHand(activity), activity.ActivityTitle(), activity.ActivityLine(), L10n.Tr("START"));
+        var button = new PixelButton { Content = face, Padding = new Thickness(0), Margin = new Thickness(0, top, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, ToolTip = activity.ActivityTip(state) };
+        button.Click += (_, _) => ByHand(activity);
+        handRows.Add((activity, button, action, detail));
+        return button;
+    }
+
+    /// <summary>A row's face: its picture, name and what happens, and on the right what pressing it does and its key.</summary>
+    private (Grid Face, TextBlock Action, TextBlock Detail) RowFace(System.Drawing.Bitmap? picture, string title, string what, string does)
+    {
+        var height = ActivityRowHeight;
+        var face = new Grid { Width = SheetWidth - 66, Height = height };
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(76) });
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         face.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var holder = new Grid { Width = 64, Height = 40, Margin = new Thickness(12, 0, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
-        if (ActionIcons.Game(kind) is System.Drawing.Bitmap picture)
+        var holder = new Grid { Width = 56, Height = height - 8, Margin = new Thickness(12, 0, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+        if (picture is not null)
         {
-            var scale = Math.Max(1, Math.Floor(Math.Min(64.0 / picture.Width, 40.0 / picture.Height)));
+            var scale = Math.Max(1, Math.Floor(Math.Min(56.0 / picture.Width, (height - 8) / picture.Height)));
             var image = new Image
             {
                 Source = Bitmaps.ToSource(picture), Width = picture.Width * scale, Height = picture.Height * scale, Stretch = Stretch.Fill,
@@ -723,32 +794,38 @@ public sealed class ActionsSheet : Window
         }
         face.Children.Add(holder);
         var words = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
-        words.Children.Add(new TextBlock { Text = kind.ActivityTitle(), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim });
+        words.Children.Add(new TextBlock { Text = title, FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim });
         words.Children.Add(new TextBlock
         {
-            Text = kind.ActivityLine(), FontFamily = mono, FontSize = 10, FontWeight = FontWeights.SemiBold, Foreground = softInk,
-            TextWrapping = TextWrapping.Wrap, MaxHeight = 28, Margin = new Thickness(0, 3, 0, 0),
+            Text = what, FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = softInk,
+            TextWrapping = TextWrapping.Wrap, MaxHeight = 24, Margin = new Thickness(0, 1, 0, 0),
         });
         Grid.SetColumn(words, 1);
         face.Children.Add(words);
         var right = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 12, 0) };
-        right.Children.Add(new TextBlock
+        var action = new TextBlock
         {
-            Text = L10n.Tr("PLAY NOW"), FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim,
+            Text = does, FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim,
             HorizontalAlignment = HorizontalAlignment.Right,
-        });
+        };
+        right.Children.Add(action);
         var detail = new TextBlock
         {
             FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = faintInk,
-            HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 3, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 2, 0, 0),
         };
         right.Children.Add(detail);
         Grid.SetColumn(right, 2);
         face.Children.Add(right);
-        var button = new PixelButton { Content = face, Padding = new Thickness(0), Margin = new Thickness(0, top, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, ToolTip = kind.ActivityTip() };
-        button.Click += (_, _) => Play(kind);
-        rows.Add((kind, button, detail));
-        return button;
+        return (face, action, detail);
+    }
+
+    /// <summary>Started by hand, from the Activities page: on if it is off, stopped at once if it is on.</summary>
+    private void ByHand(HandActivity activity)
+    {
+        if (folding) return;
+        if (colony.IsDiving) { colony.StopDive(); After(L10n.Tr("Out of the water.")); }
+        else After(colony.StartDive() ? L10n.Tr("Masks on: into the water!") : L10n.Tr("No dive: %@.", colony.TalkStatus));
     }
 
     /// <summary>Play now, from the Activities page: the game starts, or the line says why not.</summary>

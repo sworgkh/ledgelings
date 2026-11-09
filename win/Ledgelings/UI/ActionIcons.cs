@@ -19,6 +19,18 @@ public static class ActionIcons
     /// <summary>Each game's picture on the Activities page: Blocky running, the hook, the parachute, the hoop, the net, the bat.</summary>
     public static Bitmap? Game(Ledgelings.Core.Plays.Kind kind) => (games ??= MakeGames()).GetValueOrDefault(kind);
 
+    private static Bitmap? dive;
+    /// <summary>Each hand-started activity's picture: a fish for the dive.</summary>
+    public static Bitmap? ByHand(HandActivity activity)
+    {
+        if (dive is null)
+        {
+            try { dive = SpriteAtlas.Named("sea").MakeFrames().Frame("fish-a", 0) is { } fish ? Trimmed(fish) : null; }
+            catch (Exception e) when (e is IOException or InvalidDataException) { }
+        }
+        return dive;
+    }
+
     private static Dictionary<Ledgelings.Core.Plays.Kind, Bitmap> MakeGames()
     {
         var made = new Dictionary<Ledgelings.Core.Plays.Kind, Bitmap>();

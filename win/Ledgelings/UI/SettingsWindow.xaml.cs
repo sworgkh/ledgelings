@@ -65,6 +65,7 @@ public sealed partial class SettingsWindow : Window
         InitBonds();
         InitCalendar();
         InitPlay();
+        InitDiving();
         InitDictation();
         InitTranslate();
         InitReadAloud();

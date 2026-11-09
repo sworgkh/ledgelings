@@ -27,7 +27,7 @@ public class ToolsTests
     [Fact]
     public void TheCodesAreTheMacsAndUnknownOnesAreDropped()
     {
-        Assert.Equal(new[] { "translate", "dictation", "clipHistory", "snippets", "reminder", "readAloud" }, Tools.DefaultShown);
+        Assert.Equal(new[] { "translate", "dictation", "clipHistory", "snippets", "reminder", "readAloud", "dive" }, Tools.DefaultShown);
         // A Mac's screenshot tile has no Windows tool: dropped; a doubled one is kept once.
         Assert.Equal(new[] { Tools.Tool.Snippets, Tools.Tool.Translate },
                      Tools.Shown(new[] { "snippets", "screenshot", "translate", "snippets", "nonsense" }));

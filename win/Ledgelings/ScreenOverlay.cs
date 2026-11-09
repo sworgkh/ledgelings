@@ -96,7 +96,8 @@ public sealed partial class ScreenOverlay : IDisposable
                        PlaneSnapshot? plane = null, Size planeCell = default, ReminderSnapshot? reminder = null,
                        TeaTableSnapshot? tea = null, Size teaCell = default,
                        IReadOnlyList<PlantedSnapshot>? beds = null, Size bedCell = default,
-                       IReadOnlyList<PropSnapshot>? props = null, Size propCell = default)
+                       IReadOnlyList<PropSnapshot>? props = null, Size propCell = default,
+                       IReadOnlyList<WaterSnapshot>? water = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
         // Bottom to top, as the Mac layers them: the tea table, the house, the planted flowers, then the creatures.
@@ -104,8 +105,10 @@ public sealed partial class ScreenOverlay : IDisposable
         AddHouse(ops, house, houseCell);
         AddGarden(ops, garden, flowerCell);      // behind the creatures, who walk past in front
         AddGarden(ops, beds, bedCell);           // the sleepers' beds stand on their edge the same way, sleepers in front
+        AddWater(ops, water, front: false);      // the dive's water and its life, behind the divers
         AddProps(ops, props, propCell, inFront: false);      // the hoop, the rope, the parachute: behind the players
         var newBubbles = new Dictionary<int, (RectangleF, string, SizeF)>();
+        var talk = new List<(Rectangle, Action<Graphics>)>();     // the bubbles go over everything but the mail
         for (int index = 0; index < snapshots.Count; index++)
         {
             var snap = snapshots[index];
@@ -116,11 +119,13 @@ public sealed partial class ScreenOverlay : IDisposable
             if (!Monitor.Frame.InsetBy(-reach, -reach).Contains(snap.Position)) continue;
             var hatHeight = snap.Hat is null ? 0 : flowerCell.Height * scale;
             AddCreature(ops, snap, z, cell, hatHeight);
-            AddBubble(ops, newBubbles, snap, index, cell.Width * scale / 2 + hatHeight + snap.BubbleLift);
+            AddBubble(talk, newBubbles, snap, index, cell.Width * scale / 2 + hatHeight + snap.BubbleLift);
         }
+        AddWater(ops, water, front: true);       // the tint, the surface and the bubbles, over the divers
         AddFlight(ops, flight, flowerCell);
         AddProps(ops, props, propCell, inFront: true);       // the ball, over everyone
         AddSparks(ops, sparks);
+        ops.AddRange(talk);
         AddMail(ops, plane, planeCell, reminder);      // over everything, the letter on top
         bubbles = newBubbles;
 

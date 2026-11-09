@@ -29,6 +29,7 @@ public sealed partial class Colony
             ForgetAnnoyance();
             if (!Settings.TeaPartiesEnabled) BreakUpTea();
             if (play is { } game && (!Settings.PlayEnabled || game.Players.Any(p => p >= Settings.CreatureCount))) EndPlay(false);
+            if (dive is { } diving && diving.Model.Divers.Any(d => d.Index >= Settings.CreatureCount)) EndDive(false);
             while (creatures.Count < Settings.CreatureCount)
             {
                 var share = rng.NextDouble();
@@ -159,6 +160,7 @@ public sealed partial class Colony
         SayScheduledLines();
         UpdateTeaParty();
         UpdatePlay(dt);
+        UpdateDive(dt);
         UpdateMoves(dt);
         UpdateClipHelp(dt);
         UpdateDictationHelp(dt);

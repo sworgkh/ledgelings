@@ -562,6 +562,83 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Diving">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="The water">
+            <StackPanel>
+              <DockPanel Margin="0,2,0,4">
+                <TextBlock ui:Tr.Text="Water height" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding DiveWaterPercent}" ui:Tr.Unit="%"/>
+                <Slider Minimum="15" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding DiveWaterPercent, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Water shows" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding DiveWaterOpacityPercent}" ui:Tr.Unit="%"/>
+                <Slider Minimum="10" Maximum="70" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding DiveWaterOpacityPercent, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Water on" Style="{StaticResource RowLabel}"/>
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton ui:Tr.Content="The creatures' home monitor" IsChecked="{Binding DiveHomeOnly, Mode=TwoWay}" Margin="0,0,12,0"/>
+                  <RadioButton ui:Tr.Content="Every monitor" IsChecked="{Binding DiveAllScreens, Mode=TwoWay}"/>
+                </StackPanel>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="It rises from the bottom edge and is only drawn: clicks and keys go through it to the apps below. The less it shows, the more of them you see through it."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The dive">
+            <StackPanel>
+              <DockPanel Margin="0,2,0,4">
+                <TextBlock ui:Tr.Text="A dive lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding DiveMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="0.5" Maximum="15" TickFrequency="0.5" IsSnapToTickEnabled="True" Value="{Binding DiveMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Divers at most" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding DiveDivers}"/>
+                <Slider Minimum="1" Maximum="8" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding DiveDivers, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Fish" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding DiveSeaLife}"/>
+                <Slider Minimum="3" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding DiveSeaLife, Mode=TwoWay}"/>
+              </DockPanel>
+              <CheckBox ui:Tr.Content="The divers say what they see" IsChecked="{Binding DiveTalk, Mode=TwoWay}" Margin="0,2,0,6"/>
+              <Button x:Name="StartDiveButton" ui:Tr.Content="Start a dive now" Click="StartDiveButton_Click" HorizontalAlignment="Left" Padding="10,2"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Whoever is free puts on a mask and a tank and jumps in; they swim among the fish, a jellyfish, a crab, a turtle and an octopus, come up for air now and then, and climb out dripping when it is over. What they saw together goes into their memory. It never starts by itself."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Stop activity">
+            <StackPanel>
+              <DockPanel Margin="0,2">
+                <CheckBox ui:Tr.Content="Stop activity" IsChecked="{Binding StopActivityShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
+                <Button x:Name="StopActivityShortcutButton" Click="StopActivityShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding StopActivityShortcutEnabled}"/>
+              </DockPanel>
+              <CheckBox ui:Tr.Content="Stop when I use the computer" IsChecked="{Binding StopOnUse, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <TextBlock Text="{Binding StopActivityShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. With Stop when I use the computer on, a key press, or a click anywhere but on a creature, ends it too; moving the mouse does not. The menu has Stop activity as well."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Under the water">
+            <StackPanel>
+              <ItemsControl x:Name="SeaList">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Image Source="{Binding}" Width="48" Height="42" Margin="0,4,14,4" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Drawn like the creatures. The sea life is not a character: it says nothing, but fish scatter from a diver, the crab raises its claws and the octopus inks and jets off."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Sprites">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">

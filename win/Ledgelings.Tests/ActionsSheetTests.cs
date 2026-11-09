@@ -96,7 +96,7 @@ public class ActionsSheetTests
     {
         // Under the title (24), with 8 + 6 around the line: the rows, the line and the gap to the buttons
         // get what the main page's tiles, line and switches leave its footer, 350 points.
-        var n = Plays.AllKinds.Count();
+        var n = ActionsSheet.ActivityRows;
         var rows = n * ActionsSheet.ActivityRowHeight + (n - 1) * ActionsSheet.ActivityGap;
         Assert.True(rows + ActionsSheet.ActivityLineHeight + ActionsSheet.ActivitiesFooterGap <= 350, $"{rows}");
     }
