@@ -4,7 +4,7 @@ import Testing
 @testable import LedgelingsCore
 
 /// Scuba diving's water, divers and sea life, the lines every character says
-/// on a dive, and when "Stop when I use the computer" stops an activity.
+/// on a dive, and Stop activity's key and its button.
 @Suite struct DiveTests {
     struct Seeded: RandomNumberGenerator {
         var state: UInt64

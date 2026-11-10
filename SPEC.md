@@ -2561,7 +2561,8 @@ out.png] [--mute]` opens the sheet on the real screen, reads, writes the paper a
 ### 7.17 Scuba diving and Stop activity
 
 Started **by hand only** (`Dive`, `Colony+Dive`, since 0.67.0 on macOS and Windows; on Windows Stop activity is
-**Ctrl+Alt+Esc** and the use watch reads `GetAsyncKeyState`, with no film flags yet): never on its own, whatever
+**Ctrl+Alt+Q** (since 0.68.1; a saved Ctrl+Alt+Esc becomes it), its Stop button is drawn in the overlay as on the
+Mac, the key spelled *Ctrl + Alt + Q*, and there are no film flags yet): never on its own, whatever
 the games' clock says. From the Creature Actions sheet's Activities page (*SCUBA DIVING*, key D: a
 second press stops it), the **SCUBA DIVING** tile of the Tools screen (`dive`, again to stop), the
 menu's **Go Scuba Diving** / **Out of the Water**, or **Start a dive now** on Settings › Diving.

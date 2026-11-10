@@ -4,7 +4,7 @@ using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-/// <summary>Settings › Diving (SPEC §7.17): the water and the dive, Stop activity and its shortcut, and the sea life
+/// <summary>Settings › Diving (SPEC §7.17): the water and the dive, Stop activity, its shortcut and its button, and the sea life
 /// as it is drawn. The Mac's DivingSettingsView.</summary>
 public sealed partial class SettingsWindow
 {
@@ -15,7 +15,8 @@ public sealed partial class SettingsWindow
     {
         settings.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(AppSettings.StopActivityShortcut) or nameof(AppSettings.RecordingShortcut)) ShowDiving();
+            if (e.PropertyName is nameof(AppSettings.StopActivityShortcut) or nameof(AppSettings.RecordingShortcut)
+                or nameof(AppSettings.StopActivityShortcutEnabled)) ShowDiving();
         };
         try
         {
@@ -32,6 +33,8 @@ public sealed partial class SettingsWindow
     {
         StopActivityShortcutButton.Content = settings.RecordingShortcut && recordingButton == StopActivityShortcutButton
             ? L10n.Tr("Press the keys…") : ShortcutKeys.Label(settings.StopActivityShortcut);
+        // The key in words as well: the symbols alone were not enough to know what to press.
+        StopActivitySpoken.Text = settings.StopActivityShortcutEnabled ? L10n.Tr("Press %@", ShortcutKeys.Spoken(settings.StopActivityShortcut)) : "";
     }
 
     private void StopActivityShortcutButton_Click(object sender, RoutedEventArgs e)

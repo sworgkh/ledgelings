@@ -608,7 +608,7 @@ public sealed class ActionsSheet : Window
             PlaysOff: Plays.AllKinds.Where(k => !settings.PlayEnabled || !settings.EnabledPlays.Contains(k)).ToHashSet(),
             Playing: colony.CurrentPlay is not null,
             Diving: colony.IsDiving,
-            StopShortcut: settings.StopActivityShortcutEnabled ? ShortcutKeys.Label(settings.StopActivityShortcut) : "");
+            StopShortcut: settings.StopActivityShortcutEnabled ? ShortcutKeys.Spoken(settings.StopActivityShortcut) : "");
         foreach (var (flipped, button) in switches)
         {
             button.Content = flipped.Title(state);

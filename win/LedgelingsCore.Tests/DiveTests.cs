@@ -1,7 +1,7 @@
 namespace Ledgelings.Core.Tests;
 
-/// <summary>Scuba diving's water, divers and sea life, the lines every character says on a dive, and when
-/// "Stop when I use the computer" stops an activity (SPEC §7.19). The Mac's DiveTests.</summary>
+/// <summary>Scuba diving's water, divers and sea life, the lines every character says on a dive, and
+/// Stop activity's key and its button (SPEC §7.19). The Mac's DiveTests.</summary>
 public class DiveTests
 {
     private static readonly Rect Screen = new(0, 0, 1200, 800);
@@ -150,20 +150,42 @@ public class DiveTests
         Assert.Equal(1, book.Bond("Blocky", "Pip")!.Tally["dive"]);
     });
 
-    // Stop when I use the computer
+    // Stop activity's key and its button
 
     [Fact]
-    public void AKeyOrAClickOutsideTheCreaturesStopsAnActivityButMovingTheMouseDoesNot()
+    public void StopActivityIsCtrlAltQAndTheOldEscMovesOverToIt()
     {
-        const double never = 1e6;
-        // Nothing pressed since it started (moving the mouse is no key and no click).
-        Assert.False(UsePolicy.Stops(runningFor: 10, sinceKey: 30, sinceClick: 40, sinceOwnClick: never));
-        Assert.True(UsePolicy.Stops(runningFor: 10, sinceKey: 0.2, sinceClick: 40, sinceOwnClick: never));     // a key
-        Assert.True(UsePolicy.Stops(runningFor: 10, sinceKey: 30, sinceClick: 0.2, sinceOwnClick: never));     // a click on an app
-        Assert.False(UsePolicy.Stops(runningFor: 10, sinceKey: 30, sinceClick: 0.2, sinceOwnClick: 0.21));     // a click on a creature
-        Assert.False(UsePolicy.Stops(runningFor: 0.3, sinceKey: 0.1, sinceClick: 0.1, sinceOwnClick: never)); // the press that started it
-        Assert.False(UsePolicy.Stops(runningFor: 5, sinceKey: 4.8, sinceClick: 40, sinceOwnClick: never));     // a key before it started
+        var ctrlAlt = ShortcutModifiers.Control | ShortcutModifiers.Option;
+        Assert.Equal(new Shortcut(0x51, ctrlAlt), Shortcut.StopActivity);
+        Assert.Equal(Shortcut.StopActivity, Shortcut.StopActivitySaved(null, null));                          // nothing saved
+        Assert.Equal(Shortcut.StopActivity, Shortcut.StopActivitySaved(0x1B, (int)ctrlAlt));                   // the old default
+        Assert.Equal(new Shortcut(0x1B, ctrlAlt | ShortcutModifiers.Shift), Shortcut.StopActivitySaved(0x1B, (int)(ctrlAlt | ShortcutModifiers.Shift)));
+        var own = new[] { Shortcut.Standard, Shortcut.ClipHistory, Shortcut.ClipSnippets, Shortcut.Dictation, Shortcut.Translate,
+                          Shortcut.TranslateClip, Shortcut.ReadAloud, Shortcut.Tools };
+        Assert.DoesNotContain(Shortcut.StopActivity, own);                                                     // free among the app's own
+        Assert.Equal("Ctrl + Alt + Q", Shortcut.StopActivity.Spoken("Q"));
+        Assert.Equal("Ctrl + Alt + Shift + Win + S", new Shortcut(0x53, ctrlAlt | ShortcutModifiers.Shift | ShortcutModifiers.Command).Spoken("S"));
     }
+
+    [Fact]
+    public void TheStopButtonSaysWhatToPressAndSitsTopRightClearOfABoard() => Languages.With(Language.English, () =>
+    {
+        Assert.Equal("Stop · Ctrl + Alt + Q", StopButton.Label("Ctrl + Alt + Q"));
+        Assert.Equal("Stop the activity (Ctrl + Alt + Q)", StopButton.Tag("Ctrl + Alt + Q"));
+        Assert.Equal("Stop", StopButton.Label(null));
+        var screen = new Rect(1920, -1080, 1920, 1080);
+        var place = StopButton.Frame(300, 40, screen, topInset: 0);
+        Assert.Equal(screen.MaxX - StopButton.Margin, place.MaxX);
+        Assert.Equal(screen.MaxY - StopButton.Margin, place.MaxY);
+        var board = new Rect(3500, -60, 400, 50);
+        var below = StopButton.Frame(300, 40, screen, 0, new[] { board });
+        Assert.False(below.Intersects(board));
+        Assert.True(below.MaxY <= board.MinY);
+        Assert.Equal(place, StopButton.Frame(300, 40, screen, 0, new[] { new Rect(2000, -60, 400, 50) }));     // a board elsewhere is no matter
+        Assert.Equal(12, StopButton.Icon.Length);
+        Assert.All(StopButton.Icon, row => Assert.Equal(12, row.Length));
+        Languages.With(Language.Russian, () => Assert.Equal("Стоп · Ctrl + Alt + Q", StopButton.Label("Ctrl + Alt + Q")));
+    });
 
     [Fact]
     public void TheToolAndThePageAndTheStopShortcut()
@@ -173,7 +195,7 @@ public class DiveTests
         Assert.Equal("dive", Tools.Tool.Dive.Code());
         Assert.Equal(new[] { SettingsPage.Chases, SettingsPage.Play, SettingsPage.BallGames, SettingsPage.Surfing, SettingsPage.Diving }, SettingsGroup.Games.Pages());
         Assert.Equal(SettingsPage.Diving, SettingsPages.Named("diving"));
-        Assert.Equal(new Shortcut(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option), Shortcut.StopActivity);
+        Assert.Equal(new Shortcut(0x51, ShortcutModifiers.Control | ShortcutModifiers.Option), Shortcut.StopActivity);
         Assert.True(Shortcut.StopActivity.IsUsable);
         Assert.Equal(new[] { "fish-a", "fish-b", "fish-c", "jelly", "crab", "turtle", "octopus" }, Dive.AllLives.Select(l => l.Code()));
         Languages.With(Language.Russian, () =>

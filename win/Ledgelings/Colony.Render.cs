@@ -49,9 +49,11 @@ public sealed partial class Colony
         props.AddRange(DiveProps());
         var water = WaterSnapshots();
         var surf = SurfWater();
-        foreach (var overlay in overlays)
-            overlay.Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: planted, beds: sleepers, bedCell: BedCell,
-                           plane: plane, planeCell: planeCell, reminder: reminder,
-                           tea: table, teaCell: TeaCell, props: props, propCell: PlayCell, water: water, surf: surf);
+        var stop = StopButtonNow();
+        for (int k = 0; k < overlays.Count; k++)
+            overlays[k].Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: planted, beds: sleepers, bedCell: BedCell,
+                               plane: plane, planeCell: planeCell, reminder: reminder,
+                               tea: table, teaCell: TeaCell, props: props, propCell: PlayCell, water: water, surf: surf,
+                               stop: stop?.Overlay == k ? stop : null);
     }
 }
