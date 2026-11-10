@@ -122,16 +122,29 @@ import Testing
         #expect(book.bond("Blocky", "Pip")!.tally["dive"] == 1)
     }
 
-    // MARK: Stop when I use the computer
+    // MARK: Stop activity's key and its button
 
-    @Test func aKeyOrAClickOutsideTheCreaturesStopsAnActivityButMovingTheMouseDoesNot() {
-        let long = 1e6
-        // Nothing pressed since it started (moving the mouse is no key and no click).
-        #expect(!UsePolicy.stops(runningFor: 10, sinceKey: 30, sinceClick: 40, sinceOwnClick: long))
-        #expect(UsePolicy.stops(runningFor: 10, sinceKey: 0.2, sinceClick: 40, sinceOwnClick: long), "a key")
-        #expect(UsePolicy.stops(runningFor: 10, sinceKey: 30, sinceClick: 0.2, sinceOwnClick: long), "a click on an app")
-        #expect(!UsePolicy.stops(runningFor: 10, sinceKey: 30, sinceClick: 0.2, sinceOwnClick: 0.21), "a click on a creature")
-        #expect(!UsePolicy.stops(runningFor: 0.3, sinceKey: 0.1, sinceClick: 0.1, sinceOwnClick: long), "the press that started it")
-        #expect(!UsePolicy.stops(runningFor: 5, sinceKey: 4.8, sinceClick: 40, sinceOwnClick: long), "a key before it started")
+    @Test func stopActivityIsControlOptionQAndTheOldEscapeMovesOverToIt() {
+        #expect(Shortcut.stopActivity == Shortcut(keyCode: 12, modifiers: [.control, .option]))
+        #expect(Shortcut.stopActivity(savedKeyCode: nil, savedModifiers: nil) == .stopActivity, "nothing saved")
+        #expect(Shortcut.stopActivity(savedKeyCode: 53, savedModifiers: 12) == .stopActivity, "the old default ⌃⌥⎋")
+        #expect(Shortcut.stopActivity(savedKeyCode: 53, savedModifiers: 13) == Shortcut(keyCode: 53, modifiers: [.control, .option, .command]))
+        // Free among the app's own: ⌃⌥ L V B S D T K R.
+        let own: [Shortcut] = [.standard, .clipHistory, .clipSnippets, .shotCapture, .shotFull, .shotLast, .dictation, .tools,
+                               .translate, .translateClip, .readAloud]
+        #expect(!own.contains(.stopActivity))
+        #expect(Shortcut.stopActivity.spoken(key: "Q") == "Control + Option + Q")
+        #expect(Shortcut(keyCode: 1, modifiers: [.command, .shift, .option, .control]).spoken(key: "S") == "Control + Option + Shift + Command + S")
+    }
+
+    @Test func theStopButtonSitsInTheTopRightCornerUnderTheMenuBarAndClearOfABoard() {
+        let screen = CGRect(x: 1440, y: 0, width: 1920, height: 1080), size = CGSize(width: 300, height: 40)
+        let place = StopButton.frame(size: size, on: screen, topInset: 25)
+        #expect(place.maxX == screen.maxX - StopButton.margin && place.maxY == screen.maxY - 25 - StopButton.margin)
+        let board = CGRect(x: 3000, y: 1000, width: 400, height: 50)
+        let below = StopButton.frame(size: size, on: screen, topInset: 25, avoiding: [board])
+        #expect(!below.intersects(board) && below.maxY <= board.minY && below.maxX == place.maxX)
+        let aside = CGRect(x: 2000, y: 1000, width: 400, height: 50)
+        #expect(StopButton.frame(size: size, on: screen, topInset: 25, avoiding: [aside]) == place, "a board elsewhere is no matter")
     }
 }

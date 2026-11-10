@@ -85,7 +85,7 @@ final class ActionsController {
         s.playOn = settings.playEnabled
         s.playsOff = Set(Plays.Kind.allCases.filter { !settings.playEnabled || !settings.enabledPlays.contains($0) })
         s.mood = settings.cursorMood
-        s.stopShortcut = settings.stopActivityShortcutEnabled ? GlobalShortcut.label(settings.stopActivityShortcut) : ""
+        s.stopShortcut = settings.stopActivityShortcutEnabled ? GlobalShortcut.spoken(settings.stopActivityShortcut) : ""
         s.language = settings.language
         s.screen = ScreenChoice.isOffered ? Self.screenTitle(settings) : nil
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""

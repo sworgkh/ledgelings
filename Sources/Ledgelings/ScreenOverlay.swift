@@ -554,6 +554,36 @@ final class ScreenOverlay {
         }
     }
 
+    /// The Stop button, over everything, and its tag under it while hovered; nil hides both.
+    private lazy var stopLayers: (button: CALayer, tag: CALayer) = {
+        let button = makeLayers().sprite, tag = makeLayers().sprite
+        for layer in [button, tag] { layer.zPosition = 20; layer.isHidden = true; root.addSublayer(layer) }
+        return (button, tag)
+    }()
+
+    /// Its frame in global points while it is on this monitor, for a film's still.
+    private(set) var stopButtonFrame: CGRect?
+
+    func renderStopButton(_ stop: StopButtonSnapshot?) {
+        guard let stop, let image = stop.image else {
+            if stopButtonFrame != nil { stopLayers.button.isHidden = true; stopLayers.tag.isHidden = true; stopButtonFrame = nil }
+            return
+        }
+        let origin = display.frame.origin
+        stopButtonFrame = stop.frame
+        let layers = stopLayers
+        if (layers.button.contents as AnyObject?) !== image { layers.button.contents = image }
+        layers.button.frame = stop.frame.offsetBy(dx: -origin.x, dy: -origin.y)
+        if layers.button.isHidden { layers.button.isHidden = false }
+        if let tag = stop.tag {
+            if (layers.tag.contents as AnyObject?) !== tag.image { layers.tag.contents = tag.image }
+            layers.tag.frame = tag.frame.offsetBy(dx: -origin.x, dy: -origin.y)
+            if layers.tag.isHidden { layers.tag.isHidden = false }
+        } else if !layers.tag.isHidden {
+            layers.tag.isHidden = true
+        }
+    }
+
     private func renderProps(_ props: [PropSnapshot], cell: CGSize) {
         let origin = display.frame.origin
         while propLayers.count < props.count {

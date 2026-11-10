@@ -4,9 +4,9 @@ import LedgelingsCore
 
 /// Everything big that runs on the screen for a while and must stop the moment
 /// the owner needs the computer: a dive, a surf, a game. Each registers how to
-/// tell it is running and how to stop it; Stop activity (⌃⌥⎋, the menu) calls
-/// `stopAll()`, and so does a real key press or click while "Stop when I use
-/// the computer" is on (`UseWatch`).
+/// tell it is running and how to stop it; Stop activity (⌃⌥Q, the menu, the
+/// Stop button in the top-right corner) calls `stopAll()`. Nothing else does: a
+/// click or a key in another app goes on to that app and the activity runs on.
 @MainActor
 final class Activities {
     enum Kind: String, CaseIterable {
@@ -44,45 +44,5 @@ final class Activities {
         for entry in entries where entry.isRunning() { entry.stop() }
         if !stopped.isEmpty { trace?("activity stopped: \(stopped.map(\.rawValue).joined(separator: ", ")) (\(why))") }
         return stopped
-    }
-}
-
-/// "Stop when I use the computer": while an activity runs, a real key press or
-/// a click anywhere but on a creature stops it. Moving the mouse does not. It
-/// asks the system how long ago the last key and click were, ten times a
-/// second, which needs no permission; a click the creatures took themselves is
-/// told apart by its time (`ownClick`).
-@MainActor
-final class UseWatch {
-    private let settings: AppSettings
-    private var timer: Timer?
-    private var started: Date?
-    /// When a creature (or anything else on the overlay) was last clicked; that click is no reason to stop.
-    static var ownClick: Date = .distantPast
-    var secondsSince: (CGEventType) -> Double = { CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: $0) }
-
-    init(settings: AppSettings) {
-        self.settings = settings
-        let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.check() } }
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
-    }
-
-    /// It lives as long as the app.
-    func stop() { timer?.invalidate(); timer = nil }
-
-    func check(now: Date = Date()) {
-        let activities = Activities.shared
-        guard activities.isRunning else { started = nil; return }
-        guard let since = started else { started = now; return }
-        guard settings.stopOnUse else { return }
-        let running = now.timeIntervalSince(since)
-        let key = secondsSince(.keyDown)
-        let click = min(secondsSince(.leftMouseDown), secondsSince(.rightMouseDown), secondsSince(.otherMouseDown))
-        let ownClickAgo = now.timeIntervalSince(Self.ownClick)
-        if UsePolicy.stops(runningFor: running, sinceKey: key, sinceClick: click, sinceOwnClick: ownClickAgo) {
-            activities.stopAll(why: key < click ? "a key was pressed" : "a click outside the creatures")
-            started = nil
-        }
     }
 }

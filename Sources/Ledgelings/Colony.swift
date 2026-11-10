@@ -148,6 +148,9 @@ final class Colony: NSObject {
     var pointerLocation: () -> CGPoint = { NSEvent.mouseLocation }
     /// Pixel stars from the last bump, and the colours they wear.
     var sparks = Sparks()
+    /// Whether the pointer rests on the Stop button (`Colony+StopButton`), and its pictures for the words it carries.
+    var stopButtonHovered = false
+    var stopButtonImages: (label: String, plain: CGImage?, hovered: CGImage?, tag: CGImage?)?
     var sparkPalette: [CGColor] = []
     /// The one tea party going on, if any, and the table it is laid on.
     var teaParty: TeaParty?
@@ -510,7 +513,9 @@ final class Colony: NSObject {
         let water = waterSnapshots()
         let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
         let props = playProps() + moveProps() + diveProps()
-        for overlay in overlays {
+        let stop = stopButton()
+        for (k, overlay) in overlays.enumerated() {
+            overlay.renderStopButton(stop?.overlay == k ? stop : nil)
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
                            plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,

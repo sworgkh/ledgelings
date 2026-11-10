@@ -364,8 +364,8 @@ activity, the way to end a dive, a surf or a game from any app, on the right.
 | **Divers at most** (`diveDivers`) | 3 | 1 to 8 | Whoever is free, on the water's monitor first |
 | **Fish** (`diveSeaLife`) | 12 | 3 to 40 | In schools of 2–4; a jellyfish, a crab, a turtle and an octopus always come |
 | **The divers say what they see** (`diveTalk`) | on | | Built-in lines, each in its own voice; needs Talk on |
-| **Stop activity** (`stopActivityShortcutEnabled`, `stopActivityShortcutKeyCode`, `stopActivityShortcutModifiers`) | on, ⌃⌥⎋ | any key with ⌘, ⌃ or ⌥ | From any app: whatever runs (a dive, a surf, a game) stops at once; also the menu's *Stop Activity* |
-| **Stop when I use the computer** (`stopOnUse`) | on | | A key press, or a click anywhere but on a creature, stops it; moving the mouse does not |
+| **Stop activity** (`stopActivityShortcutEnabled`, `stopActivityShortcutKeyCode`, `stopActivityShortcutModifiers`) | on, Control + Option + Q (⌃⌥Q) | any key with ⌘, ⌃ or ⌥ | From any app: whatever runs (a dive, a surf, a game) stops at once; also the menu's *Stop Activity* and the Stop button. Clicks and keys in other apps never stop it. A saved ⌃⌥⎋, the old default, becomes ⌃⌥Q |
+| **Show the Stop button** (`stopButtonShown`) | on | | While something runs, a button in the top-right corner of its monitor: *Stop · Control + Option + Q*; a click on it stops it |
 
 ## Surfing page
 
