@@ -9,7 +9,7 @@ extension Colony {
     /// dive's water too) it goes through to the app below.
     func takesClick(at cursor: CGPoint, shift: Bool) -> Bool {
         held != nil || creature(at: cursor).map { shift || creatures[$0].isSleeping } == true
-            || bubble(at: cursor) != nil || letterContains(cursor) || bed(at: cursor) != nil
+            || bubble(at: cursor) != nil || letterContains(cursor) || bed(at: cursor) != nil || onStopButton(cursor)
     }
 
     func creature(at point: CGPoint) -> Int? {
@@ -27,6 +27,7 @@ extension Colony {
     func hand(_ event: HandEvent) {
         switch event {
         case .down(let point, let shift):
+            if onStopButton(point) { pressStopButton(); break }
             if letterContains(point) { closeLetter(); break }
             // A press on a sleeper's bed, beside or under it, carries the bed: no chase, no pick-up.
             if !shift, let i = bed(at: point), !onBody(i, point) { liftBed(i, at: point); break }
@@ -74,8 +75,9 @@ extension Colony {
 
     /// Make an overlay clickable only while the cursor is on something the user
     /// can act on: any sleeper, any creature at all while Shift is down, or a
-    /// speech bubble, or a reminder's open letter. Shift is also how you get close enough to right-click one.
+    /// speech bubble, or a reminder's open letter, or the Stop button. Shift is also how you get close enough to right-click one.
     func updateClickability(cursor: CGPoint, shift: Bool) {
+        stopButtonHovered = onStopButton(cursor)
         let target = takesClick(at: cursor, shift: shift)
         for overlay in overlays { overlay.setClickable(target && overlay.display.frame.contains(cursor)) }
     }

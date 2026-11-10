@@ -296,15 +296,15 @@ final class AppSettings: ObservableObject {
 
     // MARK: Diving and Stop activity
 
-    /// Stop activity (⌃⌥⎋): from any app, ends a dive, a surf or a game at once.
+    /// Stop activity (⌃⌥Q): from any app, ends a dive, a surf or a game at once.
     @Published var stopActivityShortcutEnabled: Bool { didSet { save(stopActivityShortcutEnabled, "stopActivityShortcutEnabled") } }
     @Published var stopActivityShortcut: Shortcut {
         didSet { save(stopActivityShortcut.keyCode, "stopActivityShortcutKeyCode"); save(stopActivityShortcut.modifiers.rawValue, "stopActivityShortcutModifiers") }
     }
     /// Why the Stop activity shortcut does nothing, when the system refused it. Not saved.
     @Published var stopActivityShortcutProblem = ""
-    /// A real key press, or a click anywhere but on a creature, stops a running activity.
-    @Published var stopOnUse: Bool { didSet { save(stopOnUse, "stopOnUse") } }
+    /// The Stop button in the top-right corner while an activity runs, with the shortcut written out.
+    @Published var stopButtonShown: Bool { didSet { save(stopButtonShown, "stopButtonShown") } }
     /// Scuba diving (started by hand only): how much of the screen the water covers, from the bottom.
     @Published var diveWaterShare: Double { didSet { save(diveWaterShare, "diveWaterShare") } }
     /// How see-through the water is: 0 is clear glass, 1 would hide the apps under it.
@@ -977,9 +977,12 @@ final class AppSettings: ObservableObject {
         let baseballJoin = defaults.object(forKey: "baseballPlayers") as? Int ?? 6
         baseballPlayers = min(max(baseballJoin, Self.ballPlayersRange.lowerBound), Self.ballPlayersRange.upperBound)
         stopActivityShortcutEnabled = defaults.object(forKey: "stopActivityShortcutEnabled") as? Bool ?? true
-        stopActivityShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "stopActivityShortcutKeyCode") as? Int,
-                                        savedModifiers: defaults.object(forKey: "stopActivityShortcutModifiers") as? Int, standard: .stopActivity)
-        stopOnUse = defaults.object(forKey: "stopOnUse") as? Bool ?? true
+        // The old ⌃⌥⎋ was only ever the default: it becomes ⌃⌥Q. A key the owner recorded stays.
+        stopActivityShortcut = Shortcut.stopActivity(savedKeyCode: defaults.object(forKey: "stopActivityShortcutKeyCode") as? Int,
+                                                     savedModifiers: defaults.object(forKey: "stopActivityShortcutModifiers") as? Int)
+        // Only the shortcut, the menu and the Stop button stop an activity now; the old switch for a click or key is gone.
+        defaults.removeObject(forKey: "stopOnUse")
+        stopButtonShown = defaults.object(forKey: "stopButtonShown") as? Bool ?? true
         // A third of the screen, as the owner asked; light enough to read the apps through.
         let share = defaults.object(forKey: "diveWaterShare") as? Double ?? 1.0 / 3
         diveWaterShare = min(max(share, Self.diveWaterShareRange.lowerBound), Self.diveWaterShareRange.upperBound)

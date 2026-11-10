@@ -42,8 +42,18 @@ public struct Shortcut: Equatable, Sendable {
     /// Read aloud: Control-Option-R, R for read.
     public static let readAloud = Shortcut(keyCode: 15, modifiers: [.control, .option])
 
-    /// Stop activity: Control-Option-Escape, Escape for "stop", beside the others. Not ⌥⌘⎋, the Mac's Force Quit.
-    public static let stopActivity = Shortcut(keyCode: 53, modifiers: [.control, .option])
+    /// Stop activity: Control-Option-Q, Q for quit, beside the others. Free in the system (⌃⌘Q, not this,
+    /// locks the screen) and among ours.
+    public static let stopActivity = Shortcut(keyCode: 12, modifiers: [.control, .option])
+    /// Stop activity's first key, Control-Option-Escape, which the owner could not work out how to press.
+    public static let stopActivityBefore = Shortcut(keyCode: 53, modifiers: [.control, .option])
+
+    /// Stop activity as it was saved: nothing saved, or the old ⌃⌥⎋ that was only ever the default, is
+    /// the new default; a key the owner chose stays.
+    public static func stopActivity(savedKeyCode: Int?, savedModifiers: Int?) -> Shortcut {
+        let saved = Shortcut(savedKeyCode: savedKeyCode, savedModifiers: savedModifiers, standard: .stopActivity)
+        return saved == .stopActivityBefore ? .stopActivity : saved
+    }
 
     public var keyCode: Int
     public var modifiers: Modifiers
@@ -74,4 +84,13 @@ public struct Shortcut: Equatable, Sendable {
 
     /// The whole shortcut for a label, given the key's name: "⌃⌥L".
     public func label(key: String) -> String { symbols + key }
+
+    /// The modifiers in words, in the Mac's order: Control, Option, Shift, Command.
+    public var modifierWords: [String] {
+        [(Modifiers.control, "Control"), (.option, "Option"), (.shift, "Shift"), (.command, "Command")]
+            .filter { modifiers.contains($0.0) }.map(\.1)
+    }
+
+    /// The whole shortcut in words, to be read and pressed without knowing the symbols: "Control + Option + Q".
+    public func spoken(key: String) -> String { (modifierWords + [key]).joined(separator: " + ") }
 }

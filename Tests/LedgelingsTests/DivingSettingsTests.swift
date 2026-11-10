@@ -6,7 +6,8 @@ import Testing
 
 /// Scuba diving in the colony and its settings, and the shared Stop activity:
 /// the dive never starts on its own, covers the set share of the screen, and
-/// Stop activity (or using the computer) clears everything at once.
+/// Stop activity (its shortcut, the menu, the Stop button) clears everything at
+/// once, and nothing else stops it.
 @MainActor
 @Suite(.serialized) struct DivingSettingsTests {
     static let suite = "ledgelings-diving-tests"
@@ -51,14 +52,14 @@ import Testing
         let s = AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore())
         #expect(abs(s.diveWaterShare - 1.0 / 3) < 1e-9 && s.diveWaterOpacity == 0.3 && s.diveMinutes == 3)
         #expect(s.diveDivers == 3 && s.diveSeaLife == 12 && !s.diveAllScreens && s.diveTalk)
-        #expect(s.stopActivityShortcutEnabled && s.stopActivityShortcut == .stopActivity && s.stopOnUse)
+        #expect(s.stopActivityShortcutEnabled && s.stopActivityShortcut == .stopActivity && s.stopButtonShown)
         s.diveWaterShare = 0.5; s.diveWaterOpacity = 0.6; s.diveMinutes = 8; s.diveDivers = 6; s.diveSeaLife = 30
-        s.diveAllScreens = true; s.diveTalk = false; s.stopOnUse = false; s.stopActivityShortcutEnabled = false
+        s.diveAllScreens = true; s.diveTalk = false; s.stopButtonShown = false; s.stopActivityShortcutEnabled = false
         s.stopActivityShortcut = Shortcut(keyCode: 47, modifiers: [.control, .option])
         let again = AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore())
         #expect(again.diveWaterShare == 0.5 && again.diveWaterOpacity == 0.6 && again.diveMinutes == 8)
         #expect(again.diveDivers == 6 && again.diveSeaLife == 30 && again.diveAllScreens && !again.diveTalk)
-        #expect(!again.stopOnUse && !again.stopActivityShortcutEnabled && again.stopActivityShortcut == Shortcut(keyCode: 47, modifiers: [.control, .option]))
+        #expect(!again.stopButtonShown && !again.stopActivityShortcutEnabled && again.stopActivityShortcut == Shortcut(keyCode: 47, modifiers: [.control, .option]))
         for (key, value) in [("diveWaterShare", 0.99), ("diveWaterOpacity", 1.0), ("diveMinutes", 999.0)] { defaults.set(value, forKey: key) }
         defaults.set(50, forKey: "diveDivers"); defaults.set(0, forKey: "diveSeaLife")
         let clamped = AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore())
@@ -67,7 +68,8 @@ import Testing
     }
 
     @Test func stopActivityIsATakenShortcutWhoseKeyCanBeChanged() {
-        #expect(Shortcut.stopActivity == Shortcut(keyCode: 53, modifiers: [.control, .option]), "⌃⌥⎋")
+        #expect(Shortcut.stopActivity == Shortcut(keyCode: 12, modifiers: [.control, .option]), "⌃⌥Q")
+        #expect(GlobalShortcut.label(.stopActivity) == "⌃⌥Q" && GlobalShortcut.spoken(.stopActivity) == "Control + Option + Q")
         let defaults = UserDefaults(suiteName: Self.suite)!
         defaults.removePersistentDomain(forName: Self.suite)
         defer { defaults.removePersistentDomain(forName: Self.suite) }
@@ -131,26 +133,86 @@ import Testing
         #expect(colony.play == nil && !activities.isRunning)
     }
 
-    @Test func usingTheComputerStopsItWhenThatIsOn() throws {
+    @Test func theOldDefaultKeyBecomesControlOptionQButAKeyOfTheOwnersStays() {
+        let defaults = UserDefaults(suiteName: Self.suite)!
+        defaults.removePersistentDomain(forName: Self.suite)
+        defer { defaults.removePersistentDomain(forName: Self.suite) }
+        // Saved as the old default, ⌃⌥⎋.
+        defaults.set(53, forKey: "stopActivityShortcutKeyCode"); defaults.set(Shortcut.Modifiers([.control, .option]).rawValue, forKey: "stopActivityShortcutModifiers")
+        #expect(AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore()).stopActivityShortcut == .stopActivity)
+        // Escape with Command too was chosen by hand: it stays.
+        defaults.set(Shortcut.Modifiers([.control, .option, .command]).rawValue, forKey: "stopActivityShortcutModifiers")
+        #expect(AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore()).stopActivityShortcut == Shortcut(keyCode: 53, modifiers: [.control, .option, .command]))
+        defaults.set(47, forKey: "stopActivityShortcutKeyCode"); defaults.set(Shortcut.Modifiers([.control, .option]).rawValue, forKey: "stopActivityShortcutModifiers")
+        #expect(AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore()).stopActivityShortcut == Shortcut(keyCode: 47, modifiers: [.control, .option]))
+    }
+
+    @Test func stopWhenIUseTheComputerIsGoneAndItsSavedKeyWithIt() {
+        let defaults = UserDefaults(suiteName: Self.suite)!
+        defaults.removePersistentDomain(forName: Self.suite)
+        defer { defaults.removePersistentDomain(forName: Self.suite) }
+        defaults.set(true, forKey: "stopOnUse")
+        _ = AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore())
+        #expect(defaults.object(forKey: "stopOnUse") == nil)
+        #expect(!SettingsIndex.sections.contains { $0.keys.contains("stopOnUse") || $0.labels.contains("Stop when I use the computer") })
+        #expect(SettingsIndex.sections.contains { $0.page == .diving && $0.keys.contains("stopButtonShown") && $0.labels.contains("Show the Stop button") })
+    }
+
+    @Test func theStopButtonStandsOnlyWhileSomethingRunsAndItsClickIsTheOnlyOneTheOverlayTakes() throws {
         let w = try World()
         defer { w.forget() }
         let colony = w.colony
         Activities.shared.register(.dive, isRunning: { colony.isDiving }, stop: { colony.stopDive() })
-        let watch = UseWatch(settings: w.settings)
-        defer { watch.stop() }
-        var sinceKey = 1000.0
-        watch.secondsSince = { $0 == .keyDown ? sinceKey : 1000 }
+        #expect(colony.stopButton() == nil, "nothing running")
         #expect(colony.startDive())
-        let start = Date()
-        watch.check(now: start)
-        watch.check(now: start.addingTimeInterval(3))
-        #expect(colony.isDiving, "nothing pressed: moving the mouse is not using it")
-        w.settings.stopOnUse = false
-        sinceKey = 0.1
-        watch.check(now: start.addingTimeInterval(4))
-        #expect(colony.isDiving, "off: a key does not stop it")
-        w.settings.stopOnUse = true
-        watch.check(now: start.addingTimeInterval(5))
-        #expect(!colony.isDiving, "on: a key stops it")
+        w.step(Dive.riseSeconds + 2)
+        let button = try #require(colony.stopButton())
+        #expect(button.frame.maxX <= 1200 - StopButton.margin && button.frame.maxY <= 800 - StopButton.margin, "the top-right corner")
+        #expect(button.frame.minX > 600 && button.frame.minY > 700)
+        #expect(colony.overlays[0].stopButtonFrame == button.frame, "drawn")
+        // A click on the water goes through and the dive goes on; on the button the overlay takes it.
+        let water = CGPoint(x: 1150, y: 120)
+        #expect(!colony.takesClick(at: water, shift: false))
+        w.colony.hand(.down(water, shift: false)); w.colony.hand(.up(water))
+        w.step(1)
+        #expect(colony.isDiving, "a click on the water does nothing to it")
+        let middle = CGPoint(x: button.frame.midX, y: button.frame.midY)
+        #expect(colony.takesClick(at: middle, shift: false))
+        // Under the pointer, its tag.
+        colony.advance(dt: 0.02, cursor: middle, shift: true)
+        let hovered = try #require(colony.stopButton())
+        #expect(hovered.tag != nil && hovered.tag!.frame.maxY < hovered.frame.minY, "the tag under it")
+        colony.hand(.down(middle, shift: false)); colony.hand(.up(middle))
+        w.step(0.5)
+        #expect(!colony.isDiving && colony.stopButton() == nil && colony.overlays[0].stopButtonFrame == nil, "stopped and gone")
+        // Off: no button while it runs.
+        w.settings.stopButtonShown = false
+        #expect(colony.startDive())
+        w.step(1)
+        #expect(colony.stopButton() == nil && !colony.takesClick(at: middle, shift: false))
+    }
+
+    @Test func theButtonSaysWhatToPressInWordsAndOnlyStopWithTheShortcutOff() {
+        #expect(StopButton.label(spokenShortcut: "Control + Option + Q") == "Stop · Control + Option + Q")
+        #expect(StopButton.tag(spokenShortcut: "Control + Option + Q") == "Stop the activity (Control + Option + Q)")
+        #expect(StopButton.label(spokenShortcut: nil) == "Stop" && StopButton.tag(spokenShortcut: nil) == "Stop the activity")
+        let defaults = UserDefaults(suiteName: Self.suite)!
+        defaults.removePersistentDomain(forName: Self.suite)
+        defer { defaults.removePersistentDomain(forName: Self.suite) }
+        let s = AppSettings(defaults: defaults, keychain: SettingsTests.SpyStore())
+        s.stopActivityShortcut = Shortcut(keyCode: 53, modifiers: [.control, .command])
+        #expect(GlobalShortcut.spoken(s.stopActivityShortcut) == "Control + Command + Escape", "no symbols")
+    }
+
+    /// As `ShotButtonTests`: the button is a picture of what it does and names its key on hover.
+    @Test func theStopButtonHasItsPictureAndItsTag() throws {
+        let plain = try #require(StopButtonPainter.button("Stop · Control + Option + Q", hovered: false))
+        let hovered = try #require(StopButtonPainter.button("Stop · Control + Option + Q", hovered: true))
+        #expect(plain.width > plain.height * 4 && hovered.width == plain.width)
+        #expect(StopButtonPainter.tag("Stop the activity (Control + Option + Q)") != nil)
+        let rows = StopButton.icon
+        #expect(rows.count == 12 && rows.allSatisfy { $0.count == 12 })
+        #expect(rows.joined().contains("r") && rows.joined().contains("w") && rows[0].hasPrefix("..."), "a red sign with a white bar and stepped corners")
+        #expect(Set(rows.joined()).isSubset(of: Set(".olrsw")))
     }
 }

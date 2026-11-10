@@ -146,6 +146,18 @@ final class GlobalShortcut {
     }
 
     static func label(_ shortcut: Shortcut) -> String { shortcut.label(key: keyName(shortcut.keyCode)) }
+
+    /// Keys whose printed sign is a symbol, by name.
+    private static let spokenNames: [Int: String] = [
+        kVK_Return: "Return", kVK_Tab: "Tab", kVK_Delete: "Delete", kVK_ForwardDelete: "Forward Delete", kVK_Escape: "Escape",
+        kVK_LeftArrow: "Left Arrow", kVK_RightArrow: "Right Arrow", kVK_UpArrow: "Up Arrow", kVK_DownArrow: "Down Arrow",
+        kVK_Home: "Home", kVK_End: "End", kVK_PageUp: "Page Up", kVK_PageDown: "Page Down",
+    ]
+
+    /// The shortcut in words, to press without knowing the symbols: "Control + Option + Q".
+    static func spoken(_ shortcut: Shortcut) -> String {
+        shortcut.spoken(key: spokenNames[shortcut.keyCode] ?? keyName(shortcut.keyCode))
+    }
 }
 
 /// A shortcut as a button: click it and the next keys pressed become the

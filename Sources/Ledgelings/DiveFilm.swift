@@ -5,8 +5,11 @@ import LedgelingsCore
 /// A dive filmed offscreen with five creatures, three diving: the water
 /// rising, the gear going on, the jumps and splashes, the sea life, a click
 /// through the water into a window under it, the draining and the climb out
-/// dripping; then a second dive, ended by Stop activity, and how long the screen
-/// took to clear. Every step printed with its time, stills beside the film.
+/// dripping; the Stop button in the top-right corner all along (`…-button.png`,
+/// its tag under the pointer `…-button-tag.png`), and the click on the water
+/// stopping nothing. Then a second dive, ended by a click on the Stop button, and
+/// a third, ended by Stop activity's shortcut (Control + Option + Q), each with how
+/// long the screen took to clear. Every step printed with its time, stills beside the film.
 ///
 ///     Ledgelings --dive-film build/dive.mp4
 @MainActor
@@ -74,13 +77,16 @@ enum DiveFilm {
         }
 
         let away = CGPoint(x: -500, y: -500), dt = 1 / Double(Promo.fps)
-        enum Step { case before, first, between, second, stopped(at: Double), done }
+        enum Step { case before, first, between, second, stopped(at: Double), third, thirdStopped(at: Double), done }
+        var cursor = away
         var step = Step.before, frame = 0, clicked = false, ok = true
         var secondAt = 0.0, failures: [String] = []
-        while frame < Promo.fps * 90 {
+        func gone() -> Bool { !colony.overlays[0].hasWater && colony.dive == nil && !colony.creatures.contains(where: \.isPlaying) }
+        while frame < Promo.fps * 120 {
             t = Double(frame) * dt
             CATransaction.begin(); CATransaction.setDisableActions(true)
-            colony.advance(dt: dt, cursor: away, shift: false)
+            colony.advance(dt: dt, cursor: cursor, shift: false)
+            let stopButton = colony.overlays[0].stopButtonFrame
             switch step {
             case .before where t >= 1:
                 log("Start a dive (Creature Actions)")
@@ -113,7 +119,20 @@ enum DiveFilm {
                         label.string = "Another app: clicked"
                     }
                 }
-                if clicked, let at = dive.filledAt, dive.time - at > 10.3 { still("clicked") }
+                if clicked, let at = dive.filledAt, dive.time - at > 10.3, !stills.contains("clicked") {
+                    still("clicked")
+                    if colony.isDiving { log("after the click on the water: still diving") } else { failures.append("the click on the water stopped the dive") }
+                    if let b = stopButton {
+                        log(String(format: "stop button shown at (%.0f, %.0f) %.0f×%.0f", b.minX, b.minY, b.width, b.height))
+                        still("button")
+                        cursor = CGPoint(x: b.midX, y: b.midY)
+                        log("the pointer rests on the Stop button")
+                    } else { failures.append("no Stop button while diving") }
+                }
+                if clicked, let at = dive.filledAt, dive.time - at > 11, cursor != away {
+                    if colony.stopButtonHovered { still("button-tag") } else { failures.append("no tag on the Stop button under the pointer") }
+                    cursor = away
+                }
                 if dive.phase == .draining { still("draining") }
             case .between:
                 if !colony.dripping.isEmpty { still("out") }
@@ -124,15 +143,37 @@ enum DiveFilm {
                     if colony.startDive() { step = .second; secondAt = t } else { failures.append("the second dive did not start"); step = .done }
                 }
             case .second where t - secondAt >= 8:
-                log("Stop activity (⌃⌥⎋)")
-                activities.stopAll()
+                guard let b = stopButton else { failures.append("no Stop button on the second dive"); step = .done; secondAt = t; break }
+                let point = CGPoint(x: b.midX, y: b.midY)
+                log(String(format: "click on the Stop button at (%.0f, %.0f): %@", point.x, point.y,
+                           colony.takesClick(at: point, shift: false) ? "the overlay takes it" : "it went through!"))
+                colony.hand(.down(point, shift: false)); colony.hand(.up(point))
                 step = .stopped(at: t)
             case .stopped(let at):
-                let gone = !colony.overlays[0].hasWater && colony.dive == nil && !colony.creatures.contains(where: \.isPlaying)
-                if gone {
+                if gone() {
+                    log(String(format: "stop button: water, fish and gear gone after %.2f s", t - at))
+                    if t - at > 0.5 { failures.append("clearing took longer than half a second") }
+                    if stopButton != nil { failures.append("the Stop button stayed after the stop") } else { log("the Stop button is gone") }
+                    still("stopped")
+                    step = .third; secondAt = t + 2
+                } else if t - at > 0.5 {
+                    failures.append("still on the screen half a second after the Stop button")
+                    step = .done; secondAt = t
+                }
+            case .third where t >= secondAt:
+                if !colony.isDiving {
+                    log("Start a dive a third time")
+                    if !colony.startDive() { failures.append("the third dive did not start"); step = .done; break }
+                    secondAt = t + 6
+                } else {
+                    log("Stop activity (Control + Option + Q)")
+                    activities.stopAll(why: "Control + Option + Q")
+                    step = .thirdStopped(at: t)
+                }
+            case .thirdStopped(let at):
+                if gone() {
                     log(String(format: "stop activity: water, fish and gear gone after %.2f s", t - at))
                     if t - at > 0.5 { failures.append("clearing took longer than half a second") }
-                    still("stopped")
                     step = .done; secondAt = t
                 } else if t - at > 0.5 {
                     failures.append("still on the screen half a second after Stop activity")

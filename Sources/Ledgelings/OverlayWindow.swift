@@ -16,13 +16,17 @@ struct Display: Equatable {
     var scale: CGFloat
     var id: String
     var name: String
-    init(frame: CGRect, scale: CGFloat, id: String = "", name: String = "") {
-        self.frame = frame; self.scale = scale; self.id = id; self.name = name
+    /// Points at the top kept for the system: the menu bar, and the notch's band beside it.
+    var topInset: CGFloat = 0
+    init(frame: CGRect, scale: CGFloat, id: String = "", name: String = "", topInset: CGFloat = 0) {
+        self.frame = frame; self.scale = scale; self.id = id; self.name = name; self.topInset = topInset
     }
     init(screen: NSScreen) {
         let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID ?? 0
         let uuid = CGDisplayCreateUUIDFromDisplayID(number).map { CFUUIDCreateString(nil, $0.takeRetainedValue()) as String }
-        self.init(frame: screen.frame, scale: screen.backingScaleFactor, id: uuid ?? "display-\(number)", name: screen.localizedName)
+        // A menu bar that hides itself still slides down over the top: keep its height free all the same.
+        let top = max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top, NSStatusBar.system.thickness)
+        self.init(frame: screen.frame, scale: screen.backingScaleFactor, id: uuid ?? "display-\(number)", name: screen.localizedName, topInset: top)
     }
     static var attached: [Display] { NSScreen.screens.map(Display.init) }
 }
@@ -63,11 +67,10 @@ final class OverlayView: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func mouseDown(with event: NSEvent) {
-        UseWatch.ownClick = Date()
         if event.modifierFlags.contains(.control) { onHand?(.secondaryDown(NSEvent.mouseLocation)); return }
         onHand?(.down(NSEvent.mouseLocation, shift: event.modifierFlags.contains(.shift)))
     }
     override func mouseDragged(with event: NSEvent) { onHand?(.dragged(NSEvent.mouseLocation)) }
     override func mouseUp(with event: NSEvent) { onHand?(.up(NSEvent.mouseLocation)) }
-    override func rightMouseDown(with event: NSEvent) { UseWatch.ownClick = Date(); onHand?(.secondaryDown(NSEvent.mouseLocation)) }
+    override func rightMouseDown(with event: NSEvent) { onHand?(.secondaryDown(NSEvent.mouseLocation)) }
 }

@@ -110,8 +110,9 @@ screen or the menu: see-through pixel water rises over the bottom third of the s
 light rays, caustics and swaying seaweed; a few creatures put on a mask and a tank, jump in with
 a splash and swim among fish, a jellyfish, a crab, a turtle and an octopus, pointing things out
 in their own voices, coming up for air, and climbing out dripping at the end. Clicks go straight
-through the water to your apps. **Stop activity (⌃⌥⎋)** ends a dive or a game at once, and so
-does any key press or click while *Stop when I use the computer* is on (Settings › Games › Diving).
+through the water to your apps. **Stop activity (Control + Option + Q)** ends a dive, a surf or a
+game at once, and so does the **Stop** button in the top-right corner while one runs; clicks and keys
+in your apps never stop it (Settings › Games › Diving).
 
 **They do what they say, and remember.** A letter that asks "soccer?" gets a written yes
 or no, and a yes walks them to the pitch: from talk and letters they can invite each other

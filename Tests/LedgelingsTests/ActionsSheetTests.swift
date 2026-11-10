@@ -95,8 +95,8 @@ import Testing
         for activity in HandActivity.allCases {
             let key = String(activity.activityKey).uppercased()
             #expect(activity.activityTip(in: ActionsState()).hasSuffix("(\(key))"))
-            var running = ActionsState(); running.diving = true; running.stopShortcut = "⌃⌥⎋"
-            #expect(activity.activityTip(in: running) == "Stop now (\(key) · ⌃⌥⎋)")
+            var running = ActionsState(); running.diving = true; running.stopShortcut = "Control + Option + Q"
+            #expect(activity.activityTip(in: running) == "Stop now (\(key) · Control + Option + Q)")
         }
         #expect(ActionsPage.backTip.contains("(←)") && ActionsPage.doneTip.contains("(Return)") && !ActionsPage.gamesTip.isEmpty)
     }

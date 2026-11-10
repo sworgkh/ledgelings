@@ -118,14 +118,17 @@ with `scripts/make-app.sh`, installed and seen working.
   `play baseball Unit 7 runs to second`, `play surf Hopper rides it out: 84 points`).
 - `--surf-film out.mp4` films three surfing offscreen over a pretend window (its text must stay readable through the
   water), printing each step (`surf 13.00  play surf Blocky catches the wave`), writes stills beside it (`…-riding.png`,
-  `…-trick.png`, `…-wipeout.png`, `…-board.png`, `…-stopped.png`) and presses Stop activity on the third wave; exit 1
-  unless the water, boards and score are gone within 0.5 s.
+  `…-trick.png`, `…-wipeout.png`, `…-board.png`, `…-button.png`, `…-button-tag.png`, `…-stopped.png`); clicks the water
+  on the second wave (the surf goes on), clicks the Stop button on the third, then surfs again and presses Stop activity's
+  shortcut; exit 1 unless each stop clears the water, boards and score within 0.5 s.
 - `--dive-film out.mp4` films a scuba dive offscreen (water rising, the gear, jumps, sea life, a click through the
-  water into a window below, the draining, the climb out), then a second dive ended by Stop activity, printing each
-  step and how long the screen took to clear (`stop activity: water, fish and gear gone after 0.03 s`); stills beside it.
-  `--dive [--stop-after 8]` runs one on the real screen, printing each step, and quits once they are out (or after
-  pressing Stop activity, printing how long the screen took to clear).
-  `--shortcut` lists `shortcut ⌃⌥⎋ stop activity registered`; pressing it prints `shortcut pressed: stop activity (…)`.
+  water into a window below that stops nothing, the Stop button and its tag, the draining, the climb out), then a second
+  dive ended by a click on the Stop button and a third by Stop activity's shortcut, printing each step and how long the
+  screen took to clear (`stop button: water, fish and gear gone after 0.03 s`); stills beside it (`…-button.png`, `…-button-tag.png`).
+  `--dive [--stop-after 8]` (or `--surf`) runs one on the real screen, printing each step and where the Stop button
+  stands (`stop button at (1588, 1042) 330×42 on Built-in Retina Display: Stop · Control + Option + Q`), and quits once
+  they are out (or after pressing Stop activity, or a click on the Stop button, printing how long the screen took to clear).
+  `--shortcut` lists `shortcut ⌃⌥Q stop activity registered`; pressing it prints `shortcut pressed: stop activity (…)`.
 - `--screens` prints every monitor (id, name, frame, `home`), the choice, the colony's bounds and
   where each creature is; `--screens all|N` also makes the choice live (N = monitor number left to
   right, from 1; saved like the menu does), prints every step of the move (`move Blocky hops off DELL U2415 (1)`,

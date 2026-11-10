@@ -2,7 +2,7 @@ import LedgelingsCore
 import SwiftUI
 
 /// Settings › Diving: the water and the dive on the left; Stop activity, the
-/// way to end a dive, a surf or a game from any app, on the right. A dive only
+/// way to end a dive, a surf or a game from any app, and its Stop button, on the right. A dive only
 /// ever starts by hand: from Creature Actions, the Tools screen or the menu.
 struct DivingSettingsView: View {
     @ObservedObject var settings: AppSettings
@@ -50,14 +50,17 @@ struct DivingSettingsView: View {
                         ShortcutRecorder(settings: settings, shortcut: $settings.stopActivityShortcut)
                     }
                 }
-                Toggle(tr("Stop when I use the computer"), isOn: $settings.stopOnUse)
+                if settings.stopActivityShortcutEnabled {
+                    Text(tr("Press %@", GlobalShortcut.spoken(settings.stopActivityShortcut))).foregroundStyle(.secondary)
+                }
+                Toggle(tr("Show the Stop button"), isOn: $settings.stopButtonShown)
                 if !settings.stopActivityShortcutProblem.isEmpty {
                     Text(settings.stopActivityShortcutProblem).foregroundStyle(.red)
                 }
             } header: {
                 SettingsHeader("Stop activity")
             } footer: {
-                Text(tr("The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. With Stop when I use the computer on, a key press, or a click anywhere but on a creature, ends it too; moving the mouse does not. The menu has Stop activity as well."))
+                Text(tr("The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. Clicks and keys in other apps never stop it. While something runs, the Stop button in the top-right corner says what to press, and a click on it stops it too; so does Stop activity in the menu."))
             }
 
             Section {

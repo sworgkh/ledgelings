@@ -2011,8 +2011,10 @@ baseball or surfing alone is played four times among five creatures, by 1, 2, 3 
 (`play soccer Unit 7 scores 0-2`, `play baseball Unit 7 runs to second`,
 `play surf Hopper rides it out: 84 points`). `--surf-film out.mp4` films a session of
 three over a pretend window, writes stills beside it (`…-riding.png`, `…-trick.png`,
-`…-wipeout.png`, `…-board.png`, `…-stopped.png`), presses Stop activity on the third
-wave and exits 1 unless everything is gone within 0.5 s.
+`…-wipeout.png`, `…-board.png`, `…-stopped.png`); on the second wave clicks the water (it
+goes through, the surf goes on) and rests the pointer on the Stop button (`…-button.png`,
+`…-button-tag.png`), clicks the button on the third wave, then surfs again and presses Stop
+activity's shortcut, and exits 1 unless each stop clears everything within 0.5 s.
 
 ### 7.11 The clipboard
 
@@ -2601,22 +2603,35 @@ While a dive is on, no game starts; a game going on when it starts is broken off
   with Pip at 14:02 and saw a turtle*) and the tally.
 
 **Stop activity** (`Activities`): anything that runs on the screen for a while registers how to
-tell it is running and how to stop it (the dive, a game from Plays, the surf). **⌃⌥⎋** from any app
-(`stopActivityShortcut`, rebindable; not ⌥⌘⎋, the Mac's Force Quit) and the menu's **Stop Activity
-(⌃⌥⎋)** stop everything at once: the water, the fish and the gear are gone on the next frame (within
-half a second) and the creatures drop back onto their edges. With **Stop when I use the computer**
-(`stopOnUse`, on), a real key press or a click anywhere but on a creature stops it too; moving the
-mouse does not, nor anything in the first 0.6 s (the press that started it) (`UsePolicy`). It asks
-the system how long ago the last key and click were, ten times a second, which needs no permission.
+tell it is running and how to stop it (the dive, a game from Plays, the surf). **Control + Option + Q**
+(⌃⌥Q, Q for quit) from any app (`stopActivityShortcut`, rebindable; since 0.68.1, before it ⌃⌥⎋, which
+the owner could not work out how to press: a saved ⌃⌥⎋ becomes ⌃⌥Q on load, a key recorded by hand stays),
+the menu's **Stop Activity (Control + Option + Q)** and the **Stop button** stop everything at once: the
+water, the fish and the gear are gone on the next frame (within half a second) and the creatures drop back
+onto their edges. Nothing else stops it: clicks and keys in other apps go to those apps (the old *Stop when
+I use the computer*, `stopOnUse`, is gone and its saved key removed on load). The key is written out in
+words wherever it is shown (`GlobalShortcut.spoken`: the menu, the settings row, the Activities page, the
+button), never as symbols alone.
+
+**The Stop button** (`StopButton`, `Colony+StopButton`; `stopButtonShown`, on): while anything is running, a
+plate in the game's style (flat fill, 1-pixel dark outline, light line top-left, shade line bottom-right) in
+the top-right corner of the monitor the activity is on (the players' monitor for a game or a surf, the
+water's for a dive), below the menu bar and the notch's band (`Display.topInset`) and below a score board
+it would cover. A stepped red stop sign with a white bar, and **Stop · Control + Option + Q** (*Стоп · …*;
+only *Stop* with the shortcut off). It is the only part of the overlay a click lands on besides the
+creatures; the click stops the activity. Under the pointer it shows its tag below it, drawn in the overlay
+(the system's tooltip would open under it): *Stop the activity (Control + Option + Q)*. It goes the moment
+the activity ends.
 
 `--dive-film out.mp4` films a dive offscreen with five creatures, three diving, a window of another
-app under the water and a click through to it, the draining and the climb out; then a second dive
-ended by Stop activity, printing how long the screen took to clear (`stop activity: water, fish and
+app under the water and a click through to it (the dive goes on), the Stop button and its tag, the
+draining and the climb out; then a second dive ended by a click on the Stop button and a third by
+Stop activity's shortcut, printing how long the screen took to clear (`stop activity: water, fish and
 gear gone after 0.03 s`), each step with its time, and stills beside the film (`…-rising.png`,
-`…-splash.png`, `…-under.png`, `…-clicked.png`, `…-draining.png`, `…-out.png`, `…-stopped.png`).
+`…-splash.png`, `…-under.png`, `…-clicked.png`, `…-button.png`, `…-button-tag.png`, `…-draining.png`, `…-out.png`, `…-stopped.png`).
 Exit 1 if the water is not the set share, a click was taken, or the screen did not clear in time.
-`--dive [--stop-after seconds]` runs a dive on the real screen, each step on stderr, and quits once
-they are out, or presses Stop activity after that many seconds and prints how long the screen took to clear.
+`--dive [--stop-after seconds]` (or `--surf`) runs a dive (a surf) on the real screen, each step on stderr with
+where the Stop button stands, and quits once they are out (a click on the button ends it too), or presses Stop activity after that many seconds and prints how long the screen took to clear.
 
 ## 8. The brain: chat client
 
@@ -3149,8 +3164,8 @@ An error for want of a model reads as that note, never as a server refusal.
 | soccerGoals | 3 | 1–10, clamped on load: goals that win |
 | baseballInnings | 2 | 1–9, clamped on load |
 | soccerPlayers, baseballPlayers | 6 | 1–10, clamped on load: the most who join |
-| stopActivityShortcutEnabled, stopActivityShortcutKeyCode, stopActivityShortcutModifiers | true, ⌃⌥⎋ | Stop activity from any app (§7.17): ends a dive, a surf or a game at once |
-| stopOnUse | true | a real key press or a click anywhere but on a creature stops a running activity; moving the mouse does not |
+| stopActivityShortcutEnabled, stopActivityShortcutKeyCode, stopActivityShortcutModifiers | true, ⌃⌥Q | Stop activity from any app (§7.17): ends a dive, a surf or a game at once; a saved ⌃⌥⎋ (the old default) becomes ⌃⌥Q |
+| stopButtonShown | true | the Stop button in the top-right corner while an activity runs, with the shortcut in words; a click on it stops it (§7.17) |
 | diveWaterShare | ⅓ | 0.15–0.6, clamped on load: how much of the screen the dive's water covers, from the bottom |
 | diveWaterOpacity | 0.3 | 0.1–0.7, clamped on load: how much the water shows; the desktop reads through it |
 | diveMinutes | 3 | 0.5–15 min, clamped on load: once the water is up |

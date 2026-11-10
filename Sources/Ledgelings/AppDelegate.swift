@@ -44,7 +44,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var shortcut: GlobalShortcut?
     /// Stop activity from any app (⌃⌥⎋), and the watch that stops one when the owner uses the computer.
     private var stopShortcut: GlobalShortcut?
-    private var useWatch: UseWatch?
     private var shortcutShown: AnyCancellable?
     private var colony: Colony?
     private let phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -544,26 +543,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // `--tea`: a tea party now, every line and voice cue on stderr with the
         // time since it started, then quit once the pair has walked on.
-        // `--dive [--stop-after seconds]`: a dive on the real screen, every step on stderr with its time; quits once
-        // everyone is out, or presses Stop activity after that many seconds.
-        if CommandLine.arguments.contains("--dive"), let colony {
+        // `--dive [--stop-after seconds]`, `--surf [--stop-after seconds]`: a dive or a surf on the real screen, every
+        // step on stderr with its time and where the Stop button stands; quits once it is over, or presses Stop
+        // activity after that many seconds. A click on the Stop button stops it too, and says so.
+        let realRun = CommandLine.arguments.contains("--dive") ? "dive" : CommandLine.arguments.contains("--surf") ? "surf" : nil
+        if let realRun, let colony {
             let start = Date(), args = CommandLine.arguments
-            func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "dive %7.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
-            colony.trace = { if $0.hasPrefix("dive") || $0.hasPrefix("say") { log($0) } }
+            func log(_ line: String) { FileHandle.standardError.write(Data(String(format: "\(realRun) %7.2f  %@\n", Date().timeIntervalSince(start), line).utf8)) }
+            colony.trace = { if $0.hasPrefix("dive") || $0.hasPrefix("say") || $0.hasPrefix("play surf") || $0.hasPrefix("stop button") { log($0) } }
             Activities.shared.trace = { log($0) }
             let stopAfter = args.firstIndex(of: "--stop-after").flatMap { args.indices.contains($0 + 1) ? Double(args[$0 + 1]) : nil }
+            let running = { realRun == "dive" ? colony.isDiving : colony.play?.kind == .surf }
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
-                guard colony.startDive() else { log("no dive: \(colony.talkStatus)"); exit(1) }
-                var stopped: Date?
+                let started = realRun == "dive" ? colony.startDive() : colony.startPlay(.surf)
+                guard started else { log("no \(realRun): \(colony.talkStatus)"); exit(1) }
+                var stopped: Date?, button: CGRect?
                 while true {
                     try? await Task.sleep(for: .seconds(0.05))
+                    if let at = colony.stopButton(), button == nil {
+                        button = at.frame
+                        log(String(format: "stop button at (%.0f, %.0f) %.0f×%.0f on %@: %@", at.frame.minX, at.frame.minY, at.frame.width,
+                                   at.frame.height, colony.overlays[at.overlay].display.name, StopButton.label(spokenShortcut: colony.stopShortcutSpoken)))
+                    }
                     if let stopAfter, stopped == nil, Date().timeIntervalSince(start) > stopAfter + 1 {
                         stopped = Date()
                         Activities.shared.stopAll()
                     }
-                    if !colony.isDiving, colony.overlays.allSatisfy({ !$0.hasWater }) {
+                    if !running(), colony.overlays.allSatisfy({ !$0.hasWater }) {
                         if let stopped { log(String(format: "stop activity: the screen clear after %.2f s", Date().timeIntervalSince(stopped))) }
+                        log(colony.overlays.allSatisfy { $0.stopButtonFrame == nil } ? "the Stop button is gone" : "the Stop button is STILL there")
                         try? await Task.sleep(for: .seconds(stopped == nil ? 3.5 : 0.5))
                         exit(0)
                     }
@@ -786,7 +795,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         activitiesItem.title = tr("Activities…")
         diveItem.title = colony?.isDiving == true ? tr("Out of the Water") : tr("Go Scuba Diving")
         stopActivityItem.title = settings.stopActivityShortcutEnabled
-            ? tr("Stop Activity (%@)", GlobalShortcut.label(settings.stopActivityShortcut)) : tr("Stop Activity")
+            ? tr("Stop Activity (%@)", GlobalShortcut.spoken(settings.stopActivityShortcut)) : tr("Stop Activity")
         stopActivityItem.isEnabled = Activities.shared.isRunning
         chatsItem.title = tr("Chat History…")
         deedsItem.title = tr("Deeds from Talk")
@@ -1059,7 +1068,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openActivities() { actions.show(page: .activities) }
 
     /// Everything that runs for a while registers its stop; Stop activity (the
-    /// shortcut, the menu) and the use watch call them all.
+    /// shortcut, the menu, the Stop button) calls them all.
     private func setUpActivities() {
         let activities = Activities.shared
         // Surfing is a game, but its water and score go with it at once.
@@ -1073,7 +1082,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         stopShortcut = GlobalShortcut(settings: settings, enabled: settings.$stopActivityShortcutEnabled, shortcut: settings.$stopActivityShortcut,
                                       problem: { [weak settings] in if settings?.stopActivityShortcutProblem != $0 { settings?.stopActivityShortcutProblem = $0 } },
                                       pressed: { [weak self] in self?.stopActivity() })
-        useWatch = UseWatch(settings: settings)
         settingsWindow.startDive = { [weak self] in self?.colony?.startDive() }
     }
 

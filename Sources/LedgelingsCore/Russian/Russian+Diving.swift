@@ -56,9 +56,14 @@ extension Strings {
         "Whoever is free puts on a mask and a tank and jumps in; they swim among the fish, a jellyfish, a crab, a turtle and an octopus, come up for air now and then, and climb out dripping when it is over. What they saw together goes into their memory. It never starts by itself.":
             "Кто свободен, надевает маску и баллон и прыгает в воду; они плавают среди рыб, медузы, краба, черепахи и осьминога, иногда всплывают за воздухом и выбираются мокрыми, когда всё кончается. Что видели вместе, запоминают. Само по себе не начинается никогда.",
         "Stop activity": "Остановить занятие",
-        "Stop when I use the computer": "Останавливать, когда я работаю",
-        "The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. With Stop when I use the computer on, a key press, or a click anywhere but on a creature, ends it too; moving the mouse does not. The menu has Stop activity as well.":
-            "Сочетание клавиш работает в любой программе и сразу заканчивает то, что идёт: погружение, сёрфинг, игру. Вода, рыбы и снаряжение исчезают за полсекунды. С «Останавливать, когда я работаю» это делает и нажатие клавиши или щелчок где угодно, кроме существа; движение мыши — нет. В меню тоже есть «Остановить занятие».",
+        "Show the Stop button": "Показывать кнопку «Стоп»",
+        "Press %@": "Нажмите %@",
+        "The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. Clicks and keys in other apps never stop it. While something runs, the Stop button in the top-right corner says what to press, and a click on it stops it too; so does Stop activity in the menu.":
+            "Сочетание клавиш работает в любой программе и сразу заканчивает то, что идёт: погружение, сёрфинг, игру. Вода, рыбы и снаряжение исчезают за полсекунды. Щелчки и клавиши в других программах его не останавливают. Пока что-то идёт, кнопка «Стоп» в правом верхнем углу подсказывает, что нажать, и щелчок по ней тоже всё останавливает; как и «Остановить занятие» в меню.",
+        // The Stop button in the top-right corner
+        "Stop · %@": "Стоп · %@",
+        "Stop the activity": "Остановить занятие",
+        "Stop the activity (%@)": "Остановить занятие (%@)",
         "Under the water": "Под водой",
         "Drawn like the creatures. The sea life is not a character: it says nothing, but fish scatter from a diver, the crab raises its claws and the octopus inks and jets off.":
             "Нарисованы как существа. Морские жители — не персонажи: они молчат, но рыбы разбегаются от ныряльщика, краб поднимает клешни, а осьминог выпускает чернила и уплывает.",
