@@ -11,7 +11,7 @@ public sealed partial class AppSettings
     public const int DiveDiversMin = 1, DiveDiversMax = 8;
     public const int DiveSeaLifeMin = 3, DiveSeaLifeMax = 40;
 
-    private bool stopActivityShortcutEnabled, stopOnUse, diveAllScreens, diveTalk;
+    private bool stopActivityShortcutEnabled, stopButtonShown, diveAllScreens, diveTalk;
     private Shortcut stopActivityShortcut;
     private string stopActivityShortcutProblem = "";
     private double diveWaterShare, diveWaterOpacity, diveMinutes;
@@ -20,8 +20,11 @@ public sealed partial class AppSettings
     private void LoadDiving()
     {
         stopActivityShortcutEnabled = store.Get<bool?>("stopActivityShortcutEnabled") ?? true;
-        stopActivityShortcut = Shortcut.Saved(store.Get<int?>("stopActivityShortcutKeyCode"), store.Get<int?>("stopActivityShortcutModifiers"), Shortcut.StopActivity);
-        stopOnUse = store.Get<bool?>("stopOnUse") ?? true;
+        // The old Ctrl+Alt+Esc was only ever the default: it becomes Ctrl+Alt+Q. A key the owner recorded stays.
+        stopActivityShortcut = Shortcut.StopActivitySaved(store.Get<int?>("stopActivityShortcutKeyCode"), store.Get<int?>("stopActivityShortcutModifiers"));
+        // Only the shortcut, the tray and the Stop button stop an activity now; the old switch for a click or key is gone.
+        store.Remove("stopOnUse");
+        stopButtonShown = store.Get<bool?>("stopButtonShown") ?? true;
         // A third of the screen, as the owner asked; light enough to read the apps through.
         diveWaterShare = Math.Clamp(store.Get<double?>("diveWaterShare") ?? 1.0 / 3, DiveWaterShareMin, DiveWaterShareMax);
         diveWaterOpacity = Math.Clamp(store.Get<double?>("diveWaterOpacity") ?? 0.3, DiveWaterOpacityMin, DiveWaterOpacityMax);
@@ -34,7 +37,7 @@ public sealed partial class AppSettings
         diveTalk = store.Get<bool?>("diveTalk") ?? true;
     }
 
-    /// <summary>Stop activity (Ctrl+Alt+Esc): from any app, ends a dive, a surf or a game at once.</summary>
+    /// <summary>Stop activity (Ctrl+Alt+Q): from any app, ends a dive, a surf or a game at once.</summary>
     public bool StopActivityShortcutEnabled { get => stopActivityShortcutEnabled; set => Put(ref stopActivityShortcutEnabled, value, "stopActivityShortcutEnabled"); }
     public Shortcut StopActivityShortcut { get => stopActivityShortcut; set => PutShortcut(ref stopActivityShortcut, value, "stopActivityShortcut"); }
     /// <summary>Why the Stop activity shortcut does nothing, when Windows refused it. Not saved.</summary>
@@ -43,8 +46,8 @@ public sealed partial class AppSettings
         get => stopActivityShortcutProblem;
         set { if (stopActivityShortcutProblem == value) return; stopActivityShortcutProblem = value; Raise(nameof(StopActivityShortcutProblem)); }
     }
-    /// <summary>A real key press, or a click anywhere but on a creature, stops a running activity.</summary>
-    public bool StopOnUse { get => stopOnUse; set => Put(ref stopOnUse, value, "stopOnUse"); }
+    /// <summary>The Stop button in the top-right corner while an activity runs, with the shortcut written out.</summary>
+    public bool StopButtonShown { get => stopButtonShown; set => Put(ref stopButtonShown, value, "stopButtonShown"); }
     /// <summary>How much of the screen the water covers, from the bottom.</summary>
     public double DiveWaterShare { get => diveWaterShare; set { if (Put(ref diveWaterShare, Math.Clamp(value, DiveWaterShareMin, DiveWaterShareMax), "diveWaterShare")) Raise(nameof(DiveWaterPercent)); } }
     /// <summary>How see-through the water is: 0 is clear glass.</summary>

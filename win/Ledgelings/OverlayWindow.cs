@@ -122,7 +122,6 @@ public sealed class OverlayWindow : IDisposable
             case Win32.WM_MOUSEACTIVATE:
                 return (IntPtr)Win32.MA_NOACTIVATE;
             case Win32.WM_LBUTTONDOWN:
-                UseWatch.OwnClick = DateTime.Now;
                 Win32.SetCapture(hwnd);
                 capturing = true;
                 if (Desktop.IsControlDown) Hand?.Invoke(new HandEvent.SecondaryDown(Desktop.Cursor()));
@@ -136,7 +135,6 @@ public sealed class OverlayWindow : IDisposable
                 Hand?.Invoke(new HandEvent.Up(Desktop.Cursor()));
                 return IntPtr.Zero;
             case Win32.WM_RBUTTONDOWN:
-                UseWatch.OwnClick = DateTime.Now;
                 Hand?.Invoke(new HandEvent.SecondaryDown(Desktop.Cursor()));
                 return IntPtr.Zero;
         }

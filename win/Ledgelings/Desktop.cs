@@ -8,8 +8,9 @@ namespace Ledgelings;
 /// simulation's points (origin bottom-left, y up). <c>Id</c> survives relaunching and re-plugging
 /// (the monitor's device interface path, which carries its make and the port it is on); <c>Name</c>
 /// is what the menus show (its model when Windows knows it, else "Display 2").</summary>
+/// <c>TopInset</c> is the band along the top a taskbar keeps for itself, in pixels: the Stop button sits under it.
 public sealed record Monitor(IntPtr Handle, int Left, int Top, int Width, int Height, bool IsPrimary, double DpiScale,
-                             string Id = "", string Name = "")
+                             string Id = "", string Name = "", int TopInset = 0)
 {
     /// <summary>As <see cref="HomeScreen"/> sees it.</summary>
     public HomeScreen.Monitor Home => new(Id, Name, Frame);
@@ -48,7 +49,8 @@ public static class Desktop
             double scale = 1;
             if (Win32.GetDpiForMonitor(hMonitor, Win32.MDT_EFFECTIVE_DPI, out var dpi, out _) == 0 && dpi > 0) scale = dpi / 96.0;
             var (id, model) = Identify(info.szDevice);
-            found.Add(new Monitor(hMonitor, r.Left, r.Top, r.Width, r.Height, (info.dwFlags & Win32.MONITORINFOF_PRIMARY) != 0, scale, id, model));
+            found.Add(new Monitor(hMonitor, r.Left, r.Top, r.Width, r.Height, (info.dwFlags & Win32.MONITORINFOF_PRIMARY) != 0, scale, id, model,
+                                  Math.Max(0, info.rcWork.Top - r.Top)));
             return true;
         }, IntPtr.Zero);
         found = Named(found);

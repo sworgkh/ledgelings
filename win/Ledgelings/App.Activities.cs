@@ -3,12 +3,10 @@ using Ledgelings.Core;
 namespace Ledgelings;
 
 /// <summary>Stop activity (SPEC §7.17): the registry's entries for the surf, the dive and the games, the shortcut from any
-/// app (Ctrl+Alt+Esc), the tray's Go Scuba Diving and Stop Activity, and the watch that stops one when the owner
-/// uses the computer.</summary>
+/// app (Ctrl+Alt+Q), the tray's Go Scuba Diving and Stop Activity. The Stop button is the colony's own.</summary>
 public sealed partial class App
 {
     private GlobalHotkey? stopKey;
-    private UseWatch? useWatch;
 
     private void StartActivities()
     {
@@ -24,13 +22,11 @@ public sealed partial class App
                 or nameof(AppSettings.RecordingShortcut)) HoldStopKey();
         };
         HoldStopKey();
-        useWatch = new UseWatch(settings);
     }
 
     private void StopActivities()
     {
         stopKey?.Dispose();
-        useWatch?.Dispose();
     }
 
     /// <summary>The shortcut from any app, following the settings; none while a new shortcut is recorded.</summary>
@@ -70,7 +66,7 @@ public sealed partial class App
         if (colony is null || settings is null) return;
         items.Add(new TrayIcon.Item(colony.IsDiving ? L10n.Tr("Out of the Water") : L10n.Tr("Go Scuba Diving"), ToggleDive));
         var title = settings.StopActivityShortcutEnabled && stopKey is { IsRegistered: true }
-            ? L10n.Tr("Stop Activity (%@)", ShortcutKeys.Label(settings.StopActivityShortcut)) : L10n.Tr("Stop Activity");
+            ? L10n.Tr("Stop Activity (%@)", ShortcutKeys.Spoken(settings.StopActivityShortcut)) : L10n.Tr("Stop Activity");
         items.Add(new TrayIcon.Item(title, () => Activities.Shared.StopAll(), Enabled: Activities.Shared.IsRunning));
     }
 }

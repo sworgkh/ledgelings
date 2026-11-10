@@ -26,6 +26,7 @@ public sealed partial class Colony
         switch (e)
         {
             case HandEvent.Down(var point, var shift):
+                if (OnStopButton(point)) { PressStopButton(); break; }
                 if (LetterContains(point)) { CloseLetter(); break; }      // a press on a reminder's letter folds it away
                 // A press on a sleeper's bed, beside or under it, carries the bed: no chase, no pick-up.
                 if (!shift && BedAt(point) is int sleeper && !OnBody(sleeper, point)) { LiftBed(sleeper, point); break; }
@@ -75,9 +76,10 @@ public sealed partial class Colony
 
     /// <summary>Make an overlay clickable only while the cursor is on something the user
     /// can act on: any sleeper, any creature at all while Shift is down, or a
-    /// speech bubble. Shift is also how you get close enough to right-click one.</summary>
+    /// speech bubble, or the Stop button. Shift is also how you get close enough to right-click one.</summary>
     private void UpdateClickability(Pt cursor, bool shift)
     {
+        StopButtonHovered = OnStopButton(cursor);
         var target = TakesClick(cursor, shift);
         foreach (var overlay in overlays) overlay.SetClickable(target && overlay.Monitor.Frame.Contains(cursor));
     }

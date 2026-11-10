@@ -276,7 +276,7 @@ public sealed partial class Colony
     /// too) it goes through to the app below.</summary>
     internal bool TakesClick(Pt cursor, bool shift) =>
         held is not null || (CreatureAt(cursor) is int i && (shift || creatures[i].IsSleeping)) || BubbleAt(cursor) is not null
-        || LetterContains(cursor) || BedAt(cursor) is not null;
+        || LetterContains(cursor) || BedAt(cursor) is not null || OnStopButton(cursor);
 
     /// <summary>Whether any overlay has water on it now (tests, Stop activity).</summary>
     internal bool AnyWaterShown => overlays.Any(o => o.HasWater);

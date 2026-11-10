@@ -40,4 +40,7 @@ public static class ShortcutKeys
     }
 
     public static string Label(Shortcut shortcut) => shortcut.Label(KeyName(shortcut.KeyCode));
+
+    /// <summary>The shortcut in words, spaced, to press without guessing: "Ctrl + Alt + Q".</summary>
+    public static string Spoken(Shortcut shortcut) => shortcut.Spoken(KeyName(shortcut.KeyCode));
 }

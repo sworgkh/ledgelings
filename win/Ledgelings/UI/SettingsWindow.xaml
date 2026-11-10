@@ -690,9 +690,10 @@
                 <CheckBox ui:Tr.Content="Stop activity" IsChecked="{Binding StopActivityShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
                 <Button x:Name="StopActivityShortcutButton" Click="StopActivityShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding StopActivityShortcutEnabled}"/>
               </DockPanel>
-              <CheckBox ui:Tr.Content="Stop when I use the computer" IsChecked="{Binding StopOnUse, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <TextBlock x:Name="StopActivitySpoken" Foreground="Gray" Margin="0,4,0,0"/>
+              <CheckBox ui:Tr.Content="Show the Stop button" IsChecked="{Binding StopButtonShown, Mode=TwoWay}" Margin="0,4,0,0"/>
               <TextBlock Text="{Binding StopActivityShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. With Stop when I use the computer on, a key press, or a click anywhere but on a creature, ends it too; moving the mouse does not. The menu has Stop activity as well."/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The shortcut works in every app and ends whatever is running at once: a dive, a surf, a game. The water, the fish and the gear are gone within half a second. Clicks and keys in other apps never stop it. While something runs, the Stop button in the top-right corner says what to press, and a click on it stops it too; so does Stop activity in the menu."/>
             </StackPanel>
           </GroupBox>
           <GroupBox ui:Tr.Header="Under the water">

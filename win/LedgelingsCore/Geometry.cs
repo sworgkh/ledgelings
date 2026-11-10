@@ -37,4 +37,6 @@ public readonly record struct Rect(double X, double Y, double Width, double Heig
     public Rect InsetBy(double dx, double dy) => new(X + dx, Y + dy, Width - 2 * dx, Height - 2 * dy);
 
     public Rect OffsetBy(double dx, double dy) => new(X + dx, Y + dy, Width, Height);
+
+    public bool Intersects(Rect o) => MinX < o.MaxX && o.MinX < MaxX && MinY < o.MaxY && o.MinY < MaxY;
 }

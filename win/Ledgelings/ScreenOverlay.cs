@@ -97,7 +97,7 @@ public sealed partial class ScreenOverlay : IDisposable
                        TeaTableSnapshot? tea = null, Size teaCell = default,
                        IReadOnlyList<PlantedSnapshot>? beds = null, Size bedCell = default,
                        IReadOnlyList<PropSnapshot>? props = null, Size propCell = default,
-                       IReadOnlyList<WaterSnapshot>? water = null, SurfWaterSnapshot? surf = null)
+                       IReadOnlyList<WaterSnapshot>? water = null, SurfWaterSnapshot? surf = null, StopButtonSnapshot? stop = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
         // Bottom to top, as the Mac layers them: the tea table, the house, the planted flowers, then the creatures.
@@ -128,6 +128,7 @@ public sealed partial class ScreenOverlay : IDisposable
         AddSparks(ops, sparks);
         ops.AddRange(talk);
         AddMail(ops, plane, planeCell, reminder);      // over everything, the letter on top
+        AddStopButton(ops, stop);                      // and the Stop button over that
         bubbles = newBubbles;
 
         var current = ops.Select(o => o.Bounds).ToList();

@@ -33,9 +33,18 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
     public static readonly Shortcut ReadAloud = new(0x52, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift);
     /// <summary>The Tools screen: Ctrl+Alt+K, as on the Mac.</summary>
     public static readonly Shortcut Tools = new(0x4B, ShortcutModifiers.Control | ShortcutModifiers.Option);
-    /// <summary>Stop activity: Ctrl+Alt+Esc, Esc for "stop", as on the Mac. Not Ctrl+Shift+Esc, Windows' Task Manager,
-    /// nor Ctrl+Esc or Alt+Esc, its Start menu and window switching.</summary>
-    public static readonly Shortcut StopActivity = new(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>Stop activity: Ctrl+Alt+Q, Q for quit, as on the Mac. Windows itself holds no Ctrl+Alt+Q.</summary>
+    public static readonly Shortcut StopActivity = new(0x51, ShortcutModifiers.Control | ShortcutModifiers.Option);
+    /// <summary>Stop activity's first key, Ctrl+Alt+Esc, which the owner could not work out how to press.</summary>
+    public static readonly Shortcut StopActivityBefore = new(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option);
+
+    /// <summary>Stop activity as it was saved: nothing saved, or the old Ctrl+Alt+Esc that was only ever the default, is
+    /// the new default; a key the owner chose stays.</summary>
+    public static Shortcut StopActivitySaved(int? keyCode, int? modifiers)
+    {
+        var saved = Saved(keyCode, modifiers, StopActivity);
+        return saved == StopActivityBefore ? StopActivity : saved;
+    }
 
     /// <summary>As it was saved, or the standard one when what was saved cannot be a shortcut.</summary>
     public static Shortcut Saved(int? keyCode, int? modifiers) => Saved(keyCode, modifiers, Standard);
@@ -59,4 +68,18 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
 
     /// <summary>The whole shortcut for a label, given the key's name: "Ctrl+Alt+L".</summary>
     public string Label(string key) => Names + key;
+
+    /// <summary>The modifiers in words, in Windows' order: Ctrl, Alt, Shift, Win.</summary>
+    public IReadOnlyList<string> ModifierWords
+    {
+        get
+        {
+            var held = Modifiers;
+            return new[] { (ShortcutModifiers.Control, "Ctrl"), (ShortcutModifiers.Option, "Alt"), (ShortcutModifiers.Shift, "Shift"), (ShortcutModifiers.Command, "Win") }
+                .Where(m => held.HasFlag(m.Item1)).Select(m => m.Item2).ToList();
+        }
+    }
+
+    /// <summary>The whole shortcut in words, spaced, to read and press without guessing: "Ctrl + Alt + Q".</summary>
+    public string Spoken(string key) => string.Join(" + ", ModifierWords.Append(key));
 }

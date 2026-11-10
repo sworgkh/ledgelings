@@ -16,16 +16,16 @@ public class DivingSettingsTests
         var s = new AppSettings(store, secrets);
         Assert.True(Math.Abs(s.DiveWaterShare - 1.0 / 3) < 1e-9 && s.DiveWaterOpacity == 0.3 && s.DiveMinutes == 3);
         Assert.True(s.DiveDivers == 3 && s.DiveSeaLife == 12 && !s.DiveAllScreens && s.DiveHomeOnly && s.DiveTalk);
-        Assert.True(s.StopActivityShortcutEnabled && s.StopActivityShortcut == Shortcut.StopActivity && s.StopOnUse);
+        Assert.True(s.StopActivityShortcutEnabled && s.StopActivityShortcut == Shortcut.StopActivity && s.StopButtonShown);
         Assert.Equal(33, s.DiveWaterPercent);
         s.DiveWaterPercent = 50; s.DiveWaterOpacityPercent = 60; s.DiveMinutes = 8; s.DiveDivers = 6; s.DiveSeaLife = 30;
-        s.DiveHomeOnly = false; s.DiveTalk = false; s.StopOnUse = false; s.StopActivityShortcutEnabled = false;
-        s.StopActivityShortcut = new Shortcut(0x51, ShortcutModifiers.Control | ShortcutModifiers.Option);
+        s.DiveHomeOnly = false; s.DiveTalk = false; s.StopButtonShown = false; s.StopActivityShortcutEnabled = false;
+        s.StopActivityShortcut = new Shortcut(0x50, ShortcutModifiers.Control | ShortcutModifiers.Option);
         var again = new AppSettings(store, secrets);
         Assert.True(again.DiveWaterShare == 0.5 && again.DiveWaterOpacity == 0.6 && again.DiveMinutes == 8);
         Assert.True(again.DiveDivers == 6 && again.DiveSeaLife == 30 && again.DiveAllScreens && !again.DiveTalk);
-        Assert.True(!again.StopOnUse && !again.StopActivityShortcutEnabled);
-        Assert.Equal(new Shortcut(0x51, ShortcutModifiers.Control | ShortcutModifiers.Option), again.StopActivityShortcut);
+        Assert.True(!again.StopButtonShown && !again.StopActivityShortcutEnabled);
+        Assert.Equal(new Shortcut(0x50, ShortcutModifiers.Control | ShortcutModifiers.Option), again.StopActivityShortcut);
         foreach (var (key, value) in new[] { ("diveWaterShare", 0.99), ("diveWaterOpacity", 1.0), ("diveMinutes", 999.0) }) store.Set(key, value);
         store.Set("diveDivers", 50); store.Set("diveSeaLife", 0);
         var clamped = new AppSettings(store, secrets);
@@ -34,43 +34,51 @@ public class DivingSettingsTests
     }
 
     [Fact]
-    public void StopActivityIsCtrlAltEscAndTheDiveRowSaysHowToStartAndStopIt()
+    public void StopActivityIsCtrlAltQAndTheDiveRowSaysHowToStartAndStopItInWords()
     {
-        Assert.Equal(new Shortcut(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option), Shortcut.StopActivity);
+        Assert.Equal(new Shortcut(0x51, ShortcutModifiers.Control | ShortcutModifiers.Option), Shortcut.StopActivity);
+        Assert.Equal("Ctrl+Alt+Q", ShortcutKeys.Label(Shortcut.StopActivity));
+        Assert.Equal("Ctrl + Alt + Q", ShortcutKeys.Spoken(Shortcut.StopActivity));
+        Assert.Equal("Ctrl + Win + Escape", ShortcutKeys.Spoken(new Shortcut(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Command)));
         foreach (var activity in HandActivities.All)
         {
             var key = activity.ActivityKey().ToString();
             Assert.EndsWith($"({key})", activity.ActivityTip(new ActionsState()));
-            Assert.Equal($"Stop now ({key} · Ctrl+Alt+Esc)", activity.ActivityTip(new ActionsState(Diving: true, StopShortcut: "Ctrl+Alt+Esc")));
+            Assert.Equal($"Stop now ({key} · Ctrl + Alt + Q)", activity.ActivityTip(new ActionsState(Diving: true, StopShortcut: "Ctrl + Alt + Q")));
             Assert.Equal("they are hiding", activity.ActivityDetail(new ActionsState(Hiding: true)));
         }
     }
 
     [Fact]
-    public void UsingTheComputerStopsARunningActivityOnlyWhenThatIsOn()
+    public void TheOldDefaultKeyBecomesCtrlAltQButAKeyOfTheOwnersStays()
     {
-        var s = new AppSettings(new MemorySettingsStore(), new MemorySecretStore());
-        var running = true;
-        var stops = 0;
-        Activities.Shared.Register(Activities.Kind.Dive, () => running, () => { running = false; stops++; });
-        try
-        {
-            using var watch = new UseWatch(s);
-            var pressed = (Key: false, Click: false);
-            watch.Pressed = () => pressed;
-            var t = DateTime.Now;
-            watch.Check(t);
-            watch.Check(t.AddSeconds(3));
-            Assert.True(running);                   // nothing pressed: moving the mouse is not using it
-            s.StopOnUse = false;
-            pressed = (true, false);
-            watch.Check(t.AddSeconds(4));
-            Assert.True(running);                   // off: a key does not stop it
-            s.StopOnUse = true;
-            watch.Check(t.AddSeconds(5));
-            Assert.False(running);                  // on: a key stops it
-            Assert.Equal(1, stops);
-        }
-        finally { Activities.Shared.Unregister(Activities.Kind.Dive); }
+        var store = new MemorySettingsStore();
+        var secrets = new MemorySecretStore();
+        store.Set("stopActivityShortcutKeyCode", 0x1B); store.Set("stopActivityShortcutModifiers", (int)(ShortcutModifiers.Control | ShortcutModifiers.Option));
+        Assert.Equal(Shortcut.StopActivity, new AppSettings(store, secrets).StopActivityShortcut);
+        store.Set("stopActivityShortcutModifiers", (int)(ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift));
+        Assert.Equal(new Shortcut(0x1B, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift), new AppSettings(store, secrets).StopActivityShortcut);
+    }
+
+    [Fact]
+    public void StopWhenIUseTheComputerIsGoneAndItsSavedKeyWithIt()
+    {
+        var store = new MemorySettingsStore();
+        store.Set("stopOnUse", true);
+        _ = new AppSettings(store, new MemorySecretStore());
+        Assert.Null(store.Get<bool?>("stopOnUse"));
+    }
+
+    /// <summary>As the screenshot toolbar's: the button is a picture of what it does and names its key on hover.</summary>
+    [Fact]
+    public void TheStopButtonHasItsPictureAndItsTag()
+    {
+        using var plain = StopButtonPainter.Button("Stop · Ctrl + Alt + Q", hovered: false);
+        using var hovered = StopButtonPainter.Button("Stop · Ctrl + Alt + Q", hovered: true);
+        Assert.NotNull(plain);
+        Assert.True(plain!.Width > plain.Height * 4 && hovered!.Width == plain.Width);
+        Assert.NotEqual(plain.GetPixel(plain.Width - 4, 3), hovered.GetPixel(hovered.Width - 4, 3));      // lighter under the pointer
+        using var tag = StopButtonPainter.Tag(StopButton.Tag("Ctrl + Alt + Q"));
+        Assert.NotNull(tag);
     }
 }

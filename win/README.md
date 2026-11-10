@@ -21,7 +21,8 @@ Activities page of Creature Actions), soccer and baseball for whoever is free, w
 bottom edge for whoever is free (see-through pixel water, every character on its own board, tricks and wipe-outs, a score;
 the Surfing tab, key V on the Activities page), scuba diving started by hand only
 (see-through water over the bottom of the screen, sea life, divers in masks; the Diving tab) with **Stop activity**
-(Ctrl+Alt+Esc, or any key or click while *Stop when I use the computer* is on), and keeping them all to one monitor (the `SCREEN` button on Creature
+(Ctrl + Alt + Q, the tray, or the **Stop** button in the top-right corner while one runs; clicks and keys in other
+apps never stop it), and keeping them all to one monitor (the `SCREEN` button on Creature
 Actions, the tray's *Screen*, *Live on* on the Creatures tab), the rest parachuting over;
 conversations that act: deeds from talk (a line or a letter may end in `DO:`, so "soccer?" answered "yes" starts the
 match, from a closed list checked against what is possible and the owner's limits; the built-in lines invite and answer
