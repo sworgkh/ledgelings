@@ -6,7 +6,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
     case chases, play, ballGames, surfing, diving
     case talk, voice, bonds, relationships, twists
-    case tools, reminders, clipboard, screenshots, dictation, translate, readAloud
+    case tools, reminders, clipboard, screenshots, dictation, translate, savedTranslations, readAloud
     case costs, chats
 
     public var title: String {
@@ -32,6 +32,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .screenshots: tr("Screenshots")
         case .dictation: tr("Dictation")
         case .translate: tr("Translate")
+        case .savedTranslations: tr("Saved translations")
         case .readAloud: tr("Read aloud")
         case .tools: tr("Tools screen")
         case .costs: tr("Costs")
@@ -44,7 +45,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
         case .chases, .play, .ballGames, .surfing, .diving: .games
         case .talk, .voice, .bonds, .relationships, .twists: .talkAndFriends
-        case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud: .tools
+        case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
         }
     }
@@ -280,6 +281,8 @@ public enum SettingsIndex {
         // translate
         Section(.translate, "Translate", labels: ["Translator", "Type to translate", "Translate the last copy", "The last copy", "Opens the sheet, already translated", "Puts it on the clipboard quietly"], footer: "Both work in every app. Type to translate opens the sheet: your words on the left, the translation on the right as you type. The last copy opens in the sheet already translated, or quietly replaces the clipboard with its translation and says so by the text cursor. ⏎ copies the translation, ⌘⏎ pastes it into the app you were in.", keys: ["translateClipMode", "translateClipShortcutEnabled", "translateClipShortcutKeyCode", "translateClipShortcutModifiers", "translateEnabled", "translateShortcutEnabled", "translateShortcutKeyCode", "translateShortcutModifiers"]),
         Section(.translate, "Languages", labels: ["English", "Russian", "Hebrew"], footer: "Told apart by their letters, Latin, Cyrillic or Hebrew, on this Mac and for free, before anything is sent. A text already in its target goes into the target's own language instead. At least two stay on.", keys: ["translateLanguages", "translateTargets"]),
+        Section(.savedTranslations, "Saved translations", labels: ["Saved translations", "How many to keep", "Open the drawer with the sheet"], footer: "⌘D in the sheet saves the translation on show, as a star does; ⌘L opens the drawer of saved ones beside the sheet, to search, load back, copy or delete. Kept on this Mac; the oldest go beyond the number above. Loading one back costs nothing.", keys: ["translateSavedEnabled", "translateSavedLimit", "translateSavedOpenDrawer"]),
+        Section(.savedTranslations, "Kept on this Mac", labels: ["Delete All Saved…"], footer: "In translations.json beside the clipboard history. Deleting one is the bin on its row in the drawer, or ⌫.", keys: []),
         Section(.translate, "Model", labels: ["Model", "Guess the rest of the phrase", "Guess model", "Wait after typing"], footer: "An OpenRouter model, with the key from Settings › Talk; with LM Studio as the brain and no key, its model, free. Cheap and fast is best: about a cent a day. Every call shows on Costs as Translation, every guess as Autocomplete. ⇥ takes the grey words.", keys: ["translateAutocomplete", "translateAutocompleteModel", "translateDelayMs", "translateModel"]),
         Section(.translate, "Clipboard and safety", labels: ["Translate button in the clipboard picker", "Keep translations in the clipboard history", "Ask before sending more than", "Who brings the sheet", "Whoever is nearest the middle", "Nobody: it unfolds by itself"], footer: "Text goes to the model only when you translate it. Protected snippets and copies of their words never do, and get no button. Links, e-mails, code and numbers are kept as they are. Longer texts wait for ⏎ and say their parts and price first; never more than 50 000 characters.", keys: ["translateHelper", "translateHelperEnabled", "translateKeepInHistory", "translateLiveLimit", "translatePickerButton"]),
 

@@ -86,7 +86,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
   writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames, surfing, diving,
-  talk, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, readaloud, costs, chats;
+  talk, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, savedtranslations, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place;
   `productivity`, the old tools tab, still opens Reminders).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
@@ -155,8 +155,9 @@ with `scripts/make-app.sh`, installed and seen working.
   with no cursor known, printing each step (`film 1.00 clip Whiskers leaps to (245, 558) in 0.31 s`).
 - `--translate "text" [--to he] [--model id]` translates through the real call and prints the detection, target,
   time, price and answer; `--translate-bench [--runs 10]` times the candidate models; `--translate-sheet "text"
-  [--to he] [--snapshot out.png]` opens the sheet on the real screen and writes it once translated;
-  `--translate-film out.mp4` films the sheet offscreen (stills beside it). `LEDGELINGS_FAKE_TRANSLATE=1`: hand-written
+  [--to he] [--drawer] [--snapshot out.png]` opens the sheet on the real screen and writes it once translated
+  (with the drawer of saved translations open beside it); `--translate-film out.mp4` films the sheet offscreen,
+  saving two translations, the drawer, a search, a load and a delete (stills beside it, `…-saved.png`, `…-drawer.png`). `LEDGELINGS_FAKE_TRANSLATE=1`: hand-written
   answers, no key, no network (the way to run them headless: a new build reading the key blocks on the keychain).
 - `--read "text" [--preset name] [--engine system] [--out file.m4a] [--mute]` reads through the real calls and prints the provider,
   voice, time to first sound, length and price (`read provider openRouter · Charon on … · first sound after 1.9 s · …`);

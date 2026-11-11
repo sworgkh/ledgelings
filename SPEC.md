@@ -2413,7 +2413,8 @@ sheet closes. Pressed again while up, the sheet closes.
   the source; the swap picture; each language on, the target. Two boxes: the text you type (a
   real text view: each paragraph runs in the direction of its first strong letter, Hebrew
   right to left) and the translation (selectable, aligned to its language's side), with
-  the copy and paste pictures under it. A status line: `ENGLISH → RUSSIAN · 0.6 s`, or the
+  the star, copy and paste pictures under it (the star only with `translateSavedEnabled`,
+  §7.14.3), and the saved-list picture top right. A status line: `ENGLISH → RUSSIAN · 0.6 s`, or the
   reason nothing came. The keys along the bottom.
 - `translateDelayMs` (400; 200–1 500) after the last keystroke the text is translated; each
   change cancels the call in flight and fades the shown translation (⏎ then copies nothing),
@@ -2422,7 +2423,8 @@ sheet closes. Pressed again while up, the sheet closes.
   new line · ⌘⏎ paste into the app you were in (as plain text; without Accessibility it
   copies and says *Copied. Press ⌘V to paste.*) · ⇥ take the guess · ⌘S swap (the languages
   change places and the translation becomes the text) · ⌘1 Detect, ⌘2–4 a source · ⌥1–3 a
-  target · ⌘⌫ clear · ⌘A ⌘C ⌘X ⌘V ⌘Z in the text · ⎋ close.
+  target · ⌘D save or unsave (§7.14.3) · ⌘L the drawer of saved ones · ⌘⌫ clear · ⌘A ⌘C ⌘X ⌘V ⌘Z
+  in the text · ⎋ close (the drawer first, when it is open).
 - Buttons (`Translate.Button`, AGENTS rule 4): 11×11 pixel pictures, the tag drawn in the
   sheet on hover (the panel is above where system tooltips open): *Swap languages (⌘S)*,
   *Copy the translation (⏎)*, *Paste into Notes (⌘⏎)* (the app's own name), *Clear the text
@@ -2446,15 +2448,46 @@ sheet closes. Pressed again while up, the sheet closes.
   in the history), ⌥⏎ the original, ⌥⇥ the next language on, ⌘⇧T opens it in the sheet (*Open
   in the Translate sheet (⌘⇧T)*), ⎋ closes the translation first, then the picker.
 
+#### 7.14.3 Saved translations
+
+As Google Translate keeps its starred translations. With `translateSavedEnabled` (on):
+
+- **The star** (`Translate.Button.save`, an 11×11 pixel star, ⌘D): *Save this translation
+  (⌘D)*; once saved it is filled and reads *Remove from saved (⌘D)*, and pressing it again
+  removes it. Only a finished translation; otherwise a beep, as copy does. An entry
+  (`Translate.Saved`) holds the text and its language (chosen, or detected), the translation and
+  its target, the date and the app the sheet was opened over. The same text (its edges trimmed)
+  with the same pair is one entry: saved again, it takes the new translation and date and goes
+  to the top. Beyond `translateSavedLimit` (500; 50–5 000) the oldest are dropped.
+- **The drawer** (`savedList`, a page with a list, ⌘L: *Show saved translations (⌘L)*, open:
+  *Hide saved translations (⌘L)*): a strip of the same pixel paper, 360 points wide and a little
+  shorter than the sheet, slides out from under its right edge (`Translate.DrawerSide`: the left
+  edge when that monitor has no room on the right). A search box over both texts (every word, any
+  case, accents and ё ignored), then the list, newest first: the text, the translation, a pair tag
+  (`EN → RU`) and the date (`11 Nov`; with the year from another year), with a copy picture
+  (*Copy this translation (⌘C)*) and a bin (*Delete from saved (⌫)*). Nothing saved: *Nothing
+  saved yet: ⌘D saves a translation.* With `translateSavedOpenDrawer` (off) it opens with the sheet.
+- Clicking a row, or ⏎, loads it back into the sheet: the text, its languages, the translation
+  from the saved copy (no call, nothing spent), the status `ENGLISH → RUSSIAN · SAVED 11 NOV`.
+- Keys while its search box has them: ↑↓ move · ⏎ load · ⌫ delete (with words in the search
+  box, ⌘⌫) · ⌘C copy the row's translation (unless words in the search box are selected) · ⎋
+  closes the drawer, a second ⎋ the sheet.
+- Kept in `translations.json` beside the clipboard history (`Translate.SavedStore`), saved on every
+  change. Settings › Tools › *Saved translations* (its own page: the Translate page is full)
+  shows how many and **Delete All Saved…**, after asking.
+
 `--translate "text" [--to he] [--model id]` translates through the real call and prints what it
 detected, the target, the time, the price and the answer (exit 1 on trouble).
 `--translate-bench [--runs 10]` times five candidate models on the same phrases: the median,
 the slowest, how many answered, the price, one Hebrew answer each. `--translate-sheet "text" [--to
 he] [--snapshot out.png]` opens the sheet on the real screen, waits for the translation and the
-guess, writes the paper to a PNG and closes, nothing copied. `--translate-film out.mp4` films
+guess, writes the paper to a PNG and closes, nothing copied; with `--drawer` the drawer of saved
+translations is open beside it in the PNG, nothing saved. `--translate-film out.mp4` films
 it offscreen with hand-written answers: the leap, typing, the guess, Russian, the swap, Hebrew,
-the picker's row, the leap home; stills beside it (`-typing`, `-guess`, `-russian`, `-swap`,
-`-hebrew`, `-picker`). With `LEDGELINGS_FAKE_TRANSLATE=1` the flags use the same hand-written
+two translations saved with ⌘D, the drawer (⌘L), a search, one loaded back, one deleted, the
+picker's row, the leap home, printing each step; stills beside it (`-typing`, `-guess`,
+`-russian`, `-swap`, `-hebrew`, `-saved`, `-drawer`, `-drawer-search`, `-loaded`, `-deleted`,
+`-picker`); exit 1 if the saved ones went wrong. With `LEDGELINGS_FAKE_TRANSLATE=1` the flags use the same hand-written
 answers: no key, no network, nothing recorded.
 
 ### 7.15 The Tools screen
@@ -3026,6 +3059,7 @@ falls through to whatever is underneath.
 | Menu / tray: Dictate / Stop Dictating (with `dictationEnabled`) | the same (§7.13) |
 | The translate shortcuts, in any app (`translateShortcut` ⌃⌥T, `translateClipShortcut` ⌃⌥⇧T; Windows Ctrl+Alt+T, Ctrl+Alt+Shift+T) | the Translate sheet (again: closes); the newest copy translated, in the sheet or quietly onto the clipboard (§7.14) |
 | Menu: Translate… (with `translateEnabled`) | the Translate sheet (§7.14.1) |
+| Translate sheet: ⌘D (Windows Ctrl+D), ⌘L (Ctrl+L); in the drawer ↑↓, ⏎, ⌫, ⌘C, ⎋ | save or unsave the translation; the drawer of saved ones; move, load back, delete, copy, close the drawer (§7.14.3) |
 | The read-aloud shortcut, in any app (`readAloudShortcut` ⌃⌥R; Windows Ctrl+Alt+Shift+R) | the Read aloud sheet with the clipboard's text, read at once (again: closes; while it reads, brings it back) (§7.16) |
 | Menu / tray: Read Aloud… / Stop Reading (while it reads) | the Read aloud sheet; ends the reading (§7.16) |
 | A clipboard picker row's loudspeaker, or ⌘R (Windows Ctrl+R) | that row read aloud in the sheet (§7.16) |
@@ -3332,6 +3366,9 @@ An error for want of a model reads as that note, never as a server refusal.
 | translatePickerButton | true | the clipboard picker's translate button and ⌘T |
 | translateKeepInHistory | true | a copied or pasted translation goes into the clipboard history |
 | translateHelperEnabled / translateHelper | true / empty | a creature brings the sheet; which by name, empty: whoever is nearest the middle |
+| translateSavedEnabled | true | saved translations (§7.14.3): the star (⌘D) and the drawer (⌘L); off, neither is there |
+| translateSavedLimit | 500 | 50–5 000, clamped on load: the oldest beyond it are dropped |
+| translateSavedOpenDrawer | false | the drawer of saved translations opens with the sheet |
 | readAloudEnabled | true | Read aloud (§7.16); off, its shortcut is let go, the picker has no button, the menu item hides |
 | readAloudShortcutEnabled / readAloudShortcutKeyCode / readAloudShortcutModifiers | true / R / ⌃⌥ (Windows Ctrl+Alt+Shift+R) | the sheet, as `shortcut` |
 | readAloudFromClipboard / readAloudStartAtOnce | true / true | the sheet opens with the clipboard's text, and reads it at once |

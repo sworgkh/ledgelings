@@ -55,6 +55,8 @@ struct SettingsView: View {
     var readAloud: ReadAloudController? = nil
     /// Start a dive now, from the Diving page.
     var startDive: (() -> Void)? = nil
+    /// The saved translations, for the Translate page's count and Delete all; nil in a test.
+    var savedTranslations: SavedTranslations? = nil
 
     var body: some View {
         HStack(spacing: 0) {
@@ -108,6 +110,7 @@ struct SettingsView: View {
         case .screenshots: ScreenshotSettingsView(settings: settings)
         case .dictation: DictationSettingsView(settings: settings, library: library)
         case .translate: TranslateSettingsView(settings: settings, library: library)
+        case .savedTranslations: SavedTranslationsSettingsView(settings: settings, saved: savedTranslations)
         case .readAloud: ReadAloudSettingsView(settings: settings, voice: voice, library: library, readAloud: readAloud)
         case .tools: ToolsScreenSettingsView(settings: settings)
         case .costs: CostsSettingsView(spend: spend)
@@ -371,6 +374,7 @@ final class SettingsWindowController {
     /// Set once Read aloud is made, before the window first opens.
     var readAloud: ReadAloudController?
     var startDive: (() -> Void)?
+    var savedTranslations: SavedTranslations?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
          reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, clips: ClipBook, send: @escaping (Reminders.Reminder) -> Void,
@@ -402,7 +406,7 @@ final class SettingsWindowController {
             if let first = SettingsIndex.search(search).first { navigation.open(first) }
         }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive, savedTranslations: savedTranslations))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }

@@ -33,6 +33,7 @@ import Testing
         #expect(s.translateModel == "google/gemini-2.5-flash-lite" && s.translateAutocomplete && s.translateAutocompleteModel.isEmpty)
         #expect(s.translateDelayMs == 400 && s.translateLiveLimit == 5_000)
         #expect(s.translatePickerButton && s.translateKeepInHistory && s.translateHelperEnabled && s.translateHelper.isEmpty)
+        #expect(s.translateSavedEnabled && s.translateSavedLimit == 500 && !s.translateSavedOpenDrawer)
 
         s.translateEnabled = false; s.translateShortcutEnabled = false; s.translateClipShortcutEnabled = false
         s.translateShortcut = Shortcut(keyCode: 17, modifiers: [.command, .option])
@@ -41,6 +42,7 @@ import Testing
         s.translateModel = "openai/gpt-4.1-nano"; s.translateAutocomplete = false; s.translateAutocompleteModel = "x/y"
         s.translateDelayMs = 800; s.translateLiveLimit = 9_000
         s.translatePickerButton = false; s.translateKeepInHistory = false; s.translateHelperEnabled = false; s.translateHelper = "Zed"
+        s.translateSavedEnabled = false; s.translateSavedLimit = 1_200; s.translateSavedOpenDrawer = true
         let again = AppSettings(defaults: defaults, keychain: Secrets())
         #expect(!again.translateEnabled && !again.translateShortcutEnabled && !again.translateClipShortcutEnabled)
         #expect(again.translateShortcut == Shortcut(keyCode: 17, modifiers: [.command, .option]) && again.translateClipMode == .quietly)
@@ -48,6 +50,7 @@ import Testing
         #expect(again.translateModel == "openai/gpt-4.1-nano" && !again.translateAutocomplete && again.translateAutocompleteModel == "x/y")
         #expect(again.translateDelayMs == 800 && again.translateLiveLimit == 9_000)
         #expect(!again.translatePickerButton && !again.translateKeepInHistory && !again.translateHelperEnabled && again.translateHelper == "Zed")
+        #expect(!again.translateSavedEnabled && again.translateSavedLimit == 1_200 && again.translateSavedOpenDrawer)
     }
 
     @Test func nonsenseIsClampedOnLoad() {
@@ -56,15 +59,18 @@ import Testing
         defaults.set(10, forKey: "translateDelayMs"); defaults.set(900_000, forKey: "translateLiveLimit")
         defaults.set(["en"], forKey: "translateLanguages"); defaults.set(["en": "en", "xx": "ru", "ru": "he"], forKey: "translateTargets")
         defaults.set("loudly", forKey: "translateClipMode"); defaults.set("  ", forKey: "translateModel")
+        defaults.set(3, forKey: "translateSavedLimit")
         let s = AppSettings(defaults: defaults, keychain: Secrets())
         #expect(s.translateDelayMs == 200 && s.translateLiveLimit == 20_000)
+        #expect(s.translateSavedLimit == 50)
         #expect(s.translateLanguages == ["en", "ru", "he"], "at least two languages")
         #expect(s.translateTargets == ["he": "en", "ru": "he", "en": "ru"], "into itself and unknown languages are dropped")
         #expect(s.translateClipMode == .sheet && s.translateModel == Translate.defaultModel)
     }
 
     @Test func translateIsTheFifthTool() {
-        #expect(SettingsGroup.tools.pages == [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud])
+        #expect(SettingsGroup.tools.pages == [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud])
+        #expect(SettingsPage.named("savedtranslations") == .savedTranslations)
         #expect(SettingsPage.named("translate") == .translate)
     }
 
@@ -82,17 +88,117 @@ import Testing
         #expect(Translate.Button.paste.tooltip(app: "Notes") == "Paste into Notes (⌘⏎)")
     }
 
+    /// The star and the drawer: their keys, their tags in both states, the star filled once saved.
+    @Test func theStarAndTheDrawerSayWhatTheyDo() {
+        Language.$override.withValue(.english) {
+            #expect(Translate.Button.save.key == "⌘D" && Translate.Button.savedList.key == "⌘L")
+            #expect(Translate.Button.save.tooltip() == "Save this translation (⌘D)")
+            #expect(Translate.Button.save.tooltip(on: true) == "Remove from saved (⌘D)")
+            #expect(Translate.Button.savedList.tooltip() == "Show saved translations (⌘L)")
+            #expect(Translate.Button.savedList.tooltip(on: true).contains("⌘L"))
+            #expect(Translate.Button.copySaved.tooltip() == "Copy this translation (⌘C)")
+            #expect(Translate.Button.deleteSaved.tooltip() == "Delete from saved (⌫)")
+        }
+        let filled = Translate.Button.save.icon(on: true)
+        #expect(filled != Translate.Button.save.icon && filled.count == 11 && filled.allSatisfy { $0.count == 11 })
+        #expect(filled.joined().filter { $0 == "#" }.count > Translate.Button.save.icon.joined().filter { $0 == "#" }.count)
+        #expect(Translate.Button.copy.icon(on: true) == Translate.Button.copy.icon, "only the star changes")
+        for button in Translate.Button.allCases {
+            Language.$override.withValue(.russian) { #expect(button.tooltip(on: true).contains(button.key)) }
+        }
+    }
+
+    @Test func theKeysAreFreeInTheSheet() {
+        let (defaults, s) = fresh()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let (sheet, _, _) = sheetWithBook(s)
+        // ⌘D and ⌘L were not taken before: the text box only ever saw them.
+        #expect(sheet.key(2, .command), "⌘D is the sheet's")
+        #expect(sheet.key(37, .command), "⌘L is the sheet's")
+        #expect(!sheet.key(2, []), "a plain d is typed")
+    }
+
     // MARK: The sheet, with a stand-in model
 
     func sheet(_ s: AppSettings, answer: @escaping (String, String) -> String = { _, user in "[ru] \(user)" }) -> (TranslateSheetController, ClipBook) {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("\(name)-\(UUID().uuidString)")
+        let (sheet, clips, _) = sheetWithBook(s, answer: answer)
+        return (sheet, clips)
+    }
+
+    func sheetWithBook(_ s: AppSettings, directory: URL? = nil, answer: @escaping (String, String) -> String = { _, user in "[ru] \(user)" },
+                       calls: ((String) -> Void)? = nil) -> (TranslateSheetController, ClipBook, SavedTranslations) {
+        let dir = directory ?? FileManager.default.temporaryDirectory.appendingPathComponent("\(name)-\(UUID().uuidString)")
         let clips = ClipBook(directory: dir, secrets: Secrets())
+        let saved = SavedTranslations(directory: dir)
         let translator = Translator(settings: s, spend: SpendLedger(directory: dir))
-        translator.fake = { system, user in ChatClient.Answer(text: answer(system, user), usage: nil) }
-        let sheet = TranslateSheetController(settings: s, translator: translator, clips: clips, watcher: { nil })
+        translator.fake = { system, user in calls?(user); return ChatClient.Answer(text: answer(system, user), usage: nil) }
+        let sheet = TranslateSheetController(settings: s, translator: translator, clips: clips, saved: saved, watcher: { nil })
         sheet.model.hasModel = true
         sheet.model.languages = s.translateLanguagesOn
-        return (sheet, clips)
+        return (sheet, clips, saved)
+    }
+
+    // MARK: Saved translations
+
+    @Test func theStarSavesTheTranslationOnShowAndTheDrawerLoadsItBackForFree() async {
+        let (defaults, s) = fresh()
+        defer { defaults.removePersistentDomain(forName: name) }
+        s.translateDelayMs = 200
+        s.translateAutocomplete = false
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("\(name)-\(UUID().uuidString)")
+        var sent: [String] = []
+        let (sheet, _, saved) = sheetWithBook(s, directory: dir, calls: { sent.append($0) })
+        let m = sheet.model
+        m.appName = "Notes"
+        sheet.act(.save)
+        #expect(saved.book.isEmpty, "nothing translated yet: only a beep")
+        m.typed("Good morning", cursorAtEnd: true)
+        await waitFor { m.state == .done }
+        #expect(!m.isSaved)
+        #expect(sheet.key(2, .command), "⌘D")
+        #expect(m.isSaved && saved.book.count == 1)
+        let first = saved.book.entries[0]
+        #expect(first.text == "Good morning" && first.from == "en" && first.translation == "[ru] Good morning" && first.to == "ru" && first.app == "Notes")
+        m.typed("Good night", cursorAtEnd: true)
+        #expect(!m.isSaved, "a new text is not saved")
+        await waitFor { m.state == .done && m.result == "[ru] Good night" }
+        sheet.act(.save)
+        #expect(saved.book.entries.map(\.text) == ["Good night", "Good morning"], "newest first")
+        sheet.act(.save)
+        #expect(!m.isSaved && saved.book.count == 1, "pressed again: removed")
+        sheet.act(.save)
+
+        // The drawer: ⌘L, a search, ⏎ loads, ⌫ deletes, ⎋ closes it, a second ⎋ the sheet.
+        #expect(sheet.key(37, .command))
+        #expect(m.drawerOpen && m.selectedSaved == saved.book.entries[0].id)
+        m.query = "morning"
+        #expect(m.shownSaved.map(\.text) == ["Good morning"] && m.selectedSaved == first.id)
+        let calls = sent.count
+        #expect(sheet.key(36, []), "⏎ loads it")
+        #expect(m.text == "Good morning" && m.result == "[ru] Good morning" && m.state == .done && m.isSaved)
+        #expect(m.target == Translate.russian && m.source == Translate.english)
+        try? await Task.sleep(for: .milliseconds(400))
+        #expect(sent.count == calls, "loaded from the saved copy: no call")
+        m.query = ""
+        sheet.key(125, [])  // ↓
+        #expect(m.selectedSaved == first.id)
+        #expect(sheet.key(51, []), "⌫ deletes the chosen row")
+        #expect(saved.book.entries.map(\.text) == ["Good night"] && m.selectedSaved == saved.book.entries.first?.id)
+        #expect(sheet.key(53, []), "⎋")
+        #expect(!m.drawerOpen)
+        #expect(SavedTranslations(directory: dir).book.entries.map(\.text) == ["Good night"], "kept on disk")
+    }
+
+    @Test func offMeansNoStarAndNoDrawer() {
+        let (defaults, s) = fresh()
+        defer { defaults.removePersistentDomain(forName: name) }
+        s.translateSavedEnabled = false
+        let (sheet, _, saved) = sheetWithBook(s)
+        sheet.model.savedOn = false
+        sheet.model.text = "Good morning"; sheet.model.result = "Доброе утро"; sheet.model.state = .done; sheet.model.detected = Translate.english
+        sheet.act(.save)
+        sheet.act(.savedList)
+        #expect(saved.book.isEmpty && !sheet.model.drawerOpen)
     }
 
     func waitFor(_ ok: () -> Bool) async {

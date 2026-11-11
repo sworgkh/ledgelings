@@ -19,12 +19,12 @@ final class TranslateController {
         didSet { translator.trace = trace; sheet.trace = trace }
     }
 
-    init(settings: AppSettings, spend: SpendLedger, clips: ClipBook, watcher: @escaping () -> ClipWatcher?, helper: @escaping () -> ClipHelping?) {
+    init(settings: AppSettings, spend: SpendLedger, clips: ClipBook, saved: SavedTranslations, watcher: @escaping () -> ClipWatcher?, helper: @escaping () -> ClipHelping?) {
         self.settings = settings
         self.clips = clips
         self.watcher = watcher
         translator = Translator(settings: settings, spend: spend)
-        sheet = TranslateSheetController(settings: settings, translator: translator, clips: clips, watcher: watcher, helper: helper)
+        sheet = TranslateSheetController(settings: settings, translator: translator, clips: clips, saved: saved, watcher: watcher, helper: helper)
     }
 
     /// Takes both shortcuts from every app, following the settings.
