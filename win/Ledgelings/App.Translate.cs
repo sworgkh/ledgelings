@@ -15,13 +15,14 @@ public sealed partial class App
 {
     private Translator? translator;
     private TranslateSheetController? translateSheet;
+    private SavedTranslations? savedTranslations;
     private GlobalHotkey? translateKey, translateClipKey;
 
     private void StartTranslate()
     {
         if (settings is null || spend is null || clipBook is null) return;
         translator = new Translator(settings, spend);
-        translateSheet = new TranslateSheetController(settings, translator, clipBook, () => colony);
+        translateSheet = new TranslateSheetController(settings, translator, clipBook, savedTranslations ??= new SavedTranslations(), () => colony);
         clipPicker?.UseTranslator(TranslateRow, (text, into) => translateSheet?.Show(text, into), () => settings.TranslateEnabled && settings.TranslatePickerButton);
         settings.PropertyChanged += (_, e) =>
         {

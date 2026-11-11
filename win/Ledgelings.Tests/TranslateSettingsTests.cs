@@ -128,4 +128,68 @@ public class TranslateSettingsTests
         Assert.Contains("K · Ctrl+Alt+K", Languages.With(Language.English, () => ActionsLinks.ToolsTooltip("Ctrl+Alt+K")));
         Assert.DoesNotContain(ActionsLink.Tools, ActionsLinks.Footer);
     }
+
+    // Saved translations (SPEC §7.14.3)
+
+    [Fact]
+    public void SavedTranslationsDefaultsAndAChangeSurviveARelaunch()
+    {
+        var store = new MemorySettingsStore();
+        var secrets = new MemorySecretStore();
+        var s = new AppSettings(store, secrets);
+        Assert.True(s.TranslateSavedEnabled && s.TranslateSavedLimit == 500 && !s.TranslateSavedOpenDrawer);
+        s.TranslateSavedEnabled = false; s.TranslateSavedLimit = 1_200; s.TranslateSavedOpenDrawer = true;
+        var again = new AppSettings(store, secrets);
+        Assert.True(!again.TranslateSavedEnabled && again.TranslateSavedLimit == 1_200 && again.TranslateSavedOpenDrawer);
+        store.Set("translateSavedLimit", 3);
+        Assert.Equal(50, new AppSettings(store, secrets).TranslateSavedLimit);
+    }
+
+    [Fact]
+    public void TheStarAndTheDrawerWorkByTheirKeysAndLoadingCostsNoCall()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "ledgelings-saved-" + Guid.NewGuid());
+        var s = new AppSettings(new MemorySettingsStore(), new MemorySecretStore());
+        var calls = 0;
+        var translator = new Translator(s, new SpendLedger(dir)) { Fake = (_, text) => { calls++; return Task.FromResult(new ChatClient.Answer("[ru] " + text, null)); } };
+        var saved = new SavedTranslations(dir);
+        var now = DateTimeOffset.Now;
+        saved.Change(b =>
+        {
+            b.Save(T.Saved.New("Good morning", "en", "Доброе утро", "ru", now.AddMinutes(-2), "Notepad"), 500);
+            b.Save(T.Saved.New("Не забудь купить молоко", "ru", "Don't forget to buy milk", "en", now.AddMinutes(-1)), 500);
+        });
+        var sheet = new TranslateSheetController(s, translator, new ClipBook(dir, new MemorySecretStore()), saved, () => null);
+        sheet.Act(T.Button.Save);
+        Assert.Equal(2, saved.Book.Count);                     // nothing translated yet: only a beep
+
+        Assert.True(sheet.Key(System.Windows.Input.Key.L, System.Windows.Input.ModifierKeys.Control));
+        Assert.True(sheet.DrawerOpen);
+        Assert.Equal(saved.Book.Entries[0].Id, sheet.SelectedSaved);   // newest first
+        sheet.Query = "morning";
+        Assert.Equal(new[] { "Good morning" }, sheet.ShownSaved.Select(e => e.Text));
+        Assert.True(sheet.Key(System.Windows.Input.Key.Enter, System.Windows.Input.ModifierKeys.None));
+        Assert.Equal("Good morning", sheet.Text);
+        Assert.Equal("Доброе утро", sheet.Result);
+        Assert.Equal(TranslateSheetController.State.Done, sheet.Now);
+        Assert.True(sheet.IsSaved);
+        Assert.Equal(T.Russian, sheet.Target);
+        Assert.Equal(0, calls);                                // from the saved copy: no call
+
+        Assert.True(sheet.Key(System.Windows.Input.Key.D, System.Windows.Input.ModifierKeys.Control));
+        Assert.False(sheet.IsSaved);                           // pressed again: removed
+        Assert.Single(saved.Book.Entries);
+        sheet.Act(T.Button.Save);
+        Assert.True(sheet.IsSaved);
+        Assert.Equal("Good morning", saved.Book.Entries[0].Text);
+
+        sheet.Query = "";
+        Assert.True(sheet.Key(System.Windows.Input.Key.Down, System.Windows.Input.ModifierKeys.None));
+        Assert.Equal("Не забудь купить молоко", sheet.SelectedEntry?.Text);
+        Assert.True(sheet.Key(System.Windows.Input.Key.Delete, System.Windows.Input.ModifierKeys.None));
+        Assert.Equal(new[] { "Good morning" }, saved.Book.Entries.Select(e => e.Text));
+        Assert.True(sheet.Key(System.Windows.Input.Key.Escape, System.Windows.Input.ModifierKeys.None));
+        Assert.False(sheet.DrawerOpen);                        // Esc closes the drawer first
+        Assert.Equal(new[] { "Good morning" }, new SavedTranslations(dir).Book.Entries.Select(e => e.Text));
+    }
 }

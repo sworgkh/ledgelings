@@ -1024,6 +1024,11 @@ Kept in `translations.json` beside the clipboard history.
 
 **Right column**: how many are saved, and **Delete All Saved…**, which asks first.
 
+On Windows since 0.69.0, the same, keys the Windows way round: **Ctrl+D** saves, **Ctrl+L** opens the
+drawer; in it Up and Down move, Enter loads, **Delete** deletes (Backspace too while the search is empty),
+Ctrl+C copies, Esc closes it. The same `translations.json` format, beside the clipboard history in
+`%APPDATA%`. The page is one column, and Delete All asks in a message box.
+
 ### Read aloud
 
 On Windows since 0.63.0, the same sheet and presets, keys the Windows way round: **Ctrl+Alt+Shift+R**

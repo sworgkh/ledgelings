@@ -176,6 +176,8 @@ core tests are the Swift tests line for line.
 - **Translate** is **Ctrl+Alt+T**, the last copy **Ctrl+Alt+Shift+T**: the Mac's sheet, keys the
   Windows way round (Clear is Ctrl+Shift+Backspace; the picker's next language Ctrl+Tab). The
   sheet takes the keyboard like the picker. The Mac's `--translate*` flags have no Windows twin.
+  **Ctrl+D** saves a translation (the star), **Ctrl+L** slides out the drawer of saved ones beside the
+  paper (Delete deletes a row); Tools › *Saved translations* keeps how many (`translations.json`).
 - **Read aloud** is **Ctrl+Alt+Shift+R** (Ctrl+Alt+R is already Add a Reminder): the Mac's sheet
   and presets, keys the Windows way round (Ctrl+. stops, Ctrl+S saves, Ctrl+Shift+C copies the
   file, Ctrl+- / Ctrl+= the pace, Ctrl+R the next reader). Windows' own voices are SAPI rendered
@@ -239,21 +241,21 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate, ReadAloud, Tools, SettingsPages,
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate (+ .Saved), ReadAloud, Tools, SettingsPages,
                            Deeds (+ .Lines), Bonds (+ .Storyline .Memory .Seed)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
                                      .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard .Deeds .Memory)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
-                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ReadAloud, .ToolsScreen), GlobalHotkey, ShortcutKeys, Program
+                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ReadAloud, .ToolsScreen), SavedTranslations, GlobalHotkey, ShortcutKeys, Program
                            AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard .Dictation .Translate .ReadAloud .ToolsScreen),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), Translator, ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape, ReadAloudPlayer, ReadAloudTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore, Native/ClipboardNative
-                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .ReadAloud .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
+                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .SavedTranslations .ReadAloud .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
                            ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), TranslateSheet, ReadAloudSheet, ToolsScreen, PixelGlyph, SnippetsWindow, RelationshipsWindow
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests

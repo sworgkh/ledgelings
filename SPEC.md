@@ -2475,6 +2475,8 @@ As Google Translate keeps its starred translations. With `translateSavedEnabled`
 - Kept in `translations.json` beside the clipboard history (`Translate.SavedStore`), saved on every
   change. Settings › Tools › *Saved translations* (its own page: the Translate page is full)
   shows how many and **Delete All Saved…**, after asking.
+- Windows (since 0.69.0): Ctrl+D and Ctrl+L, a `ToolTip` on every picture; in the drawer Delete deletes
+  (`Delete from saved (Delete)`), Backspace too while the search is empty. The same file format.
 
 `--translate "text" [--to he] [--model id]` translates through the real call and prints what it
 detected, the target, the time, the price and the answer (exit 1 on trouble).

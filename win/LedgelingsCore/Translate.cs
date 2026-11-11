@@ -15,7 +15,7 @@ namespace Ledgelings.Core;
 /// what the model is told, what is never sent at all (a protected snippet, a copy of its words), and the
 /// cache that answers retyping for free.
 /// </summary>
-public static class Translate
+public static partial class Translate
 {
     // Languages
 
@@ -393,6 +393,8 @@ public static class Translate
         Swap, Copy, Paste, Clear,
         /// <summary>The clipboard picker's row: translate it, open it in the sheet.</summary>
         Translate, OpenSheet,
+        /// <summary>Saved translations: the star that keeps this one, the drawer of them, and each row's copy and bin.</summary>
+        Save, SavedList, CopySaved, DeleteSaved,
     }
 
     /// <summary>The key, as Windows writes it.</summary>
@@ -404,12 +406,21 @@ public static class Translate
         // Ctrl+Backspace deletes a word in every Windows text box: Clear takes Shift too.
         Button.Clear => "Ctrl+Shift+Backspace",
         Button.Translate => "Ctrl+T",
+        Button.Save => "Ctrl+D",
+        Button.SavedList => "Ctrl+L",
+        Button.CopySaved => "Ctrl+C",
+        Button.DeleteSaved => "Delete",
         _ => "Ctrl+Shift+T",
     };
 
-    /// <summary>What it does and its key. <paramref name="app"/> is the app a paste goes into, by name.</summary>
-    public static string Tooltip(this Button button, string? app = null) => button switch
+    /// <summary>What it does and its key. <paramref name="app"/> is the app a paste goes into, by name;
+    /// <paramref name="on"/>: the translation is saved already (the star), or the drawer is open.</summary>
+    public static string Tooltip(this Button button, string? app = null, bool on = false) => button switch
     {
+        Button.Save => on ? L10n.Tr("Remove from saved (%@)", button.Key()) : L10n.Tr("Save this translation (%@)", button.Key()),
+        Button.SavedList => on ? L10n.Tr("Hide saved translations (%@)", button.Key()) : L10n.Tr("Show saved translations (%@)", button.Key()),
+        Button.CopySaved => L10n.Tr("Copy this translation (%@)", button.Key()),
+        Button.DeleteSaved => L10n.Tr("Delete from saved (%@)", button.Key()),
         Button.Swap => L10n.Tr("Swap languages (%@)", button.Key()),
         Button.Copy => L10n.Tr("Copy the translation (%@)", button.Key()),
         Button.Paste => app is null ? L10n.Tr("Paste into the app you were in (%@)", button.Key()) : L10n.Tr("Paste into %@ (%@)", app, button.Key()),
@@ -418,8 +429,21 @@ public static class Translate
         _ => L10n.Tr("Open in the Translate sheet (%@)", button.Key()),
     };
 
+    /// <summary>The picture as it stands: the star filled once the translation is saved.</summary>
+    public static IReadOnlyList<string> Icon(this Button button, bool on) => button == Button.Save && on ? FilledStar : button.Icon();
+
+    public static readonly IReadOnlyList<string> FilledStar = new[] { ".....#.....", "....###....", "....###....", "###########", ".#########.", "..#######..", "..#######..", ".#########.", ".####.####.", "####...####", "###.....###" };
+
     public static IReadOnlyList<string> Icon(this Button button) => button switch
     {
+        // A star's outline; filled once saved (FilledStar).
+        Button.Save => new[] { ".....#.....", "....#.#....", "....#.#....", "####...####", ".#.......#.", "..#.....#..", "..#.....#..", ".#...#...#.", ".#..#.#..#.", "#..#...#..#", "###.....###" },
+        // A page with a list on it: a dot and a line, four times.
+        Button.SavedList => new[] { "#########..", "#.......#..", "#.#.###.#..", "#.......#..", "#.#.###.#..", "#.......#..", "#.#.###.#..", "#.......#..", "#.#.###.#..", "#.......#..", "#########.." },
+        // Two pages with lines, one over the other.
+        Button.CopySaved => new[] { "..######...", "..#....#...", "######.#...", "#....#.#...", "#.##.#.#...", "#....###...", "#.##.#.....", "#....#.....", "######.....", "...........", "..........." },
+        // A bin: its lid with a handle, a body with ribs.
+        Button.DeleteSaved => new[] { "....###....", "###########", ".#########.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#########.", "...........", "..........." },
         // Two letter squares, one over the other: A and a line of script.
         Button.Translate => new[] { "######.....", "#.##.#.....", "#.##.#.....", "#....#.....", "#.##.######", "######....#", ".....#.#..#", ".....#.##.#", ".....#.#.##", ".....#....#", ".....######" },
         Button.Swap => new[] { "...#.......", "..##.......", ".#########.", "..##.......", "...#.......", "...........", ".......#...", ".......##..", ".#########.", ".......##..", ".......#..." },

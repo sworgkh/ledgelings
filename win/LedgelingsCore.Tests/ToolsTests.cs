@@ -60,7 +60,7 @@ public class ToolsTests
     [Fact]
     public void ThePagesSitUnderTheMacsFiveGroups()
     {
-        Assert.Equal(new[] { SettingsPage.Tools, SettingsPage.Reminders, SettingsPage.Clipboard, SettingsPage.Dictation, SettingsPage.Translate, SettingsPage.ReadAloud },
+        Assert.Equal(new[] { SettingsPage.Tools, SettingsPage.Reminders, SettingsPage.Clipboard, SettingsPage.Dictation, SettingsPage.Translate, SettingsPage.SavedTranslations, SettingsPage.ReadAloud },
                      SettingsGroup.Tools.Pages());
         Assert.Equal(new[] { SettingsPage.Costs, SettingsPage.Chats }, SettingsGroup.MoneyAndHistory.Pages());
         Assert.Equal(SettingsPages.All.Count, SettingsPages.Groups.Sum(g => g.Pages().Count));

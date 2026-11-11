@@ -10,7 +10,7 @@ public enum SettingsPage
     Creatures, Actions, Sprites, Beds, Flowers, Calendar,
     Chases, Play, BallGames, Surfing, Diving,
     Talk, Voice, Bonds, Relationships, Twists,
-    Tools, Reminders, Clipboard, Dictation, Translate, ReadAloud,
+    Tools, Reminders, Clipboard, Dictation, Translate, SavedTranslations, ReadAloud,
     Costs, Chats,
 }
 
@@ -28,6 +28,7 @@ public static class SettingsPages
         SettingsPage.BallGames => "Ball games",
         SettingsPage.Tools => "Tools screen",
         SettingsPage.ReadAloud => "Read aloud",
+        SettingsPage.SavedTranslations => "Saved translations",
         SettingsPage.Twists => "Plot twists",
         _ => page.ToString(),
     };
