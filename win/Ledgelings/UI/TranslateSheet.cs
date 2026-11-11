@@ -21,7 +21,8 @@ namespace Ledgelings.UI;
 ///
 /// Keys, Windows' way round: Enter copies the translation, Ctrl+Enter pastes it into the app you were in,
 /// Shift+Enter is a new line, Tab takes the guess, Ctrl+S swaps, Ctrl+1–4 the source (1 Detect), Alt+1–3 the
-/// target, Ctrl+Shift+Backspace clears, Esc closes. Like the picker, the sheet takes the keyboard (Windows gives
+/// target, Ctrl+D saves or unsaves the translation, Ctrl+L opens the drawer of saved ones beside the paper (SPEC
+/// §7.14.3), Ctrl+Shift+Backspace clears, Esc closes (the drawer first). Like the picker, the sheet takes the keyboard (Windows gives
 /// it only to the active window) and puts the window you were in back in front before Ctrl+V is pressed for it.
 /// A newer keystroke never cancels a call: the answer to old text is only dropped (AGENTS rule 1).
 /// </summary>
@@ -35,6 +36,8 @@ public sealed class TranslateSheetController
     internal AppSettings Settings => settings;
     private readonly Translator translator;
     private readonly ClipBook book;
+    /// <summary>The saved translations, behind the star (Ctrl+D) and in the drawer (Ctrl+L).</summary>
+    internal SavedTranslations Saved { get; }
     private readonly Func<Colony?> colony;
     private TranslateSheetWindow? window;
     private IntPtr previous;
@@ -67,11 +70,30 @@ public sealed class TranslateSheetController
 
     public Action<string>? Trace { get; set; }
 
-    public TranslateSheetController(AppSettings settings, Translator translator, ClipBook book, Func<Colony?> colony)
+    // The drawer of saved translations.
+    /// <summary>Off in the settings: no star, no drawer.</summary>
+    public bool SavedOn { get; private set; } = true;
+    /// <summary>The translation on show is saved: the star is filled.</summary>
+    public bool IsSaved { get; private set; }
+    public bool DrawerOpen { get; private set; }
+    /// <summary>Its search box has the keys; set by the box getting or losing them, or by Ctrl+L.</summary>
+    internal bool DrawerHasKeys { get; set; }
+    private string query = "";
+    public string Query
+    {
+        get => query;
+        set { if (query == value) return; query = value; SelectedSaved = ShownSaved.FirstOrDefault()?.Id; window?.RedrawDrawer(); }
+    }
+    public Guid? SelectedSaved { get; internal set; }
+    public List<T.Saved> ShownSaved => Saved.Book.Search(query);
+    public T.Saved? SelectedEntry => SelectedSaved is { } id ? Saved.Book.Entries.FirstOrDefault(e => e.Id == id) : null;
+
+    public TranslateSheetController(AppSettings settings, Translator translator, ClipBook book, SavedTranslations saved, Func<Colony?> colony)
     {
         this.settings = settings;
         this.translator = translator;
         this.book = book;
+        Saved = saved;
         this.colony = colony;
     }
 
@@ -101,6 +123,15 @@ public sealed class TranslateSheetController
         Text = text ?? "";
         Result = Guess = Status = "";
         Now = State.Idle;
+        SavedOn = settings.TranslateSavedEnabled;
+        Saved.Prune(settings.TranslateSavedLimit);
+        RefreshSaved();
+        if (window is null)
+        {
+            query = "";
+            DrawerOpen = SavedOn && settings.TranslateSavedOpenDrawer;
+            DrawerHasKeys = false;
+        }
         if (window is not null) { window.SetText(Text); Edited(now: true); return; }
         var monitor = WindowPlacer.SheetMonitor(WindowPlaces.Window.Translate, settings, ClipPickerController.Screen(caret, previous));
         window = new TranslateSheetWindow(this, monitor);
@@ -120,6 +151,7 @@ public sealed class TranslateSheetController
         else if (leap is double w) After(w, () => window?.Unfold(ClipHelper.UnfoldSeconds / settings.ClipAnimationSpeed, true));
         else window.Unfold(ClipHelper.UnfoldSeconds / settings.ClipAnimationSpeed, false);
         if (text is not null) Edited(now: true); else window.Redraw();
+        if (DrawerOpen) { window.Slide(open: true, seconds: 0); Trace?.Invoke($"drawer open with the sheet on the {window.DrawerSide.ToString().ToLowerInvariant()}, {Saved.Book.Count} saved"); }
     }
 
     public void Close() => Close(putBack: true);
@@ -138,6 +170,7 @@ public sealed class TranslateSheetController
     {
         generation++;
         wait?.Stop();
+        DrawerOpen = DrawerHasKeys = false;
         if (helped) { colony()?.ClipHelperMoodTo(Colony.ClipHelperMood.Calm); colony()?.ClipHelperGoHome(); }
         helped = false;
         Trace?.Invoke("translate close");
@@ -158,9 +191,13 @@ public sealed class TranslateSheetController
     internal bool Key(Key key, ModifierKeys modifiers)
     {
         bool ctrl = modifiers.HasFlag(ModifierKeys.Control), alt = modifiers.HasFlag(ModifierKeys.Alt), shift = modifiers.HasFlag(ModifierKeys.Shift);
+        if (DrawerOpen && DrawerHasKeys && DrawerKey(key, ctrl)) return true;
         switch (key)
         {
-            case System.Windows.Input.Key.Escape: Close(); return true;
+            // The drawer closes first, the sheet after.
+            case System.Windows.Input.Key.Escape: if (DrawerOpen) ToggleDrawer(); else Close(); return true;
+            case System.Windows.Input.Key.D when ctrl && !alt && !shift: Act(T.Button.Save); return true;
+            case System.Windows.Input.Key.L when ctrl && !alt && !shift: Act(T.Button.SavedList); return true;
             case System.Windows.Input.Key.Enter:
                 if (shift) return false;
                 Act(ctrl ? T.Button.Paste : T.Button.Copy);
@@ -178,6 +215,38 @@ public sealed class TranslateSheetController
                 return false;
             default: return false;
         }
+    }
+
+    /// <summary>In the drawer: Up and Down move, Enter loads, Delete deletes (Backspace too while the search is empty),
+    /// Ctrl+C copies the row's translation unless words in the search box are selected.</summary>
+    private bool DrawerKey(Key key, bool ctrl)
+    {
+        switch (key)
+        {
+            case System.Windows.Input.Key.Down: Step(1); return true;
+            case System.Windows.Input.Key.Up: Step(-1); return true;
+            case System.Windows.Input.Key.Enter:
+                if (SelectedEntry is { } row) Load(row); else System.Media.SystemSounds.Beep.Play();
+                return true;
+            case System.Windows.Input.Key.Delete when ctrl || query.Length == 0:
+            case System.Windows.Input.Key.Back when query.Length == 0:
+                Act(T.Button.DeleteSaved);
+                return true;
+            case System.Windows.Input.Key.C when ctrl && !(window?.SearchHasSelection ?? false):
+                Act(T.Button.CopySaved);
+                return true;
+            default: return false;
+        }
+    }
+
+    internal void Step(int by)
+    {
+        var rows = ShownSaved;
+        if (rows.Count == 0) { System.Media.SystemSounds.Beep.Play(); return; }
+        var at = rows.FindIndex(e => e.Id == SelectedSaved);
+        var next = at < 0 ? (by > 0 ? 0 : rows.Count - 1) : at + by;
+        SelectedSaved = rows[Math.Clamp(next, 0, rows.Count - 1)].Id;
+        window?.RedrawDrawer();
     }
 
     /// <summary>Ctrl+1 Detect, Ctrl+2… each language on.</summary>
@@ -216,8 +285,99 @@ public sealed class TranslateSheetController
                 window?.SetText("");
                 Edited(now: true);
                 break;
+            case T.Button.Save: ToggleSave(); break;
+            case T.Button.SavedList: ToggleDrawer(); break;
+            case T.Button.CopySaved:
+                if (SelectedEntry is { } copied) CopySaved(copied); else System.Media.SystemSounds.Beep.Play();
+                break;
+            case T.Button.DeleteSaved:
+                if (SelectedEntry is { } gone) RemoveSaved(gone); else System.Media.SystemSounds.Beep.Play();
+                break;
         }
     }
+
+    // MARK: Saved translations
+
+    /// <summary>The star: the translation on show is saved, or no longer. Only a finished one; else a beep, as copy does.</summary>
+    internal void ToggleSave()
+    {
+        if (!SavedOn || Now != State.Done || Result.Length == 0 || Source is not { } source) { System.Media.SystemSounds.Beep.Play(); return; }
+        var target = ResultLanguage ?? Target;
+        var now = Saved.Toggle(T.Saved.New(Text, source.Code, Result, target.Code, DateTimeOffset.Now, AppName), settings.TranslateSavedLimit);
+        RefreshSaved();
+        window?.Redraw();
+        Trace?.Invoke($"{(now ? "saved" : "unsaved")} {source.Code}→{target.Code}: {Short(Text)} ({Saved.Book.Count} saved)");
+    }
+
+    /// <summary>The drawer of saved translations slides out of the paper's side, or back in.</summary>
+    internal void ToggleDrawer()
+    {
+        if (!SavedOn) { System.Media.SystemSounds.Beep.Play(); return; }
+        DrawerOpen = !DrawerOpen;
+        DrawerHasKeys = DrawerOpen;
+        if (DrawerOpen)
+        {
+            query = "";
+            RefreshSaved();
+            SelectedSaved = ShownSaved.FirstOrDefault()?.Id;
+        }
+        window?.Slide(DrawerOpen, 0.22);
+        Trace?.Invoke(DrawerOpen ? $"drawer open on the {(window?.DrawerSide ?? T.DrawerSide.Right).ToString().ToLowerInvariant()}, {Saved.Book.Count} saved" : "drawer closed");
+    }
+
+    /// <summary>A saved translation back in the sheet: its text, languages and translation, from the saved copy; no call.</summary>
+    internal void Load(T.Saved entry)
+    {
+        if (T.Language(entry.From) is not { } from || T.Language(entry.To) is not { } to) { System.Media.SystemSounds.Beep.Play(); return; }
+        generation++;
+        wait?.Stop();
+        Text = entry.Text;
+        window?.SetText(entry.Text);
+        Detected = T.Detect(T.Protect(entry.Text).Text, Languages);
+        SourceChoice = Detected == from ? null : from;
+        TargetChoice = to;
+        Guess = "";
+        Result = entry.Translation;
+        ResultLanguage = to;
+        Now = State.Done;
+        var culture = Ledgelings.Core.Languages.Current.Culture();
+        Status = L10n.Tr("%@ → %@ · saved %@", from.Title, to.Title, T.SavedDate(entry.SavedAt, DateTimeOffset.Now)).ToUpper(culture);
+        SelectedSaved = entry.Id;
+        RefreshSaved();
+        window?.Redraw();
+        Trace?.Invoke($"loaded saved {from.Code}→{to.Code}: {Short(entry.Text)}");
+    }
+
+    /// <summary>A row's translation on the clipboard; the sheet stays.</summary>
+    internal void CopySaved(T.Saved entry)
+    {
+        ClipPaster.Put(new ClipPaster.Item(entry.Translation), plain: true);
+        KeepInHistory(entry.Translation, book, settings);
+        Status = L10n.Tr("Copied the translation");
+        window?.Redraw();
+        Trace?.Invoke("copied saved: " + Short(entry.Translation));
+    }
+
+    /// <summary>A row deleted; the one below it is chosen next.</summary>
+    internal void RemoveSaved(T.Saved entry)
+    {
+        var at = Math.Max(ShownSaved.FindIndex(e => e.Id == entry.Id), 0);
+        Saved.Remove(entry.Id);
+        RefreshSaved();
+        var left = ShownSaved;
+        SelectedSaved = left.Count == 0 ? null : left[Math.Min(at, left.Count - 1)].Id;
+        window?.Redraw();
+        Trace?.Invoke($"deleted saved: {Short(entry.Text)} ({Saved.Book.Count} left)");
+    }
+
+    /// <summary>Whether the translation on show is in the book; a chosen row no longer shown gives way to the first.</summary>
+    private void RefreshSaved()
+    {
+        IsSaved = Now == State.Done && Source is { } source && Saved.Book.Find(Text, source.Code, (ResultLanguage ?? Target).Code) is not null;
+        if (SelectedSaved is { } id && !ShownSaved.Any(e => e.Id == id)) SelectedSaved = ShownSaved.FirstOrDefault()?.Id;
+    }
+
+    private static string Short(string text) => text.Length <= 60 ? text : text[..60];
 
     // MARK: Typing
 
@@ -242,6 +402,7 @@ public sealed class TranslateSheetController
         var mine = ++generation;
         wait?.Stop();
         var text = Text;
+        IsSaved = false;
         Detected = T.Detect(T.Protect(text).Text, Languages);
         if (text.Trim().Length == 0)
         {
@@ -340,6 +501,7 @@ public sealed class TranslateSheetController
             if (SourceChoice is null && TargetChoice == source) status += " · " + L10n.Tr("already in %@", source.Title);
             if (done.MarkersLost) status += " · " + L10n.Tr("links may be changed");
             Status = status;
+            RefreshSaved();
             Mood(Colony.ClipHelperMood.Calm);
             Trace?.Invoke($"translated {source.Code}→{target.Code}: {(done.Text.Length <= 80 ? done.Text : done.Text[..80])}");
         }
@@ -444,7 +606,24 @@ internal sealed class TranslateSheetWindow : Window
     private readonly StackPanel chips = new() { Orientation = Orientation.Horizontal };
     private readonly StackPanel resultButtons = new() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
     private readonly Canvas guessLayer = new() { IsHitTestVisible = false, ClipToBounds = true };
+    private readonly StackPanel topButtons = new() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+    private readonly TextBlock footer = new();
     private bool settingText;
+
+    // The drawer of saved translations: a strip of the same paper behind the sheet, sliding out of its side.
+    public const double DrawerWidth = 360, DrawerTuck = 10;
+    private readonly Border drawerHolder = new() { ClipToBounds = true, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Visibility = Visibility.Collapsed };
+    private readonly TranslateTransform slide = new();
+    private readonly TextBox search = new();
+    private readonly TextBlock searchHint = new(), drawerCount = new();
+    private readonly StackPanel rows = new();
+    private readonly ScrollViewer rowsScroll = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Hidden };
+    private Grid? drawerContent;
+    private bool settingSearch;
+    /// <summary>The side the drawer opens on: the right, unless that monitor has no room for it there.</summary>
+    public T.DrawerSide DrawerSide => T.Side(drag.At.X, TranslateSheetController.SheetWidth, DrawerWidth - DrawerTuck, drag.RoomWidth);
+    /// <summary>Words in the drawer's search box are selected: Ctrl+C copies them, not the row.</summary>
+    public bool SearchHasSelection => search.IsKeyboardFocusWithin && search.SelectionLength > 0;
     /// <summary>On its way out: closing it again would throw.</summary>
     public bool IsClosing { get; private set; }
 
@@ -475,7 +654,12 @@ internal sealed class TranslateSheetWindow : Window
         RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
         paper.Children.Add(image);
         paper.Children.Add(Sheet());
-        Content = new Grid { Children = { paper } };
+        drawerHolder.Child = Drawer();
+        // Clicks on the drawer stay on it: off both papers, a click closes the sheet.
+        drawerHolder.MouseLeftButtonDown += (_, e) => e.Handled = true;
+        Content = new Grid { Children = { drawerHolder, paper } };
+        drag.Placed += PlaceDrawer;
+        PlaceDrawer();
         MouseLeftButtonDown += (_, _) => controller.Close();
         PreviewKeyDown += (_, e) =>
         {
@@ -515,16 +699,175 @@ internal sealed class TranslateSheetWindow : Window
         paper.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromSeconds(seconds)) { EasingFunction = ease });
     }
 
-    /// <summary>The paper as it looks now, for <c>--translate-sheet --snapshot</c>.</summary>
+    /// <summary>The paper as it looks now, with the drawer when it is open, for <c>--translate-sheet --snapshot</c>.</summary>
     public BitmapSource Picture()
     {
         var dpi = VisualTreeHelper.GetDpi(this);
-        var bitmap = new RenderTargetBitmap((int)Math.Round(paper.ActualWidth * dpi.DpiScaleX), (int)Math.Round(paper.ActualHeight * dpi.DpiScaleY),
-                                            dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
-        bitmap.Render(paper);
-        bitmap.Freeze();
-        return bitmap;
+        if (!controller.DrawerOpen || Content is not FrameworkElement room)
+        {
+            var bitmap = new RenderTargetBitmap((int)Math.Round(paper.ActualWidth * dpi.DpiScaleX), (int)Math.Round(paper.ActualHeight * dpi.DpiScaleY),
+                                                dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+            bitmap.Render(paper);
+            bitmap.Freeze();
+            return bitmap;
+        }
+        var whole = new RenderTargetBitmap((int)Math.Round(room.ActualWidth * dpi.DpiScaleX), (int)Math.Round(room.ActualHeight * dpi.DpiScaleY),
+                                           dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+        whole.Render(room);
+        var a = new System.Windows.Rect(drag.At.X, drag.At.Y, TranslateSheetController.SheetWidth, TranslateSheetController.SheetHeight);
+        a.Union(new System.Windows.Rect(drawerHolder.Margin.Left, drawerHolder.Margin.Top, DrawerWidth, drawerHolder.Height));
+        var crop = new Int32Rect((int)Math.Round(a.X * dpi.DpiScaleX), (int)Math.Round(a.Y * dpi.DpiScaleY),
+                                 (int)Math.Round(a.Width * dpi.DpiScaleX), (int)Math.Round(a.Height * dpi.DpiScaleY));
+        var cut = new CroppedBitmap(whole, crop);
+        cut.Freeze();
+        return cut;
     }
+
+    // The drawer
+
+    /// <summary>Beside the paper, a little shorter than it, on the side with room.</summary>
+    private void PlaceDrawer()
+    {
+        var at = drag.At;
+        var x = DrawerSide == T.DrawerSide.Right ? at.X + TranslateSheetController.SheetWidth - DrawerTuck : at.X - DrawerWidth + DrawerTuck;
+        drawerHolder.Width = DrawerWidth;
+        drawerHolder.Height = TranslateSheetController.SheetHeight - 32;
+        drawerHolder.Margin = new Thickness(x, at.Y + 16, 0, 0);
+        if (drawerContent is not null)
+        {
+            var right = DrawerSide == T.DrawerSide.Right;
+            drawerContent.Margin = new Thickness(0);
+            if (drawerContent.Children.Count > 1 && drawerContent.Children[1] is FrameworkElement words)
+                words.Margin = new Thickness(right ? 18 + DrawerTuck : 18, 18, right ? 18 : 18 + DrawerTuck, 16);
+        }
+    }
+
+    /// <summary>Out from under the paper's edge, or back under it; the search box takes the keys while it is out.</summary>
+    public void Slide(bool open, double seconds)
+    {
+        PlaceDrawer();
+        var hidden = DrawerSide == T.DrawerSide.Right ? -DrawerWidth : DrawerWidth;
+        RedrawDrawer();
+        if (open)
+        {
+            drawerHolder.Visibility = Visibility.Visible;
+            settingSearch = true;
+            search.Text = controller.Query;
+            settingSearch = false;
+            search.Focus();
+        }
+        else box.Focus();
+        if (seconds <= 0)
+        {
+            slide.BeginAnimation(TranslateTransform.XProperty, null);
+            slide.X = open ? 0 : hidden;
+            if (!open) drawerHolder.Visibility = Visibility.Collapsed;
+            return;
+        }
+        var move = new DoubleAnimation(open ? hidden : 0, open ? 0 : hidden, TimeSpan.FromSeconds(seconds)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
+        if (!open) move.Completed += (_, _) => { if (!controller.DrawerOpen) drawerHolder.Visibility = Visibility.Collapsed; };
+        slide.BeginAnimation(TranslateTransform.XProperty, move);
+    }
+
+    private UIElement Drawer()
+    {
+        var grid = new Grid { Width = DrawerWidth, Height = TranslateSheetController.SheetHeight - 32, RenderTransform = slide };
+        var image = new Image
+        {
+            Source = Bitmaps.ToSource(ScreenOverlay.PaperImage((int)(DrawerWidth / ReminderNote.Pixel), (int)((TranslateSheetController.SheetHeight - 32) / ReminderNote.Pixel))),
+            Stretch = Stretch.Fill,
+        };
+        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
+        grid.Children.Add(image);
+        var stack = new DockPanel { LastChildFill = true };
+        var top = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+        drawerCount.FontFamily = mono; drawerCount.FontSize = 10; drawerCount.FontWeight = FontWeights.Bold; drawerCount.Foreground = faintInk;
+        DockPanel.SetDock(drawerCount, Dock.Right);
+        top.Children.Add(drawerCount);
+        top.Children.Add(new TextBlock { Text = L10n.Tr("SAVED"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk });
+        DockPanel.SetDock(top, Dock.Top);
+        stack.Children.Add(top);
+
+        search.FontFamily = mono; search.FontSize = 14; search.FontWeight = FontWeights.Heavy; search.Foreground = ink; search.CaretBrush = ink;
+        search.Background = Brushes.Transparent; search.BorderThickness = new Thickness(0);
+        search.TextChanged += (_, _) => { if (!settingSearch) controller.Query = search.Text; searchHint.Visibility = search.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden; };
+        search.GotKeyboardFocus += (_, _) => controller.DrawerHasKeys = true;
+        box.GotKeyboardFocus += (_, _) => controller.DrawerHasKeys = false;
+        searchHint.Text = L10n.Tr("search saved…");
+        searchHint.FontFamily = mono; searchHint.FontSize = 14; searchHint.FontWeight = FontWeights.Heavy; searchHint.Foreground = faintInk; searchHint.IsHitTestVisible = false;
+        var field = new PixelBox { Look = PixelBox.Finish.Well, Child = new Grid { Margin = new Thickness(10, 6, 10, 6), Children = { searchHint, search } }, Margin = new Thickness(0, 0, 0, 8) };
+        DockPanel.SetDock(field, Dock.Top);
+        stack.Children.Add(field);
+
+        var keys = new TextBlock
+        {
+            Text = L10n.Tr("UP DOWN MOVE  ENTER LOAD  CTRL+C COPY  DEL DELETE  ESC CLOSE"),
+            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 6, 40, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        DockPanel.SetDock(keys, Dock.Bottom);
+        stack.Children.Add(keys);
+        rowsScroll.Content = rows;
+        stack.Children.Add(rowsScroll);
+        grid.Children.Add(stack);
+        drawerContent = grid;
+        return grid;
+    }
+
+    /// <summary>The drawer's rows again from the controller.</summary>
+    public void RedrawDrawer()
+    {
+        var c = controller;
+        var shown = c.ShownSaved;
+        drawerCount.Text = c.Query.Length == 0 ? $"{c.Saved.Book.Count}" : $"{shown.Count} / {c.Saved.Book.Count}";
+        rows.Children.Clear();
+        if (shown.Count == 0)
+            rows.Children.Add(new TextBlock
+            {
+                Text = c.Saved.Book.IsEmpty ? L10n.Tr("Nothing saved yet: Ctrl+D saves a translation.") : L10n.Tr("Nothing matches."),
+                FontFamily = mono, FontSize = 11, FontWeight = FontWeights.SemiBold, Foreground = softInk, TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 0),
+            });
+        var now = DateTimeOffset.Now;
+        foreach (var entry in shown)
+        {
+            var chosen = entry.Id == c.SelectedSaved;
+            var row = new StackPanel { Margin = new Thickness(8, 6, 8, 6) };
+            row.Children.Add(Words(entry.Text, entry.From, chosen ? PixelBox.Rim : softInk, FontWeights.SemiBold));
+            row.Children.Add(Words(entry.Translation, entry.To, PixelBox.Rim, FontWeights.Heavy));
+            var tags = new DockPanel { Margin = new Thickness(0, 3, 0, 0) };
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+            buttons.Children.Add(IconButton(T.Button.CopySaved, null, () => c.CopySaved(entry), small: true));
+            buttons.Children.Add(new Border { Width = 4 });
+            buttons.Children.Add(IconButton(T.Button.DeleteSaved, null, () => c.RemoveSaved(entry), small: true));
+            DockPanel.SetDock(buttons, Dock.Right);
+            tags.Children.Add(buttons);
+            var pair = new PixelBox { Look = PixelBox.Finish.Raised, VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock { Text = entry.Pair, FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(6, 2, 6, 2) } };
+            tags.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center,
+                Children = { pair, new TextBlock { Text = T.SavedDate(entry.SavedAt, now), FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold,
+                                                   Foreground = chosen ? PixelBox.Rim : faintInk, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center } },
+            });
+            row.Children.Add(tags);
+            FrameworkElement line = chosen ? new PixelBox { Look = PixelBox.Finish.Chosen, Child = row } : new Border { Background = Brushes.Transparent, Child = row };
+            line.Margin = new Thickness(0, 0, 0, 2);
+            line.Cursor = Cursors.Hand;
+            line.MouseEnter += (_, _) => { if (c.SelectedSaved != entry.Id) { c.SelectedSaved = entry.Id; Dispatcher.BeginInvoke(RedrawDrawer); } };
+            line.MouseLeftButtonUp += (_, e) => { e.Handled = true; c.Load(entry); };
+            rows.Children.Add(line);
+            if (chosen) line.Loaded += (_, _) => line.BringIntoView();
+        }
+    }
+
+    /// <summary>One line of a row, right to left for Hebrew.</summary>
+    private static TextBlock Words(string text, string code, Brush colour, FontWeight weight) => new()
+    {
+        Text = string.Join(" ", text.Split('\n', '\r').Where(l => l.Length > 0)),
+        FontFamily = mono, FontSize = 12, FontWeight = weight, Foreground = colour, TextTrimming = TextTrimming.CharacterEllipsis,
+        FlowDirection = T.Language(code)?.RightToLeft == true ? FlowDirection.RightToLeft : FlowDirection.LeftToRight,
+    };
 
     /// <summary>The text box holds <paramref name="text"/>, the cursor at its end; not reported back as typing.</summary>
     public void SetText(string text)
@@ -538,19 +881,18 @@ internal sealed class TranslateSheetWindow : Window
     private UIElement Sheet()
     {
         var stack = new DockPanel { Margin = new Thickness(27, 24, 27, 20), LastChildFill = true };
-        var top = new TextBlock { Text = L10n.Tr("TRANSLATE"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 8) };
+        var top = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+        DockPanel.SetDock(topButtons, Dock.Right);
+        top.Children.Add(topButtons);
+        top.Children.Add(new TextBlock { Text = L10n.Tr("TRANSLATE"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center });
         DockPanel.SetDock(top, Dock.Top);
         stack.Children.Add(top);
         chips.Margin = new Thickness(0, 0, 0, 8);
         DockPanel.SetDock(chips, Dock.Top);
         stack.Children.Add(chips);
 
-        var footer = new TextBlock
-        {
-            Text = L10n.Tr("ENTER COPY  CTRL+ENTER PASTE  SHIFT+ENTER NEW LINE  TAB GUESS  CTRL+S SWAP  CTRL+1–4 FROM  ALT+1–3 INTO  ESC CLOSE"),
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 8, 60, 0),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        footer.FontFamily = mono; footer.FontSize = 9; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
+        footer.Margin = new Thickness(0, 8, 60, 0); footer.TextTrimming = TextTrimming.CharacterEllipsis;
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
@@ -629,7 +971,17 @@ internal sealed class TranslateSheetWindow : Window
         result.Text = c.Result.Length == 0 ? " " : c.Result;
         result.Foreground = c.Now == TranslateSheetController.State.Done ? ink : softInk;
         result.FlowDirection = c.ResultLanguage?.RightToLeft == true ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        footer.Text = c.SavedOn
+            ? L10n.Tr("ENTER COPY  CTRL+ENTER PASTE  SHIFT+ENTER NEW LINE  TAB GUESS  CTRL+S SWAP  CTRL+1–4 FROM  ALT+1–3 INTO  CTRL+D SAVE  CTRL+L SAVED  ESC CLOSE")
+            : L10n.Tr("ENTER COPY  CTRL+ENTER PASTE  SHIFT+ENTER NEW LINE  TAB GUESS  CTRL+S SWAP  CTRL+1–4 FROM  ALT+1–3 INTO  ESC CLOSE");
+        topButtons.Children.Clear();
+        if (c.SavedOn) topButtons.Children.Add(IconButton(T.Button.SavedList, null, () => c.Act(T.Button.SavedList), on: c.DrawerOpen));
         resultButtons.Children.Clear();
+        if (c.SavedOn)
+        {
+            resultButtons.Children.Add(IconButton(T.Button.Save, null, () => c.Act(T.Button.Save), on: c.IsSaved));
+            resultButtons.Children.Add(new Border { Width = 6 });
+        }
         resultButtons.Children.Add(IconButton(T.Button.Copy, null, () => c.Act(T.Button.Copy)));
         resultButtons.Children.Add(new Border { Width = 6 });
         resultButtons.Children.Add(IconButton(T.Button.Paste, c.AppName, () => c.Act(T.Button.Paste)));
@@ -639,6 +991,7 @@ internal sealed class TranslateSheetWindow : Window
         status.Foreground = c.Now is TranslateSheetController.State.Trouble or TranslateSheetController.State.Refused ? PixelBox.Rim : softInk;
         guess.Text = c.Guess;
         PlaceGuess();
+        if (c.DrawerOpen) RedrawDrawer();
     }
 
     /// <summary>The guess straight after the last letter, as many of its words as fit on the line.</summary>
@@ -688,11 +1041,14 @@ internal sealed class TranslateSheetWindow : Window
     }
 
     /// <summary>One of the translator's pixel buttons: its picture, and its name and key on hover (AGENTS rule 4).</summary>
-    private static FrameworkElement IconButton(T.Button button, string? app, Action click)
+    private static FrameworkElement IconButton(T.Button button, string? app, Action click, bool on = false, bool small = false)
     {
-        var tip = button.Tooltip(app);
-        var picture = PixelGlyph.Image(button.Icon(), inkColour, 2);
-        var face = new PixelBox { Look = PixelBox.Finish.Raised, Child = new Border { Child = picture, Margin = new Thickness(6) }, Cursor = Cursors.Hand, ToolTip = tip };
+        var tip = button.Tooltip(app, on);
+        var picture = PixelGlyph.Image(button.Icon(on), inkColour, 2);
+        // A row's copy and bin are bare pictures, as the picker's row buttons; the sheet's sit in a raised box.
+        FrameworkElement face = small
+            ? new Border { Child = picture, Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, Margin = new Thickness(2) }
+            : new PixelBox { Look = PixelBox.Finish.Raised, Child = new Border { Child = picture, Margin = new Thickness(6) }, Cursor = Cursors.Hand, ToolTip = tip };
         AutomationName(face, tip);
         face.MouseLeftButtonUp += (_, e) => { e.Handled = true; click(); };
         return face;

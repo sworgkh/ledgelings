@@ -7,6 +7,16 @@ public static partial class WindowsStrings
     private static readonly Dictionary<string, string> RuTranslate = new()
     {
         ["In %@ on the clipboard: Ctrl+V pastes it"] = "В буфере на языке «%@»: Ctrl+V вставит",
+        // Saved translations (SPEC §7.14.3)
+        ["ENTER COPY  CTRL+ENTER PASTE  SHIFT+ENTER NEW LINE  TAB GUESS  CTRL+S SWAP  CTRL+1–4 FROM  ALT+1–3 INTO  CTRL+D SAVE  CTRL+L SAVED  ESC CLOSE"] =
+            "ENTER КОПИЯ  CTRL+ENTER ВСТАВИТЬ  SHIFT+ENTER СТРОКА  TAB ПОДСКАЗКА  CTRL+S ПОМЕНЯТЬ  CTRL+1–4 С  ALT+1–3 НА  CTRL+D СОХРАНИТЬ  CTRL+L СОХРАНЁННЫЕ  ESC ЗАКРЫТЬ",
+        ["UP DOWN MOVE  ENTER LOAD  CTRL+C COPY  DEL DELETE  ESC CLOSE"] = "ВВЕРХ ВНИЗ ВЫБОР  ENTER ОТКРЫТЬ  CTRL+C КОПИЯ  DEL УДАЛИТЬ  ESC ЗАКРЫТЬ",
+        ["Nothing saved yet: Ctrl+D saves a translation."] = "Пока ничего не сохранено: Ctrl+D сохраняет перевод.",
+        ["Kept on this computer"] = "Хранятся на этом компьютере",
+        ["Ctrl+D in the sheet saves the translation on show, as a star does; Ctrl+L opens the drawer of saved ones beside the sheet, to search, load back, copy or delete. Kept on this computer; the oldest go beyond the number above. Loading one back costs nothing."] =
+            "Ctrl+D в листе сохраняет показанный перевод, как звёздочка; Ctrl+L открывает рядом с листом ящик сохранённых: искать, открыть снова, скопировать или удалить. Хранятся на этом компьютере; сверх числа выше уходят самые старые. Открыть сохранённый снова ничего не стоит.",
+        ["In translations.json beside the clipboard history. Deleting one is the bin on its row in the drawer, or Delete."] =
+            "В translations.json рядом с историей буфера. Удалить один — корзина на его строке в ящике или Delete.",
         ["ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+T TRANSLATE  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE"] =
             "ENTER ВСТАВИТЬ  ALT+ENTER %@  CTRL+1–9 ВЫБОР  TAB ГРУППА  CTRL+T ПЕРЕВОД  CTRL+P ЗАКРЕПИТЬ  DEL ЗАБЫТЬ  CTRL+E ПРАВКА  ESC ЗАКРЫТЬ",
         ["INTO %@ · CTRL+TAB NEXT · ENTER PASTES IT"] = "НА %@ · CTRL+TAB ДАЛЬШЕ · ENTER ВСТАВЛЯЕТ",

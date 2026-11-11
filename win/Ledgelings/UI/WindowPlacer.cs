@@ -103,7 +103,14 @@ internal sealed class SheetDrag
         paper.HorizontalAlignment = HorizontalAlignment.Left;
         paper.VerticalAlignment = VerticalAlignment.Top;
         paper.Margin = new Thickness(to.X, to.Y, 0, 0);
+        Placed?.Invoke();
     }
+
+    /// <summary>The paper's top-left in the window, in device-independent points, and the monitor's width in them.</summary>
+    public Point At => at;
+    public double RoomWidth => roomWidth;
+    /// <summary>The paper was put somewhere: at first, and on every step of a drag. The Translate drawer follows it.</summary>
+    public event Action? Placed;
 
     /// <summary>The paper's bounds in screen pixels, where it is now.</summary>
     public System.Drawing.Rectangle OnScreen() => new(

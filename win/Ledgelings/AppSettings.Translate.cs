@@ -7,13 +7,13 @@ namespace Ledgelings;
 public sealed partial class AppSettings
 {
     private bool translateEnabled, translateShortcutEnabled, translateClipShortcutEnabled, translateAutocomplete,
-                 translatePickerButton, translateKeepInHistory, translateHelperEnabled;
+                 translatePickerButton, translateKeepInHistory, translateHelperEnabled, translateSavedEnabled, translateSavedOpenDrawer;
     private Shortcut translateShortcut, translateClipShortcut;
     private Translate.ClipMode translateClipMode;
     private List<string> translateLanguages = new();
     private Dictionary<string, string> translateTargets = new();
     private string translateModel = Translate.DefaultModel, translateAutocompleteModel = "", translateHelper = "", translateShortcutProblem = "";
-    private int translateDelayMs, translateLiveLimit;
+    private int translateDelayMs, translateLiveLimit, translateSavedLimit;
 
     private void LoadTranslate()
     {
@@ -36,6 +36,9 @@ public sealed partial class AppSettings
         translateKeepInHistory = store.Get<bool?>("translateKeepInHistory") ?? true;
         translateHelperEnabled = store.Get<bool?>("translateHelperEnabled") ?? true;
         translateHelper = store.Get<string>("translateHelper") ?? "";
+        translateSavedEnabled = store.Get<bool?>("translateSavedEnabled") ?? true;
+        translateSavedLimit = Math.Clamp(store.Get<int?>("translateSavedLimit") ?? Translate.DefaultSavedLimit, Translate.SavedLimitMin, Translate.SavedLimitMax);
+        translateSavedOpenDrawer = store.Get<bool?>("translateSavedOpenDrawer") ?? false;
     }
 
     /// <summary>What each language goes into, the defaults under what was saved; into itself or an unknown language is dropped.</summary>
@@ -106,6 +109,12 @@ public sealed partial class AppSettings
     public bool TranslateHelperEnabled { get => translateHelperEnabled; set => Put(ref translateHelperEnabled, value, "translateHelperEnabled"); }
     /// <summary>Which character brings it, by name; empty: whoever is nearest the middle.</summary>
     public string TranslateHelper { get => translateHelper; set => Put(ref translateHelper, value, "translateHelper"); }
+    /// <summary>Saved translations (SPEC §7.14.3): the star (Ctrl+D) and the drawer of them beside the sheet (Ctrl+L). Off: neither is there.</summary>
+    public bool TranslateSavedEnabled { get => translateSavedEnabled; set => Put(ref translateSavedEnabled, value, "translateSavedEnabled"); }
+    /// <summary>How many are kept; the oldest beyond it are dropped.</summary>
+    public int TranslateSavedLimit { get => translateSavedLimit; set => Put(ref translateSavedLimit, Math.Clamp(value, Translate.SavedLimitMin, Translate.SavedLimitMax), "translateSavedLimit"); }
+    /// <summary>The drawer opens with the sheet, not only on Ctrl+L.</summary>
+    public bool TranslateSavedOpenDrawer { get => translateSavedOpenDrawer; set => Put(ref translateSavedOpenDrawer, value, "translateSavedOpenDrawer"); }
 
     /// <summary>Why a translate shortcut does nothing, when Windows refused it; empty while all is well. Not saved.</summary>
     public string TranslateShortcutProblem

@@ -1634,6 +1634,35 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Saved translations">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Saved translations">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Saved translations" IsChecked="{Binding TranslateSavedEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+              <StackPanel IsEnabled="{Binding TranslateSavedEnabled}">
+                <DockPanel Margin="0,6,0,4">
+                  <TextBlock ui:Tr.Text="How many to keep" Style="{StaticResource RowLabel}"/>
+                  <TextBlock ui:Tr.Value="{Binding TranslateSavedLimit}" ui:Tr.Number="0" Style="{StaticResource RowValue}"/>
+                  <Slider Minimum="50" Maximum="5000" TickFrequency="50" IsSnapToTickEnabled="True" Value="{Binding TranslateSavedLimit, Mode=TwoWay}"/>
+                </DockPanel>
+                <CheckBox ui:Tr.Content="Open the drawer with the sheet" IsChecked="{Binding TranslateSavedOpenDrawer, Mode=TwoWay}" Margin="0,4,0,0"/>
+              </StackPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Ctrl+D in the sheet saves the translation on show, as a star does; Ctrl+L opens the drawer of saved ones beside the sheet, to search, load back, copy or delete. Kept on this computer; the oldest go beyond the number above. Loading one back costs nothing."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Kept on this computer">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <Button x:Name="DeleteSavedButton" ui:Tr.Content="Delete All Saved…" Click="DeleteSaved_Click" DockPanel.Dock="Right"/>
+                <TextBlock x:Name="SavedCountText" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="In translations.json beside the clipboard history. Deleting one is the bin on its row in the drawer, or Delete."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Read aloud">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">
