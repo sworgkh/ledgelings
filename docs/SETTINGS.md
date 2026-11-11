@@ -656,9 +656,9 @@ greyed out under a *Needs a model* note.
 ## Tools
 
 Tools the creatures run for you rather than for themselves, a page each under the
-sidebar's *Tools* heading: **Tools screen**, **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**, **Read aloud**.
+sidebar's *Tools* heading: **Tools screen**, **Reminders**, **Clipboard**, **Screenshots**, **Dictation**, **Translate**, **Saved translations**, **Read aloud**.
 `--settings tools` opens the first, `--settings reminders` the next (`productivity` too, the old tab's name);
-`--settings clipboard`, `--settings screenshots`, `--settings dictation`, `--settings translate`, `--settings readaloud` the others.
+`--settings clipboard`, `--settings screenshots`, `--settings dictation`, `--settings translate`, `--settings savedtranslations`, `--settings readaloud` the others.
 On Windows the same pages, but Screenshots, under the same heading.
 
 ### Tools screen
@@ -1007,6 +1007,22 @@ retyping costs nothing. A copied or pasted translation is kept in the clipboard 
 | **Keep translations in the clipboard history** (`translateKeepInHistory`) | on | | |
 | **Ask before sending more than** (`translateLiveLimit`) | 5 000 | 1 000 to 20 000 characters | Longer waits for ⏎ |
 | **Who brings the sheet** (`translateHelperEnabled`, `translateHelper`) | Whoever is nearest the middle | a creature on screen, or *Nobody* | It thinks (dots) while the model answers, shrugs (?) at trouble |
+
+### Saved translations
+
+Settings › Tools › *Saved translations* (§7.14.3 of SPEC): the star in the Translate sheet (⌘D)
+and the drawer of saved ones beside it (⌘L), with a search, load back (free), copy and delete.
+Kept in `translations.json` beside the clipboard history.
+
+**Left column**:
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Saved translations** (`translateSavedEnabled`) | on | | Off: no star, no drawer, ⌘D and ⌘L beep |
+| **How many to keep** (`translateSavedLimit`) | 500 | 50 to 5 000 | The oldest beyond it are dropped |
+| **Open the drawer with the sheet** (`translateSavedOpenDrawer`) | off | | Else only ⌘L opens it |
+
+**Right column**: how many are saved, and **Delete All Saved…**, which asks first.
 
 ### Read aloud
 

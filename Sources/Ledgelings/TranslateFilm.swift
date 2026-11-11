@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import QuartzCore
 import SwiftUI
 import LedgelingsCore
@@ -7,9 +8,12 @@ import LedgelingsCore
 /// offscreen: the leap to the corner, the sheet unfolding, a phrase typed with
 /// its guess in grey, the translation into Russian (thinking dots meanwhile), the
 /// swap that checks it backwards, a Hebrew answer running right to left; then the
+/// saved translations (⌘D on two of them, ⌘L for the drawer beside the sheet, a
+/// search, one loaded back, one deleted: the sheet's own logic, offscreen); then the
 /// clipboard picker with a row translated under it. Each step's still is written
 /// beside the film (`-typing.png`, `-guess.png`, `-russian.png`, `-swap.png`,
-/// `-hebrew.png`, `-picker.png`). Hand-written answers, no model, no key.
+/// `-hebrew.png`, `-saved.png`, `-drawer.png`, `-drawer-search.png`, `-loaded.png`,
+/// `-deleted.png`, `-picker.png`). Hand-written answers, no model, no key.
 ///
 ///     Ledgelings --translate-film build/translate.mp4
 @MainActor
@@ -71,8 +75,59 @@ enum TranslateFilm {
             m.resultLanguage = Translate.hebrew; m.result = TranslateDemo.known["en>he|\(phrase)"] ?? ""
             m.status = Translate.status(from: Translate.english, to: Translate.hebrew, seconds: 0.7)
         }
-        // The picker, a row translated under it.
         let book = ClipBook(directory: scratch.appendingPathComponent("clips"), secrets: Keychain(service: name))
+
+        // Saved translations, through a real sheet's keys with a stand-in model.
+        settings.translateAutocomplete = false
+        settings.translateDelayMs = 200
+        let translator = Translator(settings: settings, spend: SpendLedger(directory: scratch))
+        translator.fake = TranslateDemo.fake
+        let savedBook = SavedTranslations(directory: scratch.appendingPathComponent("saved"))
+        let sheet = TranslateSheetController(settings: settings, translator: translator, clips: book, saved: savedBook, watcher: { nil })
+        sheet.trace = { log("sheet \($0)") }
+        let m = sheet.model
+        m.languages = Translate.languages; m.hasModel = true; m.savedOn = true; m.appName = "Mail"
+        m.paper = CGRect(origin: .zero, size: TranslateSheetController.size)
+        let wide = CGSize(width: TranslateSheetController.size.width + TranslateSheetModel.drawerWidth - TranslateSheetModel.drawerTuck,
+                          height: TranslateSheetController.size.height)
+        m.room = wide
+        func type(_ text: String) async {
+            m.typed(text, cursorAtEnd: true)
+            for _ in 0..<100 where m.state != .done { try? await Task.sleep(for: .milliseconds(50)) }
+            log("typed and translated: \(m.result)")
+        }
+        func shot(_ step: String, drawer: Bool) async throws -> CGImage {
+            let image = try await picture(TranslateSheetView(model: m), size: drawer ? wide : TranslateSheetController.size)
+            try write(image, to: output, step)
+            return image
+        }
+        func press(_ code: Int, _ flags: NSEvent.ModifierFlags = [], _ name: String) {
+            let took = sheet.key(code, flags)
+            log("\(name)\(took ? "" : " (not taken)")")
+        }
+        await type(phrase)
+        press(kVK_ANSI_D, .command, "⌘D")
+        let savedImage = try await shot("saved", drawer: false)
+        await type("Не забудь купить молоко и хлеб по дороге домой.")
+        press(kVK_ANSI_D, .command, "⌘D")
+        log("\(savedBook.book.count) saved: \(savedBook.book.entries.map { $0.text.prefix(24) }.joined(separator: " | "))")
+        press(kVK_ANSI_L, .command, "⌘L")
+        let drawerImage = try await shot("drawer", drawer: true)
+        m.query = "report"
+        log("search \"report\": \(m.shownSaved.count) of \(m.saved.count)")
+        let searchImage = try await shot("drawer-search", drawer: true)
+        press(kVK_Return, [], "⏎ loads the first entry")
+        let loadedImage = try await shot("loaded", drawer: true)
+        m.query = ""
+        press(kVK_UpArrow, [], "↑")
+        press(kVK_Delete, [], "⌫")
+        let deletedImage = try await shot("deleted", drawer: true)
+        press(kVK_Escape, [], "⎋ closes the drawer")
+        if savedBook.book.count != 1 || m.drawerOpen || m.text != phrase {
+            throw CocoaError(.validationMultipleErrors, userInfo: [NSLocalizedDescriptionKey: "saved translations went wrong: \(savedBook.book.count) saved"])
+        }
+
+        // The picker, a row translated under it.
         let now = Date()
         for (i, text) in ["Не забудь купить молоко и хлеб по дороге домой.", "https://ledgelings.app/beds", "אני אגיע מאוחר היום, תתחילו בלעדיי."].enumerated() {
             book.add(Clipboard.Clip(text: text, copiedAt: now.addingTimeInterval(Double(i) * 60 - 600), app: ["Telegram", "Safari", "WhatsApp"][i]), limit: 100, days: 0)
@@ -115,7 +170,12 @@ enum TranslateFilm {
             (2.8, russian, .calm, "⇥ takes it: English → Russian"),
             (5.0, swapped, .calm, "⌘S: back from Russian"),
             (7.0, hebrew, .calm, "⌥3: into Hebrew, right to left"),
-            (9.4, pickerImage, .calm, "the clipboard picker: ⌘T under a row"),
+            (9.4, savedImage, .calm, "⌘D: the star, filled: saved"),
+            (11.0, drawerImage, .calm, "⌘L: the drawer of saved ones"),
+            (12.8, searchImage, .calm, "a search: report"),
+            (14.4, loadedImage, .calm, "⏎: loaded back, no call"),
+            (16.0, deletedImage, .calm, "⌫: one deleted"),
+            (17.6, pickerImage, .calm, "the clipboard picker: ⌘T under a row"),
         ]
         enum Phase { case before, coming(until: Double), unfolding(since: Double), open(since: Double), closing(since: Double), after(until: Double) }
         var phase = Phase.before, frame = 0, done = false, shown = -1
@@ -140,13 +200,13 @@ enum TranslateFilm {
                     shown = i
                     let step = script[i]
                     paper.contents = step.image
-                    // The picker is the other sheet: its own size, same corner.
-                    let isPicker = step.image === pickerImage
-                    paper.bounds = CGRect(origin: .zero, size: isPicker ? ClipPickerController.size : size)
+                    // The picker, or the sheet with its drawer: their own size, same corner.
+                    let k = CGFloat(typing.width) / size.width
+                    paper.bounds = CGRect(origin: .zero, size: CGSize(width: CGFloat(step.image.width) / k, height: CGFloat(step.image.height) / k))
                     colony.clipHelperMood(step.mood)
                     log(step.line)
                 }
-                if at >= 12.4 { phase = .closing(since: t); log("⎋") }
+                if at >= 20.6 { phase = .closing(since: t); log("⎋") }
             case .closing(let since):
                 let s = min((t - since) / ClipHelper.collapseSeconds, 1), k = base * (1 - 0.98 * s * s)
                 paper.transform = CATransform3DMakeScale(k, k, 1)

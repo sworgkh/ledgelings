@@ -8,6 +8,8 @@ extension Translate {
         case swap, copy, paste, clear
         /// The clipboard picker's row: translate it, open it in the sheet.
         case translate, openSheet
+        /// Saved translations: the star that keeps this one, the drawer of them, and each row's copy and bin.
+        case save, savedList, copySaved, deleteSaved
 
         public var key: String {
             switch self {
@@ -17,11 +19,16 @@ extension Translate {
             case .clear: "⌘⌫"
             case .translate: "⌘T"
             case .openSheet: "⌘⇧T"
+            case .save: "⌘D"
+            case .savedList: "⌘L"
+            case .copySaved: "⌘C"
+            case .deleteSaved: "⌫"
             }
         }
 
-        /// What it does and its key. `app` is the app a paste goes into, by name.
-        public func tooltip(app: String? = nil) -> String {
+        /// What it does and its key. `app` is the app a paste goes into, by name;
+        /// `on`: the translation is saved already (the star), or the drawer is open.
+        public func tooltip(app: String? = nil, on: Bool = false) -> String {
             switch self {
             case .swap: tr("Swap languages (%@)", key)
             case .copy: tr("Copy the translation (%@)", key)
@@ -29,8 +36,19 @@ extension Translate {
             case .clear: tr("Clear the text (%@)", key)
             case .translate: tr("Translate (%@)", key)
             case .openSheet: tr("Open in the Translate sheet (%@)", key)
+            case .save: on ? tr("Remove from saved (%@)", key) : tr("Save this translation (%@)", key)
+            case .savedList: on ? tr("Hide saved translations (%@)", key) : tr("Show saved translations (%@)", key)
+            case .copySaved: tr("Copy this translation (%@)", key)
+            case .deleteSaved: tr("Delete from saved (%@)", key)
             }
         }
+
+        /// The picture as it stands: the star filled once the translation is saved.
+        public func icon(on: Bool) -> [String] {
+            self == .save && on ? Self.filledStar : icon
+        }
+
+        public static let filledStar = [".....#.....", "....###....", "....###....", "###########", ".#########.", "..#######..", "..#######..", ".#########.", ".####.####.", "####...####", "###.....###"]
 
         public var icon: [String] {
             switch self {
@@ -42,6 +60,14 @@ extension Translate {
             case .clear: ["#.......#..", ".#.....#...", "..#...#....", "...#.#.....", "....#......", "...#.#.....", "..#...#....", ".#.....#...", "#.......#..", "...........", "..........."]
             // The sheet: a page with a swap arrow on it.
             case .openSheet: ["#########..", "#.......#..", "#..#....#..", "#.#####.#..", "#..#....#..", "#.......#..", "#....#..#..", "#.#####.#..", "#....#..#..", "#.......#..", "#########.."]
+            // A star's outline; filled once saved (`filledStar`).
+            case .save: [".....#.....", "....#.#....", "....#.#....", "####...####", ".#.......#.", "..#.....#..", "..#.....#..", ".#...#...#.", ".#..#.#..#.", "#..#...#..#", "###.....###"]
+            // A page with a list on it: a dot and a line, four times.
+            case .savedList: ["#########..", "#.......#..", "#.#.###.#..", "#.......#..", "#.#.###.#..", "#.......#..", "#.#.###.#..", "#.......#..", "#.#.###.#..", "#.......#..", "#########.."]
+            // Two pages with lines, one over the other.
+            case .copySaved: ["..######...", "..#....#...", "######.#...", "#....#.#...", "#.##.#.#...", "#....###...", "#.##.#.....", "#....#.....", "######.....", "...........", "..........."]
+            // A bin: its lid with a handle, a body with ribs.
+            case .deleteSaved: ["....###....", "###########", ".#########.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#.#.#.#.#.", ".#########.", "...........", "..........."]
             }
         }
     }

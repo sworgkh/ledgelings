@@ -667,6 +667,12 @@ final class AppSettings: ObservableObject {
     @Published var translateHelperEnabled: Bool { didSet { save(translateHelperEnabled, "translateHelperEnabled") } }
     /// Who: a name, or empty for whoever is nearest the middle.
     @Published var translateHelper: String { didSet { save(translateHelper, "translateHelper") } }
+    /// Saved translations (§7.14.3): the star (⌘D) and the drawer of them beside the sheet (⌘L). Off: neither is there.
+    @Published var translateSavedEnabled: Bool { didSet { save(translateSavedEnabled, "translateSavedEnabled") } }
+    /// How many are kept; the oldest beyond it are dropped.
+    @Published var translateSavedLimit: Int { didSet { save(translateSavedLimit, "translateSavedLimit") } }
+    /// The drawer opens with the sheet, not only on ⌘L.
+    @Published var translateSavedOpenDrawer: Bool { didSet { save(translateSavedOpenDrawer, "translateSavedOpenDrawer") } }
     /// Why a translate shortcut does nothing, when the system refused it; empty while all is well. Not saved.
     @Published var translateShortcutProblem = ""
 
@@ -1255,6 +1261,10 @@ final class AppSettings: ObservableObject {
         translateKeepInHistory = defaults.object(forKey: "translateKeepInHistory") as? Bool ?? true
         translateHelperEnabled = defaults.object(forKey: "translateHelperEnabled") as? Bool ?? true
         translateHelper = defaults.string(forKey: "translateHelper") ?? ""
+        translateSavedEnabled = defaults.object(forKey: "translateSavedEnabled") as? Bool ?? true
+        let kept = defaults.object(forKey: "translateSavedLimit") as? Int ?? Translate.defaultSavedLimit
+        translateSavedLimit = min(max(kept, Translate.savedLimitRange.lowerBound), Translate.savedLimitRange.upperBound)
+        translateSavedOpenDrawer = defaults.object(forKey: "translateSavedOpenDrawer") as? Bool ?? false
         followLanguage()
     }
 

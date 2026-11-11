@@ -28,7 +28,7 @@ import Testing
             [.creatures, .actions, .sprites, .beds, .flowers, .calendar],
             [.chases, .play, .ballGames, .surfing, .diving],
             [.talk, .voice, .bonds, .relationships, .twists],
-            [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .readAloud],
+            [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud],
             [.costs, .chats],
         ])
     }

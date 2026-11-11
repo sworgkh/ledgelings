@@ -5,13 +5,14 @@ import LedgelingsCore
 ///
 ///     Ledgelings --translate "Привет, как дела?" [--to he] [--model id]
 ///     Ledgelings --translate-bench [--runs 10]
-///     Ledgelings --translate-sheet "text" [--snapshot out.png]
+///     Ledgelings --translate-sheet "text" [--drawer] [--snapshot out.png]
 ///
 /// The first prints what it detected, where it went, the answer, the time and
 /// the price, through the real call. The bench times each candidate model on the
 /// same phrases. The sheet opens on the real screen with the text, waits for the
-/// translation and the guess, writes the paper to a PNG and closes; nothing is
-/// copied or pasted. All three are priced on Costs like any translation.
+/// translation and the guess, writes the paper to a PNG (with the drawer of saved
+/// translations open beside it, with `--drawer`) and closes; nothing is copied,
+/// pasted or saved. All three are priced on Costs like any translation.
 @MainActor
 enum TranslateDemo {
     static func once(_ text: String, to code: String?, model: String?, controller: TranslateController, settings: AppSettings, spend: SpendLedger) async -> Bool {
@@ -83,7 +84,7 @@ enum TranslateDemo {
     }
 
     /// The sheet with `text`, on the real screen, until the translation (and a guess) came; then a PNG.
-    static func sheet(_ text: String, into target: Translate.Language?, snapshot: URL?, controller: TranslateController) async -> Bool {
+    static func sheet(_ text: String, into target: Translate.Language?, drawer: Bool = false, snapshot: URL?, controller: TranslateController) async -> Bool {
         let sheet = controller.sheet
         sheet.pressKeys = false
         sheet.show(text: text, into: target)
@@ -96,6 +97,11 @@ enum TranslateDemo {
         // A moment for the guess and the unfolding.
         try? await Task.sleep(for: .seconds(1.5))
         if !sheet.model.guess.isEmpty { say("sheet guess: \(sheet.model.guess)") }
+        if drawer {
+            if !sheet.model.drawerOpen { sheet.toggleDrawer() }
+            try? await Task.sleep(for: .seconds(0.6))
+            say("sheet drawer \(sheet.model.drawerOpen ? "open" : "shut") on the \(sheet.model.drawerSide): \(sheet.model.saved.count) saved, \(sheet.model.isSaved ? "this one among them" : "this one not saved")")
+        }
         if let snapshot {
             do { try sheet.snapshot(to: snapshot); say("sheet snapshot \(snapshot.path)") } catch { say("sheet snapshot: \(error)") }
         }

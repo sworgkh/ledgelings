@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                  addReminder: { [weak self] in self?.openReminders() },
                                                  open: { [weak self] in self?.follow($0) })
     private let clips = ClipBook()
+    private let savedTranslations = SavedTranslations()
     private var clipWatcher: ClipWatcher?
     private var clipShortcuts: ClipShortcuts?
     private lazy var picker = ClipPickerController(settings: settings, book: clips, watcher: { [weak self] in self?.clipWatcher },
@@ -35,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private lazy var shots = ShotController(settings: settings, colony: { [weak self] in self?.colony })
     private lazy var dictation = DictationController(settings: settings, spend: spend, clips: clips, colony: { [weak self] in self?.colony },
                                                      watcher: { [weak self] in self?.clipWatcher })
-    private(set) lazy var translate = TranslateController(settings: settings, spend: spend, clips: clips, watcher: { [weak self] in self?.clipWatcher },
+    private(set) lazy var translate = TranslateController(settings: settings, spend: spend, clips: clips, saved: savedTranslations, watcher: { [weak self] in self?.clipWatcher },
                                                           helper: { [weak self] in self?.colony })
     private lazy var toolsScreen = ToolsScreenController(settings: settings)
     private(set) lazy var readAloud = ReadAloudController(settings: settings, spend: spend, voice: voice, library: library, clips: clips,
@@ -272,6 +273,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         translate.takeShortcuts { [weak self] in self?.translateShortcutPressed($0) }
         readAloud.takeShortcut { [weak self] in self?.readAloudShortcutPressed() }
         settingsWindow.readAloud = readAloud
+        settingsWindow.savedTranslations = savedTranslations
         picker.readRow = { [weak self] in self?.readAloud.read($0) }
         setUpToolsScreen()
         translate.sheet.openSettings = { [weak self] in self?.settingsWindow.show(.translate) }
@@ -329,7 +331,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         // `--translate "text" [--to he] [--model id]`, `--translate-bench [--runs 10]`,
-        // `--translate-sheet "text" [--snapshot out.png]`: the translator from a terminal, through the real call.
+        // `--translate-sheet "text" [--drawer] [--snapshot out.png]`: the translator from a terminal, through the real call.
         let args = CommandLine.arguments
         func value(_ flag: String) -> String? { args.firstIndex(of: flag).flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil } }
         if ProcessInfo.processInfo.environment["LEDGELINGS_FAKE_TRANSLATE"] != nil { translate.translator.fake = TranslateDemo.fake }
@@ -418,7 +420,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 translate.trace = { FileHandle.standardError.write(Data("  \($0)\n".utf8)) }
-                exit(await TranslateDemo.sheet(text, into: value("--to").flatMap(Translate.language), snapshot: value("--snapshot").map { URL(fileURLWithPath: $0) }, controller: translate) ? 0 : 1)
+                exit(await TranslateDemo.sheet(text, into: value("--to").flatMap(Translate.language), drawer: args.contains("--drawer"), snapshot: value("--snapshot").map { URL(fileURLWithPath: $0) }, controller: translate) ? 0 : 1)
             }
         }
         // `--dictate-demo [--model id]`: a line the Mac says, through the real call, onto the clipboard; put back after.

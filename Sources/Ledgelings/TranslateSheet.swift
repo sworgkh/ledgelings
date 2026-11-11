@@ -14,6 +14,8 @@ final class TranslateSheetController {
     private let settings: AppSettings
     private let translator: Translator
     private let clips: ClipBook
+    /// The saved translations, behind the star (⌘D) and in the drawer (⌘L).
+    let saved: SavedTranslations
     private let watcher: () -> ClipWatcher?
     private let helper: () -> ClipHelping?
     private var helped = false
@@ -32,16 +34,20 @@ final class TranslateSheetController {
     /// Opens Settings › Translate.
     var openSettings: () -> Void = {}
 
-    init(settings: AppSettings, translator: Translator, clips: ClipBook, watcher: @escaping () -> ClipWatcher?,
+    init(settings: AppSettings, translator: Translator, clips: ClipBook, saved: SavedTranslations, watcher: @escaping () -> ClipWatcher?,
          helper: @escaping () -> ClipHelping? = { nil }) {
         self.settings = settings
         self.translator = translator
         self.clips = clips
+        self.saved = saved
         self.watcher = watcher
         self.helper = helper
         model.edited = { [weak self] in self?.edited() }
         model.act = { [weak self] in self?.act($0) }
         model.close = { [weak self] in self?.close() }
+        model.load = { [weak self] in self?.load($0) }
+        model.copySaved = { [weak self] in self?.copySaved($0) }
+        model.removeSaved = { [weak self] in self?.removeSaved($0) }
     }
 
     var isUp: Bool { panel != nil }
@@ -72,6 +78,14 @@ final class TranslateSheetController {
         model.guess = ""
         model.state = .idle
         model.status = ""
+        model.savedOn = settings.translateSavedEnabled
+        saved.prune(limit: settings.translateSavedLimit)
+        refreshSaved()
+        if !isUp {
+            model.query = ""
+            model.drawerOpen = model.savedOn && settings.translateSavedOpenDrawer
+            model.drawerHasKeys = false
+        }
         guard panel == nil else { edited(now: true); return }
         let (screen, paper) = WindowPlacer.paper(.translate, size: Self.size, screen: given ?? ClipPickerController.screen(caret: caret), settings: settings)
         let made = ClipPanel(frame: screen.visibleFrame)
@@ -104,6 +118,7 @@ final class TranslateSheetController {
             return handled ? nil : event
         }
         if text != nil { edited(now: true) }
+        if model.drawerOpen { trace?("drawer open with the sheet on the \(model.drawerSide), \(saved.book.count) saved") }
     }
 
     func close() {
@@ -115,6 +130,8 @@ final class TranslateSheetController {
         panel.orderOut(nil)
         self.panel = nil
         model.textView = nil
+        model.drawerOpen = false
+        model.drawerHasKeys = false
         if helped {
             helper()?.clipHelperMood(.calm)
             helper()?.clipHelperGoHome(after: 0)
@@ -128,9 +145,13 @@ final class TranslateSheetController {
     /// A key pressed on the sheet; false lets it through to the text box.
     func key(_ code: Int, _ flags: NSEvent.ModifierFlags) -> Bool {
         let command = flags.contains(.command), option = flags.contains(.option), shift = flags.contains(.shift)
-        let box = model.textView
+        let inDrawer = drawerHasKeys
+        if inDrawer, drawerKey(code, flags) { return true }
+        // In the drawer the editing keys go to its search box, not the text.
+        let box = inDrawer ? panel?.firstResponder as? NSTextView : model.textView
         switch code {
-        case kVK_Escape: close()
+        // The drawer closes first, the sheet after.
+        case kVK_Escape: model.drawerOpen ? toggleDrawer() : close()
         case kVK_Return, kVK_ANSI_KeypadEnter:
             if shift { return false }
             act(command ? .paste : .copy)
@@ -139,6 +160,8 @@ final class TranslateSheetController {
             takeGuess()
         case kVK_ANSI_S where command: act(.swap)
         case kVK_Delete where command: act(.clear)
+        case kVK_ANSI_D where command: act(.save)
+        case kVK_ANSI_L where command: act(.savedList)
         // A menu-bar app has no Edit menu to send these to the text box: they are sent here.
         case kVK_ANSI_A where command: box?.selectAll(nil)
         case kVK_ANSI_C where command: box?.copy(nil)
@@ -156,6 +179,28 @@ final class TranslateSheetController {
     }
 
     private static let digits = [kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5]
+
+    /// The drawer holds the keys while its search box does (or, with no panel, while it is open).
+    private var drawerHasKeys: Bool {
+        guard model.drawerOpen else { return false }
+        guard let panel, let box = model.textView else { return model.drawerHasKeys }
+        return panel.firstResponder !== box
+    }
+
+    /// ↑↓ move, ⏎ loads, ⌫ deletes (⌘⌫ even while searching), ⌘C copies the row unless words in the search box are selected.
+    private func drawerKey(_ code: Int, _ flags: NSEvent.ModifierFlags) -> Bool {
+        let command = flags.contains(.command)
+        let field = panel?.firstResponder as? NSTextView
+        switch code {
+        case kVK_DownArrow: model.step(1)
+        case kVK_UpArrow: model.step(-1)
+        case kVK_Return, kVK_ANSI_KeypadEnter: if let row = model.selectedEntry { load(row) } else { NSSound.beep() }
+        case kVK_Delete where command || model.query.isEmpty, kVK_ForwardDelete where model.query.isEmpty: act(.deleteSaved)
+        case kVK_ANSI_C where command && (field?.selectedRange().length ?? 0) == 0: act(.copySaved)
+        default: return false
+        }
+        return true
+    }
 
     /// ⌘1 Detect, ⌘2… each language on.
     func chooseSource(_ n: Int) {
@@ -186,8 +231,93 @@ final class TranslateSheetController {
             model.text = ""
             model.textView?.string = ""
             edited(now: true)
+        case .save: toggleSave()
+        case .savedList: toggleDrawer()
+        case .copySaved: if let row = model.selectedEntry { copySaved(row) } else { NSSound.beep() }
+        case .deleteSaved: if let row = model.selectedEntry { removeSaved(row) } else { NSSound.beep() }
         case .translate, .openSheet: break
         }
+    }
+
+    // MARK: Saved translations
+
+    /// The star: the translation on show is saved, or no longer. Only a finished one; else a beep, as copy does.
+    func toggleSave() {
+        guard model.savedOn, model.state == .done, !model.result.isEmpty, let source = model.source else { NSSound.beep(); return }
+        let target = model.resultLanguage ?? model.target
+        let entry = Translate.Saved(text: model.text, from: source.code, translation: model.result, to: target.code, savedAt: Date(), app: model.appName)
+        let now = saved.toggle(entry, limit: settings.translateSavedLimit)
+        refreshSaved()
+        trace?("\(now ? "saved" : "unsaved") \(source.code)→\(target.code): \(model.text.prefix(60)) (\(saved.book.count) saved)")
+    }
+
+    /// The drawer of saved translations slides out of the sheet's side, or back in.
+    func toggleDrawer() {
+        guard model.savedOn else { NSSound.beep(); return }
+        let open = !model.drawerOpen
+        withAnimation(.easeOut(duration: 0.22)) { model.drawerOpen = open }
+        model.drawerHasKeys = open
+        if open {
+            model.query = ""
+            refreshSaved()
+            model.selectedSaved = model.shownSaved.first?.id
+            trace?("drawer open on the \(model.drawerSide), \(saved.book.count) saved")
+        } else {
+            if let box = model.textView { box.window?.makeFirstResponder(box) }
+            trace?("drawer closed")
+        }
+    }
+
+    /// A saved translation back in the sheet: its text, languages and translation, from the saved copy; no call.
+    func load(_ entry: Translate.Saved) {
+        guard let from = Translate.language(entry.from), let to = Translate.language(entry.to) else { NSSound.beep(); return }
+        working?.cancel()
+        guessing?.cancel()
+        model.text = entry.text
+        model.textView?.string = entry.text
+        model.detected = Translate.detect(Translate.protect(entry.text).text, among: model.languages)
+        model.sourceChoice = model.detected == from ? nil : from
+        model.targetChoice = to
+        model.guess = ""
+        model.result = entry.translation
+        model.resultLanguage = to
+        model.state = .done
+        model.status = tr("%@ → %@ · saved %@", from.title, to.title, Translate.savedDate(entry.savedAt)).uppercased()
+        model.selectedSaved = entry.id
+        refreshSaved()
+        trace?("loaded saved \(from.code)→\(to.code): \(entry.text.prefix(60))")
+    }
+
+    /// A row's translation on the clipboard; the sheet stays.
+    func copySaved(_ entry: Translate.Saved) {
+        let board = NSPasteboard.general
+        board.clearContents()
+        board.setString(entry.translation, forType: .string)
+        watcher()?.ownWrite()
+        keepInHistory(entry.translation, clips: clips, settings: settings)
+        model.status = tr("Copied the translation")
+        trace?("copied saved: \(entry.translation.prefix(60))")
+    }
+
+    /// A row deleted; the one below it is chosen next.
+    func removeSaved(_ entry: Translate.Saved) {
+        let at = model.shownSaved.firstIndex { $0.id == entry.id } ?? 0
+        saved.remove(entry.id)
+        refreshSaved()
+        let left = model.shownSaved
+        model.selectedSaved = left.isEmpty ? nil : left[min(at, left.count - 1)].id
+        trace?("deleted saved: \(entry.text.prefix(60)) (\(saved.book.count) left)")
+    }
+
+    /// The model's copy of the book, and whether the translation on show is in it.
+    func refreshSaved() {
+        model.saved = saved.book
+        if let source = model.source, model.state == .done {
+            model.isSaved = saved.book.find(text: model.text, from: source.code, to: (model.resultLanguage ?? model.target).code) != nil
+        } else {
+            model.isSaved = false
+        }
+        if let id = model.selectedSaved, !model.shownSaved.contains(where: { $0.id == id }) { model.selectedSaved = model.shownSaved.first?.id }
     }
 
     // MARK: Typing
@@ -198,6 +328,7 @@ final class TranslateSheetController {
         working?.cancel()
         guessing?.cancel()
         let text = model.text
+        model.isSaved = false
         model.detected = Translate.detect(Translate.protect(text).text, among: model.languages)
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             model.result = ""
@@ -270,6 +401,7 @@ final class TranslateSheetController {
             if model.sourceChoice == nil, model.targetChoice == source { status += " · " + tr("already in %@", source.title) }
             if done.markersLost { status += " · " + tr("links may be changed") }
             model.status = status
+            refreshSaved()
             helper()?.clipHelperMood(.calm)
             trace?("translated \(source.code)→\(target.code): \(done.text.prefix(80))")
         case .failure(.cancelled):
@@ -349,10 +481,11 @@ final class TranslateSheetController {
 
     // MARK: Pictures
 
-    /// The paper as a PNG, for `--translate-film` and `--translate --snapshot`.
+    /// The paper as a PNG, with the drawer when it is open, for `--translate-film` and `--translate-sheet --snapshot`.
     func snapshot(to url: URL) throws {
-        guard let view = panel?.contentView, let rep = view.bitmapImageRepForCachingDisplay(in: model.paper) else { return }
-        view.cacheDisplay(in: model.paper, to: rep)
+        let area = model.drawerOpen ? model.paper.union(model.drawerFrame) : model.paper
+        guard let view = panel?.contentView, let rep = view.bitmapImageRepForCachingDisplay(in: area) else { return }
+        view.cacheDisplay(in: area, to: rep)
         try rep.representation(using: .png, properties: [:])?.write(to: url)
     }
 }
@@ -400,6 +533,50 @@ final class TranslateSheetModel: ObservableObject {
     var edited: () -> Void = {}
     var act: (Translate.Button) -> Void = { _ in }
     var close: () -> Void = {}
+    var load: (Translate.Saved) -> Void = { _ in }
+    var copySaved: (Translate.Saved) -> Void = { _ in }
+    var removeSaved: (Translate.Saved) -> Void = { _ in }
+
+    // MARK: Saved translations
+
+    /// Off in the settings: no star, no drawer.
+    @Published var savedOn = true
+    @Published var saved = Translate.SavedBook()
+    /// The translation on show is saved: the star is filled.
+    @Published var isSaved = false
+    @Published var drawerOpen = false
+    /// Its search box has the keys; set by the box, or by ⌘L where there is no window.
+    var drawerHasKeys = false
+    @Published var query = "" {
+        didSet { if query != oldValue { selectedSaved = shownSaved.first?.id } }
+    }
+    @Published var selectedSaved: UUID?
+
+    var shownSaved: [Translate.Saved] { saved.search(query) }
+    var selectedEntry: Translate.Saved? { selectedSaved.flatMap { id in saved.entries.first { $0.id == id } } }
+
+    func step(_ by: Int) {
+        let rows = shownSaved
+        guard !rows.isEmpty else { NSSound.beep(); return }
+        let at = rows.firstIndex { $0.id == selectedSaved }.map { $0 + by } ?? (by > 0 ? 0 : rows.count - 1)
+        selectedSaved = rows[min(max(at, 0), rows.count - 1)].id
+    }
+
+    static let drawerWidth: CGFloat = 360
+    /// How far the drawer stays tucked under the paper, so it seems to come out of its edge.
+    static let drawerTuck: CGFloat = 10
+
+    /// The side the drawer opens on: the right, unless that monitor has no room for it there.
+    var drawerSide: Translate.DrawerSide {
+        Translate.DrawerSide.side(paperMinX: paper.minX, paperWidth: paper.width, drawerWidth: Self.drawerWidth - Self.drawerTuck,
+                                  room: room.width > 0 ? room.width : .greatestFiniteMagnitude)
+    }
+
+    /// Where the drawer stands in the panel: beside the paper, a little shorter than it.
+    var drawerFrame: CGRect {
+        let x = drawerSide == .right ? paper.maxX - Self.drawerTuck : paper.minX - Self.drawerWidth + Self.drawerTuck
+        return CGRect(x: x, y: paper.minY + 16, width: Self.drawerWidth, height: max(paper.height - 32, 0))
+    }
 
     var source: Translate.Language? { sourceChoice ?? detected }
 
@@ -441,6 +618,18 @@ struct TranslateSheetView: View {
         let paper = model.paper
         ZStack(alignment: .topLeading) {
             Color.black.opacity(0.001).onTapGesture { model.close() }
+            if model.savedOn && model.unfolded {
+                let frame = model.drawerFrame
+                ZStack(alignment: .topLeading) {
+                    if model.drawerOpen {
+                        TranslateDrawerView(model: model)
+                            .transition(.move(edge: model.drawerSide == .right ? .leading : .trailing))
+                    }
+                }
+                .frame(width: frame.width, height: frame.height, alignment: .topLeading)
+                .clipped()
+                .offset(x: frame.minX, y: frame.minY)
+            }
             sheet
                 .frame(width: paper.width, height: paper.height)
                 .paperDrag($model.paper, room: model.room, enabled: model.unfolded) { model.moved($0) }
@@ -458,6 +647,9 @@ struct TranslateSheetView: View {
                 HStack {
                     Text(tr("TRANSLATE")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
                     Spacer()
+                    if model.savedOn {
+                        TranslateButtonView(button: .savedList, on: model.drawerOpen) { model.act(.savedList) }
+                    }
                 }
                 .padding(.bottom, 8)
                 chips.padding(.bottom, 8)
@@ -470,7 +662,8 @@ struct TranslateSheetView: View {
                 .frame(height: 300)
                 statusLine.padding(.top, 8)
                 Spacer(minLength: 0)
-                Text(tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘⌫ CLEAR  ⎋ CLOSE"))
+                Text(model.savedOn ? tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘D SAVE  ⌘L SAVED  ⌘⌫ CLEAR  ⎋ CLOSE")
+                     : tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘⌫ CLEAR  ⎋ CLOSE"))
                     .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
                     .lineLimit(1).minimumScaleFactor(0.7)
                     .padding(.trailing, 60)
@@ -525,6 +718,9 @@ struct TranslateSheetView: View {
             }
             .scrollIndicators(.never)
             HStack(spacing: 6) {
+                if model.savedOn {
+                    TranslateButtonView(button: .save, on: model.isSaved) { model.act(.save) }
+                }
                 TranslateButtonView(button: .copy) { model.act(.copy) }
                 TranslateButtonView(button: .paste, app: model.appName) { model.act(.paste) }
             }
@@ -551,13 +747,144 @@ struct TranslateSheetView: View {
 struct TranslateButtonView: View {
     let button: Translate.Button
     var app: String? = nil
+    /// Saved already (the star, filled), or the drawer open.
+    var on = false
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) { PixelIcon(rows: button.icon) }
+        Button(action: action) { PixelIcon(rows: button.icon(on: on)) }
             .buttonStyle(PixelButtonStyle(small: true, chosen: false, square: true))
-            .modifier(PixelTag(text: button.tooltip(app: app)))
-            .accessibilityLabel(button.tooltip(app: app))
+            .modifier(PixelTag(text: button.tooltip(app: app, on: on)))
+            .accessibilityLabel(button.tooltip(app: app, on: on))
+    }
+}
+
+// MARK: The drawer
+
+/// The saved translations, on a strip of the same paper sliding out of the
+/// sheet's side: a search over both texts, newest first, each row loading back
+/// into the sheet on a click, with its copy and its bin.
+struct TranslateDrawerView: View {
+    @ObservedObject var model: TranslateSheetModel
+    @FocusState private var typing: Bool
+
+    private static let ink = TranslateSheetView.ink
+    private static let softInk = TranslateSheetView.softInk
+    private static let faintInk = TranslateSheetView.faintInk
+
+    var body: some View {
+        let size = model.drawerFrame.size
+        let rows = model.shownSaved
+        ZStack(alignment: .topLeading) {
+            NotePaper(width: size.width, height: size.height)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text(tr("SAVED")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    Spacer()
+                    Text(model.query.isEmpty ? "\(model.saved.count)" : "\(rows.count) / \(model.saved.count)")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                }
+                .padding(.bottom, 8)
+                field.padding(.bottom, 8)
+                list(rows)
+                Text(tr("↑↓ MOVE  ⏎ LOAD  ⌘C COPY  ⌫ DELETE  ⎋ CLOSE"))
+                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .padding(.top, 6)
+                    .padding(.trailing, 40)
+            }
+            // The side under the paper is tucked away: the words keep clear of it.
+            .padding(.leading, model.drawerSide == .right ? 18 + TranslateSheetModel.drawerTuck : 18)
+            .padding(.trailing, model.drawerSide == .left ? 18 + TranslateSheetModel.drawerTuck : 18)
+            .padding(.top, 18)
+            .padding(.bottom, 16)
+            .frame(width: size.width, height: size.height, alignment: .topLeading)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {}
+        .onAppear { typing = true }
+        // Only taking the keys is heard: on screen the panel's first responder says who has them,
+        // and an offscreen still losing its window must not hand them back to the text.
+        .onChange(of: typing) { _, now in if now { model.drawerHasKeys = true } }
+    }
+
+    private var field: some View {
+        // The hint is drawn by hand, as in the clipboard picker.
+        TextField("", text: $model.query)
+            .textFieldStyle(.plain)
+            .font(.system(size: 14, weight: .heavy, design: .monospaced))
+            .foregroundStyle(Self.ink)
+            .focused($typing)
+            .background(alignment: .leading) {
+                if model.query.isEmpty {
+                    Text(tr("search saved…")).font(.system(size: 14, weight: .heavy, design: .monospaced))
+                        .foregroundStyle(Self.faintInk).allowsHitTesting(false)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(PixelBox(style: .well))
+    }
+
+    private func list(_ rows: [Translate.Saved]) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    if rows.isEmpty {
+                        Text(model.saved.isEmpty ? tr("Nothing saved yet: ⌘D saves a translation.") : tr("Nothing matches."))
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Self.softInk)
+                            .padding(.top, 16).frame(maxWidth: .infinity)
+                    }
+                    ForEach(rows) { row in line(row).id(row.id) }
+                }
+                .padding(.trailing, 4)
+            }
+            .scrollIndicators(.never)
+            .onChange(of: model.selectedSaved) { _, id in
+                if let id { proxy.scrollTo(id) }
+            }
+        }
+    }
+
+    private func line(_ row: Translate.Saved) -> some View {
+        let chosen = row.id == model.selectedSaved
+        return VStack(alignment: .leading, spacing: 3) {
+            words(row.text, in: row.from, ink: chosen ? PixelBox.rim : Self.softInk, weight: .semibold)
+            words(row.translation, in: row.to, ink: PixelBox.rim, weight: .heavy)
+            HStack(spacing: 6) {
+                Text(row.pair)
+                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                    .padding(.horizontal, 6).padding(.vertical, 3)
+                    .background(PixelBox(style: .raised))
+                Text(Translate.savedDate(row.savedAt))
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
+                Spacer(minLength: 4)
+                icon(.copySaved) { model.copySaved(row) }
+                icon(.deleteSaved) { model.removeSaved(row) }
+            }
+        }
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .background { if chosen { PixelBox(style: .chosen) } }
+        .contentShape(Rectangle())
+        .onHover { if $0 { model.selectedSaved = row.id } }
+        .onTapGesture { model.load(row) }
+    }
+
+    /// One line of a row, right to left for Hebrew.
+    private func words(_ text: String, in code: String, ink: Color, weight: Font.Weight) -> some View {
+        let rtl = Translate.language(code)?.rightToLeft ?? false
+        return Text(text.split(whereSeparator: \.isNewline).joined(separator: " "))
+            .font(.system(size: 12, weight: weight, design: .monospaced)).foregroundStyle(ink)
+            .lineLimit(1).truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
+    }
+
+    private func icon(_ button: Translate.Button, action: @escaping () -> Void) -> some View {
+        Button(action: action) { PixelIcon(rows: button.icon) }
+            .buttonStyle(.plain)
+            .modifier(PixelTag(text: button.tooltip()))
+            .accessibilityLabel(button.tooltip())
     }
 }
 

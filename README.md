@@ -253,7 +253,9 @@ type in English, Russian or Hebrew and the translation appears beside it as you 
 Translate style, with the rest of your phrase guessed in grey (⇥ takes it). The language is
 told by its letters, for free; ⏎ copies, ⌘⏎ pastes into the app you were in, ⌘S swaps to check
 it backwards, and Hebrew runs right to left. **⌃⌥⇧T** translates the last thing you copied, and
-every text row of the clipboard picker gets a translate button (⌘T). One cheap, fast OpenRouter
+every text row of the clipboard picker gets a translate button (⌘T). **⌘D** saves a translation, as Google
+Translate's star does, and **⌘L** slides out a drawer of saved ones beside the sheet: search
+them, load one back for free, copy or delete it. One cheap, fast OpenRouter
 model (Gemini 2.5 Flash Lite by default) does it for about a cent a day; links, code and numbers
 are kept out of its reach, and protected snippets never reach it. Settings › Tools › Translate.
 
