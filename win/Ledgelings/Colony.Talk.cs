@@ -118,14 +118,16 @@ public sealed partial class Colony
     /// <summary>Put <paramref name="text"/> up in creature <paramref name="index"/>'s bubble. With voice on, the bubble
     /// waits for the sound and is then said (<see cref="VoiceSay"/>). Returns the line's serial, for
     /// <see cref="WhenSaid"/>. <paramref name="builtIn"/>: written in advance, so its sound can be kept and played again.</summary>
-    private int Say(string text, int index, bool builtIn = false)
+    /// <remarks><paramref name="voiced"/> false: a bubble only, never said out loud (the chat with its voice off).</remarks>
+    private int Say(string text, int index, bool builtIn = false, bool voiced = true)
     {
         if (index < 0 || index >= creatures.Count) return 0;
         bubbleSerial += 1;
         var serial = bubbleSerial;
         bubbles[index] = new Bubble { Text = text, Until = Elapsed + Banter.ShowTime(text, Settings.BubbleSeconds), Serial = serial };
-        var voiced = false;
-        if (IsVoiced) VoiceSay(serial, index, text, builtIn, ref voiced);
+        var allowed = voiced;
+        voiced = false;
+        if (allowed && IsVoiced) VoiceSay(serial, index, text, builtIn, ref voiced);
         if (voiced && bubbles.TryGetValue(index, out var bubble) && bubble.Serial == serial)
         {
             bubble.Until = Elapsed + LongestWaitForVoice;

@@ -2672,7 +2672,10 @@ where the Stop button stands, and quits once they are out (a click on the button
 ### 7.18 Chat with the creatures
 
 The owner writes to one creature or to all of them (`OwnerChat`, `Colony+OwnerChat`, `ChatController`, since
-0.70.0 on macOS). **Control + Option + C** (`chatShortcut`, free in the system and among ours; spelled in words by
+0.70.0 on macOS and Windows). On Windows the keys go the Windows way round: **Ctrl+Alt+C**, Ctrl+0 / Ctrl+1–9, Ctrl+,
+and Esc; the tray's Chat with the Creatures… for the menu item; the window takes the keyboard as the other sheets do
+and closes when it loses it (answers already asked for still come, on screen and in the log); its controls carry a
+`ToolTip`. There are no chat flags on Windows yet; `LEDGELINGS_FAKE_CHAT=1` works the same. **Control + Option + C** (`chatShortcut`, free in the system and among ours; spelled in words by
 `GlobalShortcut.spoken`) from any app, **Chat with the Creatures…** in the menu, its tile on the Tools screen (11),
 or the speech-bubble button on Creature Actions (C).
 
@@ -3427,7 +3430,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | readAloudFormat | `m4a` | `m4a` or `wav`; unknown reads as `m4a`; Windows writes WAV either way |
 | readAloudLongLimit | 3 000 | 500–20 000 characters, clamped: a longer paid reading shows its price and waits for ⏎ |
 | chatEnabled | true | Chat with the creatures (§7.18); off, its shortcut is let go, the menu item and the Creature Actions button go |
-| chatShortcutEnabled / chatShortcutKeyCode / chatShortcutModifiers | true / C / ⌃⌥ | the chat window, as `shortcut` |
+| chatShortcutEnabled / chatShortcutKeyCode / chatShortcutModifiers | true / C / ⌃⌥ (Windows Ctrl+Alt+C) | the chat window, as `shortcut` |
 | chatEveryone | 3 | 1–8, clamped: how many answer a message to everyone, one after another |
 | chatLength | `short` | `short` (25 words), `medium` (60), `long` (120); unknown reads as `short` |
 | chatSpeak | true | answers said out loud in each one's voice, when voice is on |

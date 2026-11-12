@@ -66,6 +66,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadTranslate();
         LoadToolsScreen();
         LoadReadAloud();
+        LoadChat();
         LoadVoice();
         LoadSpriteKit();
         LoadWindows();

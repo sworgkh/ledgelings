@@ -54,7 +54,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
 | **Read Aloud…** (⌃⌥R from any app; Ctrl+Alt+Shift+R on Windows) | The Read aloud sheet with the clipboard's text, read out in a preset's voice ([Read aloud](#read-aloud)) |
 | **Stop Reading** (only while it reads) | Ends a reading the sheet let go on when it closed |
-| **Chat with the Creatures…** (⌃⌥C from any app) | The chat window: write to one creature or to everyone, and they answer ([Chat with you](#chat-with-you); macOS) |
+| **Chat with the Creatures…** (⌃⌥C from any app; Ctrl+Alt+C on Windows) | The chat window: write to one creature or to everyone, and they answer ([Chat with you](#chat-with-you)) |
 | **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
@@ -473,6 +473,10 @@ says so in one line, with a button to the settings.
 | **Show bubbles on screen** (`chatBubbles`) | on | | Off: the answers are only in the window (and in the voice) |
 | **Remember talks** (`chatRemember`) | on | | Each creature keeps its last talks with you and a summary of the older ones, sent with its next answer. Off: nothing new is kept or sent |
 | **Past exchanges kept word for word** (`chatMemoryExchanges`) | 10 | 0 to 50 | An exchange that falls out is folded into the summary by one call |
+
+On Windows since 0.70.0, the same, keys the Windows way round: **Ctrl+Alt+C**, Enter sends, Shift+Enter makes
+a new line, Ctrl+0 / Ctrl+1–9 pick who, Ctrl+, opens this page, Esc closes; the tray's *Chat with the
+Creatures…* in place of the menu item. The page is one column. The same `owner-chats.json`, in `%APPDATA%`.
 
 **Right column**, under *Memory*: who remembers what (the count kept and the summary), **Forget this one**
 and **Forget everyone's**. The memory is `owner-chats.json` beside `bonds.json`; `--memory` prints it.

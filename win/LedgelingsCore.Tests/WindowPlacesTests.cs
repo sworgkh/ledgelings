@@ -11,7 +11,7 @@ public class WindowPlacesTests
         var fix = new[] { WindowPlaces.Window.Overlay, WindowPlaces.Window.ShotScreens, WindowPlaces.Window.ShotToolbar,
                           WindowPlaces.Window.ClipToast, WindowPlaces.Window.ClipGhost };
         foreach (var w in WindowPlaces.All) Assert.Equal(!fix.Contains(w), w.Movable());
-        Assert.Equal(new[] { "settings", "relationships", "snippets", "actions", "reminder", "tools", "translate", "readAloud", "clipPicker" },
+        Assert.Equal(new[] { "settings", "relationships", "snippets", "actions", "reminder", "tools", "translate", "readAloud", "clipPicker", "chat" },
                      WindowPlaces.All.Where(w => w.Movable()).Select(w => w.Key()));
     }
 

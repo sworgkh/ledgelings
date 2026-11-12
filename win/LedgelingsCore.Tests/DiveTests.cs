@@ -190,7 +190,7 @@ public class DiveTests
     [Fact]
     public void TheToolAndThePageAndTheStopShortcut()
     {
-        Assert.Equal(Tools.Tool.Dive, Tools.All[^1]);                                     // last, so every older tile keeps its number key
+        Assert.Equal(Tools.Tool.Dive, Tools.All[^2]);                                     // before the chat (0.70), so every older tile keeps its number key
         Assert.Equal(SettingsPage.Diving, Tools.Tool.Dive.Page());
         Assert.Equal("dive", Tools.Tool.Dive.Code());
         Assert.Equal(new[] { SettingsPage.Chases, SettingsPage.Play, SettingsPage.BallGames, SettingsPage.Surfing, SettingsPage.Diving }, SettingsGroup.Games.Pages());

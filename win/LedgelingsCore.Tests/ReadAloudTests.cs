@@ -228,8 +228,8 @@ public class ReadAloudTests
     {
         Assert.True(Tools.Tool.ReadAloud.Page() == SettingsPage.ReadAloud && Tools.Tool.ReadAloud.Icon().SequenceEqual(R.Speaker));
         Assert.Contains("readAloud", Tools.DefaultShown);
-        Assert.Equal(new[] { Tools.Tool.ReadAloud, Tools.Tool.Dive }, Tools.All.TakeLast(2));   // last, so every older tile keeps its number key
-        Assert.Equal(new[] { "dictation", "translate", "readAloud", "dive" }, Tools.WithNew(new[] { "dictation", "translate" }, known: null));     // at the end of an arranged list
+        Assert.Equal(new[] { Tools.Tool.ReadAloud, Tools.Tool.Dive, Tools.Tool.Chat }, Tools.All.TakeLast(3));   // last, so every older tile keeps its number key
+        Assert.Equal(new[] { "dictation", "translate", "readAloud", "dive", "chat" }, Tools.WithNew(new[] { "dictation", "translate" }, known: null));     // at the end of an arranged list
         Assert.Equal(new[] { "dictation" }.Concat(Tools.DefaultShown.Where(c => c != "dictation")),
                      Tools.WithNew(new[] { "dictation", "nonsense" }, known: new[] { "dictation" }));                                     // every tool not known then
         Assert.Equal(new[] { "dictation" }, Tools.WithNew(new[] { "dictation" }, known: Tools.DefaultShown));                            // switched off after it was known, it stays off

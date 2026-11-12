@@ -946,6 +946,61 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
+    <TabItem ui:Tr.Header="Chat with you">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Chat with you">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Chat with the creatures" IsChecked="{Binding ChatEnabled, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+              <StackPanel IsEnabled="{Binding ChatEnabled}">
+                <DockPanel Margin="0,2">
+                  <CheckBox ui:Tr.Content="Open the chat" IsChecked="{Binding ChatShortcutEnabled, Mode=TwoWay}" Width="220" VerticalAlignment="Center"/>
+                  <Button x:Name="ChatShortcutButton" Click="ChatShortcutButton_Click" MinWidth="160" HorizontalAlignment="Left" IsEnabled="{Binding ChatShortcutEnabled}"/>
+                </DockPanel>
+                <TextBlock Text="{Binding ChatShortcutProblem}" Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,4,0,0"/>
+              </StackPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="The shortcut opens a paper window from any app, and so do the tray, the Tools screen and Creature Actions. Write to one creature, or to Everyone; Enter sends, Shift+Enter makes a new line, Esc closes."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Answers" IsEnabled="{Binding ChatEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="How many answer Everyone" Style="{StaticResource RowLabel}"/>
+                <TextBlock ui:Tr.Value="{Binding ChatEveryone}" ui:Tr.Number="0" Style="{StaticResource RowValue}"/>
+                <Slider Minimum="1" Maximum="8" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ChatEveryone, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="Reply length" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ChatLengthBox" DisplayMemberPath="Title" SelectedValuePath="Length" SelectedValue="{Binding ChatLength, Mode=TwoWay}" Width="240" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <CheckBox ui:Tr.Content="Speak replies aloud" IsChecked="{Binding ChatSpeak, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <CheckBox ui:Tr.Content="Show bubbles on screen" IsChecked="{Binding ChatBubbles, Mode=TwoWay}" Margin="0,4,0,0"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Each answers through the brain model in its own persona and species, turned to face the window while it talks. To Everyone, a few answer one after another, each hearing the ones before. Out loud only when voice is on too (Talk › Voice). Every call shows on Costs as Chat with you, and each talk on Chats."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Memory" IsEnabled="{Binding ChatEnabled}">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Remember talks" IsChecked="{Binding ChatRemember, Mode=TwoWay}" Margin="0,0,0,4"/>
+              <DockPanel Margin="0,4" IsEnabled="{Binding ChatRemember}">
+                <TextBlock ui:Tr.Text="Past exchanges kept word for word" Style="{StaticResource RowLabel}"/>
+                <TextBlock ui:Tr.Value="{Binding ChatMemoryExchanges}" ui:Tr.Number="0" Style="{StaticResource RowValue}"/>
+                <Slider Minimum="0" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ChatMemoryExchanges, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,4">
+                <TextBlock ui:Tr.Text="Who" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="ChatWhoBox" SelectionChanged="ChatWho_Changed" Width="200" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <TextBlock x:Name="ChatMemoryText" TextWrapping="Wrap" Foreground="Gray" Margin="0,2,0,4"/>
+              <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                <Button x:Name="ChatForgetButton" ui:Tr.Content="Forget this one" Click="ChatForget_Click" Padding="8,1" Margin="0,0,6,0"/>
+                <Button x:Name="ChatForgetAllButton" ui:Tr.Content="Forget everyone's" Click="ChatForgetAll_Click" Padding="8,1"/>
+              </StackPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Each creature keeps its last talks with you word for word and a short summary of the older ones, and both go into its next answer: it remembers what you told it yesterday. When a talk falls out of the kept ones, one call rewrites the summary (on Costs as Chat with you). Off: nothing new is kept or sent. --memory prints it all."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
     <TabItem ui:Tr.Header="Flowers">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="12">

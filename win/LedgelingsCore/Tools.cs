@@ -5,12 +5,12 @@ namespace Ledgelings.Core;
 /// one small sheet, a big pixel picture each, its name and its keys. A click, its number, or the arrows and
 /// Enter start it; a tool that is switched off is greyed, its tag saying where to switch it on.
 /// Windows has no screenshot tool yet, so its screen has no Screenshot, Full screen or Last rectangle tile.
-/// Read aloud (0.63) and Scuba diving (0.67) are last, so every older tile keeps its number key.
+/// Read aloud (0.63), Scuba diving (0.67) and the chat (0.70) are last, so every older tile keeps its number key.
 /// </summary>
 public static class Tools
 {
-    /// <summary>The codes saved are the Mac's: <c>translate</c>, <c>dictation</c>, <c>clipHistory</c>, <c>snippets</c>, <c>reminder</c>, <c>readAloud</c>, <c>dive</c>.</summary>
-    public enum Tool { Translate, Dictation, ClipHistory, Snippets, Reminder, ReadAloud, Dive }
+    /// <summary>The codes saved are the Mac's: <c>translate</c>, <c>dictation</c>, <c>clipHistory</c>, <c>snippets</c>, <c>reminder</c>, <c>readAloud</c>, <c>dive</c>, <c>chat</c>.</summary>
+    public enum Tool { Translate, Dictation, ClipHistory, Snippets, Reminder, ReadAloud, Dive, Chat }
 
     public static IReadOnlyList<Tool> All { get; } = Enum.GetValues<Tool>();
 
@@ -22,6 +22,7 @@ public static class Tools
         Tool.Snippets => "snippets",
         Tool.Reminder => "reminder",
         Tool.Dive => "dive",
+        Tool.Chat => "chat",
         _ => "readAloud",
     };
 
@@ -35,6 +36,7 @@ public static class Tools
         Tool.Snippets => "SNIPPETS",
         Tool.Reminder => "ADD A REMINDER",
         Tool.Dive => "SCUBA DIVING",
+        Tool.Chat => "CHAT WITH THEM",
         _ => "READ ALOUD",
     });
 
@@ -47,6 +49,7 @@ public static class Tools
         Tool.Snippets => "The snippets, to paste",
         Tool.Reminder => "A reminder, thrown at you by paper plane",
         Tool.Dive => "Water over the screen and a dive among the fish; again to stop",
+        Tool.Chat => "Write to one creature or to all of them",
         _ => "Paste text and hear it read",
     });
 
@@ -58,13 +61,16 @@ public static class Tools
         Tool.ClipHistory or Tool.Snippets => SettingsPage.Clipboard,
         Tool.Reminder => SettingsPage.Reminders,
         Tool.Dive => SettingsPage.Diving,
+        Tool.Chat => SettingsPage.ChatWithYou,
         _ => SettingsPage.ReadAloud,
     };
 
     /// <summary>The tag: what it does and its keys, <c>1 · Ctrl+Alt+T</c>; switched off, where to switch it on.</summary>
     public static string Tooltip(this Tool tool, int number, string? shortcut, bool on)
     {
-        if (!on) return L10n.Tr("Off: switch it on in Settings › Tools › %@ (%d)", tool.Page().Title(), number);
+        if (!on)
+            return tool.Page().Group() == SettingsGroup.Tools ? L10n.Tr("Off: switch it on in Settings › Tools › %@ (%d)", tool.Page().Title(), number)
+                : L10n.Tr("Off: switch it on in Settings › %@ › %@ (%d)", tool.Page().Group().Title(), tool.Page().Title(), number);
         return shortcut is null ? L10n.Tr("%@ (%d)", tool.Does(), number) : L10n.Tr("%@ (%d · %@)", tool.Does(), number, shortcut);
     }
 
@@ -76,6 +82,7 @@ public static class Tools
         Tool.ClipHistory => new[] { "...###.....", "####.####..", "#.......#..", "#.#####.#..", "#.......#..", "#.###...#..", "#.......#..", "#.#####.#..", "#.......#..", "#########..", "..........." },
         Tool.Snippets => new[] { "#########..", "#.......##.", "#.#####.#.#", "#.......###", "#.#####...#", "#.........#", "#.###.....#", "#.........#", "#.#####...#", "#.........#", "###########" },
         Tool.ReadAloud => ReadAloud.Speaker,
+        Tool.Chat => OwnerChat.SheetIcon,
         Tool.Dive => new[] { "...........", "...........", ".....####..", "#...#....#.", "##.#...#..#", "#.#.......#", "##.#......#", "#...#....#.", ".....####..", "...........", "#.#.#.#.#.#" },
         _ => new[] { "..........#", "........##.", "......##.#.", "....##..#..", "..##...#...", "##....#....", "..##.#.....", "....##.....", "....#.#....", "....#..#...", "....#......" },
     };

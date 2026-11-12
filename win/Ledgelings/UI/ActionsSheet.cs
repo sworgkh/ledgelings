@@ -73,7 +73,7 @@ public static class ActionsSwitches
 }
 
 /// <summary>Where the sheet can send you, as the menu did.</summary>
-public enum ActionsLink { Settings, Chats, Quit, Tools }
+public enum ActionsLink { Settings, Chats, Quit, Tools, Chat }
 
 public static class ActionsLinks
 {
@@ -84,11 +84,16 @@ public static class ActionsLinks
         ActionsLink.Settings => L10n.Tr("SETTINGS"),
         ActionsLink.Chats => L10n.Tr("CHATS"),
         ActionsLink.Tools => L10n.Tr("TOOLS"),
+        ActionsLink.Chat => L10n.Tr("CHAT"),
         _ => L10n.Tr("QUIT"),
     };
 
     /// <summary>The words under the footer's: the Tools screen is a picture on the title line, not a word.</summary>
-    public static readonly IReadOnlyList<ActionsLink> Footer = All.Where(l => l != ActionsLink.Tools).ToList();
+    public static readonly IReadOnlyList<ActionsLink> Footer = All.Where(l => l is not (ActionsLink.Tools or ActionsLink.Chat)).ToList();
+
+    /// <summary>The chat picture's tag: what it opens, C on the sheet and its shortcut from any app.</summary>
+    public static string ChatTooltip(string shortcut) =>
+        shortcut.Length == 0 ? L10n.Tr("Chat with the creatures (C)") : L10n.Tr("Chat with the creatures (C · %@)", shortcut);
 
     /// <summary>The wrench's hover tag: what it does, its key on the sheet, and its shortcut from any app (AGENTS rule 4).</summary>
     public static string ToolsTooltip(string shortcut) =>
@@ -374,6 +379,7 @@ public sealed class ActionsSheet : Window
             }
             if (e.Key == System.Windows.Input.Key.A) { e.Handled = true; GoTo(ActionsPage.Activities); return; }
             if (e.Key == System.Windows.Input.Key.K && settings.ToolsScreenEnabled) { e.Handled = true; Follow(ActionsLink.Tools); return; }
+            if (e.Key == System.Windows.Input.Key.C && settings.ChatEnabled) { e.Handled = true; Follow(ActionsLink.Chat); return; }
             foreach (var tile in ActionsTiles.All)
                 if (tile.Key() == e.Key && tile.IsEnabled(state)) { e.Handled = true; Press(tile); return; }
         };
@@ -460,7 +466,17 @@ public sealed class ActionsSheet : Window
         };
         System.Windows.Automation.AutomationProperties.SetName(toolsButton, tip);
         toolsButton.Click += (_, _) => Follow(ActionsLink.Tools);
-        head.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { toolsButton, screenButton } });
+        // The chat window: write to one of them or to all (C).
+        var chatTip = ActionsLinks.ChatTooltip(settings.ChatShortcutEnabled ? ShortcutKeys.Label(settings.ChatShortcut) : "");
+        var chatButton = new PixelButton
+        {
+            Content = PixelGlyph.Image(OwnerChat.SheetIcon, Color.FromRgb(40, 34, 58), 1.5), Small = true, MinHeight = 22,
+            Padding = new Thickness(5, 0, 5, 0), Margin = new Thickness(0, 0, 6, 0), ToolTip = chatTip,
+            Visibility = settings.ChatEnabled ? Visibility.Visible : Visibility.Collapsed,
+        };
+        System.Windows.Automation.AutomationProperties.SetName(chatButton, chatTip);
+        chatButton.Click += (_, _) => Follow(ActionsLink.Chat);
+        head.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { chatButton, toolsButton, screenButton } });
         sheet.Children.Add(head);
         var grid = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
         for (int r = 0; r < ActionsTiles.All.Count; r += 4)

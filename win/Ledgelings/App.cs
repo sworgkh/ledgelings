@@ -66,6 +66,7 @@ public sealed partial class App : Application
         StartDictation();
         StartTranslate();
         StartReadAloud();
+        StartChat();
         StartToolsScreen();
         StartActivities();
         tray = new TrayIcon(TrayImage(), "Ledgelings") { MenuBuilder = BuildMenu };
@@ -113,6 +114,7 @@ public sealed partial class App : Application
         AddDictationItems(items);
         AddTranslateItems(items);
         AddReadAloudItems(items);
+        AddChatItem(items);
         AddNextReminder(items);
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
         items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
@@ -187,6 +189,7 @@ public sealed partial class App : Application
         AttachClipboard(settingsWindow);
         settingsWindow.AttachSavedTranslations(savedTranslations ??= new SavedTranslations());
         AttachReadAloud(settingsWindow);
+        if (colony is not null) settingsWindow.AttachOwnerChats(colony.OwnerChats);
         return settingsWindow;
     }
 
@@ -197,6 +200,7 @@ public sealed partial class App : Application
         StopDictation();
         StopTranslate();
         StopReadAloud();
+        chatKey?.Dispose();
         StopToolsScreen();
         StopActivities();
         StopShortcut();

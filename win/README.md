@@ -178,6 +178,11 @@ core tests are the Swift tests line for line.
   sheet takes the keyboard like the picker. The Mac's `--translate*` flags have no Windows twin.
   **Ctrl+D** saves a translation (the star), **Ctrl+L** slides out the drawer of saved ones beside the
   paper (Delete deletes a row); Tools › *Saved translations* keeps how many (`translations.json`).
+- **Chat with the creatures** (since 0.70.0): **Ctrl+Alt+C** from any app (or the tray, the Tools screen's chat
+  tile, or C on Creature Actions) opens a paper window: write to one creature, by its sprite and name, or to
+  Everyone; Enter sends, Shift+Enter a new line, Ctrl+0 / Ctrl+1–9 pick who, Esc closes. They answer through the
+  brain model in their persona, in the window, in a bubble and in their voice; a few answer Everyone in turn. Each
+  remembers its talks with you (`owner-chats.json`, the Mac's format). Talk › *Chat with you*; on Costs as *Chat with you*.
 - **Read aloud** is **Ctrl+Alt+Shift+R** (Ctrl+Alt+R is already Add a Reminder): the Mac's sheet
   and presets, keys the Windows way round (Ctrl+. stops, Ctrl+S saves, Ctrl+Shift+C copies the
   file, Ctrl+- / Ctrl+= the pace, Ctrl+R the next reader). Windows' own voices are SAPI rendered
@@ -241,21 +246,21 @@ win/
                            EdgeLoop, EdgeWorld, Creature, DayNight, Meetings, Gifts, Sparks, Script,
                            Hideout, Banter, ChatLog, Spend, SpriteText, LineMemory, Bonds, Almanac,
                            Voices, PaperPlanes, Letters, Reminders, Clipboard, ClipHelper, ClipPicker,
-                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate (+ .Saved), ReadAloud, Tools, SettingsPages,
+                           Garden, Complaints, TeaParty, Casting, VoiceArchive, SpeechReveal, Beds, Plays (+ .Lines), Dictation, Translate (+ .Saved), ReadAloud, OwnerChat, Tools, SettingsPages,
                            Deeds (+ .Lines), Bonds (+ .Storyline .Memory .Seed)
                            (+ Geometry: Pt, Vec, Rect)
   Ledgelings/            the app:
                            Colony (+ .Frame .Render .Hand .Meetings .Talk .Converse .Script .Hideout
                                      .Bonds .Planes .Reminders .Garden .Complaints .TeaParty .Voice .Beds .Play .Clipboard .Deeds .Memory)
                            OverlayWindow, ScreenOverlay (+ .Draw .Bubble .Mail .Garden .Tea .Play), FrameClock, Desktop
-                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ReadAloud, .ToolsScreen), SavedTranslations, GlobalHotkey, ShortcutKeys, Program
+                           TrayIcon, App (+ .Reminders, .Shortcut, .Clipboard, .Dictation, .Translate, .ReadAloud, .Chat, .ToolsScreen), SavedTranslations, OwnerChatBook, GlobalHotkey, ShortcutKeys, Program
                            AppSettings (+ .Talk .Bonds .Relationships .Calendar .Planes .Reminders .Flowers .Patience .TeaParties .Voice .Beds .Play .Clipboard .Dictation .Translate .ReadAloud .ToolsScreen),
                            SettingsStore, LaunchAtLogin
                            ChatClient (+ .Network), Translator, ModelCatalog, ChatHistory, SpendLedger, BondBook, ReminderBook, ClipBook, ClipWatcher (+ ClipPaster)
                            Voice (+ .Casting .System .Playback), SpeechClient, WaveTape, ReadAloudPlayer, ReadAloudTape
                            SpriteAtlas, SpriteLibrary (+ .Kit), PngIO
                            Native/Win32, Native/CredentialStore, Native/ClipboardNative
-                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .SavedTranslations .ReadAloud .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
+                           UI/SettingsWindow.xaml (a sidebar of pages, + .Sidebar .Translate .SavedTranslations .ReadAloud .Chat .ToolsScreen .Dictation .Sprites .Talk .Script .Cast .Chats .Bonds .Relationships .Calendar .Model .Reminders .Clipboard .Flowers .Voice .Costs),
                            ReminderNote, ActionsSheet, ColourDialog, ClipPickerWindow (+ ClipGhost, ClipToast), TranslateSheet, ReadAloudSheet, ToolsScreen, PixelGlyph, SnippetsWindow, RelationshipsWindow
   LedgelingsCore.Tests/  the §14 acceptance tests
   Ledgelings.Tests/      app-side tests
