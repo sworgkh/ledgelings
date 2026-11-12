@@ -91,6 +91,8 @@ final class ActionsController {
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
         model.toolsOn = settings.toolsScreenEnabled
         model.toolsShortcut = settings.toolsScreenShortcutEnabled ? GlobalShortcut.label(settings.toolsScreenShortcut) : ""
+        model.chatOn = settings.chatEnabled
+        model.chatShortcut = settings.chatShortcutEnabled ? GlobalShortcut.label(settings.chatShortcut) : ""
         guard let colony = colony() else {
             if model.state != s { model.state = s }
             return
@@ -351,7 +353,7 @@ enum ActionsSwitch: CaseIterable {
 
 /// Where the sheet can send you, as the menu did.
 enum ActionsLink: CaseIterable {
-    case settings, chats, quit, tools
+    case settings, chats, quit, tools, chat
 
     var title: String {
         switch self {
@@ -359,7 +361,13 @@ enum ActionsLink: CaseIterable {
         case .chats: tr("CHATS")
         case .quit: tr("QUIT")
         case .tools: tr("TOOLS")
+        case .chat: tr("CHAT")
         }
+    }
+
+    /// The chat picture's tag: what it opens and its keys, C here and the shortcut from any app.
+    static func chatTooltip(shortcut: String) -> String {
+        shortcut.isEmpty ? tr("Chat with the creatures (C)") : tr("Chat with the creatures (C · %@)", shortcut)
     }
 
     /// The Tools picture's tag: what it opens and its keys, K here and the shortcut from any app.
@@ -548,6 +556,8 @@ final class ActionsModel: ObservableObject {
     /// The Tools screen's picture, and its shortcut from any app as drawn.
     @Published var toolsOn = true
     @Published var toolsShortcut = ""
+    @Published var chatOn = true
+    @Published var chatShortcut = ""
     var press: (ActionsTile) -> Void = { _ in }
     var hide: (Double?) -> Void = { _ in }
     var flip: (ActionsSwitch) -> Void = { _ in }
@@ -708,6 +718,16 @@ struct ActionsSheetView: View {
                         Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
                             .lineLimit(1)
                         Spacer(minLength: 0)
+                        // The chat window: write to one of them or to all (C).
+                        if model.chatOn {
+                            Button { model.open(.chat) } label: {
+                                PixelGlyph(rows: OwnerChat.icon).foregroundStyle(PixelBox.rim)
+                            }
+                            .buttonStyle(TinyPixelButtonStyle())
+                            .keyboardShortcut("c", modifiers: [])
+                            .help(ActionsLink.chatTooltip(shortcut: model.chatShortcut))
+                            .fixedSize()
+                        }
                         // The Tools screen: every owner tool on one sheet (K).
                         if model.toolsOn {
                             Button { model.open(.tools) } label: {

@@ -28,6 +28,7 @@ extension Strings {
         "dictation": ruDictation,
         "translate": ruTranslate,
         "readAloud": ruReadAloud,
+        "chat": ruChat,
         "relationships": ruRelationships,
         "gang": ruGang,
         "diving": ruDiving,

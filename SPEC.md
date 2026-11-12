@@ -2669,6 +2669,49 @@ Exit 1 if the water is not the set share, a click was taken, or the screen did n
 `--dive [--stop-after seconds]` (or `--surf`) runs a dive (a surf) on the real screen, each step on stderr with
 where the Stop button stands, and quits once they are out (a click on the button ends it too), or presses Stop activity after that many seconds and prints how long the screen took to clear.
 
+### 7.18 Chat with the creatures
+
+The owner writes to one creature or to all of them (`OwnerChat`, `Colony+OwnerChat`, `ChatController`, since
+0.70.0 on macOS). **Control + Option + C** (`chatShortcut`, free in the system and among ours; spelled in words by
+`GlobalShortcut.spoken`) from any app, **Chat with the Creatures…** in the menu, its tile on the Tools screen (11),
+or the speech-bubble button on Creature Actions (C).
+
+- **The window**: 760×470 of the letter's pixel paper in a non-activating `ClipPanel`, dragged anywhere and
+  reopened where it was left (`WindowPlaces.Window.chat`). A **To:** row (Everyone, then each character on
+  screen by its idle sprite and name; ⌘0, ⌘1–9), the talk so far (yours on the right in orange, theirs on the
+  left with the sprite), *Blocky is thinking…* while one writes, the text box (⏎ sends, ⇧⏎ a new line) and the
+  send button. ⎋ closes, ⌘, opens the settings. Every control is a picture (`OwnerChat.Button`, 11×11; the
+  creatures' chips are their sprites) with a drawn tag naming its key (AGENTS rule 4). No model (the built-in
+  lines): one line says so, with **Open settings**. A message while they are still answering is refused with a line.
+- **One creature**: it answers through the brain model (`chatClient`) in its persona and kind
+  (`{speakerPersona}`, `{speakerKind}`, AGENTS rule 3), at most `chatLength`'s words (25, 60, 120), with the
+  day, the almanac and where it is. The prompt is `OwnerChat.systemPrompts` / `messagePrompts`, Russian
+  in Russian; the answer is cleaned (`OwnerChat.clean`: no thinking, no name, lines joined, cut on a sentence).
+- **Everyone**: up to `chatEveryone` characters on screen answer (`OwnerChat.answerers`: each name once, the
+  awake in a random order first, then sleepers), **one after another**: each prompt carries what the ones before
+  said, told to react if it likes and never to give the same answer.
+- **On screen**: while it writes, dots over it (never said); then the answer in its bubble (`chatBubbles`) and in
+  its voice (`chatSpeak`, when voice is on), the next one starting a beat after it is said. It stops and turns to
+  face the window along its edge (`Creature.meet`) while it thinks and talks, kept from other talk (`busy`),
+  and walks on after the last answer.
+- **Memory** (`chatRemember`): each character keeps its last `chatMemoryExchanges` (10) exchanges with the owner
+  word for word and a summary of the older ones (`OwnerChat.Book`, `owner-chats.json` beside `bonds.json`), and
+  both go into its next chat prompt (`OwnerChat.memoryBlock`: the summary, then each exchange with its day). An
+  exchange that falls out is folded into the summary by one call (`summaryPrompts`, at most 80 words). Off:
+  nothing new is kept or sent. Forget this one / Forget everyone's on the page; `--memory` prints it.
+- **Cost** (AGENTS rule 1): every answer and every summary call is recorded under `Spend.Purpose.chat`
+  (*Chat with you*), an empty answer too; LM Studio at $0. The summaries go under the same purpose, not
+  `.memory`: they exist only because of the chat, and `.memory` is the pairs' diary. Each talk goes to the chat
+  log (*Chat with you.* and the situation; you as *You*, then each answer) with its cost and tokens, and its
+  voice lines are put beside it there (`ChatLog.voiceTotals`).
+
+`--chat "text" [--to Blocky|all]` sends one message through the real calls and prints each answer, voice cue,
+price and time, then the memory. `--chat-window [--to name] [--send "text"] [--snapshot out.png]` opens the
+window on the real screen and writes it. `--chat-film out.mp4` films a talk to one and a talk to everyone
+offscreen, through the colony with stand-in answers, and writes stills beside it (`-open`, `-thinking`,
+`-answer`, `-everyone`, `-everyone-done`, `-no-model`). `LEDGELINGS_FAKE_CHAT=1`: hand-written answers in each
+character's voice, no key, no network.
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -3064,6 +3107,7 @@ falls through to whatever is underneath.
 | Translate sheet: ⌘D (Windows Ctrl+D), ⌘L (Ctrl+L); in the drawer ↑↓, ⏎, ⌫, ⌘C, ⎋ | save or unsave the translation; the drawer of saved ones; move, load back, delete, copy, close the drawer (§7.14.3) |
 | The read-aloud shortcut, in any app (`readAloudShortcut` ⌃⌥R; Windows Ctrl+Alt+Shift+R) | the Read aloud sheet with the clipboard's text, read at once (again: closes; while it reads, brings it back) (§7.16) |
 | Menu / tray: Read Aloud… / Stop Reading (while it reads) | the Read aloud sheet; ends the reading (§7.16) |
+| The chat shortcut, in any app (`chatShortcut` ⌃⌥C), the menu's Chat with the Creatures…, the Tools tile, Creature Actions' C | the chat window: write to one creature or to everyone, and they answer (§7.18) |
 | A clipboard picker row's loudspeaker, or ⌘R (Windows Ctrl+R) | that row read aloud in the sheet (§7.16) |
 | The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; Windows Ctrl+Alt+K), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
 | Clipboard picker: ⌘T on a row, ⌥⇥, ⌘⇧T, ⏎ | its translation under it, the next language, the sheet, paste the translation (§7.14.2) |
@@ -3382,6 +3426,14 @@ An error for want of a model reads as that note, never as a server refusal.
 | readAloudFolder | `~/Desktop` | where ⌘S saves (on Windows the Desktop wherever Windows keeps it); empty reads as the default |
 | readAloudFormat | `m4a` | `m4a` or `wav`; unknown reads as `m4a`; Windows writes WAV either way |
 | readAloudLongLimit | 3 000 | 500–20 000 characters, clamped: a longer paid reading shows its price and waits for ⏎ |
+| chatEnabled | true | Chat with the creatures (§7.18); off, its shortcut is let go, the menu item and the Creature Actions button go |
+| chatShortcutEnabled / chatShortcutKeyCode / chatShortcutModifiers | true / C / ⌃⌥ | the chat window, as `shortcut` |
+| chatEveryone | 3 | 1–8, clamped: how many answer a message to everyone, one after another |
+| chatLength | `short` | `short` (25 words), `medium` (60), `long` (120); unknown reads as `short` |
+| chatSpeak | true | answers said out loud in each one's voice, when voice is on |
+| chatBubbles | true | answers in a bubble over the creature too, and dots while it thinks |
+| chatRemember | true | each keeps its talks with the owner (`owner-chats.json`) and they go into its next answer |
+| chatMemoryExchanges | 10 | 0–50, clamped: exchanges kept word for word; older ones are folded into a summary |
 | toolsScreenKnown | every tool | not shown: the tools there were when the Tools screen's list was read, so a new one joins an arranged list once |
 | toolsScreenEnabled | true | the Tools screen (§7.15); off, its shortcut is let go, the menu item and the Actions sheet's wrench hide |
 | toolsScreenShortcutEnabled / toolsScreenShortcutKeyCode / toolsScreenShortcutModifiers | true / K / ⌃⌥ | the screen, as `shortcut` |
@@ -3393,9 +3445,9 @@ the hunt counts in `hunts.json` (§4.7.2), and the favourite sleeping places in
 `beds.json` (§7.9).
 
 Settings window: 1280×760 points (it fits a 1280×800 laptop screen). On the left a
-sidebar 220 wide: a search box, then twenty-one pages under five headings (`SettingsGroup`):
+sidebar 220 wide: a search box, then twenty-seven pages under five headings (`SettingsGroup`):
 *Creatures & world* (Creatures, Actions, Sprites, Beds, Flowers, Calendar), *Games*
-(Chases, Play, Ball games), *Talk & friends* (Talk, Voice, Bonds, Relationships),
+(Chases, Play, Ball games), *Talk & friends* (Talk, Chat with you, Voice, Bonds, Relationships),
 *Tools* (Tools screen, Reminders, Clipboard, Screenshots, Dictation, Translate, Read aloud) and *Money & history* (Costs,
 Chats), each heading's pages with its pixel picture. On the right the page: its
 group and name, then two columns that scroll on their own so a page fits on one

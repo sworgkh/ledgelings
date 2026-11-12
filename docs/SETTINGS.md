@@ -54,6 +54,7 @@ icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from th
 | **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
 | **Read Aloud…** (⌃⌥R from any app; Ctrl+Alt+Shift+R on Windows) | The Read aloud sheet with the clipboard's text, read out in a preset's voice ([Read aloud](#read-aloud)) |
 | **Stop Reading** (only while it reads) | Ends a reading the sheet let go on when it closed |
+| **Chat with the Creatures…** (⌃⌥C from any app) | The chat window: write to one creature or to everyone, and they answer ([Chat with you](#chat-with-you); macOS) |
 | **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
 | **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
 | **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
@@ -451,6 +452,32 @@ personality keeps returning to; a character you wrote yourself uses a few genera
 ones. With a model, the sender writes the note in its persona while the plane is in
 the air, and the catcher's thought comes from a second call; both are priced like
 any other call.
+
+## Chat with you
+
+*Talk & friends › Chat with you* (`--settings chatwithyou`). **Control + Option + C** in any app (also
+*Chat with the Creatures…* in the menu, the chat tile on the Tools screen, or the speech-bubble button at the
+top of Creature Actions, key C) opens a window of the letter's pixel paper. **To:** is *Everyone* or one
+creature on screen, by its sprite and name (⌘0, ⌘1–9). Type and press ⏎; ⇧⏎ makes a new line, ⎋ closes,
+⌘, opens this page. Each answer shows in the window, in a bubble over the creature (dots while it thinks),
+and in its voice when voice is on; it turns to face the window while it talks. Without a model the window
+says so in one line, with a button to the settings.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Chat with the creatures** (`chatEnabled`) | on | | Off: the shortcut is let go, the menu item and the Creature Actions button go, the tile goes grey |
+| **Open the chat** (`chatShortcutEnabled`, `chatShortcutKeyCode`, `chatShortcutModifiers`) | on, Control + Option + C | any key with ⌘, ⌃ or ⌥ | Click the keys to record others. Refused by the system: a red line says so |
+| **How many answer Everyone** (`chatEveryone`) | 3 | 1 to 8 | One after another, each hearing the ones before, so they react rather than repeat; the awake ones first |
+| **Reply length** (`chatLength`) | short | short (25 words), medium (60), long (120) | What the prompt asks for; a longer answer is cut on a whole sentence |
+| **Speak replies aloud** (`chatSpeak`) | on | | Only when voice is on too (Voice page); each in its own voice |
+| **Show bubbles on screen** (`chatBubbles`) | on | | Off: the answers are only in the window (and in the voice) |
+| **Remember talks** (`chatRemember`) | on | | Each creature keeps its last talks with you and a summary of the older ones, sent with its next answer. Off: nothing new is kept or sent |
+| **Past exchanges kept word for word** (`chatMemoryExchanges`) | 10 | 0 to 50 | An exchange that falls out is folded into the summary by one call |
+
+**Right column**, under *Memory*: who remembers what (the count kept and the summary), **Forget this one**
+and **Forget everyone's**. The memory is `owner-chats.json` beside `bonds.json`; `--memory` prints it.
+Every answer and every summary is one call on *Costs* as **Chat with you** (an empty answer too), and each
+talk is on *Chats* with its cost and its voice's.
 
 ## Flowers tab
 

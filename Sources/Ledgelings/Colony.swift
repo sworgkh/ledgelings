@@ -248,6 +248,13 @@ final class Colony: NSObject {
             }
         }
     }
+    /// What each creature remembers of chatting with the owner (`Colony+OwnerChat`); nil keeps nothing.
+    var ownerChats: OwnerChatBook?
+    /// Creatures writing an answer to the owner, by when they started: dots over them.
+    var chatThinking: [Int: Double] = [:]
+    /// Creatures turned to face the chat window while they answer, and the ones the chat made busy.
+    var chatFacing: Set<Int> = []
+    var chatBusy: Set<Int> = []
     /// The last thing that happened with the model, for the menu.
     var talkStatus = tr("not tried yet")
 
@@ -465,6 +472,7 @@ final class Colony: NSObject {
         updateClipHelp(dt: dt)
         updateShotCarry(dt: dt)
         updateDictationHelp(dt: dt)
+        updateOwnerChat()
         releaseChatIfOver()
         for bump in meetings.update(parties(), at: elapsed) { bumped(bump) }
         updatePost(dt: dt)

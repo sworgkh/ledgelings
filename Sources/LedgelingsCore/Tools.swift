@@ -6,7 +6,7 @@ import Foundation
 /// its tag saying where to switch it on.
 public enum Tools {
     public enum Tool: String, CaseIterable, Sendable {
-        case translate, dictation, screenshot, fullScreen, lastRectangle, clipHistory, snippets, reminder, readAloud, dive
+        case translate, dictation, screenshot, fullScreen, lastRectangle, clipHistory, snippets, reminder, readAloud, dive, chat
 
         public var title: String {
             switch self {
@@ -20,6 +20,7 @@ public enum Tools {
             case .snippets: tr("SNIPPETS")
             case .reminder: tr("ADD A REMINDER")
             case .dive: tr("SCUBA DIVING")
+            case .chat: tr("CHAT WITH THEM")
             }
         }
 
@@ -36,6 +37,7 @@ public enum Tools {
             case .snippets: tr("The snippets, to paste")
             case .reminder: tr("A reminder, thrown at you by paper plane")
             case .dive: tr("Water over the screen and a dive among the fish; again to stop")
+            case .chat: tr("Write to one creature or to all of them")
             }
         }
 
@@ -49,12 +51,16 @@ public enum Tools {
             case .clipHistory, .snippets: .clipboard
             case .reminder: .reminders
             case .dive: .diving
+            case .chat: .chatWithYou
             }
         }
 
         /// The tag: what it does and its keys, `1 · ⌃⌥T`; switched off, where to switch it on.
         public func tooltip(number: Int, shortcut: String?, on: Bool) -> String {
-            guard on else { return tr("Off: switch it on in Settings › Tools › %@ (%d)", page.title, number) }
+            guard on else {
+                return page.group == .tools ? tr("Off: switch it on in Settings › Tools › %@ (%d)", page.title, number)
+                    : tr("Off: switch it on in Settings › %@ › %@ (%d)", page.group.title, page.title, number)
+            }
             return shortcut.map { tr("%@ (%d · %@)", does, number, $0) } ?? tr("%@ (%d)", does, number)
         }
 
@@ -69,6 +75,7 @@ public enum Tools {
             case .lastRectangle: ["##.###.....", "#.........#", "....######.", "#...#....#.", "#...#....#.", "....#..#.#.", "#...#.##.#.", "#...#....#.", "....######.", "#..........", "..##.###.##"]
             case .clipHistory: ["...###.....", "####.####..", "#.......#..", "#.#####.#..", "#.......#..", "#.###...#..", "#.......#..", "#.#####.#..", "#.......#..", "#########..", "..........."]
             case .snippets: ["#########..", "#.......##.", "#.#####.#.#", "#.......###", "#.#####...#", "#.........#", "#.###.....#", "#.........#", "#.#####...#", "#.........#", "###########"]
+            case .chat: OwnerChat.icon
             case .dive: ["...........", "...........", ".....####..", "#...#....#.", "##.#...#..#", "#.#.......#", "##.#......#", "#...#....#.", ".....####..", "...........", "#.#.#.#.#.#"]
             case .reminder: ["..........#", "........##.", "......##.#.", "....##..#..", "..##...#...", "##....#....", "..##.#.....", "....##.....", "....#.#....", "....#..#...", "....#......"]
             }

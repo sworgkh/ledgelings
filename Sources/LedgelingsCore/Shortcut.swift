@@ -41,6 +41,8 @@ public struct Shortcut: Equatable, Sendable {
     public static let translateClip = Shortcut(keyCode: 17, modifiers: [.control, .option, .shift])
     /// Read aloud: Control-Option-R, R for read.
     public static let readAloud = Shortcut(keyCode: 15, modifiers: [.control, .option])
+    /// Chat with the creatures: Control-Option-C, C for chat. Free in the system and among ours.
+    public static let chat = Shortcut(keyCode: 8, modifiers: [.control, .option])
 
     /// Stop activity: Control-Option-Q, Q for quit, beside the others. Free in the system (⌃⌘Q, not this,
     /// locks the screen) and among ours.

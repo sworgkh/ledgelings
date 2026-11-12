@@ -86,7 +86,7 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
   writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, chases, play, ballgames, surfing, diving,
-  talk, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, savedtranslations, readaloud, costs, chats;
+  talk, chatwithyou, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, savedtranslations, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place;
   `productivity`, the old tools tab, still opens Reminders).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
@@ -159,6 +159,11 @@ with `scripts/make-app.sh`, installed and seen working.
   (with the drawer of saved translations open beside it); `--translate-film out.mp4` films the sheet offscreen,
   saving two translations, the drawer, a search, a load and a delete (stills beside it, `…-saved.png`, `…-drawer.png`). `LEDGELINGS_FAKE_TRANSLATE=1`: hand-written
   answers, no key, no network (the way to run them headless: a new build reading the key blocks on the keychain).
+- `--chat "text" [--to Blocky|all]` sends one message through the real calls and prints each answer, voice cue, price and
+  time, then what each remembers; `--chat-window [--to name] [--send "text"] [--snapshot out.png]` opens the chat window on
+  the real screen and writes it; `--chat-film out.mp4` films a talk to one and to everyone offscreen with stand-in answers
+  (stills beside it, `…-answer.png`, `…-everyone-done.png`, `…-no-model.png`). `LEDGELINGS_FAKE_CHAT=1`: hand-written
+  answers, no key, no network. Priced under Chat with you; the memory is `owner-chats.json` beside `bonds.json`: back it up.
 - `--read "text" [--preset name] [--engine system] [--out file.m4a] [--mute]` reads through the real calls and prints the provider,
   voice, time to first sound, length and price (`read provider openRouter · Charon on … · first sound after 1.9 s · …`);
   `--read-bench [--models a,b]` asks each candidate speech model for the same EN/RU/HE paragraph without playing it,
@@ -166,7 +171,7 @@ with `scripts/make-app.sh`, installed and seen working.
   opens the sheet on the real screen, reads, writes the paper and closes. All priced under Read aloud. `--engine system`
   reads with the Mac's voices: no key, no keychain prompt, free (headless, with `brainProvider` set to `script`).
 - `--drag-check [name]` opens every window that moves (or the one named: settings, relationships, snippets, actions,
-  reminder, tools, translate, readAloud, clipPicker) on the real screen, drags it 90 points right and 70 down with real
+  reminder, tools, translate, readAloud, clipPicker, chat) on the real screen, drags it 90 points right and 70 down with real
   mouse events, closes and reopens it, and prints each step (`drag tools: top-left (412, 801) → (502, 731), moved 90, -70; saved (502, 731)`,
   `drag tools: reopened at (502, 731), where it was left`); exit 1 if one stayed put or forgot its place. Needs Accessibility
   (as `--paste-check`), an unlocked screen, `LEDGELINGS_FAKE_TRANSLATE=1` and `brainProvider` = `script`; it saves places, so back up the preferences.
@@ -175,7 +180,7 @@ with `scripts/make-app.sh`, installed and seen working.
 - `--shortcut` says whether the system took the shortcuts from any app (`shortcut ⌃⌥L registered`,
   `shortcut ⌃⌥V history registered`, `shortcut ⌃⌥B snippets registered`, `shortcut ⌃⌥S screenshot registered`,
   `shortcut ⇧⌘8 full screen registered`, `shortcut ⇧⌘\ last rectangle registered`, `shortcut ⌃⌥D dictation registered`, `shortcut ⌃⌥T translate registered`, `shortcut ⌃⌥K tools registered`,
-  `shortcut ⌃⌥R read aloud registered`),
+  `shortcut ⌃⌥R read aloud registered`, `shortcut ⌃⌥C chat registered`),
   then `shortcut pressed: sheet up` when it is pressed, and quits; nothing in 30 s is exit 2.
 - `--shot-check` prints whether this build has Screen Recording and whether each monitor's capture
   shows the screen (`shot Built-in Retina Display: 3024×1964 px at 2×, 412 colours in a sample`); exit 1 if

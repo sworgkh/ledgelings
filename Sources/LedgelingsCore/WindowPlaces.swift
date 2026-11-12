@@ -7,7 +7,7 @@ public enum WindowPlaces {
     /// Every window or sheet the app opens, and whether the owner can move it.
     public enum Window: String, CaseIterable, Sendable {
         case settings, relationships, snippets, actions, reminder
-        case tools, translate, readAloud, clipPicker
+        case tools, translate, readAloud, clipPicker, chat
         /// The creatures' see-through layer over the screen: moving it would move the screen.
         case overlay
         /// The screenshot tool's frozen screens and its toolbar, laid over the screens they capture.

@@ -39,6 +39,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private(set) lazy var translate = TranslateController(settings: settings, spend: spend, clips: clips, saved: savedTranslations, watcher: { [weak self] in self?.clipWatcher },
                                                           helper: { [weak self] in self?.colony })
     private lazy var toolsScreen = ToolsScreenController(settings: settings)
+    /// What each creature remembers of chatting with the owner, and the chat window (⌃⌥C).
+    private let ownerChats = OwnerChatBook()
+    private(set) lazy var chat = ChatController(settings: settings, colony: { [weak self] in self?.colony })
     private(set) lazy var readAloud = ReadAloudController(settings: settings, spend: spend, voice: voice, library: library, clips: clips,
                                                           watcher: { [weak self] in self?.clipWatcher }, helper: { [weak self] in self?.colony })
     private var statusItem: NSStatusItem?
@@ -213,6 +216,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--chat-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/chat.mp4"
+            Task { @MainActor in
+                do { try await ChatFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings chat film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--translate-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/translate.mp4"
@@ -256,6 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             colony = try Colony(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds)
             colony?.voice = voice
             colony?.pointer = pointer
+            colony?.ownerChats = ownerChats
             freeTheCursorWhenTheScreenGoes()
         } catch {
             FileHandle.standardError.write(Data("Ledgelings: \(error)\n".utf8))
@@ -272,6 +286,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         dictation.takeShortcut { [weak self] in self?.dictationShortcutPressed() }
         translate.takeShortcuts { [weak self] in self?.translateShortcutPressed($0) }
         readAloud.takeShortcut { [weak self] in self?.readAloudShortcutPressed() }
+        chat.takeShortcut { [weak self] in self?.chatShortcutPressed() }
+        chat.openSettings = { [weak self] in self?.settingsWindow.show($0) }
+        if ProcessInfo.processInfo.environment["LEDGELINGS_FAKE_CHAT"] != nil { chat.fake = ChatDemo.fake }
+        settingsWindow.ownerChats = ownerChats
         settingsWindow.readAloud = readAloud
         settingsWindow.savedTranslations = savedTranslations
         picker.readRow = { [weak self] in self?.readAloud.read($0) }
@@ -319,6 +337,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let readState = !settings.readAloudEnabled || !settings.readAloudShortcutEnabled ? "off"
                 : settings.readAloudShortcutProblem.isEmpty ? "registered" : "refused: \(settings.readAloudShortcutProblem)"
             FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.readAloudShortcut)) read aloud \(readState)\n".utf8))
+            let chatState = !settings.chatEnabled || !settings.chatShortcutEnabled ? "off"
+                : settings.chatShortcutProblem.isEmpty ? "registered" : "refused: \(settings.chatShortcutProblem)"
+            FileHandle.standardError.write(Data("shortcut \(GlobalShortcut.label(settings.chatShortcut)) chat \(chatState)\n".utf8))
             Task { @MainActor in try? await Task.sleep(for: .seconds(30)); FileHandle.standardError.write(Data("shortcut: not pressed\n".utf8)); exit(2) }
         }
         // `--shot-demo [--snapshot out.png]`: a shot of the real screen with marks, the clipboard put back after.
@@ -373,11 +394,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                controller: readAloud, settings: settings) ? 0 : 1)
             }
         }
+        // `--chat "text" [--to Blocky|all]`: one message through the real calls, each answer, voice cue, price and time on stderr.
+        // `--chat-window [--to name] [--send "text"] [--snapshot out.png]`: the window on the real screen, written to a PNG.
+        if let text = value("--chat"), let colony {
+            let chat = chat, spend = spend
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                exit(await ChatDemo.once(text, to: value("--to"), controller: chat, colony: colony, settings: settings, spend: spend) ? 0 : 1)
+            }
+        }
+        if args.contains("--chat-window"), let colony {
+            let chat = chat
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                exit(await ChatDemo.window(to: value("--to"), send: value("--send"), snapshot: value("--snapshot").map { URL(fileURLWithPath: $0) },
+                                           controller: chat, colony: colony) ? 0 : 1)
+            }
+        }
         // `--tools [--snapshot out.png]`: the Tools screen on the real screen, written to a PNG, then closed.
         // `--drag-check`: every window that moves, dragged on the real screen and reopened (`DragCheck`).
         if args.contains("--drag-check") {
             let (settings, tools, translate, readAloud, picker, actions, note) = (settings, toolsScreen, translate, readAloud, picker, actions, note)
-            let (settingsWindow, relationships, snippets) = (settingsWindow, relationshipsWindow, snippetsWindow)
+            let (settingsWindow, relationships, snippets, chat) = (settingsWindow, relationshipsWindow, snippetsWindow, chat)
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 let targets: [DragCheck.Target] = [
@@ -395,6 +433,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     .init(window: .readAloud, open: { readAloud.sheet.show(text: nil, start: false) }, close: { readAloud.sheet.close() },
                           place: { DragCheck.paper(readAloud.sheet.model.paper) }),
                     .init(window: .clipPicker, open: { picker.show(.recent) }, close: { picker.close() }, place: { DragCheck.paper(picker.model.paper) }),
+                    .init(window: .chat, open: { chat.show() }, close: { chat.close() }, place: { DragCheck.paper(chat.model.paper) }),
                 ]
                 let only = value("--drag-check").flatMap(WindowPlaces.Window.init(rawValue:))
                 exit(await DragCheck.run(targets.filter { only == nil || $0.window == only }, settings: settings) ? 0 : 1)
@@ -721,6 +760,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let readAloudItem = NSMenuItem(title: "", action: #selector(openReadAloud), keyEquivalent: "")
     private let stopReadingItem = NSMenuItem(title: "", action: #selector(stopReading), keyEquivalent: "")
     private let toolsItem = NSMenuItem(title: "", action: #selector(openToolsScreen), keyEquivalent: "")
+    private let chatItem = NSMenuItem(title: "", action: #selector(openChat), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
     private func installStatusItem() {
@@ -741,6 +781,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
+        chatItem.target = self
+        menu.addItem(chatItem)
         for item in [toolsItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem, readAloudItem, stopReadingItem] {
             item.target = self
             menu.addItem(item)
@@ -842,6 +884,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let readKey = GlobalShortcut.keyName(settings.readAloudShortcut.keyCode).lowercased()
         readAloudItem.keyEquivalent = settings.readAloudShortcutEnabled && readKey.count == 1 ? readKey : ""
         readAloudItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.readAloudShortcut.modifiers)
+        chatItem.title = tr("Chat with the Creatures…")
+        chatItem.isHidden = !settings.chatEnabled
+        let chatKey = GlobalShortcut.keyName(settings.chatShortcut.keyCode).lowercased()
+        chatItem.keyEquivalent = settings.chatShortcutEnabled && chatKey.count == 1 ? chatKey : ""
+        chatItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.chatShortcut.modifiers)
         stopReadingItem.title = tr("Stop Reading")
         stopReadingItem.isHidden = !readAloud.player.isActive
         toolsItem.title = tr("Tools…")
@@ -931,6 +978,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openTranslate() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); translate.sheet.show() } }
     @objc private func openReadAloud() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); if !readAloud.sheet.isUp { readAloud.sheet.toggle() } } }
     @objc private func stopReading() { readAloud.player.stop() }
+    @objc private func openChat() { Task { @MainActor in try? await Task.sleep(for: .milliseconds(250)); if !chat.isUp { chat.show() } } }
+
+    /// The chat shortcut from any app, for `--shortcut`: said, then quit once the window is closed.
+    private func chatShortcutPressed() {
+        guard CommandLine.arguments.contains("--shortcut") else { return }
+        FileHandle.standardError.write(Data("shortcut pressed: chat\n".utf8))
+        Task { @MainActor in try? await Task.sleep(for: .seconds(2)); while chat.isUp { try? await Task.sleep(for: .seconds(0.2)) }; exit(0) }
+    }
 
     /// The read-aloud shortcut from any app, for `--shortcut`: said, then quit once the sheet is closed.
     private func readAloudShortcutPressed() {
@@ -1002,6 +1057,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .settings: openSettings()
         case .chats: openChats()
         case .quit: NSApp.terminate(nil)
+        case .chat:
+            NSApp.deactivate()
+            Task { @MainActor in try? await Task.sleep(for: .milliseconds(200)); chat.show() }
         case .tools:
             // The Actions sheet made Ledgelings the active app: give the keyboard back
             // first, so a tool that pastes pastes into the app you were in.
@@ -1025,6 +1083,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .snippets: picker.show(.snippets)
             case .reminder: openReminders()
             case .dive: toggleDive()
+            case .chat: chat.show()
             }
         }
         toolsScreen.isOn = { [weak self] tool in
@@ -1037,6 +1096,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .clipHistory, .snippets: return s.clipboardEnabled
             case .reminder: return s.remindersEnabled
             case .dive: return true
+            case .chat: return s.chatEnabled
             }
         }
         toolsScreen.shortcutLabel = { [weak self] tool in
@@ -1044,6 +1104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let pair: (Bool, Shortcut)? = switch tool {
             case .translate: (s.translateShortcutEnabled, s.translateShortcut)
             case .readAloud: (s.readAloudShortcutEnabled, s.readAloudShortcut)
+            case .chat: (s.chatShortcutEnabled, s.chatShortcut)
             case .dictation: (s.dictationShortcutEnabled, s.dictationShortcut)
             case .screenshot: (s.shotCaptureShortcutEnabled, s.shotCaptureShortcut)
             case .fullScreen: (s.shotFullShortcutEnabled, s.shotFullShortcut)
