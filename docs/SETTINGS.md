@@ -381,6 +381,28 @@ Clipboard (copied!), Costs (money spent). All are kept in `effectsOff`.
 | **Look at my calendar** (`effectsCalendar`) | off | | Clock ticking five minutes before a meeting; **Allow…** asks the Mac for the calendar. Only start times are read, on the Mac. Not on Windows, which gives the creatures no calendar: there Clock ticking plays by hand only |
 | **Daily budget** (`effectsDailyBudget`) | $1 | $0.10 to $50 | Money spent: when today's spend (Costs) passes it, the coins drop, once a day |
 
+## Weather page
+
+Snow, rain and wind over the creatures' monitors when the screen is quiet (SPEC §7.20). Only drawn, click-through.
+**Play now** beside each weather starts it at once, quiet or not; **Clear sky** eases it off. The menu's **Weather** submenu
+and Creature Actions › **WEATHER…** (W) do the same.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Weather on** (`weatherEnabled`) | on | | Off, none comes by itself (by hand still works), and one falling eases off |
+| **Snow**, **Rain**, **Wind** (`weatherSnow`, `weatherRain`, `weatherWind`) | on | | Each weather's switch; a storm is rain and wind together and needs both |
+| **Follow the season** (`weatherFollowSeason`) | on | | Snow mostly in winter, wind in autumn, rain any time; off, all alike |
+| **Reduce motion** (`weatherReduceMotion`) | as the system | as the system, on, off | Half the particles, and the wind pushes nobody |
+| **The creatures talk about it** (`weatherTalk`) | on | | Built-in lines in each character's voice; no model, no cost |
+| **How quiet the screen must be** (`weatherQuietMinutes`) | 5 min | 1 to 60 | No typing and the cursor moving under 150 points for that long, nothing full screen, no game, surf or dive, no meeting (calendar, or a microphone in use) |
+| **How often** (`weatherFrequency`) | sometimes | rarely, sometimes, often | About once every 60, 20 or 5 quiet minutes |
+| **How long it lasts** (`weatherMinutes`) | 3 min | 1 to 20 | Then it eases off over 8 s; coming back eases it off too; snow left lying melts slowly |
+| **How deep snow piles** (`weatherSnowDepth`) | medium | low, medium, high | Up to 4, 8 or 13 pixels (×2 points) along the bottom, half that on window tops |
+| **Snow on window tops** (`weatherWindowTops`) | on | | A window that moves or closes drops its snow |
+| **How heavy the rain is** (`weatherRainHeaviness`) | medium | low, medium, high | More drops; puddles and the bowl on the top edge fill sooner |
+| **Umbrella sharing distance** (`weatherShareDistance`) | 40 pt | 0 to 200 | Closer than this along an edge, up to three share one umbrella; 0, each their own |
+| **How strong the wind is** (`weatherWindStrength`) | medium | low, medium, high | Harder gusts push further and blow light ones off the top edge |
+
 ## Diving tab
 
 Scuba diving, which only ever starts by hand (the Activities page's *SCUBA DIVING*, key D; the

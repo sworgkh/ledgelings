@@ -889,6 +889,54 @@ final class AppSettings: ObservableObject {
         if on { effectsOff.removeAll { $0 == key } } else if !effectsOff.contains(key) { effectsOff.append(key) }
     }
 
+    // MARK: Weather
+
+    /// Weather on a quiet screen (SPEC §7.20): snow, rain and wind.
+    @Published var weatherEnabled: Bool { didSet { save(weatherEnabled, "weatherEnabled") } }
+    @Published var weatherSnow: Bool { didSet { save(weatherSnow, "weatherSnow") } }
+    @Published var weatherRain: Bool { didSet { save(weatherRain, "weatherRain") } }
+    @Published var weatherWind: Bool { didSet { save(weatherWind, "weatherWind") } }
+    /// Minutes with no typing and the cursor barely moving before weather may come.
+    @Published var weatherQuietMinutes: Double { didSet { save(weatherQuietMinutes, "weatherQuietMinutes") } }
+    @Published var weatherFrequency: Weather.Frequency { didSet { save(weatherFrequency.rawValue, "weatherFrequency") } }
+    /// Minutes a spell lasts before it eases off.
+    @Published var weatherMinutes: Double { didSet { save(weatherMinutes, "weatherMinutes") } }
+    @Published var weatherSnowDepth: Weather.Level { didSet { save(weatherSnowDepth.rawValue, "weatherSnowDepth") } }
+    @Published var weatherRainHeaviness: Weather.Level { didSet { save(weatherRainHeaviness.rawValue, "weatherRainHeaviness") } }
+    @Published var weatherWindStrength: Weather.Level { didSet { save(weatherWindStrength.rawValue, "weatherWindStrength") } }
+    /// Creatures closer than this many points share one umbrella; 0: everyone has its own.
+    @Published var weatherShareDistance: Double { didSet { save(weatherShareDistance, "weatherShareDistance") } }
+    @Published var weatherFollowSeason: Bool { didSet { save(weatherFollowSeason, "weatherFollowSeason") } }
+    @Published var weatherWindowTops: Bool { didSet { save(weatherWindowTops, "weatherWindowTops") } }
+    /// Reduce motion: half the particles, nobody pushed by the wind. As the system says, or always, or never.
+    @Published var weatherReduceMotion: Effects.ReduceMotion { didSet { save(weatherReduceMotion.rawValue, "weatherReduceMotion") } }
+    /// The creatures say a line about it now and then.
+    @Published var weatherTalk: Bool { didSet { save(weatherTalk, "weatherTalk") } }
+
+    static let weatherQuietRange = 1.0...60.0
+    static let weatherMinutesRange = 1.0...20.0
+    static let weatherShareRange = 0.0...200.0
+
+    /// Every weather setting at once, Reduce motion read from the system when it follows it.
+    func weatherSwitches(systemReduceMotion: Bool) -> Weather.Switches {
+        var s = Weather.Switches()
+        s.enabled = weatherEnabled
+        s.snow = weatherSnow
+        s.rain = weatherRain
+        s.wind = weatherWind
+        s.quietMinutes = weatherQuietMinutes
+        s.frequency = weatherFrequency
+        s.lastsMinutes = weatherMinutes
+        s.snowDepth = weatherSnowDepth
+        s.rainHeaviness = weatherRainHeaviness
+        s.windStrength = weatherWindStrength
+        s.shareDistance = weatherShareDistance
+        s.followSeason = weatherFollowSeason
+        s.windowTops = weatherWindowTops
+        s.reduceMotion = weatherReduceMotion.isOn(system: systemReduceMotion)
+        return s
+    }
+
     private let defaults: UserDefaults
     private let keychain: any SecretStore
     private static let keychainKeyAccount = "openRouterKey"
@@ -1369,6 +1417,25 @@ final class AppSettings: ObservableObject {
         let budget = defaults.object(forKey: "effectsDailyBudget") as? Double ?? 1
         effectsDailyBudget = min(max(budget, Self.effectsDailyBudgetRange.lowerBound), Self.effectsDailyBudgetRange.upperBound)
         effectsCalendar = defaults.object(forKey: "effectsCalendar") as? Bool ?? false
+        // Weather: all on, sometimes, after five quiet minutes, for three.
+        weatherEnabled = defaults.object(forKey: "weatherEnabled") as? Bool ?? true
+        weatherSnow = defaults.object(forKey: "weatherSnow") as? Bool ?? true
+        weatherRain = defaults.object(forKey: "weatherRain") as? Bool ?? true
+        weatherWind = defaults.object(forKey: "weatherWind") as? Bool ?? true
+        let weatherQuiet = defaults.object(forKey: "weatherQuietMinutes") as? Double ?? 5
+        weatherQuietMinutes = min(max(weatherQuiet, Self.weatherQuietRange.lowerBound), Self.weatherQuietRange.upperBound)
+        weatherFrequency = defaults.string(forKey: "weatherFrequency").flatMap(Weather.Frequency.init(rawValue:)) ?? .sometimes
+        let lasts = defaults.object(forKey: "weatherMinutes") as? Double ?? 3
+        weatherMinutes = min(max(lasts, Self.weatherMinutesRange.lowerBound), Self.weatherMinutesRange.upperBound)
+        weatherSnowDepth = defaults.string(forKey: "weatherSnowDepth").flatMap(Weather.Level.init(rawValue:)) ?? .medium
+        weatherRainHeaviness = defaults.string(forKey: "weatherRainHeaviness").flatMap(Weather.Level.init(rawValue:)) ?? .medium
+        weatherWindStrength = defaults.string(forKey: "weatherWindStrength").flatMap(Weather.Level.init(rawValue:)) ?? .medium
+        let weatherShare = defaults.object(forKey: "weatherShareDistance") as? Double ?? 40
+        weatherShareDistance = min(max(weatherShare, Self.weatherShareRange.lowerBound), Self.weatherShareRange.upperBound)
+        weatherFollowSeason = defaults.object(forKey: "weatherFollowSeason") as? Bool ?? true
+        weatherWindowTops = defaults.object(forKey: "weatherWindowTops") as? Bool ?? true
+        weatherReduceMotion = defaults.string(forKey: "weatherReduceMotion").flatMap(Effects.ReduceMotion.init(rawValue:)) ?? .system
+        weatherTalk = defaults.object(forKey: "weatherTalk") as? Bool ?? true
         followLanguage()
     }
 

@@ -333,6 +333,17 @@ public struct Creature: Sendable {
         }
     }
 
+    /// Pushed `points` along its edge (+ toward growing t) by a gust: standing or walking only, and never round
+    /// a corner, so it stays on the edge it stood on.
+    public mutating func shove(by points: CGFloat) {
+        guard isAtLeisure else { return }
+        let seg = segment, start = loop.t(onSegment: seg, fraction: 0), length = loop.length(ofSegment: seg)
+        let along = loop.wrap(spot.t - start)
+        let moved = min(max(along + points, min(1, length / 2)), max(length - 1, length / 2))
+        spot.t = loop.wrap(start + moved)
+        position = loop.point(at: spot.t)
+    }
+
     /// Walking or standing about: free to stop for something of its own.
     public var isAtLeisure: Bool {
         switch mode {

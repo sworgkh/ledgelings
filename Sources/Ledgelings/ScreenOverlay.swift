@@ -176,6 +176,8 @@ final class ScreenOverlay {
     private var sparkLayers: [CALayer] = []
     private var looseLayers: [(body: CALayer, back: CALayer, front: CALayer)] = []
     private var ambientLayers: [CALayer] = []
+    /// The weather's picture, made the first time there is weather on this monitor.
+    private var weatherLayer: CALayer?
     private lazy var house: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
@@ -275,8 +277,9 @@ final class ScreenOverlay {
                 plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
                 tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = [],
                 beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero, props: [PropSnapshot] = [], propCell: CGSize = .zero,
-                water: [WaterSnapshot] = [], loose: [LooseEffect] = [], ambient: [AmbientTile] = []) {
+                water: [WaterSnapshot] = [], loose: [LooseEffect] = [], ambient: [AmbientTile] = [], weather: [WeatherPicture] = []) {
         renderWater(water)
+        renderWeather(weather)
         renderAmbient(ambient)
         renderLooseEffects(loose)
         renderFlight(inFlight, flowerCell: flowerCell)
@@ -399,6 +402,32 @@ final class ScreenOverlay {
                        back: layers.back, front: layers.front, cell: e.cell, scale: e.scale, mirrored: e.mirrored)
         }
     }
+
+    /// The weather over this monitor: one picture, in front of the creatures (the snow they wade in covers
+    /// their feet) and under their bubbles. Only drawn: clicks go through it.
+    func renderWeather(_ pictures: [WeatherPicture]) {
+        guard let here = pictures.first(where: { $0.frame.intersects(display.frame) && $0.image != nil }) else {
+            if let layer = weatherLayer { layer.removeFromSuperlayer(); weatherLayer = nil }
+            return
+        }
+        let layer = weatherLayer ?? {
+            let layer = CALayer()
+            layer.magnificationFilter = .nearest
+            layer.minificationFilter = .nearest
+            layer.contentsGravity = .resize
+            layer.actions = Self.noAnimations
+            layer.anchorPoint = .zero
+            layer.zPosition = 1.2                      // over the creatures and the dive's tint, under the bubbles (3)
+            root.addSublayer(layer)
+            weatherLayer = layer
+            return layer
+        }()
+        let origin = display.frame.origin
+        if (layer.contents as AnyObject?) !== here.image { layer.contents = here.image }
+        layer.bounds = CGRect(origin: .zero, size: here.frame.size)
+        layer.position = CGPoint(x: here.frame.minX - origin.x, y: here.frame.minY - origin.y)
+    }
+
 
     /// The ambient particles along the bottom edge, behind the creatures.
     func renderAmbient(_ tiles: [AmbientTile]) {

@@ -33,5 +33,6 @@ extension Strings {
         "gang": ruGang,
         "diving": ruDiving,
         "effects": ruEffects,
+        "weather": ruWeather,
     ]
 }
