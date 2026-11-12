@@ -5,7 +5,7 @@ import Foundation
 public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar
     case chases, play, ballGames, surfing, diving
-    case talk, voice, bonds, relationships, twists
+    case talk, chatWithYou, voice, bonds, relationships, twists
     case tools, reminders, clipboard, screenshots, dictation, translate, savedTranslations, readAloud
     case costs, chats
 
@@ -23,6 +23,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .surfing: tr("Surfing")
         case .diving: tr("Diving")
         case .talk: tr("Talk")
+        case .chatWithYou: tr("Chat with you")
         case .voice: tr("Voice")
         case .bonds: tr("Bonds")
         case .relationships: tr("Relationships")
@@ -44,7 +45,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         switch self {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
         case .chases, .play, .ballGames, .surfing, .diving: .games
-        case .talk, .voice, .bonds, .relationships, .twists: .talkAndFriends
+        case .talk, .chatWithYou, .voice, .bonds, .relationships, .twists: .talkAndFriends
         case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
         }
@@ -217,6 +218,10 @@ public enum SettingsIndex {
         Section(.talk, "Brain", labels: ["Brain", "Room for each line"], keys: ["brainProvider", "lineTokens", "openRouterModel", "script", "talkModel", "talkServer"]),
         Section(.talk, "Characters", labels: ["Species", "Name", "Take them out of the cast", "Who they are", "Add Character", "Reset Cast"], footer: "Every species has its own cast. The first creature wearing a species is its first character, the second its second, and so on, starting over when the cast runs out. The species itself is described to the model, so a frog talks like a frog.", keys: ["casts"]),
         Section(.talk, "Prompts", labels: ["Who is speaking (system prompt)", "Opening line", "Reply", "Reset Prompts"], keys: ["linePrompt", "replyPrompt", "systemPrompt"]),
+        // chat with you
+        Section(.chatWithYou, "Chat with you", labels: ["Chat with the creatures", "Open the chat"], keys: ["chatEnabled", "chatShortcutEnabled", "chatShortcutKeyCode", "chatShortcutModifiers"]),
+        Section(.chatWithYou, "Answers", labels: ["How many answer Everyone", "Reply length", "Speak replies aloud", "Show bubbles on screen"], footer: "Each answers through the brain model in its own persona and species, turned to face the window while it talks. To Everyone, a few answer one after another, each hearing the ones before. Out loud only when voice is on too (Talk › Voice). Every call shows on Costs as Chat with you, and each talk on Chats.", keys: ["chatBubbles", "chatEveryone", "chatLength", "chatSpeak"]),
+        Section(.chatWithYou, "Memory", labels: ["Remember talks", "Past exchanges kept word for word", "Forget this one", "Forget everyone's"], footer: "Each creature keeps its last talks with you word for word and a short summary of the older ones, and both go into its next answer: it remembers what you told it yesterday. When a talk falls out of the kept ones, one call rewrites the summary (on Costs as Chat with you). Off: nothing new is kept or sent. --memory prints it all.", keys: ["chatMemoryExchanges", "chatRemember"]),
 
         // voice
         Section(.voice, "Characters", labels: ["Nobody on screen right now.", "Casting…", "Cast Everyone with Model"], footer: "The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends.", keys: ["characterVoices"]),

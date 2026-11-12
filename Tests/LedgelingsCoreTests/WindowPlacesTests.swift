@@ -14,7 +14,7 @@ import Testing
             #expect(window.remembered == window.movable, "\(window)")
         }
         let movable: Set<WindowPlaces.Window> = [.settings, .relationships, .snippets, .actions, .reminder,
-                                                 .tools, .translate, .readAloud, .clipPicker]
+                                                 .tools, .translate, .readAloud, .clipPicker, .chat]
         #expect(Set(WindowPlaces.Window.allCases.filter(\.movable)) == movable)
     }
 

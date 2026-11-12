@@ -72,6 +72,7 @@ import Testing
                 "deedMenu": Deeds.menuTexts(l), "deedAnswer": Deeds.answerTexts(l), "deedNote": Deeds.noteTexts(l),
                 "diary": Bonds.diaryPrompts(l), "diarySystem": Bonds.diarySystemPrompts(l), "seed": Bonds.seedPrompts(l),
                 "play": Plays.linePrompts(l), "playSystem": Plays.lineSystemPrompts(l), "playCheer": Plays.cheerPrompts(l),
+                "chatSystem": OwnerChat.systemPrompts(l), "chatMessage": OwnerChat.messagePrompts(l), "chatSummary": OwnerChat.summaryPrompts(l),
             ],
         ]
     }

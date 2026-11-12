@@ -724,6 +724,28 @@ final class AppSettings: ObservableObject {
         return URL(fileURLWithPath: path.expandingTildeInPath, isDirectory: true)
     }
 
+    // MARK: Chat with you
+
+    /// Chat with the creatures (§7.18): write to one of them or to all, they answer. Off: no shortcut, no menu item, no tile.
+    @Published var chatEnabled: Bool { didSet { save(chatEnabled, "chatEnabled") } }
+    @Published var chatShortcutEnabled: Bool { didSet { save(chatShortcutEnabled, "chatShortcutEnabled") } }
+    @Published var chatShortcut: Shortcut {
+        didSet { save(chatShortcut.keyCode, "chatShortcutKeyCode"); save(chatShortcut.modifiers.rawValue, "chatShortcutModifiers") }
+    }
+    /// How many answer a message to everyone, one after another.
+    @Published var chatEveryone: Int { didSet { save(chatEveryone, "chatEveryone") } }
+    @Published var chatLength: OwnerChat.Length { didSet { save(chatLength.rawValue, "chatLength") } }
+    /// Answers are said out loud in each one's voice, when voice is on.
+    @Published var chatSpeak: Bool { didSet { save(chatSpeak, "chatSpeak") } }
+    /// Answers show in a bubble over the creature on screen, as well as in the window.
+    @Published var chatBubbles: Bool { didSet { save(chatBubbles, "chatBubbles") } }
+    /// Each creature remembers its talks with the owner: the last ones and a summary of the rest.
+    @Published var chatRemember: Bool { didSet { save(chatRemember, "chatRemember") } }
+    /// How many past exchanges each keeps word for word.
+    @Published var chatMemoryExchanges: Int { didSet { save(chatMemoryExchanges, "chatMemoryExchanges") } }
+    /// Why the chat shortcut does nothing, when the system refused it; empty while all is well. Not saved.
+    @Published var chatShortcutProblem = ""
+
     // MARK: Dictation
 
     /// Dictation (§7.13). Off: no dictation shortcut is taken and the menu item goes.
@@ -1238,6 +1260,18 @@ final class AppSettings: ObservableObject {
         readAloudFormat = defaults.string(forKey: "readAloudFormat").flatMap(ReadAloud.Format.init(rawValue:)) ?? .m4a
         let long = defaults.object(forKey: "readAloudLongLimit") as? Int ?? ReadAloud.defaultLongLimit
         readAloudLongLimit = min(max(long, ReadAloud.longLimitRange.lowerBound), ReadAloud.longLimitRange.upperBound)
+        chatEnabled = defaults.object(forKey: "chatEnabled") as? Bool ?? true
+        chatShortcutEnabled = defaults.object(forKey: "chatShortcutEnabled") as? Bool ?? true
+        chatShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "chatShortcutKeyCode") as? Int,
+                                savedModifiers: defaults.object(forKey: "chatShortcutModifiers") as? Int, standard: .chat)
+        let everyone = defaults.object(forKey: "chatEveryone") as? Int ?? OwnerChat.defaultEveryone
+        chatEveryone = min(max(everyone, OwnerChat.everyoneRange.lowerBound), OwnerChat.everyoneRange.upperBound)
+        chatLength = defaults.string(forKey: "chatLength").flatMap(OwnerChat.Length.init(rawValue:)) ?? .short
+        chatSpeak = defaults.object(forKey: "chatSpeak") as? Bool ?? true
+        chatBubbles = defaults.object(forKey: "chatBubbles") as? Bool ?? true
+        chatRemember = defaults.object(forKey: "chatRemember") as? Bool ?? true
+        let exchanges = defaults.object(forKey: "chatMemoryExchanges") as? Int ?? OwnerChat.defaultExchanges
+        chatMemoryExchanges = min(max(exchanges, OwnerChat.exchangesRange.lowerBound), OwnerChat.exchangesRange.upperBound)
         translateEnabled = defaults.object(forKey: "translateEnabled") as? Bool ?? true
         translateShortcutEnabled = defaults.object(forKey: "translateShortcutEnabled") as? Bool ?? true
         translateShortcut = Shortcut(savedKeyCode: defaults.object(forKey: "translateShortcutKeyCode") as? Int,

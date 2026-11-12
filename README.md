@@ -259,6 +259,12 @@ them, load one back for free, copy or delete it. One cheap, fast OpenRouter
 model (Gemini 2.5 Flash Lite by default) does it for about a cent a day; links, code and numbers
 are kept out of its reach, and protected snippets never reach it. Settings › Tools › Translate.
 
+**Chat with the creatures** (macOS). **⌃⌥C** from any app (or the menu, the Tools screen, or C on Creature
+Actions): a pixel-paper window where you write to one creature, picked by its sprite, or to everyone. It answers
+through your model in its own persona, in the window, in a bubble over it and in its own voice, turned to face
+you; to everyone a few answer one after another, reacting to each other. Each keeps a short memory of your
+talks, so it remembers what you told it yesterday. Settings › Talk › Chat with you.
+
 **The Tools screen** (macOS; Windows with Ctrl+Alt+K). **⌃⌥K** from any app, or the wrench on the Creature
 Actions sheet: every tool on one sheet of pixel paper, a big picture tile each (translate,
 dictate, the three screenshots, clipboard history, snippets, a reminder), with its own

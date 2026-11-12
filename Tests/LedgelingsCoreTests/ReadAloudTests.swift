@@ -163,8 +163,8 @@ import Testing
     @Test func theToolsScreenHasReadAloudAndAnArrangedListGetsItOnce() {
         #expect(Tools.Tool.readAloud.page == .readAloud && Tools.Tool.readAloud.icon == R.Button.speaker)
         #expect(Tools.defaultShown.contains("readAloud"))
-        #expect(Tools.Tool.allCases.suffix(2) == [.readAloud, .dive], "last, so every older tile keeps its number key")
-        #expect(Tools.withNew(["dictation", "translate"], known: nil) == ["dictation", "translate", "readAloud", "dive"], "at the end of an arranged list")
+        #expect(Tools.Tool.allCases.suffix(3) == [.readAloud, .dive, .chat], "last, so every older tile keeps its number key")
+        #expect(Tools.withNew(["dictation", "translate"], known: nil) == ["dictation", "translate", "readAloud", "dive", "chat"], "at the end of an arranged list")
         #expect(Tools.withNew(["dictation", "nonsense"], known: ["dictation"]) == Array(["dictation"] + Tools.defaultShown.filter { $0 != "dictation" }), "every tool not known then")
         #expect(Tools.withNew(["dictation"], known: Tools.defaultShown) == ["dictation"], "switched off after it was known, it stays off")
         #expect(SettingsPage.readAloud.group == .tools && SettingsPage.named("readaloud") == .readAloud)

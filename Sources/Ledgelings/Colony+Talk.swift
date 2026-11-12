@@ -297,15 +297,16 @@ extension Colony {
     /// shows dots until the sound is ready, then types the line out as it is said.
     /// Returns the line's serial, for `whenSaid`. `builtIn`: written in advance,
     /// so its sound is kept and played again next time (`reuseLineVoices`).
+    /// `voiced` false: a bubble only, never said out loud (the chat with its voice switched off).
     @discardableResult
-    func say(_ text: String, from index: Int, builtIn: Bool = false) -> Int {
+    func say(_ text: String, from index: Int, builtIn: Bool = false, voiced allowed: Bool = true) -> Int {
         guard creatures.indices.contains(index) else { return 0 }
         bubbleSerial += 1
         let serial = bubbleSerial
         bubbles[index] = Bubble(text: text, until: elapsed + Banter.showTime(text, base: settings.bubbleSeconds), serial: serial)
-        let voiced = voice?.say(text, as: character(forCreature: index).name, builtIn: builtIn) { [weak self] cue in
+        let voiced = allowed && (voice?.say(text, as: character(forCreature: index).name, builtIn: builtIn) { [weak self] cue in
             self?.heard(cue, bubble: serial, of: index)
-        } ?? false
+        } ?? false)
         if voiced {
             bubbles[index]?.reveal = .waiting(since: elapsed)
             bubbles[index]?.until = elapsed + Self.longestWaitForVoice

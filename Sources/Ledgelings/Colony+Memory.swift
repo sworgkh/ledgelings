@@ -195,6 +195,6 @@ extension Colony {
                 out.append("memory \(key): \(x) remembers (\(Bonds.tokens(block)) of \(settings.memoryTokens) tokens; all of it \(all)): \(block)")
             }
         }
-        return out + gangDump()
+        return out + ownerChatDump(only: only) + gangDump()
     }
 }

@@ -57,6 +57,8 @@ struct SettingsView: View {
     var startDive: (() -> Void)? = nil
     /// The saved translations, for the Translate page's count and Delete all; nil in a test.
     var savedTranslations: SavedTranslations? = nil
+    /// What the creatures remember of chatting with the owner, for its Forget buttons; nil in a test.
+    var ownerChats: OwnerChatBook? = nil
 
     var body: some View {
         HStack(spacing: 0) {
@@ -101,6 +103,7 @@ struct SettingsView: View {
         case .surfing: SurfingSettingsView(settings: settings)
         case .diving: DivingSettingsView(settings: settings, start: startDive)
         case .talk: TalkSettingsView(settings: settings, library: library, voice: voice)
+        case .chatWithYou: ChatSettingsView(settings: settings, memory: ownerChats ?? OwnerChatBook(directory: FileManager.default.temporaryDirectory.appendingPathComponent("ledgelings-no-owner-chats")))
         case .voice: VoiceSettingsView(settings: settings, voice: voice)
         case .bonds: BondsSettingsView(settings: settings, bonds: bonds)
         case .relationships: RelationshipsSettingsView(settings: settings, bonds: bonds, open: openRelationships, seed: seedMemory)
@@ -375,6 +378,7 @@ final class SettingsWindowController {
     var readAloud: ReadAloudController?
     var startDive: (() -> Void)?
     var savedTranslations: SavedTranslations?
+    var ownerChats: OwnerChatBook?
 
     init(settings: AppSettings, history: ChatHistory, library: SpriteLibrary, spend: SpendLedger, bonds: BondBook,
          reminders: ReminderBook, hunts: HuntBook, beds: BedBook, voice: Voice, clips: ClipBook, send: @escaping (Reminders.Reminder) -> Void,
@@ -406,7 +410,7 @@ final class SettingsWindowController {
             if let first = SettingsIndex.search(search).first { navigation.open(first) }
         }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive, savedTranslations: savedTranslations))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive, savedTranslations: savedTranslations, ownerChats: ownerChats))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }
