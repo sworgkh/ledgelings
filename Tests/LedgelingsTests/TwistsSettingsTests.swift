@@ -60,7 +60,9 @@ import Testing
         let heard = w.colony.relationship(of: 0, with: 1)
         #expect(heard.contains("News in the gang:") && heard.contains("Newbie is new to the gang: arrived today."))
         #expect(heard.contains("\(c) has left the gang"))
-        // From the built-in lines it is a line of each one's own about it.
+        // From the built-in lines it is a line of each one's own about it. A built-in
+        // invitation is rolled first and takes the talk when it comes up: none here.
+        w.settings.builtInInviteShare = 0
         w.colony.talkNow(from: 0)
         #expect(w.traced.contains { $0.hasPrefix("twist built in: \(a) on") })
         // Off, nothing is said of it.
