@@ -109,6 +109,17 @@ public static class ActionIcons
         return image;
     }
 
+    private static readonly Dictionary<string, Bitmap?> weatherPictures = new();
+
+    /// <summary>Each weather's picture, and Clear sky's (null): a snowman, an umbrella, gusts, one inside out, the sun.</summary>
+    public static Bitmap? Weather(Core.Weather.Kind? kind)
+    {
+        var key = kind?.ToString() ?? "clear";
+        if (weatherPictures.TryGetValue(key, out var made)) return made;
+        var art = Core.Weather.Icon(kind);
+        return weatherPictures[key] = EffectPlayer.Image(art.Rgba, art.W, art.H);
+    }
+
     private static readonly Dictionary<Core.Effects.Style, Bitmap?> styleStills = new();
 
     /// <summary>A style as it looks on Blocky, part way in, cut down to the creature and what it wears (Creature Actions › Styles).</summary>

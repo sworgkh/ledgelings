@@ -370,6 +370,19 @@ public sealed class Creature
         if (IsAtLeisure) Enter(new Mode.Idle(seconds));
     }
 
+    /// <summary>Pushed <paramref name="points"/> along its edge (+ toward growing t) by a gust: standing or walking only,
+    /// and never round a corner, so it stays on the edge it stood on.</summary>
+    public void Shove(double points)
+    {
+        if (!IsAtLeisure) return;
+        int seg = Segment;
+        double start = Loop.T(seg, 0), length = Loop.SegmentLength(seg);
+        var along = Loop.Wrap(Spot.T - start);
+        var moved = Math.Min(Math.Max(along + points, Math.Min(1, length / 2)), Math.Max(length - 1, length / 2));
+        Spot = new EdgeWorld.Spot(Spot.Loop, Loop.Wrap(start + moved));
+        Position = Loop.Point(Spot.T);
+    }
+
     /// <summary>Walking or standing about: free to stop for something of its own.</summary>
     public bool IsAtLeisure => CurrentMode is Mode.Walking or Mode.Idle;
 

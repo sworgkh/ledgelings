@@ -2873,6 +2873,16 @@ if it rains and one is on the top edge its umbrella fills with rain and falls do
   `…-snow-bottom.png`, `…-rain-shared.png`, `…-rain-falling.png`, `…-wind.png`, `…-storm.png`) and exits 1 if a step
   never happened. `--weather <kind> [--stop-after seconds]` starts one on the real screen, prints its steps and quits once
   it is over.
+- **Windows.** The same rules, numbers and keys, ported to C# (`win/LedgelingsCore/Weather.cs`, `Weather.Sky.cs`,
+  `Weather.Art.cs`, `Weather.Lines.cs`; the Russian lines from the shared `ru.json`), the two particle kinds added to
+  `FXParticles.cs` the same way, and the same props pixel for pixel. The sky is drawn over the creatures in the overlay,
+  nearest-neighbour, click-through. Where it differs: a meeting is only an app using the microphone (read from the
+  privacy records Windows keeps); Windows gives the creatures no calendar. A full-screen app is the window in front
+  covering a monitor. Key idle comes from the keyboard hook that already counts keys, and before the first key from
+  Windows' own idle time (mouse and keys together). Window tops come from the visible frames of other processes' top-level
+  windows, cloaked, minimised and tool windows left out. Distances in points are scaled to screen pixels. The tray's
+  Weather submenu has no hover tips (tray menus show none): the tips are on the Weather page and in Creature Actions. There is
+  no `--weather` or `--weather-film` on Windows.
 
 ## 8. The brain: chat client
 

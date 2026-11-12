@@ -100,7 +100,8 @@ public sealed partial class ScreenOverlay : IDisposable
                        IReadOnlyList<PlantedSnapshot>? beds = null, Size bedCell = default,
                        IReadOnlyList<PropSnapshot>? props = null, Size propCell = default,
                        IReadOnlyList<WaterSnapshot>? water = null, SurfWaterSnapshot? surf = null, StopButtonSnapshot? stop = null,
-                       IReadOnlyList<LooseEffectSnapshot>? loose = null, IReadOnlyList<AmbientTile>? ambient = null)
+                       IReadOnlyList<LooseEffectSnapshot>? loose = null, IReadOnlyList<AmbientTile>? ambient = null,
+                       IReadOnlyList<WeatherPicture>? weather = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
         AddAmbient(ops, ambient);                // the season's particles along the bottom edge, behind everything
@@ -128,6 +129,7 @@ public sealed partial class ScreenOverlay : IDisposable
         }
         AddLooseEffects(ops, loose, cell);       // a poof where a creature stood
         AddWater(ops, water, front: true);       // the tint, the surface and the bubbles, over the divers
+        AddWeather(ops, weather);                // the snow they wade in covers their feet, the rain falls in front
         AddFlight(ops, flight, flowerCell);
         AddProps(ops, props, propCell, inFront: true);       // the ball, over everyone
         AddSparks(ops, sparks);

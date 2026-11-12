@@ -71,6 +71,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadSpriteKit();
         LoadWindows();
         LoadEffects();
+        LoadWeather();
         FollowLanguage();
     }
 

@@ -213,7 +213,8 @@ public sealed partial class Colony
     /// <summary>The fireflies after dark, or the season's particles, for a while every so often.</summary>
     private void UpdateAmbient(double dt)
     {
-        var want = Effects.AmbientAt(Now().LocalDateTime, IsNight, fxRules.Switches);
+        // While weather falls, the light season particles pause: the weather is heavier.
+        var want = WeatherShowing ? null : Effects.AmbientAt(Now().LocalDateTime, IsNight, fxRules.Switches);
         var outNow = Effects.AmbientShowing(Elapsed, Settings.EffectsAmbientSeconds, Settings.EffectsAmbientEveryMinutes);
         if (fxAmbient is { } a)
         {

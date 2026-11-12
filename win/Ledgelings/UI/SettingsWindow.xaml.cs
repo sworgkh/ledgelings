@@ -72,6 +72,7 @@ public sealed partial class SettingsWindow : Window
         InitChat();
         InitToolsScreen();
         InitEffects();
+        InitWeather();
         InitSidebar();
         Closing += (_, e) => { e.Cancel = true; Hide(); };      // the window is reused; the app lives in the tray
     }

@@ -101,7 +101,7 @@ public static class ActionsLinks
 }
 
 /// <summary>The sheet has one inner page: the games, listed (<see cref="Plays"/>).</summary>
-public enum ActionsPage { Main, Activities, Styles }
+public enum ActionsPage { Main, Activities, Styles, Weather }
 
 /// <summary>What the Activities page's buttons say on hover, with their keys.</summary>
 public static class ActivitiesTips
@@ -110,6 +110,7 @@ public static class ActivitiesTips
     public static string Games => L10n.Tr("Turn games on or off");
     public static string Done => L10n.Tr("Put the sheet away (Return)");
     public static string Styles => L10n.Tr("Put a style on a creature (Y)");
+    public static string Weather => L10n.Tr("Make it snow, rain or blow (W)");
     public static string Who => L10n.Tr("Choose who wears it (Tab)");
 }
 
@@ -378,6 +379,14 @@ public sealed class ActionsSheet : Window
                     if (e.Key == System.Windows.Input.Key.D1 + k || e.Key == System.Windows.Input.Key.NumPad1 + k) { e.Handled = true; Wear(Effects.Styles[k]); return; }
                 return;
             }
+            if (page == ActionsPage.Weather)
+            {
+                if (e.Key == System.Windows.Input.Key.Left) { e.Handled = true; GoTo(ActionsPage.Main); return; }
+                if (e.Key == System.Windows.Input.Key.Enter) { e.Handled = true; Close(); return; }
+                for (var k = 0; k < WeatherRows.Count; k++)
+                    if (e.Key == System.Windows.Input.Key.D1 + k || e.Key == System.Windows.Input.Key.NumPad1 + k) { e.Handled = true; PlayWeather(WeatherRows[k]); return; }
+                return;
+            }
             if (page == ActionsPage.Activities)
             {
                 if (e.Key == System.Windows.Input.Key.Left) { e.Handled = true; GoTo(ActionsPage.Main); return; }
@@ -390,6 +399,7 @@ public sealed class ActionsSheet : Window
             }
             if (e.Key == System.Windows.Input.Key.A) { e.Handled = true; GoTo(ActionsPage.Activities); return; }
             if (e.Key == System.Windows.Input.Key.Y) { e.Handled = true; GoTo(ActionsPage.Styles); return; }
+            if (e.Key == System.Windows.Input.Key.W) { e.Handled = true; GoTo(ActionsPage.Weather); return; }
             if (e.Key == System.Windows.Input.Key.K && settings.ToolsScreenEnabled) { e.Handled = true; Follow(ActionsLink.Tools); return; }
             if (e.Key == System.Windows.Input.Key.C && settings.ChatEnabled) { e.Handled = true; Follow(ActionsLink.Chat); return; }
             foreach (var tile in ActionsTiles.All)
@@ -424,7 +434,7 @@ public sealed class ActionsSheet : Window
         paper.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); };
         root.Children.Add(paper);
         if (keeper?.Face is System.Drawing.Bitmap face) root.Children.Add(ReminderNote.Peeker(face, SheetWidth, Headroom));
-        root.Children.Add(page switch { ActionsPage.Activities => ActivitiesPage(), ActionsPage.Styles => StylesPage(), _ => Sheet(keeper?.Name) });
+        root.Children.Add(page switch { ActionsPage.Activities => ActivitiesPage(), ActionsPage.Styles => StylesPage(), ActionsPage.Weather => WeatherPage(), _ => Sheet(keeper?.Name) });
 
         foreach (var (title, minutes) in HideChoices)
         {
@@ -511,6 +521,9 @@ public sealed class ActionsSheet : Window
         var styles = new PixelButton { Content = L10n.Tr("STYLES…"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Styles };
         styles.Click += (_, _) => GoTo(ActionsPage.Styles);
         links.Children.Add(styles);
+        var weather = new PixelButton { Content = L10n.Tr("WEATHER…"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Weather };
+        weather.Click += (_, _) => GoTo(ActionsPage.Weather);
+        links.Children.Add(weather);
         links.Children.Add(Switch(ActionsSwitch.Language));
         foreach (var link in ActionsLinks.Footer)
         {
@@ -912,6 +925,63 @@ public sealed class ActionsSheet : Window
         footer.Children.Add(done);
         sheet.Children.Add(footer);
         return sheet;
+    }
+
+    // MARK: Weather
+
+    /// <summary>The Weather page's rows, 1 to 5: each weather, then Clear sky (null).</summary>
+    private static readonly IReadOnlyList<Weather.Kind?> WeatherRows = Weather.Kinds.Select(k => (Weather.Kind?)k).Append(null).ToList();
+
+    /// <summary>Creature Actions › Weather (SPEC §7.20): a row per weather, its picture, name and what it does; then Clear sky.</summary>
+    private UIElement WeatherPage()
+    {
+        var sheet = new StackPanel
+        {
+            Margin = new Thickness(33, Headroom + 27, 33, 0), Width = SheetWidth - 66,
+            HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        };
+        sheet.Children.Add(new TextBlock
+        {
+            Text = L10n.Tr("WEATHER · WHAT SHOULD IT DO?"),
+            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
+        });
+        var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+        for (var k = 0; k < WeatherRows.Count; k++)
+        {
+            var kind = WeatherRows[k];
+            var title = (kind?.Title() ?? L10n.Tr("Clear sky")).ToUpper(Languages.Current.Culture());
+            var what = kind?.Detail() ?? L10n.Tr("Whatever falls eases off; the snow lying there melts slowly");
+            var (face, _, detail) = RowFace(ActionIcons.Weather(kind), title, what, kind is null ? L10n.Tr("CLEAR") : L10n.Tr("START"));
+            detail.Text = (k + 1).ToString();
+            var button = new PixelButton
+            {
+                Content = face, Padding = new Thickness(0), Margin = new Thickness(0, k == 0 ? 0 : ActivityGap, 0, 0), HorizontalAlignment = HorizontalAlignment.Left,
+                ToolTip = kind is { } w ? L10n.Tr("Start %@ now (%d)", w.Title().ToLower(Languages.Current.Culture()), k + 1) : L10n.Tr("Let the weather ease off now (%d)", k + 1),
+            };
+            button.Click += (_, _) => PlayWeather(kind);
+            list.Children.Add(button);
+        }
+        sheet.Children.Add(list);
+        line.Height = ActivityLineHeight;
+        line.Margin = new Thickness(0, 0, 0, 6);
+        sheet.Children.Add(line);
+        var back = new PixelButton { Content = L10n.Tr("BACK"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Back, HorizontalAlignment = HorizontalAlignment.Left };
+        back.Click += (_, _) => GoTo(ActionsPage.Main);
+        var done = new PixelButton { Content = L10n.Tr("DONE"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0), ToolTip = ActivitiesTips.Done };
+        done.Click += (_, _) => Close();
+        var footer = new Grid { Margin = new Thickness(0, ActivitiesFooterGap, 0, 0) };
+        footer.Children.Add(back);
+        footer.Children.Add(done);
+        sheet.Children.Add(footer);
+        return sheet;
+    }
+
+    /// <summary>From the Weather page: that weather now, or Clear sky.</summary>
+    private void PlayWeather(Weather.Kind? kind)
+    {
+        if (folding) return;
+        if (kind is { } k) { colony.StartWeather(k); After(L10n.Tr("%@ now.", k.Title())); }
+        else { colony.ClearWeather(); After(L10n.Tr("The weather clears.")); }
     }
 
     private void NextWearer()

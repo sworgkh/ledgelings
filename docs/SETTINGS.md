@@ -403,6 +403,9 @@ and Creature Actions › **WEATHER…** (W) do the same.
 | **Umbrella sharing distance** (`weatherShareDistance`) | 40 pt | 0 to 200 | Closer than this along an edge, up to three share one umbrella; 0, each their own |
 | **How strong the wind is** (`weatherWindStrength`) | medium | low, medium, high | Harder gusts push further and blow light ones off the top edge |
 
+On Windows the same settings and keys; a meeting there is only an app using the microphone, since Windows gives
+the creatures no calendar, and the tray's Weather submenu shows no hover tips (the page and Creature Actions do).
+
 ## Diving tab
 
 Scuba diving, which only ever starts by hand (the Activities page's *SCUBA DIVING*, key D; the
