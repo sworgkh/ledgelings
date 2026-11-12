@@ -187,7 +187,8 @@ extension Colony {
             weather.nextSample = elapsed + 0.5
             weather.trail.add(NSEvent.mouseLocation, at: elapsed, keep: max(60, weather.switches.quietMinutes * 60))
         }
-        if elapsed >= weather.nextWindows {
+        // Read only while weather can come or is falling: nobody else needs the windows.
+        if elapsed >= weather.nextWindows, weather.switches.enabled || weather.spell != nil {
             weather.nextWindows = elapsed + 0.5
             weather.windows = weather.fakeWindows ?? (stage == nil ? WeatherWatch.windows() : [])
             weather.fullScreen = WeatherWatch.fullScreen(weather.windows, screens: displays.map(\.frame))
