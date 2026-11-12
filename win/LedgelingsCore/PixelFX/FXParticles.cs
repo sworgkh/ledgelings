@@ -179,7 +179,13 @@ public static partial class FX
 // Simulated particles
 
 /// <summary>Particle kinds, as pixelfx numbers them.</summary>
-public enum FXKind { Spark = 0, Mote, Streak, Flake, Vapour, Dust, Star, Ember, Smoke, Fire, Brand, Grit }
+public enum FXKind
+{
+    Spark = 0, Mote, Streak, Flake, Vapour, Dust, Star, Ember, Smoke, Fire, Brand, Grit,
+    /// <summary>Weather's own (SPEC §7.20), not pixelfx's: a raindrop falling straight at its speed, and a leaf or a
+    /// speck of dust carried on the wind.</summary>
+    Drop, Leaf,
+}
 
 /// <summary>Particle flags: smokes (a fire puff leaves smoke), big (bigger, slower smoke), back (drawn behind).</summary>
 public static class FXFlag { public const int Smokes = 1, Big = 2, Back = 4; }
@@ -203,6 +209,9 @@ public sealed class FXParticles
     public FXColor[] Sparks;
     public FXColor? Haze;
     public Action<double, double>? OnLand;
+    /// <summary>Weather's wind, in pixels a second: it carries the flakes, drops and leaves sideways. 0 (pixelfx's
+    /// effects) changes nothing.</summary>
+    public double Wind;
 
     public FXParticles(Rng? rng = null, double seed = 1, Func<double, double>? ground = null, FXColor[]? sparks = null, FXColor? haze = null)
     {
@@ -305,6 +314,14 @@ public sealed class FXParticles
                     p.Vx -= p.Vx * 2.2 * dt;
                     p.Vy -= p.Vy * 2.2 * dt - 35 * dt;
                     p.X += Math.Sin(T * 2.5 + p.Seed) * 7 * dt;
+                    if (Wind != 0) p.X += Wind * dt * (0.7 + FX.Mod(p.Seed, 0.6));
+                    break;
+                case FXKind.Drop:
+                    p.Vx += (Wind - p.Vx) * 4 * dt;
+                    break;
+                case FXKind.Leaf:
+                    p.Vx += (Wind * (0.6 + FX.Mod(p.Seed, 0.6)) - p.Vx) * 2 * dt;
+                    p.Vy = Math.Sin(t * 3.1 + p.Seed) * 14 + 6;
                     break;
                 case FXKind.Ember:
                     p.Vy += (-30 + Math.Sin(t * 3 + p.Seed) * 20) * dt;
@@ -445,6 +462,18 @@ public sealed class FXParticles
                     p.Glow(x, y, 3 + q.Size, c, 0.35 * k);
                     break;
                 }
+                case FXKind.Drop:
+                {
+                    // A streak a few pixels long along its fall, lighter at the head.
+                    var L = Math.Min(5, 2 + sp / 120);
+                    p.Line(x - ux * L, y - uy * L, x - ux, y - uy, FX.Scale(q.Col, 0.8), 0.85);
+                    p.Dot(x, y, q.Col);
+                    break;
+                }
+                case FXKind.Leaf:
+                    p.Dot(x, y, q.Col);
+                    if (q.Size > 1.2) p.Dot(x + (Math.Sin(t * 6 + q.Seed) > 0 ? 1 : -1), y, FX.Scale(q.Col, 0.75));
+                    break;
                 case FXKind.Star:
                 {
                     var tw = 0.6 + 0.4 * Math.Sin(t * (8 + FX.Mod(q.Seed, 5)) + q.Seed);

@@ -24,6 +24,10 @@ internal sealed class KeyCounter : IDisposable
 
     /// <summary>Keys pressed since it started.</summary>
     public double Count { get; private set; }
+    /// <summary>When the last key went down (<see cref="Environment.TickCount64"/>), null before the first.</summary>
+    public long? LastKey { get; private set; }
+    /// <summary>Seconds since a key was last pressed, as the Mac's own count says it; null before the first.</summary>
+    public double? KeyIdle => LastKey is long at ? (Environment.TickCount64 - at) / 1000.0 : null;
 
     private KeyCounter()
     {
@@ -43,7 +47,7 @@ internal sealed class KeyCounter : IDisposable
 
     private IntPtr Hooked(int code, IntPtr wParam, IntPtr lParam)
     {
-        if (code >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) Count += 1;
+        if (code >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) { Count += 1; LastKey = Environment.TickCount64; }
         return CallNextHookEx(hook, code, wParam, lParam);
     }
 

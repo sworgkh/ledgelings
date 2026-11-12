@@ -175,6 +175,7 @@ public sealed partial class Colony
         UpdateReminders(dt);
         LiveTogether(dt);
         UpdateEffects(dt);
+        UpdateWeather(dt);
         Render();
         SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && CurrentGrab is null && clipHelp is null && dictationHelp is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
     }

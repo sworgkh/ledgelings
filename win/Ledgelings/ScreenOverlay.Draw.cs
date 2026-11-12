@@ -139,6 +139,25 @@ public sealed partial class ScreenOverlay
         }
     }
 
+    /// <summary>The weather over this monitor: one picture, in front of the creatures, drawn pixel for pixel.</summary>
+    private void AddWeather(List<(Rectangle, Action<Graphics>)> ops, IReadOnlyList<WeatherPicture>? skies)
+    {
+        if (skies is null) return;
+        foreach (var sky in skies)
+        {
+            if (sky.Image is not { } image || !sky.Frame.Intersects(Monitor.Frame)) continue;
+            var corner = ToWindow(new Core.Pt(sky.Frame.MinX, sky.Frame.MaxY));      // the top-left corner, y down
+            var rect = new RectangleF(corner.X, corner.Y, (float)sky.Frame.Width, (float)sky.Frame.Height);
+            ops.Add((Rectangle.Round(RectangleF.Inflate(rect, 1, 1)), g =>
+            {
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.PixelOffsetMode = PixelOffsetMode.Half;
+                g.SmoothingMode = SmoothingMode.None;
+                g.DrawImage(image, rect, new RectangleF(0, 0, image.Width, image.Height), GraphicsUnit.Pixel);
+            }));
+        }
+    }
+
     /// <summary>The ambient particles along the bottom edge, a tile at a time, each standing on its monitor's bottom.</summary>
     private void AddAmbient(List<(Rectangle, Action<Graphics>)> ops, IReadOnlyList<AmbientTile>? tiles)
     {

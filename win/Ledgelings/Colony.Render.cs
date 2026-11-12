@@ -27,7 +27,7 @@ public sealed partial class Colony
             snapshots.Add(new CreatureSnapshot
             {
                 Position = new Pt(p.X - inward.Dx * sink, p.Y - inward.Dy * sink),
-                Rotation = c.Rotation,
+                Rotation = c.Rotation + WeatherLean(i),
                 IsMirrored = c.IsMirrored,
                 Image = image,
                 Scale = sizes[i],
@@ -55,18 +55,20 @@ public sealed partial class Colony
         var props = PlayProps();
         props.AddRange(MoveProps());
         props.AddRange(DiveProps());
+        props.AddRange(WeatherProps());
         var water = WaterSnapshots();
         var surf = SurfWater();
         var stop = StopButtonNow();
         var loose = LooseEffectSnapshots();
         var ambient = AmbientSnapshots();
+        var skies = WeatherPictures();
         foreach (var e in snapshots.Select(s => s.Effect).OfType<CreatureEffect>()) fxPictures.AddRange(new[] { e.Back, e.Front }.OfType<Bitmap>());
         foreach (var e in loose) fxPictures.AddRange(new[] { e.Back, e.Front }.OfType<Bitmap>());
         for (int k = 0; k < overlays.Count; k++)
             overlays[k].Render(snapshots, z, atlas.CellSize, zCell, flowerCell, inFlight, stars, home, houseCell, garden: planted, beds: sleepers, bedCell: BedCell,
                                plane: plane, planeCell: planeCell, reminder: reminder,
                                tea: table, teaCell: TeaCell, props: props, propCell: PlayCell, water: water, surf: surf,
-                               stop: stop?.Overlay == k ? stop : null, loose: loose, ambient: ambient);
+                               stop: stop?.Overlay == k ? stop : null, loose: loose, ambient: ambient, weather: skies);
         foreach (var b in used) b.Dispose();
     }
 }

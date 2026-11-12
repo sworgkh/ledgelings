@@ -109,6 +109,7 @@ public sealed partial class App : Application
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
         AddActivityItems(items);
+        AddWeatherItem(items);
         AddToolsItem(items);
         AddClipboardItems(items);
         AddDictationItems(items);
@@ -184,7 +185,7 @@ public sealed partial class App : Application
     private SettingsWindow? EnsureSettingsWindow()
     {
         if (settings is null || history is null || library is null || spend is null) return null;
-        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, StartDive = () => colony?.StartDive() ?? false, PreviewEffect = code => colony?.Preview(code) ?? false, SeedMemory = SeedMemory, OpenRelationships = OpenRelationships, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
+        settingsWindow ??= new SettingsWindow(settings, history, library, spend) { ClearGarden = () => colony?.ClearGarden() ?? 0, StartDive = () => colony?.StartDive() ?? false, PreviewEffect = code => colony?.Preview(code) ?? false, PlayWeather = code => colony?.PlayWeather(code) ?? false, SeedMemory = SeedMemory, OpenRelationships = OpenRelationships, BondBook = colony?.Bonds, HuntBook = colony?.Hunts, BedBook = colony?.Beds, Voice = voice };
         AttachReminders(settingsWindow);
         AttachClipboard(settingsWindow);
         settingsWindow.AttachSavedTranslations(savedTranslations ??= new SavedTranslations());
