@@ -257,6 +257,8 @@ final class Colony: NSObject {
     var chatBusy: Set<Int> = []
     /// The styles the creatures wear and the moments they mark (`Colony+Effects`).
     let fx = EffectsState()
+    /// Snow, rain and wind on a quiet screen (`Colony+Weather`).
+    let weather = WeatherState()
     /// The last thing that happened with the model, for the menu.
     var talkStatus = tr("not tried yet")
 
@@ -485,6 +487,7 @@ final class Colony: NSObject {
         updateReminders(dt: dt)
         liveTogether(dt: dt)
         updateEffects(dt: dt)
+        updateWeather(dt: dt)
         render()
         setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && clipHelp == nil && shotCarry == nil && dictationHelp == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
@@ -508,7 +511,7 @@ final class Colony: NSObject {
             let image = frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes)
             return CreatureSnapshot(
                 position: CGPoint(x: p.x - inward.dx * sink, y: p.y - inward.dy * sink),
-                rotation: c.rotation, isMirrored: c.isMirrored,
+                rotation: c.rotation + weatherLean(of: i), isMirrored: c.isMirrored,
                 image: image,
                 scale: CGFloat(sizes[i]),
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
@@ -527,16 +530,16 @@ final class Colony: NSObject {
         let inFlight = flightSnapshot(), stars = sparkSnapshots(), home = houseSnapshot(), plane = planeSnapshot()
         let water = waterSnapshots()
         let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
-        let props = playProps() + moveProps() + diveProps()
+        let props = playProps() + moveProps() + diveProps() + weatherProps()
         let stop = stopButton()
-        let loose = looseEffectSnapshots(), ambient = ambientSnapshots()
+        let loose = looseEffectSnapshots(), ambient = ambientSnapshots(), skies = weatherPictures()
         for (k, overlay) in overlays.enumerated() {
             overlay.renderStopButton(stop?.overlay == k ? stop : nil)
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
                            plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,
                            garden: planted, beds: sleepers, bedCell: bedCell, props: props, propCell: playCell,
-                           water: water, loose: loose, ambient: ambient)
+                           water: water, loose: loose, ambient: ambient, weather: skies)
         }
     }
 }

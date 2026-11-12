@@ -160,7 +160,12 @@ extension FX {
 // MARK: Simulated particles
 
 /// Particle kinds, as pixelfx numbers them.
-public enum FXKind: Int { case spark = 0, mote, streak, flake, vapour, dust, star, ember, smoke, fire, brand, grit }
+public enum FXKind: Int {
+    case spark = 0, mote, streak, flake, vapour, dust, star, ember, smoke, fire, brand, grit
+    /// Weather's own (SPEC §7.20), not pixelfx's: a raindrop falling straight at its speed, and a leaf or a
+    /// speck of dust carried on the wind.
+    case drop, leaf
+}
 
 /// Particle flags: smokes (a fire puff leaves smoke), big (bigger, slower smoke), back (drawn behind).
 public enum FXFlag { public static let smokes = 1, big = 2, back = 4 }
@@ -178,6 +183,9 @@ public final class FXParticles {
     public var sparks: [FXColor]
     public var haze: FXColor?
     public var onLand: ((Double, Double) -> Void)?
+    /// Weather's wind, in pixels a second: it carries the flakes, drops and leaves sideways. 0 (pixelfx's effects)
+    /// changes nothing.
+    public var wind = 0.0
 
     public init(rng: Rng? = nil, seed: Double = 1, ground: ((Double) -> Double)? = nil, sparks: [FXColor]? = nil, haze: FXColor? = nil) {
         R = rng ?? Rng(seed)
@@ -261,6 +269,12 @@ public final class FXParticles {
                 p.vx -= p.vx * 2.2 * dt
                 p.vy -= p.vy * 2.2 * dt - 35 * dt
                 p.x += sin(self.t * 2.5 + p.seed) * 7 * dt
+                if wind != 0 { p.x += wind * dt * (0.7 + FX.mod(p.seed, 0.6)) }
+            case .drop:
+                p.vx += (wind - p.vx) * 4 * dt
+            case .leaf:
+                p.vx += (wind * (0.6 + FX.mod(p.seed, 0.6)) - p.vx) * 2 * dt
+                p.vy = sin(t * 3.1 + p.seed) * 14 + 6
             case .ember:
                 p.vy += (-30 + sin(t * 3 + p.seed) * 20) * dt
                 p.vx += cos(t * 2.3 + p.seed) * 45 * dt
@@ -355,6 +369,14 @@ public final class FXParticles {
                 p.px(x, y, c)
                 if q.size > 1.5 { p.px(x, y + 1, sparks[sparks.count - 1]) }
                 p.glow(x, y, 3 + q.size, c, 0.35 * k)
+            case .drop:
+                // A streak a few pixels long along its fall, lighter at the head.
+                let L = Swift.min(5, 2 + sp / 120)
+                p.line(x - ux * L, y - uy * L, x - ux, y - uy, FX.scale(q.col, 0.8), 0.85)
+                p.dot(x, y, q.col)
+            case .leaf:
+                p.dot(x, y, q.col)
+                if q.size > 1.2 { p.dot(x + (sin(t * 6 + q.seed) > 0 ? 1 : -1), y, FX.scale(q.col, 0.75)) }
             case .star:
                 let tw = 0.6 + 0.4 * sin(t * (8 + FX.mod(q.seed, 5)) + q.seed)
                 if q.size < 1 {

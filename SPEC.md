@@ -2779,7 +2779,7 @@ own output on our sprites (blocky and cactus, every frame at 15 fps): all 25 eff
 - **Ambient particles.** Fireflies at night, else the season's particles (summer has none), along the bottom of the
   creatures' home monitors: tiles of 320×180 pixels at 2 points per pixel, side by side, each with its own seed,
   drawn without pixelfx's sky haze (`FXBackdropped.backdrop = false`) and at 15 pictures a second. They come out for
-  `effectsAmbientSeconds` out of every `effectsAmbientEveryMinutes`, the first time one whole wait after launch. Weather (the next feature) builds on this layer.
+  `effectsAmbientSeconds` out of every `effectsAmbientEveryMinutes`, the first time one whole wait after launch. While weather falls (§7.20) they pause.
 - **Switches.** `effectsEnabled` turns everything off; each style and moment has its switch (`effectsOff` lists the
   ones off by key, `effectStyle.<name>` / `effectMoment.<name>`). **Reduce motion** (`effectsReduceMotion`: as the
   system's Accessibility setting, on, off) turns the busy ones off: Charged, Fired up, both blinks, confetti, the
@@ -2795,6 +2795,84 @@ own output on our sprites (blocky and cactus, every frame at 15 fps): all 25 eff
   keeps no count of its own); and Windows gives the creatures no calendar, so Clock ticking plays only by hand and there
   is no `effectsCalendar`. The pictures are drawn in the creature's own GDI+ transform, nearest-neighbour, the back one
   under the sprite and the front one over it; the overlay stays click-through.
+
+### 7.20 Weather on a quiet screen
+
+Snow, rain and wind over the creatures' home monitors when nobody is using the computer (`Weather`,
+`Weather+Sky`, `Weather+Art`, `Colony+Weather`, `WeatherWatch`, since 0.72.0 on macOS). The owner's words:
+"if there is not much activity on the screen there may fall snow, and it should affect the creatures and accumulate on
+windows and the bottom edge; rain makes them hide under umbrellas, a few under one or each its own depending on distance;
+if it rains and one is on the top edge its umbrella fills with rain and falls down; high winds with some behaviour too."
+
+- **When it comes.** The screen is quiet (`Weather.isQuiet`) when no key was pressed for `weatherQuietMinutes`, the
+  cursor travelled at most 150 points in that time (sampled twice a second), no app fills a monitor (a window the size
+  of the whole monitor, menu bar included), no activity runs (§7.17: a game, a surf, a dive), and there is no meeting: an
+  app is using the default microphone, or (with `effectsCalendar` and the calendar allowed) the calendar has a meeting on
+  now. Every 10 s of quiet the chance `1 - exp(-10 / (60 × every))` brings one, every = 60, 20 or 5 minutes for
+  `weatherFrequency` rarely, sometimes, often; never within one quiet stretch of the last spell's end. Which one is drawn
+  from the season's weights (`Weather.weights`) when `weatherFollowSeason` is on:
+
+  | Season | Snow | Rain | Wind | Storm |
+  |---|---|---|---|---|
+  | Winter (Dec–Feb) | 6 | 1 | 1.5 | 0.5 |
+  | Spring (Mar–May) | 0.3 | 4 | 1.5 | 1 |
+  | Summer (Jun–Aug) | 0 | 4 | 1 | 2 |
+  | Autumn (Sep–Nov) | 0.3 | 3 | 4 | 2 |
+
+  Off, each is as likely as the others. A weather switched off never comes; a storm needs both rain and wind.
+- **A spell** (`Weather.Spell`) comes in over 6 s, lasts `weatherMinutes`, and eases off over 8 s. Someone coming
+  back (a key in the last 2 s, or the cursor moving more than 60 points in them) eases it off then, never all at once.
+  A spell started by hand (the menu, Play now, Creature Actions, `--weather`) is not ended by the owner coming back;
+  `weatherEnabled` off eases off one that came by itself. While a spell falls the season's ambient particles (§7.19) pause.
+  The menu's **Weather** submenu has Snow, Rain, Wind, Storm and Clear sky, the one falling ticked; Creature Actions ›
+  `WEATHER…` (W) has the same, 1–5.
+- **The sky** (`Weather.Sky`) is one picture per home monitor at 2 points per pixel, drawn 15 times a second in front
+  of the creatures and under their bubbles, click-through. What falls is the shared `FXParticles` (§7.19): flakes
+  (pixelfx's own `flake` kind, slow, swaying, a quarter of them bigger), and two kinds added for weather: `drop`, a
+  raindrop streak at its own speed, and `leaf`, a leaf (autumn) or a speck of dust (otherwise) carried on the wind. A
+  particle `wind` carries all three sideways. Splashes are `spark`s in water blues. Rates: snow 5, rain 26 and wind 2.2
+  particles a second per hundred pixels across, times the level's factor (low 0.5, medium 1, high 1.6); Reduce motion
+  (`weatherReduceMotion`, as Effects' is) halves them and stops the wind pushing anyone.
+- **Snow piles** (`Weather.Pile`): a height per pixel column along the bottom of each home monitor and along the top
+  of every other app's window open to the sky (`WeatherWatch.windows`: on-screen, ordinary windows of other apps, read
+  twice a second from their frames only, no permission; a column under a window further front gets none). A landing
+  flake adds there and half either side; a column more than 2 pixels above its neighbour slides onto it. On top of what
+  lands, the pile grows `0.05 × depth factor` pixels a second (window tops 0.6 of that), up to the cap: 8 pixels times the
+  `weatherSnowDepth` factor along the bottom, 4 on a window top. Drawn in Blocky's style: a dark-tint outline on top, a light
+  line under it, a flat fill, a shade line low down. Once it stops, it melts at 0.03 pixels a second (window tops 1.5 times
+  faster). A window that moves, resizes or closes drops its snow as a shower of specks that fall to the bottom;
+  `weatherWindowTops` off clears and stops it.
+- **In the snow.** A creature walks at `1 - 0.5 × depth/cap` of its pace in the bottom pile and leaves footprints, a
+  dent a pixel deep every 6 pixels it walks. Every 14–26 s in snow at more than 60 % one creature at leisure on the floor
+  throws a snowball at a friend (a pair with a bond, §6.6) within 500 points (35 %), builds a tiny snowman beside it where
+  the snow is at least 40 % deep (35 %, three at most, melting with the snow they stand in), or shivers (Frost, §7.19).
+  The snowball flies 0.8 s in an arc and bursts in a puff on the one hit.
+- **Rain and umbrellas.** Everyone on the floor or hanging from the top edge opens an umbrella. Each second
+  `Weather.umbrellaGroups` groups those on the same edge each within `weatherShareDistance` points of the next, three at
+  most to one: a group shares one umbrella, 27 pixels across plus 22 for each one more, over the middle of them, held by
+  the middle one; the others step under it. A creature on its own has its own. Distance 0: everyone has their own. Each
+  umbrella is a stepped dome in its holder's colour (always the same one per character), a 1-pixel outline, a light and a
+  shade line, a stick with a hook, drawn in the holder's own pixels. Puddles form in a few dips along the bottom edge and
+  dry over 90 s once it stops. Hanging from the top edge, the umbrella is upside down: a bowl (`Weather.Bowl`). It fills
+  in 20 s of medium rain (sooner when heavier), its top rows turning to water, tips over in 1.2 s, spills with a splash,
+  and falls to the floor, landing with another; the creatures under it are soaked (drips for 25 s, a shiver) and say so.
+- **Wind** (`Weather.Wind`) blows from one side for the spell: a breeze of 0.3 and a gust every 9 s lasting 2.5 s. The
+  creatures on the floor and the top edge lean into it (0.18 rad × force × strength) and walk 40 % slower into it and up to
+  30 % faster with it. At a gust's height a creature at leisure is pushed `6 × force × strength / size²` points along its
+  edge (the smallest size counts as 1; under 0.75 none, so the heavy ones hardly move), never round a corner
+  (`Creature.shove`); one hanging from the top edge whose `force × strength / size` is at least 1.25 is blown off and lands
+  on the floor downwind. In a storm a gust of at least 0.9 turns an umbrella inside out for 4 s, 40 % of the time.
+- **Words.** With `weatherTalk` and talk on, the creatures say built-in lines in their own voices (`Weather+Lines`,
+  `Weather+Russian`): as snow, rain or wind starts, shivering, a snowman, throwing a snowball (`{friend}`), hit by one, under
+  a friend's umbrella, soaked on the top edge, a gust, inside out, blown off. 9 s apart at least, each in the chat log as
+  "The weather: snow.". No model is called and nothing goes into the spend ledger.
+- **Checks.** `--weather-film out.mp4 [snow|rain|wind|storm]` films each offscreen with four creatures (Blocky and Boo
+  close and friends, Unit 7 apart, Sprout small and on the top edge) over a pretend window, printing each step with its time
+  (`weather snow starts`, `snow pile bottom 6 px`, `rain Blocky & Boo share an umbrella`, `rain Sprout umbrella full, falls`,
+  `wind gust pushes Sprout 6 px`, `snow falls off a window at 150: 420 flakes`), writes stills beside it (`…-snow-window.png`,
+  `…-snow-bottom.png`, `…-rain-shared.png`, `…-rain-falling.png`, `…-wind.png`, `…-storm.png`) and exits 1 if a step
+  never happened. `--weather <kind> [--stop-after seconds]` starts one on the real screen, prints its steps and quits once
+  it is over.
 
 ## 8. The brain: chat client
 
@@ -3342,6 +3420,17 @@ An error for want of a model reads as that note, never as a server refusal.
 | effectsTypingKeys | 5000 | 1000–20000, clamped on load: keys in an hour that make it a fast hour of typing |
 | effectsDailyBudget | 1 | $0.10–$50, clamped on load: today's spend past it drops the coins once |
 | effectsCalendar | false | Clock ticking reads the Mac's calendar for meetings |
+| weatherEnabled | true | weather on a quiet screen on or off (§7.20) |
+| weatherSnow, weatherRain, weatherWind | true | each weather's switch; a storm needs rain and wind |
+| weatherQuietMinutes | 5 | 1–60 min, clamped on load: no typing and the cursor barely moving this long |
+| weatherFrequency | sometimes | rarely, sometimes, often: about once every 60, 20, 5 quiet minutes |
+| weatherMinutes | 3 | 1–20 min, clamped on load: how long a spell lasts before it eases off |
+| weatherSnowDepth, weatherRainHeaviness, weatherWindStrength | medium | low, medium, high (×0.5, ×1, ×1.6) |
+| weatherShareDistance | 40 | 0–200 points, clamped on load: closer than this, creatures share an umbrella; 0, each their own |
+| weatherFollowSeason | true | snow mostly in winter, wind in autumn, rain any time; off, all alike |
+| weatherWindowTops | true | snow piles on other apps' window tops too |
+| weatherReduceMotion | system | system, on, off: on halves the particles and stops the wind pushing |
+| weatherTalk | true | the creatures say built-in lines about it |
 | diveWaterShare | ⅓ | 0.15–0.6, clamped on load: how much of the screen the dive's water covers, from the bottom |
 | diveWaterOpacity | 0.3 | 0.1–0.7, clamped on load: how much the water shows; the desktop reads through it |
 | diveMinutes | 3 | 0.5–15 min, clamped on load: once the water is up |

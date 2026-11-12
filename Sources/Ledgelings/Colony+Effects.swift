@@ -191,7 +191,8 @@ extension Colony {
 
     /// The fireflies after dark, or the season's particles, for a while every so often.
     private func updateAmbient(dt: Double) {
-        let want = Effects.ambient(at: now(), isNight: isNight, switches: fx.rules.switches)
+        // While weather falls, the light season particles pause: the weather is heavier.
+        let want = weatherShowing ? nil : Effects.ambient(at: now(), isNight: isNight, switches: fx.rules.switches)
         let out = Effects.ambientShowing(at: elapsed, seconds: settings.effectsAmbientSeconds, everyMinutes: settings.effectsAmbientEveryMinutes)
         if let a = fx.ambient {
             let byHand = a.tiles.first?.byHand == true

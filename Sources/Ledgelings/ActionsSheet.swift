@@ -32,6 +32,7 @@ final class ActionsController {
         model.byHand = { [weak self] in self?.byHand($0) }
         model.chooseScreen = { [weak self] in self?.chooseScreen() }
         model.wear = { [weak self] in self?.wear($0) }
+        model.weather = { [weak self] in self?.weather($0) }
     }
 
     /// Which page is showing.
@@ -226,6 +227,12 @@ final class ActionsController {
         }
     }
 
+    /// From the Weather page: that weather now, or Clear.
+    private func weather(_ kind: Weather.Kind?) {
+        guard let colony = colony() else { return }
+        if let kind { colony.startWeather(kind); after(tr("%@ now.", kind.title)) } else { colony.clearWeather(); after(tr("The weather clears.")) }
+    }
+
     /// From the Styles page: the style goes on whoever is chosen, now, whatever the switches say.
     private func wear(_ style: Effects.Style) {
         guard let colony = colony(), model.wearers.indices.contains(model.wearer) else { return }
@@ -389,7 +396,7 @@ enum ActionsLink: CaseIterable {
 
 /// The sheet has one inner page: the games, listed (`Plays`).
 enum ActionsPage {
-    case main, activities, styles
+    case main, activities, styles, weather
 
     /// What the Activities page's buttons say on hover, with their keys.
     static var backTip: String { tr("Back to the sheet (←)") }
@@ -397,6 +404,7 @@ enum ActionsPage {
     static var doneTip: String { tr("Put the sheet away (Return)") }
     static var stylesTip: String { tr("Put a style on a creature (Y)") }
     static var wearerTip: String { tr("Choose who wears it (Tab)") }
+    static var weatherTip: String { tr("Make it snow, rain or blow (W)") }
 }
 
 /// A game as a row of the Activities page: what it is called, a line on what
@@ -584,6 +592,8 @@ final class ActionsModel: ObservableObject {
     @Published var wearer = 0
     @Published var wearers: [String] = []
     var wear: (Effects.Style) -> Void = { _ in }
+    /// The Weather page: a weather now, or nil for Clear.
+    var weather: (Weather.Kind?) -> Void = { _ in }
 }
 
 // MARK: The pictures
@@ -641,6 +651,16 @@ enum ActionIcons {
             // Just round the creature, the height of a row: the whole effect is too big for one.
             let m = type.meta, top = m.origin.y - actor.h - 8
             if let image = p.still()?.cropping(to: CGRect(x: m.origin.x - 20, y: top, width: 40, height: actor.h + 8)) { made[style] = image }
+        }
+        return made
+    }()
+
+    /// Each weather's picture, and Clear's, by name.
+    static let weather: [String: CGImage] = {
+        var made: [String: CGImage] = [:]
+        for kind in Weather.Kind.allCases.map({ Optional($0) }) + [nil] {
+            let art = Weather.icon(kind)
+            made[kind?.rawValue ?? "clear"] = WeatherState.picture(art.rgba, art.w, art.h)
         }
         return made
     }()
@@ -740,7 +760,13 @@ struct ActionsSheetView: View {
                 .offset(y: Self.headroom)
             if let face = model.keeper?.face { Peeker(face: face, sheetWidth: size.width, headroom: Self.headroom) }
             VStack(alignment: .leading, spacing: 0) {
-                if model.page == .styles {
+                if model.page == .weather {
+                    Text(tr("WEATHER · WHAT SHOULD IT DO?")).font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Self.faintInk).padding(.bottom, 10)
+                    weatherPage.padding(.bottom, 8)
+                    line.frame(height: Self.activityLineHeight, alignment: .leading).padding(.bottom, 6)
+                    stylesFooter
+                } else if model.page == .styles {
                     Text(tr("STYLES · WHO WEARS WHAT?")).font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(Self.faintInk).padding(.bottom, 10)
                     stylesPage.padding(.bottom, 8)
@@ -891,6 +917,9 @@ struct ActionsSheetView: View {
             PixelButton(title: tr("STYLES…"), small: true) { model.page = .styles }
                 .keyboardShortcut("y", modifiers: [])
                 .help(ActionsPage.stylesTip)
+            PixelButton(title: tr("WEATHER…"), small: true) { model.page = .weather }
+                .keyboardShortcut("w", modifiers: [])
+                .help(ActionsPage.weatherTip)
             PixelButton(title: ActionsSwitch.language.title(in: model.state), small: true) { model.flip(.language) }
             PixelButton(title: ActionsLink.settings.title, small: true) { model.open(.settings) }
                 .keyboardShortcut(",", modifiers: .command)
@@ -1005,6 +1034,22 @@ extension ActionsSheetView {
                 .buttonStyle(PixelTileStyle(chosen: false))
                 .keyboardShortcut(KeyEquivalent(Swift.Character("\(n + 1)")), modifiers: [])
                 .help(tr("Put %@ on %@ now (%d)", style.title, model.wearers.indices.contains(model.wearer) ? model.wearers[model.wearer] : "", n + 1))
+            }
+        }
+    }
+
+    /// The Weather page: a row per weather, its picture, name and what it does, and Start; then Clear.
+    var weatherPage: some View {
+        VStack(alignment: .leading, spacing: Self.activityGap) {
+            ForEach(Array((Weather.Kind.allCases.map { Optional($0) } + [nil]).enumerated()), id: \.offset) { n, kind in
+                Button { model.weather(kind) } label: {
+                    rowLabel(picture: ActionIcons.weather[kind?.rawValue ?? "clear"], title: (kind?.title ?? tr("Clear sky")).uppercased(),
+                             line: kind?.detail ?? tr("Whatever falls eases off; the snow lying there melts slowly"),
+                             action: kind == nil ? tr("CLEAR") : tr("START"), detail: "\(n + 1)")
+                }
+                .buttonStyle(PixelTileStyle(chosen: false))
+                .keyboardShortcut(KeyEquivalent(Swift.Character("\(n + 1)")), modifiers: [])
+                .help(kind.map { tr("Start %@ now (%d)", $0.title.lowercased(), n + 1) } ?? tr("Let the weather ease off now (%d)", n + 1))
             }
         }
     }

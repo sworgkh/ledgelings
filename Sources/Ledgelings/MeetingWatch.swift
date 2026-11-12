@@ -15,6 +15,13 @@ final class MeetingWatch {
         return (try? await store.requestFullAccessToEvents()) ?? false
     }
 
+    /// A meeting (not an all-day event) is on now: weather waits for it to end.
+    func inMeetingNow(at now: Date) -> Bool {
+        guard Self.allowed else { return false }
+        let predicate = store.predicateForEvents(withStart: now.addingTimeInterval(-12 * 3600), end: now.addingTimeInterval(60), calendars: nil)
+        return store.events(matching: predicate).contains { !$0.isAllDay && $0.startDate <= now && $0.endDate > now }
+    }
+
     /// Meetings (not all-day events) starting after `now` and within `minutes`: their identifiers and titles.
     func startingSoon(at now: Date, within minutes: Double = 5) -> [(id: String, title: String)] {
         guard Self.allowed else { return [] }

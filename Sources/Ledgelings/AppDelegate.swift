@@ -57,6 +57,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let revengeItem = NSMenuItem(title: "", action: #selector(toggleRevenge), keyEquivalent: "")
     private let activitiesItem = NSMenuItem(title: "", action: #selector(openActivities), keyEquivalent: "")
     private let diveItem = NSMenuItem(title: "", action: #selector(toggleDive), keyEquivalent: "")
+    /// Weather › Snow, Rain, Wind, Storm, Clear: one by hand, at any time.
+    private let weatherItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let stopActivityItem = NSMenuItem(title: "", action: #selector(stopActivity), keyEquivalent: "")
     private let deedsItem = NSMenuItem(title: "", action: #selector(toggleDeeds), keyEquivalent: "")
     private let relationshipsItem = NSMenuItem(title: "", action: #selector(openRelationships), keyEquivalent: "")
@@ -172,6 +174,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in
                 do { try await EffectsFilm.run(output: URL(fileURLWithPath: out)) }
                 catch { FileHandle.standardError.write(Data("Ledgelings effects film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
+        if let at = CommandLine.arguments.firstIndex(of: "--weather-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/weather.mp4"
+            let only = args.indices.contains(at + 2) ? Weather.Kind(rawValue: args[at + 2]) : nil
+            Task { @MainActor in
+                do { try await WeatherFilm.run(output: URL(fileURLWithPath: out), only: only) }
+                catch { FileHandle.standardError.write(Data("Ledgelings weather film: \(error)\n".utf8)); exit(1) }
                 exit(0)
             }
             return
@@ -595,6 +608,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
+        // `--weather <kind> [--stop-after seconds]`: that weather on the real screen now, every step printed with its
+        // time; it eases off after `--stop-after` (or its own time), and the app quits once it is over.
+        if let at = CommandLine.arguments.firstIndex(of: "--weather"), let colony {
+            let args = CommandLine.arguments, start = Date()
+            let kind = args.indices.contains(at + 1) ? Weather.Kind(rawValue: args[at + 1]) : .snow
+            let stopAfter = args.firstIndex(of: "--stop-after").flatMap { args.indices.contains($0 + 1) ? Double(args[$0 + 1]) : nil }
+            colony.weather.trace = { FileHandle.standardError.write(Data(String(format: "weather %6.2f  %@\n", Date().timeIntervalSince(start), $0).utf8)) }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                guard let kind, colony.startWeather(kind) else {
+                    FileHandle.standardError.write(Data("weather: snow, rain, wind or storm\n".utf8)); exit(1)
+                }
+                if let stopAfter {
+                    try? await Task.sleep(for: .seconds(stopAfter))
+                    colony.clearWeather()
+                }
+                while colony.weatherShowing { try? await Task.sleep(for: .seconds(0.2)) }
+                try? await Task.sleep(for: .seconds(2))
+                exit(0)
+            }
+        }
         // `--grab`: the first creature grabs the cursor now; every step on stderr
         // with the time since, then quit once it has let go.
         if CommandLine.arguments.contains("--grab"), let colony {
@@ -807,6 +841,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.target = self
             menu.addItem(item)
         }
+        weatherItem.submenu = NSMenu()
+        menu.addItem(weatherItem)
         nextReminderItem.target = self
         menu.addItem(nextReminderItem)
         chatItem.target = self
@@ -866,6 +902,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         revengeItem.title = tr("Cursor Revenge")
         activitiesItem.title = tr("Activities…")
         diveItem.title = colony?.isDiving == true ? tr("Out of the Water") : tr("Go Scuba Diving")
+        weatherItem.title = tr("Weather")
+        let now = colony?.weather.spell.flatMap { $0.isEasing ? nil : $0.kind }
+        weatherItem.submenu?.items = Weather.Kind.allCases.map { kind in
+            let item = NSMenuItem(title: kind.title, action: #selector(weatherChosen(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = kind.rawValue
+            item.state = now == kind ? .on : .off
+            item.toolTip = kind.detail
+            return item
+        } + [.separator(), {
+            let item = NSMenuItem(title: tr("Clear sky"), action: #selector(weatherChosen(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = "clear"
+            item.state = now == nil ? .on : .off
+            item.toolTip = tr("Let the weather ease off now")
+            return item
+        }()]
         stopActivityItem.title = settings.stopActivityShortcutEnabled
             ? tr("Stop Activity (%@)", GlobalShortcut.spoken(settings.stopActivityShortcut)) : tr("Stop Activity")
         stopActivityItem.isEnabled = Activities.shared.isRunning
@@ -1175,12 +1228,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                       pressed: { [weak self] in self?.stopActivity() })
         settingsWindow.startDive = { [weak self] in self?.colony?.startDive() }
         settingsWindow.previewEffect = { [weak self] name in if self?.colony?.preview(name) != true { NSSound.beep() } }
+        settingsWindow.playWeather = { [weak self] name in self?.playWeather(name) }
         settingsWindow.allowCalendar = { [weak self] in
             Task { @MainActor in
                 guard let colony = self?.colony else { return }
                 if !(await colony.fx.meetings.ask()) { NSSound.beep() }
             }
         }
+    }
+
+    @objc private func weatherChosen(_ item: NSMenuItem) { playWeather(item.representedObject as? String ?? "clear") }
+
+    /// A weather by name now, or `clear`: from the menu, the Weather page and Creature Actions.
+    func playWeather(_ name: String) {
+        guard let colony else { return }
+        if let kind = Weather.Kind(rawValue: name) { colony.startWeather(kind) } else { colony.clearWeather() }
     }
 
     @objc private func toggleDive() {
