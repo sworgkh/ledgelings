@@ -31,6 +31,8 @@ public readonly record struct Shortcut(int KeyCode, ShortcutModifiers Modifiers)
     /// <summary>Read aloud: Ctrl+Alt+Shift+R, R for read. The Mac's is Ctrl+Option+R, but Windows' Ctrl+Alt+R is
     /// already Add a Reminder, so Shift is held too, as for translating the last copy.</summary>
     public static readonly Shortcut ReadAloud = new(0x52, ShortcutModifiers.Control | ShortcutModifiers.Option | ShortcutModifiers.Shift);
+    /// <summary>Chat with the creatures: Ctrl+Alt+C, C for chat, as on the Mac. Windows itself holds no Ctrl+Alt+C.</summary>
+    public static readonly Shortcut Chat = new(0x43, ShortcutModifiers.Control | ShortcutModifiers.Option);
     /// <summary>The Tools screen: Ctrl+Alt+K, as on the Mac.</summary>
     public static readonly Shortcut Tools = new(0x4B, ShortcutModifiers.Control | ShortcutModifiers.Option);
     /// <summary>Stop activity: Ctrl+Alt+Q, Q for quit, as on the Mac. Windows itself holds no Ctrl+Alt+Q.</summary>

@@ -27,6 +27,7 @@ public sealed partial class App
                     case Tools.Tool.Snippets: clipPicker?.Show(ClipPicker.Group.Snippets); break;
                     case Tools.Tool.ReadAloud: ShowReadAloud(); break;
                     case Tools.Tool.Dive: ToggleDive(); break;
+                    case Tools.Tool.Chat: ShowChat(); break;
                     default: AddAReminder(); break;
                 }
             },
@@ -38,6 +39,7 @@ public sealed partial class App
                 Tools.Tool.Snippets => s.ClipboardEnabled && clipPicker is not null,
                 Tools.Tool.ReadAloud => s.ReadAloudEnabled && readAloudSheet is not null,
                 Tools.Tool.Dive => true,
+                Tools.Tool.Chat => s.ChatEnabled && chat is not null,
                 _ => s.RemindersEnabled,
             },
             ShortcutLabel = tool => tool switch
@@ -47,6 +49,7 @@ public sealed partial class App
                 Tools.Tool.ClipHistory when s.ClipHistoryShortcutEnabled => ShortcutKeys.Label(s.ClipHistoryShortcut),
                 Tools.Tool.Snippets when s.ClipSnippetsShortcutEnabled => ShortcutKeys.Label(s.ClipSnippetsShortcut),
                 Tools.Tool.ReadAloud when s.ReadAloudShortcutEnabled => ShortcutKeys.Label(s.ReadAloudShortcut),
+                Tools.Tool.Chat when s.ChatShortcutEnabled => ShortcutKeys.Label(s.ChatShortcut),
                 // Windows' reminder key is fixed, Ctrl+Alt+R, and held only when Windows gave it.
                 Tools.Tool.Reminder when reminderKey is { IsRegistered: true } => ReminderHotkeyTitle,
                 _ => null,
