@@ -110,11 +110,17 @@ enum DiveFilm {
                 // A click through the water, onto the other app's button.
                 if !clicked, dive.phase == .on, let at = dive.filledAt, dive.time - at > 10 {
                     clicked = true
-                    let point = CGPoint(x: window.frame.midX, y: window.frame.minY + 58)
+                    // The water is under test, not the divers: the click goes on the window's button where no diver
+                    // and no speech bubble happens to be (a click on one of those is theirs, water or not).
+                    let row = window.frame.minY + 58
+                    let spots = stride(from: window.frame.minX + 20, through: window.frame.maxX - 20, by: 10).map { CGPoint(x: $0, y: row) }
+                    let free = spots.filter { colony.creature(at: $0) == nil && colony.bubble(at: $0) == nil }
+                    let point = free.min { abs($0.x - window.frame.midX) < abs($1.x - window.frame.midX) } ?? CGPoint(x: window.frame.midX, y: row)
                     let creatures = colony.takesClick(at: point, shift: false)
+                    let taker = colony.creature(at: point).map { colony.character(forCreature: $0).name } ?? (colony.bubble(at: point) != nil ? "a speech bubble" : "the overlay")
                     log(String(format: "click at (%.0f, %.0f) under the water: %@", point.x, point.y,
-                               creatures ? "the creatures took it" : "through to the window below"))
-                    if creatures { failures.append("the water took a click") } else {
+                               creatures ? "\(taker) took it" : "through to the window below"))
+                    if creatures { failures.append("the water took a click (\(taker))") } else {
                         button.backgroundColor = CGColor(srgbRed: 0.2, green: 0.7, blue: 0.35, alpha: 1)
                         label.string = "Another app: clicked"
                     }
