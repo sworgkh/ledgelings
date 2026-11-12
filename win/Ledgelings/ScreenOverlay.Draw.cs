@@ -42,6 +42,8 @@ public sealed partial class ScreenOverlay
         var scale = (float)snap.Scale;
         var bodyHeight = cell.Height * scale;
         var radius = (int)Math.Ceiling(bodyHeight * 1.6 + 4);
+        // An effect reaches past the body: the whole of its frame, wherever it stands in the cell.
+        if (snap.Effect is { } fx) radius = Math.Max(radius, (int)Math.Ceiling(EffectReach(fx, cell) * scale + 4));
         var bounds = new Rectangle((int)centre.X - radius, (int)centre.Y - radius, 2 * radius, 2 * radius);
         ops.Add((bounds, g =>
         {
@@ -52,7 +54,10 @@ public sealed partial class ScreenOverlay
             g.ScaleTransform((float)snap.Shrink, (float)snap.Shrink);
             using var body = g.Transform;
             g.ScaleTransform(snap.IsMirrored ? -scale : scale, scale);
-            DrawImageCentred(g, snap.Image!);
+            // The effect's back picture under the sprite, its front over it, both under the hat; the mirror flips them too.
+            DrawEffect(g, snap.Effect?.Back, snap.Effect, cell);
+            if (snap.Effect?.HidesBody != true) DrawImageCentred(g, snap.Image!);
+            DrawEffect(g, snap.Effect?.Front, snap.Effect, cell);
             g.Transform = body;
 
             // The flower stands on the head: inside the body, so it turns with the
@@ -74,7 +79,7 @@ public sealed partial class ScreenOverlay
                 g.Transform = body;
             }
 
-            if (snap.AsleepFor is double asleep && z is not null)
+            if (snap.AsleepFor is double asleep && z is not null && snap.Effect?.HidesZs != true)
             {
                 for (int k = 0; k < ZCount; k++)
                 {
@@ -93,6 +98,67 @@ public sealed partial class ScreenOverlay
                 }
             }
         }));
+    }
+
+    /// <summary>One of an effect's pictures in the creature's sprite pixels, centred on the body as the sprite is:
+    /// the frame's top-left at its origin in the cell, the cell's rows running down from its top.</summary>
+    private static void DrawEffect(Graphics g, Bitmap? picture, CreatureEffect? fx, Size cell)
+    {
+        if (picture is null || fx is null) return;
+        g.InterpolationMode = InterpolationMode.NearestNeighbor;
+        g.PixelOffsetMode = PixelOffsetMode.Half;
+        g.SmoothingMode = SmoothingMode.None;
+        var rect = new Rectangle(fx.Origin.X - cell.Width / 2, fx.Origin.Y - cell.Height / 2, fx.Size.Width, fx.Size.Height);
+        g.DrawImage(picture, rect, 0, 0, picture.Width, picture.Height, GraphicsUnit.Pixel, pixelEdges);
+    }
+
+    /// <summary>How far an effect's frame reaches from the body's centre, in sprite pixels.</summary>
+    private static double EffectReach(CreatureEffect fx, Size cell)
+    {
+        double left = fx.Origin.X - cell.Width / 2.0, top = fx.Origin.Y - cell.Height / 2.0;
+        return new[] { Math.Abs(left), Math.Abs(left + fx.Size.Width), Math.Abs(top), Math.Abs(top + fx.Size.Height) }.Max() * Math.Sqrt(2);
+    }
+
+    /// <summary>Effects standing on their own (a poof), each where its creature's centre was, as the creature would be drawn.</summary>
+    private void AddLooseEffects(List<(Rectangle, Action<Graphics>)> ops, IReadOnlyList<LooseEffectSnapshot>? loose, Size cell)
+    {
+        if (loose is null) return;
+        foreach (var e in loose)
+        {
+            var centre = ToWindow(e.Place);
+            var fx = new CreatureEffect(e.Back, e.Front, e.Origin, e.Size, true, false);
+            var radius = (int)Math.Ceiling(EffectReach(fx, cell) * e.Scale + 4);
+            ops.Add((new Rectangle((int)centre.X - radius, (int)centre.Y - radius, 2 * radius, 2 * radius), g =>
+            {
+                g.TranslateTransform(centre.X, centre.Y);
+                g.RotateTransform(Degrees(e.Rotation));
+                g.ScaleTransform(e.Mirrored ? -(float)e.Scale : (float)e.Scale, (float)e.Scale);
+                DrawEffect(g, e.Back, fx, cell);
+                DrawEffect(g, e.Front, fx, cell);
+            }));
+        }
+    }
+
+    /// <summary>The ambient particles along the bottom edge, a tile at a time, each standing on its monitor's bottom.</summary>
+    private void AddAmbient(List<(Rectangle, Action<Graphics>)> ops, IReadOnlyList<AmbientTile>? tiles)
+    {
+        if (tiles is null) return;
+        foreach (var t in tiles)
+        {
+            if (t.Image is not { } image) continue;
+            var w = (float)(image.Width * t.Scale);
+            var h = (float)(image.Height * t.Scale);
+            var corner = ToWindow(t.BottomLeft);      // the bottom-left corner, y down from here
+            var rect = new RectangleF(corner.X, corner.Y - h, w, h);
+            if (!rect.IntersectsWith(new RectangleF(0, 0, Monitor.Width, Monitor.Height))) continue;
+            ops.Add((Rectangle.Round(RectangleF.Inflate(rect, 1, 1)), g =>
+            {
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.PixelOffsetMode = PixelOffsetMode.Half;
+                g.SmoothingMode = SmoothingMode.None;
+                g.DrawImage(image, rect, new RectangleF(0, 0, image.Width, image.Height), GraphicsUnit.Pixel);
+            }));
+        }
     }
 
     private void AddHouse(List<(Rectangle, Action<Graphics>)> ops, HouseSnapshot? house, Size cell)

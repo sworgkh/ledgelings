@@ -182,6 +182,7 @@ public sealed partial class Colony
     private void Launch(Delivery mail, int? thrower)
     {
         mail.Thrower = thrower;
+        if (thrower is int t) Mark(Effects.Moment.HeyLook, t);
         var start = new Pt(mail.Target.X + rng.Range(-200, 200), mail.Screen.MinY - 16);
         var inward = new Vec(0, 1);
         if (thrower is int i)

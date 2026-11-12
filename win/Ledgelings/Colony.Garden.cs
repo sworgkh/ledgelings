@@ -131,6 +131,7 @@ public sealed partial class Colony
         garden.Plant(worn.Flower, spot.Floor, spot.Rotation, sizes[i], CharacterFor(i).Name,
                      Elapsed, Settings.GardenMinutes * 60, Settings.GardenSize);
         creatures[i].Pause(1.2);
+        Mark(Effects.Moment.Bloom, i);
     }
 
     /// <summary>Pull up every planted flower at once (the menu, the Flowers tab). Returns how many went.</summary>

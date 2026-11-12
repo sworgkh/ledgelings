@@ -550,6 +550,7 @@ public sealed partial class Colony
                     court.SwishUntil = Elapsed + 0.5;
                     sparks.Burst(new Pt(court.Hoop.RimX, court.Hoop.RimY), new Vec(0, 1), 8, rng);
                     Trace?.Invoke($"play basketball {name} scores");
+                    Mark(Effects.Moment.Goal, thrower);
                     break;
                 case Plays.Ball.Event.Rim: Trace?.Invoke("play basketball clang off the rim"); break;
                 case Plays.Ball.Event.Board: Trace?.Invoke("play basketball off the board"); break;
@@ -582,6 +583,9 @@ public sealed partial class Colony
         // other side too, with how it ended and whose idea it was.
         var (score, winners) = GameResult(s);
         Trace?.Invoke($"play {s.Kind.Raw()} result: {score ?? "-"}, won by {(winners is null ? "-" : winners.Count == 0 ? "nobody (a draw)" : string.Join(", ", winners))}");
+        // Losing a game can make one fired up.
+        if (winners is { Count: > 0 })
+            foreach (var p in s.Players.Where(p => !winners.Contains(CharacterFor(p).Name))) StyleTrigger(Effects.Trigger.LostGame, p);
         for (int a = 0; a < s.Players.Length; a++)
             for (int b = a + 1; b < s.Players.Length; b++)
                 Shared(s.Players[a], s.Players[b], Core.Bonds.MomentKind.Play, s.Kind.Raw(), score, winners, s.AskedBy);

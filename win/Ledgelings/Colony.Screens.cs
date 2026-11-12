@@ -94,6 +94,7 @@ public sealed partial class Colony
                 turn = Math.Max(turn, Elapsed + HomeScreen.Hop.Crouch + hop.FlightTime);
                 moves[i] = new Move { Hop = hop, Turn = turn };
                 Trace?.Invoke($"move {CharacterFor(i).Name} hops off {screen.Name}");
+                Mark(Effects.Moment.LeaveScreen, i);
             }
             else
             {
@@ -125,12 +126,13 @@ public sealed partial class Colony
                 if (events.Contains(Plays.Chute.Event.Packed))
                 {
                     LandNow(i);
+                    Mark(Effects.Moment.ArriveScreen, i);
                     Trace?.Invoke($"move {CharacterFor(i).Name} lands at ({creatures[i].Position.X:F0}, {creatures[i].Position.Y:F0})");
                 }
             }
             else if (Elapsed >= move.Turn)
             {
-                if (ChuteFor(i) is not { } made) { LandNow(i); continue; }
+                if (ChuteFor(i) is not { } made) { LandNow(i); Mark(Effects.Moment.ArriveScreen, i); continue; }
                 move.Chute = made;
                 creatures[i].Carry(made.Position, made.Rotation, made.Pose);
                 Trace?.Invoke($"move {CharacterFor(i).Name} comes down at {made.Position.X:F0}");

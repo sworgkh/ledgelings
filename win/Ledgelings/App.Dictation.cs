@@ -245,6 +245,7 @@ public sealed partial class App
             timer.Start();
         }
         DictationTell(Dictation.CopiedBubble(text), voiced: false);
+        colony?.EffectsCopied(colony.DictationHelper);
     }
 
     private void DictationFail(Dictation.Trouble trouble) => DictationTell(trouble.Line, voiced: true);

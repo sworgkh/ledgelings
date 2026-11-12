@@ -38,6 +38,8 @@ public sealed partial class Colony
         if (i < 0 || i >= creatures.Count || busy.Contains(i) || complaining.Contains(i)) return;
         var times = annoyance.Streak(i, Elapsed);
         annoyance.Forgive(i);
+        // Grumpy at the cursor: it may get fired up about it.
+        StyleTrigger(Effects.Trigger.Grumpy, i);
         var me = CharacterFor(i);
         var situation = string.Join(" ", new[] { AlmanacSentence, Describe(i) + ".", L10n.Tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.Name, times),
                                              HuntSentence(new[] { i }, always: true) }

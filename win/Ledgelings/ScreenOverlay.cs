@@ -31,6 +31,8 @@ public sealed class CreatureSnapshot
     public Bitmap? Letter;
     /// <summary>Points to float the bubble further off the head: over an open parachute.</summary>
     public double BubbleLift;
+    /// <summary>The style it wears or the moment it marks (Colony.Effects): a picture behind it and one in front.</summary>
+    public CreatureEffect? Effect;
 }
 
 /// <summary>The house, at whatever size it currently is, pinned by its bottom-right corner.
@@ -97,9 +99,11 @@ public sealed partial class ScreenOverlay : IDisposable
                        TeaTableSnapshot? tea = null, Size teaCell = default,
                        IReadOnlyList<PlantedSnapshot>? beds = null, Size bedCell = default,
                        IReadOnlyList<PropSnapshot>? props = null, Size propCell = default,
-                       IReadOnlyList<WaterSnapshot>? water = null, SurfWaterSnapshot? surf = null, StopButtonSnapshot? stop = null)
+                       IReadOnlyList<WaterSnapshot>? water = null, SurfWaterSnapshot? surf = null, StopButtonSnapshot? stop = null,
+                       IReadOnlyList<LooseEffectSnapshot>? loose = null, IReadOnlyList<AmbientTile>? ambient = null)
     {
         var ops = new List<(Rectangle Bounds, Action<Graphics> Draw)>();
+        AddAmbient(ops, ambient);                // the season's particles along the bottom edge, behind everything
         // Bottom to top, as the Mac layers them: the tea table, the house, the planted flowers, then the creatures.
         AddTeaTable(ops, tea, teaCell);
         AddHouse(ops, house, houseCell);
@@ -122,6 +126,7 @@ public sealed partial class ScreenOverlay : IDisposable
             AddCreature(ops, snap, z, cell, hatHeight);
             AddBubble(talk, newBubbles, snap, index, cell.Width * scale / 2 + hatHeight + snap.BubbleLift);
         }
+        AddLooseEffects(ops, loose, cell);       // a poof where a creature stood
         AddWater(ops, water, front: true);       // the tint, the surface and the bubbles, over the divers
         AddFlight(ops, flight, flowerCell);
         AddProps(ops, props, propCell, inFront: true);       // the ball, over everyone

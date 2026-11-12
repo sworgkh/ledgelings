@@ -353,6 +353,7 @@ public sealed class TranslateSheetController
     {
         ClipPaster.Put(new ClipPaster.Item(entry.Translation), plain: true);
         KeepInHistory(entry.Translation, book, settings);
+        colony()?.EffectsCopied();
         Status = L10n.Tr("Copied the translation");
         window?.Redraw();
         Trace?.Invoke("copied saved: " + Short(entry.Translation));
@@ -489,6 +490,8 @@ public sealed class TranslateSheetController
         var culture = Ledgelings.Core.Languages.Current.Culture();
         Status = L10n.Tr("%@ → %@ · translating…", source.Title.ToUpper(culture), target.Title.ToUpper(culture));
         Mood(Colony.ClipHelperMood.Thinking);
+        // The helper casts its magic circle while the answer is on its way (Translating).
+        if (helped && colony() is { } casting) casting.EffectsTranslating = true;
         window?.Redraw();
         var (done, trouble) = await translator.Translate(text, source, target);
         if (mine != generation || Text != text || window is null) return;
@@ -561,6 +564,7 @@ public sealed class TranslateSheetController
         // Marked as ours, so the watcher does not keep it a second time under another app's name.
         ClipPaster.Put(new ClipPaster.Item(text), plain: true);
         KeepInHistory(text, book, settings);
+        colony()?.EffectsCopied();
         var front = previous;
         var near = caret;
         Close(putBack: false);

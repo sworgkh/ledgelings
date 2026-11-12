@@ -359,12 +359,12 @@ have their own page, Moments, so neither page scrolls.
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Effects on** (`effectsEnabled`) | on | | Everything on this page and on Moments |
-| **Reduce motion** (`effectsReduceMotion`) | as the system | as the system, on, off | On turns the busy ones off: sparks, flames, confetti, the blinks, the falling particles |
+| **Reduce motion** (`effectsReduceMotion`) | as the system | as the system, on, off | On turns the busy ones off: sparks, flames, confetti, the blinks, the falling particles. As the system: Accessibility's Reduce motion on the Mac, Show animations on Windows |
 | **Styles play on their own** (`effectsFrequency`) | sometimes | rarely, sometimes, often | The chance something puts a style on (25, 50, 100 %), and how long before the same creature wears it again (30, 10, 3 min) |
 | **A style lasts** (`effectStyleSeconds`) | 12 s | 4 to 60 s | Then it fades |
 | **Frost, Smitten, Charged, Fired up, Haunted** (`effectsOff`) | on | | Each style's switch |
 | **Left alone for** (`effectsAloneMinutes`) | 30 min | 5 to 240 | Met by nobody that long, a creature may frost over |
-| **A fast hour of typing** (`effectsTypingKeys`) | 5000 keys | 1000 to 20000 | A whole hour with that many keys: someone gets charged. The Mac's own count; nothing is recorded, no permission |
+| **A fast hour of typing** (`effectsTypingKeys`) | 5000 keys | 1000 to 20000 | A whole hour with that many keys: someone gets charged. The Mac's own count, a keyboard hook that only counts on Windows; nothing is recorded, no permission |
 | **Out for** (`effectsAmbientSeconds`) | 60 s | 10 to 600 | How long the fireflies or the season's particles drift along the bottom edge |
 | **Once every** (`effectsAmbientEveryMinutes`) | 10 min | 1 to 120 | The first time one whole wait after launch. |
 
@@ -378,7 +378,7 @@ Clipboard (copied!), Costs (money spent). All are kept in `effectsOff`.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
-| **Look at my calendar** (`effectsCalendar`) | off | | Clock ticking five minutes before a meeting; **Allow…** asks the Mac for the calendar. Only start times are read, on the Mac |
+| **Look at my calendar** (`effectsCalendar`) | off | | Clock ticking five minutes before a meeting; **Allow…** asks the Mac for the calendar. Only start times are read, on the Mac. Not on Windows, which gives the creatures no calendar: there Clock ticking plays by hand only |
 | **Daily budget** (`effectsDailyBudget`) | $1 | $0.10 to $50 | Money spent: when today's spend (Costs) passes it, the coins drop, once a day |
 
 ## Diving tab
