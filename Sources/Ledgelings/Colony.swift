@@ -255,6 +255,8 @@ final class Colony: NSObject {
     /// Creatures turned to face the chat window while they answer, and the ones the chat made busy.
     var chatFacing: Set<Int> = []
     var chatBusy: Set<Int> = []
+    /// The styles the creatures wear and the moments they mark (`Colony+Effects`).
+    let fx = EffectsState()
     /// The last thing that happened with the model, for the menu.
     var talkStatus = tr("not tried yet")
 
@@ -340,6 +342,7 @@ final class Colony: NSObject {
 
         if let held, held.index >= settings.creatureCount { letGo() }
         while creatures.count > settings.creatureCount {
+            effectsPoof(creatures.count - 1)
             creatures.removeLast(); asleepFor.removeLast(); sizeShares.removeLast(); sizes.removeLast()
         }
         gifts.forget(creaturesFrom: creatures.count)
@@ -378,6 +381,7 @@ final class Colony: NSObject {
             frameCache[key] = made
             return made
         }
+        effectsNoticeSpecies()
         render()
     }
 
@@ -480,6 +484,7 @@ final class Colony: NSObject {
         updateMemory()
         updateReminders(dt: dt)
         liveTogether(dt: dt)
+        updateEffects(dt: dt)
         render()
         setFrameRate(asleep: hideout.phase == .hidden || (held == nil && grab == nil && clipHelp == nil && shotCarry == nil && dictationHelp == nil && !creatures.isEmpty && creatures.allSatisfy(\.isSleeping)))
     }
@@ -500,10 +505,11 @@ final class Colony: NSObject {
             let sink = atlas.bodyHalfSize * CGFloat(sizes[i]) * (1 - shrink)
             let shown = bubbles[i].map { $0.reveal.shown($0.text, at: elapsed) }
             let p = drawnPosition(of: i)       // lying in its bed, a sleeper is raised onto the mattress
+            let image = frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes)
             return CreatureSnapshot(
                 position: CGPoint(x: p.x - inward.dx * sink, y: p.y - inward.dy * sink),
                 rotation: c.rotation, isMirrored: c.isMirrored,
-                image: frames[i].frame(animation: c.animation, time: c.animationTime, eyes: c.eyes),
+                image: image,
                 scale: CGFloat(sizes[i]),
                 asleepFor: c.looksAsleep ? asleepFor[i] : nil,
                 inward: c.isHeld || c.isPlaying ? CGVector(dx: 0, dy: 1) : c.loop.inward(ofSegment: c.segment),
@@ -513,7 +519,8 @@ final class Colony: NSObject {
                 hidden: hideout.isInside(i),
                 shrink: shrink,
                 letter: letterImage(for: i) ?? shotThumbnail(for: i) ?? dictationMicrophone(for: i),
-                bubbleLift: playBubbleLift(of: i)
+                bubbleLift: playBubbleLift(of: i),
+                effect: hideout.isInside(i) ? nil : effectSnapshot(of: i, image: image)
             )
         }
         let z = zFrames.frame(animation: "float", time: 0)
@@ -522,13 +529,14 @@ final class Colony: NSObject {
         let reminder = reminderSnapshot(), table = teaTableSnapshot(), planted = gardenSnapshots(), sleepers = bedSnapshots()
         let props = playProps() + moveProps() + diveProps()
         let stop = stopButton()
+        let loose = looseEffectSnapshots(), ambient = ambientSnapshots()
         for (k, overlay) in overlays.enumerated() {
             overlay.renderStopButton(stop?.overlay == k ? stop : nil)
             overlay.render(snapshots, z: z, cell: atlas.cellSize, zCell: zCell, flowerCell: flowerCell,
                            flight: inFlight, sparks: stars, house: home, houseCell: houseCell,
                            plane: plane, planeCell: planeCell, reminder: reminder, tea: table, teaCell: teaCell,
                            garden: planted, beds: sleepers, bedCell: bedCell, props: props, propCell: playCell,
-                           water: water)
+                           water: water, loose: loose, ambient: ambient)
         }
     }
 }

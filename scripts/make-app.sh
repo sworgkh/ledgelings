@@ -3,7 +3,7 @@
 #   scripts/make-app.sh && open build/Ledgelings.app
 set -euo pipefail
 cd "$(dirname "$0")/.."
-VERSION="${VERSION:-0.70.0}"
+VERSION="${VERSION:-0.71.0}"
 
 swift build -c release
 APP=build/Ledgelings.app
@@ -31,6 +31,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>26.0</string>
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
+    <key>NSCalendarsFullAccessUsageDescription</key><string>Clock ticking: a creature's clock starts ticking five minutes before a meeting in your calendar. Only the start times are read, on this Mac; nothing is sent anywhere.</string>
     <key>NSMicrophoneUsageDescription</key><string>Dictation listens while you hold its shortcut, and sends the sound to the model you chose to write it down. Nothing is recorded otherwise, and nothing is saved.</string>
 </dict>
 </plist>

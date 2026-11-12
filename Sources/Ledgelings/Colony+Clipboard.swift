@@ -80,6 +80,7 @@ extension Colony: ClipHelping {
 
     /// Thinking dots over it while a model answers; a "?" and a little hop at trouble.
     func clipHelperMood(_ mood: ClipHelperMood) {
+        if mood != .thinking { fx.translating = false }
         guard let help = clipHelp, help.mood != mood else { return }
         clipHelp?.mood = mood
         clipHelp?.moodSince = elapsed

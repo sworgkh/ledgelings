@@ -106,6 +106,7 @@ extension Colony {
             let invitation = invitations.remove(at: k)
             if deed == .accept {
                 trace?("deed \(a) accepts \(invitation.offer.tag) from \(b)")
+                if invitation.byLetter { styleTrigger(.invitationAccepted, on: i) }
                 agree(.invite(invitation.offer), by: j, with: i, asked: b)
             } else {
                 trace?("deed \(a) declines \(invitation.offer.tag) from \(b)")

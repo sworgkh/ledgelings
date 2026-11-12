@@ -166,6 +166,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let at = CommandLine.arguments.firstIndex(of: "--effects-film") {
+            let args = CommandLine.arguments
+            let out = args.indices.contains(at + 1) ? args[at + 1] : "build/effects.mp4"
+            Task { @MainActor in
+                do { try await EffectsFilm.run(output: URL(fileURLWithPath: out)) }
+                catch { FileHandle.standardError.write(Data("Ledgelings effects film: \(error)\n".utf8)); exit(1) }
+                exit(0)
+            }
+            return
+        }
         if let at = CommandLine.arguments.firstIndex(of: "--dive-film") {
             let args = CommandLine.arguments
             let out = args.indices.contains(at + 1) ? args[at + 1] : "build/dive.mp4"
@@ -567,6 +577,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(colony.creatures.allSatisfy { colony.isHome($0.position, slack: 1) } ? 0 : 1)
             }
         }
+        // `--effect <name> [--on Blocky]`: one style or moment (or a pixelfx id) on the real screen, every start
+        // printed with its time; quits once it is over.
+        if let at = CommandLine.arguments.firstIndex(of: "--effect"), let colony {
+            let args = CommandLine.arguments, start = Date()
+            let what = args.indices.contains(at + 1) ? args[at + 1] : "smitten"
+            let who = args.firstIndex(of: "--on").flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil }
+            colony.fx.trace = { FileHandle.standardError.write(Data(String(format: "effect %6.2f  %@\n", Date().timeIntervalSince(start), $0).utf8)) }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                let i = who.flatMap { name in colony.creatures.indices.first { colony.character(forCreature: $0).name.lowercased() == name.lowercased() } }
+                guard colony.preview(what, on: i) else {
+                    FileHandle.standardError.write(Data("effect: nothing called \(what), or nobody to show it on\n".utf8)); exit(1)
+                }
+                while colony.effectsShowing { try? await Task.sleep(for: .seconds(0.1)) }
+                FileHandle.standardError.write(Data(String(format: "effect %6.2f  over\n", Date().timeIntervalSince(start)).utf8))
+                exit(0)
+            }
+        }
         // `--grab`: the first creature grabs the cursor now; every step on stderr
         // with the time since, then quit once it has let go.
         if CommandLine.arguments.contains("--grab"), let colony {
@@ -717,7 +745,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let actions = actions
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
-                actions.show(page: CommandLine.arguments.contains("--activities") ? .activities : .main)
+                actions.show(page: CommandLine.arguments.contains("--activities") ? .activities : CommandLine.arguments.contains("--styles") ? .styles : .main)
                 guard let shot = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.indices.contains(shot + 1) else { return }
                 try? await Task.sleep(for: .seconds(1))
                 do { try actions.snapshot(to: URL(fileURLWithPath: CommandLine.arguments[shot + 1])) } catch { FileHandle.standardError.write(Data("Ledgelings snapshot: \(error)\n".utf8)) }
@@ -1146,6 +1174,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                       problem: { [weak settings] in if settings?.stopActivityShortcutProblem != $0 { settings?.stopActivityShortcutProblem = $0 } },
                                       pressed: { [weak self] in self?.stopActivity() })
         settingsWindow.startDive = { [weak self] in self?.colony?.startDive() }
+        settingsWindow.previewEffect = { [weak self] name in if self?.colony?.preview(name) != true { NSSound.beep() } }
+        settingsWindow.allowCalendar = { [weak self] in
+            Task { @MainActor in
+                guard let colony = self?.colony else { return }
+                if !(await colony.fx.meetings.ask()) { NSSound.beep() }
+            }
+        }
     }
 
     @objc private func toggleDive() {

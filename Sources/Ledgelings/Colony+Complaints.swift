@@ -23,6 +23,8 @@ extension Colony {
         guard creatures.indices.contains(i), !busy.contains(i), !complaining.contains(i) else { return }
         let times = annoyance.streak(of: i, at: elapsed)
         annoyance.forgive(i)
+        // Grumpy at the cursor: it may get fired up about it.
+        styleTrigger(.grumpy, on: i)
         let me = character(forCreature: i)
         let situation = [almanac, "\(describe(i)).", tr("%@ has been chased or picked up by the user's cursor %d times in a row.", me.name, times),
                          huntSentence([i], always: true)]

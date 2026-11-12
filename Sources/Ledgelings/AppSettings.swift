@@ -841,6 +841,54 @@ final class AppSettings: ObservableObject {
     /// made and played from disk after that, instead of being made every time.
     @Published var reuseLineVoices: Bool { didSet { save(reuseLineVoices, "reuseLineVoices") } }
 
+    // MARK: Effects
+
+    /// Every effect at once: the styles the creatures wear and the moments they mark.
+    @Published var effectsEnabled: Bool { didSet { save(effectsEnabled, "effectsEnabled") } }
+    /// The styles and moments switched off, by their keys (`Effects.Style.key`, `Effects.Moment.key`): all on is empty.
+    @Published var effectsOff: [String] { didSet { save(effectsOff, "effectsOff") } }
+    /// How often styles play on their own.
+    @Published var effectsFrequency: Effects.Frequency { didSet { save(effectsFrequency.rawValue, "effectsFrequency") } }
+    /// Reduce motion turns the busy effects off: as the system says, or always, or never.
+    @Published var effectsReduceMotion: Effects.ReduceMotion { didSet { save(effectsReduceMotion.rawValue, "effectsReduceMotion") } }
+    /// How long a creature wears a style.
+    @Published var effectStyleSeconds: Double { didSet { save(effectStyleSeconds, "effectStyleSeconds") } }
+    /// The season's particles and the fireflies come out for this long...
+    @Published var effectsAmbientSeconds: Double { didSet { save(effectsAmbientSeconds, "effectsAmbientSeconds") } }
+    /// ...once in this many minutes.
+    @Published var effectsAmbientEveryMinutes: Double { didSet { save(effectsAmbientEveryMinutes, "effectsAmbientEveryMinutes") } }
+    /// A creature nobody has met for this long may frost over.
+    @Published var effectsAloneMinutes: Double { didSet { save(effectsAloneMinutes, "effectsAloneMinutes") } }
+    /// Keys in an hour that count as a fast hour of typing.
+    @Published var effectsTypingKeys: Int { didSet { save(effectsTypingKeys, "effectsTypingKeys") } }
+    /// Money spent: the day's spend past this many dollars drops the coins, once a day.
+    @Published var effectsDailyBudget: Double { didSet { save(effectsDailyBudget, "effectsDailyBudget") } }
+    /// Clock ticking looks at the Mac's calendar for meetings; off until the owner allows it.
+    @Published var effectsCalendar: Bool { didSet { save(effectsCalendar, "effectsCalendar") } }
+
+    static let effectStyleSecondsRange = 4.0...60.0
+    static let effectsAmbientSecondsRange = 10.0...600.0
+    static let effectsAmbientEveryRange = 1.0...120.0
+    static let effectsAloneMinutesRange = 5.0...240.0
+    static let effectsTypingKeysRange = 1000...20000
+    static let effectsDailyBudgetRange = 0.1...50.0
+
+    /// The switches as the rules read them, Reduce motion resolved against the system's.
+    func effectSwitches(systemReduceMotion: Bool) -> Effects.Switches {
+        var s = Effects.Switches()
+        s.enabled = effectsEnabled
+        s.styles = Set(Effects.Style.allCases.filter { !effectsOff.contains($0.key) })
+        s.moments = Set(Effects.Moment.allCases.filter { !effectsOff.contains($0.key) })
+        s.frequency = effectsFrequency
+        s.reduceMotion = effectsReduceMotion.isOn(system: systemReduceMotion)
+        return s
+    }
+    /// One style's or moment's switch, by its key.
+    func effectOn(_ key: String) -> Bool { !effectsOff.contains(key) }
+    func setEffect(_ key: String, on: Bool) {
+        if on { effectsOff.removeAll { $0 == key } } else if !effectsOff.contains(key) { effectsOff.append(key) }
+    }
+
     private let defaults: UserDefaults
     private let keychain: any SecretStore
     private static let keychainKeyAccount = "openRouterKey"
@@ -1299,6 +1347,28 @@ final class AppSettings: ObservableObject {
         let kept = defaults.object(forKey: "translateSavedLimit") as? Int ?? Translate.defaultSavedLimit
         translateSavedLimit = min(max(kept, Translate.savedLimitRange.lowerBound), Translate.savedLimitRange.upperBound)
         translateSavedOpenDrawer = defaults.object(forKey: "translateSavedOpenDrawer") as? Bool ?? false
+        // Effects: everything on, as the owner asked; styles now and then, not all the time.
+        effectsEnabled = defaults.object(forKey: "effectsEnabled") as? Bool ?? true
+        let known = Set(Effects.Style.allCases.map(\.key) + Effects.Moment.allCases.map(\.key))
+        effectsOff = (defaults.stringArray(forKey: "effectsOff") ?? []).filter { known.contains($0) }
+        effectsFrequency = defaults.string(forKey: "effectsFrequency").flatMap(Effects.Frequency.init(rawValue:)) ?? .sometimes
+        effectsReduceMotion = defaults.string(forKey: "effectsReduceMotion").flatMap(Effects.ReduceMotion.init(rawValue:)) ?? .system
+        // Twelve seconds: long enough to notice, short enough not to become the creature's look.
+        let wear = defaults.object(forKey: "effectStyleSeconds") as? Double ?? 12
+        effectStyleSeconds = min(max(wear, Self.effectStyleSecondsRange.lowerBound), Self.effectStyleSecondsRange.upperBound)
+        // A minute of snow or fireflies every ten: ambience, not weather (that is the next feature).
+        let spell = defaults.object(forKey: "effectsAmbientSeconds") as? Double ?? 60
+        effectsAmbientSeconds = min(max(spell, Self.effectsAmbientSecondsRange.lowerBound), Self.effectsAmbientSecondsRange.upperBound)
+        let ambientEvery = defaults.object(forKey: "effectsAmbientEveryMinutes") as? Double ?? 10
+        effectsAmbientEveryMinutes = min(max(ambientEvery, Self.effectsAmbientEveryRange.lowerBound), Self.effectsAmbientEveryRange.upperBound)
+        let alone = defaults.object(forKey: "effectsAloneMinutes") as? Double ?? 30
+        effectsAloneMinutes = min(max(alone, Self.effectsAloneMinutesRange.lowerBound), Self.effectsAloneMinutesRange.upperBound)
+        // About 80 keys a minute for a whole hour: steady, fast typing.
+        let keys = defaults.object(forKey: "effectsTypingKeys") as? Int ?? 5000
+        effectsTypingKeys = min(max(keys, Self.effectsTypingKeysRange.lowerBound), Self.effectsTypingKeysRange.upperBound)
+        let budget = defaults.object(forKey: "effectsDailyBudget") as? Double ?? 1
+        effectsDailyBudget = min(max(budget, Self.effectsDailyBudgetRange.lowerBound), Self.effectsDailyBudgetRange.upperBound)
+        effectsCalendar = defaults.object(forKey: "effectsCalendar") as? Bool ?? false
         followLanguage()
     }
 

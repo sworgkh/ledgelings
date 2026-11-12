@@ -295,6 +295,7 @@ final class TranslateSheetController {
         board.setString(entry.translation, forType: .string)
         watcher()?.ownWrite()
         keepInHistory(entry.translation, clips: clips, settings: settings)
+        (helper() as? Colony)?.effectsCopied()
         model.status = tr("Copied the translation")
         trace?("copied saved: \(entry.translation.prefix(60))")
     }
@@ -390,6 +391,8 @@ final class TranslateSheetController {
         model.state = .waiting
         model.status = tr("%@ → %@ · translating…", source.title.uppercased(), target.title.uppercased())
         helper()?.clipHelperMood(.thinking)
+        // The helper casts its magic circle while the answer is on its way (Translating).
+        (helper() as? Colony)?.fx.translating = true
         let result = await translator.translate(text, from: source, to: target)
         guard !Task.isCancelled, model.text == text else { return }
         switch result {
@@ -460,6 +463,7 @@ final class TranslateSheetController {
         board.setString(text, forType: .string)
         watcher()?.ownWrite()
         keepInHistory(text, clips: clips, settings: settings)
+        (helper() as? Colony)?.effectsCopied()
         let caret = caret, previous = previous
         close()
         guard paste else {

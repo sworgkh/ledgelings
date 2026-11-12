@@ -28,6 +28,7 @@ extension Colony {
     /// third time one of them brings a flower.
     func bumped(_ bump: Meetings.Bump) {
         let (giver, receiver) = Bool.random(using: &rng) ? (bump.a, bump.b) : (bump.b, bump.a)
+        effectsMet(bump.a, bump.b, friends: Effects.friendshipStage(bonds.bond(character(forCreature: bump.a).name, character(forCreature: bump.b).name)) >= 1)
         hold(bump.a, and: bump.b)
         let pa = creatures[bump.a].position, pb = creatures[bump.b].position
         sparkPalette = [CGColor.white, CGColor(red: 1, green: 0.82, blue: 0.24, alpha: 1),

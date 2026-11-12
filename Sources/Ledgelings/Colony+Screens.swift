@@ -94,6 +94,7 @@ extension Colony {
                 turn = max(turn, elapsed + HomeScreen.Hop.crouch + hop.flightTime)
                 moves[i] = Move(stage: .leaving(hop), turn: turn)
                 trace?("move \(character(forCreature: i).name) hops off \(screen.name.isEmpty ? "\(screen.frame)" : screen.name)")
+                mark(.leaveScreen, on: i)
             } else {
                 // On a monitor that is gone: nothing to see leave, it just comes down.
                 moves[i] = Move(stage: .waiting(until: turn), turn: turn)
@@ -115,7 +116,7 @@ extension Colony {
                 move.stage = hop.isGone ? .waiting(until: move.turn) : .leaving(hop)
             case .waiting(let until):
                 guard elapsed >= until else { break }
-                guard let chute = chute(for: i) else { landNow(i); continue }
+                guard let chute = chute(for: i) else { landNow(i); mark(.arriveScreen, on: i); continue }
                 creatures[i].carry(to: chute.position, rotation: chute.rotation, pose: chute.pose)
                 move.stage = .arriving(chute)
                 trace?(String(format: "move %@ comes down at %.0f", character(forCreature: i).name, chute.position.x))
@@ -126,6 +127,7 @@ extension Colony {
                 if events.contains(.packed) {
                     moves[i] = move
                     landNow(i)
+                    mark(.arriveScreen, on: i)
                     trace?(String(format: "move %@ lands at (%.0f, %.0f)", character(forCreature: i).name,
                                   creatures[i].position.x, creatures[i].position.y))
                     continue

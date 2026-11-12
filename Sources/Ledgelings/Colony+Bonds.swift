@@ -58,7 +58,10 @@ extension Colony {
         guard creatures.indices.contains(i), creatures.indices.contains(j), i != j else { return }
         let a = character(forCreature: i).name, b = character(forCreature: j).name
         firstMeeting(a, b)
+        let was = Effects.friendshipStage(bonds.bond(a, b))
         bonds.change { $0.note(a, b, Bonds.Moment(time: Date(), kind: kind, who: a, detail: detail, score: score, winners: winners, asked: asked)) }
+        // A friendship that grows a stage: both level up.
+        if Effects.friendshipStage(bonds.bond(a, b)) > was { mark(.friends, on: i); mark(.friends, on: j) }
     }
 
     /// The pair's past from before moments were kept, read from the chat log once.

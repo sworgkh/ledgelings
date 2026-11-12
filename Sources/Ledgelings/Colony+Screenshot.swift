@@ -48,6 +48,7 @@ extension Colony {
         let to = CGPoint(x: spot.x, y: spot.y - atlas.bodyHalfSize * CGFloat(sizes[i]))
         let leap = ClipHelper.Leap(from: from, to: to, flight: ClipHelper.flight(distance: hypot(to.x - from.x, to.y - from.y), speed: 1))
         shotCarry = ShotCarry(index: i, stage: .going(leap), home: from, picture: picture)
+        mark(.copied, on: i)
         trace?(String(format: "shot %@ hops to (%.0f, %.0f) in %.2f s", character(forCreature: i).name, to.x, to.y, leap.duration))
         return true
     }

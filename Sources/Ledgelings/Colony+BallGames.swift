@@ -170,6 +170,7 @@ extension Colony {
         case .goal(let by, _):
             let score = soccerScore(match)
             trace?("play soccer \(name(by)) scores \(score)")
+            mark(.goal, on: by)
             let goal = match.goals.min { abs($0.x - match.ball.position.x) < abs($1.x - match.ball.position.x) }
             // High over the goal, clear of the scorer's bubble.
             let at = CGPoint(x: goal.map { $0.x - $0.side * 160 } ?? match.ball.position.x, y: match.pitch.floorY + 230 * (s.ballGame?.scale ?? 2.5) / 2.5)
@@ -241,6 +242,7 @@ extension Colony {
         case .scored(let by, let score): trace?("play baseball \(name(by)) scores \(game.lineup == .solo ? "\(game.hits)" : score)")
         case .homeRun(let by, let runs):
             trace?("play baseball HOME RUN \(name(by)), \(runs) in")
+            mark(.goal, on: by)
             let exit = game.lastHomeRun ?? game.field.home.edge
             cheer(tr("HOME RUN!"), at: CGPoint(x: exit.x, y: exit.y - 140), &s)
             for k in 0..<6 {

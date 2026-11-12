@@ -128,6 +128,7 @@ extension Colony {
     /// The thrower stops, and the plane leaves its head in weather of its own.
     private func launch(_ mail: inout Delivery, from thrower: Int?) {
         mail.thrower = thrower
+        if let thrower { mark(.heyLook, on: thrower) }
         var start = CGPoint(x: mail.target.x + .random(in: -200...200, using: &rng), y: mail.screen.minY - 16)
         var inward = CGVector(dx: 0, dy: 1)
         if let i = thrower {

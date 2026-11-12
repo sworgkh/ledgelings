@@ -2715,6 +2715,81 @@ offscreen, through the colony with stand-in answers, and writes stills beside it
 `-answer`, `-everyone`, `-everyone-done`, `-no-model`). `LEDGELINGS_FAKE_CHAT=1`: hand-written answers in each
 character's voice, no key, no network.
 
+### 7.19 Effects: styles and moments
+
+Pixel effects on the creatures (`Effects`, `PixelFX/`, `Colony+Effects`, `EffectPlayer`, since 0.71.0 on macOS),
+ported from [pixelfx](https://github.com/patch-gg/pixelfx) (MIT, see `THIRD-PARTY-NOTICES.md`) number for
+number: every effect is a small drawing routine on the pixel grid (`FXEffect`, `Painter`, `FXParticles`), the
+same arithmetic as pixelfx's JavaScript (its rounding, its 32-bit hash, its mulberry32 generator, V8's sort order),
+so a frame drawn here at time t is the frame pixelfx draws. The port is checked frame by frame against pixelfx's
+own output on our sprites (blocky and cactus, every frame at 15 fps): all 25 effects match with no pixel off.
+
+- **Drawing.** An effect has a back layer (behind the creature) and a front layer, with the creature between
+  (`FXInstance.render`). In the overlay each creature's body layer carries two more pixel layers: the back picture
+  under the sprite, the front picture over it, lined up pixel for pixel with the sprite cell and mirrored with it.
+  The creature stays its own sprite, walking as ever; the front picture holds only what the front changed over it
+  (a film of frost, light), so the screen shows back + creature + front exactly. Light (pixelfx's additive glow)
+  is composited with the front. Nothing is half drawn: `FXComposite` turns anything less than opaque into whole
+  pixels by ordered (4×4 Bayer) dither, and below a quarter opaque into nothing. Some effects draw the body
+  themselves (frost) or hide it (a blink, the egg until it hatches at 1.98 s): the sprite is hidden meanwhile.
+  The overlay stays click-through. The effect's actor is the creature's standing frame cut to its pixels' box, feet
+  at the middle of the bottom row. Effects step at 120 Hz whatever the frame rate.
+- **The five styles**, worn for `effectStyleSeconds` (12 s) and then faded out (0.3 s):
+
+  | Style | pixelfx | Comes when |
+  |---|---|---|
+  | Frost | `status/frozen` | now and then in December–February; a creature nobody met for `effectsAloneMinutes` |
+  | Smitten | `status/charmed` | two friends (friendship stage ≥ 1) bump into each other; a letter's invitation is accepted |
+  | Charged | `lightning/electrified` | a creature grabs the cursor; an hour with `effectsTypingKeys` keys pressed |
+  | Fired up | `status/burning` | a complaint at the cursor; losing a game (a player not among the winners) |
+  | Haunted | `status/cursed` | now and then 25 October – 1 November; Boo (a ghost) bumps into anyone |
+
+  A trigger puts its style on with the chance of `effectsFrequency` (rarely 25 %, sometimes 50 %, often 100 %),
+  and one creature wears the same style again only after 30, 10 or 3 minutes. Now-and-then styles are rolled every
+  30 s with the chance `1 - exp(-30 / (60 × every))`, every = 60, 20 or 6 minutes, so they come about that often;
+  they always take when rolled. A style never covers a moment showing on that creature. Creature Actions › Styles
+  (`STYLES…`, Y) puts any style on any creature by hand (Tab chooses who, 1–5 the style).
+- **The twenty moments**, each played on the creature it happens to, at most every `cooldown` seconds per creature:
+
+  | Moment | Feature | pixelfx | When | Cooldown |
+  |---|---|---|---|---|
+  | Leaving a monitor | Screens | `arcane/blink-out` | it hops off for another monitor (§2.4) | 5 s |
+  | Arriving on a monitor | Screens | `arcane/blink-in` | it lands on the new monitor, its parachute packed: a blink of light where it stands | 5 s |
+  | A hard landing | Moving about | `impacts/heavy-landing` | a jump or drop ends on a floor more than 240 points below where it started | 45 s |
+  | Dizzy | Cursor grab | `status/stunned` | the grab lets go because the cursor shook it off | 60 s |
+  | Goal! | Ball games | `ui/confetti` | a soccer goal, a basket, a home run | 6 s |
+  | Friends for real | Bonds | `ui/level-up` | a shared moment lifts the pair's friendship a stage (3, 8, 14, 20 moments): both | — |
+  | A new arrival | Sprite kit | `spawn/egg-hatch` | a species the colony never had joins it | — |
+  | Poof, gone | Creatures | `spawn/poof` | a creature is removed (the count goes down): where it stood | — |
+  | A flower comes up | Garden | `nature/healing-bloom` | a flower is planted | 20 s |
+  | Fast asleep | Beds | `status/sleep` | for as long as it sleeps, in place of the plain Zs (§9.4) | held |
+  | Night falls | Night | `weather/fireflies` | after dark, along the bottom edge | ambient |
+  | Winter, Autumn, Spring | Seasons | `weather/snow`, `falling-leaves`, `cherry-blossoms` | December–February, September–November, March–May (northern hemisphere) | ambient |
+  | Hey, look! | Reminders | `ui/exclamation` | a reminder is due: on its thrower | — |
+  | Clock ticking | Calendar | `status/slowed` | a meeting in the Mac's calendar starts within 5 minutes: once per meeting | 120 s |
+  | Listening | Dictation | `lightning/charge-up` | for as long as the microphone listens, on its holder | held |
+  | Translating | Translate | `arcane/magic-circle-cast` | while a translation is on its way, on the helper | held |
+  | Copied! | Clipboard | `pickups/collect-burst` | dictation, a translation or a screenshot lands on the clipboard | 8 s |
+  | Money spent | Costs | `spawn/coin-drop` | today's spend (§6.5.1) passes `effectsDailyBudget`: once a day | — |
+
+  Clock ticking was asked for as the magic circle; the owner picked the ticking dial from the pictures, and the
+  magic circle is Translating's. It reads the calendar (EventKit, full access asked by **Allow…**) only with
+  `effectsCalendar` on; only start times are read. "Held" moments play while their state lasts, a one-shot played
+  again while it goes on, and stop (fading) when it ends; they give way to nothing and wait for a moment showing.
+- **Ambient particles.** Fireflies at night, else the season's particles (summer has none), along the bottom of the
+  creatures' home monitors: tiles of 320×180 pixels at 2 points per pixel, side by side, each with its own seed,
+  drawn without pixelfx's sky haze (`FXBackdropped.backdrop = false`) and at 15 pictures a second. They come out for
+  `effectsAmbientSeconds` out of every `effectsAmbientEveryMinutes`, the first time one whole wait after launch. Weather (the next feature) builds on this layer.
+- **Switches.** `effectsEnabled` turns everything off; each style and moment has its switch (`effectsOff` lists the
+  ones off by key, `effectStyle.<name>` / `effectMoment.<name>`). **Reduce motion** (`effectsReduceMotion`: as the
+  system's Accessibility setting, on, off) turns the busy ones off: Charged, Fired up, both blinks, confetti, the
+  level-up, the egg, the poof, the four ambient ones, Listening, Translating, Copied and the coins. A switch turned
+  off fades out what it was showing. **Play** on the settings pages (and `--effect`) plays one now whatever the
+  switches say. No model is called: nothing goes into the spend ledger.
+- **Checks.** `--effects-film out.mp4` films every style on Blocky and Boo, then every moment, printing
+  `fx 3.20 Smitten on Boo`, `fx 9.10 moment goal Blocky`, and writes `…-contact.png`, every effect at its height.
+  `--effect <name> [--on Blocky]` plays one on the real screen and quits when it is over.
+
 ## 8. The brain: chat client
 
 One client speaks the OpenAI-style chat API to either provider.
@@ -3250,6 +3325,17 @@ An error for want of a model reads as that note, never as a server refusal.
 | soccerPlayers, baseballPlayers | 6 | 1–10, clamped on load: the most who join |
 | stopActivityShortcutEnabled, stopActivityShortcutKeyCode, stopActivityShortcutModifiers | true, ⌃⌥Q | Stop activity from any app (§7.17): ends a dive, a surf or a game at once; a saved ⌃⌥⎋ (the old default) becomes ⌃⌥Q |
 | stopButtonShown | true | the Stop button in the top-right corner while an activity runs, with the shortcut in words; a click on it stops it (§7.17) |
+| effectsEnabled | true | every effect on or off (§7.19) |
+| effectsOff | [] | the styles and moments switched off, by key (`effectStyle.frost`, `effectMoment.goal`); unknown keys dropped on load |
+| effectsFrequency | sometimes | rarely, sometimes, often: the chance a trigger puts a style on, its cooldown, how often now-and-then styles come |
+| effectsReduceMotion | system | system, on, off: on turns the busy effects off |
+| effectStyleSeconds | 12 | 4–60 s, clamped on load: how long a style is worn |
+| effectsAmbientSeconds | 60 | 10–600 s, clamped on load: how long the fireflies or the season's particles are out |
+| effectsAmbientEveryMinutes | 10 | 1–120 min, clamped on load: once in this long |
+| effectsAloneMinutes | 30 | 5–240 min, clamped on load: met by nobody this long, a creature may frost over |
+| effectsTypingKeys | 5000 | 1000–20000, clamped on load: keys in an hour that make it a fast hour of typing |
+| effectsDailyBudget | 1 | $0.10–$50, clamped on load: today's spend past it drops the coins once |
+| effectsCalendar | false | Clock ticking reads the Mac's calendar for meetings |
 | diveWaterShare | ⅓ | 0.15–0.6, clamped on load: how much of the screen the dive's water covers, from the bottom |
 | diveWaterOpacity | 0.3 | 0.1–0.7, clamped on load: how much the water shows; the desktop reads through it |
 | diveMinutes | 3 | 0.5–15 min, clamped on load: once the water is up |

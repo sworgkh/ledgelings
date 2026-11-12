@@ -31,6 +31,7 @@ final class ActionsController {
         model.play = { [weak self] in self?.play($0) }
         model.byHand = { [weak self] in self?.byHand($0) }
         model.chooseScreen = { [weak self] in self?.chooseScreen() }
+        model.wear = { [weak self] in self?.wear($0) }
     }
 
     /// Which page is showing.
@@ -97,6 +98,8 @@ final class ActionsController {
             if model.state != s { model.state = s }
             return
         }
+        let names = colony.creatures.indices.map { colony.character(forCreature: $0).name }
+        if model.wearers != names { model.wearers = names; model.wearer = min(model.wearer, max(0, names.count - 1)) }
         s.isNight = colony.isNight
         s.nightOff = settings.nightMinutes == 0
         s.phaseLeft = Int(colony.secondsLeftInPhase.rounded(.up))
@@ -221,6 +224,14 @@ final class ActionsController {
                 after(colony.startDive() ? tr("Masks on: into the water!") : tr("No dive: %@.", colony.talkStatus))
             }
         }
+    }
+
+    /// From the Styles page: the style goes on whoever is chosen, now, whatever the switches say.
+    private func wear(_ style: Effects.Style) {
+        guard let colony = colony(), model.wearers.indices.contains(model.wearer) else { return }
+        let name = model.wearers[model.wearer]
+        after(colony.wear(style, on: model.wearer, byHand: true) ? tr("%@ is %@ for a while.", name, style.title.lowercased())
+                                                                   : tr("%@ can't wear it now.", name))
     }
 
     private func hide(minutes: Double?) {
@@ -378,12 +389,14 @@ enum ActionsLink: CaseIterable {
 
 /// The sheet has one inner page: the games, listed (`Plays`).
 enum ActionsPage {
-    case main, activities
+    case main, activities, styles
 
     /// What the Activities page's buttons say on hover, with their keys.
     static var backTip: String { tr("Back to the sheet (←)") }
     static var gamesTip: String { tr("Turn games on or off") }
     static var doneTip: String { tr("Put the sheet away (Return)") }
+    static var stylesTip: String { tr("Put a style on a creature (Y)") }
+    static var wearerTip: String { tr("Choose who wears it (Tab)") }
 }
 
 /// A game as a row of the Activities page: what it is called, a line on what
@@ -567,6 +580,10 @@ final class ActionsModel: ObservableObject {
     var play: (Plays.Kind) -> Void = { _ in }
     var byHand: (HandActivity) -> Void = { _ in }
     var chooseScreen: () -> Void = {}
+    /// The Styles page: who is to wear one (an index into `wearers`), everyone's names, and putting one on.
+    @Published var wearer = 0
+    @Published var wearers: [String] = []
+    var wear: (Effects.Style) -> Void = { _ in }
 }
 
 // MARK: The pictures
@@ -610,6 +627,22 @@ enum ActionIcons {
         var made: [HandActivity: CGImage] = [:]
         made[.dive] = (try? SpriteAtlas(named: "sea"))?.frames().frame(animation: "fish-a", time: 0)
         return made.compactMapValues { trimmed($0) }
+    }()
+
+    /// Each style's picture: Blocky wearing it, a moment in.
+    static let styles: [Effects.Style: CGImage] = {
+        var made: [Effects.Style: CGImage] = [:]
+        guard let idle = (try? SpriteAtlas(named: "blocky"))?.frames().frame(animation: "idle", time: 0),
+              let (actor, box) = EffectActors().actor(standing: idle) else { return made }
+        for style in Effects.Style.allCases {
+            guard let type = FXCatalog.all[style.effect] else { continue }
+            let p = EffectPlayer(type, name: style.effect, actor: actor, box: box, seed: 3, style: style)
+            p.instance.update(0.9)
+            // Just round the creature, the height of a row: the whole effect is too big for one.
+            let m = type.meta, top = m.origin.y - actor.h - 8
+            if let image = p.still()?.cropping(to: CGRect(x: m.origin.x - 20, y: top, width: 40, height: actor.h + 8)) { made[style] = image }
+        }
+        return made
     }()
 
     /// The picture cut down to its painted pixels: a sprite cell has room to move in.
@@ -707,7 +740,13 @@ struct ActionsSheetView: View {
                 .offset(y: Self.headroom)
             if let face = model.keeper?.face { Peeker(face: face, sheetWidth: size.width, headroom: Self.headroom) }
             VStack(alignment: .leading, spacing: 0) {
-                if model.page == .activities {
+                if model.page == .styles {
+                    Text(tr("STYLES · WHO WEARS WHAT?")).font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Self.faintInk).padding(.bottom, 10)
+                    stylesPage.padding(.bottom, 8)
+                    line.frame(height: Self.activityLineHeight, alignment: .leading).padding(.bottom, 6)
+                    stylesFooter
+                } else if model.page == .activities {
                     Text(tr("ACTIVITIES · WHAT SHOULD THEY PLAY?")).font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(Self.faintInk).padding(.bottom, 10)
                     activities.padding(.bottom, 8)
@@ -761,7 +800,7 @@ struct ActionsSheetView: View {
         }
         .frame(width: size.width, height: size.height, alignment: .topLeading)
         // Esc on the inner page goes back; on the sheet it puts the sheet away.
-        .onExitCommand { if model.page == .activities { model.page = .main } else { done() } }
+        .onExitCommand { if model.page != .main { model.page = .main } else { done() } }
     }
 
     private var title: String {
@@ -849,6 +888,9 @@ struct ActionsSheetView: View {
         HStack(spacing: 6) {
             PixelButton(title: tr("ACTIVITIES…"), small: true) { model.page = .activities }
                 .keyboardShortcut("a", modifiers: [])
+            PixelButton(title: tr("STYLES…"), small: true) { model.page = .styles }
+                .keyboardShortcut("y", modifiers: [])
+                .help(ActionsPage.stylesTip)
             PixelButton(title: ActionsSwitch.language.title(in: model.state), small: true) { model.flip(.language) }
             PixelButton(title: ActionsLink.settings.title, small: true) { model.open(.settings) }
                 .keyboardShortcut(",", modifiers: .command)
@@ -940,6 +982,46 @@ extension ActionsSheetView {
             Image(decorative: image, scale: 1).resizable().interpolation(.none)
                 .frame(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
         }
+    }
+
+    /// The Styles page: who wears it, then a row per style, its picture, name and what it shows, and Put on.
+    var stylesPage: some View {
+        VStack(alignment: .leading, spacing: Self.activityGap) {
+            HStack(spacing: 8) {
+                Text(tr("WHO")).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+                PixelButton(title: (model.wearers.indices.contains(model.wearer) ? model.wearers[model.wearer] : "—").uppercased() + " ▸", small: true) {
+                    if !model.wearers.isEmpty { model.wearer = (model.wearer + 1) % model.wearers.count }
+                }
+                .keyboardShortcut(.tab, modifiers: [])
+                .help(ActionsPage.wearerTip)
+                .lineLimit(1).fixedSize()
+            }
+            .frame(height: Self.activityRow)
+            ForEach(Array(Effects.Style.allCases.enumerated()), id: \.element) { n, style in
+                Button { model.wear(style) } label: {
+                    rowLabel(picture: ActionIcons.styles[style], title: style.title.uppercased(), line: style.detail,
+                             action: tr("PUT ON"), detail: "\(n + 1)")
+                }
+                .buttonStyle(PixelTileStyle(chosen: false))
+                .keyboardShortcut(KeyEquivalent(Swift.Character("\(n + 1)")), modifiers: [])
+                .help(tr("Put %@ on %@ now (%d)", style.title, model.wearers.indices.contains(model.wearer) ? model.wearers[model.wearer] : "", n + 1))
+            }
+        }
+    }
+
+    /// Back to the sheet, and Done.
+    var stylesFooter: some View {
+        HStack(spacing: 6) {
+            PixelButton(title: tr("BACK"), small: true) { model.page = .main }
+                .keyboardShortcut(.leftArrow, modifiers: [])
+                .help(ActionsPage.backTip)
+            Spacer()
+            PixelButton(title: tr("DONE"), action: done)
+                .keyboardShortcut(.return, modifiers: [])
+                .help(ActionsPage.doneTip)
+        }
+        .padding(.top, Self.activitiesFooterGap)
+        .padding(.trailing, 24)
     }
 
     /// Back to the sheet, games on or off, and Done.
