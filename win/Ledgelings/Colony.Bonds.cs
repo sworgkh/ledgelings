@@ -74,7 +74,10 @@ public sealed partial class Colony
         if (i < 0 || j < 0 || i >= creatures.Count || j >= creatures.Count || i == j) return;
         string a = CharacterFor(i).Name, b = CharacterFor(j).Name;
         FirstMeeting(a, b);
+        var was = Effects.FriendshipStage(Bonds.Bond(a, b));
         Bonds.Change(book => book.Note(a, b, new Core.Bonds.Moment(DateTimeOffset.Now, kind, a, detail, score, winners, asked)));
+        // A friendship that grows a stage: both level up.
+        if (Effects.FriendshipStage(Bonds.Bond(a, b)) > was) { Mark(Effects.Moment.Friends, i); Mark(Effects.Moment.Friends, j); }
     }
 
     /// <summary>The pair's past from before moments were kept, read from the chat log once.</summary>

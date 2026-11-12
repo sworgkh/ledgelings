@@ -136,7 +136,7 @@ struct EffectRow: View {
             .help(busy ? detail + " · " + tr("off with Reduce motion") : detail)
             Spacer(minLength: 4)
             if let play {
-                Button(tr("Play"), action: play)
+                Button(tr("Play it"), action: play)
                     .controlSize(.small)
                     .help(tr("Play %@ on a creature now", title))
             }

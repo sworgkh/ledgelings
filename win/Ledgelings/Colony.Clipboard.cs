@@ -79,6 +79,7 @@ public sealed partial class Colony
         if (clipHelp is not { } help || help.Mood == mood) return;
         help.Mood = mood;
         help.MoodSince = Elapsed;
+        if (mood != ClipHelperMood.Thinking) EffectsTranslating = false;
         if (mood == ClipHelperMood.Calm) bubbles.Remove(help.Index);
         Trace?.Invoke($"clip {CharacterFor(help.Index).Name} is {mood.ToString().ToLowerInvariant()}");
     }

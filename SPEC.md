@@ -2789,6 +2789,12 @@ own output on our sprites (blocky and cactus, every frame at 15 fps): all 25 eff
 - **Checks.** `--effects-film out.mp4` films every style on Blocky and Boo, then every moment, printing
   `fx 3.20 Smitten on Boo`, `fx 9.10 moment goal Blocky`, and writes `…-contact.png`, every effect at its height.
   `--effect <name> [--on Blocky]` plays one on the real screen and quits when it is over.
+- **Windows.** The same effects, ported to C# number for number (`win/LedgelingsCore/PixelFX/`, checked against the
+  same pixelfx frames), the same rules (`Effects.cs`) and the same keys. Three differences: Reduce motion follows
+  Windows' *Show animations* setting; the keys of a fast hour are only counted, by a low-level keyboard hook (Windows
+  keeps no count of its own); and Windows gives the creatures no calendar, so Clock ticking plays only by hand and there
+  is no `effectsCalendar`. The pictures are drawn in the creature's own GDI+ transform, nearest-neighbour, the back one
+  under the sprite and the front one over it; the overlay stays click-through.
 
 ## 8. The brain: chat client
 

@@ -34,6 +34,7 @@ public sealed partial class Colony
     private void Bumped(Meetings.Bump bump)
     {
         var (giver, receiver) = rng.Coin() ? (bump.A, bump.B) : (bump.B, bump.A);
+        EffectsMet(bump.A, bump.B, Effects.FriendshipStage(Bonds.Bond(CharacterFor(bump.A).Name, CharacterFor(bump.B).Name)) >= 1);
         Hold(bump.A, bump.B);
         var pa = creatures[bump.A].Position;
         var pb = creatures[bump.B].Position;

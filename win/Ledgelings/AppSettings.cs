@@ -70,6 +70,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         LoadVoice();
         LoadSpriteKit();
         LoadWindows();
+        LoadEffects();
         FollowLanguage();
     }
 

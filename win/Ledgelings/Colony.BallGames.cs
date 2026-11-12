@@ -201,6 +201,7 @@ public sealed partial class Colony
             {
                 var score = SoccerScore(match);
                 Trace?.Invoke($"play soccer {PlayerName(g.By)} scores {score}");
+                Mark(Effects.Moment.Goal, g.By);
                 var ballX = match.TheBall.Position.X;
                 var goal = match.Goals.Count == 0 ? null : match.Goals.MinBy(x => Math.Abs(x.X - ballX));
                 // High over the goal, clear of the scorer's bubble.
@@ -284,6 +285,7 @@ public sealed partial class Colony
             case Plays.Baseball.Event.HomeRun hr:
             {
                 Trace?.Invoke($"play baseball HOME RUN {PlayerName(hr.By)}, {hr.RunsIn} in");
+                Mark(Effects.Moment.Goal, hr.By);
                 var exit = game.LastHomeRun ?? game.Field.Home.Edge;
                 Cheer(L10n.Tr("HOME RUN!"), new Pt(exit.X, exit.Y - 140), s);
                 for (int k = 0; k < 6; k++)

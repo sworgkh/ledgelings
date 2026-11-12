@@ -123,6 +123,7 @@ public sealed partial class Colony : IDisposable
         Settings.Changed -= ApplySettings;
         Desktop.MonitorsChanged -= ScreensChanged;
         clock?.Dispose();
+        keyCounter?.Dispose();
         foreach (var o in overlays) o.Dispose();
         overlays.Clear();
     }

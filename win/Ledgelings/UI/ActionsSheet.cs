@@ -101,7 +101,7 @@ public static class ActionsLinks
 }
 
 /// <summary>The sheet has one inner page: the games, listed (<see cref="Plays"/>).</summary>
-public enum ActionsPage { Main, Activities }
+public enum ActionsPage { Main, Activities, Styles }
 
 /// <summary>What the Activities page's buttons say on hover, with their keys.</summary>
 public static class ActivitiesTips
@@ -109,6 +109,8 @@ public static class ActivitiesTips
     public static string Back => L10n.Tr("Back to the sheet (←)");
     public static string Games => L10n.Tr("Turn games on or off");
     public static string Done => L10n.Tr("Put the sheet away (Return)");
+    public static string Styles => L10n.Tr("Put a style on a creature (Y)");
+    public static string Who => L10n.Tr("Choose who wears it (Tab)");
 }
 
 /// <summary>A game as a row of the Activities page: what it is called, a line on what happens, and the key that plays it.</summary>
@@ -359,7 +361,7 @@ public sealed class ActionsSheet : Window
         PreviewKeyDown += (_, e) =>
         {
             // Esc on the inner page goes back; on the sheet it puts the sheet away.
-            if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; if (page == ActionsPage.Activities) GoTo(ActionsPage.Main); else Close(); return; }
+            if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; if (page != ActionsPage.Main) GoTo(ActionsPage.Main); else Close(); return; }
             if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is System.Windows.Input.Key.OemComma or System.Windows.Input.Key.Q)
             {
                 e.Handled = true;
@@ -367,6 +369,15 @@ public sealed class ActionsSheet : Window
                 return;
             }
             if (Keyboard.Modifiers != ModifierKeys.None) return;
+            if (page == ActionsPage.Styles)
+            {
+                if (e.Key == System.Windows.Input.Key.Left) { e.Handled = true; GoTo(ActionsPage.Main); return; }
+                if (e.Key == System.Windows.Input.Key.Enter) { e.Handled = true; Close(); return; }
+                if (e.Key == System.Windows.Input.Key.Tab) { e.Handled = true; NextWearer(); return; }
+                for (var k = 0; k < Effects.Styles.Count; k++)
+                    if (e.Key == System.Windows.Input.Key.D1 + k || e.Key == System.Windows.Input.Key.NumPad1 + k) { e.Handled = true; Wear(Effects.Styles[k]); return; }
+                return;
+            }
             if (page == ActionsPage.Activities)
             {
                 if (e.Key == System.Windows.Input.Key.Left) { e.Handled = true; GoTo(ActionsPage.Main); return; }
@@ -378,6 +389,7 @@ public sealed class ActionsSheet : Window
                 return;
             }
             if (e.Key == System.Windows.Input.Key.A) { e.Handled = true; GoTo(ActionsPage.Activities); return; }
+            if (e.Key == System.Windows.Input.Key.Y) { e.Handled = true; GoTo(ActionsPage.Styles); return; }
             if (e.Key == System.Windows.Input.Key.K && settings.ToolsScreenEnabled) { e.Handled = true; Follow(ActionsLink.Tools); return; }
             if (e.Key == System.Windows.Input.Key.C && settings.ChatEnabled) { e.Handled = true; Follow(ActionsLink.Chat); return; }
             foreach (var tile in ActionsTiles.All)
@@ -412,7 +424,7 @@ public sealed class ActionsSheet : Window
         paper.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); };
         root.Children.Add(paper);
         if (keeper?.Face is System.Drawing.Bitmap face) root.Children.Add(ReminderNote.Peeker(face, SheetWidth, Headroom));
-        root.Children.Add(page == ActionsPage.Activities ? ActivitiesPage() : Sheet(keeper?.Name));
+        root.Children.Add(page switch { ActionsPage.Activities => ActivitiesPage(), ActionsPage.Styles => StylesPage(), _ => Sheet(keeper?.Name) });
 
         foreach (var (title, minutes) in HideChoices)
         {
@@ -496,6 +508,9 @@ public sealed class ActionsSheet : Window
         var activities = new PixelButton { Content = L10n.Tr("ACTIVITIES…"), Small = true, Margin = new Thickness(0, 0, 6, 0) };
         activities.Click += (_, _) => GoTo(ActionsPage.Activities);
         links.Children.Add(activities);
+        var styles = new PixelButton { Content = L10n.Tr("STYLES…"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Styles };
+        styles.Click += (_, _) => GoTo(ActionsPage.Styles);
+        links.Children.Add(styles);
         links.Children.Add(Switch(ActionsSwitch.Language));
         foreach (var link in ActionsLinks.Footer)
         {
@@ -841,6 +856,78 @@ public sealed class ActionsSheet : Window
         Grid.SetColumn(right, 2);
         face.Children.Add(right);
         return (face, action, detail);
+    }
+
+    // MARK: Styles
+
+    /// <summary>Who the Styles page puts a style on: a creature's number in the colony.</summary>
+    private int wearer;
+
+    /// <summary>Creature Actions › Styles (SPEC §7.19): who wears it, then a row for each of the five styles, 1 to 5.</summary>
+    private UIElement StylesPage()
+    {
+        if (wearer >= colony.CreatureCount) wearer = 0;
+        var sheet = new StackPanel
+        {
+            Margin = new Thickness(33, Headroom + 27, 33, 0), Width = SheetWidth - 66,
+            HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        };
+        sheet.Children.Add(new TextBlock
+        {
+            Text = L10n.Tr("STYLES · WHO WEARS WHAT?"),
+            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
+        });
+        var who = new PixelButton
+        {
+            Content = L10n.Tr("WHO") + "  " + (colony.CreatureCount == 0 ? "—" : colony.CharacterFor(wearer).Name.ToUpper(Languages.Current.Culture())),
+            Small = true, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 10), ToolTip = ActivitiesTips.Who,
+        };
+        who.Click += (_, _) => NextWearer();
+        sheet.Children.Add(who);
+        var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+        var name = colony.CreatureCount == 0 ? "" : colony.CharacterFor(wearer).Name;
+        for (var k = 0; k < Effects.Styles.Count; k++)
+        {
+            var style = Effects.Styles[k];
+            var (face, _, detail) = RowFace(ActionIcons.Style(style), style.Title().ToUpper(Languages.Current.Culture()), style.Detail(), L10n.Tr("PUT ON"));
+            detail.Text = (k + 1).ToString();
+            var button = new PixelButton
+            {
+                Content = face, Padding = new Thickness(0), Margin = new Thickness(0, k == 0 ? 0 : ActivityGap, 0, 0), HorizontalAlignment = HorizontalAlignment.Left,
+                ToolTip = L10n.Tr("Put %@ on %@ now (%d)", style.Title(), name, k + 1),
+            };
+            button.Click += (_, _) => Wear(style);
+            list.Children.Add(button);
+        }
+        sheet.Children.Add(list);
+        line.Height = ActivityLineHeight;
+        line.Margin = new Thickness(0, 0, 0, 6);
+        sheet.Children.Add(line);
+        var back = new PixelButton { Content = L10n.Tr("BACK"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Back, HorizontalAlignment = HorizontalAlignment.Left };
+        back.Click += (_, _) => GoTo(ActionsPage.Main);
+        var done = new PixelButton { Content = L10n.Tr("DONE"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0), ToolTip = ActivitiesTips.Done };
+        done.Click += (_, _) => Close();
+        var footer = new Grid { Margin = new Thickness(0, ActivitiesFooterGap, 0, 0) };
+        footer.Children.Add(back);
+        footer.Children.Add(done);
+        sheet.Children.Add(footer);
+        return sheet;
+    }
+
+    private void NextWearer()
+    {
+        if (colony.CreatureCount == 0) return;
+        wearer = (wearer + 1) % colony.CreatureCount;
+        Build();
+        Refresh();
+    }
+
+    /// <summary>Put on from the Styles page: on the chosen creature now, or the line says why not.</summary>
+    private void Wear(Effects.Style style)
+    {
+        if (folding || colony.CreatureCount == 0) return;
+        var name = colony.CharacterFor(wearer).Name;
+        After(colony.Wear(style, wearer, byHand: true) ? L10n.Tr("%@ is %@ for a while.", name, style.Title()) : L10n.Tr("%@ can't wear it now.", name));
     }
 
     /// <summary>Started by hand, from the Activities page: on if it is off, stopped at once if it is on.</summary>

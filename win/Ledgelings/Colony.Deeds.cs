@@ -139,6 +139,7 @@ public sealed partial class Colony
                 if (deed.Verb == "accept")
                 {
                     Trace?.Invoke($"deed {a} accepts {invitation.Offer.Tag} from {b}");
+                    if (invitation.ByLetter) StyleTrigger(Effects.Trigger.InvitationAccepted, i);
                     Agree(Deeds.Deed.Invite(invitation.Offer), j, i, b);
                 }
                 else

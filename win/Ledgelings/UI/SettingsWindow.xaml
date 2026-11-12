@@ -23,6 +23,15 @@
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="DockPanel.Dock" Value="Right"/>
     </Style>
+    <!-- One style's or moment's row (Effects, Moments): its switch, the feature it belongs to, and Play. -->
+    <DataTemplate x:Key="EffectRowTemplate">
+      <DockPanel Margin="0,2">
+        <Button DockPanel.Dock="Right" ui:Tr.Content="Play it" Tag="{Binding Code}" Click="EffectPlay_Click" ToolTip="{Binding PlayTip}"
+                FontSize="11" Padding="8,0" Margin="8,0,0,0"/>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding Feature}" Foreground="Gray" FontSize="11" VerticalAlignment="Center"/>
+        <CheckBox Content="{Binding Title}" IsChecked="{Binding On, Mode=TwoWay}" ToolTip="{Binding Detail}" VerticalAlignment="Center"/>
+      </DockPanel>
+    </DataTemplate>
     <Style TargetType="GroupBox">
       <Setter Property="Padding" Value="8"/>
       <Setter Property="Margin" Value="0,0,0,10"/>
@@ -1382,6 +1391,95 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Effects">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+          <GroupBox ui:Tr.Header="Effects">
+            <StackPanel>
+              <CheckBox ui:Tr.Content="Effects on" IsChecked="{Binding EffectsEnabled, Mode=TwoWay}"/>
+              <DockPanel Margin="0,6,0,4" IsEnabled="{Binding EffectsEnabled}">
+                <TextBlock ui:Tr.Text="Reduce motion" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="EffectsReduceMotionBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding EffectsReduceMotionIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4" IsEnabled="{Binding EffectsEnabled}">
+                <TextBlock ui:Tr.Text="Styles play on their own" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="EffectsFrequencyBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding EffectsFrequencyIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4" IsEnabled="{Binding EffectsEnabled}">
+                <TextBlock ui:Tr.Text="A style lasts" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectStyleSeconds}" ui:Tr.Unit=" s"/>
+                <Slider Minimum="4" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding EffectStyleSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Pixel effects on the creatures, drawn in their own square pixels: styles they wear for a while, and moments in the features they mark. They are only drawn: clicks go through them. Reduce motion follows Windows' Show animations setting unless you choose, and turns the busy ones off (sparks, flames, confetti, the falling particles)."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Styles" IsEnabled="{Binding EffectsEnabled}">
+            <StackPanel>
+              <ItemsControl x:Name="EffectStyleList" ItemTemplate="{StaticResource EffectRowTemplate}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Each comes on when something happens, by chance as often as you chose, and comes off by itself. Play puts it on a creature now. Creature Actions › Styles puts any style on anyone."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="When styles come" IsEnabled="{Binding EffectsEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Left alone for" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAloneMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="5" Maximum="240" TickFrequency="5" IsSnapToTickEnabled="True" Value="{Binding EffectsAloneMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="A fast hour of typing" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsTypingKeys}" ui:Tr.Format="%d keys"/>
+                <Slider Minimum="1000" Maximum="20000" TickFrequency="500" IsSnapToTickEnabled="True" Value="{Binding EffectsTypingKeys, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Frost: now and then from December to February, or on a creature nobody has met for that long. Smitten: two friends meet, or a letter's invitation is accepted. Charged: grabbing the cursor, or a whole hour with at least that many keys pressed (only counted, nothing is recorded). Fired up: grumpy at the cursor, or losing a game. Haunted: now and then from 25 October to 1 November, or Boo spooking a friend."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Along the bottom edge" IsEnabled="{Binding EffectsEnabled}">
+            <StackPanel>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Out for" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAmbientSeconds}" ui:Tr.Unit=" s"/>
+                <Slider Minimum="10" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding EffectsAmbientSeconds, Mode=TwoWay}"/>
+              </DockPanel>
+              <DockPanel Margin="0,0,0,4">
+                <TextBlock ui:Tr.Text="Once every" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAmbientEveryMinutes}" ui:Tr.Unit=" min"/>
+                <Slider Minimum="1" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding EffectsAmbientEveryMinutes, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Fireflies after dark, and the season's particles: snow from December to February, petals from March to May, leaves from September to November. They drift along the bottom of the creatures' monitors for a while, then go. Each has its switch on the Moments page."/>
+            </StackPanel>
+          </GroupBox>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+    <TabItem ui:Tr.Header="Moments">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12" IsEnabled="{Binding EffectsEnabled}">
+          <GroupBox ui:Tr.Header="The creatures">
+            <StackPanel>
+              <ItemsControl x:Name="MomentCreatureList" ItemTemplate="{StaticResource EffectRowTemplate}"/>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Each marks a moment of a feature with an effect on the creature it happens to, at most every so often."/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="Night and the seasons">
+            <StackPanel>
+              <ItemsControl x:Name="MomentSeasonList" ItemTemplate="{StaticResource EffectRowTemplate}"/>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox ui:Tr.Header="The tools">
+            <StackPanel>
+              <ItemsControl x:Name="MomentToolList" ItemTemplate="{StaticResource EffectRowTemplate}"/>
+              <DockPanel Margin="0,6,0,4">
+                <TextBlock ui:Tr.Text="Daily budget" Style="{StaticResource RowLabel}"/>
+                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsDailyBudget}" ui:Tr.Unit=" $"/>
+                <Slider Minimum="0.1" Maximum="50" TickFrequency="0.1" IsSnapToTickEnabled="True" Value="{Binding EffectsDailyBudget, Mode=TwoWay}"/>
+              </DockPanel>
+              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Clock ticking needs a calendar to read meetings from, and Windows gives the creatures none yet: Play shows it. Money spent drops the coins once a day, when the day's spend on Settings › Costs passes the budget."/>
             </StackPanel>
           </GroupBox>
         </StackPanel>

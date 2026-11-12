@@ -29,6 +29,7 @@ extension Strings {
         "Look at my calendar": "Смотреть мой календарь",
         "Ask the Mac for the calendar": "Попросить у Mac доступ к календарю",
         "Daily budget": "Бюджет на день",
+        "Play it": "Показать",
         "Play %@ on a creature now": "Показать «%@» на существе сейчас",
         "off with Reduce motion": "выключается с «Меньше движения»",
         "Pixel effects on the creatures, drawn in their own square pixels: styles they wear for a while, and moments in the features they mark. They are only drawn: clicks go through them. Reduce motion follows the Mac's Accessibility setting unless you choose, and turns the busy ones off (sparks, flames, confetti, the falling particles).":

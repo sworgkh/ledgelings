@@ -107,6 +107,7 @@ public sealed partial class Colony
         grabCount++;
         var pinned = Settings.RevengePinsCursor && Pointer?.Pin(cursor) == true;
         if (!pinned) Pointer?.Follow();
+        StyleTrigger(Effects.Trigger.CursorGrab, i);
         if (Pointer is not null) Pointer.OnEscape = () => LetGoOfCursor(Revenge.Release.Escape);
         WatchTheSession();
         CurrentGrab = new Grab
@@ -180,6 +181,7 @@ public sealed partial class Colony
         StopWatchingTheSession();
         if (g.Index >= creatures.Count) return;
         creatures[g.Index].Drop(tumbling: why == Revenge.Release.Shaken);
+        if (why == Revenge.Release.Shaken) Mark(Effects.Moment.Dizzy, g.Index);
         var name = CharacterFor(g.Index).Name;
         Trace?.Invoke($"let go {name}: {why.ToString().ToLowerInvariant()}");
         if (why != Revenge.Release.Shaken || !Settings.TalkEnabled) return;

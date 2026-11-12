@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
@@ -106,6 +107,38 @@ public static class ActionIcons
             for (int x = 0; x < rows[y].Length; x++)
                 if (inks.TryGetValue(rows[y][x], out var c)) image.SetPixel(x, y, c);
         return image;
+    }
+
+    private static readonly Dictionary<Core.Effects.Style, Bitmap?> styleStills = new();
+
+    /// <summary>A style as it looks on Blocky, part way in, cut down to the creature and what it wears (Creature Actions › Styles).</summary>
+    public static Bitmap? Style(Core.Effects.Style style)
+    {
+        if (styleStills.TryGetValue(style, out var made)) return made;
+        Bitmap? still = null;
+        try
+        {
+            var actors = new EffectActors();
+            if (Core.PixelFX.FXCatalog.All.TryGetValue(style.Effect(), out var type)
+                && SpriteAtlas.Named("blocky").MakeFrames().Frame("idle", 0) is { } standing && actors.Actor(standing) is { } a)
+            {
+                var player = new EffectPlayer(type, style.Effect(), a.Actor, a.Box, 3, style);
+                for (var t = 0.0; t < 1.2; t += 1.0 / 30) player.Instance.Update(1.0 / 30);
+                if (player.Still() is { } whole) { still = Trimmed(Cropped(whole, a.Box, type.Meta)); whole.Dispose(); }
+            }
+        }
+        catch (Exception e) when (e is IOException or ArgumentException) { }
+        styleStills[style] = still;
+        return still;
+    }
+
+    /// <summary>The part of an effect's frame round its creature: half again its size each way, so the style shows.</summary>
+    private static Bitmap Cropped(Bitmap whole, (int X, int Y, int W, int H) box, Core.PixelFX.FXMeta meta)
+    {
+        var w = box.W * 2; var h = box.H * 2;
+        var x = (int)meta.Origin.X - w / 2; var y = (int)meta.Origin.Y - box.H * 3 / 2;
+        var rect = Rectangle.Intersect(new Rectangle(x, y, w, h + box.H / 4), new Rectangle(0, 0, whole.Width, whole.Height));
+        return whole.Clone(rect, PixelFormat.Format32bppArgb);
     }
 
     /// <summary>The picture cut down to its painted pixels: a sprite cell has room to move in.</summary>

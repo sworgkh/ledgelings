@@ -22,6 +22,7 @@ public sealed partial class Colony
             while (creatures.Count > Settings.CreatureCount)
             {
                 var last = creatures.Count - 1;
+                EffectsPoof(last);
                 creatures.RemoveAt(last); asleepFor.RemoveAt(last); sizeShares.RemoveAt(last); sizes.RemoveAt(last);
             }
             gifts.Forget(creatures.Count);
@@ -61,6 +62,7 @@ public sealed partial class Colony
             }
         }
         finally { applying = false; }
+        EffectsNoticeSpecies();
         // Another monitor chosen: everyone not on it moves over.
         HomeMayHaveChanged();
         Render();
@@ -172,6 +174,7 @@ public sealed partial class Colony
         UpdateMemory();
         UpdateReminders(dt);
         LiveTogether(dt);
+        UpdateEffects(dt);
         Render();
         SetFrameRate(hideout.CurrentPhase == Hideout.Phase.Hidden || (held is null && CurrentGrab is null && clipHelp is null && dictationHelp is null && creatures.Count > 0 && creatures.All(c => c.IsSleeping)));
     }
