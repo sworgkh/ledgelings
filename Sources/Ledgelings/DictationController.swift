@@ -213,6 +213,7 @@ final class DictationController {
             clips.add(Clipboard.Clip(text: text, copiedAt: Date(), app: tr("Dictation")), limit: settings.clipHistoryLimit, days: settings.clipKeepDays)
         }
         trace?("copied \(text.count) characters: \(text.prefix(80))")
+        colony()?.effectsCopied(by: colony()?.dictationHelper)
         if settings.dictationPaste {
             front?.activate()
             Task { @MainActor in

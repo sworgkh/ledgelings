@@ -107,6 +107,7 @@ extension Colony {
                      at: elapsed, lasts: settings.gardenMinutes * 60, most: settings.gardenSize)
         creatures[i].pause(for: 1.2)
         trace?("plant \(name) \(worn.flower) \(place?.rawValue ?? "anywhere")")
+        mark(.bloom, on: i)
     }
 
     /// Pull up every planted flower at once (the menu, the Flowers tab). Returns how many went.

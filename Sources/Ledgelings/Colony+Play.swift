@@ -466,6 +466,7 @@ extension Colony {
                     court.swishUntil = elapsed + 0.5
                     sparks.burst(at: CGPoint(x: court.hoop.rimX, y: court.hoop.rimY), inward: CGVector(dx: 0, dy: 1), using: &rng)
                     trace?("play basketball \(name) scores")
+                    mark(.goal, on: thrower)
                 case .rim: trace?("play basketball clang off the rim")
                 case .board: trace?("play basketball off the board")
                 case .floor: break
@@ -500,6 +501,10 @@ extension Colony {
         // other side too, with how it ended and whose idea it was.
         let (score, winners) = gameResult(s)
         trace?("play \(s.kind.rawValue) result: \(score ?? "-"), won by \(winners.map { $0.isEmpty ? "nobody (a draw)" : $0.joined(separator: ", ") } ?? "-")")
+        // Losing a game can make one fired up.
+        if let winners, !winners.isEmpty {
+            for p in s.players where !winners.contains(character(forCreature: p).name) { styleTrigger(.lostGame, on: p) }
+        }
         for a in s.players.indices {
             for b in s.players.indices where b > a {
                 shared(s.players[a], s.players[b], .play, detail: s.kind.rawValue, score: score, winners: winners, asked: s.askedBy)

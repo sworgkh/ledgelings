@@ -55,6 +55,7 @@ extension Colony {
         if !pinned { pointer?.follow() }
         pointer?.onMove = { [weak self] at in self?.struggle(to: at); self?.render() }
         pointer?.onEscape = { [weak self] in self?.letGoOfCursor(.escape) }
+        styleTrigger(.cursorGrab, on: i)
         grab = Grab(index: i, since: elapsed, pin: cursor, last: cursor,
                     shake: Revenge.Shake(needed: settings.revengeShakes, stroke: settings.revengeShakeStroke,
                                          window: settings.revengeShakeWindowSeconds),
@@ -124,6 +125,7 @@ extension Colony {
         pointer?.onEscape = nil
         guard creatures.indices.contains(g.index) else { return }
         creatures[g.index].drop(tumbling: why == .shaken)
+        if why == .shaken { mark(.dizzy, on: g.index) }
         let name = character(forCreature: g.index).name
         trace?("let go \(name): \(why.rawValue)")
         guard why == .shaken, settings.talkEnabled else { return }

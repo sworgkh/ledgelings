@@ -350,6 +350,37 @@ games.
 | **Innings** (`baseballInnings`) | 2 | 1 to 9 | Each side bats once an inning; alone, 4 practice swings an inning |
 | **Soccer players at most** (`soccerPlayers`), **Baseball players at most** (`baseballPlayers`) | 6 | 1 to 10 | Who joins: the one who starts it, then the closest friends, then anyone free |
 
+## Effects page
+
+Pixel effects the creatures wear and the moments they mark (SPEC §7.19), drawn in their own square pixels and
+click-through. Every switch is on by default; **Play** beside each puts it on a creature now. The twenty moments
+have their own page, Moments, so neither page scrolls.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Effects on** (`effectsEnabled`) | on | | Everything on this page and on Moments |
+| **Reduce motion** (`effectsReduceMotion`) | as the system | as the system, on, off | On turns the busy ones off: sparks, flames, confetti, the blinks, the falling particles |
+| **Styles play on their own** (`effectsFrequency`) | sometimes | rarely, sometimes, often | The chance something puts a style on (25, 50, 100 %), and how long before the same creature wears it again (30, 10, 3 min) |
+| **A style lasts** (`effectStyleSeconds`) | 12 s | 4 to 60 s | Then it fades |
+| **Frost, Smitten, Charged, Fired up, Haunted** (`effectsOff`) | on | | Each style's switch |
+| **Left alone for** (`effectsAloneMinutes`) | 30 min | 5 to 240 | Met by nobody that long, a creature may frost over |
+| **A fast hour of typing** (`effectsTypingKeys`) | 5000 keys | 1000 to 20000 | A whole hour with that many keys: someone gets charged. The Mac's own count; nothing is recorded, no permission |
+| **Out for** (`effectsAmbientSeconds`) | 60 s | 10 to 600 | How long the fireflies or the season's particles drift along the bottom edge |
+| **Once every** (`effectsAmbientEveryMinutes`) | 10 min | 1 to 120 | The first time one whole wait after launch. |
+
+## Moments page
+
+A switch and **Play** for each moment, grouped by the feature it belongs to: Screens (leaving, arriving),
+Moving about (a hard landing), Cursor grab (dizzy), Ball games (goal), Bonds (friends for real), Sprite kit (a new
+arrival), Creatures (poof), Garden (a flower comes up), Beds (fast asleep), Night (fireflies), Seasons (winter,
+autumn, spring), Reminders (hey, look!), Calendar (clock ticking), Dictation (listening), Translate (translating),
+Clipboard (copied!), Costs (money spent). All are kept in `effectsOff`.
+
+| Setting | Default | Range | Notes |
+|---|---|---|---|
+| **Look at my calendar** (`effectsCalendar`) | off | | Clock ticking five minutes before a meeting; **Allow…** asks the Mac for the calendar. Only start times are read, on the Mac |
+| **Daily budget** (`effectsDailyBudget`) | $1 | $0.10 to $50 | Money spent: when today's spend (Costs) passes it, the coins drop, once a day |
+
 ## Diving tab
 
 Scuba diving, which only ever starts by hand (the Activities page's *SCUBA DIVING*, key D; the

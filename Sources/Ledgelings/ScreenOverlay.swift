@@ -28,6 +28,8 @@ struct CreatureSnapshot {
     var letter: CGImage?
     /// Points to float the bubble further off the head: over an open parachute.
     var bubbleLift: CGFloat = 0
+    /// The style it wears or the moment it marks (`Colony+Effects`): a picture behind it and one in front.
+    var effect: CreatureEffect?
 }
 
 /// The paper plane and its dotted trail, in GLOBAL coordinates.
@@ -150,7 +152,7 @@ final class ScreenOverlay {
     let root: CALayer
     let view: OverlayView?
     private let window: OverlayWindow?
-    private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer)] = []
+    private var creatures: [(body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer, fxBack: CALayer, fxFront: CALayer)] = []
     /// The creatures' paper plane, and a reminder's: both can be in the air at once.
     private lazy var mailPlane = PlaneSprite(root: root, z: 4, layer: makeLayers().sprite)
     private lazy var reminderPlane = PlaneSprite(root: root, z: 6, layer: makeLayers().sprite)
@@ -172,6 +174,8 @@ final class ScreenOverlay {
     var hasWater: Bool { !waterLayers.isEmpty }
     private var bubbles: [Int: (plate: CALayer, text: CATextLayer, for: String, shown: Int)] = [:]
     private var sparkLayers: [CALayer] = []
+    private var looseLayers: [(body: CALayer, back: CALayer, front: CALayer)] = []
+    private var ambientLayers: [CALayer] = []
     private lazy var house: CALayer = {
         let layer = makeLayers().sprite
         layer.isHidden = true
@@ -271,8 +275,10 @@ final class ScreenOverlay {
                 plane: PlaneSnapshot? = nil, planeCell: CGSize = .zero, reminder: ReminderSnapshot? = nil,
                 tea: TeaTableSnapshot? = nil, teaCell: CGSize = .zero, garden: [PlantedSnapshot] = [],
                 beds: [PlantedSnapshot] = [], bedCell: CGSize = .zero, props: [PropSnapshot] = [], propCell: CGSize = .zero,
-                water: [WaterSnapshot] = []) {
+                water: [WaterSnapshot] = [], loose: [LooseEffect] = [], ambient: [AmbientTile] = []) {
         renderWater(water)
+        renderAmbient(ambient)
+        renderLooseEffects(loose)
         renderFlight(inFlight, flowerCell: flowerCell)
         renderStanding(garden, cell: flowerCell, pool: &flowerBeds)
         renderStanding(beds, cell: bedCell, pool: &sleeperBeds)
@@ -308,6 +314,9 @@ final class ScreenOverlay {
             layers.sprite.bounds = CGRect(x: 0, y: 0, width: cell.width * scale, height: bodyHeight)
             if (layers.sprite.contents as AnyObject?) !== snap.image { layers.sprite.contents = snap.image }
             layers.sprite.transform = CATransform3DMakeScale(snap.isMirrored ? -1 : 1, 1, 1)
+            let hideBody = snap.effect?.hidesBody ?? false
+            if layers.sprite.isHidden != hideBody { layers.sprite.isHidden = hideBody }
+            Self.place(snap.effect, back: layers.fxBack, front: layers.fxFront, cell: cell, scale: scale, mirrored: snap.isMirrored)
 
             // The flower stands on the head: inside the body layer, so it turns
             // with the creature onto walls and the ceiling, but never mirrors.
@@ -332,7 +341,7 @@ final class ScreenOverlay {
             }
 
             for (k, layer) in layers.zs.enumerated() {
-                guard let asleep = snap.asleepFor else { if layer.opacity != 0 { layer.opacity = 0 }; continue }
+                guard let asleep = snap.asleepFor, snap.effect?.hidesZs != true else { if layer.opacity != 0 { layer.opacity = 0 }; continue }
                 let clock = asleep / Self.zCycle - Double(k) / Double(Self.zCount)
                 guard clock >= 0 else { if layer.opacity != 0 { layer.opacity = 0 }; continue }   // not launched yet
                 let p = clock.truncatingRemainder(dividingBy: 1)
@@ -345,6 +354,76 @@ final class ScreenOverlay {
                 // Undo the body's turn so the letter stays upright on walls and ceilings.
                 layer.transform = CATransform3DScale(CATransform3DMakeRotation(-snap.rotation, 0, 0, 1), grow, grow, 1)
             }
+        }
+    }
+
+    /// An effect's two pictures inside a creature's body layer, lined up pixel for pixel with its sprite:
+    /// the frame's top-left at `origin` in the sprite cell's pixels, mirrored about the body as the sprite is.
+    static func place(_ effect: CreatureEffect?, back: CALayer, front: CALayer, cell: CGSize, scale: CGFloat, mirrored: Bool) {
+        guard let effect else {
+            if !back.isHidden { back.isHidden = true; back.contents = nil }
+            if !front.isHidden { front.isHidden = true; front.contents = nil }
+            return
+        }
+        let w = effect.size.width * scale, h = effect.size.height * scale
+        // The cell is centred on the body; its pixel rows run down from the top.
+        let left = (effect.origin.x - cell.width / 2) * scale, top = (cell.height / 2 - effect.origin.y) * scale
+        let centre = CGPoint(x: (left + w / 2) * (mirrored ? -1 : 1), y: top - h / 2)
+        for (layer, image) in [(back, effect.back), (front, effect.front)] {
+            layer.isHidden = image == nil
+            layer.contents = image
+            layer.bounds = CGRect(x: 0, y: 0, width: w, height: h)
+            layer.position = centre
+            layer.transform = CATransform3DMakeScale(mirrored ? -1 : 1, 1, 1)
+        }
+    }
+
+    /// Effects standing on their own (a poof), each in a body layer of its own as a creature would be.
+    func renderLooseEffects(_ loose: [LooseEffect]) {
+        let origin = display.frame.origin
+        while looseLayers.count < loose.count {
+            let l = makeLayers()
+            l.sprite.isHidden = true
+            looseLayers.append((l.body, l.fxBack, l.fxFront))
+        }
+        for (k, layers) in looseLayers.enumerated() {
+            guard k < loose.count else {
+                if !layers.body.isHidden { layers.body.isHidden = true; layers.back.contents = nil; layers.front.contents = nil }
+                continue
+            }
+            let e = loose[k]
+            layers.body.isHidden = false
+            layers.body.position = CGPoint(x: e.feet.x - origin.x, y: e.feet.y - origin.y)
+            layers.body.transform = CATransform3DMakeRotation(e.rotation, 0, 0, 1)
+            Self.place(CreatureEffect(back: e.back, front: e.front, origin: e.origin, size: e.size, hidesBody: true, hidesZs: false),
+                       back: layers.back, front: layers.front, cell: e.cell, scale: e.scale, mirrored: e.mirrored)
+        }
+    }
+
+    /// The ambient particles along the bottom edge, behind the creatures.
+    func renderAmbient(_ tiles: [AmbientTile]) {
+        let origin = display.frame.origin
+        while ambientLayers.count < tiles.count {
+            let layer = CALayer()
+            layer.magnificationFilter = .nearest
+            layer.minificationFilter = .nearest
+            layer.contentsGravity = .resize
+            layer.actions = Self.noAnimations
+            layer.anchorPoint = .zero
+            layer.zPosition = -2
+            root.addSublayer(layer)
+            ambientLayers.append(layer)
+        }
+        for (k, layer) in ambientLayers.enumerated() {
+            guard k < tiles.count, display.frame.intersects(CGRect(origin: tiles[k].bottomLeft, size: tiles[k].size)) else {
+                if !layer.isHidden { layer.isHidden = true; layer.contents = nil }
+                continue
+            }
+            let t = tiles[k]
+            layer.isHidden = t.image == nil
+            if (layer.contents as AnyObject?) !== t.image { layer.contents = t.image }
+            layer.bounds = CGRect(origin: .zero, size: t.size)
+            layer.position = CGPoint(x: t.bottomLeft.x - origin.x, y: t.bottomLeft.y - origin.y)
         }
     }
 
@@ -737,7 +816,7 @@ final class ScreenOverlay {
         bubbles.removeValue(forKey: index)?.plate.removeFromSuperlayer()
     }
 
-    private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer) {
+    private func makeLayers() -> (body: CALayer, sprite: CALayer, zs: [CALayer], hat: CALayer, letter: CALayer, fxBack: CALayer, fxFront: CALayer) {
         func pixelLayer() -> CALayer {
             let layer = CALayer()
             layer.magnificationFilter = .nearest
@@ -748,8 +827,14 @@ final class ScreenOverlay {
         }
         let body = CALayer()
         body.actions = Self.noAnimations
+        // The effect's back picture under the sprite, its front picture over it, both under the hat.
+        let fxBack = pixelLayer(), fxFront = pixelLayer()
+        fxBack.isHidden = true
+        fxFront.isHidden = true
+        body.addSublayer(fxBack)
         let sprite = pixelLayer()
         body.addSublayer(sprite)
+        body.addSublayer(fxFront)
         let zs = (0..<Self.zCount).map { _ in pixelLayer() }
         zs.forEach { $0.opacity = 0; body.addSublayer($0) }
         let hat = pixelLayer()
@@ -760,7 +845,7 @@ final class ScreenOverlay {
         letter.zPosition = 1
         body.addSublayer(letter)
         root.addSublayer(body)
-        return (body, sprite, zs, hat, letter)
+        return (body, sprite, zs, hat, letter, fxBack, fxFront)
     }
 
     private static let noAnimations: [String: any CAAction] = [

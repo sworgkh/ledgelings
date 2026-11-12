@@ -3,7 +3,7 @@ import Foundation
 /// One page of the settings window. The sidebar lists them by `group`, in the
 /// order of `allCases`; `named` is what `--settings <name>` opens.
 public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
-    case creatures, actions, sprites, beds, flowers, calendar
+    case creatures, actions, sprites, beds, flowers, calendar, effects, moments
     case chases, play, ballGames, surfing, diving
     case talk, chatWithYou, voice, bonds, relationships, twists
     case tools, reminders, clipboard, screenshots, dictation, translate, savedTranslations, readAloud
@@ -17,6 +17,8 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .beds: tr("Beds")
         case .flowers: tr("Flowers")
         case .calendar: tr("Calendar")
+        case .effects: tr("Effects")
+        case .moments: tr("Moments")
         case .chases: tr("Chases")
         case .play: tr("Play")
         case .ballGames: tr("Ball games")
@@ -43,7 +45,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
 
     public var group: SettingsGroup {
         switch self {
-        case .creatures, .actions, .sprites, .beds, .flowers, .calendar: .creaturesAndWorld
+        case .creatures, .actions, .sprites, .beds, .flowers, .calendar, .effects, .moments: .creaturesAndWorld
         case .chases, .play, .ballGames, .surfing, .diving: .games
         case .talk, .chatWithYou, .voice, .bonds, .relationships, .twists: .talkAndFriends
         case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud: .tools
@@ -175,6 +177,15 @@ public enum SettingsIndex {
         Section(.flowers, "Planting", labels: ["They plant their flowers where they like", "A planted flower lasts", "Flowers in the ground at most", "Clear Planted Flowers", "Nothing was planted."], footer: "After wearing it a while, each one stops following its giver, goes looking for the kind of spot its character likes and plants the flower in the edge there. What it likes comes from who it is: Blocky wants the bottom edge, Pip the ceiling, Ruth a neat row beside the others, Dot plants at once, Zed waits for dark. If nowhere suits before the flower would wilt, it plants it where it stands. Planting one more than the most wilts the oldest. Clear Planted Flowers, here or in the menu, pulls them all up at once. Planted flowers are not kept when the app quits.", keys: ["gardenMinutes", "gardenSize", "plantFlowers"]),
         Section(.flowers, "Who plants where", footer: "Read from each character's description and its species on the Talk tab, the same way voices are cast: words like bottom, ceiling, corner, quiet, cheerful, counts, sleepy or fast. Edit a description and this changes with it.", keys: ["creatureCount", "species"]),
 
+        // effects
+        Section(.effects, "Effects", labels: ["Effects on", "Reduce motion", "As the system", "Styles play on their own", "Rarely", "Sometimes", "Often", "A style lasts"], footer: "Pixel effects on the creatures, drawn in their own square pixels: styles they wear for a while, and moments in the features they mark. They are only drawn: clicks go through them. Reduce motion follows the Mac's Accessibility setting unless you choose, and turns the busy ones off (sparks, flames, confetti, the falling particles).", keys: ["effectStyleSeconds", "effectsEnabled", "effectsFrequency", "effectsReduceMotion"]),
+        Section(.effects, "Styles", labels: ["Frost", "Smitten", "Charged", "Fired up", "Haunted", "Play"], footer: "Each comes on when something happens, by chance as often as you chose, and comes off by itself. Play puts it on a creature now. Creature Actions › Styles puts any style on anyone.", keys: ["effectsOff"]),
+        Section(.effects, "When styles come", labels: ["Left alone for", "A fast hour of typing"], footer: "Frost: now and then from December to February, or on a creature nobody has met for that long. Smitten: two friends meet, or a letter's invitation is accepted. Charged: grabbing the cursor, or a whole hour with at least that many keys pressed (counted by the Mac, nothing is recorded). Fired up: grumpy at the cursor, or losing a game. Haunted: now and then from 25 October to 1 November, or Boo spooking a friend.", keys: ["effectsAloneMinutes", "effectsTypingKeys"]),
+        Section(.effects, "Along the bottom edge", labels: ["Out for", "Once every"], footer: "Fireflies after dark, and the season's particles: snow from December to February, petals from March to May, leaves from September to November. They drift along the bottom of the creatures' monitors for a while, then go. Each has its switch on the Moments page.", keys: ["effectsAmbientEveryMinutes", "effectsAmbientSeconds"]),
+        // moments
+        Section(.moments, "The creatures", labels: ["Leaving a monitor", "Arriving on a monitor", "A hard landing", "Dizzy", "Goal!", "Friends for real", "A new arrival", "Poof, gone", "A flower comes up", "Fast asleep", "Play"], footer: "Each marks a moment of a feature with an effect on the creature it happens to, at most every so often.", keys: ["effectsOff"]),
+        Section(.moments, "Night and the seasons", labels: ["Night falls", "Winter", "Autumn", "Spring"], keys: ["effectsOff"]),
+        Section(.moments, "The tools", labels: ["Hey, look!", "Clock ticking", "Listening", "Translating", "Copied!", "Money spent", "Look at my calendar", "Allow…", "Daily budget"], footer: "Clock ticking reads the start of your next meeting from the Mac's calendar, and only once you allow it; nothing leaves the Mac. Money spent drops the coins once a day, when the day's spend on Settings › Costs passes the budget.", keys: ["effectsCalendar", "effectsDailyBudget", "effectsOff"]),
         // calendar
         Section(.calendar, "The day", labels: ["They know the time of day", "They know the day of the week and the date"], footer: "Your Mac's clock and calendar, told to the model before every line and paper plane: \"late evening (22:40)\", \"Saturday, 26 September 2026\". This is apart from the colony's own day and night, which only says when they sleep.", keys: ["knowsDate", "knowsTimeOfDay"]),
         Section(.calendar, "Holidays", labels: ["Jewish holidays", "Christian holidays", "Muslim holidays", "Mention a holiday", "only on the day"], footer: "On a holiday they know it, and which day of it (\"day 3 of Sukkot\"); before one, how far off it is. Jewish dates come from the Hebrew calendar and Muslim ones from the Islamic (Umm al-Qura) calendar, both built into macOS, so nothing is looked up online; a holiday that starts at sundown \"begins this evening\" the evening before. Where the new moon is sighted locally, a Muslim date can fall a day apart. With the built-in lines, one conversation in three on a holiday is about it; they only know a holiday on the day, so how far ahead to mention one needs a model.", keys: ["christianHolidays", "holidayLookAhead", "jewishHolidays", "muslimHolidays"]),
