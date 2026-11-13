@@ -616,7 +616,7 @@ struct TranslateSheetView: View {
     static let ink = Color(cgColor: ScreenOverlay.ink)
     static let softInk = Color(cgColor: ScreenOverlay.softInk)
     static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
-    static let font = NSFont.monospacedSystemFont(ofSize: 15, weight: .semibold)
+    static let font = Pixel.Font.typed
 
     var body: some View {
         let paper = model.paper
@@ -649,7 +649,7 @@ struct TranslateSheetView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text(tr("TRANSLATE")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    PaperHints(tr("TRANSLATE")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                     Spacer()
                     if model.savedOn {
                         TranslateButtonView(button: .savedList, on: model.drawerOpen) { model.act(.savedList) }
@@ -668,8 +668,6 @@ struct TranslateSheetView: View {
                 Spacer(minLength: 0)
                 Text(model.savedOn ? tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘D SAVE  ⌘L SAVED  ⌘⌫ CLEAR  ⎋ CLOSE")
                      : tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘⌫ CLEAR  ⎋ CLOSE"))
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    .lineLimit(1).minimumScaleFactor(0.7)
                     .padding(.trailing, 60)
             }
             .padding(.horizontal, 27)
@@ -743,7 +741,7 @@ struct TranslateSheetView: View {
                 .lineLimit(2)
             Spacer()
         }
-        .font(.system(size: 11, weight: .heavy, design: .monospaced))
+        .font(Pixel.Font.label)
     }
 }
 
@@ -783,17 +781,15 @@ struct TranslateDrawerView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text(tr("SAVED")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    PaperHints(tr("SAVED")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                     Spacer()
                     Text(model.query.isEmpty ? "\(model.saved.count)" : "\(rows.count) / \(model.saved.count)")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                        .font(Pixel.Font.hint).foregroundStyle(Self.faintInk)
                 }
                 .padding(.bottom, 8)
                 field.padding(.bottom, 8)
                 list(rows)
                 Text(tr("↑↓ MOVE  ⏎ LOAD  ⌘C COPY  ⌫ DELETE  ⎋ CLOSE"))
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    .lineLimit(1).minimumScaleFactor(0.7)
                     .padding(.top, 6)
                     .padding(.trailing, 40)
             }
@@ -816,12 +812,12 @@ struct TranslateDrawerView: View {
         // The hint is drawn by hand, as in the clipboard picker.
         TextField("", text: $model.query)
             .textFieldStyle(.plain)
-            .font(.system(size: 14, weight: .heavy, design: .monospaced))
+            .font(Pixel.Font.smallField)
             .foregroundStyle(Self.ink)
             .focused($typing)
             .background(alignment: .leading) {
                 if model.query.isEmpty {
-                    Text(tr("search saved…")).font(.system(size: 14, weight: .heavy, design: .monospaced))
+                    Text(tr("search saved…")).font(Pixel.Font.smallField)
                         .foregroundStyle(Self.faintInk).allowsHitTesting(false)
                 }
             }
@@ -836,7 +832,7 @@ struct TranslateDrawerView: View {
                 LazyVStack(alignment: .leading, spacing: 2) {
                     if rows.isEmpty {
                         Text(model.saved.isEmpty ? tr("Nothing saved yet: ⌘D saves a translation.") : tr("Nothing matches."))
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Self.softInk)
+                            .font(Pixel.Font.body).foregroundStyle(Self.softInk)
                             .padding(.top, 16).frame(maxWidth: .infinity)
                     }
                     ForEach(rows) { row in line(row).id(row.id) }
@@ -853,15 +849,15 @@ struct TranslateDrawerView: View {
     private func line(_ row: Translate.Saved) -> some View {
         let chosen = row.id == model.selectedSaved
         return VStack(alignment: .leading, spacing: 3) {
-            words(row.text, in: row.from, ink: chosen ? PixelBox.rim : Self.softInk, weight: .semibold)
-            words(row.translation, in: row.to, ink: PixelBox.rim, weight: .heavy)
+            words(row.text, in: row.from, ink: chosen ? PixelBox.rim : Self.softInk, font: Pixel.Font.body)
+            words(row.translation, in: row.to, ink: PixelBox.rim, font: Pixel.Font.strong)
             HStack(spacing: 6) {
                 Text(row.pair)
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                    .font(Pixel.Font.hint).foregroundStyle(PixelBox.rim)
                     .padding(.horizontal, 6).padding(.vertical, 3)
                     .background(PixelBox(style: .raised))
                 Text(Translate.savedDate(row.savedAt))
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
+                    .font(Pixel.Font.hint).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
                 Spacer(minLength: 4)
                 icon(.copySaved) { model.copySaved(row) }
                 icon(.deleteSaved) { model.removeSaved(row) }
@@ -875,10 +871,10 @@ struct TranslateDrawerView: View {
     }
 
     /// One line of a row, right to left for Hebrew.
-    private func words(_ text: String, in code: String, ink: Color, weight: Font.Weight) -> some View {
+    private func words(_ text: String, in code: String, ink: Color, font: Font) -> some View {
         let rtl = Translate.language(code)?.rightToLeft ?? false
         return Text(text.split(whereSeparator: \.isNewline).joined(separator: " "))
-            .font(.system(size: 12, weight: weight, design: .monospaced)).foregroundStyle(ink)
+            .font(font).foregroundStyle(ink)
             .lineLimit(1).truncationMode(.tail)
             .frame(maxWidth: .infinity, alignment: .leading)
             .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)

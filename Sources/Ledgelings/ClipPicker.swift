@@ -483,7 +483,7 @@ enum ClipToast {
 
     static func show(_ text: String, near caret: CGRect?) {
         window?.close()
-        let label = Text(text).font(.system(size: 13, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+        let label = Text(text).font(Pixel.Font.button).foregroundStyle(PixelBox.rim)
             .padding(.horizontal, 14).padding(.vertical, 10).background(PixelBox(style: .raised)).fixedSize()
         let hosting = NSHostingView(rootView: label)
         let size = hosting.fittingSize
@@ -654,6 +654,8 @@ struct ClipPickerView: View {
     private static let softInk = Color(cgColor: ScreenOverlay.softInk)
     private static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
     private static let rowHeight: CGFloat = 36
+    /// A row's picture button (read, translate): the same place in every row.
+    private static let slot: CGFloat = 26
     /// A copy holding a protected snippet's words: the ink's own violet, faint on the paper.
     static let maskTint = Color(cgColor: ScreenOverlay.softInk).opacity(0.12)
 
@@ -677,13 +679,11 @@ struct ClipPickerView: View {
         return ZStack(alignment: .topLeading) {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text(tr("CLIPBOARD")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    Spacer()
+                PaperTitle(tr("CLIPBOARD")) {
                     Text(tr("%d RECENT · %d SNIPPETS", model.counts.recent, model.counts.snippets))
-                        .font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                        .font(Pixel.Font.hint).foregroundStyle(Self.faintInk).lineLimit(1)
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, Look.Space.s)
                 field.padding(.bottom, 10)
                 list
                 footer.padding(.top, 8)
@@ -702,12 +702,12 @@ struct ClipPickerView: View {
         // came out white and cut off at the top.
         TextField("", text: $model.query)
             .textFieldStyle(.plain)
-            .font(.system(size: 18, weight: .heavy, design: .monospaced))
+            .font(Pixel.Font.field)
             .foregroundStyle(Self.ink)
             .focused($typing)
             .background(alignment: .leading) {
                 if model.query.isEmpty {
-                    Text(tr("search copies and snippets…")).font(.system(size: 18, weight: .heavy, design: .monospaced))
+                    Text(tr("search copies and snippets…")).font(Pixel.Font.field).lineLimit(1)
                         .foregroundStyle(Self.faintInk).allowsHitTesting(false)
                 }
             }
@@ -721,9 +721,7 @@ struct ClipPickerView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
                     if model.rows.isEmpty {
-                        Text(model.query.isEmpty ? tr("Nothing yet: copy something, or add a snippet (⌘E).") : tr("Nothing matches."))
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(Self.softInk)
-                            .padding(.top, 20).frame(maxWidth: .infinity)
+                        PaperEmpty(model.query.isEmpty ? tr("Nothing yet: copy something, or add a snippet (⌘E).") : tr("Nothing matches."))
                     }
                     ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
                         if index == 0 || model.rows[index - 1].group != row.group { header(row.group) }
@@ -731,9 +729,12 @@ struct ClipPickerView: View {
                         if let t = model.translation, t.id == row.id { translation(t) }
                     }
                 }
-                .padding(.trailing, 6)
+                .padding(Pixel.px * 2)
             }
             .scrollIndicators(.never)
+            // In a well, so a row, chosen or long, never reaches the paper's edge.
+            .clipped()
+            .background(PixelBox(style: .well))
             .onChange(of: model.selected) { _, id in
                 if let id { proxy.scrollTo(id) }
             }
@@ -752,56 +753,63 @@ struct ClipPickerView: View {
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(t.target.map { tr("INTO %@ · ⌥⇥ NEXT · ⏎ PASTES IT", $0.title.uppercased()) } ?? tr("TRANSLATING…"))
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    .font(Pixel.Font.hint).foregroundStyle(Self.faintInk).lineLimit(1)
                 Spacer()
                 TranslateButtonView(button: .openSheet) { model.openTranslation() }
             }
-            Text(words).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(ink)
+            Text(words).font(Pixel.Font.body).foregroundStyle(ink)
                 .lineLimit(4).textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
                 .multilineTextAlignment(rtl ? .trailing : .leading)
         }
-        .padding(.horizontal, 30).padding(.vertical, 6)
+        .padding(.horizontal, Look.Space.xl).padding(.vertical, 6)
         .background(Rectangle().fill(Self.maskTint))
     }
 
     private func header(_ group: ClipPickerModel.Group) -> some View {
         Text(group == .recent ? tr("RECENT") : tr("SNIPPETS"))
-            .font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
-            .padding(.top, 6).padding(.bottom, 2)
+            .font(Pixel.Font.label).foregroundStyle(Self.softInk)
+            .padding(.top, 6).padding(.bottom, 2).padding(.leading, 9)
     }
 
     private func line(_ row: ClipPickerModel.Row, number: Int?) -> some View {
         let chosen = row.id == model.selected
         return HStack(spacing: 8) {
             Text(number.map { "\($0)" } ?? " ")
-                .font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
+                .font(Pixel.Font.hint).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
                 .frame(width: 12)
             if let thumbnail = row.thumbnail { Self.picture(thumbnail) }
-            if row.pinned { Text("▲").font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim) }
+            if row.pinned { Text("▲").font(Pixel.Font.hint).foregroundStyle(PixelBox.rim) }
             if let title = row.title {
-                Text(title).font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim).lineLimit(1)
-                    .layoutPriority(1)
+                Text(title).font(Pixel.Font.strong).foregroundStyle(PixelBox.rim).lineLimit(1)
+                    .truncationMode(.tail).layoutPriority(1)
             }
-            Text(row.text).font(.system(size: 12, weight: row.title == nil ? .semibold : .regular, design: .monospaced))
+            Text(row.text).font(row.title == nil ? Pixel.Font.body : Pixel.Font.plain)
                 .foregroundStyle(row.title == nil && !row.masked ? PixelBox.rim : Self.softInk).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 6)
             Text(row.protected ? tr("LOCKED · %@", row.detail) : row.detail)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
-                .lineLimit(1)
-            if row.readable {
-                Button { model.read(row) } label: { PixelIcon(rows: ReadAloud.Button.readRow.icon).opacity(chosen ? 1 : 0.55) }
-                    .buttonStyle(.plain)
-                    .modifier(PixelTag(text: ReadAloud.Button.readRow.tooltip))
-                    .accessibilityLabel(ReadAloud.Button.readRow.tooltip)
+                .font(Pixel.Font.hint).foregroundStyle(chosen ? PixelBox.rim : Self.faintInk)
+                .lineLimit(1).fixedSize()
+            // Each picture in its own slot, there or not, so the pictures line up row under row.
+            if model.readOn { Group {
+                if row.readable {
+                    Button { model.read(row) } label: { PixelIcon(rows: ReadAloud.Button.readRow.icon).opacity(chosen ? 1 : 0.55) }
+                        .buttonStyle(.plain)
+                        .modifier(PixelTag(text: ReadAloud.Button.readRow.tooltip))
+                        .accessibilityLabel(ReadAloud.Button.readRow.tooltip)
+                } else { Color.clear }
             }
-            if row.translatable {
-                Button { model.translate(row) } label: { PixelIcon(rows: Translate.Button.translate.icon).opacity(chosen ? 1 : 0.55) }
-                    .buttonStyle(.plain)
-                    .modifier(PixelTag(text: Translate.Button.translate.tooltip()))
-                    .accessibilityLabel(Translate.Button.translate.tooltip())
+            .frame(width: Self.slot) }
+            if model.translateOn { Group {
+                if row.translatable {
+                    Button { model.translate(row) } label: { PixelIcon(rows: Translate.Button.translate.icon).opacity(chosen ? 1 : 0.55) }
+                        .buttonStyle(.plain)
+                        .modifier(PixelTag(text: Translate.Button.translate.tooltip()))
+                        .accessibilityLabel(Translate.Button.translate.tooltip())
+                } else { Color.clear }
             }
+            .frame(width: Self.slot) }
         }
         .padding(.horizontal, 9)
         .frame(height: Self.rowHeight)
@@ -827,25 +835,23 @@ struct ClipPickerView: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 6) {
             if model.needsTrust {
-                HStack(spacing: 8) {
+                HStack(spacing: Look.Space.s) {
                     Text(tr("To paste for you, Ledgelings needs Accessibility (System Settings › Privacy & Security). Until then it copies; you press ⌘V."))
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(Self.softInk)
+                        .font(Pixel.Font.hint).foregroundStyle(Self.softInk)
                         .fixedSize(horizontal: false, vertical: true)
-                    PixelButton(title: tr("ALLOW…"), small: true, action: model.askTrust)
+                    PixelButton(title: tr("ALLOW…"), small: true, action: model.askTrust).fixedSize()
                 }
+                .padding(.trailing, Pixel.cornerRoom)
             }
             if !model.refusal.isEmpty {
-                Text(model.refusal).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                Text(model.refusal).font(Pixel.Font.hint).foregroundStyle(PixelBox.rim)
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.trailing, Pixel.cornerRoom)
             }
-            Text(model.checking ? tr("Touch the fingerprint sensor…")
+            PaperHints(model.checking ? tr("Touch the fingerprint sensor…")
                  : model.translateOn && model.readOn ? tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘T TRANSLATE  ⌘R READ  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN"))
                  : model.translateOn ? tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘T TRANSLATE  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN"))
                  : tr("⏎ PASTE  ⌥⏎ %@  ⌘1–9 PICK  ⇥ GROUP  ⌘P PIN  ⌫ FORGET  ⌘E EDIT  ⎋ CLOSE", model.plainFirst ? tr("FORMATTED") : tr("PLAIN")))
-                .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
-                .lineLimit(1).minimumScaleFactor(0.7)
         }
-        // Clear of the paper's folded-down corner.
-        .padding(.trailing, 60)
     }
 }

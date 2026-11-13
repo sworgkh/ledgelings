@@ -122,7 +122,7 @@ struct ReminderNoteView: View {
                 .offset(y: Self.headroom)
             if let face { Peeker(face: face, sheetWidth: size.width, headroom: Self.headroom) }
             VStack(alignment: .leading, spacing: 0) {
-                Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                Text(title).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                     .padding(.bottom, 10)
                 field.padding(.bottom, 18)
                 when.padding(.bottom, 14)
@@ -149,7 +149,7 @@ struct ReminderNoteView: View {
             label(tr("REMIND ME TO"))
             TextField("", text: $text, prompt: Text(tr("stretch, call mom, stand-up…")).foregroundStyle(Self.faintInk))
                 .textFieldStyle(.plain)
-                .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .font(Pixel.Font.field)
                 .foregroundStyle(Self.ink)
                 .focused($writing)
                 .onSubmit(send)
@@ -169,7 +169,7 @@ struct ReminderNoteView: View {
                         back: { shift(days: -1) }, on: { shift(days: 1) })
                 stepper(Reminders.clock(time), width: 128, tips: (tr("15 minutes earlier"), tr("15 minutes later")), back: { time = Reminders.step(time, by: -15) }, on: { time = Reminders.step(time, by: 15) })
                 if time <= Date() {
-                    Text(tr("past: it comes\nstraight away")).font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    Text(tr("past: it comes\nstraight away")).font(Pixel.Font.hint)
                         .foregroundStyle(Self.faintInk)
                 }
             }
@@ -186,7 +186,7 @@ struct ReminderNoteView: View {
     private func stepper(_ value: String, width: CGFloat, tips: (back: String, on: String), back: @escaping () -> Void, on: @escaping () -> Void) -> some View {
         HStack(spacing: 4) {
             PixelButton(title: "◀", small: true, action: back).help(tips.back)
-            Text(value).font(.system(size: 15, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+            Text(value).font(Pixel.Font.value).foregroundStyle(Self.ink)
                 .monospacedDigit()
                 .frame(width: width - 60, height: 30)
                 .background(PixelBox(style: .well))
@@ -220,7 +220,7 @@ struct ReminderNoteView: View {
     private var buttons: some View {
         HStack(alignment: .bottom) {
             Text(words.isEmpty ? tr("write something first") : "\(Reminders.when(time, now: Date()))" + (repeats == .once ? "" : ", \(repeats.title.lowercased())"))
-                .font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Self.softInk)
+                .font(Pixel.Font.body).foregroundStyle(Self.softInk)
             Spacer()
             PixelButton(title: tr("NEVER MIND"), action: cancel)
                 .keyboardShortcut(.cancelAction)
@@ -239,7 +239,7 @@ struct ReminderNoteView: View {
     }
 
     private func label(_ words: String) -> some View {
-        Text(words).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+        Text(words).font(Pixel.Font.label).foregroundStyle(Self.softInk)
     }
 }
 

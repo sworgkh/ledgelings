@@ -384,7 +384,7 @@ struct ReadAloudSheetView: View {
     static let ink = Color(cgColor: ScreenOverlay.ink)
     static let softInk = Color(cgColor: ScreenOverlay.softInk)
     static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
-    static let font = NSFont.monospacedSystemFont(ofSize: 15, weight: .semibold)
+    static let font = Pixel.Font.typed
 
     var body: some View {
         let paper = model.paper
@@ -405,7 +405,7 @@ struct ReadAloudSheetView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
-                    Text(tr("READ ALOUD")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    PaperHints(tr("READ ALOUD")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                     Spacer()
                 }
                 .padding(.bottom, 8)
@@ -419,8 +419,6 @@ struct ReadAloudSheetView: View {
                 statusLine.padding(.top, 8)
                 Spacer(minLength: 0)
                 Text(tr("⏎ READ · PAUSE  ⇧⏎ NEW LINE  ⌘. STOP  ⌘− ⌘= PACE  ⌘1–9 PRESET  ⌘R READER  ⌘S SAVE  ⌘⇧C COPY  ⎋ CLOSE"))
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    .lineLimit(1).minimumScaleFactor(0.7)
                     .padding(.trailing, 60)
             }
             .padding(.horizontal, 27)
@@ -456,13 +454,13 @@ struct ReadAloudSheetView: View {
             Spacer().frame(width: 14)
             ReadAloudButtonView(button: .slower) { model.act(.slower) }
             Text(ReadAloud.speedLabel(model.speed))
-                .font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+                .font(Pixel.Font.strong).foregroundStyle(Self.ink)
                 .frame(width: 48)
             ReadAloudButtonView(button: .faster) { model.act(.faster) }
             Spacer().frame(width: 14)
             ReadAloudButtonView(button: .reader) { model.act(.reader) }
             Text(model.readerTitle)
-                .font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+                .font(Pixel.Font.strong).foregroundStyle(Self.ink)
                 .lineLimit(1)
             Spacer(minLength: 8)
             ReadAloudButtonView(button: .save) { model.act(.save) }.opacity(player.hasSound ? 1 : 0.45)
@@ -486,7 +484,7 @@ struct ReadAloudSheetView: View {
             .frame(height: 18)
             Text(player.partsTotal == 0 ? "0:00 / 0:00"
                  : "\(ReadAloud.clock(player.played / rate)) / \(player.isComplete ? "" : "~")\(ReadAloud.clock(player.length / rate))")
-                .font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+                .font(Pixel.Font.label).foregroundStyle(Self.softInk)
                 .frame(width: 104, alignment: .trailing)
         }
     }
@@ -503,7 +501,7 @@ struct ReadAloudSheetView: View {
                 .lineLimit(2)
             Spacer()
         }
-        .font(.system(size: 11, weight: .heavy, design: .monospaced))
+        .font(Pixel.Font.label)
     }
 }
 

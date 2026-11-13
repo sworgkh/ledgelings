@@ -59,7 +59,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let talkStatusItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let spendItem = NSMenuItem(title: "", action: #selector(openSpend), keyEquivalent: "")
     private let voiceItem = NSMenuItem(title: "", action: #selector(toggleVoice), keyEquivalent: "v")
-    private let revengeItem = NSMenuItem(title: "", action: #selector(toggleRevenge), keyEquivalent: "")
     private let activitiesItem = NSMenuItem(title: "", action: #selector(openActivities), keyEquivalent: "")
     private let diveItem = NSMenuItem(title: "", action: #selector(toggleDive), keyEquivalent: "")
     /// Weather › Snow, Rain, Wind, Storm, Clear: one by hand, at any time.
@@ -67,7 +66,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Shown only while weather, the season's particles or the fireflies are out.
     private let stopWeatherItem = NSMenuItem(title: "", action: #selector(stopWeather), keyEquivalent: "")
     private let stopActivityItem = NSMenuItem(title: "", action: #selector(stopActivity), keyEquivalent: "")
-    private let deedsItem = NSMenuItem(title: "", action: #selector(toggleDeeds), keyEquivalent: "")
     private let relationshipsItem = NSMenuItem(title: "", action: #selector(openRelationships), keyEquivalent: "")
     private let pointer = SystemPointer()
     private let nextReminderItem = NSMenuItem(title: "", action: #selector(openReminderList), keyEquivalent: "")
@@ -882,10 +880,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let actionsItem = NSMenuItem(title: "", action: #selector(openActions), keyEquivalent: "a")
     private let chatsItem = NSMenuItem(title: "", action: #selector(openChats), keyEquivalent: "h")
     private let settingsItem = NSMenuItem(title: "", action: #selector(openSettings), keyEquivalent: ",")
-    private let languageItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    private let cursorMoodItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    /// Which monitor they live on; only with two or more attached.
-    private let screenItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let clipHistoryItem = NSMenuItem(title: "", action: #selector(openClipHistory), keyEquivalent: "")
     private let clipSnippetsItem = NSMenuItem(title: "", action: #selector(openClipSnippets), keyEquivalent: "")
     private let editSnippetsItem = NSMenuItem(title: "", action: #selector(openSnippetsEditor), keyEquivalent: "")
@@ -900,71 +894,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let chatItem = NSMenuItem(title: "", action: #selector(openChat), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
+    /// The menu holds things to do now and windows to open, in groups: where they stand, what
+    /// the creatures do, the tools, the one switch used often, the windows, Quit. Every switch and
+    /// choice (revenge, deeds, language, the cursor's mood, the monitor) is in Settings, where its
+    /// search finds it (docs/DESIGN.md).
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = StatusIcon.image()
         let menu = NSMenu()
         menu.delegate = self
-        phaseItem.isEnabled = false
-        menu.addItem(phaseItem)
+        func add(_ items: [NSMenuItem]) {
+            for item in items {
+                if item.action != nil { item.target = self } else if item.submenu == nil { item.isEnabled = false }
+                menu.addItem(item)
+            }
+        }
+        // Where they stand: the day, the talk, the next reminder (a click opens the reminders).
+        add([phaseItem, talkStatusItem, nextReminderItem])
         menu.addItem(.separator())
-        actionsItem.target = self
-        menu.addItem(actionsItem)
-        activitiesItem.target = self
-        menu.addItem(activitiesItem)
-        for item in [diveItem, stopActivityItem] {
-            item.target = self
-            menu.addItem(item)
-        }
+        // What the creatures do now.
         weatherItem.submenu = NSMenu()
-        menu.addItem(weatherItem)
-        stopWeatherItem.target = self
-        menu.addItem(stopWeatherItem)
-        nextReminderItem.target = self
-        menu.addItem(nextReminderItem)
-        chatItem.target = self
-        menu.addItem(chatItem)
-        for item in [toolsItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem, shotItem, shotFullItem, shotLastItem, dictationItem, translateItem, readAloudItem, stopReadingItem] {
-            item.target = self
-            menu.addItem(item)
-        }
-        voiceItem.target = self
-        menu.addItem(voiceItem)
-        revengeItem.target = self
-        menu.addItem(revengeItem)
-        deedsItem.target = self
-        menu.addItem(deedsItem)
-
-        talkStatusItem.isEnabled = false
-        menu.addItem(talkStatusItem)
-        chatsItem.target = self
-        menu.addItem(chatsItem)
-        relationshipsItem.target = self
-        menu.addItem(relationshipsItem)
-        spendItem.target = self
-        menu.addItem(spendItem)
-        // Each language under its own name, so whoever cannot read the current one still finds theirs.
-        let languages = NSMenu()
-        for language in Language.allCases {
-            let choice = NSMenuItem(title: language.title, action: #selector(chooseLanguage(_:)), keyEquivalent: "")
-            choice.target = self
-            choice.representedObject = language.rawValue
-            languages.addItem(choice)
-        }
-        languageItem.submenu = languages
-        menu.addItem(languageItem)
-        let moods = NSMenu()
-        for mood in CursorMood.allCases {
-            let choice = NSMenuItem(title: "", action: #selector(chooseCursorMood(_:)), keyEquivalent: "")
-            choice.target = self
-            choice.representedObject = mood.rawValue
-            moods.addItem(choice)
-        }
-        cursorMoodItem.submenu = moods
-        menu.addItem(cursorMoodItem)
-        menu.addItem(screenItem)
-        settingsItem.target = self
-        menu.addItem(settingsItem)
+        add([actionsItem, activitiesItem, diveItem, weatherItem, stopWeatherItem, stopActivityItem])
+        menu.addItem(.separator())
+        // The tools.
+        add([chatItem, toolsItem, translateItem, readAloudItem, stopReadingItem, dictationItem,
+             shotItem, shotFullItem, shotLastItem, clipHistoryItem, clipSnippetsItem, editSnippetsItem])
+        menu.addItem(.separator())
+        // The one switch kept here: toggled often, as the talk starts and stops being welcome.
+        add([voiceItem])
+        menu.addItem(.separator())
+        // Windows.
+        add([chatsItem, relationshipsItem, spendItem, settingsItem])
         menu.addItem(.separator())
         menu.addItem(quitItem)
         item.menu = menu
@@ -976,7 +936,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func retitleMenu() {
         actionsItem.title = tr("Creature Actions…")
         voiceItem.title = tr("Hear Them Talk")
-        revengeItem.title = tr("Cursor Revenge")
         activitiesItem.title = tr("Activities…")
         diveItem.title = colony?.isDiving == true ? tr("Out of the Water") : tr("Go Scuba Diving")
         weatherItem.title = tr("Weather")
@@ -1013,10 +972,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ? tr("Stop Activity (%@)", GlobalShortcut.spoken(settings.stopActivityShortcut)) : tr("Stop Activity")
         stopActivityItem.isEnabled = Activities.shared.isRunning
         chatsItem.title = tr("Chat History…")
-        deedsItem.title = tr("Deeds from Talk")
         relationshipsItem.title = tr("Relationships…")
         settingsItem.title = tr("Settings…")
-        languageItem.title = tr("Language")
         quitItem.title = tr("Quit Ledgelings")
         clipHistoryItem.title = tr("Clipboard History…")
         clipSnippetsItem.title = tr("Paste a Snippet…")
@@ -1067,20 +1024,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let toolsKey = GlobalShortcut.keyName(settings.toolsScreenShortcut.keyCode).lowercased()
         toolsItem.keyEquivalent = settings.toolsScreenShortcutEnabled && toolsKey.count == 1 ? toolsKey : ""
         toolsItem.keyEquivalentModifierMask = GlobalShortcut.flags(settings.toolsScreenShortcut.modifiers)
-        for choice in languageItem.submenu?.items ?? [] {
-            choice.state = choice.representedObject as? String == settings.language.rawValue ? .on : .off
-        }
-        cursorMoodItem.title = tr("The Cursor Is")
-        screenItem.title = tr("Screen")
-        screenItem.isHidden = !ScreenChoice.isOffered
-        if ScreenChoice.isOffered {
-            screenItem.submenu = ScreenChoice.menu(settings) { [weak self] in self?.settings.liveOn($0) }
-        }
-        for choice in cursorMoodItem.submenu?.items ?? [] {
-            let mood = (choice.representedObject as? String).flatMap(CursorMood.init(rawValue:))
-            choice.title = mood?.title ?? ""
-            choice.state = mood == settings.cursorMood ? .on : .off
-        }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -1091,8 +1034,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         phaseItem.title = colony.isNight ? tr("Night — they wake in %@", clock) : tr("Day — they sleep in %@", clock)
         if settings.nightMinutes == 0 { phaseItem.title = tr("Always day — night is set to 0") }
         voiceItem.state = settings.voiceEnabled ? .on : .off
-        revengeItem.state = settings.revengeEnabled ? .on : .off
-        deedsItem.state = settings.deedsEnabled ? .on : .off
         if let next = reminders.book.upcoming {
             nextReminderItem.title = "   " + tr("Next: %@, %@", String(next.text.prefix(40)), Reminders.when(next.time, now: Date()))
                 + (settings.remindersEnabled ? "" : " " + tr("(off)"))
@@ -1110,20 +1051,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc private func chooseLanguage(_ sender: NSMenuItem) {
-        guard let code = sender.representedObject as? String, let language = Language(rawValue: code) else { return }
-        settings.language = language
-        retitleMenu()
-    }
-
-    @objc private func chooseCursorMood(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String, let mood = CursorMood(rawValue: raw) else { return }
-        settings.cursorMood = mood
-        retitleMenu()
-    }
-
     @objc private func openActions() { actions.show() }
-    @objc private func toggleDeeds() { settings.deedsEnabled.toggle() }
     @objc private func openRelationships() { relationshipsWindow.show() }
 
     /// The seed, from the Relationships tab: its log in a line for the tab.
@@ -1297,7 +1225,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Task { @MainActor in try? await Task.sleep(for: .seconds(2)); while toolsScreen.isUp { try? await Task.sleep(for: .seconds(0.2)) }; exit(0) }
     }
     @objc private func toggleVoice() { settings.voiceEnabled.toggle() }
-    @objc private func toggleRevenge() { settings.revengeEnabled.toggle() }
     /// The games, on the Actions sheet's inner page: Play Now for each, and games on or off.
     @objc private func openActivities() { actions.show(page: .activities) }
 

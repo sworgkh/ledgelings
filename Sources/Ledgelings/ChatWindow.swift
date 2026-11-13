@@ -268,7 +268,7 @@ struct ChatView: View {
     static let ink = Color(cgColor: ScreenOverlay.ink)
     static let softInk = Color(cgColor: ScreenOverlay.softInk)
     static let faintInk = Color(cgColor: ScreenOverlay.faintInk)
-    static let font = NSFont.monospacedSystemFont(ofSize: 14, weight: .semibold)
+    static let font = Pixel.Font.typed
 
     var body: some View {
         let paper = model.paper
@@ -289,7 +289,7 @@ struct ChatView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
-                    Text(tr("CHAT WITH THE CREATURES")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    PaperHints(tr("CHAT WITH THE CREATURES")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                     Spacer()
                     ChatButtonView(button: .settings) { model.act(.settings) }
                     ChatButtonView(button: .close) { model.act(.close) }
@@ -314,8 +314,6 @@ struct ChatView: View {
                 // Clear of the paper's folded corner.
                 .padding(.trailing, 46)
                 Text(tr("⏎ SEND  ⇧⏎ NEW LINE  ⌘1–9 TO ONE  ⌘0 EVERYONE  ⌘, SETTINGS  ⎋ CLOSE"))
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    .lineLimit(1).minimumScaleFactor(0.7)
                     .padding(.top, 8)
             }
             .padding(.horizontal, 27)
@@ -330,7 +328,7 @@ struct ChatView: View {
     /// To: Everyone, then each creature on screen by its sprite and name.
     private var toRow: some View {
         HStack(spacing: 6) {
-            Text(tr("TO:")).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+            Text(tr("TO:")).font(Pixel.Font.label).foregroundStyle(Self.softInk)
             Button { model.choose(nil) } label: {
                 HStack(spacing: 5) { PixelIcon(rows: OwnerChat.Button.everyone.icon); Text(tr("EVERYONE")) }
             }
@@ -373,7 +371,7 @@ struct ChatView: View {
                         .id("thinking")
                     }
                 }
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .font(Pixel.Font.reading)
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -390,7 +388,7 @@ struct ChatView: View {
                 Spacer(minLength: 80)
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(line.to.map { tr("YOU → %@", $0.uppercased()) } ?? tr("YOU → EVERYONE"))
-                        .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
+                        .font(Pixel.Font.hint).foregroundStyle(Self.faintInk)
                     Text(line.text).foregroundStyle(Self.ink).multilineTextAlignment(.leading)
                         .padding(.horizontal, 9).padding(.vertical, 6)
                         .background(PixelBox(style: .chosen))
@@ -400,7 +398,7 @@ struct ChatView: View {
             HStack(alignment: .top, spacing: 8) {
                 Portrait(image: line.portrait, size: 26)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(line.speaker.uppercased()).font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
+                    Text(line.speaker.uppercased()).font(Pixel.Font.hint).foregroundStyle(Self.faintInk)
                     Text(line.text).foregroundStyle(Self.ink)
                         .padding(.horizontal, 9).padding(.vertical, 6)
                         .background(PixelBox(style: .raised))
@@ -412,7 +410,7 @@ struct ChatView: View {
 
     private var statusLine: some View {
         Text(model.status.isEmpty ? " " : model.status)
-            .font(.system(size: 11, weight: .heavy, design: .monospaced))
+            .font(Pixel.Font.label)
             .foregroundStyle(PixelBox.rim)
             .lineLimit(1)
     }
@@ -421,7 +419,7 @@ struct ChatView: View {
     private var noModel: some View {
         HStack(spacing: 8) {
             Text(OwnerChat.noModel)
-                .font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
+                .font(Pixel.Font.label).foregroundStyle(PixelBox.rim)
                 .lineLimit(2)
             Spacer(minLength: 4)
             Button { model.act(.settings) } label: { Text(tr("OPEN SETTINGS")) }

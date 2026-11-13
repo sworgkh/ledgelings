@@ -66,27 +66,18 @@ import Testing
         sheet.toggle()
     }
 
-    /// Everything the menu bar menu offers besides the actions is on the sheet too.
-    @Test func theMenusSwitchesSayHowTheyStandAndTheLinksAreThere() {
+    /// The two switches the menu keeps (talk, and hearing it) are on the sheet; every other
+    /// switch and choice is in Settings, as in the menu.
+    @Test func theSwitchesSayHowTheyStandAndTheLinksAreThere() {
         var s = ActionsState()
-        #expect(ActionsSwitch.allCases.count == 6 && ActionsLink.allCases.count == 5)
+        #expect(ActionsSwitch.allCases == [.talk, .voice, .play] && ActionsLink.allCases.count == 5)
         #expect(ActionsLink.toolsTooltip(shortcut: "").contains("(K)"), "the Tools picture names its key")
         #expect(ActionsLink.chatTooltip(shortcut: "⌃⌥C") == "Chat with the creatures (C · ⌃⌥C)", "the chat picture names its keys")
         #expect(ActionsSwitch.talk.title(in: s) == "TALK ON" && ActionsSwitch.talk.isOn(in: s))
         #expect(ActionsSwitch.voice.title(in: s) == "VOICE OFF" && !ActionsSwitch.voice.isOn(in: s))
-        #expect(ActionsSwitch.cursor.title(in: s) == "CURSOR: A MENACE")
-        #expect(ActionsSwitch.language.title(in: s) == "ENGLISH")
-        s.talkOn = false; s.revengeOn = false; s.mood = .good; s.language = .russian
-        #expect(ActionsSwitch.talk.title(in: s) == "TALK OFF" && ActionsSwitch.revenge.title(in: s) == "REVENGE OFF")
-        #expect(ActionsSwitch.cursor.title(in: s) == "CURSOR: A PLAYMATE")
-        #expect(ActionsSwitch.language.title(in: s) == "РУССКИЙ")
+        s.talkOn = false
+        #expect(ActionsSwitch.talk.title(in: s) == "TALK OFF")
         #expect(ActionsSwitch.talk.said(in: s) == "They keep quiet.")
-    }
-
-    @MainActor @Test func aSwitchOnTheSheetChangesTheSettingAndGoesRoundItsChoices() {
-        #expect(ActionsController.next(after: CursorMood.good) == .neutral)
-        #expect(ActionsController.next(after: CursorMood.allCases.last!) == CursorMood.allCases.first!)
-        #expect(ActionsController.next(after: Language.english) == .russian && ActionsController.next(after: Language.russian) == .english)
     }
 
     @Test func everyGameRowAndButtonOnTheActivitiesPageSaysWhatItDoesAndItsKey() {

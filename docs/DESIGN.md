@@ -59,11 +59,16 @@ line bottom-right, stepped corners, never round.
 | `title` | 11 bold | the sheet's name, top left, in capitals: CLIPBOARD |
 | `label` | 11 heavy | a label beside controls, a group's heading in a list: TO:, RECENT |
 | `body` | 12 semibold | what is read: a row, a line, a message |
-| `field` | 18 heavy | the big search field at the top of a picker |
+| `strong` / `plain` | 12 heavy / regular | a row's own name, and what follows it |
+| `reading` | 13 semibold | a conversation's lines (Chat) |
+| `value` | 15 heavy | a value between its arrows: the note's date and time |
+| `field` / `smallField` | 18 / 14 heavy | the big field of a picker or note; a drawer's search |
 | `button` / `smallButton` | 13 / 11 heavy | words on buttons |
 | `hint` | 10 heavy | the keys line, a row's detail, a hover tag |
+| `tile` | 9 semibold | inside a tile only, whose width is fixed: its second line and its key letter |
+| `typed` | 15 semibold | what is typed into a text box (Translate, Read aloud, Chat) |
 
-Nothing on the paper is smaller than `hint`, and nothing is shrunk to fit
+Nothing on the paper is smaller than `hint` but a tile's caption, and nothing is shrunk to fit
 (`minimumScaleFactor` is not used): a keys line that is too long wraps to a second
 line (`PaperHints`) or loses its least useful keys.
 
@@ -99,5 +104,7 @@ to do (`PaperEmpty`).
 - `--layout-check` (English and Russian): no settings page or the sidebar scrolls.
 - `LEDGELINGS_APPEARANCE=light|dark` puts every window in that mode for a snapshot;
   `LEDGELINGS_NO_KEYCHAIN=1` keeps a new build from asking for the keychain.
-- The tests measure every pixel button's words in their font against the room they
-  have, in English and Russian (`DesignTests`).
+- `DesignTests` measures the Creature Actions buttons in their font against the room
+  they have, in English and Russian, and fails a paper file that sets a font size of its
+  own or shrinks words to fit.
+- `--menu` prints the menu: things to do and windows, no switch but Hear Them Talk.

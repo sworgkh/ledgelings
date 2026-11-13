@@ -99,7 +99,7 @@ enum Pixel {
     static let cornerRoom: CGFloat = 48
 
     /// The font sizes, all monospaced and heavy as the creatures' lines are. Nothing
-    /// on the paper is smaller than `hint`, and nothing is shrunk to fit.
+    /// on the paper is smaller than `hint` but a tile's caption, and nothing is shrunk to fit.
     enum Font {
         /// The sheet's name, top left, in capitals: CLIPBOARD, TOOLS.
         static let title = SwiftUI.Font.system(size: 11, weight: .bold, design: .monospaced)
@@ -107,8 +107,22 @@ enum Pixel {
         static let label = SwiftUI.Font.system(size: 11, weight: .heavy, design: .monospaced)
         /// What is read: a row, a line, a message.
         static let body = SwiftUI.Font.system(size: 12, weight: .semibold, design: .monospaced)
-        /// The big field at the top of a picker.
+        /// A row's own name before its text (a snippet's title), a figure.
+        static let strong = SwiftUI.Font.system(size: 12, weight: .heavy, design: .monospaced)
+        /// What follows a row's name, quieter.
+        static let plain = SwiftUI.Font.system(size: 12, weight: .regular, design: .monospaced)
+        /// A conversation's lines, read at length.
+        static let reading = SwiftUI.Font.system(size: 13, weight: .semibold, design: .monospaced)
+        /// A value between its arrows: a date, a time.
+        static let value = SwiftUI.Font.system(size: 15, weight: .heavy, design: .monospaced)
+        /// The big field at the top of a picker or a note.
         static let field = SwiftUI.Font.system(size: 18, weight: .heavy, design: .monospaced)
+        /// A search field in a narrow drawer.
+        static let smallField = SwiftUI.Font.system(size: 14, weight: .heavy, design: .monospaced)
+        /// Inside a tile only, whose width is fixed: its second line and its key letter.
+        static let tile = SwiftUI.Font.system(size: 9, weight: .semibold, design: .monospaced)
+        /// What is typed into a text box on the paper (Translate, Read aloud, Chat).
+        static var typed: NSFont { NSFont.monospacedSystemFont(ofSize: 15, weight: .semibold) }
         static let button = SwiftUI.Font.system(size: 13, weight: .heavy, design: .monospaced)
         static let smallButton = SwiftUI.Font.system(size: 11, weight: .heavy, design: .monospaced)
         /// The keys line at the bottom, a row's detail, a hover tag.
