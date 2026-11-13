@@ -26,42 +26,4 @@ enum ScreenChoice {
         let name = attached.first { $0.id == settings.homeScreen }?.name ?? settings.homeScreenName
         return isAway(settings) ? tr("%@ (unplugged: all screens till it is back)", name) : name
     }
-
-    /// What the Actions sheet says once the choice is made.
-    static func said(_ settings: AppSettings) -> String {
-        settings.homeScreen == HomeScreen.all ? tr("They live on every screen.") : tr("They live on %@ only.", current(settings))
-    }
-
-    /// The menu of choices: All Screens, then each monitor, the chosen one ticked.
-    static func menu(_ settings: AppSettings, choose: @escaping (HomeScreen.Monitor?) -> Void) -> NSMenu {
-        let menu = NSMenu()
-        let all = ActionItem(title: tr("All Screens")) { choose(nil) }
-        all.state = settings.homeScreen == HomeScreen.all ? .on : .off
-        menu.addItem(all)
-        menu.addItem(.separator())
-        for monitor in attached {
-            let item = ActionItem(title: monitor.name) { choose(monitor) }
-            item.state = monitor.id == settings.homeScreen ? .on : .off
-            menu.addItem(item)
-        }
-        if isAway(settings) {
-            let away = NSMenuItem(title: tr("%@ (unplugged)", settings.homeScreenName), action: nil, keyEquivalent: "")
-            away.state = .on
-            away.isEnabled = false
-            menu.addItem(away)
-        }
-        return menu
-    }
-}
-
-/// A menu item that runs a closure.
-final class ActionItem: NSMenuItem {
-    private let run: () -> Void
-    init(title: String, run: @escaping () -> Void) {
-        self.run = run
-        super.init(title: title, action: #selector(fire), keyEquivalent: "")
-        target = self
-    }
-    @available(*, unavailable) required init(coder: NSCoder) { fatalError() }
-    @objc private func fire() { run() }
 }

@@ -30,7 +30,6 @@ final class ActionsController {
         model.hide = { [weak self] in self?.hide(minutes: $0) }
         model.play = { [weak self] in self?.play($0) }
         model.byHand = { [weak self] in self?.byHand($0) }
-        model.chooseScreen = { [weak self] in self?.chooseScreen() }
         model.wear = { [weak self] in self?.wear($0) }
         model.weather = { [weak self] in self?.weather($0) }
     }
@@ -83,13 +82,9 @@ final class ActionsController {
         var s = ActionsState()
         s.talkOn = settings.talkEnabled
         s.voiceOn = settings.voiceEnabled
-        s.revengeOn = settings.revengeEnabled
         s.playOn = settings.playEnabled
         s.playsOff = Set(Plays.Kind.allCases.filter { !settings.playEnabled || !settings.enabledPlays.contains($0) })
-        s.mood = settings.cursorMood
         s.stopShortcut = settings.stopActivityShortcutEnabled ? GlobalShortcut.spoken(settings.stopActivityShortcut) : ""
-        s.language = settings.language
-        s.screen = ScreenChoice.isOffered ? Self.screenTitle(settings) : nil
         model.shortcut = settings.shortcutEnabled ? GlobalShortcut.label(settings.shortcut) : ""
         model.toolsOn = settings.toolsScreenEnabled
         model.toolsShortcut = settings.toolsScreenShortcutEnabled ? GlobalShortcut.label(settings.toolsScreenShortcut) : ""
@@ -164,41 +159,11 @@ final class ActionsController {
         switch flipped {
         case .talk: settings.talkEnabled.toggle()
         case .voice: settings.voiceEnabled.toggle()
-        case .revenge: settings.revengeEnabled.toggle()
         case .play: settings.playEnabled.toggle()
-        case .cursor: settings.cursorMood = Self.next(after: settings.cursorMood)
-        case .language: settings.language = Self.next(after: settings.language)
         }
         refresh()
         model.said = flipped.said(in: model.state)
         model.saidAt = Date()
-    }
-
-    /// The sheet's screen button: which monitor they live on, short enough for the row.
-    static func screenTitle(_ settings: AppSettings) -> String {
-        guard settings.homeScreen != HomeScreen.all, !ScreenChoice.isAway(settings) else { return tr("SCREEN: ALL") }
-        let name = ScreenChoice.current(settings)
-        // "Built-in Retina Display" is the laptop's own: that is all it needs to say.
-        let short = name.lowercased().hasPrefix("built-in") ? tr("BUILT-IN") : name.uppercased()
-        return tr("SCREEN: %@", short)
-    }
-
-    /// The screen button: the monitors, as the menu bar menu has them, under the pointer.
-    private func chooseScreen() {
-        model.choosingHide = false
-        let menu = ScreenChoice.menu(settings) { [weak self] monitor in
-            guard let self else { return }
-            settings.liveOn(monitor)
-            refresh()
-            model.said = ScreenChoice.said(settings)
-            model.saidAt = Date()
-        }
-        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
-    }
-
-    static func next<T: CaseIterable & Equatable>(after value: T) -> T {
-        let all = Array(T.allCases)
-        return all[((all.firstIndex(of: value) ?? -1) + 1) % all.count]
     }
 
     /// Settings, the chats, or out: the sheet is put away first.
@@ -313,7 +278,6 @@ struct ActionsState: Equatable {
     var hideLeft = 0
     var talkOn = true
     var voiceOn = false
-    var revengeOn = true
     var playOn = true
     /// Games switched off in settings (all of them while play is off).
     var playsOff: Set<Plays.Kind> = []
@@ -321,27 +285,20 @@ struct ActionsState: Equatable {
     var diving = false
     /// Stop activity's shortcut as drawn, empty while it is off.
     var stopShortcut = ""
-    var mood = CursorMood.bad
-    var language = Language.english
-    /// The screen button's words; nil with one monitor, when there is nothing to choose.
-    var screen: String?
 }
 
-/// The switches under the tiles: what the menu bar menu offers besides the
-/// actions, here too, so that nothing is lost when the icon is hidden.
+/// The switches under the tiles: the two used most, here as in the menu bar menu
+/// (talk, and hearing it), and the games on the Activities page. Every other switch
+/// and choice is in Settings (docs/DESIGN.md).
 enum ActionsSwitch: CaseIterable {
-    case talk, voice, revenge, cursor, language, play
+    case talk, voice, play
 
     /// Its words say how it stands now.
     func title(in s: ActionsState) -> String {
         switch self {
         case .talk: s.talkOn ? tr("TALK ON") : tr("TALK OFF")
         case .voice: s.voiceOn ? tr("VOICE ON") : tr("VOICE OFF")
-        case .revenge: s.revengeOn ? tr("REVENGE ON") : tr("REVENGE OFF")
         case .play: s.playOn ? tr("PLAY ON") : tr("PLAY OFF")
-        case .cursor: tr("CURSOR: %@", s.mood.title.uppercased())
-        // Under its own name, as in the menu, so whoever cannot read the current one still finds theirs.
-        case .language: s.language.title.uppercased()
         }
     }
 
@@ -350,9 +307,7 @@ enum ActionsSwitch: CaseIterable {
         switch self {
         case .talk: s.talkOn
         case .voice: s.voiceOn
-        case .revenge: s.revengeOn
         case .play: s.playOn
-        case .cursor, .language: false
         }
     }
 
@@ -361,10 +316,7 @@ enum ActionsSwitch: CaseIterable {
         switch self {
         case .talk: s.talkOn ? tr("They talk again.") : tr("They keep quiet.")
         case .voice: s.voiceOn ? tr("You hear them talk.") : tr("They talk in bubbles only.")
-        case .revenge: s.revengeOn ? tr("They may grab the cursor.") : tr("They leave the cursor alone.")
         case .play: s.playOn ? tr("They play now and then.") : tr("No more games.")
-        case .cursor: tr("The cursor is: %@.", s.mood.title)
-        case .language: tr("They speak %@ now.", s.language.title)
         }
     }
 }
@@ -587,7 +539,6 @@ final class ActionsModel: ObservableObject {
     @Published var page = ActionsPage.main
     var play: (Plays.Kind) -> Void = { _ in }
     var byHand: (HandActivity) -> Void = { _ in }
-    var chooseScreen: () -> Void = {}
     /// The Styles page: who is to wear one (an index into `wearers`), everyone's names, and putting one on.
     @Published var wearer = 0
     @Published var wearers: [String] = []
@@ -761,26 +712,26 @@ struct ActionsSheetView: View {
             if let face = model.keeper?.face { Peeker(face: face, sheetWidth: size.width, headroom: Self.headroom) }
             VStack(alignment: .leading, spacing: 0) {
                 if model.page == .weather {
-                    Text(tr("WEATHER · WHAT SHOULD IT DO?")).font(.system(size: 11, weight: .bold, design: .monospaced))
+                    Text(tr("WEATHER · WHAT SHOULD IT DO?")).font(Pixel.Font.title)
                         .foregroundStyle(Self.faintInk).padding(.bottom, 10)
                     weatherPage.padding(.bottom, 8)
                     line.frame(height: Self.activityLineHeight, alignment: .leading).padding(.bottom, 6)
                     stylesFooter
                 } else if model.page == .styles {
-                    Text(tr("STYLES · WHO WEARS WHAT?")).font(.system(size: 11, weight: .bold, design: .monospaced))
+                    Text(tr("STYLES · WHO WEARS WHAT?")).font(Pixel.Font.title)
                         .foregroundStyle(Self.faintInk).padding(.bottom, 10)
                     stylesPage.padding(.bottom, 8)
                     line.frame(height: Self.activityLineHeight, alignment: .leading).padding(.bottom, 6)
                     stylesFooter
                 } else if model.page == .activities {
-                    Text(tr("ACTIVITIES · WHAT SHOULD THEY PLAY?")).font(.system(size: 11, weight: .bold, design: .monospaced))
+                    Text(tr("ACTIVITIES · WHAT SHOULD THEY PLAY?")).font(Pixel.Font.title)
                         .foregroundStyle(Self.faintInk).padding(.bottom, 10)
                     activities.padding(.bottom, 8)
                     line.frame(height: Self.activityLineHeight, alignment: .leading).padding(.bottom, 6)
                     activitiesFooter
                 } else {
                     HStack(spacing: 8) {
-                        Text(title).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                        Text(title).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                             .lineLimit(1)
                         Spacer(minLength: 0)
                         // The chat window: write to one of them or to all (C).
@@ -802,13 +753,6 @@ struct ActionsSheetView: View {
                             .keyboardShortcut("k", modifiers: [])
                             .help(ActionsLink.toolsTooltip(shortcut: model.toolsShortcut))
                             .fixedSize()
-                        }
-                        // With two monitors or more: which one they live on, chosen from a menu of their names.
-                        // Up here, small: the switches' row has no room left in Russian.
-                        if let screen = model.state.screen {
-                            Button { model.chooseScreen() } label: { Text(screen + " ▾").lineLimit(1).truncationMode(.middle) }
-                                .buttonStyle(TinyPixelButtonStyle())
-                                .frame(maxWidth: 220, alignment: .trailing)
                         }
                     }
                     .frame(height: 22)
@@ -849,16 +793,16 @@ struct ActionsSheetView: View {
         return Button { model.press(tile) } label: {
             VStack(spacing: 5) {
                 picture(ActionIcons.pictures[tile]).frame(width: 76, height: 62)
-                Text(tile.title(in: s)).font(.system(size: 10, weight: .heavy, design: .monospaced))
+                Text(tile.title(in: s)).font(Pixel.Font.hint)
                     .foregroundStyle(PixelBox.rim)
                     .multilineTextAlignment(.center).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     .frame(width: Self.tile.width - 16)
-                Text(tile.detail(in: s) ?? " ").font(.system(size: 9, weight: .semibold, design: .monospaced))
+                Text(tile.detail(in: s) ?? " ").font(Pixel.Font.tile)
                     .foregroundStyle(Self.softInk).monospacedDigit().lineLimit(1)
             }
             .frame(width: Self.tile.width, height: Self.tile.height)
             .overlay(alignment: .topTrailing) {
-                Text(String(tile.key).uppercased()).font(.system(size: 9, weight: .heavy, design: .monospaced))
+                Text(String(tile.key).uppercased()).font(Pixel.Font.tile)
                     .foregroundStyle(Self.faintInk).padding(.top, 8).padding(.trailing, 9)
             }
         }
@@ -881,7 +825,7 @@ struct ActionsSheetView: View {
     @ViewBuilder private var line: some View {
         if model.choosingHide {
             HStack(spacing: 6) {
-                Text(tr("HIDE FOR")).font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+                Text(tr("HIDE FOR")).font(Pixel.Font.label).foregroundStyle(Self.softInk)
                     .padding(.trailing, 2)
                 ForEach(Self.hideChoices, id: \.0) { title, minutes in
                     PixelButton(title: title, small: true, chosen: minutes == 30) { model.hide(minutes) }
@@ -889,7 +833,7 @@ struct ActionsSheetView: View {
             }
         } else {
             Text(model.said.isEmpty ? hint : model.said)
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .font(Pixel.Font.body)
                 .foregroundStyle(model.said.isEmpty ? Self.faintInk : Self.softInk)
                 .lineLimit(1)
         }
@@ -900,14 +844,19 @@ struct ActionsSheetView: View {
             : tr("click a picture, or press its letter · %@ opens and closes this", model.shortcut)
     }
 
-    /// The menu's quick switches, each saying how it stands; the language sits with the links below.
+    /// Two rows, so no word wraps in Russian: the switches and the windows that open
+    /// elsewhere; then the sheet's own pages, its settings, and Done.
     private var switches: some View {
         HStack(spacing: 6) {
-            ForEach(ActionsSwitch.allCases.filter { $0 != .language && $0 != .play }, id: \.self) { flipped in
+            ForEach([ActionsSwitch.talk, .voice], id: \.self) { flipped in
                 PixelButton(title: flipped.title(in: model.state), small: true, chosen: flipped.isOn(in: model.state)) { model.flip(flipped) }
-                    .lineLimit(1).fixedSize()
             }
+            Spacer(minLength: Look.Space.s)
+            PixelButton(title: ActionsLink.chats.title, small: true) { model.open(.chats) }
+            PixelButton(title: ActionsLink.quit.title, small: true) { model.open(.quit) }
+                .keyboardShortcut("q", modifiers: .command)
         }
+        .padding(.trailing, Pixel.cornerRoom - 24)
     }
 
     private var footer: some View {
@@ -920,13 +869,9 @@ struct ActionsSheetView: View {
             PixelButton(title: tr("WEATHER…"), small: true) { model.page = .weather }
                 .keyboardShortcut("w", modifiers: [])
                 .help(ActionsPage.weatherTip)
-            PixelButton(title: ActionsSwitch.language.title(in: model.state), small: true) { model.flip(.language) }
             PixelButton(title: ActionsLink.settings.title, small: true) { model.open(.settings) }
                 .keyboardShortcut(",", modifiers: .command)
-            PixelButton(title: ActionsLink.chats.title, small: true) { model.open(.chats) }
-            PixelButton(title: ActionsLink.quit.title, small: true) { model.open(.quit) }
-                .keyboardShortcut("q", modifiers: .command)
-            Spacer()
+            Spacer(minLength: Look.Space.s)
             PixelButton(title: tr("DONE"), action: done)
                 .keyboardShortcut(.cancelAction)
         }
@@ -977,14 +922,14 @@ extension ActionsSheetView {
         HStack(spacing: 12) {
             activityPicture(picture).frame(width: 56, height: 30)
             // The name leads the line, so a row is two lines in all: eight rows share the page.
-            (Text(title).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundColor(PixelBox.rim)
+            (Text(title).font(Pixel.Font.hint).foregroundColor(PixelBox.rim)
                 + Text("  ")
-                + Text(line).font(.system(size: 9, weight: .semibold, design: .monospaced)).foregroundColor(Color(cgColor: ScreenOverlay.softInk)))
-                .lineLimit(2).minimumScaleFactor(0.8)
+                + Text(line).font(Pixel.Font.hint).foregroundColor(Color(cgColor: ScreenOverlay.softInk)))
+                .lineLimit(2).truncationMode(.tail)
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 2) {
-                Text(action).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(PixelBox.rim)
-                Text(detail).font(.system(size: 9, weight: .semibold, design: .monospaced))
+                Text(action).font(Pixel.Font.hint).foregroundStyle(PixelBox.rim)
+                Text(detail).font(Pixel.Font.hint)
                     .foregroundStyle(Color(cgColor: ScreenOverlay.faintInk)).lineLimit(1)
             }
         }
@@ -1017,7 +962,7 @@ extension ActionsSheetView {
     var stylesPage: some View {
         VStack(alignment: .leading, spacing: Self.activityGap) {
             HStack(spacing: 8) {
-                Text(tr("WHO")).font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(Self.softInk)
+                Text(tr("WHO")).font(Pixel.Font.hint).foregroundStyle(Self.softInk)
                 PixelButton(title: (model.wearers.indices.contains(model.wearer) ? model.wearers[model.wearer] : "—").uppercased() + " ▸", small: true) {
                     if !model.wearers.isEmpty { model.wearer = (model.wearer + 1) % model.wearers.count }
                 }

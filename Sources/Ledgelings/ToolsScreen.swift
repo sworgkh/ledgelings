@@ -177,20 +177,20 @@ struct ToolsScreenView: View {
         return ZStack(alignment: .topLeading) {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
-                Text(tr("TOOLS")).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Self.faintInk)
+                Text(tr("TOOLS")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
                     .frame(height: 24, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: ToolsScreenController.gap) {
                     ForEach(rows.indices, id: \.self) { r in
                         HStack(spacing: ToolsScreenController.gap) {
                             ForEach(rows[r], id: \.self) { tileView($0) }
                         }
+                        // The hovered tile's tag hangs over the row below: its row is drawn on top.
+                        .zIndex(rows[r].contains(model.chosen) ? 1 : 0)
                     }
                 }
                 Spacer(minLength: 0)
-                Text(model.tiles.isEmpty ? tr("No tools chosen: Settings › Tools › Tools screen.")
+                PaperHints(model.tiles.isEmpty ? tr("No tools chosen: Settings › Tools › Tools screen.")
                      : tr("1–%d START  ←→↑↓ CHOOSE  ⏎ START  ⎋ CLOSE", min(model.tiles.count, 9)))
-                    .font(.system(size: 9, weight: .heavy, design: .monospaced)).foregroundStyle(Self.faintInk)
-                    .padding(.trailing, 60)
             }
             .padding(.horizontal, 33)
             .padding(.top, 24)
@@ -206,16 +206,16 @@ struct ToolsScreenView: View {
         return Button { model.choose(index) } label: {
             VStack(spacing: 6) {
                 PixelIcon(rows: tile.tool.icon).scaleEffect(2, anchor: .center).frame(width: 44, height: 44)
-                Text(tile.tool.title).font(.system(size: 10, weight: .heavy, design: .monospaced))
+                Text(tile.tool.title).font(Pixel.Font.hint)
                     .foregroundStyle(PixelBox.rim)
                     .multilineTextAlignment(.center).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     .frame(width: ToolsScreenController.tile.width - 16)
-                Text(tile.on ? tile.shortcut ?? " " : tr("off")).font(.system(size: 9, weight: .semibold, design: .monospaced))
+                Text(tile.on ? tile.shortcut ?? " " : tr("off")).font(Pixel.Font.tile)
                     .foregroundStyle(Self.softInk).lineLimit(1)
             }
             .frame(width: ToolsScreenController.tile.width, height: ToolsScreenController.tile.height)
             .overlay(alignment: .topTrailing) {
-                Text(tile.number <= 9 ? "\(tile.number)" : " ").font(.system(size: 9, weight: .heavy, design: .monospaced))
+                Text(tile.number <= 9 ? "\(tile.number)" : " ").font(Pixel.Font.tile)
                     .foregroundStyle(Self.faintInk).padding(.top, 8).padding(.trailing, 9)
             }
         }

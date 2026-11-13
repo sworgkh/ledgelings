@@ -37,35 +37,48 @@ Voice tab then, and a line said without one tells you so in the Voice tab's stat
 **No icon in the menu bar?** macOS hides the icons that do not fit, and beside a notch
 that is often. Press **⌃⌥L** (Control-Option-L) in any app: Creature Actions comes up,
 and the same keys put it away. Or open Ledgelings again from Spotlight or Finder. The
-sheet has everything this menu has: the switches, Settings…, the chats and Quit. The
+sheet has everything this menu has: Hear Them Talk, Settings…, the chats and Quit. The
 keys are yours to change: [Actions tab](#actions-tab). On Windows, where the tray tucks
 icons into its overflow, it is **Ctrl+Alt+L**, or start Ledgelings again from the Start menu.
+
+The menu holds things to do now and windows to open, in five groups; every switch and
+choice is in Settings, where its search finds it. (*Cursor Revenge* and *Deeds from Talk*,
+*Language*, *The Cursor Is* and *Screen* left the menu in 0.73.2: they are **Chases › Revenge**,
+**Relationships › Deeds from talk**, **Creatures › Language**, **Creatures › The cursor is** and
+**Creatures › Live on**.)
 
 | Item | What it does |
 |---|---|
 | *Day — they sleep in m:ss* / *Night — they wake in m:ss* | The colony's clock. Reads *Always day — night is set to 0* when the night is off, and *Hiding in the house — out in m:ss* while they hide |
+| *the status line* | The last thing that happened with the model: a line, or why nothing was said |
 | *Next: Call mom, Today 14:30* | The next reminder while one is waiting, *(off)* when reminders are off; opens *Tools › Reminders* |
-| **Clipboard History…** (⌃⌥V from any app) | The clipboard picker on your recent copies ([Clipboard](#clipboard)) |
-| **Paste a Snippet…** (⌃⌥B from any app) | The same picker, snippets first |
-| **Edit Snippets…** | The snippet editor: folders, snippets, protected ones, import and export |
-| **Take a Screenshot…** (⌃⌥S from any app) | Freezes the screens with the screenshot toolbar ([Screenshots](#screenshots)) |
-| **Screenshot the Full Screen** (⌘⇧8, the `*` key, from any app) | All screens in one picture (or the one under the cursor), straight to the clipboard or folder |
-| **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
-| **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
+| — | |
+| **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
+| **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
+| **Go Scuba Diving** / **Out of the Water** | A dive now ([Diving tab](#diving-tab)) |
+| **Weather ›**, **Stop Weather** | A weather now, or clear sky; Stop Weather while one is out ([Weather page](#weather-page)) |
+| **Stop Activity** (⌃⌥Q) | Ends whatever game, dive or weather is on |
+| — | |
+| **Chat with the Creatures…** (⌃⌥C from any app; Ctrl+Alt+C on Windows) | The chat window: write to one creature or to everyone, and they answer ([Chat with you](#chat-with-you)) |
+| **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
 | **Translate…** (⌃⌥T from any app; ⌃⌥⇧T translates the last copy) | The Translate sheet: type in any language that is on, the translation appears beside it ([Translate](#translate); macOS) |
 | **Read Aloud…** (⌃⌥R from any app; Ctrl+Alt+Shift+R on Windows) | The Read aloud sheet with the clipboard's text, read out in a preset's voice ([Read aloud](#read-aloud)) |
 | **Stop Reading** (only while it reads) | Ends a reading the sheet let go on when it closed |
-| **Chat with the Creatures…** (⌃⌥C from any app; Ctrl+Alt+C on Windows) | The chat window: write to one creature or to everyone, and they answer ([Chat with you](#chat-with-you)) |
-| **Tools…** (⌃⌥K from any app) | The Tools screen: every tool on one sheet, a tile each ([Tools screen](#tools-screen); macOS) |
-| **Creature Actions…** (the shortcut from any app, ⌃⌥L; ⌘A while that is off) | A sheet of the letter's pixel paper with a picture tile for everything you can ask of them, each with a letter key (below). |
-| **Activities…** | The Creature Actions sheet, opened on its Activities page: the games, each with Play now, and games on or off |
-| **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Talk tab › Voice). Ticked while on |
-| *the status line* | The last thing that happened with the model: a line, or why nothing was said |
-| **Chat History…** | The Chats tab |
-| *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs tab |
-| **Screen ›** | Only with two monitors or more. *All Screens*, then each monitor by name: the creatures live on that one only. The same choice as **Live on** on the Creatures tab |
-| **Language ›** | *English*, *Русский*: each under its own name, so you can find yours whatever the app speaks. Applies at once, no relaunch. The same choice as **Language** on the Creatures tab |
+| **Dictate** / **Stop Dictating** (⌃⌥D from any app) | Starts listening, or stops and writes it down onto the clipboard ([Dictation](#dictation)) |
+| **Take a Screenshot…** (⌃⌥S from any app) | Freezes the screens with the screenshot toolbar ([Screenshots](#screenshots)) |
+| **Screenshot the Full Screen** (⌘⇧8, the `*` key, from any app) | All screens in one picture (or the one under the cursor), straight to the clipboard or folder |
+| **Screenshot the Last Rectangle** (⌘⇧\\ from any app) | The same area as the last rectangle again, straight out; the toolbar while there is none yet |
+| **Clipboard History…** (⌃⌥V from any app) | The clipboard picker on your recent copies ([Clipboard](#clipboard)) |
+| **Paste a Snippet…** (⌃⌥B from any app) | The same picker, snippets first |
+| **Edit Snippets…** | The snippet editor: folders, snippets, protected ones, import and export |
+| — | |
+| **Hear Them Talk** (⌘V on macOS) | Voice on or off: every bubble read out loud (Voice page). Ticked while on. The one switch kept in the menu: it is flipped often, as talk out loud stops and starts being welcome |
+| — | |
+| **Chat History…** | The Chats page |
+| **Relationships…** | The Relationships window |
+| *Spent: $a today, $b this month* | Shown once there is a record; opens the Costs page |
 | **Settings…** | The settings window |
+| — | |
 | **Quit** | Everyone vanishes; nothing is persisted about the hide |
 
 ### Creature Actions
@@ -88,20 +101,17 @@ what the last press did (*A paper plane goes up.*, *No plane: nobody free…*).
 
 While they hide, jumping, talking, tea and planes are greyed: there is nobody outside.
 
-Under the tiles, the menu's switches, so a hidden icon loses nothing. Each says how it
-stands and flips at a click; the sheet stays up.
+Under the tiles, two rows of buttons, so a hidden icon loses nothing. The switches say how
+they stand and flip at a click; the sheet stays up. Every other switch and choice is in
+Settings, as in the menu.
 
 | Button | What it does |
 |---|---|
-| **TALK ON / OFF** | Whether they talk at all (Talk tab) |
+| **TALK ON / OFF** | Whether they talk at all (Talk page) |
 | **VOICE ON / OFF** | *Hear Them Talk*: bubbles read out loud |
-| **REVENGE ON / OFF** | *Cursor Revenge* |
-| **CURSOR: A MENACE** | *The Cursor Is*: each click the next of playmate, just there, menace |
 | *the wrench picture* (K; top right, on the title line) | The Tools screen ([Tools screen](#tools-screen)); its tag names the key, and the shortcut from any app. Hidden while the screen is off. macOS |
-| **SCREEN: ALL ▾** (top right, on the title line) | Only with two monitors or more. A menu of *All Screens* and each monitor by name: pick one and they live there only (the button then names it, *BUILT-IN* for the laptop's own) |
-| **ENGLISH / РУССКИЙ** | The language, under its own name; each click the next |
-| **ACTIVITIES…** (A) | The sheet's inner page, below |
-| **SETTINGS** (⌘, · Ctrl+, on Windows), **CHATS** | Puts the sheet away and opens the settings window, or its Chats tab |
+| **ACTIVITIES…** (A), **STYLES…** (Y), **WEATHER…** (W) | The sheet's inner pages, below |
+| **SETTINGS** (⌘, · Ctrl+, on Windows), **CHATS** | Puts the sheet away and opens the settings window, or its Chats page |
 | **QUIT** (⌘Q · Ctrl+Q) | Quits Ledgelings |
 
 ## What your hand can do
@@ -157,7 +167,7 @@ Switch in the menu (**Language ›**) or on the Creatures tab; nothing needs a r
 | **Colours** | 6 swatches | 1 to 12 | Creature 1 wears colour 1, creature 2 colour 2, and so on, starting over when the colours run out. The body, its highlight, shade and outline are all shades of the one colour; eyes stay black. A species with its own colour (frog, ghost, slime, robot, mushroom, cactus, beetle, crystal, sprout) ignores the slot. **Add Colour**, **Remove Last**, **Reset** restore the six defaults |
 | **Day lasts** | 3 min | 0.5 to 60 | |
 | **Night lasts** | 5 min | 0 to 60 | 0 means they never sleep. At dusk each creature wanders 0.5 to 7 more seconds, then lies down; at dawn each gets up within 3 seconds |
-| **The cursor is** (`cursorMood`) | A menace | A playmate, Just there, A menace | What the creatures make of the cursor. *A playmate*: being chased is a game of tag, and their lines, stories, letters and complaints say so. *Just there*: it comes and goes, nothing to have feelings about; a chase gets a passing remark. *A menace*: a grudge, as they were first written. Applies at once, to built-in lines and to what a model is asked for (through each persona, so an edited prompt follows it while it keeps `{speakerPersona}`). Also in the menu: *The Cursor Is* |
+| **The cursor is** (`cursorMood`) | A menace | A playmate, Just there, A menace | What the creatures make of the cursor. *A playmate*: being chased is a game of tag, and their lines, stories, letters and complaints say so. *Just there*: it comes and goes, nothing to have feelings about; a chase gets a passing remark. *A menace*: a grudge, as they were first written. Applies at once, to built-in lines and to what a model is asked for (through each persona, so an edited prompt follows it while it keeps `{speakerPersona}`). |
 | **Complain when pushed around** (`complainEnabled`) | on | | Chasing a creature off its edge with the cursor, or picking it up, bothers it. Bothered more than *Puts up with* times in a row, it tells you about it in a bubble, in its own voice: off when the cursor is a menace, a tease when it is a playmate, a shrug when it is just there (a model writes it when one is set up and talk is on; that call is priced under *Complaints* in Costs). The count then starts over |
 | **Puts up with** (`complainAfter`) | 4 in a row | 1 to 20 | The 5th chase in a row, by default, gets the complaint |
 | **Calms down after** (`complainCalmSeconds`) | 20 s | 5 to 120 | Leave it alone this long and its count starts again from zero |
@@ -191,7 +201,7 @@ up (a plain press on a sleeper, or a Shift-drag).
 | **How often it comes up** (`huntTalkChance`) | 25 % | 0 to 100 | Share of conversations, tea stories, paper planes and built-in complaints that bring the count up. Milestones are said whatever this is |
 | **Much-chased creatures keep their distance** (`huntWary`) | on | | Only when the cursor is a menace: a creature hunted *After* times today jumps away from 35 % further off, until tomorrow |
 | **After** (`huntWaryAfter`) | 20 in a day | 5 to 200, in fives | |
-| **Grab the cursor in revenge** (`revengeEnabled`) | on | | Chased or picked up *After* times *Within* that time, a creature jumps on the cursor and rides along on it while it tells you off, in its own words and the cursor mood (with a model, priced as *Revenge* in Costs; the first line only). Shake the mouse back and forth to throw it off. Also in the menu as **Cursor Revenge** |
+| **Grab the cursor in revenge** (`revengeEnabled`) | on | | Chased or picked up *After* times *Within* that time, a creature jumps on the cursor and rides along on it while it tells you off, in its own words and the cursor mood (with a model, priced as *Revenge* in Costs; the first line only). Shake the mouse back and forth to throw it off. |
 | **After** (`revengeAfter`) | 10 times | 3 to 50 | Counted per creature, even with complaints off |
 | **Within** (`revengeWindowSeconds`) | 120 s | 30 to 600, in 30s | |
 | **Holds on for at most** (`revengeHoldSeconds`) | no limit | 0 to 30 s; 0 is *no limit*: until shaken off | Then it lets go by itself. Holding the pointer still, never past 10 s. Escape lets go at once (outside Ledgelings only with Accessibility allowed); so does the screen sleeping or locking |
@@ -677,7 +687,7 @@ baseball); a "no" is remembered. The prompt only offers what is possible right n
 (no games at night, no second tea party), so anything else, and anything over the
 limits, is simply not done. With the built-in lines each character invites and answers
 in its own words. Deeds make no calls of their own; they add about 40 tokens to a line.
-*Deeds from Talk* in the menu turns them on and off.
+**What they say can turn into what they do**, above, turns them on and off.
 
 **Memory.** Every conversation, letter and tea party carries what the two remember:
 their story so far, their facts (a promise, a debt, a rivalry), today, yesterday and

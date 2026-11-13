@@ -128,19 +128,12 @@ import Testing
         #expect(Self.right.frame.contains(CGPoint(x: w.colony.doorPoint.x, y: w.colony.doorPoint.y + 1)), "the house stands on it")
     }
 
-    @Test func theSheetShowsWhichScreenInFewWords() {
+    @Test func anUnpluggedScreenIsNamedSo() {
         let defaults = UserDefaults(suiteName: Self.suite)!
         defaults.removePersistentDomain(forName: Self.suite)
         defer { defaults.removePersistentDomain(forName: Self.suite) }
         let s = AppSettings(defaults: defaults, keychain: Keychain(service: Self.suite))
-        #expect(ActionsController.screenTitle(s) == "SCREEN: ALL")
         s.liveOn(HomeScreen.Monitor(id: "gone", name: "Old TV", frame: .zero))
-        #expect(ActionsController.screenTitle(s) == "SCREEN: ALL", "unplugged: they are on all of them")
         #expect(ScreenChoice.current(s).hasPrefix("Old TV (unplugged"))
-        if let attached = ScreenChoice.attached.first {
-            s.liveOn(attached)
-            #expect(ActionsController.screenTitle(s).hasPrefix("SCREEN: "))
-            #expect(ScreenChoice.said(s).contains("only"))
-        }
     }
 }

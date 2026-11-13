@@ -122,8 +122,7 @@ to Zed this morning"). Every pair keeps a small long-term memory (a few dated fa
 line per day, their games), condensed at nightfall and sent to the model only in a
 budgeted few lines, so it stays cheap. It can start from the last two weeks of their
 chat log on your computer. Watch friendships form in the **Relationships** window; every
-limit and budget is in Settings › Relationships, and *Deeds from Talk* in the menu turns
-the doing off.
+limit and budget is in Settings › Relationships, where one switch turns the doing off.
 
 **Plot twists.** Switch a species on, raise the count or import a sprite, and the gang
 notices: for a few days they gossip about the newcomer, welcome it or eye it with
@@ -193,8 +192,8 @@ and reset it, in Settings › Chases.
 **They take revenge.** Chase one around too often (ten times in two minutes) and it
 jumps on your cursor and rides along on it wherever you move, telling you every so
 often exactly what it thinks of you. Wiggle the mouse back and forth to throw it
-off; it tumbles down with a last word. Escape lets go, and *Cursor Revenge* in the
-menu turns it off. In Settings › Chases you can make it hold the pointer still
+off; it tumbles down with a last word. Escape lets go, and Settings › Chases ›
+Revenge turns it off. In Settings › Chases you can make it hold the pointer still
 instead (ten seconds at most), give it a time limit, and make the shake gentler or
 harder.
 

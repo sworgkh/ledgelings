@@ -904,7 +904,7 @@ struct ShotToolbar: View {
             }
             ZStack(alignment: .leading) {
                 Text(hint)
-                    .font(.system(size: 10, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+                    .font(Pixel.Font.hint).foregroundStyle(Self.ink)
                     .padding(.leading, 2)
                     .opacity(model.hovered == nil ? 1 : 0)
                 if let item = model.hovered, let place = places[item] {
@@ -933,7 +933,7 @@ struct ShotToolbar: View {
     /// The hovered item's name and key on a little plate, under it, kept inside the toolbar.
     private func tag(_ text: String, under place: CGRect) -> some View {
         let label = Text(text)
-            .font(.system(size: 11, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+            .font(Pixel.Font.label).foregroundStyle(Self.ink)
             .padding(.horizontal, 8).padding(.vertical, 3)
             .background(PixelBox(style: .well))
             .fixedSize()
@@ -972,7 +972,7 @@ struct ShotToolbar: View {
             .tip(.button(.font), model)
             button(.smaller) { model.act(.textSize(bigger: false)) }
             Text(verbatim: "\(size)")
-                .font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(Self.ink)
+                .font(Pixel.Font.strong).foregroundStyle(Self.ink)
                 .frame(width: 24)
             button(.bigger) { model.act(.textSize(bigger: true)) }
             button(.turnLeft) { model.act(.turn(left: true)) }

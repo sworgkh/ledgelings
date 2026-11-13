@@ -657,8 +657,7 @@ what is said three ways, and adds no model call:
   that asks a model for more built-in lines says the creatures "play tag with",
   "hop out of the way of" or "flee" the mouse cursor.
 
-Changing the mood applies at once, from the settings (Creatures tab) or the menu
-("The Cursor Is").
+Changing the mood applies at once, from the settings (Creatures › The cursor).
 
 ### 6.2 One conversation
 
@@ -3310,9 +3309,8 @@ falls through to whatever is underneath.
 | A clipboard picker row's loudspeaker, or ⌘R (Windows Ctrl+R) | that row read aloud in the sheet (§7.16) |
 | The Tools screen shortcut, in any app (`toolsScreenShortcut` ⌃⌥K; Windows Ctrl+Alt+K), the menu's Tools…, the Creature Actions sheet's wrench (K) | the Tools screen (again: closes); a tile, its number or ⏎ starts that tool (§7.15) |
 | Clipboard picker: ⌘T on a row, ⌥⇥, ⌘⇧T, ⏎ | its translation under it, the next language, the sheet, paste the translation (§7.14.2) |
-| Sheet: Talk, Voice, Revenge, Cursor, the language | the menu's switches, flipped in place (below) |
-| Sheet: `SCREEN: ALL ▾` / `SCREEN: <NAME> ▾` (two monitors or more) | a menu under the pointer: All Screens, then each monitor by name, left to right, the chosen one ticked (and an unplugged choice, greyed); picking one sets `homeScreen` and `homeScreenName` (§2.4) and the line says `They live on <name> only.` |
-| Menu: Screen › (two monitors or more) | the same menu |
+| Sheet: Talk, Voice | `talkEnabled`, `voiceEnabled`, flipped in place (below) |
+| Menu: Hear Them Talk (⌘V on macOS) | `voiceEnabled`; the one switch in the menu, flipped often. Every other switch and choice (revenge, deeds, language, the cursor's mood, the monitor) is in Settings only, findable by its search |
 | Sheet: Settings (⌘, · Ctrl+, on Windows), Chats, Quit (⌘Q · Ctrl+Q) | puts the sheet away; the settings window, its Chats tab, or the app quits |
 | Sheet: Make Them Jump (J) | every creature startles |
 | Sheet: Make Someone Talk (T) | §6.5 |
@@ -3348,16 +3346,11 @@ with nothing to do is drawn at 45 % and ignores presses; while the creatures hid
 Jump, Talk, Tea and Plane are greyed. Under the tiles, one line: the hide durations
 while choosing, else what the last press did for 5 s, else `click a picture, or press
 its letter` (followed, while the shortcut is on, by ` · ⌃⌥L opens and closes this`).
-Under that, a row of small pixel buttons, the menu's switches, each worded as it stands
-and drawn pressed in while on: `TALK ON/OFF` (`talkEnabled`), `VOICE ON/OFF`
-(`voiceEnabled`), `REVENGE ON/OFF` (`revengeEnabled`), `CURSOR: <mood>` (`cursorMood`,
-each press the next mood, round again). With two monitors or more, a smaller pixel
-button (10-point type, 22 points tall) at the right end of the title line,
-`SCREEN: ALL ▾` (`homeScreen`; the chosen monitor's name in capitals, `BUILT-IN` for
-the laptop's own, cut in the middle if long; `ALL` while the chosen one is unplugged),
-opens the Screen menu; the title line stays 28 points tall either way. It is up there
-because the switches' row is full in Russian. The last row: `ACTIVITIES…` (key A), the language under its own name
-(each press the next one), `SETTINGS`, `CHATS`, `QUIT`, and Done at the right.
+Under that, two rows of small pixel buttons, each on one line in every language (a test
+measures them): the switches, worded as they stand and drawn pressed in while on,
+`TALK ON/OFF` (`talkEnabled`) and `VOICE ON/OFF` (`voiceEnabled`), then at the right
+`CHATS` and `QUIT`; and `ACTIVITIES…` (key A), `STYLES…` (Y), `WEATHER…` (W),
+`SETTINGS`, and Done at the right.
 **Activities** is the sheet's one inner page, the same size: `ACTIVITIES · WHAT SHOULD
 THEY PLAY?`, then a row per game (§7.10), each a raised pixel box the width of the
 sheet with its picture (Blocky's `walk`, the hook, the parachute, the hoop), its name,
@@ -3497,7 +3490,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | surfWaveHeight | 2 | 1–4 creature heights, clamped on load |
 | surfPlayers | 5 | 1–10, clamped on load: the most who surf |
 | surfWaterOpacity | 55 | 20–90 %, clamped on load: how solid the water is drawn |
-| revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); also in the menu as *Cursor Revenge* |
+| revengeEnabled | true | a creature hunted far too often grabs the cursor (§4.7.3); Chases › Revenge |
 | revengeAfter | 10 | 3–50, clamped on load: hunts of one creature inside the window that make it grab |
 | revengeWindowSeconds | 120 | 30–600 s, clamped on load |
 | revengeHoldSeconds | 0 | 0–30 s, clamped on load: it lets go by itself after this; 0 = until shaken off (holding the pointer still: 10 s at most) |
@@ -3512,7 +3505,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | shortcutKeyCode / shortcutModifiers | 37 / 12 (⌃⌥L); Windows 76 / 12 (Ctrl+Alt+L) | the platform's key number, 0–127 (Windows: a virtual-key code, 1–254); modifier bits Command 1, Shift 2, Option 4, Control 8, others dropped. Without Command, Control or Option, or with a key out of range: the default |
 | reopenShowsActions | true | opening the app again while it runs brings the sheet up (§11) |
 | teaPartiesEnabled | true | now and then a bump becomes a tea party (§7.8) |
-| homeScreen / homeScreenName | empty / empty | the monitor they live on, by its id, and its name when chosen; empty = every monitor; kept while that monitor is unplugged, when they live on all (§2.4). Creatures tab *Live on*, the sheet's `SCREEN` button, the menu's *Screen* |
+| homeScreen / homeScreenName | empty / empty | the monitor they live on, by its id, and its name when chosen; empty = every monitor; kept while that monitor is unplugged, when they live on all (§2.4). Creatures tab *Live on* |
 | teaPartyChance | 10 | 1–100 %, clamped on load: share of bumps that try a tea party |
 | teaPartyMinutes | 3 | 1–10, clamped on load: how long a party lasts |
 | teaSipSeconds | 6 | 0–30 s, clamped on load: quiet between one story and the next |
@@ -3542,7 +3535,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | storylinesEnabled | true | each new plot grows from the pair's whole history: chronicle + moments (§6.5.2) |
 | storyWords | 80 | 30–200 in steps of 10, clamped on load: words the chronicle is kept to |
 | storyMoments | 8 | 2–20, clamped on load: moments since the last plot the prompt lists one by one; older ones are folded into the chronicle first |
-| deedsEnabled | true | what is said can turn into deeds (§6.5.2.2); also the menu's "Deeds from Talk" |
+| deedsEnabled | true | what is said can turn into deeds (§6.5.2.2); Relationships › Deeds from talk |
 | deedGames / deedTea / deedFlower / deedLetter / deedVisit / deedFollow / deedSleep | true | which deeds may be offered |
 | deedGapMinutes | 4 | 0–60, clamped on load; 0 = no wait: after a deed, the next anywhere waits this long |
 | deedsPerHour | 8 | 0–120, clamped on load; 0 = no limit |
