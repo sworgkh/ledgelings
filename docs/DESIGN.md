@@ -8,7 +8,7 @@ look: if something is missing, it is added here and in `Design.swift` first.
 
 | Kind | Screens | Drawn with |
 |---|---|---|
-| Ordinary window | Settings, Relationships, Snippets | the system's own controls, laid out by `Look` |
+| Ordinary window | Settings, Weather & Sky, Relationships, Snippets | the system's own controls, laid out by `Look` |
 | Pixel paper | Creature Actions, the reminder note, the clipboard picker, Tools, Translate, Read aloud, Chat, the screenshot toolbar | Blocky's style, by `Pixel` |
 
 ## Spacing
@@ -86,7 +86,7 @@ to do (`PaperEmpty`).
 
 | Window | Size (points) |
 |---|---|
-| Settings | 1360×880 |
+| Settings, Weather & Sky | 1360×880 (Weather & Sky in three columns) |
 | Relationships | 980×640 |
 | Snippets | 860×540 |
 | Creature Actions, the reminder note | 564 wide |

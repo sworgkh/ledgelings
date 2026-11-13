@@ -33,13 +33,12 @@ struct WeatherSettingsView: View {
                     ForEach(Effects.ReduceMotion.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 Toggle(tr("The creatures talk about it"), isOn: $settings.weatherTalk)
-                HStack(spacing: 8) {
+                ButtonRow {
                     Button(tr("Stop now")) { play?("stop") }
                         .help(tr("The weather, the falling leaves and the fireflies fade out now, and the snow lying goes"))
                     let paused = settings.weatherPaused()
                     Button(paused ? tr("Resume today") : tr("Pause for today")) { play?(paused ? "resume" : "pause") }
                         .help(tr("No weather, falling leaves, petals or fireflies until tomorrow; what is out now stops"))
-                    Spacer(minLength: 0)
                 }
                 .disabled(play == nil)
             } header: {
@@ -147,12 +146,12 @@ struct WeatherSettingsView: View {
 
     /// A weather's switch and its Play button.
     @ViewBuilder private func kindRow(_ kind: Weather.Kind, _ on: Binding<Bool>, title: String? = nil) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Look.Space.s) {
             Toggle(title ?? kind.title, isOn: on).help(kind.detail)
             Spacer(minLength: 4)
             if let play {
                 Button(tr("Play now"), action: { play(kind.rawValue) })
-                    .controlSize(.small)
+                    .rowAction()
                     .help(tr("Start %@ now", kind.title.lowercased()))
             }
         }
@@ -167,7 +166,7 @@ struct WeatherSettingsView: View {
     @ViewBuilder private func lightRow(_ title: String, _ on: Binding<Bool>, _ count: Binding<Double>,
                                        range: ClosedRange<Double> = AppSettings.skyCountRange, play name: String) -> some View {
         LabeledContent(title) {
-            HStack(spacing: 8) {
+            HStack(spacing: Look.Space.s) {
                 Slider(value: count, in: range, step: 1).disabled(!on.wrappedValue)
                     .frame(minWidth: 50)
                     .help(tr("How many on a monitor at once"))
@@ -175,8 +174,7 @@ struct WeatherSettingsView: View {
                 Toggle(title, isOn: on).labelsHidden().toggleStyle(.switch)
                 if let play {
                     Button(tr("Play now"), action: { play(name) })
-                        .controlSize(.small)
-                        .fixedSize()
+                        .rowAction()
                         .help(tr("Show %@ now", title.lowercased()))
                 }
             }
@@ -203,7 +201,7 @@ struct WeatherPageView: View {
         TwoColumns {
             Section {
                 Toggle(tr("Weather on"), isOn: $settings.weatherEnabled)
-                HStack(spacing: 8) {
+                ButtonRow {
                     Button(tr("Open Weather & Sky…")) { open?() }
                         .keyboardShortcut(.defaultAction)
                         .help(tr("Every aspect of the weather and the sky, in a window of its own"))
@@ -212,7 +210,6 @@ struct WeatherPageView: View {
                     let paused = settings.weatherPaused()
                     Button(paused ? tr("Resume today") : tr("Pause for today")) { play?(paused ? "resume" : "pause") }
                         .help(tr("No weather, falling leaves, petals or fireflies until tomorrow; what is out now stops"))
-                    Spacer(minLength: 0)
                 }
             } header: {
                 SettingsHeader("Weather & Sky")
@@ -229,8 +226,8 @@ struct WeatherPageView: View {
 /// The Weather & Sky window (`WeatherSettingsView`), opened from its settings page, the menu and a search.
 @MainActor
 final class WeatherWindowController {
-    /// Three columns of about 425 points: every aspect fits without scrolling on a 1280×800 laptop screen.
-    static let size = CGSize(width: 1280, height: 760)
+    /// Three columns of about 450 points, the settings window's size (`Look.settingsSize`): every aspect fits without scrolling.
+    static let size = Look.settingsSize
     private let settings: AppSettings
     private var window: NSWindow?
     private var retitle: AnyCancellable?
