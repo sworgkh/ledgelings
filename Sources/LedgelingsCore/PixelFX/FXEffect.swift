@@ -157,6 +157,9 @@ public final class FXInstance {
     /// Leave out the effect's own backdrop, if it has one.
     public func dropBackdrop() { (impl as? FXBackdropped)?.backdrop = false }
 
+    /// Fireflies only: how many fly, of 32.
+    public func setFireflies(_ n: Int) { (impl as? FXFireflies)?.flies = n }
+
     /// Let it end: loops fade out, one-shots are cut short.
     public func stop() { if stopAt == .infinity { stopAt = t } }
     public var stopping: Bool { stopAt != .infinity }

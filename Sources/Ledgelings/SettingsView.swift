@@ -61,6 +61,8 @@ struct SettingsView: View {
     var allowCalendar: (() -> Void)? = nil
     /// Start a weather now (or `clear`), from the Weather page.
     var playWeather: ((String) -> Void)? = nil
+    /// Opens the Weather & Sky window, from its page.
+    var openWeather: (() -> Void)? = nil
     /// The saved translations, for the Translate page's count and Delete all; nil in a test.
     var savedTranslations: SavedTranslations? = nil
     /// What the creatures remember of chatting with the owner, for its Forget buttons; nil in a test.
@@ -105,7 +107,7 @@ struct SettingsView: View {
         case .calendar: CalendarSettingsView(settings: settings)
         case .effects: EffectsSettingsView(settings: settings, preview: previewEffect)
         case .moments: MomentsSettingsView(settings: settings, preview: previewEffect, allowCalendar: allowCalendar)
-        case .weather: WeatherSettingsView(settings: settings, play: playWeather)
+        case .weather: WeatherPageView(settings: settings, play: playWeather, open: openWeather)
         case .chases: ChasesSettingsView(settings: settings, library: library, hunts: hunts)
         case .play: PlaySettingsView(settings: settings)
         case .ballGames: BallGamesSettingsView(settings: settings)
@@ -389,6 +391,7 @@ final class SettingsWindowController {
     var previewEffect: ((String) -> Void)?
     var allowCalendar: (() -> Void)?
     var playWeather: ((String) -> Void)?
+    var openWeather: (() -> Void)?
     var savedTranslations: SavedTranslations?
     var ownerChats: OwnerChatBook?
 
@@ -422,7 +425,7 @@ final class SettingsWindowController {
             if let first = SettingsIndex.search(search).first { navigation.open(first) }
         }
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive, previewEffect: previewEffect, allowCalendar: allowCalendar, playWeather: playWeather, savedTranslations: savedTranslations, ownerChats: ownerChats))
+            let hosting = NSHostingController(rootView: SettingsView(settings: settings, history: history, library: library, spend: spend, bonds: bonds, reminders: reminders, hunts: hunts, beds: beds, voice: voice, navigation: navigation, clips: clips, send: send, editSnippets: editSnippets, clearGarden: clearGarden, openRelationships: openRelationships, seedMemory: seedMemory, readAloud: readAloud, startDive: startDive, previewEffect: previewEffect, allowCalendar: allowCalendar, playWeather: playWeather, openWeather: openWeather, savedTranslations: savedTranslations, ownerChats: ownerChats))
             let made = NSWindow(contentViewController: hosting)
             made.title = tr("Ledgelings Settings")
             retitle = settings.$language.dropFirst().receive(on: RunLoop.main).sink { [weak made] _ in made?.title = tr("Ledgelings Settings") }

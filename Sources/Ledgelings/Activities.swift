@@ -11,6 +11,8 @@ import LedgelingsCore
 final class Activities {
     enum Kind: String, CaseIterable {
         case surf, dive, game
+        /// The weather, the season's light particles and the fireflies (Settings › Weather & Sky).
+        case weather
     }
 
     static let shared = Activities()
@@ -30,6 +32,9 @@ final class Activities {
     func unregister(_ kind: Kind) { entries.removeAll { $0.kind == kind } }
 
     func isRunning(_ kind: Kind) -> Bool { entries.contains { $0.kind == kind && $0.isRunning() } }
+
+    /// Whether anything but `kind` is running: weather waits for a game to end, but not for itself.
+    func isRunning(besides kind: Kind) -> Bool { entries.contains { $0.kind != kind && $0.isRunning() } }
 
     /// Whether anything at all is running.
     var isRunning: Bool { entries.contains { $0.isRunning() } }

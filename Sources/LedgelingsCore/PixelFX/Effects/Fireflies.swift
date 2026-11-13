@@ -14,7 +14,15 @@ final class FXFireflies: FXEffect, FXBackdropped {
     let C: [FXColor], G: [FXColor]
     /// false: no night haze over the whole canvas (drawn over the desktop); the grass and the fireflies stay.
     var backdrop = true
+    /// How many of the 32 fly (Settings › Weather & Sky: a sparse few), spread over the near and far ones.
+    var flies = 32
     init(_ o: FXOptions) { self.o = o; C = FX.fit(o.palette, 6); G = Self.grassRamp }
+
+    /// The fireflies flying, picked evenly from far to near.
+    func swarm(_ S: Double, _ t: Double) -> [Fly] {
+        let n = Swift.max(0, Swift.min(32, flies))
+        return (0..<n).map { k in Self.fly(S, n == 32 ? k : Int(Double(k) * 32 / Double(n) + 32 / Double(n) / 2), t) }
+    }
 
     @inline(__always) static func cyc(_ t: Double, _ n: Double, _ ph: Double = 0) -> Double { (FX.tau * n * t) / D + ph }
 
@@ -49,14 +57,14 @@ final class FXFireflies: FXEffect, FXBackdropped {
                 R.fill(FX.mix(G[0], G[1], k), 0.48 + 0.14 * k, blend: true)
             }
         }
-        let flies = (0..<32).map { Self.fly(S, $0, t) }
+        let flies = swarm(S, t)
         grass(q, t, S, flies, false)
         for f in flies where f.depth < 2 { firefly(q, t, f) }
     }
 
     func draw(_ p: Painter, _ t: Double) {
         let q = FXWeather.Clip(p, Self.meta), S = o.seed
-        let flies = (0..<32).map { Self.fly(S, $0, t) }
+        let flies = swarm(S, t)
         grass(q, t, S, flies, true)
         for f in flies where f.depth == 2 { firefly(q, t, f) }
     }

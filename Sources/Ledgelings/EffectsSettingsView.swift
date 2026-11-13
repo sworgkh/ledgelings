@@ -49,14 +49,6 @@ struct EffectsSettingsView: View {
                 Text(tr("Frost: now and then from December to February, or on a creature nobody has met for that long. Smitten: two friends meet, or a letter's invitation is accepted. Charged: grabbing the cursor, or a whole hour with at least that many keys pressed (counted by the Mac, nothing is recorded). Fired up: grumpy at the cursor, or losing a game. Haunted: now and then from 25 October to 1 November, or Boo spooking a friend."))
             }
 
-            Section {
-                SliderRow(tr("Out for"), value: $settings.effectsAmbientSeconds, in: AppSettings.effectsAmbientSecondsRange, step: 10, unit: tr(" s"))
-                SliderRow(tr("Once every"), value: $settings.effectsAmbientEveryMinutes, in: AppSettings.effectsAmbientEveryRange, step: 1, unit: tr(" min"))
-            } header: {
-                SettingsHeader("Along the bottom edge")
-            } footer: {
-                Text(tr("Fireflies after dark, and the season's particles: snow from December to February, petals from March to May, leaves from September to November. They drift along the bottom of the creatures' monitors for a while, then go. Each has its switch on the Moments page."))
-            }
         }
     }
 }
@@ -70,7 +62,6 @@ struct MomentsSettingsView: View {
     var allowCalendar: (() -> Void)?
 
     static let left: [Effects.Moment] = [.leaveScreen, .arriveScreen, .hardLanding, .dizzy, .goal, .friends, .newArrival, .poof, .bloom, .asleep]
-    static let ambient: [Effects.Moment] = [.night, .winter, .autumn, .spring]
     static let tools: [Effects.Moment] = [.heyLook, .clockTicking, .listening, .translating, .copied, .moneySpent]
 
     var body: some View {
@@ -84,9 +75,8 @@ struct MomentsSettingsView: View {
             }
         } right: {
             Section {
-                rows(Self.ambient)
-            } header: {
-                SettingsHeader("Night and the seasons")
+                Text(tr("Fireflies and the season's leaves, petals and snow are on Weather & Sky."))
+                    .foregroundStyle(.secondary)
             }
             Section {
                 rows(Self.tools)

@@ -11,6 +11,112 @@ import Testing
         mutating func next() -> UInt64 { state = state &* 6364136223846793005 &+ 1442695040888963407; return state }
     }
 
+    static let on = Weather.Switches()
+    static var noTops: Weather.Switches { var s = on; s.windowTops = false; return s }
+    static var heavyRain: Weather.Switches { var s = on; s.rainCount = 300; return s }
+    static var reduced: Weather.Switches { var s = on; s.reduceMotion = true; return s }
+
+    /// A monitor the size the counts are for: 1512 × 982 points at two points a pixel.
+    static func monitor(seed: Double = 3) -> Weather.Sky { Weather.Sky(width: Int(Weather.referenceWidth), height: 491, depth: .medium, seed: seed) }
+
+    /// `seconds` of `kind` (or the season's `light`) at full intensity, a frame at a time.
+    static func run(_ sky: Weather.Sky, _ kind: Weather.Kind?, seconds: Double, switches: Weather.Switches = on, light: Weather.Light? = nil, drift: Double = 0) {
+        for _ in 0..<Int(seconds * 30) { sky.update(1.0 / 30, kind: kind, intensity: kind == nil ? 0 : 1, drift: drift, switches: switches, light: light) }
+    }
+
+    // MARK: Falling from the top, sparse
+
+    @Test func everythingIsBornAboveTheTopEdgeAndFallsTheWholeHeight() {
+        for kind in Weather.Kind.allCases {
+            let sky = Self.monitor()
+            Self.run(sky, kind, seconds: 40, drift: kind.blows ? 49 : 0)
+            #expect(sky.spawnTop < 0, "\(kind.name) is born above the top edge, not part way down: row \(sky.spawnTop)")
+            #expect(sky.falling > 0)
+            // Something reached the bottom third: they fall all the way, not just along the bottom.
+            #expect(sky.particles.list.contains { $0.y > 491 * 0.66 && ($0.k == .flake || $0.k == .drop || $0.k == .leaf) }, "\(kind.name) reaches the bottom")
+        }
+        for kind in Weather.Light.Kind.allCases {
+            let sky = Self.monitor()
+            Self.run(sky, nil, seconds: 60, light: Weather.Light(kind: kind, count: 10))
+            #expect(sky.spawnTop < 0, "the season's \(kind.rawValue) too")
+            #expect(sky.particles.list.contains { $0.y > 491 * 0.66 }, "\(kind.rawValue) falls the whole height")
+            #expect(sky.bottom.isEmpty && sky.wet.allSatisfy { $0 == 0 }, "light ones never pile up")
+        }
+    }
+
+    /// The defaults are a sparse few: about two dozen flakes and forty drops on a whole monitor at once (they
+    /// were 1169 flakes and 376 drops), a handful of leaves on the wind (299).
+    @Test func theDefaultsAreVerySparse() {
+        #expect(Weather.defaultSnowCount == 24 && Weather.defaultRainCount == 40)
+        #expect(Weather.Switches().snowCount == 24 && Weather.Switches().rainCount == 40)
+        let counts: [(Weather.Kind, ClosedRange<Int>)] = [(.snow, 12...40), (.rain, 25...60), (.wind, 3...20), (.storm, 30...80)]
+        for (kind, range) in counts {
+            let sky = Self.monitor()
+            // Long enough for the slowest (snow, about 30 s top to bottom) to settle to its steady number.
+            Self.run(sky, kind, seconds: 70, drift: kind.blows ? 49 : 0)
+            #expect(range.contains(sky.falling), "\(kind.name): \(sky.falling) on screen at once")
+        }
+        let light = Self.monitor()
+        Self.run(light, nil, seconds: 70, light: Weather.Light(kind: .snow, count: 10))
+        #expect((4...18).contains(light.falling), "the season's snow: \(light.falling)")
+    }
+
+    @Test func moreAtOnceAndFasterAreTheirSettings() {
+        var many = Weather.Switches(); many.snowCount = 120
+        let a = Self.monitor(), b = Self.monitor()
+        Self.run(a, .snow, seconds: 70)
+        Self.run(b, .snow, seconds: 70, switches: many)
+        #expect(b.falling > a.falling * 3)
+        var fast = Weather.Switches(); fast.snowSpeed = 2
+        #expect(Weather.Sky.snowFall(fast) == 2 * Weather.Sky.snowFall(Weather.Switches()))
+        var big = Weather.Switches(); big.flakeSize = .large
+        let c = Self.monitor()
+        Self.run(c, .snow, seconds: 40, switches: big)
+        let share = Double(c.particles.list.filter { $0.k == .flake && $0.size > 1 }.count) / Double(max(1, c.falling))
+        #expect(share > 0.4, "large flakes: most of them big")
+        var small = Weather.Switches(); small.flakeSize = .small
+        let d = Self.monitor()
+        Self.run(d, .snow, seconds: 40, switches: small)
+        #expect(!d.particles.list.contains { $0.k == .flake && $0.size > 1 })
+    }
+
+    @Test func eachSwitchTurnsItsPartOff() {
+        var noPiles = Weather.Switches(); noPiles.snowPiles = false
+        let a = Self.monitor()
+        a.setLedges([1: Weather.Ledge(x: 100, y: 200, open: Array(repeating: true, count: 200))], depth: .medium)
+        Self.run(a, .snow, seconds: 40, switches: noPiles)
+        #expect(a.bottom.isEmpty && a.ledgePile(1)?.isEmpty == true, "snow that does not pile up")
+        var noPuddles = Self.heavyRain; noPuddles.puddles = false
+        let b = Self.monitor()
+        Self.run(b, .rain, seconds: 40, switches: noPuddles)
+        #expect(b.wet.allSatisfy { $0 == 0 }, "rain with no puddles")
+        var off = Weather.Switches()
+        off.storm = false
+        #expect(!off.allows(.storm) && off.allows(.rain) && off.allows(.wind))
+        off.snow = false; off.rain = false; off.wind = false
+        #expect(Weather.Kind.allCases.allSatisfy { !off.allows($0) })
+        // The wind's gusts come as often as set.
+        let slow = Weather.Wind(fromLeft: true, strength: .medium, gustEvery: 20)
+        #expect(slow.force(at: 9 + Weather.Wind.gustLasts / 2) < 0.31, "no gust at 9 s when they come every 20")
+        #expect(slow.force(at: 20 + Weather.Wind.gustLasts / 2) > 0.99)
+    }
+
+    @Test func clearingTakesEverythingAtOnce() {
+        let sky = Self.monitor()
+        Self.run(sky, .snow, seconds: 30)
+        sky.fillBottom(by: 4)
+        #expect(!sky.isEmpty)
+        sky.clearAll()
+        #expect(sky.isEmpty)
+    }
+
+    @Test func aStopEndsTheAmbientPeriodNotTheNext() {
+        // Out a minute in every ten: periods count from launch.
+        #expect(Effects.ambientPeriod(at: 590, seconds: 60, everyMinutes: 10) == 0)
+        #expect(Effects.ambientPeriod(at: 610, seconds: 60, everyMinutes: 10) == 1)
+        #expect(Effects.ambientPeriod(at: 1210, seconds: 60, everyMinutes: 10) == 2)
+    }
+
     // MARK: Quiet
 
     static let quiet = Weather.Screen(keyIdle: 600, cursorTravel: 20)
@@ -141,7 +247,7 @@ import Testing
         let sky = Weather.Sky(width: 120, height: 80, depth: .medium, seed: 3)
         sky.setLedges([7: Weather.Ledge(x: 20, y: 40, open: Array(repeating: true, count: 60))], depth: .medium)
         for _ in 0..<(30 * 120) {
-            sky.update(1.0 / 30, kind: .snow, intensity: 1, drift: 0, heaviness: .medium, depth: .medium, windowTops: true, reduced: false)
+            sky.update(1.0 / 30, kind: .snow, intensity: 1, drift: 0, switches: Self.on)
         }
         #expect(sky.bottom.average > 4, "the bottom pile grew")
         #expect((sky.ledgePile(7)?.average ?? 0) > 2, "so did the window's top")
@@ -154,29 +260,31 @@ import Testing
         #expect((sky.ledgePile(7)?.average ?? 1) == 0, "it starts bare where it went")
         // Snow tops off: the window tops' snow goes, the bottom's stays.
         sky.fillLedges(by: 3)
-        sky.update(0.1, kind: .snow, intensity: 1, drift: 0, heaviness: .medium, depth: .medium, windowTops: false, reduced: false)
+        sky.update(0.1, kind: .snow, intensity: 1, drift: 0, switches: Self.noTops)
         #expect(sky.ledgePile(7)?.isEmpty == true)
         // It stops: slowly, all of it melts.
         let before = sky.bottom.average
-        sky.update(10, kind: nil, intensity: 0, drift: 0, heaviness: .medium, depth: .medium, windowTops: true, reduced: false)
+        sky.update(10, kind: nil, intensity: 0, drift: 0, switches: Self.on)
         #expect(sky.bottom.average < before && sky.bottom.average > before - 1, "slowly")
-        for _ in 0..<100 { sky.update(10, kind: nil, intensity: 0, drift: 0, heaviness: .medium, depth: .medium, windowTops: true, reduced: false) }
+        for _ in 0..<100 { sky.update(10, kind: nil, intensity: 0, drift: 0, switches: Self.on) }
         #expect(sky.bottom.isEmpty)
     }
 
     @Test func rainMakesPuddlesThatDry() {
         let sky = Weather.Sky(width: 100, height: 60, depth: .medium, seed: 5)
-        for _ in 0..<(30 * 60) { sky.update(1.0 / 30, kind: .rain, intensity: 1, drift: 0, heaviness: .high, depth: .medium, windowTops: true, reduced: false) }
+        for _ in 0..<(30 * 60) { sky.update(1.0 / 30, kind: .rain, intensity: 1, drift: 0, switches: Self.heavyRain) }
         #expect(sky.wet.max()! > 0.5, "a puddle")
         #expect(sky.bottom.isEmpty, "rain piles nothing")
-        sky.update(Weather.drySeconds + 1, kind: nil, intensity: 0, drift: 0, heaviness: .high, depth: .medium, windowTops: true, reduced: false)
+        sky.update(Weather.drySeconds + 1, kind: nil, intensity: 0, drift: 0, switches: Self.heavyRain)
         #expect(sky.wet.max()! == 0)
     }
 
     @Test func reduceMotionHalvesTheParticles() {
         func count(_ reduced: Bool) -> Int {
-            let sky = Weather.Sky(width: 200, height: 400, depth: .medium, seed: 9)
-            for _ in 0..<60 { sky.update(1.0 / 30, kind: .snow, intensity: 1, drift: 0, heaviness: .medium, depth: .medium, windowTops: true, reduced: reduced) }
+            var s = reduced ? Self.reduced : Self.on
+            s.snowCount = 300
+            let sky = Self.monitor(seed: 9)
+            for _ in 0..<(30 * 20) { sky.update(1.0 / 30, kind: .snow, intensity: 1, drift: 0, switches: s) }
             return sky.particles.count
         }
         let full = count(false), half = count(true)
@@ -206,7 +314,7 @@ import Testing
         var events: [Weather.Bowl.Event] = []
         var t = 0.0
         while t < 60 {
-            if let e = bowl.update(0.1, intensity: 1, heaviness: .medium) { events.append(e) }
+            if let e = bowl.update(0.1, intensity: 1, weight: 1) { events.append(e) }
             t += 0.1
             if bowl.state == .fallen { break }
         }
@@ -214,8 +322,8 @@ import Testing
         #expect(t >= Weather.Bowl.fillSeconds && t < Weather.Bowl.fillSeconds + Weather.Bowl.tipSeconds + 1)
         #expect(bowl.tip == 1 && bowl.water == 0)
         var heavy = Weather.Bowl(), light = Weather.Bowl()
-        _ = heavy.update(5, intensity: 1, heaviness: .high)
-        _ = light.update(5, intensity: 1, heaviness: .low)
+        _ = heavy.update(5, intensity: 1, weight: 1.6)
+        _ = light.update(5, intensity: 1, weight: 0.5)
         #expect(heavy.water > light.water, "heavier rain fills it sooner")
     }
 
@@ -224,7 +332,7 @@ import Testing
     @Test func theWindPushesTheLightOnesAndSlowsThoseWalkingIntoIt() {
         let wind = Weather.Wind(fromLeft: true, strength: .medium)
         #expect(wind.force(at: Weather.Wind.gustLasts / 2) > 0.99, "a gust at its height")
-        #expect(wind.force(at: Weather.Wind.gustEvery - 1) < 0.31, "a breeze between gusts")
+        #expect(wind.force(at: wind.gustEvery - 1) < 0.31, "a breeze between gusts")
         #expect(wind.peaks(at: Weather.Wind.gustLasts / 2 + 0.01, dt: 0.03))
         #expect(!wind.peaks(at: 4, dt: 0.03))
         #expect(Weather.push(size: 1, force: 1, strength: .medium) >= 4, "a light one, a few pixels")

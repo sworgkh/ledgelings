@@ -168,13 +168,19 @@ public enum FXKind: Int {
 }
 
 /// Particle flags: smokes (a fire puff leaves smoke), big (bigger, slower smoke), back (drawn behind).
-public enum FXFlag { public static let smokes = 1, big = 2, back = 4 }
+public enum FXFlag {
+    public static let smokes = 1, big = 2, back = 4
+    /// Weather's light season particles: they fall and are gone, never piling up or wetting the ground.
+    public static let light = 8
+}
 
 /// A particle system: spawn kinds, step them, draw "back" (the soft kinds) or "front" (the rest).
 public final class FXParticles {
     public struct P {
         public var k: FXKind, x: Double, y: Double, vx: Double, vy: Double, life: Double, max: Double
         public var col: FXColor, size: Double, seed: Double, delay: Double, flag: Int
+        /// Weather's flakes and leaves: how fast it settles to falling, in pixels a second (0: pixelfx's own pace).
+        public var fall = 0.0
     }
     public let R: Rng
     public var list: [P] = []
@@ -197,8 +203,8 @@ public final class FXParticles {
 
     /// delay: seconds before it appears; col 0 lets fire and smoke use their own ramps.
     public func spawn(_ k: FXKind, _ x: Double, _ y: Double, _ vx: Double, _ vy: Double, _ life: Double,
-                      _ col: FXColor = FX.white, _ size: Double = 1, _ delay: Double = 0, _ flag: Int = 0) {
-        list.append(P(k: k, x: x, y: y, vx: vx, vy: vy, life: life, max: life, col: col, size: size, seed: R.next() * 100, delay: delay, flag: flag))
+                      _ col: FXColor = FX.white, _ size: Double = 1, _ delay: Double = 0, _ flag: Int = 0, fall: Double = 0) {
+        list.append(P(k: k, x: x, y: y, vx: vx, vy: vy, life: life, max: life, col: col, size: size, seed: R.next() * 100, delay: delay, flag: flag, fall: fall))
     }
 
     static func soft(_ k: FXKind) -> Bool { k == .vapour || k == .dust || k == .smoke }
@@ -267,14 +273,14 @@ public final class FXParticles {
                 p.vx += p.vx * 3 * dt; p.vy += p.vy * 3 * dt
             case .flake:
                 p.vx -= p.vx * 2.2 * dt
-                p.vy -= p.vy * 2.2 * dt - 35 * dt
+                p.vy -= p.vy * 2.2 * dt - (p.fall > 0 ? p.fall * 2.2 : 35) * dt
                 p.x += sin(self.t * 2.5 + p.seed) * 7 * dt
                 if wind != 0 { p.x += wind * dt * (0.7 + FX.mod(p.seed, 0.6)) }
             case .drop:
                 p.vx += (wind - p.vx) * 4 * dt
             case .leaf:
-                p.vx += (wind * (0.6 + FX.mod(p.seed, 0.6)) - p.vx) * 2 * dt
-                p.vy = sin(t * 3.1 + p.seed) * 14 + 6
+                p.vx += (wind * (0.6 + FX.mod(p.seed, 0.6)) + sin(t * 1.3 + p.seed) * 9 - p.vx) * 2 * dt
+                p.vy = sin(t * 3.1 + p.seed) * 14 + (p.fall > 0 ? p.fall : 6)
             case .ember:
                 p.vy += (-30 + sin(t * 3 + p.seed) * 20) * dt
                 p.vx += cos(t * 2.3 + p.seed) * 45 * dt
