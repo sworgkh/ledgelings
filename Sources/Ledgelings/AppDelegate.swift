@@ -471,6 +471,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(await DragCheck.run(targets.filter { only == nil || $0.window == only }, settings: settings) ? 0 : 1)
             }
         }
+        // `--menu`: the menu bar menu as it would open now, one line per item (`---` a separator, `  ` a submenu's item), then quit.
+        if args.contains("--menu") {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                guard let menu = statusItem?.menu else { exit(1) }
+                menuNeedsUpdate(menu)
+                func mods(_ m: NSEvent.ModifierFlags) -> String {
+                    (m.contains(.control) ? "⌃" : "") + (m.contains(.option) ? "⌥" : "") + (m.contains(.shift) ? "⇧" : "") + (m.contains(.command) ? "⌘" : "")
+                }
+                func dump(_ menu: NSMenu, _ indent: String) {
+                    for item in menu.items where !item.isHidden {
+                        if item.isSeparatorItem { print(indent + "---"); continue }
+                        let key = item.keyEquivalent.isEmpty ? "" : "  [\(mods(item.keyEquivalentModifierMask))\(item.keyEquivalent.uppercased())]"
+                        print(indent + (item.state == .on ? "✓ " : "") + item.title.trimmingCharacters(in: .whitespaces) + key + (item.isEnabled ? "" : "  (shown, not clickable)"))
+                        if let sub = item.submenu { dump(sub, indent + "    ") }
+                    }
+                }
+                dump(menu, "")
+                exit(0)
+            }
+        }
+        // `--clip-picker [snippets] [--snapshot out.png]`, `--snippets [--snapshot out.png]`: the clipboard picker over the
+        // real history (or on its snippets), or the Snippets editor, on the real screen, written to a PNG, then closed.
+        if args.contains("--clip-picker") || args.contains("--snippets") {
+            let (picker, snippets) = (picker, snippetsWindow)
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                if args.contains("--snippets") { snippets.show() } else { picker.show(value("--clip-picker") == "snippets" ? .snippets : .recent) }
+                try? await Task.sleep(for: .seconds(1.5))
+                if let out = value("--snapshot").map({ URL(fileURLWithPath: $0) }) {
+                    if args.contains("--snippets") { try? snippets.snapshot(to: out) } else { try? picker.snapshot(to: out) }
+                }
+                exit(0)
+            }
+        }
         if args.contains("--tools") {
             let toolsScreen = toolsScreen
             Task { @MainActor in
