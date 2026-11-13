@@ -16,10 +16,13 @@ public static partial class Weather
     public enum Level { Low, Medium, High }
     /// <summary>How often weather comes once the screen is quiet.</summary>
     public enum Frequency { Rarely, Sometimes, Often }
+    /// <summary>How big the snowflakes are.</summary>
+    public enum FlakeSize { Small, Medium, Large }
 
     public static IReadOnlyList<Kind> Kinds { get; } = Enum.GetValues<Kind>();
     public static IReadOnlyList<Level> Levels { get; } = Enum.GetValues<Level>();
     public static IReadOnlyList<Frequency> Frequencies { get; } = Enum.GetValues<Frequency>();
+    public static IReadOnlyList<FlakeSize> FlakeSizes { get; } = Enum.GetValues<FlakeSize>();
 
     static string Code(Enum e) { var s = e.ToString(); return char.ToLowerInvariant(s[0]) + s[1..]; }
 
@@ -49,6 +52,12 @@ public static partial class Weather
     /// <summary>Times the medium amount.</summary>
     public static double Factor(this Level l) => l switch { Level.Low => 0.5, Level.Medium => 1, _ => 1.6 };
 
+    public static string Code(this FlakeSize f) => Code((Enum)f);
+    public static FlakeSize? FlakeSizeNamed(string? code) => FlakeSizes.Cast<FlakeSize?>().FirstOrDefault(f => f!.Value.Code() == code);
+    public static string Title(this FlakeSize f) => L10n.Tr(f switch { FlakeSize.Small => "Small", FlakeSize.Medium => "Medium", _ => "Large" });
+    /// <summary>The share of flakes drawn big (a cross of five pixels rather than one).</summary>
+    public static double BigShare(this FlakeSize f) => f switch { FlakeSize.Small => 0, FlakeSize.Medium => 0.25, _ => 0.7 };
+
     public static string Code(this Frequency f) => Code((Enum)f);
     public static Frequency? FrequencyNamed(string? code) => Frequencies.Cast<Frequency?>().FirstOrDefault(f => f!.Value.Code() == code);
     public static string Title(this Frequency f) => L10n.Tr(f switch { Frequency.Rarely => "Rarely", Frequency.Sometimes => "Sometimes", _ => "Often" });
@@ -64,12 +73,30 @@ public static partial class Weather
         public bool Snow { get; init; } = true;
         public bool Rain { get; init; } = true;
         public bool Wind { get; init; } = true;
+        public bool Storm { get; init; } = true;
         public double QuietMinutes { get; init; } = 5;
         public Frequency Frequency { get; init; } = Frequency.Sometimes;
         public double LastsMinutes { get; init; } = 3;
+        /// <summary>Flakes on a monitor at once (<see cref="ReferenceWidth"/> wide; a wider one gets more).</summary>
+        public double SnowCount { get; init; } = DefaultSnowCount;
+        public FlakeSize FlakeSize { get; init; } = FlakeSize.Medium;
+        /// <summary>Times the ordinary falling speed.</summary>
+        public double SnowSpeed { get; init; } = 1;
+        /// <summary>Snow lies along the bottom (and on window tops): off, it falls and is gone.</summary>
+        public bool SnowPiles { get; init; } = true;
         public Level SnowDepth { get; init; } = Level.Medium;
-        public Level RainHeaviness { get; init; } = Level.Medium;
+        /// <summary>Drops on a monitor at once.</summary>
+        public double RainCount { get; init; } = DefaultRainCount;
+        public double RainSpeed { get; init; } = 1;
+        public bool Puddles { get; init; } = true;
+        public bool Umbrellas { get; init; } = true;
+        /// <summary>The umbrella of a creature on the top edge fills with rain, tips and falls.</summary>
+        public bool MenuBarUmbrella { get; init; } = true;
         public Level WindStrength { get; init; } = Level.Medium;
+        /// <summary>Seconds from one gust to the next.</summary>
+        public double GustSeconds { get; init; } = 9;
+        /// <summary>A strong gust pushes the light ones along, and can blow one off the top edge.</summary>
+        public bool WindPushes { get; init; } = true;
         /// <summary>Creatures closer than this (points, along the edge) share one umbrella; 0: everyone has its own.</summary>
         public double ShareDistance { get; init; } = 40;
         public bool FollowSeason { get; init; } = true;
@@ -83,9 +110,20 @@ public static partial class Weather
             Kind.Snow => Snow,
             Kind.Rain => Rain,
             Kind.Wind => Wind,
-            _ => Rain && Wind,
+            _ => Storm && Rain && Wind,
         };
+
+        /// <summary>How heavy the rain is against the default, for the umbrella filling on the top edge.</summary>
+        public double RainWeight => Math.Max(0.2, RainCount / DefaultRainCount);
     }
+
+    /// <summary>Very sparse by default: a few flakes, a few dozen drops and a handful of leaves on a whole monitor at once.</summary>
+    public const double DefaultSnowCount = 24, DefaultRainCount = 40;
+    public static readonly (double Min, double Max) SnowCountRange = (2, 300), RainCountRange = (2, 400), SpeedRange = (0.5, 2), GustRange = (3, 30);
+    /// <summary>Leaves or dust on the wind on a monitor at once, at medium strength.</summary>
+    public const double WindLeaves = 8;
+    /// <summary>The monitor width the counts are for, in art pixels (a 1512-point laptop screen at two points a pixel).</summary>
+    public const double ReferenceWidth = 756;
 
     // MARK: When the screen is quiet
 
@@ -173,6 +211,8 @@ public static partial class Weather
         /// <summary>Started by hand (the menu, Play now): the owner coming back does not end it.</summary>
         public bool ByHand { get; }
         public const double ComeIn = 6, EaseOff = 8;
+        /// <summary>Seconds to go when stopped (Stop activity, Stop Weather): about one.</summary>
+        public const double StopFade = 1;
 
         public Spell(Kind kind, double lasts, bool byHand = false) { Kind = kind; Lasts = lasts; ByHand = byHand; }
 
@@ -316,12 +356,12 @@ public static partial class Weather
         public const double TipSeconds = 1.2;
 
         /// <summary>Rain at <paramref name="intensity"/> (0…1) with <paramref name="heaviness"/>: it fills; full, it tips; tipped, it spills and falls.</summary>
-        public Event? Update(double dt, double intensity, Level heaviness)
+        public Event? Update(double dt, double intensity, double weight)
         {
             switch (Now)
             {
                 case State.Holding:
-                    Water = Math.Min(1, Water + dt * intensity * heaviness.Factor() / FillSeconds);
+                    Water = Math.Min(1, Water + dt * intensity * weight / FillSeconds);
                     if (Water >= 1) { Now = State.Tipping; tipping = 0; return Event.Full; }
                     break;
                 case State.Tipping:
@@ -345,8 +385,13 @@ public static partial class Weather
     {
         public double From { get; }
         public Level Strength { get; }
-        public const double GustEvery = 9, GustLasts = 2.5;
-        public Wind(bool fromLeft, Level strength) { From = fromLeft ? 1 : -1; Strength = strength; }
+        /// <summary>Seconds between gusts.</summary>
+        public double GustEvery { get; }
+        public const double GustLasts = 2.5;
+        public Wind(bool fromLeft, Level strength, double gustEvery = 9)
+        {
+            From = fromLeft ? 1 : -1; Strength = strength; GustEvery = Math.Max(GustLasts + 0.5, gustEvery);
+        }
 
         /// <summary>How hard it blows at <paramref name="time"/> seconds into the spell, 0…1.</summary>
         public double Force(double time)

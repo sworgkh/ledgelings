@@ -1,0 +1,223 @@
+<UserControl x:Class="Ledgelings.UI.WeatherSkyPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Ledgelings.UI">
+  <!-- Every aspect of the weather and the sky in three columns, the Mac's WeatherSettingsView: the whole thing and when
+       weather comes; snow, and the wind with the storm; rain, and the season's light particles with the fireflies. -->
+  <UserControl.Resources>
+    <Style x:Key="Footer" TargetType="TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Foreground" Value="Gray"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+    <Style x:Key="RowLabel" TargetType="TextBlock">
+      <Setter Property="Width" Value="170"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="RowValue" TargetType="TextBlock">
+      <Setter Property="Width" Value="56"/>
+      <Setter Property="TextAlignment" Value="Right"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="DockPanel.Dock" Value="Right"/>
+    </Style>
+    <Style x:Key="Play" TargetType="Button">
+      <Setter Property="DockPanel.Dock" Value="Right"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Padding" Value="8,0"/>
+      <Setter Property="Margin" Value="8,0,0,0"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style TargetType="GroupBox">
+      <Setter Property="Padding" Value="8"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+    <Style TargetType="Slider">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="IsSnapToTickEnabled" Value="True"/>
+    </Style>
+    <Style TargetType="DockPanel">
+      <Setter Property="Margin" Value="0,2"/>
+    </Style>
+  </UserControl.Resources>
+  <Grid Margin="12">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="12"/>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="12"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0">
+      <GroupBox ui:Tr.Header="Weather &amp; Sky">
+        <StackPanel>
+          <CheckBox ui:Tr.Content="Weather on" IsChecked="{Binding WeatherEnabled, Mode=TwoWay}"/>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Reduce motion" Style="{StaticResource RowLabel}"/>
+            <ComboBox x:Name="ReduceMotionBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherReduceMotionIndex, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="The creatures talk about it" IsChecked="{Binding WeatherTalk, Mode=TwoWay}" Margin="0,2"/>
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <Button x:Name="StopNow" ui:Tr.Content="Stop now" Tag="stop" Click="Play_Click" Padding="10,2" Margin="0,0,8,0"/>
+            <Button x:Name="PauseToday" Click="Pause_Click" Padding="10,2"/>
+          </StackPanel>
+          <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Everything falls from above the top edge, the whole height, a sparse few at a time. Stop activity (Ctrl + Alt + Q), the Stop button and Stop Weather in the tray fade it all out in a second; nothing is switched off."/>
+        </StackPanel>
+      </GroupBox>
+      <GroupBox ui:Tr.Header="When weather comes">
+        <StackPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="How quiet the screen must be" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherQuietMinutes}" ui:Tr.Unit=" min"/>
+            <Slider Minimum="1" Maximum="60" TickFrequency="1" Value="{Binding WeatherQuietMinutes, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="How often" Style="{StaticResource RowLabel}"/>
+            <ComboBox x:Name="FrequencyBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherFrequencyIndex, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="How long it lasts" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherMinutes}" ui:Tr.Unit=" min"/>
+            <Slider Minimum="1" Maximum="20" TickFrequency="1" Value="{Binding WeatherMinutes, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="Follow the season" IsChecked="{Binding WeatherFollowSeason, Mode=TwoWay}" Margin="0,2"/>
+          <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Quiet: no typing, the cursor barely moving, nothing full screen, no game and no call (an app using the microphone). When you come back it eases off."/>
+        </StackPanel>
+      </GroupBox>
+      <GroupBox ui:Tr.Header="When leaves and fireflies come">
+        <StackPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Fireflies come out" Style="{StaticResource RowLabel}"/>
+            <ComboBox x:Name="FirefliesFromBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding SkyFirefliesFromIndex, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Out for" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAmbientSeconds}" ui:Tr.Unit=" s"/>
+            <Slider Minimum="10" Maximum="600" TickFrequency="10" Value="{Binding EffectsAmbientSeconds, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Once every" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAmbientEveryMinutes}" ui:Tr.Unit=" min"/>
+            <Slider Minimum="1" Maximum="120" TickFrequency="1" Value="{Binding EffectsAmbientEveryMinutes, Mode=TwoWay}"/>
+          </DockPanel>
+        </StackPanel>
+      </GroupBox>
+    </StackPanel>
+
+    <StackPanel Grid.Column="2">
+      <GroupBox ui:Tr.Header="Snow">
+        <StackPanel>
+          <DockPanel>
+            <Button x:Name="PlaySnow" Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="snow" Click="Play_Click"/>
+            <CheckBox x:Name="SnowBox" ui:Tr.Content="Snow" IsChecked="{Binding WeatherSnow, Mode=TwoWay}" VerticalAlignment="Center"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="How many at once" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherSnowCount}"/>
+            <Slider Minimum="2" Maximum="300" TickFrequency="1" Value="{Binding WeatherSnowCount, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Flake size" Style="{StaticResource RowLabel}"/>
+            <ComboBox x:Name="FlakeSizeBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherFlakeSizeIndex, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Speed" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherSnowSpeed}" ui:Tr.Unit="×"/>
+            <Slider Minimum="0.5" Maximum="2" TickFrequency="0.1" Value="{Binding WeatherSnowSpeed, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="Piles up" IsChecked="{Binding WeatherSnowPiles, Mode=TwoWay}" Margin="0,2"/>
+          <DockPanel IsEnabled="{Binding WeatherSnowPiles}">
+            <TextBlock ui:Tr.Text="How deep" Style="{StaticResource RowLabel}"/>
+            <ComboBox x:Name="SnowDepthBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherSnowDepthIndex, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="On window tops too" IsChecked="{Binding WeatherWindowTops, Mode=TwoWay}" IsEnabled="{Binding WeatherSnowPiles}" Margin="0,2"/>
+          <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Flakes on a whole monitor at once. Piled up, they wade in it and build snowmen."/>
+        </StackPanel>
+      </GroupBox>
+      <GroupBox ui:Tr.Header="Wind and storm">
+        <StackPanel>
+          <DockPanel>
+            <Button x:Name="PlayWind" Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="wind" Click="Play_Click"/>
+            <CheckBox x:Name="WindBox" ui:Tr.Content="Wind" IsChecked="{Binding WeatherWind, Mode=TwoWay}" VerticalAlignment="Center"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="How strong" Style="{StaticResource RowLabel}"/>
+            <ComboBox x:Name="WindStrengthBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherWindStrengthIndex, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="A gust every" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherGustSeconds}" ui:Tr.Unit=" s"/>
+            <Slider Minimum="3" Maximum="30" TickFrequency="1" Value="{Binding WeatherGustSeconds, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="Gusts push the light ones" IsChecked="{Binding WeatherWindPushes, Mode=TwoWay}" Margin="0,2"/>
+          <DockPanel>
+            <Button x:Name="PlayStorm" Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="storm" Click="Play_Click"/>
+            <CheckBox x:Name="StormBox" ui:Tr.Content="Storm: rain and wind together" IsChecked="{Binding WeatherStorm, Mode=TwoWay}" VerticalAlignment="Center"/>
+          </DockPanel>
+          <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Leaves or dust blow from one side; a strong gust can blow a light one off the top edge."/>
+        </StackPanel>
+      </GroupBox>
+    </StackPanel>
+
+    <StackPanel Grid.Column="4">
+      <GroupBox ui:Tr.Header="Rain">
+        <StackPanel>
+          <DockPanel>
+            <Button x:Name="PlayRain" Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="rain" Click="Play_Click"/>
+            <CheckBox x:Name="RainBox" ui:Tr.Content="Rain" IsChecked="{Binding WeatherRain, Mode=TwoWay}" VerticalAlignment="Center"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="How many at once" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherRainCount}"/>
+            <Slider Minimum="2" Maximum="400" TickFrequency="1" Value="{Binding WeatherRainCount, Mode=TwoWay}"/>
+          </DockPanel>
+          <DockPanel>
+            <TextBlock ui:Tr.Text="Speed" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherRainSpeed}" ui:Tr.Unit="×"/>
+            <Slider Minimum="0.5" Maximum="2" TickFrequency="0.1" Value="{Binding WeatherRainSpeed, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="Puddles" IsChecked="{Binding WeatherPuddles, Mode=TwoWay}" Margin="0,2"/>
+          <CheckBox ui:Tr.Content="Umbrellas" IsChecked="{Binding WeatherUmbrellas, Mode=TwoWay}" Margin="0,2"/>
+          <DockPanel IsEnabled="{Binding WeatherUmbrellas}">
+            <TextBlock ui:Tr.Text="Umbrella sharing distance" Style="{StaticResource RowLabel}"/>
+            <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherShareDistance}" ui:Tr.Unit=" pt" ui:Tr.Zero="each their own"/>
+            <Slider Minimum="0" Maximum="200" TickFrequency="5" Value="{Binding WeatherShareDistance, Mode=TwoWay}"/>
+          </DockPanel>
+          <CheckBox ui:Tr.Content="On the top edge an umbrella fills and falls" IsChecked="{Binding WeatherMenuBarUmbrella, Mode=TwoWay}" IsEnabled="{Binding WeatherUmbrellas}" Margin="0,2"/>
+          <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Creatures closer than the distance share a bigger umbrella. Hanging from the top edge, an umbrella fills like a bowl, tips over and falls."/>
+        </StackPanel>
+      </GroupBox>
+      <GroupBox ui:Tr.Header="Seasons and night">
+        <StackPanel>
+          <DockPanel>
+            <Button Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="autumn" Click="Play_Click"/>
+            <TextBlock Style="{StaticResource RowValue}" Width="32" ui:Tr.Value="{Binding SkyAutumnCount}"/>
+            <CheckBox x:Name="AutumnBox" ui:Tr.Content="Autumn leaves" IsChecked="{Binding SkyAutumnLeaves, Mode=TwoWay}" Width="170" VerticalAlignment="Center"/>
+            <Slider Minimum="2" Maximum="100" TickFrequency="1" Value="{Binding SkyAutumnCount, Mode=TwoWay}" IsEnabled="{Binding SkyAutumnLeaves}"/>
+          </DockPanel>
+          <DockPanel>
+            <Button Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="spring" Click="Play_Click"/>
+            <TextBlock Style="{StaticResource RowValue}" Width="32" ui:Tr.Value="{Binding SkySpringCount}"/>
+            <CheckBox x:Name="SpringBox" ui:Tr.Content="Spring petals" IsChecked="{Binding SkySpringPetals, Mode=TwoWay}" Width="170" VerticalAlignment="Center"/>
+            <Slider Minimum="2" Maximum="100" TickFrequency="1" Value="{Binding SkySpringCount, Mode=TwoWay}" IsEnabled="{Binding SkySpringPetals}"/>
+          </DockPanel>
+          <DockPanel>
+            <Button Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="winter" Click="Play_Click"/>
+            <TextBlock Style="{StaticResource RowValue}" Width="32" ui:Tr.Value="{Binding SkyWinterCount}"/>
+            <CheckBox x:Name="WinterBox" ui:Tr.Content="Winter snow" IsChecked="{Binding SkyWinterSnow, Mode=TwoWay}" Width="170" VerticalAlignment="Center"/>
+            <Slider Minimum="2" Maximum="100" TickFrequency="1" Value="{Binding SkyWinterCount, Mode=TwoWay}" IsEnabled="{Binding SkyWinterSnow}"/>
+          </DockPanel>
+          <DockPanel>
+            <Button Style="{StaticResource Play}" ui:Tr.Content="Play now" Tag="night" Click="Play_Click"/>
+            <TextBlock Style="{StaticResource RowValue}" Width="32" ui:Tr.Value="{Binding SkyFirefliesCount}"/>
+            <CheckBox x:Name="FirefliesBox" ui:Tr.Content="Fireflies" IsChecked="{Binding SkyFireflies, Mode=TwoWay}" Width="170" VerticalAlignment="Center"/>
+            <Slider Minimum="1" Maximum="32" TickFrequency="1" Value="{Binding SkyFirefliesCount, Mode=TwoWay}" IsEnabled="{Binding SkyFireflies}"/>
+          </DockPanel>
+          <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Apart from the weather, falling from the top: leaves in autumn, petals in spring, snow in winter. Fireflies stay low, after dark."/>
+        </StackPanel>
+      </GroupBox>
+    </StackPanel>
+  </Grid>
+</UserControl>

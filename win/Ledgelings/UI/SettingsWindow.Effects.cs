@@ -33,7 +33,6 @@ public sealed partial class SettingsWindow
         Effects.Moment.LeaveScreen, Effects.Moment.ArriveScreen, Effects.Moment.HardLanding, Effects.Moment.Dizzy, Effects.Moment.Goal,
         Effects.Moment.Friends, Effects.Moment.NewArrival, Effects.Moment.Poof, Effects.Moment.Bloom, Effects.Moment.Asleep,
     ];
-    private static readonly Effects.Moment[] SeasonMoments = [Effects.Moment.Night, Effects.Moment.Winter, Effects.Moment.Autumn, Effects.Moment.Spring];
     private static readonly Effects.Moment[] ToolMoments =
     [
         Effects.Moment.HeyLook, Effects.Moment.ClockTicking, Effects.Moment.Listening, Effects.Moment.Translating,
@@ -49,13 +48,11 @@ public sealed partial class SettingsWindow
         EffectRow Row(Effects.Moment m) => new(settings, m.Key(), m.Code(), m.Title(), m.Detail(), m.Busy(), m.FeatureOf().Title());
         var styles = Effects.Styles.Select(s => new EffectRow(settings, s.Key(), s.Code(), s.Title(), s.Detail(), s.Busy(), "")).ToList();
         var creatures = CreatureMoments.Select(Row).ToList();
-        var seasons = SeasonMoments.Select(Row).ToList();
         var tools = ToolMoments.Select(Row).ToList();
         EffectStyleList.ItemsSource = styles;
         MomentCreatureList.ItemsSource = creatures;
-        MomentSeasonList.ItemsSource = seasons;
         MomentToolList.ItemsSource = tools;
-        effectRows.AddRange(styles.Concat(creatures).Concat(seasons).Concat(tools));
+        effectRows.AddRange(styles.Concat(creatures).Concat(tools));
         settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppSettings.EffectsOff)) foreach (var row in effectRows) row.Refresh();

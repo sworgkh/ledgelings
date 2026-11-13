@@ -31,6 +31,7 @@ public static class SettingsPages
         SettingsPage.SavedTranslations => "Saved translations",
         SettingsPage.Twists => "Plot twists",
         SettingsPage.ChatWithYou => "Chat with you",
+        SettingsPage.Weather => "Weather & Sky",
         _ => page.ToString(),
     };
 

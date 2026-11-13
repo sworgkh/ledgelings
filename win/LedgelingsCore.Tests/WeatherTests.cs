@@ -1,3 +1,5 @@
+using Ledgelings.Core.PixelFX;
+
 namespace Ledgelings.Core.Tests;
 
 /// <summary>Weather on a quiet screen (SPEC §7.20): the quiet rule, the seasons, a spell easing off, the snow piles, the
@@ -141,8 +143,122 @@ public class WeatherTests
         Assert.Equal(0.75, Weather.Wading(4, 8));
     }
 
-    static void Step(Weather.Sky sky, double dt, Weather.Kind? kind, double intensity, Weather.Level heaviness = Weather.Level.Medium, bool windowTops = true, bool reduced = false) =>
-        sky.Update(dt, kind, intensity, 0, heaviness, Weather.Level.Medium, windowTops, reduced);
+    static readonly Weather.Switches On = new();
+    static Weather.Switches HeavyRain => On with { RainCount = 300 };
+
+    static void Step(Weather.Sky sky, double dt, Weather.Kind? kind, double intensity, Weather.Switches? s = null, bool windowTops = true, bool reduced = false) =>
+        sky.Update(dt, kind, intensity, 0, (s ?? On) with { WindowTops = windowTops, ReduceMotion = reduced });
+
+    /// <summary>A monitor the size the counts are for: 1512 × 982 points at two points a pixel.</summary>
+    static Weather.Sky Monitor(double seed = 3) => new((int)Weather.ReferenceWidth, 491, Weather.Level.Medium, seed);
+
+    /// <summary><paramref name="seconds"/> of <paramref name="kind"/> (or the season's <paramref name="light"/>) at full
+    /// intensity, a frame at a time.</summary>
+    static void Run(Weather.Sky sky, Weather.Kind? kind, double seconds, Weather.Switches? s = null, Weather.Light? light = null, double drift = 0)
+    {
+        for (int i = 0; i < (int)(seconds * 30); i++) sky.Update(1.0 / 30, kind, kind is null ? 0 : 1, drift, s ?? On, light);
+    }
+
+    static bool IsFalling(FXParticles.P p) => p.K is FXKind.Flake or FXKind.Drop or FXKind.Leaf;
+
+    // MARK: Falling from the top, sparse
+
+    [Fact]
+    public void EverythingIsBornAboveTheTopEdgeAndFallsTheWholeHeight()
+    {
+        foreach (var kind in Weather.Kinds)
+        {
+            var sky = Monitor();
+            Run(sky, kind, 40, drift: kind.Blows() ? 49 : 0);
+            Assert.True(sky.SpawnTop < 0, $"{kind} is born above the top edge, not part way down: row {sky.SpawnTop}");
+            Assert.True(sky.Falling > 0);
+            Assert.True(sky.Particles.List.Any(p => p.Y > 491 * 0.66 && IsFalling(p)), $"{kind} reaches the bottom");
+        }
+        foreach (var kind in Enum.GetValues<Weather.LightKind>())
+        {
+            var sky = Monitor();
+            Run(sky, null, 60, light: new Weather.Light(kind, 10));
+            Assert.True(sky.SpawnTop < 0, $"the season's {kind} too");
+            Assert.True(sky.Particles.List.Any(p => p.Y > 491 * 0.66), $"{kind} falls the whole height");
+            Assert.True(sky.Bottom.IsEmpty && sky.Wet.All(w => w == 0), "light ones never pile up");
+        }
+    }
+
+    /// <summary>The defaults are a sparse few: about two dozen flakes and forty drops on a whole monitor at once (they
+    /// were 1169 flakes and 376 drops), a handful of leaves on the wind (299).</summary>
+    [Fact]
+    public void TheDefaultsAreVerySparse()
+    {
+        Assert.True(Weather.DefaultSnowCount == 24 && Weather.DefaultRainCount == 40);
+        Assert.True(new Weather.Switches().SnowCount == 24 && new Weather.Switches().RainCount == 40);
+        foreach (var (kind, min, max) in new[] { (Weather.Kind.Snow, 12, 40), (Weather.Kind.Rain, 25, 60), (Weather.Kind.Wind, 3, 20), (Weather.Kind.Storm, 30, 80) })
+        {
+            var sky = Monitor();
+            // Long enough for the slowest (snow, about 30 s top to bottom) to settle to its steady number.
+            Run(sky, kind, 70, drift: kind.Blows() ? 49 : 0);
+            Assert.True(sky.Falling >= min && sky.Falling <= max, $"{kind}: {sky.Falling} on screen at once");
+        }
+        var light = Monitor();
+        Run(light, null, 70, light: new Weather.Light(Weather.LightKind.Snow, 10));
+        Assert.True(light.Falling is >= 4 and <= 18, $"the season's snow: {light.Falling}");
+    }
+
+    [Fact]
+    public void MoreAtOnceAndFasterAreTheirSettings()
+    {
+        Weather.Sky a = Monitor(), b = Monitor();
+        Run(a, Weather.Kind.Snow, 70);
+        Run(b, Weather.Kind.Snow, 70, On with { SnowCount = 120 });
+        Assert.True(b.Falling > a.Falling * 3);
+        Assert.Equal(2 * Weather.Sky.SnowFall(On), Weather.Sky.SnowFall(On with { SnowSpeed = 2 }));
+        var c = Monitor();
+        Run(c, Weather.Kind.Snow, 40, On with { FlakeSize = Weather.FlakeSize.Large });
+        var share = (double)c.Particles.List.Count(p => p.K == FXKind.Flake && p.Size > 1) / Math.Max(1, c.Falling);
+        Assert.True(share > 0.4, "large flakes: most of them big");
+        var d = Monitor();
+        Run(d, Weather.Kind.Snow, 40, On with { FlakeSize = Weather.FlakeSize.Small });
+        Assert.DoesNotContain(d.Particles.List, p => p.K == FXKind.Flake && p.Size > 1);
+    }
+
+    [Fact]
+    public void EachSwitchTurnsItsPartOff()
+    {
+        var a = Monitor();
+        a.SetLedges(new Dictionary<int, Weather.Ledge> { [1] = new(100, 200, Enumerable.Repeat(true, 200).ToArray()) }, Weather.Level.Medium);
+        Run(a, Weather.Kind.Snow, 40, On with { SnowPiles = false });
+        Assert.True(a.Bottom.IsEmpty && a.LedgePile(1)?.IsEmpty == true, "snow that does not pile up");
+        var b = Monitor();
+        Run(b, Weather.Kind.Rain, 40, HeavyRain with { Puddles = false });
+        Assert.True(b.Wet.All(w => w == 0), "rain with no puddles");
+        var off = On with { Storm = false };
+        Assert.True(!off.Allows(Weather.Kind.Storm) && off.Allows(Weather.Kind.Rain) && off.Allows(Weather.Kind.Wind));
+        off = off with { Snow = false, Rain = false, Wind = false };
+        Assert.True(Weather.Kinds.All(k => !off.Allows(k)));
+        // The wind's gusts come as often as set.
+        var slow = new Weather.Wind(true, Weather.Level.Medium, 20);
+        Assert.True(slow.Force(9 + Weather.Wind.GustLasts / 2) < 0.31, "no gust at 9 s when they come every 20");
+        Assert.True(slow.Force(20 + Weather.Wind.GustLasts / 2) > 0.99);
+    }
+
+    [Fact]
+    public void ClearingTakesEverythingAtOnce()
+    {
+        var sky = Monitor();
+        Run(sky, Weather.Kind.Snow, 30);
+        sky.FillBottom(4);
+        Assert.False(sky.IsEmpty);
+        sky.ClearAll();
+        Assert.True(sky.IsEmpty);
+    }
+
+    [Fact]
+    public void AStopEndsTheAmbientPeriodNotTheNext()
+    {
+        // Out a minute in every ten: periods count from launch.
+        Assert.Equal(0, Effects.AmbientPeriod(590, 60, 10));
+        Assert.Equal(1, Effects.AmbientPeriod(610, 60, 10));
+        Assert.Equal(2, Effects.AmbientPeriod(1210, 60, 10));
+    }
 
     [Fact]
     public void TheSkyPilesSnowOnTheBottomAndOnWindowTopsAndDropsIt()
@@ -172,10 +288,10 @@ public class WeatherTests
     public void RainMakesPuddlesThatDry()
     {
         var sky = new Weather.Sky(100, 60, Weather.Level.Medium, 5);
-        for (int i = 0; i < 30 * 60; i++) Step(sky, 1.0 / 30, Weather.Kind.Rain, 1, Weather.Level.High);
+        for (int i = 0; i < 30 * 60; i++) Step(sky, 1.0 / 30, Weather.Kind.Rain, 1, HeavyRain);
         Assert.True(sky.Wet.Max() > 0.5);
         Assert.True(sky.Bottom.IsEmpty);
-        Step(sky, Weather.DrySeconds + 1, null, 0, Weather.Level.High);
+        Step(sky, Weather.DrySeconds + 1, null, 0, HeavyRain);
         Assert.Equal(0, sky.Wet.Max());
     }
 
@@ -184,8 +300,8 @@ public class WeatherTests
     {
         int Count(bool reduced)
         {
-            var sky = new Weather.Sky(200, 400, Weather.Level.Medium, 9);
-            for (int i = 0; i < 60; i++) Step(sky, 1.0 / 30, Weather.Kind.Snow, 1, reduced: reduced);
+            var sky = Monitor(9);
+            for (int i = 0; i < 30 * 20; i++) Step(sky, 1.0 / 30, Weather.Kind.Snow, 1, On with { SnowCount = 300 }, reduced: reduced);
             return sky.Particles.Count;
         }
         int full = Count(false), half = Count(true);
@@ -220,7 +336,7 @@ public class WeatherTests
         var t = 0.0;
         while (t < 60)
         {
-            if (bowl.Update(0.1, 1, Weather.Level.Medium) is { } e) events.Add(e);
+            if (bowl.Update(0.1, 1, 1) is { } e) events.Add(e);
             t += 0.1;
             if (bowl.Now == Weather.Bowl.State.Fallen) break;
         }
@@ -229,8 +345,8 @@ public class WeatherTests
         Assert.True(bowl.Tip == 1 && bowl.Water == 0);
         var heavy = new Weather.Bowl();
         var light = new Weather.Bowl();
-        heavy.Update(5, 1, Weather.Level.High);
-        light.Update(5, 1, Weather.Level.Low);
+        heavy.Update(5, 1, 1.6);
+        light.Update(5, 1, 0.5);
         Assert.True(heavy.Water > light.Water);
     }
 
@@ -241,7 +357,7 @@ public class WeatherTests
     {
         var wind = new Weather.Wind(true, Weather.Level.Medium);
         Assert.True(wind.Force(Weather.Wind.GustLasts / 2) > 0.99);
-        Assert.True(wind.Force(Weather.Wind.GustEvery - 1) < 0.31);
+        Assert.True(wind.Force(wind.GustEvery - 1) < 0.31);
         Assert.True(wind.Peaks(Weather.Wind.GustLasts / 2 + 0.01, 0.03));
         Assert.False(wind.Peaks(4, 0.03));
         Assert.True(Weather.Push(1, 1, Weather.Level.Medium) >= 4);

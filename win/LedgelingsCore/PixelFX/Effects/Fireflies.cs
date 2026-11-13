@@ -19,6 +19,17 @@ public sealed class FXFireflies : IFXEffect, IFXBackdropped
     /// <summary>false: no night haze over the whole canvas (drawn over the desktop); the grass and the fireflies stay.</summary>
     public bool Backdrop { get; set; } = true;
     public FXFireflies(FXOptions o) { this.o = o; C = FX.Fit(o.Palette, 6); G = GrassRamp; }
+    /// <summary>How many of the 32 fly (Settings › Weather &amp; Sky: a sparse few), spread over the near and far ones.</summary>
+    public int Flies { get; set; } = 32;
+
+    /// <summary>The fireflies flying, picked evenly from far to near.</summary>
+    Fly[] Swarm(double S, double t)
+    {
+        var n = Math.Max(0, Math.Min(32, Flies));
+        var flies = new Fly[n];
+        for (int k = 0; k < n; k++) flies[k] = MakeFly(S, n == 32 ? k : (int)((double)k * 32 / n + 32.0 / n / 2), t);
+        return flies;
+    }
 
     static double Cyc(double t, double n, double ph = 0) => (FX.Tau * n * t) / D + ph;
 
@@ -56,8 +67,7 @@ public sealed class FXFireflies : IFXEffect, IFXBackdropped
                 var k = (y + 170) / 180;
                 R.Fill(FX.Mix(G[0], G[1], k), 0.48 + 0.14 * k, blend: true);
             });
-        var flies = new Fly[32];
-        for (int i = 0; i < 32; i++) flies[i] = MakeFly(S, i, t);
+        var flies = Swarm(S, t);
         Grass(q, t, S, flies, false);
         foreach (var f in flies) if (f.Depth < 2) Firefly(q, t, f);
     }
@@ -66,8 +76,7 @@ public sealed class FXFireflies : IFXEffect, IFXBackdropped
     {
         var q = new FXWeather.Clip(p, Meta);
         var S = o.Seed;
-        var flies = new Fly[32];
-        for (int i = 0; i < 32; i++) flies[i] = MakeFly(S, i, t);
+        var flies = Swarm(S, t);
         Grass(q, t, S, flies, true);
         foreach (var f in flies) if (f.Depth == 2) Firefly(q, t, f);
     }

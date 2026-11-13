@@ -73,12 +73,31 @@ internal sealed class WeatherState
     public Action<string>? Trace;
     /// <summary>A test says where the windows are rather than Windows.</summary>
     public List<WeatherWatch.Window>? FakeWindows;
+    /// <summary>The season's light particles falling now (Settings › Weather &amp; Sky): which, how much, and until when.</summary>
+    public LightState? Light;
+    /// <summary>Stopped (Stop activity, Stop Weather, the Stop button) at this time: everything fades out over
+    /// <see cref="Weather.Spell.StopFade"/> and is gone, piles and all.</summary>
+    public double? StoppingSince;
 
     public static Bitmap? Image(Weather.Art art) => EffectPlayer.Image(art.Rgba, art.W, art.H);
 }
 
-/// <summary>One monitor's weather as a picture: its bottom-left corner in global points and its size there.</summary>
-public sealed record WeatherPicture(Bitmap? Image, Rect Frame);
+/// <summary>The season's light particles while they are out: they come in over a few seconds, and go the same way.</summary>
+internal sealed class LightState
+{
+    public Effects.Moment Moment;
+    public Weather.LightKind Kind;
+    public bool ByHand;
+    /// <summary>Shown by hand until then.</summary>
+    public double? Until;
+    public double Intensity;
+    public bool Easing;
+    public const double Fade = 3;
+}
+
+/// <summary>One monitor's weather as a picture: its bottom-left corner in global points and its size there; below 1
+/// opacity while it fades out after Stop.</summary>
+public sealed record WeatherPicture(Bitmap? Image, Rect Frame, float Opacity = 1);
 
 /// <summary>
 /// Weather on a quiet screen (SPEC §7.20), the Mac's <c>Colony+Weather</c>: it comes when nobody has typed or moved
@@ -101,6 +120,97 @@ public sealed partial class Colony
     private double SkyPixel => SkyScale * pixelScale;
 
     public bool WeatherShowing => weather.Spell is not null;
+
+    /// <summary>Anything of the weather or the sky on screen that Stop would clear: a spell, the season's particles,
+    /// the fireflies, snow still lying. Not while it is already fading out.</summary>
+    public bool WeatherRunning
+    {
+        get
+        {
+            if (weather.StoppingSince is not null) return false;
+            var flies = fxAmbient is { } a && a.Moment == Effects.Moment.Night && !a.Tiles.All(t => t.Instance.Stopping);
+            return weather.Spell is not null || weather.Light is not null || weather.Skies.Count > 0 || flies;
+        }
+    }
+    /// <summary>The season's particles out now (a test, the tray).</summary>
+    public Weather.LightKind? LightNow => weather.Light?.Kind;
+    public bool WeatherStopping => weather.StoppingSince is not null;
+    internal IReadOnlyList<Weather.Sky> WeatherSkies => weather.Skies.Select(e => e.Sky).ToList();
+
+    /// <summary>Stop: the weather, the season's particles and the fireflies fade out over about a second, and the piles
+    /// and puddles go with them. Nothing is switched off: the next weather comes when the screen is next quiet, the
+    /// season's particles at their next time out.</summary>
+    public void StopWeather(string why = "stop")
+    {
+        if (!WeatherRunning) return;
+        weather.StoppingSince = Elapsed;
+        if (weather.Spell is not null) weather.EndedAt = Elapsed;
+        weather.Spell?.Ease();
+        weather.Light = null;
+        if (fxAmbient is { } a && a.Moment.Ambient()) a.Tiles.ForEach(t => t.Instance.Stop());
+        fxStoppedPeriod = Effects.AmbientPeriod(Elapsed, Settings.EffectsAmbientSeconds, Settings.EffectsAmbientEveryMinutes);
+        weather.Trace?.Invoke($"weather stopped ({why}): fading out");
+    }
+
+    /// <summary>The fireflies' night: the creatures' own, or from the chosen hour on the clock until six.</summary>
+    private bool FireflyNight
+    {
+        get
+        {
+            var from = Settings.SkyFirefliesFrom;
+            if (from == AppSettings.SkyNightFollowsColony) return IsNight;
+            var hour = Now().LocalDateTime.Hour;
+            return hour >= from || hour < 6;
+        }
+    }
+
+    // MARK: The season's light particles
+
+    /// <summary>The season's particles start falling from the top: by hand for half a minute (a preview), or on their
+    /// own until the season or their time out ends.</summary>
+    public bool StartLight(Effects.Moment moment, bool byHand)
+    {
+        if (LightKindOf(moment) is not { } kind) return false;
+        weather.StoppingSince = null;
+        weather.Light = new LightState { Moment = moment, Kind = kind, ByHand = byHand, Until = byHand ? Elapsed + 30 : null };
+        LayOutSkies();
+        weather.Trace?.Invoke($"sky {kind.Code()} starts falling from the top");
+        Trace?.Invoke($"fx {Elapsed:F2} moment {moment.Code()} from the top");
+        return true;
+    }
+
+    private static Weather.LightKind? LightKindOf(Effects.Moment moment) => moment switch
+    {
+        Effects.Moment.Winter => Weather.LightKind.Snow,
+        Effects.Moment.Autumn => Weather.LightKind.Leaves,
+        Effects.Moment.Spring => Weather.LightKind.Petals,
+        _ => null,
+    };
+
+    /// <summary>How many of the season's particles on a monitor at once.</summary>
+    private double LightCount(Weather.LightKind kind) => kind switch
+    {
+        Weather.LightKind.Snow => Settings.SkyWinterCount,
+        Weather.LightKind.Leaves => Settings.SkyAutumnCount,
+        _ => Settings.SkySpringCount,
+    };
+
+    /// <summary>Let the season's particles go: no more fall, those in the air finish falling.</summary>
+    public void EaseLight()
+    {
+        if (weather.Light is not { Easing: false } l) return;
+        l.Easing = true;
+        weather.Trace?.Invoke("sky eases off");
+    }
+
+    /// <summary>The season's particles come in and go over a few seconds; shown by hand, they go when their time is up.</summary>
+    private void UpdateLight(double dt)
+    {
+        if (weather.Light is not { } l) return;
+        if (l.Until is double until && Elapsed >= until) l.Easing = true;
+        l.Intensity = l.Easing ? Math.Max(0, l.Intensity - dt / LightState.Fade) : Math.Min(1, l.Intensity + dt / LightState.Fade);
+        if (l.Easing && l.Intensity <= 0) weather.Light = null;
+    }
     /// <summary>The weather now, null when the sky is clear or clearing: the tray's tick.</summary>
     public Weather.Kind? WeatherNow => weather.Spell is { IsEasing: false } s ? s.Kind : null;
     /// <summary><c>--weather</c>: every step, as it happens.</summary>
@@ -113,8 +223,9 @@ public sealed partial class Colony
     {
         RefreshWeatherSwitches();
         if (!byHand && !weather.Switches.Allows(kind)) return false;
+        if (weather.StoppingSince is not null) ResetWeather();
         weather.Spell = new Weather.Spell(kind, weather.Switches.LastsMinutes * 60, byHand);
-        weather.Wind = kind.Blows() ? new Weather.Wind(rng.Coin(), weather.Switches.WindStrength) : null;
+        weather.Wind = kind.Blows() ? new Weather.Wind(rng.Coin(), weather.Switches.WindStrength, weather.Switches.GustSeconds) : null;
         weather.Time = 0;
         weather.Said = new();
         weather.Groups = new();
@@ -125,6 +236,7 @@ public sealed partial class Colony
         weather.Trace?.Invoke($"weather {kind.Name()} starts");
         // The light season particles give way to the heavier weather.
         if (fxAmbient is { } a && a.Tiles.FirstOrDefault()?.ByHand != true) a.Tiles.ForEach(t => t.Instance.Stop());
+        if (weather.Light is { ByHand: false }) weather.Light = null;
         if (kind.Snows()) WeatherLine("snow", WeatherSpeaker());
         if (kind.Rains()) WeatherLine("rain", WeatherSpeaker());
         if (kind == Weather.Kind.Wind) WeatherLine("wind", WeatherSpeaker());
@@ -139,12 +251,22 @@ public sealed partial class Colony
         weather.Trace?.Invoke("weather eases off");
     }
 
-    /// <summary>A weather by name now, or <c>clear</c>: from the tray, the Weather page and Creature Actions.</summary>
+    /// <summary>A weather by name now, <c>clear</c> (ease off), <c>stop</c> (fade out at once), <c>pause</c> (for today)
+    /// or <c>resume</c>; a season's particles (<c>winter</c>, <c>autumn</c>, <c>spring</c>) or the fireflies
+    /// (<c>night</c>): from the tray, the Weather &amp; Sky page and Creature Actions.</summary>
     public bool PlayWeather(string code)
     {
+        switch (code)
+        {
+            case "clear": ClearWeather(); return true;
+            case "stop": StopWeather("Stop Weather"); return true;
+            case "pause": Settings.PauseWeather(true, Now().LocalDateTime); StopWeather("paused for today"); return true;
+            case "resume": Settings.PauseWeather(false, Now().LocalDateTime); return true;
+        }
         if (Weather.KindNamed(code) is { } kind) return StartWeather(kind);
-        ClearWeather();
-        return true;
+        if (Effects.Moments.FirstOrDefault(m => m.Code() == code) is var moment && moment.Code() == code && moment.Ambient())
+            return StartAmbient(moment, preview: true);
+        return false;
     }
 
     /// <summary>Everything gone at once (the monitors changed, a test).</summary>
@@ -152,6 +274,8 @@ public sealed partial class Colony
     {
         weather.Spell = null;
         weather.Wind = null;
+        weather.Light = null;
+        weather.StoppingSince = null;
         RestorePaces();
         foreach (var e in weather.Skies) e.Image?.Dispose();
         weather.Skies = new();
@@ -192,6 +316,15 @@ public sealed partial class Colony
     private void UpdateWeather(double dt)
     {
         RefreshWeatherSwitches();
+        if (weather.StoppingSince is double since)
+        {
+            // Stopped: the picture fades for a second, then everything is gone, the snow lying there too.
+            WatchTheScreen();
+            if (Elapsed - since < Weather.Spell.StopFade) return;
+            ResetWeather();
+            weather.Trace?.Invoke("weather stopped: water, snow and particles gone");
+            return;
+        }
         var s = weather.Switches;
         if (!s.Enabled && weather.Spell is { ByHand: false }) weather.Spell.Ease();
         WatchTheScreen();
@@ -215,11 +348,12 @@ public sealed partial class Colony
                 weather.Trace?.Invoke($"weather {spell.Kind.Name()} over");
             }
         }
-        if (weather.Skies.Count == 0 && weather.Spell is null) return;
+        UpdateLight(dt);
+        if (weather.Skies.Count == 0 && weather.Spell is null && weather.Light is null) return;
         LayOutSkies();
         UpdateSkies(dt);
         UpdateWeatherCreatures(dt);
-        if (weather.Spell is null && weather.Skies.All(e => e.Sky.IsEmpty) && weather.DroppedUmbrellas.Count == 0)
+        if (weather.Spell is null && weather.Light is null && weather.Skies.All(e => e.Sky.IsEmpty) && weather.DroppedUmbrellas.Count == 0)
         {
             foreach (var e in weather.Skies) e.Image?.Dispose();
             weather.Skies = new();
@@ -248,7 +382,7 @@ public sealed partial class Colony
         const double step = 10;
         weather.NextCheck = Elapsed + step;
         var s = weather.Switches;
-        if (!s.Enabled) return;
+        if (!s.Enabled || Settings.WeatherPaused(Now().LocalDateTime)) return;
         // Typing starts the keyboard counter, which the quiet rule reads too.
         keyCounter ??= Native.KeyCounter.Start();
         if (Elapsed >= weather.NextMicrophone)
@@ -258,7 +392,7 @@ public sealed partial class Colony
         }
         // The cursor's travel in points, as the Mac counts it, whatever the monitor's pixel scale.
         var screen = new Weather.Screen(WeatherWatch.KeyIdle(keyCounter), weather.Trail.Travel(Elapsed - s.QuietMinutes * 60) / pixelScale,
-                                        weather.FullScreen, Activities.Shared.IsRunning, weather.Microphone);
+                                        weather.FullScreen, Activities.Shared.IsRunningBesides(Activities.Kind.Weather), weather.Microphone);
         // A whole quiet stretch watched, and one since the last spell ended.
         if (weather.Trail.Span < Math.Min(s.QuietMinutes * 60, 60) - 1 || Elapsed - weather.EndedAt < s.QuietMinutes * 60
             || !Weather.IsQuiet(screen, s.QuietMinutes)) return;
@@ -273,12 +407,13 @@ public sealed partial class Colony
         var spell = weather.Spell;
         var drift = spell is not null && weather.Wind is { } wind ? wind.Drift(weather.Time, spell.Intensity) : 0;
         var leafy = Effects.SeasonOf(Now().LocalDateTime) == Effects.Season.Autumn;
+        Weather.Light? light = weather.Light is { } l ? new Weather.Light(l.Kind, LightCount(l.Kind), l.Easing ? 0 : l.Intensity) : null;
         foreach (var e in weather.Skies)
         {
             e.Sky.Leafy = leafy;
             if (s.WindowTops && weather.WindowsFresh)
                 e.Sky.SetLedges(WeatherWatch.Ledges(weather.Windows, e.Display, SkyPixel, e.TopInset), s.SnowDepth);
-            e.Sky.Update(dt, spell?.Kind, spell?.Intensity ?? 0, drift, s.RainHeaviness, s.SnowDepth, s.WindowTops, s.ReduceMotion);
+            e.Sky.Update(dt, spell?.Kind, spell?.Intensity ?? 0, drift, s, light);
         }
         weather.WindowsFresh = false;
     }
@@ -345,9 +480,9 @@ public sealed partial class Colony
                 }
             }
         }
-        if (kind is { } k && k.Rains()) UpdateUmbrellas(dt, intensity);
+        if (kind is { } k && k.Rains() && s.Umbrellas) UpdateUmbrellas(dt, intensity);
         else if (weather.Groups.Count > 0) weather.Groups = new();
-        if (kind?.Rains() != true && weather.Bowls.Count > 0 && spell is null) weather.Bowls = new();
+        if (((kind?.Rains() != true && spell is null) || !s.MenuBarUmbrella) && weather.Bowls.Count > 0) weather.Bowls = new();
         if (weather.Wind is { } w && spell is not null && !s.ReduceMotion && w.Peaks(weather.Time, dt)) Gust(w, spell.Intensity);
         UpdateDropped(dt);
         UpdateSnowballs(dt);
@@ -408,11 +543,12 @@ public sealed partial class Colony
         // The top edge: the umbrella is a bowl, and it fills.
         foreach (var g in weather.Groups)
         {
+            if (!weather.Switches.MenuBarUmbrella) break;
             var holder = Weather.Holder(g);
             if (holder >= creatures.Count || !SideOf(holder).Ceiling) { weather.Bowls.Remove(holder); continue; }
             if (!weather.Bowls.TryGetValue(holder, out var bowl)) weather.Bowls[holder] = bowl = new Weather.Bowl();
             if (bowl.Now == Weather.Bowl.State.Fallen) continue;
-            var happened = bowl.Update(dt, intensity, weather.Switches.RainHeaviness);
+            var happened = bowl.Update(dt, intensity, weather.Switches.RainWeight);
             var name = CharacterFor(holder).Name;
             switch (happened)
             {
@@ -542,6 +678,7 @@ public sealed partial class Colony
             if (!Outside(i) || !creatures[i].IsAtLeisure) continue;
             var (floor, ceiling) = SideOf(i);
             if (!floor && !ceiling) continue;
+            if (!weather.Switches.WindPushes) continue;
             var size = sizes[i] / pixelScale / Math.Max(0.5, Settings.MinSize);        // the smallest on screen counts as 1
             var c = creatures[i];
             var name = CharacterFor(i).Name;
@@ -692,14 +829,16 @@ public sealed partial class Colony
             }
         }
         var scale = SkyPixel;
+        var opacity = weather.StoppingSince is double since ? (float)Math.Max(0, 1 - (Elapsed - since) / Weather.Spell.StopFade) : 1f;
         return weather.Skies.Select(e => new WeatherPicture(e.Image,
-            new Rect(e.Display.MinX, e.Display.MaxY - e.Frame.H * scale, e.Frame.W * scale, e.Frame.H * scale))).ToList();
+            new Rect(e.Display.MinX, e.Display.MaxY - e.Frame.H * scale, e.Frame.W * scale, e.Frame.H * scale), opacity)).ToList();
     }
 
     /// <summary>The umbrellas, the falling ones, the snowmen, the snowballs in the air and the drips off the wet.</summary>
     private List<PropSnapshot> WeatherProps()
     {
         var props = new List<PropSnapshot>();
+        if (weather.StoppingSince is not null) return props;
         var scale = SkyPixel;
         if (weather.Spell is { } spell && spell.Kind.Rains() && spell.Intensity > 0.15)
             foreach (var g in weather.Groups)

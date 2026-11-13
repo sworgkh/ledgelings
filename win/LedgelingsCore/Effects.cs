@@ -392,6 +392,9 @@ public static class Effects
         return elapsed >= period && elapsed % period < seconds;
     }
 
+    /// <summary>Which time out <paramref name="elapsed"/> falls in, counting from 0: Stop ends one early and the next comes as ever.</summary>
+    public static int AmbientPeriod(double elapsed, double seconds, double everyMinutes) => (int)(elapsed / Math.Max(everyMinutes * 60, seconds));
+
     /// <summary>Keys pressed in the last hour, from samples of the system's running count: fast typing is over a threshold.</summary>
     public sealed class TypingWatch
     {

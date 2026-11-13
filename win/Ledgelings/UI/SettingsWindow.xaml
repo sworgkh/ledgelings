@@ -1439,21 +1439,6 @@
               <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Frost: now and then from December to February, or on a creature nobody has met for that long. Smitten: two friends meet, or a letter's invitation is accepted. Charged: grabbing the cursor, or a whole hour with at least that many keys pressed (only counted, nothing is recorded). Fired up: grumpy at the cursor, or losing a game. Haunted: now and then from 25 October to 1 November, or Boo spooking a friend."/>
             </StackPanel>
           </GroupBox>
-          <GroupBox ui:Tr.Header="Along the bottom edge" IsEnabled="{Binding EffectsEnabled}">
-            <StackPanel>
-              <DockPanel Margin="0,6,0,4">
-                <TextBlock ui:Tr.Text="Out for" Style="{StaticResource RowLabel}"/>
-                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAmbientSeconds}" ui:Tr.Unit=" s"/>
-                <Slider Minimum="10" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding EffectsAmbientSeconds, Mode=TwoWay}"/>
-              </DockPanel>
-              <DockPanel Margin="0,0,0,4">
-                <TextBlock ui:Tr.Text="Once every" Style="{StaticResource RowLabel}"/>
-                <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding EffectsAmbientEveryMinutes}" ui:Tr.Unit=" min"/>
-                <Slider Minimum="1" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding EffectsAmbientEveryMinutes, Mode=TwoWay}"/>
-              </DockPanel>
-              <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Fireflies after dark, and the season's particles: snow from December to February, petals from March to May, leaves from September to November. They drift along the bottom of the creatures' monitors for a while, then go. Each has its switch on the Moments page."/>
-            </StackPanel>
-          </GroupBox>
         </StackPanel>
       </ScrollViewer>
     </TabItem>
@@ -1466,11 +1451,7 @@
               <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Each marks a moment of a feature with an effect on the creature it happens to, at most every so often."/>
             </StackPanel>
           </GroupBox>
-          <GroupBox ui:Tr.Header="Night and the seasons">
-            <StackPanel>
-              <ItemsControl x:Name="MomentSeasonList" ItemTemplate="{StaticResource EffectRowTemplate}"/>
-            </StackPanel>
-          </GroupBox>
+          <TextBlock ui:Tr.Text="Fireflies and the season's leaves, petals and snow are on Weather &amp; Sky." Foreground="Gray" Margin="4,0,0,10" TextWrapping="Wrap"/>
           <GroupBox ui:Tr.Header="The tools">
             <StackPanel>
               <ItemsControl x:Name="MomentToolList" ItemTemplate="{StaticResource EffectRowTemplate}"/>
@@ -1485,101 +1466,21 @@
         </StackPanel>
       </ScrollViewer>
     </TabItem>
-    <TabItem ui:Tr.Header="Weather">
-      <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="12">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="12"/>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <StackPanel Grid.Column="0">
-            <GroupBox ui:Tr.Header="Weather">
-              <StackPanel>
-                <CheckBox ui:Tr.Content="Weather on" IsChecked="{Binding WeatherEnabled, Mode=TwoWay}" ui:Tr.ToolTip="Snow, rain or wind when the screen is quiet"/>
-                <DockPanel Margin="0,4,0,2" IsEnabled="{Binding WeatherEnabled}">
-                  <Button x:Name="WeatherPlaySnow" DockPanel.Dock="Right" ui:Tr.Content="Play now" Tag="snow" Click="WeatherPlay_Click" FontSize="11" Padding="8,0"/>
-                  <CheckBox x:Name="WeatherSnowBox" ui:Tr.Content="Snow" IsChecked="{Binding WeatherSnow, Mode=TwoWay}" VerticalAlignment="Center"/>
-                </DockPanel>
-                <DockPanel Margin="0,2" IsEnabled="{Binding WeatherEnabled}">
-                  <Button x:Name="WeatherPlayRain" DockPanel.Dock="Right" ui:Tr.Content="Play now" Tag="rain" Click="WeatherPlay_Click" FontSize="11" Padding="8,0"/>
-                  <CheckBox x:Name="WeatherRainBox" ui:Tr.Content="Rain" IsChecked="{Binding WeatherRain, Mode=TwoWay}" VerticalAlignment="Center"/>
-                </DockPanel>
-                <DockPanel Margin="0,2" IsEnabled="{Binding WeatherEnabled}">
-                  <Button x:Name="WeatherPlayWind" DockPanel.Dock="Right" ui:Tr.Content="Play now" Tag="wind" Click="WeatherPlay_Click" FontSize="11" Padding="8,0"/>
-                  <CheckBox x:Name="WeatherWindBox" ui:Tr.Content="Wind" IsChecked="{Binding WeatherWind, Mode=TwoWay}" VerticalAlignment="Center"/>
-                </DockPanel>
-                <DockPanel Margin="0,2,0,4">
-                  <Button DockPanel.Dock="Right" ui:Tr.Content="Clear sky" Tag="clear" Click="WeatherPlay_Click" FontSize="11" Padding="8,0" Margin="6,0,0,0" ui:Tr.ToolTip="Let the weather ease off now"/>
-                  <Button x:Name="WeatherPlayStorm" DockPanel.Dock="Right" ui:Tr.Content="Play now" Tag="storm" Click="WeatherPlay_Click" FontSize="11" Padding="8,0"/>
-                  <TextBlock ui:Tr.Text="Storm: rain and wind together" Foreground="Gray" VerticalAlignment="Center"/>
-                </DockPanel>
-                <CheckBox ui:Tr.Content="Follow the season" IsChecked="{Binding WeatherFollowSeason, Mode=TwoWay}" ui:Tr.ToolTip="Snow mostly in winter, wind in autumn, rain any time" Margin="0,2"/>
-                <DockPanel Margin="0,4">
-                  <TextBlock ui:Tr.Text="Reduce motion" Style="{StaticResource RowLabel}"/>
-                  <ComboBox x:Name="WeatherReduceMotionBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherReduceMotionIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left" ui:Tr.ToolTip="Half the particles, and the wind pushes nobody"/>
-                </DockPanel>
-                <CheckBox ui:Tr.Content="The creatures talk about it" IsChecked="{Binding WeatherTalk, Mode=TwoWay}" ui:Tr.ToolTip="Built-in lines in each character's voice; no model, no cost" Margin="0,2"/>
-                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Snow, rain or wind over the creatures' monitors when the screen is quiet. Following the season, snow comes mostly in winter, wind in autumn, rain any time. While it falls, the season's light particles along the bottom pause. Reduce motion halves the particles and keeps the wind from pushing anyone. It is only drawn: clicks go through it."/>
-              </StackPanel>
-            </GroupBox>
-            <GroupBox ui:Tr.Header="When it comes">
-              <StackPanel>
-                <DockPanel Margin="0,6,0,4">
-                  <TextBlock ui:Tr.Text="How quiet the screen must be" Style="{StaticResource RowLabel}"/>
-                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherQuietMinutes}" ui:Tr.Unit=" min"/>
-                  <Slider Minimum="1" Maximum="60" TickFrequency="1" Value="{Binding WeatherQuietMinutes, Mode=TwoWay}" ui:Tr.ToolTip="No typing and the cursor barely moving for this long"/>
-                </DockPanel>
-                <DockPanel Margin="0,0,0,4">
-                  <TextBlock ui:Tr.Text="How often" Style="{StaticResource RowLabel}"/>
-                  <ComboBox x:Name="WeatherFrequencyBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherFrequencyIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left" ui:Tr.ToolTip="About once every 60, 20 or 5 quiet minutes"/>
-                </DockPanel>
-                <DockPanel Margin="0,0,0,4">
-                  <TextBlock ui:Tr.Text="How long it lasts" Style="{StaticResource RowLabel}"/>
-                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherMinutes}" ui:Tr.Unit=" min"/>
-                  <Slider Minimum="1" Maximum="20" TickFrequency="1" Value="{Binding WeatherMinutes, Mode=TwoWay}" ui:Tr.ToolTip="Then it eases off over a few seconds"/>
-                </DockPanel>
-                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Quiet: no typing and the cursor barely moving for that long, nothing full screen, no game, surf or dive, and no call (an app using the microphone). When you come back it eases off over a few seconds, and the snow left lying melts slowly."/>
-              </StackPanel>
-            </GroupBox>
+    <TabItem ui:Tr.Header="Weather &amp; Sky">
+      <!-- Every aspect has its own window (WeatherSkyPanel, too much for a page); the page opens it as it comes up. -->
+      <StackPanel Margin="12">
+        <GroupBox ui:Tr.Header="Weather &amp; Sky">
+          <StackPanel>
+            <CheckBox ui:Tr.Content="Weather on" IsChecked="{Binding WeatherEnabled, Mode=TwoWay}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+              <Button ui:Tr.Content="Open Weather &amp; Sky…" Click="WeatherOpen_Click" Padding="10,2" Margin="0,0,8,0" IsDefault="False"/>
+              <Button x:Name="WeatherStopNow" ui:Tr.Content="Stop now" Tag="stop" Click="WeatherPlay_Click" Padding="10,2" Margin="0,0,8,0"/>
+              <Button x:Name="WeatherPauseToday" Click="WeatherPause_Click" Padding="10,2"/>
+            </StackPanel>
+            <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Snow, rain, wind and storms, the season's leaves, petals and snow, and the fireflies: each with its own switches in the Weather &amp; Sky window, which also opens from the tray's Weather submenu."/>
           </StackPanel>
-          <StackPanel Grid.Column="2">
-            <GroupBox ui:Tr.Header="Snow">
-              <StackPanel>
-                <DockPanel Margin="0,6,0,4">
-                  <TextBlock ui:Tr.Text="How deep snow piles" Style="{StaticResource RowLabel}"/>
-                  <ComboBox x:Name="WeatherSnowDepthBox" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherSnowDepthIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left" ui:Tr.ToolTip="How deep snow piles"/>
-                </DockPanel>
-                <CheckBox ui:Tr.Content="Snow on window tops" IsChecked="{Binding WeatherWindowTops, Mode=TwoWay}" ui:Tr.ToolTip="A window that moves or closes drops its snow" Margin="0,2"/>
-                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="It piles up along the bottom edge and on the tops of windows, and grows until it is that deep. A window that moves or closes drops its snow. The creatures wade slower in deep snow and leave footprints; now and then one shivers, builds a snowman or throws a snowball at a friend."/>
-              </StackPanel>
-            </GroupBox>
-            <GroupBox ui:Tr.Header="Rain">
-              <StackPanel>
-                <DockPanel Margin="0,6,0,4">
-                  <TextBlock ui:Tr.Text="How heavy the rain is" Style="{StaticResource RowLabel}"/>
-                  <ComboBox x:Name="WeatherRainBox2" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherRainHeavinessIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left" ui:Tr.ToolTip="How heavy the rain is"/>
-                </DockPanel>
-                <DockPanel Margin="0,0,0,4">
-                  <TextBlock ui:Tr.Text="Umbrella sharing distance" Style="{StaticResource RowLabel}"/>
-                  <TextBlock Style="{StaticResource RowValue}" ui:Tr.Value="{Binding WeatherShareDistance}" ui:Tr.Unit=" pt" ui:Tr.Zero="each their own"/>
-                  <Slider Minimum="0" Maximum="200" TickFrequency="5" Value="{Binding WeatherShareDistance, Mode=TwoWay}" ui:Tr.ToolTip="Closer than this, up to three share one umbrella"/>
-                </DockPanel>
-                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Everyone out in it opens an umbrella; creatures closer than this share a bigger one, up to three under it. Hanging from the top edge, an umbrella fills with rain like a bowl, tips over and falls. Puddles dry up afterwards."/>
-              </StackPanel>
-            </GroupBox>
-            <GroupBox ui:Tr.Header="Wind">
-              <StackPanel>
-                <DockPanel Margin="0,6,0,4">
-                  <TextBlock ui:Tr.Text="How strong the wind is" Style="{StaticResource RowLabel}"/>
-                  <ComboBox x:Name="WeatherWindBox2" DisplayMemberPath="Title" SelectedValuePath="Index" SelectedValue="{Binding WeatherWindStrengthIndex, Mode=TwoWay}" Width="160" HorizontalAlignment="Left" ui:Tr.ToolTip="How strong the wind is"/>
-                </DockPanel>
-                <TextBlock Style="{StaticResource Footer}" ui:Tr.Text="Gusts come from one side with leaves or dust. The creatures lean into it, walk slower into it and faster with it; a strong gust pushes the light ones and can blow one off the top edge. In a storm, umbrellas turn inside out."/>
-              </StackPanel>
-            </GroupBox>
-          </StackPanel>
-        </Grid>
-      </ScrollViewer>
+        </GroupBox>
+      </StackPanel>
     </TabItem>
     <!-- The Tools group: things the creatures do for you, a page each in the sidebar. -->
     <TabItem ui:Tr.Header="Reminders">

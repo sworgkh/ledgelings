@@ -188,7 +188,12 @@ public enum FXKind
 }
 
 /// <summary>Particle flags: smokes (a fire puff leaves smoke), big (bigger, slower smoke), back (drawn behind).</summary>
-public static class FXFlag { public const int Smokes = 1, Big = 2, Back = 4; }
+public static class FXFlag
+{
+    public const int Smokes = 1, Big = 2, Back = 4;
+    /// <summary>Weather's light season particles: they fall and are gone, never piling up or wetting the ground.</summary>
+    public const int Light = 8;
+}
 
 /// <summary>A particle system: spawn kinds, step them, draw "back" (the soft kinds) or "front" (the rest).</summary>
 public sealed class FXParticles
@@ -201,6 +206,8 @@ public sealed class FXParticles
         public FXColor Col;
         public double Size, Seed, Delay;
         public int Flag;
+        /// <summary>Weather's flakes and leaves: how fast it settles to falling, in pixels a second (0: pixelfx's own pace).</summary>
+        public double Fall;
     }
     public readonly Rng R;
     public List<P> List = new();
@@ -224,9 +231,9 @@ public sealed class FXParticles
 
     /// <summary>delay: seconds before it appears; col 0 lets fire and smoke use their own ramps.</summary>
     public void Spawn(FXKind k, double x, double y, double vx, double vy, double life,
-                      FXColor col = FX.White, double size = 1, double delay = 0, int flag = 0)
+                      FXColor col = FX.White, double size = 1, double delay = 0, int flag = 0, double fall = 0)
     {
-        List.Add(new P { K = k, X = x, Y = y, Vx = vx, Vy = vy, Life = life, Max = life, Col = col, Size = size, Seed = R.Next() * 100, Delay = delay, Flag = flag });
+        List.Add(new P { K = k, X = x, Y = y, Vx = vx, Vy = vy, Life = life, Max = life, Col = col, Size = size, Seed = R.Next() * 100, Delay = delay, Flag = flag, Fall = fall });
     }
 
     static bool Soft(FXKind k) => k == FXKind.Vapour || k == FXKind.Dust || k == FXKind.Smoke;
@@ -312,7 +319,7 @@ public sealed class FXParticles
                     break;
                 case FXKind.Flake:
                     p.Vx -= p.Vx * 2.2 * dt;
-                    p.Vy -= p.Vy * 2.2 * dt - 35 * dt;
+                    p.Vy -= p.Vy * 2.2 * dt - (p.Fall > 0 ? p.Fall * 2.2 : 35) * dt;
                     p.X += Math.Sin(T * 2.5 + p.Seed) * 7 * dt;
                     if (Wind != 0) p.X += Wind * dt * (0.7 + FX.Mod(p.Seed, 0.6));
                     break;
@@ -320,8 +327,8 @@ public sealed class FXParticles
                     p.Vx += (Wind - p.Vx) * 4 * dt;
                     break;
                 case FXKind.Leaf:
-                    p.Vx += (Wind * (0.6 + FX.Mod(p.Seed, 0.6)) - p.Vx) * 2 * dt;
-                    p.Vy = Math.Sin(t * 3.1 + p.Seed) * 14 + 6;
+                    p.Vx += (Wind * (0.6 + FX.Mod(p.Seed, 0.6)) + Math.Sin(t * 1.3 + p.Seed) * 9 - p.Vx) * 2 * dt;
+                    p.Vy = Math.Sin(t * 3.1 + p.Seed) * 14 + (p.Fall > 0 ? p.Fall : 6);
                     break;
                 case FXKind.Ember:
                     p.Vy += (-30 + Math.Sin(t * 3 + p.Seed) * 20) * dt;
