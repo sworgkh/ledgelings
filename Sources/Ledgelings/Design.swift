@@ -171,8 +171,15 @@ struct PaperHints: View {
     let text: String
     init(_ text: String) { self.text = text }
 
+    /// Keys are two spaces apart, a key and its word one: a wrap falls between keys,
+    /// never between "⌘P" and "PIN". A sentence (no double space) wraps as usual.
+    static func keepingKeysWhole(_ text: String) -> String {
+        guard text.contains("  ") else { return text }
+        return text.components(separatedBy: "  ").map { $0.replacingOccurrences(of: " ", with: "\u{00A0}") }.joined(separator: "  ")
+    }
+
     var body: some View {
-        Text(text).font(Pixel.Font.hint).foregroundStyle(Pixel.faintInk)
+        Text(Self.keepingKeysWhole(text)).font(Pixel.Font.hint).foregroundStyle(Pixel.faintInk)
             .lineLimit(2).fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.trailing, Pixel.cornerRoom)

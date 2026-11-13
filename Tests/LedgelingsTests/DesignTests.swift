@@ -80,4 +80,9 @@ struct DesignTests {
             #expect(own == 0, "\(name) sets \(own) font size(s) of its own; use Pixel.Font")
         }
     }
+
+    @Test func aKeysLineWrapsBetweenKeysOnly() {
+        #expect(PaperHints.keepingKeysWhole("⏎ PASTE  ⌘P PIN") == "⏎\u{00A0}PASTE  ⌘P\u{00A0}PIN")
+        #expect(PaperHints.keepingKeysWhole("No tools chosen: Settings.") == "No tools chosen: Settings.")
+    }
 }

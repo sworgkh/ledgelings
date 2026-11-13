@@ -289,7 +289,7 @@ struct ChatView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
-                    PaperHints(tr("CHAT WITH THE CREATURES")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
+                    Text(tr("CHAT WITH THE CREATURES")).font(Pixel.Font.title).lineLimit(1).foregroundStyle(Self.faintInk)
                     Spacer()
                     ChatButtonView(button: .settings) { model.act(.settings) }
                     ChatButtonView(button: .close) { model.act(.close) }
@@ -313,7 +313,7 @@ struct ChatView: View {
                 .padding(.top, 6)
                 // Clear of the paper's folded corner.
                 .padding(.trailing, 46)
-                Text(tr("⏎ SEND  ⇧⏎ NEW LINE  ⌘1–9 TO ONE  ⌘0 EVERYONE  ⌘, SETTINGS  ⎋ CLOSE"))
+                PaperHints(tr("⏎ SEND  ⇧⏎ NEW LINE  ⌘1–9 TO ONE  ⌘0 EVERYONE  ⌘, SETTINGS  ⎋ CLOSE"))
                     .padding(.top, 8)
             }
             .padding(.horizontal, 27)

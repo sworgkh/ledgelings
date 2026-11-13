@@ -405,7 +405,7 @@ struct ReadAloudSheetView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
-                    PaperHints(tr("READ ALOUD")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
+                    Text(tr("READ ALOUD")).font(Pixel.Font.title).lineLimit(1).foregroundStyle(Self.faintInk)
                     Spacer()
                 }
                 .padding(.bottom, 8)
@@ -418,8 +418,7 @@ struct ReadAloudSheetView: View {
                 progress.padding(.top, 10)
                 statusLine.padding(.top, 8)
                 Spacer(minLength: 0)
-                Text(tr("⏎ READ · PAUSE  ⇧⏎ NEW LINE  ⌘. STOP  ⌘− ⌘= PACE  ⌘1–9 PRESET  ⌘R READER  ⌘S SAVE  ⌘⇧C COPY  ⎋ CLOSE"))
-                    .padding(.trailing, 60)
+                PaperHints(tr("⏎ READ · PAUSE  ⇧⏎ NEW LINE  ⌘. STOP  ⌘− ⌘= PACE  ⌘1–9 PRESET  ⌘R READER  ⌘S SAVE  ⌘⇧C COPY  ⎋ CLOSE"))
             }
             .padding(.horizontal, 27)
             .padding(.top, 24)

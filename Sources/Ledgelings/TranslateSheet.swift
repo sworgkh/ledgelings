@@ -649,7 +649,7 @@ struct TranslateSheetView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    PaperHints(tr("TRANSLATE")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
+                    Text(tr("TRANSLATE")).font(Pixel.Font.title).lineLimit(1).foregroundStyle(Self.faintInk)
                     Spacer()
                     if model.savedOn {
                         TranslateButtonView(button: .savedList, on: model.drawerOpen) { model.act(.savedList) }
@@ -666,9 +666,8 @@ struct TranslateSheetView: View {
                 .frame(height: 300)
                 statusLine.padding(.top, 8)
                 Spacer(minLength: 0)
-                Text(model.savedOn ? tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘D SAVE  ⌘L SAVED  ⌘⌫ CLEAR  ⎋ CLOSE")
+                PaperHints(model.savedOn ? tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘D SAVE  ⌘L SAVED  ⌘⌫ CLEAR  ⎋ CLOSE")
                      : tr("⏎ COPY  ⌘⏎ PASTE  ⇧⏎ NEW LINE  ⇥ GUESS  ⌘S SWAP  ⌘1–4 FROM  ⌥1–3 INTO  ⌘⌫ CLEAR  ⎋ CLOSE"))
-                    .padding(.trailing, 60)
             }
             .padding(.horizontal, 27)
             .padding(.top, 24)
@@ -781,7 +780,7 @@ struct TranslateDrawerView: View {
             NotePaper(width: size.width, height: size.height)
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    PaperHints(tr("SAVED")).font(Pixel.Font.title).foregroundStyle(Self.faintInk)
+                    Text(tr("SAVED")).font(Pixel.Font.title).lineLimit(1).foregroundStyle(Self.faintInk)
                     Spacer()
                     Text(model.query.isEmpty ? "\(model.saved.count)" : "\(rows.count) / \(model.saved.count)")
                         .font(Pixel.Font.hint).foregroundStyle(Self.faintInk)
@@ -789,9 +788,8 @@ struct TranslateDrawerView: View {
                 .padding(.bottom, 8)
                 field.padding(.bottom, 8)
                 list(rows)
-                Text(tr("↑↓ MOVE  ⏎ LOAD  ⌘C COPY  ⌫ DELETE  ⎋ CLOSE"))
+                PaperHints(tr("↑↓ MOVE  ⏎ LOAD  ⌘C COPY  ⌫ DELETE  ⎋ CLOSE"))
                     .padding(.top, 6)
-                    .padding(.trailing, 40)
             }
             // The side under the paper is tucked away: the words keep clear of it.
             .padding(.leading, model.drawerSide == .right ? 18 + TranslateSheetModel.drawerTuck : 18)
