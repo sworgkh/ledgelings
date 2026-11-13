@@ -598,7 +598,6 @@ internal sealed class TranslateSheetWindow : Window
     private static readonly Brush ink = Frozen(40, 34, 58), softInk = Frozen(92, 86, 120), faintInk = Frozen(150, 146, 170);
     private static readonly Color inkColour = Color.FromRgb(40, 34, 58);
     private static readonly FontFamily mono = new("Consolas");
-    private const double FontSize15 = 15;
 
     private readonly TranslateSheetController controller;
     private readonly Monitor monitor;
@@ -785,20 +784,20 @@ internal sealed class TranslateSheetWindow : Window
         grid.Children.Add(image);
         var stack = new DockPanel { LastChildFill = true };
         var top = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
-        drawerCount.FontFamily = mono; drawerCount.FontSize = 10; drawerCount.FontWeight = FontWeights.Bold; drawerCount.Foreground = faintInk;
+        drawerCount.FontFamily = mono; drawerCount.FontSize = Pixel.Hint; drawerCount.FontWeight = FontWeights.Bold; drawerCount.Foreground = faintInk;
         DockPanel.SetDock(drawerCount, Dock.Right);
         top.Children.Add(drawerCount);
-        top.Children.Add(new TextBlock { Text = L10n.Tr("SAVED"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk });
+        top.Children.Add(new TextBlock { Text = L10n.Tr("SAVED"), FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk });
         DockPanel.SetDock(top, Dock.Top);
         stack.Children.Add(top);
 
-        search.FontFamily = mono; search.FontSize = 14; search.FontWeight = FontWeights.Heavy; search.Foreground = ink; search.CaretBrush = ink;
+        search.FontFamily = mono; search.FontSize = Pixel.SmallField; search.FontWeight = FontWeights.Heavy; search.Foreground = ink; search.CaretBrush = ink;
         search.Background = Brushes.Transparent; search.BorderThickness = new Thickness(0);
         search.TextChanged += (_, _) => { if (!settingSearch) controller.Query = search.Text; searchHint.Visibility = search.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden; };
         search.GotKeyboardFocus += (_, _) => controller.DrawerHasKeys = true;
         box.GotKeyboardFocus += (_, _) => controller.DrawerHasKeys = false;
         searchHint.Text = L10n.Tr("search saved…");
-        searchHint.FontFamily = mono; searchHint.FontSize = 14; searchHint.FontWeight = FontWeights.Heavy; searchHint.Foreground = faintInk; searchHint.IsHitTestVisible = false;
+        searchHint.FontFamily = mono; searchHint.FontSize = Pixel.SmallField; searchHint.FontWeight = FontWeights.Heavy; searchHint.Foreground = faintInk; searchHint.IsHitTestVisible = false;
         var field = new PixelBox { Look = PixelBox.Finish.Well, Child = new Grid { Margin = new Thickness(10, 6, 10, 6), Children = { searchHint, search } }, Margin = new Thickness(0, 0, 0, 8) };
         DockPanel.SetDock(field, Dock.Top);
         stack.Children.Add(field);
@@ -806,9 +805,9 @@ internal sealed class TranslateSheetWindow : Window
         var keys = new TextBlock
         {
             Text = L10n.Tr("UP DOWN MOVE  ENTER LOAD  CTRL+C COPY  DEL DELETE  ESC CLOSE"),
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 6, 40, 0),
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 6, 0, 0),
         };
+        Pixel.AsHints(keys);
         DockPanel.SetDock(keys, Dock.Bottom);
         stack.Children.Add(keys);
         rowsScroll.Content = rows;
@@ -829,7 +828,7 @@ internal sealed class TranslateSheetWindow : Window
             rows.Children.Add(new TextBlock
             {
                 Text = c.Saved.Book.IsEmpty ? L10n.Tr("Nothing saved yet: Ctrl+D saves a translation.") : L10n.Tr("Nothing matches."),
-                FontFamily = mono, FontSize = 11, FontWeight = FontWeights.SemiBold, Foreground = softInk, TextWrapping = TextWrapping.Wrap,
+                FontFamily = mono, FontSize = Pixel.Label, FontWeight = FontWeights.SemiBold, Foreground = softInk, TextWrapping = TextWrapping.Wrap,
                 HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 0),
             });
         var now = DateTimeOffset.Now;
@@ -847,11 +846,11 @@ internal sealed class TranslateSheetWindow : Window
             DockPanel.SetDock(buttons, Dock.Right);
             tags.Children.Add(buttons);
             var pair = new PixelBox { Look = PixelBox.Finish.Raised, VerticalAlignment = VerticalAlignment.Center,
-                Child = new TextBlock { Text = entry.Pair, FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(6, 2, 6, 2) } };
+                Child = new TextBlock { Text = entry.Pair, FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(6, 2, 6, 2) } };
             tags.Children.Add(new StackPanel
             {
                 Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center,
-                Children = { pair, new TextBlock { Text = T.SavedDate(entry.SavedAt, now), FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold,
+                Children = { pair, new TextBlock { Text = T.SavedDate(entry.SavedAt, now), FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.SemiBold,
                                                    Foreground = chosen ? PixelBox.Rim : faintInk, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center } },
             });
             row.Children.Add(tags);
@@ -869,7 +868,7 @@ internal sealed class TranslateSheetWindow : Window
     private static TextBlock Words(string text, string code, Brush colour, FontWeight weight) => new()
     {
         Text = string.Join(" ", text.Split('\n', '\r').Where(l => l.Length > 0)),
-        FontFamily = mono, FontSize = 12, FontWeight = weight, Foreground = colour, TextTrimming = TextTrimming.CharacterEllipsis,
+        FontFamily = mono, FontSize = Pixel.Body, FontWeight = weight, Foreground = colour, TextTrimming = TextTrimming.CharacterEllipsis,
         FlowDirection = T.Language(code)?.RightToLeft == true ? FlowDirection.RightToLeft : FlowDirection.LeftToRight,
     };
 
@@ -888,27 +887,27 @@ internal sealed class TranslateSheetWindow : Window
         var top = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
         DockPanel.SetDock(topButtons, Dock.Right);
         top.Children.Add(topButtons);
-        top.Children.Add(new TextBlock { Text = L10n.Tr("TRANSLATE"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center });
+        top.Children.Add(new TextBlock { Text = L10n.Tr("TRANSLATE"), FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center });
         DockPanel.SetDock(top, Dock.Top);
         stack.Children.Add(top);
         chips.Margin = new Thickness(0, 0, 0, 8);
         DockPanel.SetDock(chips, Dock.Top);
         stack.Children.Add(chips);
 
-        footer.FontFamily = mono; footer.FontSize = 9; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
-        footer.Margin = new Thickness(0, 8, 60, 0); footer.TextTrimming = TextTrimming.CharacterEllipsis;
+        footer.FontFamily = mono; footer.FontSize = Pixel.Hint; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
+        footer.Margin = new Thickness(0, 8, 0, 0);
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
         dots.Text = "•••"; dots.Foreground = softInk; dots.Margin = new Thickness(0, 0, 8, 0);
         status.TextWrapping = TextWrapping.Wrap; status.MaxHeight = 30;
         var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { dots, status } };
-        foreach (var t in new[] { dots, status }) { t.FontFamily = mono; t.FontSize = 11; t.FontWeight = FontWeights.Heavy; }
+        foreach (var t in new[] { dots, status }) { t.FontFamily = mono; t.FontSize = Pixel.Label; t.FontWeight = FontWeights.Heavy; }
         DockPanel.SetDock(line, Dock.Bottom);
         stack.Children.Add(line);
 
         // The left box: what you type, with the guess in grey after the last letter.
-        box.FontFamily = mono; box.FontSize = FontSize15; box.FontWeight = FontWeights.SemiBold; box.Foreground = ink; box.CaretBrush = ink;
+        box.FontFamily = mono; box.FontSize = Pixel.Typed; box.FontWeight = FontWeights.SemiBold; box.Foreground = ink; box.CaretBrush = ink;
         box.Background = Brushes.Transparent; box.BorderThickness = new Thickness(0);
         box.AcceptsReturn = true; box.AcceptsTab = false; box.TextWrapping = TextWrapping.Wrap;
         box.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
@@ -920,13 +919,13 @@ internal sealed class TranslateSheetWindow : Window
             PlaceGuess();
         };
         hint.Text = L10n.Tr("Type, or paste, in any language that is on.");
-        hint.FontFamily = mono; hint.FontSize = FontSize15; hint.FontWeight = FontWeights.SemiBold; hint.Foreground = faintInk; hint.IsHitTestVisible = false; hint.TextWrapping = TextWrapping.Wrap;
-        guess.FontFamily = mono; guess.FontSize = FontSize15; guess.FontWeight = FontWeights.SemiBold; guess.Foreground = faintInk;
+        hint.FontFamily = mono; hint.FontSize = Pixel.Typed; hint.FontWeight = FontWeights.SemiBold; hint.Foreground = faintInk; hint.IsHitTestVisible = false; hint.TextWrapping = TextWrapping.Wrap;
+        guess.FontFamily = mono; guess.FontSize = Pixel.Typed; guess.FontWeight = FontWeights.SemiBold; guess.Foreground = faintInk;
         guessLayer.Children.Add(guess);
         var left = new PixelBox { Look = PixelBox.Finish.Well, Child = new Grid { Margin = new Thickness(10, 8, 10, 8), Children = { hint, box, guessLayer } } };
 
         // The right box: the translation, and its copy and paste pictures.
-        result.FontFamily = mono; result.FontSize = FontSize15; result.FontWeight = FontWeights.SemiBold; result.TextWrapping = TextWrapping.Wrap;
+        result.FontFamily = mono; result.FontSize = Pixel.Typed; result.FontWeight = FontWeights.SemiBold; result.TextWrapping = TextWrapping.Wrap;
         var words = new ScrollViewer { Content = result, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden };
         DockPanel.SetDock(resultButtons, Dock.Bottom);
         var right = new PixelBox { Look = PixelBox.Finish.Raised, Child = new DockPanel { Margin = new Thickness(10, 8, 10, 8), Children = { resultButtons, words } } };
@@ -978,6 +977,7 @@ internal sealed class TranslateSheetWindow : Window
         footer.Text = c.SavedOn
             ? L10n.Tr("ENTER COPY  CTRL+ENTER PASTE  SHIFT+ENTER NEW LINE  TAB GUESS  CTRL+S SWAP  CTRL+1–4 FROM  ALT+1–3 INTO  CTRL+D SAVE  CTRL+L SAVED  ESC CLOSE")
             : L10n.Tr("ENTER COPY  CTRL+ENTER PASTE  SHIFT+ENTER NEW LINE  TAB GUESS  CTRL+S SWAP  CTRL+1–4 FROM  ALT+1–3 INTO  ESC CLOSE");
+        Pixel.AsHints(footer);
         topButtons.Children.Clear();
         if (c.SavedOn) topButtons.Children.Add(IconButton(T.Button.SavedList, null, () => c.Act(T.Button.SavedList), on: c.DrawerOpen));
         resultButtons.Children.Clear();
@@ -1027,7 +1027,7 @@ internal sealed class TranslateSheetWindow : Window
     private double Measure(string text)
     {
         var formatted = new FormattedText(text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                                          new Typeface(mono, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal), FontSize15, faintInk,
+                                          new Typeface(mono, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal), Pixel.Typed, faintInk,
                                           VisualTreeHelper.GetDpi(this).PixelsPerDip);
         return formatted.WidthIncludingTrailingWhitespace;
     }
@@ -1037,7 +1037,7 @@ internal sealed class TranslateSheetWindow : Window
         var chip = new PixelBox
         {
             Look = chosen ? PixelBox.Finish.Chosen : PixelBox.Finish.Raised,
-            Child = new TextBlock { Text = title, FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(9, 5, 9, 5) },
+            Child = new TextBlock { Text = title, FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(9, 5, 9, 5) },
             Margin = new Thickness(0, 0, 6, 0), Cursor = Cursors.Hand, ToolTip = tip,
         };
         chip.MouseLeftButtonUp += (_, e) => { e.Handled = true; click(); };

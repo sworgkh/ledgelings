@@ -5,41 +5,20 @@
         ui:Tr.Title="Ledgelings Settings" Width="980" Height="720" MinWidth="760" MinHeight="480"
         WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
   <Window.Resources>
-    <Style x:Key="Footer" TargetType="TextBlock">
-      <Setter Property="TextWrapping" Value="Wrap"/>
-      <Setter Property="Foreground" Value="Gray"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Margin" Value="0,6,0,0"/>
-    </Style>
-    <Style x:Key="RowLabel" TargetType="TextBlock">
-      <Setter Property="Width" Value="110"/>
-      <!-- Russian labels run longer: they wrap rather than lose their ends. -->
-      <Setter Property="TextWrapping" Value="Wrap"/>
-      <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-    <Style x:Key="RowValue" TargetType="TextBlock">
-      <Setter Property="Width" Value="70"/>
-      <Setter Property="TextAlignment" Value="Right"/>
-      <Setter Property="VerticalAlignment" Value="Center"/>
-      <Setter Property="DockPanel.Dock" Value="Right"/>
-    </Style>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Design.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
     <!-- One style's or moment's row (Effects, Moments): its switch, the feature it belongs to, and Play. -->
     <DataTemplate x:Key="EffectRowTemplate">
       <DockPanel Margin="0,2">
         <Button DockPanel.Dock="Right" ui:Tr.Content="Play it" Tag="{Binding Code}" Click="EffectPlay_Click" ToolTip="{Binding PlayTip}"
-                FontSize="11" Padding="8,0" Margin="8,0,0,0"/>
+                Style="{StaticResource RowAction}"/>
         <TextBlock DockPanel.Dock="Right" Text="{Binding Feature}" Foreground="Gray" FontSize="11" VerticalAlignment="Center"/>
         <CheckBox Content="{Binding Title}" IsChecked="{Binding On, Mode=TwoWay}" ToolTip="{Binding Detail}" VerticalAlignment="Center"/>
       </DockPanel>
     </DataTemplate>
-    <Style TargetType="GroupBox">
-      <Setter Property="Padding" Value="8"/>
-      <Setter Property="Margin" Value="0,0,0,10"/>
-    </Style>
-    <Style TargetType="Slider">
-      <Setter Property="VerticalAlignment" Value="Center"/>
-      <Setter Property="IsSnapToTickEnabled" Value="True"/>
-    </Style>
+    </ResourceDictionary>
   </Window.Resources>
   <!-- A sidebar of every page under its group's heading, with a search box (SettingsWindow.Sidebar.cs);
        the pages are a TabControl with no tab strip, each found by its Tr.Header (SettingsPage's English title). -->
@@ -328,7 +307,7 @@
                       <TextBlock Grid.Column="1" Text="{Binding Today}" TextAlignment="Right" FontWeight="{Binding Weight}"/>
                       <TextBlock Grid.Column="2" Text="{Binding Week}" TextAlignment="Right" FontWeight="{Binding Weight}"/>
                       <TextBlock Grid.Column="3" Text="{Binding All}" TextAlignment="Right" FontWeight="{Binding Weight}"/>
-                      <Button Grid.Column="4" ui:Tr.Content="Reset" Tag="{Binding Name}" Click="ResetHunt_Click" FontSize="11" Padding="6,0"
+                      <Button Grid.Column="4" ui:Tr.Content="Reset" Tag="{Binding Name}" Click="ResetHunt_Click" Style="{StaticResource RowAction}"
                               HorizontalAlignment="Right" Visibility="{Binding ResetVisibility}" IsEnabled="{Binding CanReset}"/>
                     </Grid>
                   </DataTemplate>
@@ -393,7 +372,7 @@
                         <TextBlock Text="{Binding Bed}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
                       </StackPanel>
                       <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" Margin="6,0"/>
-                      <Button Grid.Column="3" ui:Tr.Content="Forget" Tag="{Binding Name}" Click="ForgetBed_Click" FontSize="11" Padding="6,0"
+                      <Button Grid.Column="3" ui:Tr.Content="Forget" Tag="{Binding Name}" Click="ForgetBed_Click" Style="{StaticResource RowAction}"
                               HorizontalAlignment="Right" VerticalAlignment="Center" IsEnabled="{Binding CanForget}"/>
                     </Grid>
                   </DataTemplate>
@@ -1112,8 +1091,8 @@
                   <DataTemplate>
                     <StackPanel Margin="0,4">
                       <DockPanel>
-                        <Button DockPanel.Dock="Right" ui:Tr.Content="Forget" Tag="{Binding Key}" Click="ForgetBond_Click" FontSize="11" Padding="6,0"/>
-                        <Button DockPanel.Dock="Right" ui:Tr.Content="Reset Story" Tag="{Binding Key}" Click="ResetStory_Click" FontSize="11" Padding="6,0" Margin="0,0,6,0"/>
+                        <Button DockPanel.Dock="Right" ui:Tr.Content="Forget" Tag="{Binding Key}" Click="ForgetBond_Click" Style="{StaticResource RowAction}"/>
+                        <Button DockPanel.Dock="Right" ui:Tr.Content="Reset Story" Tag="{Binding Key}" Click="ResetStory_Click" Style="{StaticResource RowAction}" Margin="0,0,6,0"/>
                         <TextBlock Text="{Binding Names}" FontWeight="Bold"/>
                       </DockPanel>
                       <TextBlock Text="{Binding Details}" FontSize="11" Foreground="Gray"/>

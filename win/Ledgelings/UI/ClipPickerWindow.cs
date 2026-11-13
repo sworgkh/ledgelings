@@ -525,23 +525,23 @@ internal sealed class ClipPickerWindow : Window
     {
         var stack = new DockPanel { Margin = new Thickness(27, 24, 27, 20), LastChildFill = true };
         var top = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
-        counts.FontFamily = mono; counts.FontSize = 10; counts.FontWeight = FontWeights.Bold; counts.Foreground = faintInk;
+        counts.FontFamily = mono; counts.FontSize = Pixel.Hint; counts.FontWeight = FontWeights.Bold; counts.Foreground = faintInk;
         DockPanel.SetDock(counts, Dock.Right);
         top.Children.Add(counts);
-        top.Children.Add(new TextBlock { Text = L10n.Tr("CLIPBOARD"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk });
+        top.Children.Add(new TextBlock { Text = L10n.Tr("CLIPBOARD"), FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk });
         DockPanel.SetDock(top, Dock.Top);
         stack.Children.Add(top);
 
-        field.FontFamily = mono; field.FontSize = 18; field.FontWeight = FontWeights.Heavy; field.Foreground = ink;
+        field.FontFamily = mono; field.FontSize = Pixel.Field; field.FontWeight = FontWeights.Heavy; field.Foreground = ink;
         field.Background = Brushes.Transparent; field.BorderThickness = new Thickness(0); field.CaretBrush = ink;
         field.TextChanged += (_, _) => { hint.Visibility = field.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden; controller.Search(field.Text); };
         hint.Text = L10n.Tr("search copies and snippets…");
-        hint.FontFamily = mono; hint.FontSize = 18; hint.FontWeight = FontWeights.Heavy; hint.Foreground = faintInk; hint.IsHitTestVisible = false;
+        hint.FontFamily = mono; hint.FontSize = Pixel.Field; hint.FontWeight = FontWeights.Heavy; hint.Foreground = faintInk; hint.IsHitTestVisible = false;
         var well = new PixelBox { Look = PixelBox.Finish.Well, Child = new Grid { Margin = new Thickness(12, 9, 12, 9), Children = { hint, field } }, Margin = new Thickness(0, 0, 0, 10) };
         DockPanel.SetDock(well, Dock.Top);
         stack.Children.Add(well);
 
-        footer.FontFamily = mono; footer.FontSize = 9; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
+        footer.FontFamily = mono; footer.FontSize = Pixel.Hint; footer.FontWeight = FontWeights.Heavy; footer.Foreground = faintInk;
         footer.Margin = new Thickness(0, 8, 60, 0);   // clear of the paper's folded-down corner
         footer.TextTrimming = TextTrimming.CharacterEllipsis;
         var other = settings.ClipPlainText ? L10n.Tr("FORMATTED") : L10n.Tr("PLAIN");
@@ -552,11 +552,13 @@ internal sealed class ClipPickerWindow : Window
             (false, true) => L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+R READ  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE", other),
             _ => L10n.Tr("ENTER PASTE  ALT+ENTER %@  CTRL+1–9 PICK  TAB GROUP  CTRL+P PIN  DEL FORGET  CTRL+E EDIT  ESC CLOSE", other),
         };
+        Pixel.AsHints(footer);
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
+        // The list sits in a well and is clipped to it: a long row or the chosen box never runs to the paper's edge.
         scroller.Content = rows;
-        stack.Children.Add(scroller);
+        stack.Children.Add(new PixelBox { Look = PixelBox.Finish.Well, Child = new Border { Child = scroller, ClipToBounds = true, Padding = new Thickness(Look.Xs) } });
         return stack;
     }
 
@@ -570,7 +572,7 @@ internal sealed class ClipPickerWindow : Window
             rows.Children.Add(new TextBlock
             {
                 Text = model.Query.Length == 0 ? L10n.Tr("Nothing yet: copy something, or add a snippet (Ctrl+E).") : L10n.Tr("Nothing matches."),
-                FontFamily = mono, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = softInk,
+                FontFamily = mono, FontSize = Pixel.Body, FontWeight = FontWeights.SemiBold, Foreground = softInk,
                 HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 20, 0, 0),
             });
         var shown = model.Rows.Take(ClipPickerController.MostRows).ToList();
@@ -581,7 +583,7 @@ internal sealed class ClipPickerWindow : Window
                 rows.Children.Add(new TextBlock
                 {
                     Text = row.Group == ClipPicker.Group.Recent ? L10n.Tr("RECENT") : L10n.Tr("SNIPPETS"),
-                    FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = softInk, Margin = new Thickness(0, 6, 0, 2),
+                    FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = softInk, Margin = new Thickness(0, 6, 0, 2),
                 });
             var line = Line(row, i < 9 ? i + 1 : null);
             lines[row.Id] = line;
@@ -589,8 +591,16 @@ internal sealed class ClipPickerWindow : Window
             if (controller.Translation is { } t && t.Id == row.Id) rows.Children.Add(Translation(t));
         }
         if (model.Rows.Count > shown.Count)
-            rows.Children.Add(new TextBlock { Text = L10n.Tr("%d more: type to narrow", model.Rows.Count - shown.Count), FontFamily = mono, FontSize = 10, Foreground = faintInk });
+            rows.Children.Add(new TextBlock { Text = L10n.Tr("%d more: type to narrow", model.Rows.Count - shown.Count), FontFamily = mono, FontSize = Pixel.Hint, Foreground = faintInk });
         if (scroll && model.Selected is Guid id && lines.TryGetValue(id, out var chosen)) chosen.BringIntoView();
+    }
+
+    private const double SlotWidth = 30;
+    private static Border Slot()
+    {
+        var slot = new Border { Width = SlotWidth, Margin = new Thickness(Look.S, 0, 0, 0) };
+        DockPanel.SetDock(slot, Dock.Right);
+        return slot;
     }
 
     private FrameworkElement Line(ClipPicker.Row row, int? number)
@@ -599,49 +609,52 @@ internal sealed class ClipPickerWindow : Window
         var panel = new DockPanel { Height = RowHeight, Margin = new Thickness(9, 0, 9, 0), LastChildFill = true };
         TextBlock Text(string text, double size, FontWeight weight, Brush brush) =>
             new() { Text = text, FontFamily = mono, FontSize = size, FontWeight = weight, Foreground = brush, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
-        var num = Text(number?.ToString() ?? " ", 10, FontWeights.Heavy, chosen ? PixelBox.Rim : faintInk);
+        var num = Text(number?.ToString() ?? " ", Pixel.Hint, FontWeights.Heavy, chosen ? PixelBox.Rim : faintInk);
         num.Width = 20;
         DockPanel.SetDock(num, Dock.Left);
         panel.Children.Add(num);
+        // The trailing pictures keep fixed slots: a row without one keeps its place empty, so they line up.
+        if (controller.TranslateOn && controller.Words(row) is null) panel.Children.Add(Slot());
         if (controller.Words(row) is not null)
         {
             // The translate picture: on hover its name and key; a click opens the translation under the row.
             var tip = Translate.Button.Translate.Tooltip();
             var picture = PixelGlyph.Image(Translate.Button.Translate.Icon(), Color.FromRgb(40, 34, 58), 1.5);
             picture.Opacity = chosen ? 1 : 0.55;
-            var button = new Border { Child = picture, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
+            var button = new Border { Child = picture, Width = SlotWidth, Margin = new Thickness(Look.S, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
             System.Windows.Automation.AutomationProperties.SetName(button, tip);
             button.MouseLeftButtonUp += (_, e) => { e.Handled = true; controller.ToggleTranslation(row); };
             DockPanel.SetDock(button, Dock.Right);
             panel.Children.Add(button);
         }
+        if (controller.ReadOn && controller.ReadWords(row) is null) panel.Children.Add(Slot());
         if (controller.ReadWords(row) is not null)
         {
             // The loudspeaker: on hover its name and key; a click reads the row aloud in the Read aloud sheet.
             var tip = ReadAloud.Button.ReadRow.Tooltip();
             var picture = PixelGlyph.Image(ReadAloud.Button.ReadRow.Icon(), Color.FromRgb(40, 34, 58), 1.5);
             picture.Opacity = chosen ? 1 : 0.55;
-            var button = new Border { Child = picture, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
+            var button = new Border { Child = picture, Width = SlotWidth, Margin = new Thickness(Look.S, 0, 0, 0), Padding = new Thickness(3), Background = Brushes.Transparent, Cursor = Cursors.Hand, ToolTip = tip, VerticalAlignment = VerticalAlignment.Center };
             System.Windows.Automation.AutomationProperties.SetName(button, tip);
             button.MouseLeftButtonUp += (_, e) => { e.Handled = true; controller.Read(row); };
             DockPanel.SetDock(button, Dock.Right);
             panel.Children.Add(button);
         }
-        var detail = Text(row.Protected ? L10n.Tr("LOCKED · %@", row.Detail) : row.Detail, 10, FontWeights.SemiBold, chosen ? PixelBox.Rim : faintInk);
+        var detail = Text(row.Protected ? L10n.Tr("LOCKED · %@", row.Detail) : row.Detail, Pixel.Hint, FontWeights.SemiBold, chosen ? PixelBox.Rim : faintInk);
         detail.Margin = new Thickness(8, 0, 0, 0);
         DockPanel.SetDock(detail, Dock.Right);
         panel.Children.Add(detail);
         var words = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         if (row.Group == ClipPicker.Group.Recent && controller.Thumbnail(row.Id) is { } thumbnail) words.Children.Add(Picture(thumbnail));
-        if (row.Pinned) words.Children.Add(Text("▲ ", 9, FontWeights.Heavy, PixelBox.Rim));
-        if (row.Title is string title) words.Children.Add(Text(title + "  ", 12, FontWeights.Heavy, PixelBox.Rim));
-        words.Children.Add(Text(row.Text, 12, row.Title is null ? FontWeights.SemiBold : FontWeights.Normal, row.Title is null && !row.Masked ? PixelBox.Rim : softInk));
+        if (row.Pinned) words.Children.Add(Text("▲ ", Pixel.Tile, FontWeights.Heavy, PixelBox.Rim));
+        if (row.Title is string title) words.Children.Add(Text(title + "  ", Pixel.Body, FontWeights.Heavy, PixelBox.Rim));
+        words.Children.Add(Text(row.Text, Pixel.Body, row.Title is null ? FontWeights.SemiBold : FontWeights.Normal, row.Title is null && !row.Masked ? PixelBox.Rim : softInk));
         panel.Children.Add(words);
         // Unchosen rows are bare paper: only the chosen one is a box. The panel gets one parent only:
         // WPF throws if it is handed to a second before the first lets go.
         if (!chosen)
-            return Hook(new Border { Child = panel, Margin = new Thickness(0, 1, 6, 1), Background = row.Masked ? maskTint : Brushes.Transparent }, row);
-        return Hook(new PixelBox { Look = PixelBox.Finish.Chosen, Child = panel, Margin = new Thickness(0, 1, 6, 1) }, row);
+            return Hook(new Border { Child = panel, Margin = new Thickness(0, 1, 0, 1), Background = row.Masked ? maskTint : Brushes.Transparent }, row);
+        return Hook(new PixelBox { Look = PixelBox.Finish.Chosen, Child = panel, Margin = new Thickness(0, 1, 0, 1) }, row);
     }
 
     /// <summary>A row's translation, under it: where it went, the words (or dots, or the trouble), and the sheet.</summary>
@@ -662,12 +675,12 @@ internal sealed class ClipPickerWindow : Window
         head.Children.Add(new TextBlock
         {
             Text = t.Target is { } into ? L10n.Tr("INTO %@ · CTRL+TAB NEXT · ENTER PASTES IT", into.Title.ToUpper(culture)) : L10n.Tr("TRANSLATING…"),
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center,
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center,
         });
         var words = new TextBlock
         {
             Text = t.Words ?? t.Trouble ?? "•••",
-            FontFamily = mono, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = t.Words is null ? softInk : PixelBox.Rim,
+            FontFamily = mono, FontSize = Pixel.Body, FontWeight = FontWeights.SemiBold, Foreground = t.Words is null ? softInk : PixelBox.Rim,
             TextWrapping = TextWrapping.Wrap, MaxHeight = 64, Margin = new Thickness(0, 4, 0, 0),
             FlowDirection = t.Target?.RightToLeft == true && t.Words is not null ? FlowDirection.RightToLeft : FlowDirection.LeftToRight,
         };
@@ -747,7 +760,7 @@ internal static class ClipToast
         var label = new PixelBox
         {
             Look = PixelBox.Finish.Raised,
-            Child = new TextBlock { Text = text, FontFamily = new FontFamily("Consolas"), FontSize = 13, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(14, 10, 14, 10) },
+            Child = new TextBlock { Text = text, FontFamily = new FontFamily("Consolas"), FontSize = Pixel.Button, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(14, 10, 14, 10) },
         };
         var window = new Window
         {

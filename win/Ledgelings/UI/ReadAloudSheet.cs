@@ -528,19 +528,19 @@ internal sealed class ReadAloudSheetWindow : Window
         var footer = new TextBlock
         {
             Text = L10n.Tr("ENTER READ · PAUSE  SHIFT+ENTER NEW LINE  CTRL+. STOP  CTRL+- CTRL+= PACE  CTRL+1–9 PRESET  CTRL+R READER  CTRL+S SAVE  CTRL+SHIFT+C COPY  ESC CLOSE"),
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 8, 60, 0),
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 8, 0, 0),
         };
+        Pixel.AsHints(footer);
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
         var column = new StackPanel();
-        column.Children.Add(new TextBlock { Text = L10n.Tr("READ ALOUD"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 8) });
+        column.Children.Add(new TextBlock { Text = L10n.Tr("READ ALOUD"), FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 8) });
         chips.Margin = new Thickness(0, 0, 0, 8);
         column.Children.Add(chips);
 
         // The text to read: a real text box, so Hebrew runs right to left and the usual keys work.
-        box.FontFamily = mono; box.FontSize = 15; box.FontWeight = FontWeights.SemiBold; box.Foreground = ink; box.CaretBrush = ink;
+        box.FontFamily = mono; box.FontSize = Pixel.Value; box.FontWeight = FontWeights.SemiBold; box.Foreground = ink; box.CaretBrush = ink;
         box.Background = Brushes.Transparent; box.BorderThickness = new Thickness(0);
         box.AcceptsReturn = true; box.AcceptsTab = false; box.TextWrapping = TextWrapping.Wrap;
         box.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
@@ -551,7 +551,7 @@ internal sealed class ReadAloudSheetWindow : Window
             box.FlowDirection = Translate.Detect(box.Text)?.RightToLeft == true ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         };
         hint.Text = L10n.Tr("Paste or type, choose a preset, and Enter reads it.");
-        hint.FontFamily = mono; hint.FontSize = 15; hint.FontWeight = FontWeights.SemiBold; hint.Foreground = faintInk; hint.IsHitTestVisible = false; hint.TextWrapping = TextWrapping.Wrap;
+        hint.FontFamily = mono; hint.FontSize = Pixel.Value; hint.FontWeight = FontWeights.SemiBold; hint.Foreground = faintInk; hint.IsHitTestVisible = false; hint.TextWrapping = TextWrapping.Wrap;
         column.Children.Add(new PixelBox { Look = PixelBox.Finish.Well, Height = 210, Child = new Grid { Margin = new Thickness(10, 8, 10, 8), Children = { hint, box } } });
 
         column.Children.Add(Controls());
@@ -559,7 +559,7 @@ internal sealed class ReadAloudSheetWindow : Window
 
         dots.Text = "•••"; dots.Foreground = softInk; dots.Margin = new Thickness(0, 0, 8, 0);
         status.TextWrapping = TextWrapping.Wrap; status.MaxHeight = 30;
-        foreach (var t in new[] { dots, status }) { t.FontFamily = mono; t.FontSize = 11; t.FontWeight = FontWeights.Heavy; }
+        foreach (var t in new[] { dots, status }) { t.FontFamily = mono; t.FontSize = Pixel.Label; t.FontWeight = FontWeights.Heavy; }
         var line = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
         DockPanel.SetDock(dots, Dock.Left);
         line.Children.Add(dots);
@@ -586,7 +586,7 @@ internal sealed class ReadAloudSheetWindow : Window
         left.Children.Add(Button(R.Button.Reader));
         reader.Margin = new Thickness(8, 0, 0, 0); reader.MaxWidth = 220; reader.TextTrimming = TextTrimming.CharacterEllipsis;
         left.Children.Add(reader);
-        foreach (var t in new[] { pace, reader }) { t.FontFamily = mono; t.FontSize = 12; t.FontWeight = FontWeights.Heavy; t.Foreground = ink; t.VerticalAlignment = VerticalAlignment.Center; }
+        foreach (var t in new[] { pace, reader }) { t.FontFamily = mono; t.FontSize = Pixel.Body; t.FontWeight = FontWeights.Heavy; t.Foreground = ink; t.VerticalAlignment = VerticalAlignment.Center; }
         var right = new StackPanel { Orientation = Orientation.Horizontal };
         right.Children.Add(Button(R.Button.Save));
         right.Children.Add(Gap(6));
@@ -604,7 +604,7 @@ internal sealed class ReadAloudSheetWindow : Window
     private UIElement Progress()
     {
         var row = new DockPanel { Margin = new Thickness(0, 10, 0, 0) };
-        clock.FontFamily = mono; clock.FontSize = 11; clock.FontWeight = FontWeights.Heavy; clock.Foreground = softInk;
+        clock.FontFamily = mono; clock.FontSize = Pixel.Label; clock.FontWeight = FontWeights.Heavy; clock.Foreground = softInk;
         clock.Width = 104; clock.TextAlignment = TextAlignment.Right; clock.VerticalAlignment = VerticalAlignment.Center;
         DockPanel.SetDock(clock, Dock.Right);
         row.Children.Add(clock);
@@ -696,7 +696,7 @@ internal sealed class ReadAloudSheetWindow : Window
             var chip = new PixelBox
             {
                 Look = preset.Id == c.PresetId ? PixelBox.Finish.Chosen : PixelBox.Finish.Raised,
-                Child = new TextBlock { Text = preset.Title.ToUpper(culture), FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(9, 5, 9, 5) },
+                Child = new TextBlock { Text = preset.Title.ToUpper(culture), FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim, Margin = new Thickness(9, 5, 9, 5) },
                 Margin = new Thickness(0, 0, 6, 0), Cursor = Cursors.Hand, ToolTip = R.Tag(preset, i + 1),
             };
             chip.MouseLeftButtonUp += (_, e) => { e.Handled = true; c.ChoosePreset(n); };

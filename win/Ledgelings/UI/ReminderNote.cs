@@ -8,6 +8,8 @@ using Rect = System.Windows.Rect;
 using Ledgelings.Core;
 using Ledgelings.Native;
 
+using PaperFont = Ledgelings.UI.Pixel;
+
 namespace Ledgelings.UI;
 
 /// <summary>
@@ -155,7 +157,7 @@ public sealed class ReminderNote : Window
 
     private static TextBlock Label(string words, double width = double.NaN)
     {
-        var label = Text(words, 11, softInk);
+        var label = Text(words, PaperFont.Label, softInk);
         label.Width = width;
         return label;
     }
@@ -174,7 +176,7 @@ public sealed class ReminderNote : Window
             Margin = new Thickness(33, Headroom + 27, 33, 0), Width = SheetWidth - 66,
             HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
         };
-        var title = Text(TitleLine, 11, faintInk);
+        var title = Text(TitleLine, PaperFont.Title, faintInk);
         title.Margin = new Thickness(0, 0, 0, 10);
         sheet.Children.Add(title);
 
@@ -182,7 +184,7 @@ public sealed class ReminderNote : Window
         var what = new StackPanel { Margin = new Thickness(0, 0, 0, 18) };
         what.Children.Add(Label(L10n.Tr("REMIND ME TO")));
         writing.FontFamily = mono;
-        writing.FontSize = 22;
+        writing.FontSize = PaperFont.Field;
         writing.FontWeight = FontWeights.Bold;
         writing.Foreground = ink;
         writing.CaretBrush = ink;
@@ -191,7 +193,7 @@ public sealed class ReminderNote : Window
         writing.TextChanged += (_, _) => Refresh();
         placeholder.Text = L10n.Tr("stretch, call mom, stand-up…");
         placeholder.FontFamily = mono;
-        placeholder.FontSize = 22;
+        placeholder.FontSize = PaperFont.Field;
         placeholder.FontWeight = FontWeights.Bold;
         placeholder.Foreground = faintInk;
         placeholder.IsHitTestVisible = false;
@@ -204,7 +206,7 @@ public sealed class ReminderNote : Window
         // When
         pastNote.Text = L10n.Tr("past: it comes\nstraight away");
         pastNote.FontFamily = mono;
-        pastNote.FontSize = 10;
+        pastNote.FontSize = PaperFont.Hint;
         pastNote.FontWeight = FontWeights.SemiBold;
         pastNote.Foreground = faintInk;
         pastNote.VerticalAlignment = VerticalAlignment.Center;
@@ -247,7 +249,7 @@ public sealed class ReminderNote : Window
         buttons.Children.Add(foldButton);
         buttons.Children.Add(cancel);
         summary.FontFamily = mono;
-        summary.FontSize = 11;
+        summary.FontSize = PaperFont.Label;
         summary.FontWeight = FontWeights.SemiBold;
         summary.Foreground = softInk;
         summary.VerticalAlignment = VerticalAlignment.Bottom;
@@ -265,7 +267,7 @@ public sealed class ReminderNote : Window
         left.Click += (_, _) => back();
         right.Click += (_, _) => on();
         value.FontFamily = mono;
-        value.FontSize = 15;
+        value.FontSize = PaperFont.Value;
         value.FontWeight = FontWeights.Bold;
         value.Foreground = ink;
         value.HorizontalAlignment = HorizontalAlignment.Center;
@@ -412,7 +414,7 @@ public sealed class PixelButton : Button
 
     private void Apply()
     {
-        FontSize = small ? 11 : 13;
+        FontSize = small ? PaperFont.SmallButton : PaperFont.Button;
         Padding = new Thickness(small ? 9 : 14, 0, small ? 9 : 14, 0);
         MinWidth = small ? 30 : 0;
         MinHeight = small ? 30 : 38;
