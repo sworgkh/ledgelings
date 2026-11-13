@@ -48,6 +48,11 @@ final class WeatherState {
     lazy var snowmanImage: CGImage? = WeatherState.image(Weather.snowman())
     lazy var snowballImage: CGImage? = WeatherState.image(Weather.snowball())
     lazy var dripImage: CGImage? = WeatherState.image(Weather.drip())
+    /// The season's light particles falling now (Settings › Weather & Sky): which, how much, and until when.
+    var light: LightState?
+    /// Stopped (Stop activity, Stop Weather, the Stop button) at this time: everything fades out over
+    /// `Weather.Spell.stopFade` and is gone, piles and all.
+    var stoppingSince: Double?
     /// `--weather-film` and `--weather`: every step, as it happens.
     var trace: ((String) -> Void)?
     /// The film says where the windows are rather than the Mac.
@@ -66,6 +71,18 @@ final class WeatherState {
     }
 }
 
+/// The season's light particles while they are out: they come in over a few seconds, and go the same way.
+struct LightState {
+    var moment: Effects.Moment
+    var kind: Weather.Light.Kind
+    var byHand: Bool
+    /// Shown by hand until then.
+    var until: Double?
+    var intensity = 0.0
+    var easing = false
+    static let fade = 3.0
+}
+
 /// Weather on a quiet screen (SPEC §7.20): it comes when nobody has typed or moved the cursor for a while,
 /// falls over the creatures' monitors, piles up, and eases off when the owner comes back. The creatures wade,
 /// shiver, build snowmen, throw snowballs, open umbrellas, get soaked on the menu bar and are pushed by the wind.
@@ -78,6 +95,76 @@ extension Colony {
 
     var weatherShowing: Bool { weather.spell != nil }
 
+    /// Anything of the weather or the sky on screen that Stop would clear: a spell, the season's particles, the
+    /// fireflies, snow still lying. Not while it is already fading out.
+    var weatherRunning: Bool {
+        guard weather.stoppingSince == nil else { return false }
+        let flies = fx.ambient.map { a in a.moment == .night && !a.tiles.allSatisfy(\.instance.stopping) } ?? false
+        return weather.spell != nil || weather.light != nil || !weather.skies.isEmpty || flies
+    }
+
+    /// Stop: the weather, the season's particles and the fireflies fade out over about a second, and the piles
+    /// and puddles go with them. Nothing is switched off: the next weather comes when the screen is next quiet,
+    /// the season's particles at their next time out.
+    func stopWeather(why: String = "stop") {
+        guard weatherRunning else { return }
+        weather.stoppingSince = elapsed
+        if weather.spell != nil { weather.endedAt = elapsed }
+        weather.spell?.ease()
+        weather.light = nil
+        if let a = fx.ambient, a.moment == .night || a.moment.ambient { a.tiles.forEach { $0.instance.stop() } }
+        fx.stoppedPeriod = Effects.ambientPeriod(at: elapsed, seconds: settings.effectsAmbientSeconds, everyMinutes: settings.effectsAmbientEveryMinutes)
+        weather.trace?("weather stopped (\(why)): fading out")
+    }
+
+    /// The fireflies' night: the creatures' own, or from the chosen hour on the Mac's clock until six.
+    var fireflyNight: Bool {
+        let from = settings.skyFirefliesFrom
+        if from == AppSettings.skyNightFollowsColony { return isNight }
+        let hour = Calendar.current.component(.hour, from: now())
+        return hour >= from || hour < 6
+    }
+
+    // MARK: The season's light particles
+
+    /// The season's particles start falling from the top: by hand for half a minute (a preview), or on their own
+    /// until the season or their time out ends.
+    @discardableResult
+    func startLight(_ moment: Effects.Moment, byHand: Bool) -> Bool {
+        guard let kind = Self.lightKind(moment) else { return false }
+        weather.stoppingSince = nil
+        weather.light = LightState(moment: moment, kind: kind, byHand: byHand, until: byHand ? elapsed + 30 : nil)
+        layOutSkies()
+        weather.trace?("sky \(kind.rawValue) starts falling from the top")
+        fx.trace?(String(format: "fx %.2f moment %@ from the top", elapsed, moment.rawValue))
+        return true
+    }
+
+    static func lightKind(_ moment: Effects.Moment) -> Weather.Light.Kind? {
+        switch moment {
+        case .winter: .snow
+        case .autumn: .leaves
+        case .spring: .petals
+        default: nil
+        }
+    }
+
+    /// How many of the season's particles on a monitor at once.
+    private func lightCount(_ kind: Weather.Light.Kind) -> Double {
+        switch kind {
+        case .snow: settings.skyWinterCount
+        case .leaves: settings.skyAutumnCount
+        case .petals: settings.skySpringCount
+        }
+    }
+
+    /// Let the season's particles go: no more fall, those in the air finish falling.
+    func easeLight() {
+        guard weather.light?.easing == false else { return }
+        weather.light?.easing = true
+        weather.trace?("sky eases off")
+    }
+
     // MARK: Starting and stopping
 
     /// Weather starts now: from the menu, Play now, the film, or the quiet screen. False when it is off.
@@ -85,8 +172,10 @@ extension Colony {
     func startWeather(_ kind: Weather.Kind, byHand: Bool = true) -> Bool {
         refreshWeatherSwitches()
         guard byHand || weather.switches.allows(kind) else { return false }
+        if weather.stoppingSince != nil { resetWeather() }
         weather.spell = Weather.Spell(kind: kind, lasts: weather.switches.lastsMinutes * 60, byHand: byHand)
-        weather.wind = kind.blows ? Weather.Wind(fromLeft: Bool.random(using: &rng), strength: weather.switches.windStrength) : nil
+        weather.wind = kind.blows ? Weather.Wind(fromLeft: Bool.random(using: &rng), strength: weather.switches.windStrength,
+                                                 gustEvery: weather.switches.gustSeconds) : nil
         weather.time = 0
         weather.said = []
         weather.groups = []
@@ -97,6 +186,7 @@ extension Colony {
         weather.trace?("weather \(kind.name) starts")
         // The light season particles give way to the heavier weather.
         if let a = fx.ambient, a.tiles.first?.byHand != true { a.tiles.forEach { $0.instance.stop() } }
+        if weather.light?.byHand == false { weather.light = nil }
         if kind.snows { weatherLine("snow", by: weatherSpeaker()) }
         if kind.rains { weatherLine("rain", by: weatherSpeaker()) }
         if kind == .wind { weatherLine("wind", by: weatherSpeaker()) }
@@ -114,6 +204,8 @@ extension Colony {
     func resetWeather() {
         weather.spell = nil
         weather.wind = nil
+        weather.light = nil
+        weather.stoppingSince = nil
         restorePaces()
         weather.skies = []
         weather.dropped = []
@@ -133,7 +225,7 @@ extension Colony {
     }
 
     /// One sky per home monitor, made afresh when the monitors change (the snow lying there goes with them).
-    private func layOutSkies() {
+    func layOutSkies() {
         let frames = homeFrames
         if weather.skies.map(\.display) == frames { return }
         weather.skies = frames.enumerated().map { k, f in
@@ -148,6 +240,14 @@ extension Colony {
 
     func updateWeather(dt: Double) {
         refreshWeatherSwitches()
+        if let since = weather.stoppingSince {
+            // Stopped: the picture fades for a second, then everything is gone, the snow lying there too.
+            watchTheScreen()
+            guard elapsed - since >= Weather.Spell.stopFade else { return }
+            resetWeather()
+            weather.trace?("weather stopped: water, snow and particles gone")
+            return
+        }
         let s = weather.switches
         if !s.enabled, weather.spell?.byHand == false { weather.spell?.ease() }
         watchTheScreen()
@@ -169,16 +269,25 @@ extension Colony {
                 weather.trace?("weather \(spell.kind.name) over")
             }
         }
-        guard !weather.skies.isEmpty || weather.spell != nil else { return }
+        updateLight(dt: dt)
+        guard !weather.skies.isEmpty || weather.spell != nil || weather.light != nil else { return }
         layOutSkies()
         updateSkies(dt: dt)
         updateWeatherCreatures(dt: dt)
-        if weather.spell == nil, weather.skies.allSatisfy({ $0.sky.isEmpty }), weather.dropped.isEmpty {
+        if weather.spell == nil, weather.light == nil, weather.skies.allSatisfy({ $0.sky.isEmpty }), weather.dropped.isEmpty {
             weather.skies = []
             weather.snowmen = []
             weather.wetUntil = [:]
             weather.trace?("weather all melted")
         }
+    }
+
+    /// The season's particles come in and go over a few seconds; shown by hand, they go when their time is up.
+    private func updateLight(dt: Double) {
+        guard var l = weather.light else { return }
+        if let until = l.until, elapsed >= until { l.easing = true }
+        l.intensity = l.easing ? max(0, l.intensity - dt / LightState.fade) : min(1, l.intensity + dt / LightState.fade)
+        weather.light = l.easing && l.intensity <= 0 ? nil : l
     }
 
     /// The cursor, the keys, full-screen apps and the microphone: whether the screen is quiet, and weather may come.
@@ -198,14 +307,14 @@ extension Colony {
         let step = 10.0
         weather.nextCheck = elapsed + step
         let s = weather.switches
-        guard s.enabled, stage == nil else { return }
+        guard s.enabled, stage == nil, !settings.weatherPaused(on: now()) else { return }
         if elapsed >= weather.nextMicrophone {
             weather.nextMicrophone = elapsed + 30
             weather.microphone = WeatherWatch.microphoneInUse
         }
         let meeting = weather.microphone || (settings.effectsCalendar && fx.meetings.inMeetingNow(at: now()))
         let screen = Weather.Screen(keyIdle: WeatherWatch.keyIdle, cursorTravel: weather.trail.travel(since: elapsed - s.quietMinutes * 60),
-                                    fullScreen: weather.fullScreen, activity: Activities.shared.isRunning, meeting: meeting)
+                                    fullScreen: weather.fullScreen, activity: Activities.shared.isRunning(besides: .weather), meeting: meeting)
         // A whole quiet stretch watched, and one since the last spell ended.
         guard weather.trail.span >= min(s.quietMinutes * 60, 60) - 1, elapsed - weather.endedAt >= s.quietMinutes * 60,
               Weather.isQuiet(screen, minutes: s.quietMinutes) else { return }
@@ -218,6 +327,7 @@ extension Colony {
         let s = weather.switches, spell = weather.spell
         let drift = spell.flatMap { sp in weather.wind?.drift(at: weather.time, intensity: sp.intensity) } ?? 0
         let leafy = Effects.Season.of(now()) == .autumn
+        let light = weather.light.map { Weather.Light(kind: $0.kind, count: lightCount($0.kind), intensity: $0.easing ? 0 : $0.intensity) }
         for k in weather.skies.indices {
             let entry = weather.skies[k]
             entry.sky.leafy = leafy
@@ -225,8 +335,7 @@ extension Colony {
                 entry.sky.setLedges(WeatherWatch.ledges(weather.windows, on: entry.display, scale: Self.skyScale, topInset: topInset(of: entry.display)),
                                     depth: s.snowDepth)
             }
-            entry.sky.update(dt, kind: spell?.kind, intensity: spell?.intensity ?? 0, drift: drift, heaviness: s.rainHeaviness,
-                             depth: s.snowDepth, windowTops: s.windowTops, reduced: s.reduceMotion)
+            entry.sky.update(dt, kind: spell?.kind, intensity: spell?.intensity ?? 0, drift: drift, switches: s, light: light)
         }
         weather.windowsFresh = false
     }
@@ -283,8 +392,8 @@ extension Colony {
                 } else if weather.printedAt[i] == nil { weather.printedAt[i] = c.position.x }
             }
         }
-        if let kind, kind.rains { updateUmbrellas(dt: dt, intensity: intensity) } else if !weather.groups.isEmpty { weather.groups = [] }
-        if kind?.rains != true, !weather.bowls.isEmpty, spell == nil { weather.bowls = [:] }
+        if let kind, kind.rains, s.umbrellas { updateUmbrellas(dt: dt, intensity: intensity) } else if !weather.groups.isEmpty { weather.groups = [] }
+        if (kind?.rains != true && spell == nil) || !s.menuBarUmbrella, !weather.bowls.isEmpty { weather.bowls = [:] }
         if let wind = weather.wind, let spell, !s.reduceMotion, wind.peaks(at: weather.time, dt: dt) { gust(wind, intensity: spell.intensity) }
         updateDropped(dt: dt)
         updateSnowballs(dt: dt)
@@ -338,12 +447,12 @@ extension Colony {
             }
         }
         // The top edge: the umbrella is a bowl, and it fills.
-        for g in weather.groups {
+        for g in weather.groups where weather.switches.menuBarUmbrella {
             let holder = Weather.holder(of: g)
             guard side(of: holder).ceiling else { weather.bowls.removeValue(forKey: holder); continue }
             var bowl = weather.bowls[holder] ?? Weather.Bowl()
             if bowl.state == .fallen { continue }
-            let event = bowl.update(dt, intensity: intensity, heaviness: weather.switches.rainHeaviness)
+            let event = bowl.update(dt, intensity: intensity, weight: weather.switches.rainWeight)
             weather.bowls[holder] = bowl
             let name = character(forCreature: holder).name
             switch event {
@@ -456,6 +565,7 @@ extension Colony {
         for i in creatures.indices where outside(i) && creatures[i].isAtLeisure {
             let (floor, ceiling) = side(of: i)
             guard floor || ceiling else { continue }
+            guard weather.switches.windPushes else { continue }
             let size = sizes[i] / max(0.5, settings.minSize)        // the smallest on screen counts as 1
             let c = creatures[i], name = character(forCreature: i).name
             if ceiling, !blown, Weather.blowsOff(size: size, force: force, strength: wind.strength) {
@@ -583,15 +693,18 @@ extension Colony {
                 weather.skies[k].image = WeatherState.picture(FXComposite.rgba(e.frame), e.frame.w, e.frame.h)
             }
         }
+        let opacity = weather.stoppingSince.map { Float(max(0, 1 - (elapsed - $0) / Weather.Spell.stopFade)) } ?? 1
         return weather.skies.map { e in
             WeatherPicture(image: e.image, frame: CGRect(x: e.display.minX, y: e.display.maxY - CGFloat(e.frame.h) * Self.skyScale,
-                                                         width: CGFloat(e.frame.w) * Self.skyScale, height: CGFloat(e.frame.h) * Self.skyScale))
+                                                         width: CGFloat(e.frame.w) * Self.skyScale, height: CGFloat(e.frame.h) * Self.skyScale),
+                           opacity: opacity)
         }
     }
 
     /// The umbrellas, the falling ones, the snowmen, the snowballs in the air and the drips off the wet.
     func weatherProps() -> [PropSnapshot] {
         var props: [PropSnapshot] = []
+        guard weather.stoppingSince == nil else { return props }
         if weather.spell?.kind.rains == true, (weather.spell?.intensity ?? 0) > 0.15 {
             for g in weather.groups where creatures.indices.contains(Weather.holder(of: g)) {
                 let holder = Weather.holder(of: g)
@@ -633,4 +746,6 @@ extension Colony {
 struct WeatherPicture {
     var image: CGImage?
     var frame: CGRect
+    /// Below 1 while it fades out after Stop.
+    var opacity: Float = 1
 }

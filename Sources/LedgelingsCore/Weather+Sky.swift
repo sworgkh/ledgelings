@@ -15,6 +15,32 @@ extension Weather {
         public var width: Int { open.count }
     }
 
+    /// The season's light particles (Settings › Weather & Sky): a few snowflakes in winter, leaves in autumn,
+    /// petals in spring, falling from above the top edge the whole height and gone at the bottom.
+    public struct Light: Equatable, Sendable {
+        public enum Kind: String, CaseIterable, Sendable {
+            case snow, leaves, petals
+            /// Pixels a second it falls: petals drift, leaves flutter, flakes float.
+            public var fall: Double {
+                switch self {
+                case .snow: 12
+                case .leaves: 22
+                case .petals: 15
+                }
+            }
+        }
+        public var kind: Kind
+        /// On a monitor at once, at full intensity.
+        public var count: Double
+        /// 0...1: rising as it comes out, falling as it goes.
+        public var intensity: Double
+        public init(kind: Kind, count: Double, intensity: Double = 1) {
+            self.kind = kind
+            self.count = count
+            self.intensity = intensity
+        }
+    }
+
     /// What falls on one monitor and what lies there: the flakes, drops and leaves (the shared `FXParticles`,
     /// in art pixels, y down), the snow along the bottom and on the window tops, the puddles, and the splashes.
     /// Drawn into an `FXFrame` the size of the monitor in art pixels; the overlay scales it up, pixel for pixel.
@@ -108,53 +134,99 @@ extension Weather {
 
         // MARK: Every frame
 
-        /// One step: `kind` falling at `intensity` (0 once it is over), the wind's drift in pixels a second, with
-        /// `heaviness` and `depth`. `reduced` halves the particles.
-        public func update(_ dt: Double, kind: Kind?, intensity: Double, drift: Double, heaviness: Level, depth: Level,
-                           windowTops: Bool, reduced: Bool) {
+        /// One step: `kind` falling at `intensity` (0 once it is over), the wind's drift in pixels a second, as
+        /// `switches` say; and `light`, the season's light particles, if they are out. Reduce motion halves them all.
+        public func update(_ dt: Double, kind: Kind?, intensity: Double, drift: Double, switches s: Switches, light: Light? = nil) {
             particles.wind = drift
-            if let kind, intensity > 0 { spawn(dt, kind: kind, intensity: intensity, drift: drift, heaviness: heaviness, depth: depth, reduced: reduced) }
+            if let kind, intensity > 0 { spawn(dt, kind: kind, intensity: intensity, drift: drift, switches: s) }
+            if let light, light.intensity > 0 { spawnLight(dt, light, reduced: s.reduceMotion) }
             particles.update(dt)
-            land(windowTops: windowTops, depth: depth)
-            let snowing = kind?.snows == true && intensity > 0
+            land(switches: s)
+            let snowing = kind?.snows == true && intensity > 0 && s.snowPiles
             if snowing {
-                bottom.grow(by: dt * snowfall(depth) * intensity)
-                if windowTops { for (k, v) in ledges { var p = v.pile; p.grow(by: dt * snowfall(depth) * intensity * 0.6); ledges[k] = (v.ledge, p) } }
+                bottom.grow(by: dt * snowfall(s.snowDepth) * intensity)
+                if s.windowTops { for (k, v) in ledges { var p = v.pile; p.grow(by: dt * snowfall(s.snowDepth) * intensity * 0.6); ledges[k] = (v.ledge, p) } }
             } else {
                 bottom.melt(by: dt * meltRate)
                 for (k, v) in ledges { var p = v.pile; p.melt(by: dt * meltRate * 1.5); ledges[k] = (v.ledge, p) }
             }
-            if !(kind?.rains == true && intensity > 0) {
-                for x in wet.indices where wet[x] > 0 { wet[x] = Swift.max(0, wet[x] - dt / drySeconds) }
+            if !(kind?.rains == true && intensity > 0 && s.puddles) {
+                for x in wet.indices where wet[x] > 0 { wet[x] = Swift.max(0, wet[x] - dt / (s.puddles ? drySeconds : 1)) }
             }
-            if !windowTops { for (k, v) in ledges where !v.pile.isEmpty { var p = v.pile; p.clear(); ledges[k] = (v.ledge, p) } }
+            if !s.windowTops { for (k, v) in ledges where !v.pile.isEmpty { var p = v.pile; p.clear(); ledges[k] = (v.ledge, p) } }
         }
 
-        private func spawn(_ dt: Double, kind: Kind, intensity: Double, drift: Double, heaviness: Level, depth: Level, reduced: Bool) {
-            let share = reduced ? 0.5 : 1
-            // Particles a second per hundred columns.
-            var rate = 0.0
-            if kind.snows { rate += 5 * depth.factor }
-            if kind.rains { rate += 26 * heaviness.factor }
-            if kind.blows { rate += kind.rains ? 1 : 2.2 }
-            owed += dt * rate * Double(w) / 100 * intensity * share
-            // Upwind, the particles start off screen, so the wind does not leave a bare strip.
-            let margin = Swift.abs(drift) * 3
-            while owed >= 1 {
-                owed -= 1
-                let x = rng.range(-margin * (drift > 0 ? 1 : 0), Double(w) + margin * (drift < 0 ? 1 : 0))
-                let pick = rng.next() * rate
-                if kind.snows && pick < 5 * depth.factor {
-                    let near = rng.chance(0.25)
-                    particles.spawn(.flake, x, rng.range(-6, -1), drift * 0.5, rng.range(8, 16), 120, rng.pick(Self.snowColours), near ? 1.6 : 1)
-                } else if kind.rains && pick < (kind.snows ? 5 * depth.factor : 0) + 26 * heaviness.factor {
-                    particles.spawn(.drop, x, rng.range(-8, -1), drift, rng.range(230, 290), 30, Self.rainColour, 1)
-                } else if kind.blows {
-                    // Leaves in autumn, dust the rest of the year (`leafy` set by the colony).
-                    let side = drift >= 0 ? -4.0 : Double(w) + 4
-                    let y = rng.range(Double(h) * 0.35, Double(h) - 4)
-                    particles.spawn(.leaf, side, y, drift, 0, Double(w) / Swift.max(20, Swift.abs(drift)) * 1.6,
-                                    rng.pick(leafy ? Self.leafColours : Self.dustColours), rng.chance(0.5) ? 1.6 : 1)
+        /// Everything gone at once: what falls, what lies, the puddles (Stop, once the picture has faded).
+        public func clearAll() {
+            particles.list.removeAll()
+            bottom.clear()
+            for (k, v) in ledges { var p = v.pile; p.clear(); ledges[k] = (v.ledge, p) }
+            for x in wet.indices { wet[x] = 0 }
+        }
+
+        /// The lowest row anything has been born on so far (rows count down from the monitor's top edge): below
+        /// zero, everything starts above the screen and falls the whole height.
+        public private(set) var spawnTop = -Double.infinity
+        /// The falling things on the monitor now: flakes, drops and leaves, not the splashes or puffs.
+        public var falling: Int { particles.list.filter { $0.k == .flake || $0.k == .drop || $0.k == .leaf }.count }
+
+        private var owedSnow = 0.0, owedRain = 0.0, owedLeaf = 0.0, owedLight = 0.0
+
+        /// Particles a second that keep `count` on a monitor this wide, each falling the whole height at `fall`
+        /// pixels a second: as many are born as reach the bottom.
+        public static func birthRate(count: Double, fall: Double, width: Int, height: Int) -> Double {
+            guard height > 0, fall > 0 else { return 0 }
+            return count * Double(width) / referenceWidth * fall / Double(height)
+        }
+
+        /// How fast snow, rain and the wind's leaves fall, in pixels a second.
+        public static func snowFall(_ s: Switches) -> Double { 16 * s.snowSpeed }
+        public static func rainFall(_ s: Switches) -> Double { 260 * s.rainSpeed }
+        public static let leafFall = 28.0
+
+        private func spawnPoint(_ drift: Double, fall: Double) -> (x: Double, y: Double) {
+            // Upwind, some start off the side, so the wind carries them in and leaves no bare strip.
+            let margin = Swift.min(Double(w), Swift.abs(drift) * Double(h) / fall)
+            let x = rng.range(-margin * (drift > 0 ? 1 : 0), Double(w) + margin * (drift < 0 ? 1 : 0))
+            return (x, rng.range(-6, -1))
+        }
+
+        private func born(_ y: Double) { spawnTop = Swift.max(spawnTop, y) }
+
+        private func spawn(_ dt: Double, kind: Kind, intensity: Double, drift: Double, switches s: Switches) {
+            let k = intensity * (s.reduceMotion ? 0.5 : 1)
+            let H = Double(h)
+            if kind.snows {
+                let fall = Self.snowFall(s)
+                owedSnow += dt * k * Self.birthRate(count: s.snowCount, fall: fall, width: w, height: h)
+                while owedSnow >= 1 {
+                    owedSnow -= 1
+                    let (x, y) = spawnPoint(drift * 0.5, fall: fall)
+                    let big = rng.chance(s.flakeSize.bigShare)
+                    particles.spawn(.flake, x, y, drift * 0.5, fall * rng.range(0.5, 1), H / fall * 3 + 30, rng.pick(Self.snowColours),
+                                    big ? 1.6 : 1, fall: fall)
+                    born(y)
+                }
+            }
+            if kind.rains {
+                let fall = Self.rainFall(s)
+                owedRain += dt * k * Self.birthRate(count: s.rainCount * (kind.blows ? 1.3 : 1), fall: fall, width: w, height: h)
+                while owedRain >= 1 {
+                    owedRain -= 1
+                    let (x, y) = spawnPoint(drift, fall: fall)
+                    particles.spawn(.drop, x, y, drift, fall * rng.range(0.9, 1.1), H / fall * 3 + 5, Self.rainColour, 1)
+                    born(y)
+                }
+            }
+            if kind.blows {
+                // Leaves in autumn, dust the rest of the year (`leafy` set by the colony), falling from the top too.
+                owedLeaf += dt * k * Self.birthRate(count: windLeaves * s.windStrength.factor * (kind.rains ? 0.5 : 1), fall: Self.leafFall, width: w, height: h)
+                while owedLeaf >= 1 {
+                    owedLeaf -= 1
+                    let (x, y) = spawnPoint(drift, fall: Self.leafFall)
+                    particles.spawn(.leaf, x, y, drift, 0, H / Self.leafFall * 3 + 10, rng.pick(leafy ? Self.leafColours : Self.dustColours),
+                                    rng.chance(0.5) ? 1.6 : 1, fall: Self.leafFall)
+                    born(y)
                 }
             }
         }
@@ -162,25 +234,51 @@ extension Weather {
         /// Leaves (autumn) rather than dust on the wind.
         public var leafy = false
 
+        public static let petalColours = ["#ffd1dc", "#ffb3c6", "#f7a1b5", "#fff0f4"].map(FX.hex)
+
+        private func spawnLight(_ dt: Double, _ light: Light, reduced: Bool) {
+            let fall = light.kind.fall
+            owedLight += dt * light.intensity * (reduced ? 0.5 : 1) * Self.birthRate(count: light.count, fall: fall, width: w, height: h)
+            while owedLight >= 1 {
+                owedLight -= 1
+                let x = rng.range(0, Double(w)), y = rng.range(-6, -1), life = Double(h) / fall * 3 + 10
+                switch light.kind {
+                case .snow:
+                    particles.spawn(.flake, x, y, 0, fall * 0.6, life, rng.pick(Self.snowColours), rng.chance(0.2) ? 1.6 : 1, 0, FXFlag.light, fall: fall)
+                case .leaves:
+                    particles.spawn(.leaf, x, y, 0, 0, life, rng.pick(Self.leafColours), rng.chance(0.5) ? 1.6 : 1, 0, FXFlag.light, fall: fall)
+                case .petals:
+                    particles.spawn(.leaf, x, y, 0, 0, life, rng.pick(Self.petalColours), rng.chance(0.4) ? 1.6 : 1, 0, FXFlag.light, fall: fall)
+                }
+                born(y)
+            }
+        }
+
         /// Flakes and drops that reached a surface stop there: snow on the pile, a splash and a wet patch for rain.
-        private func land(windowTops: Bool, depth: Level) {
+        /// The season's light ones and the leaves are simply gone.
+        private func land(switches s: Switches) {
             var i = particles.list.count - 1
             while i >= 0 {
                 defer { i -= 1 }
                 let p = particles.list[i]
-                guard p.k == .flake || p.k == .drop, p.delay <= 0 else {
-                    if p.k == .leaf, p.x < -8 || p.x > Double(w) + 8 { particles.list.remove(at: i) }
+                if p.k == .leaf {
+                    let x = Int(p.x.rounded(.down))
+                    if p.x < -Double(w) || p.x > Double(w) * 2 || p.y >= Double(groundY(x)) { particles.list.remove(at: i) }
                     continue
                 }
+                guard p.k == .flake || p.k == .drop, p.delay <= 0 else { continue }
                 let x = Int(p.x.rounded(.down))
-                if x < -40 || x > w + 40 || p.y > Double(h) + 4 { particles.list.remove(at: i); continue }
+                if x < -Swift.max(40, w) || x > w * 2 || p.y > Double(h) + 4 { particles.list.remove(at: i); continue }
+                let light = p.flag & FXFlag.light != 0
                 let before = p.y - p.vy / 60
-                if windowTops, let (id, top) = ledgeHit(x: x, from: before, to: p.y) {
+                if !light, s.windowTops, let (id, top) = ledgeHit(x: x, from: before, to: p.y) {
                     particles.list.remove(at: i)
                     if p.k == .flake {
-                        var pile = ledges[id]!.pile
-                        pile.land(at: x - ledges[id]!.ledge.x, amount: 0.35)
-                        ledges[id] = (ledges[id]!.ledge, pile)
+                        if s.snowPiles {
+                            var pile = ledges[id]!.pile
+                            pile.land(at: x - ledges[id]!.ledge.x, amount: 0.35)
+                            ledges[id] = (ledges[id]!.ledge, pile)
+                        }
                     } else { splash(Double(x), Double(top)) }
                     continue
                 }
@@ -188,10 +286,11 @@ extension Weather {
                 let g = groundY(x)
                 if p.y >= Double(g) {
                     particles.list.remove(at: i)
-                    if p.k == .flake { bottom.land(at: x, amount: 0.35) }
+                    if light { continue }
+                    if p.k == .flake { if s.snowPiles { bottom.land(at: x, amount: 0.35) } }
                     else {
                         splash(Double(x), Double(g))
-                        for k in [x - 1, x, x + 1] where wet.indices.contains(k) && dips[k] { wet[k] = Swift.min(1, wet[k] + 0.012) }
+                        if s.puddles { for k in [x - 1, x, x + 1] where wet.indices.contains(k) && dips[k] { wet[k] = Swift.min(1, wet[k] + 0.012) } }
                     }
                 }
             }

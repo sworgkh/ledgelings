@@ -127,6 +127,21 @@ enum WeatherFilm {
         }
         func expect(_ words: String) { if !seen.contains(where: { $0.contains(words) }) { failures.append("never: \(words)") } }
         let floorY = CGFloat(0)
+        // The top of the screen: where everything must come from.
+        let topBand = CGRect(x: 0, y: Promo.size.height - 220, width: Promo.size.width, height: 220)
+        /// Every five seconds: how many are falling and where the newest were born (rows below zero are above the top).
+        var nextCount = 0.0
+        func count(_ now: Double) {
+            guard now >= nextCount, let sky = colony.weather.skies.first?.sky else { return }
+            nextCount = now + 5
+            let monitor = Double(sky.falling) * Weather.referenceWidth / Double(sky.w)
+            log(String(format: "sky %d falling (about %.0f on a %.0f-pixel-wide monitor), born at row %.0f: %@ the top edge",
+                       sky.falling, monitor, Weather.referenceWidth, sky.spawnTop, sky.spawnTop < 0 ? "above" : "BELOW"))
+            if sky.spawnTop >= 0 { failures.append("born below the top edge: row \(sky.spawnTop)") }
+        }
+        let activities = Activities.shared
+        activities.register(.weather, isRunning: { colony.weatherRunning }, stop: { colony.stopWeather(why: "Control + Option + Q") })
+        defer { activities.unregister(.weather) }
 
         for kind in kinds {
             act { colony.resetWeather() }
@@ -134,6 +149,8 @@ enum WeatherFilm {
             seen = []
             try await film(0.5)
             act { colony.startWeather(kind) }
+            nextCount = t + 5
+            stills.append(("\(kind.name)-top", topBand, t + 12))
             switch kind {
             case .snow:
                 // The snow comes thick for the film: piled by hand a little each frame on top of what falls.
@@ -141,6 +158,7 @@ enum WeatherFilm {
                 stills.append(("snow-window", CGRect(x: window.minX - 40, y: window.maxY - 90, width: window.width + 80, height: 150), t + 34))
                 stills.append(("snow-bottom", CGRect(x: 220, y: floorY, width: 620, height: 200), t + 37.5))
                 try await film(38) { now in
+                    count(now)
                     colony.weather.skies.first?.sky.fillBottom(by: 0.006)
                     colony.weather.skies.first?.sky.fillLedges(by: 0.004)
                     let deep = Int(colony.weather.skies.first?.sky.bottom.average ?? 0)
@@ -166,7 +184,8 @@ enum WeatherFilm {
             case .rain:
                 stills.append(("rain-shared", CGRect(x: 280, y: floorY, width: 420, height: 170), t + 10))
                 var fell = false
-                try await film(32) { _ in
+                try await film(32) { now in
+                    count(now)
                     if !fell, case .tipping? = colony.weather.bowls[sprout]?.state {
                         fell = true
                         stills.append(("rain-falling", CGRect(x: 80, y: 200, width: 520, height: 376), t + 1.75))
@@ -177,12 +196,12 @@ enum WeatherFilm {
                 expect("lands on the floor")
             case .wind:
                 stills.append(("wind", CGRect(x: 150, y: floorY, width: 720, height: 220), t + 10.4))
-                try await film(24)
+                try await film(24, count)
                 expect("wind gust")
                 expect("pushes")
             case .storm:
                 stills.append(("storm", CGRect(x: 280, y: floorY, width: 420, height: 170), t + 10.5))
-                try await film(26)
+                try await film(26, count)
                 expect("share an umbrella")
                 expect("wind gust")
             }
@@ -190,6 +209,30 @@ enum WeatherFilm {
             act { colony.clearWeather() }
             try await film(9)
             expect("eases off")
+        }
+        if only == nil {
+            // The season's light particles: a few, falling from above the top edge the whole height.
+            for moment in [Effects.Moment.autumn, .spring, .winter] {
+                act { colony.resetWeather() }
+                seen = []
+                act { colony.startAmbient(moment, preview: true) }
+                nextCount = t + 5
+                stills.append(("\(moment.rawValue)-top", topBand, t + 14))
+                stills.append(("\(moment.rawValue)-whole", CGRect(origin: .zero, size: Promo.size), t + 22))
+                try await film(24, count)
+                expect("starts falling from the top")
+            }
+            // Stop activity: snow lying and falling, gone within a second or so.
+            act { colony.resetWeather() }
+            act { colony.startWeather(.snow) }
+            try await film(8) { _ in colony.weather.skies.first?.sky.fillBottom(by: 0.02) }
+            let stoppedAt = t
+            act { _ = activities.stopAll(why: "Control + Option + Q") }
+            stills.append(("stopping", CGRect(origin: .zero, size: Promo.size), t + 0.5))
+            var gone = -1.0
+            try await film(2) { now in if gone < 0, colony.weather.skies.isEmpty, !colony.weatherShowing { gone = now - stoppedAt } }
+            if gone < 0 || gone > 1.3 { failures.append("Stop left the weather on screen") }
+            else { log(String(format: "stop activity: weather, snow lying and particles gone after %.2f s", gone)) }
         }
         try await recorder.finish()
         if !failures.isEmpty { failures.forEach { log("FAILED: " + $0) }; exit(1) }

@@ -79,20 +79,58 @@ public enum Weather {
 
     // MARK: The switches
 
+    /// How big the snowflakes are.
+    public enum FlakeSize: String, CaseIterable, Codable, Sendable {
+        case small, medium, large
+        public var title: String {
+            switch self {
+            case .small: tr("Small")
+            case .medium: tr("Medium")
+            case .large: tr("Large")
+            }
+        }
+        /// The share of flakes drawn big (a cross of five pixels rather than one).
+        public var bigShare: Double {
+            switch self {
+            case .small: 0
+            case .medium: 0.25
+            case .large: 0.7
+            }
+        }
+    }
+
     /// Every weather setting at once, as the settings hold them.
     public struct Switches: Equatable, Sendable {
         public var enabled = true
         public var snow = true
         public var rain = true
         public var wind = true
+        public var storm = true
         public var quietMinutes = 5.0
         public var frequency: Frequency = .sometimes
         public var lastsMinutes = 3.0
+        /// Flakes on a monitor at once (`referenceWidth` wide; a wider one gets more, a narrower fewer).
+        public var snowCount = defaultSnowCount
+        public var flakeSize: FlakeSize = .medium
+        /// Times the ordinary falling speed.
+        public var snowSpeed = 1.0
+        /// Snow lies along the bottom (and on window tops): off, it falls and is gone.
+        public var snowPiles = true
         public var snowDepth: Level = .medium
-        public var rainHeaviness: Level = .medium
-        public var windStrength: Level = .medium
+        /// Drops on a monitor at once.
+        public var rainCount = defaultRainCount
+        public var rainSpeed = 1.0
+        public var puddles = true
+        public var umbrellas = true
         /// Creatures closer than this (points, along the edge) share one umbrella; 0: everyone has its own.
         public var shareDistance = 40.0
+        /// The umbrella of a creature on the top edge fills with rain, tips and falls.
+        public var menuBarUmbrella = true
+        public var windStrength: Level = .medium
+        /// Seconds from one gust to the next.
+        public var gustSeconds = 9.0
+        /// A strong gust pushes the light ones along, and can blow one off the top edge.
+        public var windPushes = true
         public var followSeason = true
         public var windowTops = true
         /// Reduce motion as it stands now, the system's setting already read: half the particles, no pushing.
@@ -106,10 +144,22 @@ public enum Weather {
             case .snow: return snow
             case .rain: return rain
             case .wind: return wind
-            case .storm: return rain && wind
+            case .storm: return storm && rain && wind
             }
         }
+
+        /// How heavy the rain is against the default, for the umbrella filling on the top edge.
+        public var rainWeight: Double { Swift.max(0.2, rainCount / defaultRainCount) }
     }
+
+    /// Very sparse by default: a few flakes, a few dozen drops and a handful of leaves on a whole monitor at once.
+    public static let defaultSnowCount = 24.0, defaultRainCount = 40.0
+    public static let snowCountRange = 2.0...300.0, rainCountRange = 2.0...400.0, speedRange = 0.5...2.0
+    public static let gustRange = 3.0...30.0
+    /// Leaves or dust on the wind on a monitor at once, at medium strength.
+    public static let windLeaves = 8.0
+    /// The monitor width the counts are for, in art pixels (a 1512-point laptop screen at two points a pixel).
+    public static let referenceWidth = 756.0
 
     // MARK: When the screen is quiet
 
@@ -214,6 +264,8 @@ public enum Weather {
         public let byHand: Bool
         /// Seconds to come in, and to ease off.
         public static let comeIn = 6.0, easeOff = 8.0
+        /// Seconds to go when stopped (Stop activity, Stop Weather): about one.
+        public static let stopFade = 1.0
 
         public init(kind: Kind, lasts: Double, byHand: Bool = false) {
             self.kind = kind
@@ -365,18 +417,19 @@ public enum Weather {
         public private(set) var water = 0.0
         public private(set) var state: State = .holding
         public init() {}
-        /// Seconds of medium rain to fill it.
+        /// Seconds of the default rain to fill it.
         public static let fillSeconds = 20.0
         /// Seconds it takes to tip over once full.
         public static let tipSeconds = 1.2
 
         public enum Event: Equatable, Sendable { case full, spills }
 
-        /// Rain at `intensity` (0...1) with `heaviness`: it fills; full, it tips; tipped, it spills and falls.
-        public mutating func update(_ dt: Double, intensity: Double, heaviness: Level) -> Event? {
+        /// Rain at `intensity` (0...1), `weight` times the default amount: it fills; full, it tips; tipped, it spills
+        /// and falls.
+        public mutating func update(_ dt: Double, intensity: Double, weight: Double) -> Event? {
             switch state {
             case .holding:
-                water = Swift.min(1, water + dt * intensity * heaviness.factor / Self.fillSeconds)
+                water = Swift.min(1, water + dt * intensity * weight / Self.fillSeconds)
                 if water >= 1 { state = .tipping(0); return .full }
             case .tipping(let t):
                 let n = t + dt
@@ -405,22 +458,25 @@ public enum Weather {
     public struct Wind: Equatable, Sendable {
         public let from: Double
         public let strength: Level
-        /// Seconds between gusts, and how long one lasts.
-        public static let gustEvery = 9.0, gustLasts = 2.5
-        public init(fromLeft: Bool, strength: Level) {
+        /// Seconds between gusts.
+        public let gustEvery: Double
+        /// How long one lasts.
+        public static let gustLasts = 2.5
+        public init(fromLeft: Bool, strength: Level, gustEvery: Double = 9) {
             from = fromLeft ? 1 : -1
             self.strength = strength
+            self.gustEvery = Swift.max(Self.gustLasts + 0.5, gustEvery)
         }
         /// How hard it blows at `time` seconds into the spell, 0...1: a steady breeze and a gust every so often.
         public func force(at time: Double) -> Double {
-            let phase = time.truncatingRemainder(dividingBy: Self.gustEvery)
+            let phase = time.truncatingRemainder(dividingBy: gustEvery)
             let gust = phase < Self.gustLasts ? sin(.pi * phase / Self.gustLasts) : 0
             return 0.3 + 0.7 * gust * gust
         }
         /// A gust at its peak now (a strong gust pushes): within a quarter second of the middle of one.
         public func peaks(at time: Double, dt: Double) -> Bool {
             let mid = Self.gustLasts / 2
-            let a = (time - dt).truncatingRemainder(dividingBy: Self.gustEvery), b = time.truncatingRemainder(dividingBy: Self.gustEvery)
+            let a = (time - dt).truncatingRemainder(dividingBy: gustEvery), b = time.truncatingRemainder(dividingBy: gustEvery)
             return a < mid && b >= mid
         }
         /// Sideways speed it gives the particles, in art pixels a second.

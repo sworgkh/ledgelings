@@ -426,6 +426,7 @@ final class ScreenOverlay {
         if (layer.contents as AnyObject?) !== here.image { layer.contents = here.image }
         layer.bounds = CGRect(origin: .zero, size: here.frame.size)
         layer.position = CGPoint(x: here.frame.minX - origin.x, y: here.frame.minY - origin.y)
+        if layer.opacity != here.opacity { layer.opacity = here.opacity }
     }
 
 

@@ -2776,10 +2776,15 @@ own output on our sprites (blocky and cactus, every frame at 15 fps): all 25 eff
   magic circle is Translating's. It reads the calendar (EventKit, full access asked by **Allow…**) only with
   `effectsCalendar` on; only start times are read. "Held" moments play while their state lasts, a one-shot played
   again while it goes on, and stop (fading) when it ends; they give way to nothing and wait for a moment showing.
-- **Ambient particles.** Fireflies at night, else the season's particles (summer has none), along the bottom of the
-  creatures' home monitors: tiles of 320×180 pixels at 2 points per pixel, side by side, each with its own seed,
-  drawn without pixelfx's sky haze (`FXBackdropped.backdrop = false`) and at 15 pictures a second. They come out for
-  `effectsAmbientSeconds` out of every `effectsAmbientEveryMinutes`, the first time one whole wait after launch. While weather falls (§7.20) they pause.
+- **Ambient particles.** Fireflies at night, else the season's particles (summer has none). Since 0.73.0 their
+  switches live on the Weather & Sky page (§7.20, `skyFireflies`, `skyWinterSnow`, `skyAutumnLeaves`, `skySpringPetals`).
+  The fireflies stay along the bottom of the creatures' home monitors: tiles of 320×180 pixels at 2 points per pixel,
+  side by side, each with its own seed, drawn without pixelfx's sky haze (`FXBackdropped.backdrop = false`) and at 15
+  pictures a second, a sparse few in each (`skyFirefliesCount` on a 1512-point monitor, of pixelfx's 32 a tile). The
+  season's particles no longer use pixelfx's tiles, which filled the bottom 360 points with over a thousand flakes: they
+  fall with the weather's sky (§7.20) from above the top edge. They come out for `effectsAmbientSeconds` out of every
+  `effectsAmbientEveryMinutes`, the first time one whole wait after launch. While weather falls they pause; Stop
+  (§7.17) ends this time out early, and they come again at the next.
 - **Switches.** `effectsEnabled` turns everything off; each style and moment has its switch (`effectsOff` lists the
   ones off by key, `effectStyle.<name>` / `effectMoment.<name>`). **Reduce motion** (`effectsReduceMotion`: as the
   system's Accessibility setting, on, off) turns the busy ones off: Charged, Fired up, both blinks, confetti, the
@@ -2829,10 +2834,28 @@ if it rains and one is on the top edge its umbrella fills with rain and falls do
 - **The sky** (`Weather.Sky`) is one picture per home monitor at 2 points per pixel, drawn 15 times a second in front
   of the creatures and under their bubbles, click-through. What falls is the shared `FXParticles` (§7.19): flakes
   (pixelfx's own `flake` kind, slow, swaying, a quarter of them bigger), and two kinds added for weather: `drop`, a
-  raindrop streak at its own speed, and `leaf`, a leaf (autumn) or a speck of dust (otherwise) carried on the wind. A
-  particle `wind` carries all three sideways. Splashes are `spark`s in water blues. Rates: snow 5, rain 26 and wind 2.2
-  particles a second per hundred pixels across, times the level's factor (low 0.5, medium 1, high 1.6); Reduce motion
-  (`weatherReduceMotion`, as Effects' is) halves them and stops the wind pushing anyone.
+  raindrop streak at its own speed, and `leaf`, a leaf (autumn), a petal or a speck of dust carried on the wind. A
+  particle `wind` carries all three sideways. Splashes are `spark`s in water blues. **Everything is born above the top
+  edge** (rows −6 to −1) and falls the whole height; upwind some start off the side so the wind leaves no bare strip.
+  **Sparse:** the settings say how many are on a monitor at once, not a rate; as many are born a second as reach the
+  bottom (`Sky.birthRate`: count × width / 756 × fall speed / height). Defaults on a 1512-point monitor: 24 flakes (was
+  1169), 40 drops (was 376), 8 leaves on the wind (was 299), a storm 52 drops and 4 leaves (was 432). Snow falls at
+  16 pixels a second × `weatherSnowSpeed`, rain 260 × `weatherRainSpeed`, leaves 28. Reduce motion (`weatherReduceMotion`,
+  as Effects' is) halves them and stops the wind pushing anyone.
+- **The season's light particles** (`Weather.Light`) fall in the same sky when no weather does: snowflakes (12 pixels a
+  second), autumn leaves (22) and spring petals (15, pinks), `skyWinterCount`, `skyAutumnCount`, `skySpringCount` on a
+  monitor at once (10 each by default). They never pile up or wet anything (`FXFlag.light`), come in and go over 3 s,
+  and a weather starting takes their place.
+- **Weather & Sky** is a window of its own (`WeatherWindowController`, three columns, 1280 × 760): every switch, count,
+  speed and Play button for snow, rain, wind, storm, the season's particles and the fireflies, and when weather comes.
+  Its settings page holds the main switch, Stop now, Pause for today and the button that opens it, and opens it as it
+  comes up, so a search lands there. The window remembers where it was left (`WindowPlaces.Window.weather`).
+- **Stop.** The weather is an activity (§7.17, `Activities.Kind.weather`): Stop activity (⌃⌥Q), the Stop button, the
+  menu's **Stop Weather** (shown only while something is out) and the page's **Stop now** fade the sky, the season's
+  particles and the fireflies out over 1 s (`Spell.stopFade`) and then clear everything, the piles and puddles too.
+  Nothing is switched off: the next weather comes at the next quiet stretch, the season's particles at their next time
+  out. A weather does not count as an activity that keeps weather away. **Pause for today** (`weatherPausedDay`, the
+  menu's Weather submenu and the page) stops what is out and lets nothing come by itself until the day changes.
 - **Snow piles** (`Weather.Pile`): a height per pixel column along the bottom of each home monitor and along the top
   of every other app's window open to the sky (`WeatherWatch.windows`: on-screen, ordinary windows of other apps, read
   twice a second from their frames only, no permission; a column under a window further front gets none). A landing
@@ -2871,8 +2894,12 @@ if it rains and one is on the top edge its umbrella fills with rain and falls do
   (`weather snow starts`, `snow pile bottom 6 px`, `rain Blocky & Boo share an umbrella`, `rain Sprout umbrella full, falls`,
   `wind gust pushes Sprout 6 px`, `snow falls off a window at 150: 420 flakes`), writes stills beside it (`…-snow-window.png`,
   `…-snow-bottom.png`, `…-rain-shared.png`, `…-rain-falling.png`, `…-wind.png`, `…-storm.png`) and exits 1 if a step
-  never happened. `--weather <kind> [--stop-after seconds]` starts one on the real screen, prints its steps and quits once
-  it is over.
+  never happened. Every five seconds it prints how many are falling and the lowest row any was born on
+  (`sky 12 falling (about 18 on a 756-pixel-wide monitor), born at row -1: above the top edge`), and fails if one was born
+  below it; it writes a still of the top of the screen for each kind (`…-snow-top.png`, `…-autumn-top.png`), films the
+  season's particles, then Stop activity on falling and lying snow (`stop activity: weather, snow lying and particles gone
+  after 1.00 s`). `--weather <kind|winter|autumn|spring|night> [--stop-after seconds] [--stop-activity]` starts one on the
+  real screen, prints its steps and the same counts, and quits once it is over.
 - **Windows.** The same rules, numbers and keys, ported to C# (`win/LedgelingsCore/Weather.cs`, `Weather.Sky.cs`,
   `Weather.Art.cs`, `Weather.Lines.cs`; the Russian lines from the shared `ru.json`), the two particle kinds added to
   `FXParticles.cs` the same way, and the same props pixel for pixel. The sky is drawn over the creatures in the overlay,
@@ -3424,7 +3451,7 @@ An error for want of a model reads as that note, never as a server refusal.
 | effectsFrequency | sometimes | rarely, sometimes, often: the chance a trigger puts a style on, its cooldown, how often now-and-then styles come |
 | effectsReduceMotion | system | system, on, off: on turns the busy effects off |
 | effectStyleSeconds | 12 | 4–60 s, clamped on load: how long a style is worn |
-| effectsAmbientSeconds | 60 | 10–600 s, clamped on load: how long the fireflies or the season's particles are out |
+| effectsAmbientSeconds | 60 | 10–600 s, clamped on load: how long the fireflies or the season's particles are out (on Weather & Sky) |
 | effectsAmbientEveryMinutes | 10 | 1–120 min, clamped on load: once in this long |
 | effectsAloneMinutes | 30 | 5–240 min, clamped on load: met by nobody this long, a creature may frost over |
 | effectsTypingKeys | 5000 | 1000–20000, clamped on load: keys in an hour that make it a fast hour of typing |
@@ -3435,7 +3462,22 @@ An error for want of a model reads as that note, never as a server refusal.
 | weatherQuietMinutes | 5 | 1–60 min, clamped on load: no typing and the cursor barely moving this long |
 | weatherFrequency | sometimes | rarely, sometimes, often: about once every 60, 20, 5 quiet minutes |
 | weatherMinutes | 3 | 1–20 min, clamped on load: how long a spell lasts before it eases off |
-| weatherSnowDepth, weatherRainHeaviness, weatherWindStrength | medium | low, medium, high (×0.5, ×1, ×1.6) |
+| weatherSnowDepth, weatherWindStrength | medium | low, medium, high (×0.5, ×1, ×1.6) |
+| weatherSnowCount | 24 | 2–300, clamped on load: flakes on a 1512-point monitor at once |
+| weatherFlakeSize | medium | small, medium, large: none, a quarter, most of the flakes drawn big |
+| weatherSnowSpeed, weatherRainSpeed | 1 | 0.5–2, clamped on load: times the ordinary falling speed |
+| weatherSnowPiles | true | snow piles up along the bottom and on window tops; off, it falls and is gone |
+| weatherRainCount | 40 | 2–400, clamped on load: drops on a monitor at once (replaces weatherRainHeaviness) |
+| weatherPuddles, weatherUmbrellas, weatherMenuBarUmbrella | true | puddles; umbrellas; the top edge's umbrella that fills, tips and falls |
+| weatherGustSeconds | 9 | 3–30 s, clamped on load: from one gust to the next |
+| weatherWindPushes | true | a gust pushes the light ones and can blow one off the top edge |
+| weatherStorm | true | storms come (they need rain and wind too) |
+| weatherPausedDay | "" | the day (yyyy-MM-dd) weather and sky were paused for; any other day, not paused |
+| skyWinterSnow, skyAutumnLeaves, skySpringPetals | true | the season's light particles; moved from `effectMoment.winter`/`autumn`/`spring` in `effectsOff` |
+| skyWinterCount, skyAutumnCount, skySpringCount | 10 | 2–100, clamped on load: how many on a monitor at once |
+| skyFireflies | true | fireflies along the bottom at night; moved from `effectMoment.night` |
+| skyFirefliesCount | 6 | 1–32, clamped on load: how many on a monitor |
+| skyFirefliesFrom | -1 | -1 (with the creatures' night) or 17–23: from that hour on the clock until six |
 | weatherShareDistance | 40 | 0–200 points, clamped on load: closer than this, creatures share an umbrella; 0, each their own |
 | weatherFollowSeason | true | snow mostly in winter, wind in autumn, rain any time; off, all alike |
 | weatherWindowTops | true | snow piles on other apps' window tops too |

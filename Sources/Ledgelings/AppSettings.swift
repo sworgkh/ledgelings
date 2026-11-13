@@ -878,7 +878,11 @@ final class AppSettings: ObservableObject {
         var s = Effects.Switches()
         s.enabled = effectsEnabled
         s.styles = Set(Effects.Style.allCases.filter { !effectsOff.contains($0.key) })
-        s.moments = Set(Effects.Moment.allCases.filter { !effectsOff.contains($0.key) })
+        s.moments = Set(Effects.Moment.allCases.filter { !$0.ambient && !effectsOff.contains($0.key) })
+        if skyFireflies { s.moments.insert(.night) }
+        if skyWinterSnow { s.moments.insert(.winter) }
+        if skyAutumnLeaves { s.moments.insert(.autumn) }
+        if skySpringPetals { s.moments.insert(.spring) }
         s.frequency = effectsFrequency
         s.reduceMotion = effectsReduceMotion.isOn(system: systemReduceMotion)
         return s
@@ -902,7 +906,52 @@ final class AppSettings: ObservableObject {
     /// Minutes a spell lasts before it eases off.
     @Published var weatherMinutes: Double { didSet { save(weatherMinutes, "weatherMinutes") } }
     @Published var weatherSnowDepth: Weather.Level { didSet { save(weatherSnowDepth.rawValue, "weatherSnowDepth") } }
-    @Published var weatherRainHeaviness: Weather.Level { didSet { save(weatherRainHeaviness.rawValue, "weatherRainHeaviness") } }
+    /// Flakes on a monitor at once, how big, how fast; whether they pile up.
+    @Published var weatherSnowCount: Double { didSet { save(weatherSnowCount, "weatherSnowCount") } }
+    @Published var weatherFlakeSize: Weather.FlakeSize { didSet { save(weatherFlakeSize.rawValue, "weatherFlakeSize") } }
+    @Published var weatherSnowSpeed: Double { didSet { save(weatherSnowSpeed, "weatherSnowSpeed") } }
+    @Published var weatherSnowPiles: Bool { didSet { save(weatherSnowPiles, "weatherSnowPiles") } }
+    /// Drops on a monitor at once and how fast; puddles, umbrellas, and the umbrella on the menu bar that fills.
+    @Published var weatherRainCount: Double { didSet { save(weatherRainCount, "weatherRainCount") } }
+    @Published var weatherRainSpeed: Double { didSet { save(weatherRainSpeed, "weatherRainSpeed") } }
+    @Published var weatherPuddles: Bool { didSet { save(weatherPuddles, "weatherPuddles") } }
+    @Published var weatherUmbrellas: Bool { didSet { save(weatherUmbrellas, "weatherUmbrellas") } }
+    @Published var weatherMenuBarUmbrella: Bool { didSet { save(weatherMenuBarUmbrella, "weatherMenuBarUmbrella") } }
+    /// Seconds between gusts; whether a gust pushes the light ones.
+    @Published var weatherGustSeconds: Double { didSet { save(weatherGustSeconds, "weatherGustSeconds") } }
+    @Published var weatherWindPushes: Bool { didSet { save(weatherWindPushes, "weatherWindPushes") } }
+    @Published var weatherStorm: Bool { didSet { save(weatherStorm, "weatherStorm") } }
+    /// The day (yyyy-MM-dd) the weather and the sky were paused for; empty when not paused.
+    @Published var weatherPausedDay: String { didSet { save(weatherPausedDay, "weatherPausedDay") } }
+
+    // MARK: The sky (Weather & Sky): the season's light particles and the fireflies
+
+    /// Each season's light particles on or off, and how many on a monitor at once. They were the Moments page's
+    /// Winter, Autumn and Spring switches (`effectMoment.…` in `effectsOff`), moved here on first load.
+    @Published var skyWinterSnow: Bool { didSet { save(skyWinterSnow, "skyWinterSnow") } }
+    @Published var skyWinterCount: Double { didSet { save(skyWinterCount, "skyWinterCount") } }
+    @Published var skyAutumnLeaves: Bool { didSet { save(skyAutumnLeaves, "skyAutumnLeaves") } }
+    @Published var skyAutumnCount: Double { didSet { save(skyAutumnCount, "skyAutumnCount") } }
+    @Published var skySpringPetals: Bool { didSet { save(skySpringPetals, "skySpringPetals") } }
+    @Published var skySpringCount: Double { didSet { save(skySpringCount, "skySpringCount") } }
+    /// Fireflies at night (the Moments page's Night falls), how many on a monitor, and from what hour on the Mac's
+    /// clock (until six in the morning); `skyNightFollowsColony` for the creatures' own night.
+    @Published var skyFireflies: Bool { didSet { save(skyFireflies, "skyFireflies") } }
+    @Published var skyFirefliesCount: Int { didSet { save(skyFirefliesCount, "skyFirefliesCount") } }
+    @Published var skyFirefliesFrom: Int { didSet { save(skyFirefliesFrom, "skyFirefliesFrom") } }
+
+    static let skyCountRange = 2.0...100.0
+    static let skyFirefliesRange = 1...32
+    /// The hours fireflies may come out from; `skyNightFollowsColony` is the creatures' night.
+    static let skyFirefliesHours = [-1] + Array(17...23)
+    static let skyNightFollowsColony = -1
+    /// A handful at once: very sparse.
+    static let skyDefaultCount = 10.0
+    static let skyDefaultFireflies = 6
+
+    /// Paused for today: no weather comes on its own and the sky stays clear until tomorrow.
+    func weatherPaused(on date: Date = Date()) -> Bool { weatherPausedDay == ChatLog.day(of: date) }
+    func pauseWeather(_ on: Bool, at date: Date = Date()) { weatherPausedDay = on ? ChatLog.day(of: date) : "" }
     @Published var weatherWindStrength: Weather.Level { didSet { save(weatherWindStrength.rawValue, "weatherWindStrength") } }
     /// Creatures closer than this many points share one umbrella; 0: everyone has its own.
     @Published var weatherShareDistance: Double { didSet { save(weatherShareDistance, "weatherShareDistance") } }
@@ -928,7 +977,18 @@ final class AppSettings: ObservableObject {
         s.frequency = weatherFrequency
         s.lastsMinutes = weatherMinutes
         s.snowDepth = weatherSnowDepth
-        s.rainHeaviness = weatherRainHeaviness
+        s.snowCount = weatherSnowCount
+        s.flakeSize = weatherFlakeSize
+        s.snowSpeed = weatherSnowSpeed
+        s.snowPiles = weatherSnowPiles
+        s.rainCount = weatherRainCount
+        s.rainSpeed = weatherRainSpeed
+        s.puddles = weatherPuddles
+        s.umbrellas = weatherUmbrellas
+        s.menuBarUmbrella = weatherMenuBarUmbrella
+        s.gustSeconds = weatherGustSeconds
+        s.windPushes = weatherWindPushes
+        s.storm = weatherStorm
         s.windStrength = weatherWindStrength
         s.shareDistance = weatherShareDistance
         s.followSeason = weatherFollowSeason
@@ -1428,7 +1488,41 @@ final class AppSettings: ObservableObject {
         let lasts = defaults.object(forKey: "weatherMinutes") as? Double ?? 3
         weatherMinutes = min(max(lasts, Self.weatherMinutesRange.lowerBound), Self.weatherMinutesRange.upperBound)
         weatherSnowDepth = defaults.string(forKey: "weatherSnowDepth").flatMap(Weather.Level.init(rawValue:)) ?? .medium
-        weatherRainHeaviness = defaults.string(forKey: "weatherRainHeaviness").flatMap(Weather.Level.init(rawValue:)) ?? .medium
+        // Very sparse: a couple of dozen flakes, forty drops on a whole monitor (it was over a thousand flakes).
+        func clamped(_ key: String, _ fallback: Double, _ range: ClosedRange<Double>) -> Double {
+            min(max(defaults.object(forKey: key) as? Double ?? fallback, range.lowerBound), range.upperBound)
+        }
+        weatherSnowCount = clamped("weatherSnowCount", Weather.defaultSnowCount, Weather.snowCountRange)
+        weatherFlakeSize = defaults.string(forKey: "weatherFlakeSize").flatMap(Weather.FlakeSize.init(rawValue:)) ?? .medium
+        weatherSnowSpeed = clamped("weatherSnowSpeed", 1, Weather.speedRange)
+        weatherSnowPiles = defaults.object(forKey: "weatherSnowPiles") as? Bool ?? true
+        weatherRainCount = clamped("weatherRainCount", Weather.defaultRainCount, Weather.rainCountRange)
+        weatherRainSpeed = clamped("weatherRainSpeed", 1, Weather.speedRange)
+        weatherPuddles = defaults.object(forKey: "weatherPuddles") as? Bool ?? true
+        weatherUmbrellas = defaults.object(forKey: "weatherUmbrellas") as? Bool ?? true
+        weatherMenuBarUmbrella = defaults.object(forKey: "weatherMenuBarUmbrella") as? Bool ?? true
+        weatherGustSeconds = clamped("weatherGustSeconds", 9, Weather.gustRange)
+        weatherWindPushes = defaults.object(forKey: "weatherWindPushes") as? Bool ?? true
+        weatherStorm = defaults.object(forKey: "weatherStorm") as? Bool ?? true
+        weatherPausedDay = defaults.string(forKey: "weatherPausedDay") ?? ""
+        // The sky's switches were the Moments page's: a moment switched off there stays off here, once, and
+        // leaves `effectsOff`.
+        let wasOff = Set(defaults.stringArray(forKey: "effectsOff") ?? [])
+        let movedOff = Set(Effects.Moment.allCases.filter { $0.ambient && wasOff.contains($0.key) }.map(\.key))
+        func moved(_ key: String, _ moment: Effects.Moment) -> Bool { defaults.object(forKey: key) as? Bool ?? !movedOff.contains(moment.key) }
+        let sky = [("skyFireflies", moved("skyFireflies", .night)), ("skyWinterSnow", moved("skyWinterSnow", .winter)),
+                   ("skyAutumnLeaves", moved("skyAutumnLeaves", .autumn)), ("skySpringPetals", moved("skySpringPetals", .spring))]
+        skyFireflies = sky[0].1
+        skyWinterSnow = sky[1].1
+        skyAutumnLeaves = sky[2].1
+        skySpringPetals = sky[3].1
+        skyWinterCount = clamped("skyWinterCount", Self.skyDefaultCount, Self.skyCountRange)
+        skyAutumnCount = clamped("skyAutumnCount", Self.skyDefaultCount, Self.skyCountRange)
+        skySpringCount = clamped("skySpringCount", Self.skyDefaultCount, Self.skyCountRange)
+        let flies = defaults.object(forKey: "skyFirefliesCount") as? Int ?? Self.skyDefaultFireflies
+        skyFirefliesCount = min(max(flies, Self.skyFirefliesRange.lowerBound), Self.skyFirefliesRange.upperBound)
+        let from = defaults.object(forKey: "skyFirefliesFrom") as? Int ?? Self.skyNightFollowsColony
+        skyFirefliesFrom = Self.skyFirefliesHours.contains(from) ? from : Self.skyNightFollowsColony
         weatherWindStrength = defaults.string(forKey: "weatherWindStrength").flatMap(Weather.Level.init(rawValue:)) ?? .medium
         let weatherShare = defaults.object(forKey: "weatherShareDistance") as? Double ?? 40
         weatherShareDistance = min(max(weatherShare, Self.weatherShareRange.lowerBound), Self.weatherShareRange.upperBound)
@@ -1436,6 +1530,11 @@ final class AppSettings: ObservableObject {
         weatherWindowTops = defaults.object(forKey: "weatherWindowTops") as? Bool ?? true
         weatherReduceMotion = defaults.string(forKey: "weatherReduceMotion").flatMap(Effects.ReduceMotion.init(rawValue:)) ?? .system
         weatherTalk = defaults.object(forKey: "weatherTalk") as? Bool ?? true
+        if !movedOff.isEmpty {
+            for (key, on) in sky { defaults.set(on, forKey: key) }
+            effectsOff.removeAll { movedOff.contains($0) }
+            defaults.set(effectsOff, forKey: "effectsOff")
+        }
         followLanguage()
     }
 

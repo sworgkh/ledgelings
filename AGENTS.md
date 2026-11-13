@@ -87,7 +87,7 @@ with `scripts/make-app.sh`, installed and seen working.
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
   writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, effects, moments, weather, chases, play, ballgames, surfing, diving,
   talk, chatwithyou, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, savedtranslations, readaloud, costs, chats;
-  `--settings-search <words>` searches and opens the first place;
+  `--settings-search <words>` searches and opens the first place; `weather` opens the Weather & Sky window and writes it, the page beside it as `out.page.png`;
   `productivity`, the old tools tab, still opens Reminders).
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.

@@ -365,43 +365,76 @@ have their own page, Moments, so neither page scrolls.
 | **Frost, Smitten, Charged, Fired up, Haunted** (`effectsOff`) | on | | Each style's switch |
 | **Left alone for** (`effectsAloneMinutes`) | 30 min | 5 to 240 | Met by nobody that long, a creature may frost over |
 | **A fast hour of typing** (`effectsTypingKeys`) | 5000 keys | 1000 to 20000 | A whole hour with that many keys: someone gets charged. The Mac's own count, a keyboard hook that only counts on Windows; nothing is recorded, no permission |
-| **Out for** (`effectsAmbientSeconds`) | 60 s | 10 to 600 | How long the fireflies or the season's particles drift along the bottom edge |
-| **Once every** (`effectsAmbientEveryMinutes`) | 10 min | 1 to 120 | The first time one whole wait after launch. |
 
 ## Moments page
 
 A switch and **Play** for each moment, grouped by the feature it belongs to: Screens (leaving, arriving),
 Moving about (a hard landing), Cursor grab (dizzy), Ball games (goal), Bonds (friends for real), Sprite kit (a new
-arrival), Creatures (poof), Garden (a flower comes up), Beds (fast asleep), Night (fireflies), Seasons (winter,
-autumn, spring), Reminders (hey, look!), Calendar (clock ticking), Dictation (listening), Translate (translating),
-Clipboard (copied!), Costs (money spent). All are kept in `effectsOff`.
+arrival), Creatures (poof), Garden (a flower comes up), Beds (fast asleep), Reminders (hey, look!), Calendar (clock
+ticking), Dictation (listening), Translate (translating), Clipboard (copied!), Costs (money spent). All are kept in
+`effectsOff`. The fireflies and the season's particles moved to the Weather & Sky page in 0.73.0; one line here
+points there.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Look at my calendar** (`effectsCalendar`) | off | | Clock ticking five minutes before a meeting; **Allow…** asks the Mac for the calendar. Only start times are read, on the Mac. Not on Windows, which gives the creatures no calendar: there Clock ticking plays by hand only |
 | **Daily budget** (`effectsDailyBudget`) | $1 | $0.10 to $50 | Money spent: when today's spend (Costs) passes it, the coins drop, once a day |
 
-## Weather page
+## Weather & Sky page and window
 
-Snow, rain and wind over the creatures' monitors when the screen is quiet (SPEC §7.20). Only drawn, click-through.
-**Play now** beside each weather starts it at once, quiet or not; **Clear sky** eases it off. The menu's **Weather** submenu
-and Creature Actions › **WEATHER…** (W) do the same.
+Too much for one settings page, so Weather & Sky has a **window of its own** (1280 × 760, three columns, no scrolling).
+The Settings page of that name holds **Weather on**, **Open Weather & Sky…**, **Stop now** and **Pause for today**, and
+opens the window as it comes up (from the sidebar or a search: "fireflies" lands here). The menu's Weather submenu has
+**Weather & Sky Settings…**. `--settings weather --snapshot out.png` writes the window to `out.png` and the page to
+`out.page.png`.
+
+Every weather and sky aspect in one place (SPEC §7.20): snow, rain and wind over the creatures' monitors when the
+screen is quiet, and, apart from the weather, the season's light particles and the fireflies. Everything that falls
+starts above the top edge and falls the whole height, a sparse few at a time; the fireflies stay low. Only drawn,
+click-through. **Play now** beside each kind shows it at once, quiet or not.
+
+**Stop now** (and Stop activity, ⌃⌥Q, the Stop button in the top-right corner, and the menu's **Stop Weather**, shown only
+while something is out) fades the weather, the season's particles and the fireflies out in about a second, and the
+snow lying and the puddles go with them. Nothing is switched off: the next weather comes when the screen is next quiet,
+the season's particles at their next time out. **Pause for today** (also in the menu's Weather submenu) stops what is
+out and keeps everything away until tomorrow; by hand still works.
 
 | Setting | Default | Range | Notes |
 |---|---|---|---|
 | **Weather on** (`weatherEnabled`) | on | | Off, none comes by itself (by hand still works), and one falling eases off |
-| **Snow**, **Rain**, **Wind** (`weatherSnow`, `weatherRain`, `weatherWind`) | on | | Each weather's switch; a storm is rain and wind together and needs both |
-| **Follow the season** (`weatherFollowSeason`) | on | | Snow mostly in winter, wind in autumn, rain any time; off, all alike |
 | **Reduce motion** (`weatherReduceMotion`) | as the system | as the system, on, off | Half the particles, and the wind pushes nobody |
 | **The creatures talk about it** (`weatherTalk`) | on | | Built-in lines in each character's voice; no model, no cost |
+| **Pause for today** (`weatherPausedDay`) | not paused | | The day it was paused for; any other day it is not |
+| **Snow** (`weatherSnow`) | on | | |
+| **How many at once** (`weatherSnowCount`) | 24 | 2 to 300 | Flakes on a whole 1512-point monitor at once; a wider monitor gets more. It was over 1100 before 0.73.0 |
+| **Flake size** (`weatherFlakeSize`) | medium | small, medium, large | The share drawn as a bigger cross: none, a quarter, most |
+| **Speed** (`weatherSnowSpeed`) | 1× | 0.5× to 2× | 1× is 32 points a second: about 30 s top to bottom |
+| **Piles up** (`weatherSnowPiles`) | on | | Off, snow falls and is gone: no piles, no snowmen |
+| **How deep** (`weatherSnowDepth`) | medium | low, medium, high | Up to 4, 8 or 13 pixels (×2 points) along the bottom, half that on window tops |
+| **On window tops too** (`weatherWindowTops`) | on | | A window that moves or closes drops its snow |
+| **Wind** (`weatherWind`) | on | | Leaves (autumn) or dust fall from the top and blow sideways, 8 at once at medium |
+| **How strong** (`weatherWindStrength`) | medium | low, medium, high | Harder gusts push further and blow light ones off the top edge |
+| **A gust every** (`weatherGustSeconds`) | 9 s | 3 to 30 | Each gust lasts 2.5 s |
+| **Gusts push the light ones** (`weatherWindPushes`) | on | | Off, the creatures only lean |
+| **Storm: rain and wind together** (`weatherStorm`) | on | | Also needs Rain and Wind on |
 | **How quiet the screen must be** (`weatherQuietMinutes`) | 5 min | 1 to 60 | No typing and the cursor moving under 150 points for that long, nothing full screen, no game, surf or dive, no meeting (calendar, or a microphone in use) |
 | **How often** (`weatherFrequency`) | sometimes | rarely, sometimes, often | About once every 60, 20 or 5 quiet minutes |
 | **How long it lasts** (`weatherMinutes`) | 3 min | 1 to 20 | Then it eases off over 8 s; coming back eases it off too; snow left lying melts slowly |
-| **How deep snow piles** (`weatherSnowDepth`) | medium | low, medium, high | Up to 4, 8 or 13 pixels (×2 points) along the bottom, half that on window tops |
-| **Snow on window tops** (`weatherWindowTops`) | on | | A window that moves or closes drops its snow |
-| **How heavy the rain is** (`weatherRainHeaviness`) | medium | low, medium, high | More drops; puddles and the bowl on the top edge fill sooner |
+| **Follow the season** (`weatherFollowSeason`) | on | | Snow mostly in winter, wind in autumn, rain any time; off, all alike |
+| **Rain** (`weatherRain`) | on | | |
+| **How many at once** (`weatherRainCount`) | 40 | 2 to 400 | Drops on a whole monitor at once (it was 376); a storm has a third more |
+| **Speed** (`weatherRainSpeed`) | 1× | 0.5× to 2× | 1× is 520 points a second |
+| **Puddles** (`weatherPuddles`) | on | | They dry over 90 s once it stops |
+| **Umbrellas** (`weatherUmbrellas`) | on | | Off, nobody opens one |
 | **Umbrella sharing distance** (`weatherShareDistance`) | 40 pt | 0 to 200 | Closer than this along an edge, up to three share one umbrella; 0, each their own |
-| **How strong the wind is** (`weatherWindStrength`) | medium | low, medium, high | Harder gusts push further and blow light ones off the top edge |
+| **On the menu bar an umbrella fills and falls** (`weatherMenuBarUmbrella`) | on | | Hanging from the top edge, the umbrella is a bowl: it fills (sooner with more rain), tips and falls |
+| **Autumn leaves**, **Spring petals**, **Winter snow** (`skyAutumnLeaves`, `skySpringPetals`, `skyWinterSnow`) | on | | The season's light particles, September–November, March–May, December–February; were the Moments page's Autumn, Spring and Winter (`effectMoment.…` in `effectsOff`, moved on first launch) |
+| their slider (`skyAutumnCount`, `skySpringCount`, `skyWinterCount`) | 10 | 2 to 100 | How many on a monitor at once (they were about 140 to 1200, in the bottom third) |
+| **Fireflies** (`skyFireflies`) | on | | Along the bottom after dark; was the Moments page's Night falls |
+| its slider (`skyFirefliesCount`) | 6 | 1 to 32 | How many on a monitor (they were 96) |
+| **Fireflies come out** (`skyFirefliesFrom`) | with the creatures' night | that, or from 17:00 to 23:00 | An hour on the clock: from then until six in the morning |
+| **Out for** (`effectsAmbientSeconds`) | 60 s | 10 to 600 | How long the fireflies or the season's particles are out |
+| **once every** (`effectsAmbientEveryMinutes`) | 10 min | 1 to 120 | The first time one whole wait after launch |
 
 On Windows the same settings and keys; a meeting there is only an app using the microphone, since Windows gives
 the creatures no calendar, and the tray's Weather submenu shows no hover tips (the page and Creature Actions do).

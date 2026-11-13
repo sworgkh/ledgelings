@@ -418,6 +418,11 @@ public enum Effects {
         return elapsed >= period && elapsed.truncatingRemainder(dividingBy: period) < seconds
     }
 
+    /// Which time out `elapsed` falls in, counting from 0: Stop ends one early and the next comes as ever.
+    public static func ambientPeriod(at elapsed: Double, seconds: Double, everyMinutes: Double) -> Int {
+        Int(elapsed / Swift.max(everyMinutes * 60, seconds))
+    }
+
     /// Keys pressed in the last hour, from samples of the system's running count: fast typing is over `threshold`.
     public struct TypingWatch: Sendable {
         var samples: [(at: Double, count: Double)] = []

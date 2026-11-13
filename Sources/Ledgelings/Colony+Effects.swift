@@ -12,6 +12,8 @@ final class EffectsState {
     /// The season's particles or the fireflies along each home monitor's bottom edge, a tile at a time.
     var ambient: (moment: Effects.Moment, tiles: [EffectPlayer])?
     var ambientImages: [CGImage?] = []
+    /// The ambient period Stop ended early: nothing comes back out until the next one.
+    var stoppedPeriod = -1
     var ambientNextDraw = 0.0
     let actors = EffectActors()
     /// The colony's clock when each creature last met anyone: left alone too long, it may frost over.
@@ -189,37 +191,52 @@ extension Colony {
         }
     }
 
-    /// The fireflies after dark, or the season's particles, for a while every so often.
+    /// The fireflies after dark, or the season's particles, for a while every so often. Paused for today, or
+    /// while weather falls (it is heavier), none come; stopped, none until the next time out.
     private func updateAmbient(dt: Double) {
-        // While weather falls, the light season particles pause: the weather is heavier.
-        let want = weatherShowing ? nil : Effects.ambient(at: now(), isNight: isNight, switches: fx.rules.switches)
+        let paused = settings.weatherPaused(on: now()) || weather.stoppingSince != nil
+        let want = weatherShowing || paused ? nil : Effects.ambient(at: now(), isNight: fireflyNight, switches: fx.rules.switches)
+        let period = Effects.ambientPeriod(at: elapsed, seconds: settings.effectsAmbientSeconds, everyMinutes: settings.effectsAmbientEveryMinutes)
         let out = Effects.ambientShowing(at: elapsed, seconds: settings.effectsAmbientSeconds, everyMinutes: settings.effectsAmbientEveryMinutes)
+            && period != fx.stoppedPeriod
         if let a = fx.ambient {
             let byHand = a.tiles.first?.byHand == true
             if byHand, let until = a.tiles.first?.until, elapsed >= until { a.tiles.forEach { $0.instance.stop() } }
             if !byHand && (a.moment != want || !out) { a.tiles.forEach { $0.instance.stop() } }
             a.tiles.forEach { $0.instance.update(dt) }
             if a.tiles.allSatisfy(\.done) { fx.ambient = nil; fx.ambientImages = [] }
-        } else if let want, out {
-            startAmbient(want, preview: false)
+        } else if want == .night, out {
+            startAmbient(.night, preview: false)
+        }
+        // The season's light particles fall over the whole monitor from the top, with the weather's sky.
+        if let l = weather.light {
+            if !l.byHand && (l.moment != want || !out) { easeLight() }
+        } else if let want, want != .night, out {
+            startLight(want, byHand: false)
         }
     }
 
-    /// Tiles across every home monitor's bottom edge, each with its own seed.
+    /// Fireflies: tiles across every home monitor's bottom edge, each with its own seed, a sparse few in each.
+    /// The season's particles fall from the top instead (`startLight`).
     @discardableResult
     func startAmbient(_ moment: Effects.Moment, preview: Bool) -> Bool {
+        if moment != .night { return startLight(moment, byHand: preview) }
         guard let type = FXCatalog.all[moment.effect], let standing = frames.first?.frame(animation: "idle", time: 0),
               let (actor, box) = fx.actors.actor(standing: standing) else { return false }
+        if weather.stoppingSince != nil { resetWeather() }
         let tileWidth = CGFloat(type.meta.size.w) * Self.ambientScale
         let count = homeFrames.reduce(0) { $0 + Int(($1.width / tileWidth).rounded(.up)) }
+        // "How many" is for a whole monitor of the reference width: each tile flies its share.
+        let perTile = max(1, Int((Double(settings.skyFirefliesCount) * Double(tileWidth) / (Weather.referenceWidth * Double(Self.skyScale))).rounded()))
         let tiles = (0..<max(1, count)).map { k -> EffectPlayer in
             let p = EffectPlayer(type, name: moment.effect, actor: actor, box: box, seed: 11 + Double(k) * 7, moment: moment)
             p.instance.dropBackdrop()
+            p.instance.setFireflies(perTile)
             if preview { p.until = elapsed + 6; p.byHand = true }
             return p
         }
         fx.ambient = (moment, tiles)
-        fx.trace?(String(format: "fx %.2f moment %@ along the bottom, %d tiles", elapsed, moment.rawValue, tiles.count))
+        fx.trace?(String(format: "fx %.2f moment %@ along the bottom, %d tiles, %d fireflies each", elapsed, moment.rawValue, tiles.count, perTile))
         return true
     }
 
