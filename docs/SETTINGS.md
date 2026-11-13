@@ -4,9 +4,10 @@ Every setting is saved as you change it and applied live; nothing needs a restar
 On macOS the window is *menu bar icon › Settings…*; on Windows it is *tray icon ›
 Settings…*. A sidebar lists the pages under five headings: *Creatures &
 world* (**Creatures**, **Actions**, **Sprites**, **Beds**, **Flowers**, **Calendar**), *Games* (**Chases**, **Play**,
-**Ball games**, **Surfing**), *Talk & friends* (**Talk**, **Voice**, **Bonds**, **Relationships**), *Tools* (**Tools screen**, **Reminders**,
+**Ball games**, **Surfing**), *Talk & friends* (**Talk**, **Chat with you**, **Voice**, **Character voices**, **Bonds**, **Relationships**, **Plot twists**), *Tools* (**Tools screen**, **Reminders**,
 **Clipboard**, **Screenshots**, **Dictation**, **Translate**) and *Money & history* (**Costs**, **Chats**); on the Mac each page is two
-columns that fit on one screen. The search box at its top (⌘F) finds any setting by the words
+columns that fit in the window without scrolling (1360×880; the look is in
+[DESIGN.md](DESIGN.md)). The search box at its top (⌘F) finds any setting by the words
 of its label, its section or its footer, in Russian or English: click a place (⏎ for the first)
 and its page opens with the section lit up; ⎋ clears it. On Windows the same sidebar and search
 (Ctrl+F, Enter, Esc), twenty pages (no Screenshots yet), each page one scrolling column; the
@@ -1229,8 +1230,10 @@ Start with, Try it (a line in the chosen preset), and the chosen one's fields:
 
 ## Voice tab
 
-The left column is how they all sound; the right column,
-**Characters**, is one card per character on screen. Every line that appears in a bubble, from a meeting, a poke, a
+The left column is the engine and its voice (**Voice**); the right column is how they
+all sound (**How they sound**: speed, pitch, the pause, the volume, Test). The cards,
+one per character on screen, are on their own page, **Character voices** (below), across
+both its columns. Every line that appears in a bubble, from a meeting, a poke, a
 paper plane or the built-in lines, is also read out loud, one line at a time in the
 order they came. When the talk runs far ahead of the voice (four lines waiting),
 new lines are skipped rather than read long after their bubble is gone. Emoji and
@@ -1268,9 +1271,10 @@ shows in full at once. A bubble gives up waiting after 45 s.
 | **Volume** | 0.8 | 0 to 1 | |
 | **Test** / **Stop** | | | The first three creatures on screen introduce themselves in their voices, voice on or off |
 
-### Characters
+### Character voices page
 
-Every character starts automatic. With **Voices fit each character's
+One card per character on screen, half in each column; under them, in **Cast with
+the model**, **Cast Everyone with Model**. Every character starts automatic. With **Voices fit each character's
 personality** (on by default, left column), its description and its species are
 read for words that say how it should sound, and the voice, pitch and speed follow:
 

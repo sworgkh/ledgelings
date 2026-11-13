@@ -60,4 +60,16 @@ import Testing
         #expect(labels["google/gemma-4-26b-a4b-it:free"] == "free")
         #expect(labels["weird/no-price"] == "price unknown")
     }
+
+    /// A router (openrouter/auto) says -1 a token: not a negative price, and not first in the list.
+    @Test func aRoutersPriceVaries() throws {
+        let router = try #require(try ModelCatalog.parse(Data("""
+        {"data":[{"id":"openrouter/auto","name":"Auto Router","pricing":{"prompt":"-1","completion":"-1"}}]}
+        """.utf8)).first)
+        #expect(router.priceLabel == "price varies")
+        #expect(router.exchangeCost == nil)
+        let catalog = ModelCatalog(models: try ModelCatalog.parse(Self.sample) + [router])
+        #expect(catalog.search("").last?.id == "weird/no-price" || catalog.search("").last?.id == "openrouter/auto")
+        #expect(catalog.search("").first?.id == "google/gemma-4-26b-a4b-it:free")
+    }
 }

@@ -3680,10 +3680,12 @@ clipboard history and snippets in `clipboard.json` and `snippets.json` (§7.11),
 the hunt counts in `hunts.json` (§4.7.2), and the favourite sleeping places in
 `beds.json` (§7.9).
 
-Settings window: 1280×760 points (it fits a 1280×800 laptop screen). On the left a
+Settings window: 1360×880 points (with its title bar it fits under the menu bar of a 1470×956
+screen, the smallest a current Mac laptop shows; no page and not the sidebar scrolls, but the
+lists of Bonds, Costs and Chats, checked by `--layout-check`; the shared look is docs/DESIGN.md). On the left a
 sidebar 220 wide: a search box, then twenty-seven pages under five headings (`SettingsGroup`):
 *Creatures & world* (Creatures, Actions, Sprites, Beds, Flowers, Calendar), *Games*
-(Chases, Play, Ball games), *Talk & friends* (Talk, Chat with you, Voice, Bonds, Relationships),
+(Chases, Play, Ball games), *Talk & friends* (Talk, Chat with you, Voice, Character voices, Bonds, Relationships, Plot twists),
 *Tools* (Tools screen, Reminders, Clipboard, Screenshots, Dictation, Translate, Read aloud) and *Money & history* (Costs,
 Chats), each heading's pages with its pixel picture. On the right the page: its
 group and name, then two columns that scroll on their own so a page fits on one
@@ -3719,9 +3721,11 @@ the delivery toggle, letter slider, read-aloud toggle, paper-note toggle and Sen
 the right every reminder, waiting ones by time then sent ones greyed, each with
 Send Now and Delete, then the file with Clear Sent. **Voice**: on the left the toggle,
 engine picker, voice-each and cartoon toggles, voice picker or key/model/voice
-pickers and Keep with its count and Reveal, speed/pitch/volume sliders, Test,
-Stop, status; on the right a card per character on screen with voice picker
-(automatic names the voice it gets), speed and pitch sliders, Test and Auto.
+pickers and Keep with its count and Reveal; on the right *How they sound*: speed/pitch
+sliders, speed follows pitch, the pause, volume, Test, Stop, status. **Character voices**:
+a card per character on screen, half in each column, with voice picker (automatic names
+the voice it gets), speed and pitch sliders, Test, Cast with Model and Auto; under them
+Cast Everyone with Model.
 
 ---
 

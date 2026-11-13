@@ -116,6 +116,7 @@ struct SettingsView: View {
         case .talk: TalkSettingsView(settings: settings, library: library, voice: voice)
         case .chatWithYou: ChatSettingsView(settings: settings, memory: ownerChats ?? OwnerChatBook(directory: FileManager.default.temporaryDirectory.appendingPathComponent("ledgelings-no-owner-chats")))
         case .voice: VoiceSettingsView(settings: settings, voice: voice)
+        case .characterVoices: CharacterVoicesSettingsView(settings: settings, voice: voice)
         case .bonds: BondsSettingsView(settings: settings, bonds: bonds)
         case .relationships: RelationshipsSettingsView(settings: settings, bonds: bonds, open: openRelationships, seed: seedMemory)
         case .twists: TwistsSettingsView(settings: settings, bonds: bonds)
@@ -281,8 +282,8 @@ struct TwoColumns<Left: View, Right: View>: View {
 }
 
 /// One grouped form that shows when it scrolls: a shadow along the bottom
-/// while there is more below, and room under the last control so nothing sits
-/// in the shadow once scrolled to the end. (The scroll bar itself stays visible
+/// while there is more below. A page is laid out not to scroll (`--layout-check`);
+/// only the list pages' columns do. (The scroll bar itself stays visible
 /// app-wide; see main.swift.)
 struct SettingsColumn<Content: View>: View {
     @ViewBuilder let content: () -> Content
@@ -302,7 +303,7 @@ struct SettingsColumn<Content: View>: View {
     private var form: some View {
         Form { content() }
             .formStyle(.grouped)
-            .contentMargins(.bottom, 56, for: .scrollContent)
+            .contentMargins(.bottom, Look.Space.l, for: .scrollContent)
             .onScrollGeometryChange(for: Bool.self) { g in
                 g.contentSize.height + g.contentInsets.bottom - g.contentOffset.y - g.containerSize.height > 2
             } action: { _, more in moreBelow = more }
@@ -356,7 +357,9 @@ struct SliderRow: View {
                 Slider(value: $value, in: range, step: step)
                 Text(value == 0 && zero != nil ? zero! : String(format: "%g", scale == 1 ? value : (value * scale).rounded()) + unit)
                     .monospacedDigit()
-                    .frame(width: 70, alignment: .trailing)
+                    .lineLimit(1)
+                    .frame(minWidth: Look.valueWidth, alignment: .trailing)
+                    .fixedSize()
             }
         }
     }
@@ -364,9 +367,8 @@ struct SliderRow: View {
 
 @MainActor
 final class SettingsWindowController {
-    /// The sidebar and two columns of about 530 each; tall enough that a page needs no
-    /// scrolling, and both fit a 1280×800 laptop screen.
-    static let size = CGSize(width: 1280, height: 760)
+    /// See `Look.settingsSize`.
+    static let size = Look.settingsSize
     private var window: NSWindow?
     private let settings: AppSettings
     private let history: ChatHistory
@@ -441,6 +443,51 @@ final class SettingsWindowController {
         // A menu-bar-only app is never frontmost on its own.
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+    }
+
+    /// How far the open page's columns and the sidebar run past the window, in points:
+    /// 0 for each that fits. A column is a scroll view wider than the sidebar.
+    func overflow() -> (sidebar: CGFloat, columns: [CGFloat]) {
+        guard let view = window?.contentView else { return (0, []) }
+        view.layoutSubtreeIfNeeded()
+        var sidebar: CGFloat = 0, columns: [CGFloat] = []
+        func walk(_ v: NSView) {
+            if let s = v as? NSScrollView, let doc = s.documentView {
+                let over = max(0, doc.frame.height - s.contentView.frame.height)
+                if s.frame.minX < SettingsSidebar.width - 1 && s.frame.width <= SettingsSidebar.width + 1 { sidebar = max(sidebar, over) }
+                else if s.frame.height > Look.settingsSize.height / 2 { columns.append(over) }   // a column, not a list inside one
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(view)
+        return (sidebar, columns)
+    }
+
+    /// Pages whose column is a list that grows with use (pairs, days of chats,
+    /// features and calls): that column scrolls, by design.
+    static let listPages: Set<SettingsPage> = [.bonds, .costs, .chats]
+
+    /// `--layout-check`: every page in turn; prints what scrolls, and whether any page
+    /// or the sidebar does that must not. In the language the app was started in.
+    func layoutCheck() async -> Bool {
+        show(.creatures)
+        var good = true
+        for page in SettingsPage.allCases {
+            navigation.page = page
+            try? await Task.sleep(for: .milliseconds(700))
+            let (sidebar, columns) = overflow()
+            let worst = columns.max() ?? 0
+            let allowed = Self.listPages.contains(page)
+            let fits = worst <= 1 || allowed
+            if !fits { good = false }
+            print("layout \(page.rawValue): " + (columns.isEmpty ? "no columns" : columns.map { $0 <= 1 ? "fits" : "scrolls \(Int($0))" }.joined(separator: ", "))
+                  + (allowed && worst > 1 ? " (a list, allowed)" : "") + (fits ? "" : "  ✗"))
+            if page == .creatures {
+                if sidebar > 1 { good = false }
+                print("layout sidebar: " + (sidebar <= 1 ? "fits" : "scrolls \(Int(sidebar))  ✗"))
+            }
+        }
+        return good
     }
 
     /// The window's content as a PNG, drawn by the app itself: no screen-recording permission needed.

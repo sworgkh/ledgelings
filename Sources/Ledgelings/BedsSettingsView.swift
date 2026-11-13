@@ -91,7 +91,7 @@ struct BedsSettingsView: View {
                     }
                     Text(verbatim: whereItSleeps(row.name, screens: screens)).font(.caption)
                     Button(tr("Forget")) { beds.forget(row.name) }
-                        .buttonStyle(.link).font(.caption)
+                        .rowAction()
                         .disabled(beds.spot(of: row.name) == nil)
                 }
             }

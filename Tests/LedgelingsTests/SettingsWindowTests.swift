@@ -39,8 +39,9 @@ struct SettingsWindowTests {
     }
 
     @Test func theWindowFitsALaptopScreen() {
-        #expect(SettingsWindowController.size.width <= 1280)
-        #expect(SettingsWindowController.size.height <= 800 - 37, "under the menu bar of a 1280×800 screen")
-        #expect((SettingsWindowController.size.width - SettingsSidebar.width) / 2 >= 500, "two columns of 500 or more")
+        #expect(SettingsWindowController.size.width <= Look.smallestScreen.width)
+        #expect(SettingsWindowController.size.height + Look.titleBar + Look.menuBar <= Look.smallestScreen.height,
+                "with its title bar, under the menu bar of a 13-inch MacBook Air")
+        #expect((SettingsWindowController.size.width - SettingsSidebar.width) / 2 >= 560, "two columns of 560 or more")
     }
 }

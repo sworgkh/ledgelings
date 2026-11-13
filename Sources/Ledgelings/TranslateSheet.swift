@@ -892,31 +892,6 @@ struct TranslateDrawerView: View {
     }
 }
 
-/// A tag drawn in the sheet itself on hover: the panel sits above where the
-/// system's tooltips open, so `.help` would show underneath.
-struct PixelTag: ViewModifier {
-    let text: String
-    @State private var hovering = false
-
-    func body(content: Content) -> some View {
-        content
-            .onHover { hovering = $0 }
-            .overlay(alignment: .bottom) {
-                if hovering {
-                    Text(text)
-                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                        .foregroundStyle(PixelBox.rim)
-                        .padding(.horizontal, 7).padding(.vertical, 4)
-                        .background(PixelBox(style: .raised))
-                        .fixedSize()
-                        .offset(y: 30)
-                        .allowsHitTesting(false)
-                        .zIndex(10)
-                }
-            }
-            .zIndex(hovering ? 10 : 0)
-    }
-}
 
 // MARK: The text box
 

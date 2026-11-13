@@ -24,6 +24,10 @@ extension Strings {
         "Nothing found.": "Ничего не найдено.",
         "place|places": "место|места|мест",
         "Voice": "Голос",
+        "Character voices": "Голоса персонажей",
+        "How they sound": "Как звучат",
+        "Cast with the model": "Подбор моделью",
+        "Each character's own voice is on the Character voices page.": "Свой голос каждого персонажа — на странице «Голоса персонажей».",
         "Costs": "Расходы",
         "Chats": "Чаты",
 

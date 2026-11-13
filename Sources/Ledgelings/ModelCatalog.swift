@@ -16,13 +16,16 @@ struct ModelCatalog: Sendable {
 
         /// Dollars for one creature meeting: two calls of about 300 tokens in and 80 out.
         var exchangeCost: Double? {
-            guard let promptPerMillion, let completionPerMillion else { return nil }
+            // A router's -1 is no price: it sorts with the unpriced, last.
+            guard let promptPerMillion, let completionPerMillion, promptPerMillion >= 0, completionPerMillion >= 0 else { return nil }
             return 2 * (300 * promptPerMillion + 80 * completionPerMillion) / 1_000_000
         }
 
         var priceLabel: String {
             guard let promptPerMillion, let completionPerMillion else { return tr("price unknown") }
             if isFree { return tr("free") }
+            // A router (openrouter/auto) says -1: the price is the model it picks.
+            if promptPerMillion < 0 || completionPerMillion < 0 { return tr("price varies") }
             return tr("$%.2f in · $%.2f out per M", promptPerMillion, completionPerMillion)
 
         }

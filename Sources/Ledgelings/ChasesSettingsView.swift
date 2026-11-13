@@ -128,7 +128,7 @@ struct ChasesSettingsView: View {
                     Text(verbatim: "\(n.week)")
                     Text(verbatim: "\(n.all)")
                     Button(tr("Reset")) { hunts.reset(name) }
-                        .buttonStyle(.link).font(.caption)
+                        .rowAction()
                         .disabled(hunts.book.tallies[name] == nil)
                 }
                 .monospacedDigit()

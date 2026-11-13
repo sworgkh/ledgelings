@@ -27,7 +27,7 @@ import Testing
         #expect(SettingsGroup.allCases.map { $0.pages } == [
             [.creatures, .actions, .sprites, .beds, .flowers, .calendar, .effects, .moments, .weather],
             [.chases, .play, .ballGames, .surfing, .diving],
-            [.talk, .chatWithYou, .voice, .bonds, .relationships, .twists],
+            [.talk, .chatWithYou, .voice, .characterVoices, .bonds, .relationships, .twists],
             [.tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud],
             [.costs, .chats],
         ])
@@ -66,7 +66,7 @@ import Testing
     @Test func aWordFindsItsSettingBestFirst() {
         Language.$override.withValue(.english) {
             let hits = SettingsIndex.search("pitch")
-            #expect(hits.first == SettingsIndex.Hit(page: .voice, section: "Voice", text: "Pitch"))
+            #expect(hits.first == SettingsIndex.Hit(page: .voice, section: "How they sound", text: "Pitch"))
             #expect(SettingsIndex.search("PAPER planes").contains { $0.page == .talk })
             #expect(SettingsIndex.search("kept images").contains { $0.page == .clipboard && $0.section == "History" }, "words in any order, anywhere in the section")
             #expect(SettingsIndex.search("   ").isEmpty)

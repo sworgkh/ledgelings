@@ -5,7 +5,7 @@ import Foundation
 public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
     case creatures, actions, sprites, beds, flowers, calendar, effects, moments, weather
     case chases, play, ballGames, surfing, diving
-    case talk, chatWithYou, voice, bonds, relationships, twists
+    case talk, chatWithYou, voice, characterVoices, bonds, relationships, twists
     case tools, reminders, clipboard, screenshots, dictation, translate, savedTranslations, readAloud
     case costs, chats
 
@@ -28,6 +28,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         case .talk: tr("Talk")
         case .chatWithYou: tr("Chat with you")
         case .voice: tr("Voice")
+        case .characterVoices: tr("Character voices")
         case .bonds: tr("Bonds")
         case .relationships: tr("Relationships")
         case .twists: tr("Plot twists")
@@ -48,7 +49,7 @@ public enum SettingsPage: String, CaseIterable, Hashable, Sendable {
         switch self {
         case .creatures, .actions, .sprites, .beds, .flowers, .calendar, .effects, .moments, .weather: .creaturesAndWorld
         case .chases, .play, .ballGames, .surfing, .diving: .games
-        case .talk, .chatWithYou, .voice, .bonds, .relationships, .twists: .talkAndFriends
+        case .talk, .chatWithYou, .voice, .characterVoices, .bonds, .relationships, .twists: .talkAndFriends
         case .tools, .reminders, .clipboard, .screenshots, .dictation, .translate, .savedTranslations, .readAloud: .tools
         case .costs, .chats: .moneyAndHistory
         }
@@ -242,8 +243,10 @@ public enum SettingsIndex {
         Section(.chatWithYou, "Memory", labels: ["Remember talks", "Past exchanges kept word for word", "Forget this one", "Forget everyone's"], footer: "Each creature keeps its last talks with you word for word and a short summary of the older ones, and both go into its next answer: it remembers what you told it yesterday. When a talk falls out of the kept ones, one call rewrites the summary (on Costs as Chat with you). Off: nothing new is kept or sent. --memory prints it all.", keys: ["chatMemoryExchanges", "chatRemember"]),
 
         // voice
-        Section(.voice, "Characters", labels: ["Nobody on screen right now.", "Casting…", "Cast Everyone with Model"], footer: "The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends.", keys: ["characterVoices"]),
-        Section(.voice, "Voice", labels: ["Hear them talk out loud", "Voices", "Every character gets a voice of their own", "Cartoon voices: squeakier, sillier", "Voices fit each character's personality", "Speed", "Pitch", "Speed follows pitch: no echo, higher talks a little faster", "Pause before the answer", "Volume", "Test", "Stop", "Status"], keys: ["cartoonVoices", "castByPersonality", "keepVoices", "localVoice", "localVoiceModel", "localVoiceServer", "openRouterVoice", "reuseLineVoices", "speedFollowsPitch", "systemVoice", "voiceEnabled", "voiceEngine", "voiceModel", "voicePerCharacter", "voicePitch", "voiceSpeed", "voiceTurnPause", "voiceVolume"]),
+        Section(.voice, "Voice", labels: ["Hear them talk out loud", "Voices", "Every character gets a voice of their own", "Cartoon voices: squeakier, sillier", "Voices fit each character's personality", "Voice", "Model", "API key", "Keep every line it says", "Save the built-in lines' voices", "Server"], keys: ["cartoonVoices", "castByPersonality", "keepVoices", "localVoice", "localVoiceModel", "localVoiceServer", "openRouterVoice", "reuseLineVoices", "systemVoice", "voiceEnabled", "voiceEngine", "voiceModel", "voicePerCharacter"]),
+        Section(.voice, "How they sound", labels: ["Speed", "Pitch", "Speed follows pitch: no echo, higher talks a little faster", "Pause before the answer", "Volume", "Test", "Stop", "Status"], keys: ["speedFollowsPitch", "voicePitch", "voiceSpeed", "voiceTurnPause", "voiceVolume"]),
+        Section(.characterVoices, "Characters", labels: ["Nobody on screen right now.", "Test", "Cast with Model", "Auto", "Voice", "Speed", "Pitch", "Speed follows pitch"], keys: ["characterVoices"]),
+        Section(.characterVoices, "Cast with the model", labels: ["Casting…", "Cast Everyone with Model"], footer: "The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends."),
 
         // bonds
         Section(.bonds, "Stories", labels: ["Pairs who live together get a story", "First story after", "A story lasts"], keys: ["plotAfterHours", "plotLength", "plotsEnabled"]),

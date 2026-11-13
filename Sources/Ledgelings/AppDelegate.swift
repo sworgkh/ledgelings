@@ -78,7 +78,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Before anything is drawn or said: the language everything looks its words up in.
         Language.choose(settings.language)
-        speaking = settings.$language.sink { Language.choose($0) }
+        // The Costs page names each feature in the language chosen: summed again once it is known, and on every change.
+        speaking = settings.$language.sink { [weak self] in Language.choose($0); self?.spend.reload() }
         CursorMood.choose(settings.cursorMood)
         minding = settings.$cursorMood.sink { CursorMood.choose($0) }
         if let at = CommandLine.arguments.firstIndex(of: "--kit-images") {
@@ -469,6 +470,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 ]
                 let only = value("--drag-check").flatMap(WindowPlaces.Window.init(rawValue:))
                 exit(await DragCheck.run(targets.filter { only == nil || $0.window == only }, settings: settings) ? 0 : 1)
+            }
+        }
+        // `--layout-check`: every settings page opened in turn, and whether one scrolls (`SettingsWindowController.layoutCheck`).
+        if args.contains("--layout-check") {
+            let settingsWindow = settingsWindow
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                exit(await settingsWindow.layoutCheck() ? 0 : 1)
             }
         }
         // `--menu`: the menu bar menu as it would open now, one line per item (`---` a separator, `  ` a submenu's item), then quit.
