@@ -8,7 +8,8 @@ namespace Ledgelings;
 /// else does: a click or a key in another app goes on to that app and the activity runs on.</summary>
 public sealed class Activities
 {
-    public enum Kind { Surf, Dive, Game }
+    /// <summary>Weather: the weather, the season's light particles and the fireflies (Settings › Weather &amp; Sky).</summary>
+    public enum Kind { Surf, Dive, Game, Weather }
 
     public static Activities Shared { get; } = new();
 
@@ -27,6 +28,9 @@ public sealed class Activities
     public void Unregister(Kind kind) => entries.RemoveAll(e => e.Kind == kind);
 
     public bool IsKindRunning(Kind kind) => entries.Any(e => e.Kind == kind && e.IsRunning());
+
+    /// <summary>Whether anything but <paramref name="kind"/> is running: weather waits for a game to end, but not for itself.</summary>
+    public bool IsRunningBesides(Kind kind) => entries.Any(e => e.Kind != kind && e.IsRunning());
 
     /// <summary>Whether anything at all is running.</summary>
     public bool IsRunning => entries.Any(e => e.IsRunning());

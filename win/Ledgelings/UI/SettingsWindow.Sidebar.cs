@@ -54,6 +54,8 @@ public sealed partial class SettingsWindow
         PageGroup.Text = p.Group().Title().ToUpper(Languages.Current.Culture());
         if (p == SettingsPage.Translate) LoadTranslateModelsOnce();
         if (p == SettingsPage.ReadAloud) LoadSpeechModelsOnce();
+        // Weather & Sky's every aspect is in its own window: coming to the page (a click, a search) opens it.
+        if (p == SettingsPage.Weather && IsVisible) OpenWeatherWindow();
         DrawSidebar();
     }
 
@@ -156,12 +158,24 @@ public sealed partial class SettingsWindow
             var loose = Descendants(item.Content as DependencyObject)
                 .Where(d => d is CheckBox && !inBoxes.Contains(d)).Select(Tr.GetContent).OfType<string>().ToList();
             if (loose.Count > 0) found.Add(new SettingsSearch.Section(p, "", loose));
+            // The Weather & Sky window's boxes count as its page's: "fireflies" lands on the page, which opens it.
+            if (p == SettingsPage.Weather)
+            {
+                var panel = new WeatherSkyPanel(settings);
+                var footer = panel.TryFindResource("Footer");
+                foreach (var box in Descendants(panel).OfType<GroupBox>())
+                    if (Tr.GetHeader(box) is string title && found.All(f => f.Page != p || f.Title != title))
+                    {
+                        var (labels, footers) = Words(box, footer);
+                        found.Add(new SettingsSearch.Section(p, title, labels, footers));
+                    }
+            }
         }
         return found;
     }
 
     /// <summary>A box's control words, and its footers joined, in English.</summary>
-    private (List<string> Labels, string Footer) Words(GroupBox box)
+    private (List<string> Labels, string Footer) Words(GroupBox box, object? footerStyle = null)
     {
         var labels = new List<string>();
         var footers = new List<string>();
@@ -170,7 +184,7 @@ public sealed partial class SettingsWindow
             if (d is GroupBox inner && !ReferenceEquals(inner, box)) continue;
             var text = Tr.GetText(d) ?? Tr.GetContent(d);
             if (text is null) continue;
-            if (d is TextBlock { Style: Style s } && ReferenceEquals(s, TryFindResource("Footer"))) footers.Add(text);
+            if (d is TextBlock { Style: Style s } && (ReferenceEquals(s, TryFindResource("Footer")) || ReferenceEquals(s, footerStyle))) footers.Add(text);
             else labels.Add(text);
         }
         return (labels, string.Join(" ", footers));

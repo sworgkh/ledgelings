@@ -16,6 +16,8 @@ public sealed partial class App
         Activities.Shared.Register(Activities.Kind.Surf, () => c.CurrentPlay?.Kind == Plays.Kind.Surf, c.StopSurf);
         Activities.Shared.Register(Activities.Kind.Dive, () => c.IsDiving, c.StopDive);
         Activities.Shared.Register(Activities.Kind.Game, () => c.CurrentPlay is not null, () => c.EndPlay(false));
+        // The weather and the sky fade out over a second, the piles with them; nothing is switched off.
+        Activities.Shared.Register(Activities.Kind.Weather, () => c.WeatherRunning, () => c.StopWeather("stop activity"));
         settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(AppSettings.StopActivityShortcutEnabled) or nameof(AppSettings.StopActivityShortcut)

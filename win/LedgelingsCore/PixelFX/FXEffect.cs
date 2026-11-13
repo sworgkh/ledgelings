@@ -171,6 +171,9 @@ public sealed class FXInstance
     /// <summary>Leave out the effect's own backdrop, if it has one.</summary>
     public void DropBackdrop() { if (impl is IFXBackdropped b) b.Backdrop = false; }
 
+    /// <summary>Fireflies only: how many fly, of 32.</summary>
+    public void SetFireflies(int n) { if (impl is FXFireflies f) f.Flies = n; }
+
     /// <summary>Let it end: loops fade out, one-shots are cut short.</summary>
     public void Stop() { if (double.IsPositiveInfinity(stopAt)) stopAt = T; }
     public bool Stopping => !double.IsPositiveInfinity(stopAt);

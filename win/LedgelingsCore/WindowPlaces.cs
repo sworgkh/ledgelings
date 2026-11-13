@@ -13,7 +13,7 @@ public static class WindowPlaces
     public enum Window
     {
         Settings, Relationships, Snippets, Actions, Reminder,
-        Tools, Translate, ReadAloud, ClipPicker, Chat,
+        Tools, Translate, ReadAloud, ClipPicker, Chat, Weather,
         Overlay, ShotScreens, ShotToolbar, ClipToast, ClipGhost,
     }
 

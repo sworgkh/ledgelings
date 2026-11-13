@@ -83,7 +83,7 @@ public class ToolsTests
     {
         var root = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Here())!, ".."));
         var xaml = File.ReadAllText(Path.Combine(root, "Ledgelings", "UI", "SettingsWindow.xaml"));
-        var headers = System.Text.RegularExpressions.Regex.Matches(xaml, "<TabItem ui:Tr.Header=\"([^\"]+)\"").Select(m => m.Groups[1].Value).ToList();
+        var headers = System.Text.RegularExpressions.Regex.Matches(xaml, "<TabItem ui:Tr.Header=\"([^\"]+)\"").Select(m => System.Net.WebUtility.HtmlDecode(m.Groups[1].Value)).ToList();
         Assert.Equal(SettingsPages.All.Select(p => p.EnglishTitle()).OrderBy(t => t), headers.OrderBy(t => t));
     }
 

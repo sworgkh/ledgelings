@@ -11,6 +11,16 @@ public static partial class Weather
         public int Width => Open.Length;
     }
 
+    /// <summary>The season's light particles (Settings › Weather &amp; Sky).</summary>
+    public enum LightKind { Snow, Leaves, Petals }
+    /// <summary>Pixels a second it falls: petals drift, leaves flutter, flakes float.</summary>
+    public static double Fall(this LightKind k) => k switch { LightKind.Snow => 12, LightKind.Leaves => 22, _ => 15 };
+    public static string Code(this LightKind k) => Code((Enum)k);
+
+    /// <summary>The season's light particles: a few snowflakes in winter, leaves in autumn, petals in spring, falling
+    /// from above the top edge the whole height and gone at the bottom. <c>Intensity</c> 0…1 rises as they come out.</summary>
+    public readonly record struct Light(LightKind Kind, double Count, double Intensity = 1);
+
     /// <summary>
     /// What falls on one monitor and what lies there, the Mac's <c>Weather+Sky.swift</c>: the flakes, drops and leaves
     /// (the shared <see cref="FXParticles"/>, in art pixels, y down), the snow along the bottom and on the window tops,
@@ -29,7 +39,6 @@ public static partial class Weather
         /// <summary>Where puddles can form along the bottom: a few dips, not the whole edge.</summary>
         public readonly bool[] Dips;
         readonly Rng rng;
-        double owed;
         /// <summary>Snow showers off windows that moved or closed, as they start (for the film's steps).</summary>
         public Action<int, int>? OnShower;
         /// <summary>Leaves (autumn) rather than dust on the wind.</summary>
@@ -118,83 +127,160 @@ public static partial class Weather
         // MARK: Every frame
 
         /// <summary>One step: <paramref name="kind"/> falling at <paramref name="intensity"/> (0 once it is over), the
-        /// wind's drift in pixels a second. <paramref name="reduced"/> halves the particles.</summary>
-        public void Update(double dt, Kind? kind, double intensity, double drift, Level heaviness, Level depth, bool windowTops, bool reduced)
+        /// wind's drift in pixels a second, as <paramref name="s"/> say; and <paramref name="light"/>, the season's light
+        /// particles, if they are out. Reduce motion halves them all.</summary>
+        public void Update(double dt, Kind? kind, double intensity, double drift, Switches s, Light? light = null)
         {
             Particles.Wind = drift;
-            if (kind is Kind k && intensity > 0) Spawn(dt, k, intensity, drift, heaviness, depth, reduced);
+            if (kind is Kind k && intensity > 0) Spawn(dt, k, intensity, drift, s);
+            if (light is { } l && l.Intensity > 0) SpawnLight(dt, l, s.ReduceMotion);
             Particles.Update(dt);
-            Land(windowTops);
-            var snowing = kind == Kind.Snow && intensity > 0;
+            Land(s);
+            var snowing = kind == Kind.Snow && intensity > 0 && s.SnowPiles;
             if (snowing)
             {
-                Bottom.Grow(dt * Snowfall(depth) * intensity);
-                if (windowTops) foreach (var v in ledges.Values) v.Pile.Grow(dt * Snowfall(depth) * intensity * 0.6);
+                Bottom.Grow(dt * Snowfall(s.SnowDepth) * intensity);
+                if (s.WindowTops) foreach (var v in ledges.Values) v.Pile.Grow(dt * Snowfall(s.SnowDepth) * intensity * 0.6);
             }
             else
             {
                 Bottom.Melt(dt * MeltRate);
                 foreach (var v in ledges.Values) v.Pile.Melt(dt * MeltRate * 1.5);
             }
-            if (!(kind is Kind r && r.Rains() && intensity > 0))
-                for (int x = 0; x < Wet.Length; x++) if (Wet[x] > 0) Wet[x] = Math.Max(0, Wet[x] - dt / DrySeconds);
-            if (!windowTops) foreach (var v in ledges.Values) if (!v.Pile.IsEmpty) v.Pile.Clear();
+            if (!(kind is Kind r && r.Rains() && intensity > 0 && s.Puddles))
+                for (int x = 0; x < Wet.Length; x++) if (Wet[x] > 0) Wet[x] = Math.Max(0, Wet[x] - dt / (s.Puddles ? DrySeconds : 1));
+            if (!s.WindowTops) foreach (var v in ledges.Values) if (!v.Pile.IsEmpty) v.Pile.Clear();
         }
 
-        void Spawn(double dt, Kind kind, double intensity, double drift, Level heaviness, Level depth, bool reduced)
+        /// <summary>Everything gone at once: what falls, what lies, the puddles (Stop, once the picture has faded).</summary>
+        public void ClearAll()
         {
-            var share = reduced ? 0.5 : 1;
-            // Particles a second per hundred columns.
-            var rate = 0.0;
-            if (kind.Snows()) rate += 5 * depth.Factor();
-            if (kind.Rains()) rate += 26 * heaviness.Factor();
-            if (kind.Blows()) rate += kind.Rains() ? 1 : 2.2;
-            owed += dt * rate * W / 100 * intensity * share;
-            // Upwind, the particles start off screen, so the wind does not leave a bare strip.
-            var margin = Math.Abs(drift) * 3;
-            while (owed >= 1)
+            Particles.List.Clear();
+            Bottom.Clear();
+            foreach (var v in ledges.Values) v.Pile.Clear();
+            Array.Clear(Wet);
+        }
+
+        /// <summary>The lowest row anything has been born on so far (rows count down from the monitor's top edge): below
+        /// zero, everything starts above the screen and falls the whole height.</summary>
+        public double SpawnTop { get; private set; } = double.NegativeInfinity;
+        /// <summary>The falling things on the monitor now: flakes, drops and leaves, not the splashes or puffs.</summary>
+        public int Falling => Particles.List.Count(p => p.K is FXKind.Flake or FXKind.Drop or FXKind.Leaf);
+
+        double owedSnow, owedRain, owedLeaf, owedLight;
+
+        /// <summary>Particles a second that keep <paramref name="count"/> on a monitor this wide, each falling the whole
+        /// height at <paramref name="fall"/> pixels a second: as many are born as reach the bottom.</summary>
+        public static double BirthRate(double count, double fall, int width, int height) =>
+            height <= 0 || fall <= 0 ? 0 : count * width / ReferenceWidth * fall / height;
+
+        /// <summary>How fast snow, rain and the wind's leaves fall, in pixels a second.</summary>
+        public static double SnowFall(Switches s) => 16 * s.SnowSpeed;
+        public static double RainFall(Switches s) => 260 * s.RainSpeed;
+        public const double LeafFall = 28;
+
+        (double X, double Y) SpawnPoint(double drift, double fall)
+        {
+            // Upwind, some start off the side, so the wind carries them in and leaves no bare strip.
+            var margin = Math.Min(W, Math.Abs(drift) * H / fall);
+            var x = rng.Range(-margin * (drift > 0 ? 1 : 0), W + margin * (drift < 0 ? 1 : 0));
+            return (x, rng.Range(-6, -1));
+        }
+
+        void Born(double y) => SpawnTop = Math.Max(SpawnTop, y);
+
+        void Spawn(double dt, Kind kind, double intensity, double drift, Switches s)
+        {
+            var k = intensity * (s.ReduceMotion ? 0.5 : 1);
+            double h = H;
+            if (kind.Snows())
             {
-                owed -= 1;
-                var x = rng.Range(-margin * (drift > 0 ? 1 : 0), W + margin * (drift < 0 ? 1 : 0));
-                var pick = rng.Next() * rate;
-                if (kind.Snows() && pick < 5 * depth.Factor())
+                var fall = SnowFall(s);
+                owedSnow += dt * k * BirthRate(s.SnowCount, fall, W, H);
+                while (owedSnow >= 1)
                 {
-                    var near = rng.Chance(0.25);
-                    Particles.Spawn(FXKind.Flake, x, rng.Range(-6, -1), drift * 0.5, rng.Range(8, 16), 120, rng.Pick(SnowColours), near ? 1.6 : 1);
+                    owedSnow -= 1;
+                    var (x, y) = SpawnPoint(drift * 0.5, fall);
+                    var big = rng.Chance(s.FlakeSize.BigShare());
+                    Particles.Spawn(FXKind.Flake, x, y, drift * 0.5, fall * rng.Range(0.5, 1), h / fall * 3 + 30, rng.Pick(SnowColours), big ? 1.6 : 1, fall: fall);
+                    Born(y);
                 }
-                else if (kind.Rains() && pick < (kind.Snows() ? 5 * depth.Factor() : 0) + 26 * heaviness.Factor())
+            }
+            if (kind.Rains())
+            {
+                var fall = RainFall(s);
+                owedRain += dt * k * BirthRate(s.RainCount * (kind.Blows() ? 1.3 : 1), fall, W, H);
+                while (owedRain >= 1)
                 {
-                    Particles.Spawn(FXKind.Drop, x, rng.Range(-8, -1), drift, rng.Range(230, 290), 30, RainColour, 1);
+                    owedRain -= 1;
+                    var (x, y) = SpawnPoint(drift, fall);
+                    Particles.Spawn(FXKind.Drop, x, y, drift, fall * rng.Range(0.9, 1.1), h / fall * 3 + 5, RainColour, 1);
+                    Born(y);
                 }
-                else if (kind.Blows())
+            }
+            if (kind.Blows())
+            {
+                // Leaves in autumn, dust the rest of the year (Leafy set by the colony), falling from the top too.
+                owedLeaf += dt * k * BirthRate(WindLeaves * s.WindStrength.Factor() * (kind.Rains() ? 0.5 : 1), LeafFall, W, H);
+                while (owedLeaf >= 1)
                 {
-                    var side = drift >= 0 ? -4.0 : W + 4;
-                    var y = rng.Range(H * 0.35, H - 4);
-                    Particles.Spawn(FXKind.Leaf, side, y, drift, 0, W / Math.Max(20, Math.Abs(drift)) * 1.6,
-                                    rng.Pick(Leafy ? LeafColours : DustColours), rng.Chance(0.5) ? 1.6 : 1);
+                    owedLeaf -= 1;
+                    var (x, y) = SpawnPoint(drift, LeafFall);
+                    Particles.Spawn(FXKind.Leaf, x, y, drift, 0, h / LeafFall * 3 + 10, rng.Pick(Leafy ? LeafColours : DustColours),
+                                    rng.Chance(0.5) ? 1.6 : 1, fall: LeafFall);
+                    Born(y);
                 }
             }
         }
 
-        /// <summary>Flakes and drops that reached a surface stop there: snow on the pile, a splash and a wet patch for rain.</summary>
-        void Land(bool windowTops)
+        public static readonly FXColor[] PetalColours = new[] { "#ffd1dc", "#ffb3c6", "#f7a1b5", "#fff0f4" }.Select(FX.Hex).ToArray();
+
+        void SpawnLight(double dt, Light light, bool reduced)
+        {
+            var fall = light.Kind.Fall();
+            owedLight += dt * light.Intensity * (reduced ? 0.5 : 1) * BirthRate(light.Count, fall, W, H);
+            while (owedLight >= 1)
+            {
+                owedLight -= 1;
+                double x = rng.Range(0, W), y = rng.Range(-6, -1), life = (double)H / fall * 3 + 10;
+                switch (light.Kind)
+                {
+                    case LightKind.Snow:
+                        Particles.Spawn(FXKind.Flake, x, y, 0, fall * 0.6, life, rng.Pick(SnowColours), rng.Chance(0.2) ? 1.6 : 1, 0, FXFlag.Light, fall);
+                        break;
+                    case LightKind.Leaves:
+                        Particles.Spawn(FXKind.Leaf, x, y, 0, 0, life, rng.Pick(LeafColours), rng.Chance(0.5) ? 1.6 : 1, 0, FXFlag.Light, fall);
+                        break;
+                    default:
+                        Particles.Spawn(FXKind.Leaf, x, y, 0, 0, life, rng.Pick(PetalColours), rng.Chance(0.4) ? 1.6 : 1, 0, FXFlag.Light, fall);
+                        break;
+                }
+                Born(y);
+            }
+        }
+
+        /// <summary>Flakes and drops that reached a surface stop there: snow on the pile, a splash and a wet patch for
+        /// rain. The season's light ones and the leaves are simply gone.</summary>
+        void Land(Switches s)
         {
             var list = Particles.List;
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 var p = list[i];
-                if (!((p.K == FXKind.Flake || p.K == FXKind.Drop) && p.Delay <= 0))
+                if (p.K == FXKind.Leaf)
                 {
-                    if (p.K == FXKind.Leaf && (p.X < -8 || p.X > W + 8)) list.RemoveAt(i);
+                    if (p.X < -W || p.X > W * 2 || p.Y >= GroundY((int)Math.Floor(p.X))) list.RemoveAt(i);
                     continue;
                 }
+                if (!((p.K == FXKind.Flake || p.K == FXKind.Drop) && p.Delay <= 0)) continue;
                 var x = (int)Math.Floor(p.X);
-                if (x < -40 || x > W + 40 || p.Y > H + 4) { list.RemoveAt(i); continue; }
+                if (x < -Math.Max(40, W) || x > W * 2 || p.Y > H + 4) { list.RemoveAt(i); continue; }
+                var light = (p.Flag & FXFlag.Light) != 0;
                 var before = p.Y - p.Vy / 60;
-                if (windowTops && LedgeHit(x, before, p.Y) is (int id, int top))
+                if (!light && s.WindowTops && LedgeHit(x, before, p.Y) is (int id, int top))
                 {
                     list.RemoveAt(i);
-                    if (p.K == FXKind.Flake) ledges[id].Pile.Land(x - ledges[id].Ledge.X, 0.35);
+                    if (p.K == FXKind.Flake) { if (s.SnowPiles) ledges[id].Pile.Land(x - ledges[id].Ledge.X, 0.35); }
                     else SplashAt(x, top);
                     continue;
                 }
@@ -203,11 +289,12 @@ public static partial class Weather
                 if (p.Y >= g)
                 {
                     list.RemoveAt(i);
-                    if (p.K == FXKind.Flake) Bottom.Land(x, 0.35);
+                    if (light) continue;
+                    if (p.K == FXKind.Flake) { if (s.SnowPiles) Bottom.Land(x, 0.35); }
                     else
                     {
                         SplashAt(x, g);
-                        foreach (var k in new[] { x - 1, x, x + 1 }) if (k >= 0 && k < W && Dips[k]) Wet[k] = Math.Min(1, Wet[k] + 0.012);
+                        if (s.Puddles) foreach (var k in new[] { x - 1, x, x + 1 }) if (k >= 0 && k < W && Dips[k]) Wet[k] = Math.Min(1, Wet[k] + 0.012);
                     }
                 }
             }

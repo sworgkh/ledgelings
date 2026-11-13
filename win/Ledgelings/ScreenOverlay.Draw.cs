@@ -153,7 +153,11 @@ public sealed partial class ScreenOverlay
                 g.InterpolationMode = InterpolationMode.NearestNeighbor;
                 g.PixelOffsetMode = PixelOffsetMode.Half;
                 g.SmoothingMode = SmoothingMode.None;
-                g.DrawImage(image, rect, new RectangleF(0, 0, image.Width, image.Height), GraphicsUnit.Pixel);
+                if (sky.Opacity >= 1) { g.DrawImage(image, rect, new RectangleF(0, 0, image.Width, image.Height), GraphicsUnit.Pixel); return; }
+                // Fading out after Stop: the whole picture, less of it each frame.
+                using var fade = new ImageAttributes();
+                fade.SetColorMatrix(new ColorMatrix { Matrix33 = Math.Max(0, sky.Opacity) });
+                g.DrawImage(image, Rectangle.Round(rect), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, fade);
             }));
         }
     }

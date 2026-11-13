@@ -17,5 +17,13 @@ public static partial class WindowsStrings
         ["Then it eases off over a few seconds"] = "Потом за несколько секунд утихает",
         ["A window that moves or closes drops its snow"] = "Окно, которое сдвинули или закрыли, роняет свой снег",
         ["Closer than this, up to three share one umbrella"] = "Если ближе этого, до трёх прячутся под одним зонтом",
+        // Weather & Sky: the tray instead of the menu, the top edge instead of the menu bar, a call instead of a meeting.
+        ["Snow, rain, wind and storms, the season's leaves, petals and snow, and the fireflies: each with its own switches in the Weather & Sky window, which also opens from the tray's Weather submenu."] =
+            "Снег, дождь, ветер и бури, листья, лепестки и снег по сезону, светлячки — у каждого свои переключатели в окне «Погода и небо»; оно открывается и из подменю «Погода» в трее.",
+        ["Everything falls from above the top edge, the whole height, a sparse few at a time. Stop activity (Ctrl + Alt + Q), the Stop button and Stop Weather in the tray fade it all out in a second; nothing is switched off."] =
+            "Всё падает из-за верхнего края через весь экран, понемногу и редко. «Остановить занятие» (Ctrl + Alt + Q), кнопка «Стоп» и «Остановить погоду» в трее гасят всё за секунду; ничего не выключается.",
+        ["On the top edge an umbrella fills and falls"] = "На верхнем краю зонт наполняется и падает",
+        ["Quiet: no typing, the cursor barely moving, nothing full screen, no game and no call (an app using the microphone). When you come back it eases off."] =
+            "Тихо — это когда никто не печатает, курсор почти не движется, ничего не развёрнуто на весь экран, нет игры и звонка (приложение пользуется микрофоном). Когда вы возвращаетесь, она стихает.",
     };
 }

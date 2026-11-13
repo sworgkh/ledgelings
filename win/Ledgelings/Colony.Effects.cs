@@ -27,6 +27,8 @@ public sealed partial class Colony
     private (Effects.Moment Moment, List<EffectPlayer> Tiles)? fxAmbient;
     private List<Bitmap?> fxAmbientImages = new();
     private double fxAmbientNextDraw;
+    /// <summary>The ambient period Stop ended early: nothing comes back out until the next one.</summary>
+    private int fxStoppedPeriod = -1;
     private readonly EffectActors fxActors = new();
     /// <summary>The colony's clock when each creature last met anyone: left alone too long, it may frost over.</summary>
     private readonly Dictionary<int, double> fxMetAt = new();
@@ -210,12 +212,15 @@ public sealed partial class Colony
         }
     }
 
-    /// <summary>The fireflies after dark, or the season's particles, for a while every so often.</summary>
+    /// <summary>The fireflies after dark, or the season's particles, for a while every so often. Paused for today, or
+    /// while weather falls (it is heavier), none come; stopped, none until the next time out.</summary>
     private void UpdateAmbient(double dt)
     {
-        // While weather falls, the light season particles pause: the weather is heavier.
-        var want = WeatherShowing ? null : Effects.AmbientAt(Now().LocalDateTime, IsNight, fxRules.Switches);
-        var outNow = Effects.AmbientShowing(Elapsed, Settings.EffectsAmbientSeconds, Settings.EffectsAmbientEveryMinutes);
+        var paused = Settings.WeatherPaused(Now().LocalDateTime) || WeatherStopping;
+        var want = WeatherShowing || paused ? null : Effects.AmbientAt(Now().LocalDateTime, FireflyNight, fxRules.Switches);
+        var period = Effects.AmbientPeriod(Elapsed, Settings.EffectsAmbientSeconds, Settings.EffectsAmbientEveryMinutes);
+        var outNow = Effects.AmbientShowing(Elapsed, Settings.EffectsAmbientSeconds, Settings.EffectsAmbientEveryMinutes)
+            && period != fxStoppedPeriod;
         if (fxAmbient is { } a)
         {
             var byHand = a.Tiles.FirstOrDefault()?.ByHand == true;
@@ -224,26 +229,38 @@ public sealed partial class Colony
             a.Tiles.ForEach(t => t.Instance.Update(dt));
             if (a.Tiles.All(t => t.Done)) { fxAmbient = null; fxAmbientImages = new(); }
         }
-        else if (want is { } m && outNow) StartAmbient(m, preview: false);
+        else if (want == Effects.Moment.Night && outNow) StartAmbient(Effects.Moment.Night, preview: false);
+        // The season's light particles fall over the whole monitor from the top, with the weather's sky.
+        if (weather.Light is { } l)
+        {
+            if (!l.ByHand && (l.Moment != want || !outNow)) EaseLight();
+        }
+        else if (want is { } m && m != Effects.Moment.Night && outNow) StartLight(m, byHand: false);
     }
 
-    /// <summary>Tiles across every home monitor's bottom edge, each with its own seed.</summary>
-    private bool StartAmbient(Effects.Moment moment, bool preview)
+    /// <summary>Fireflies: tiles across every home monitor's bottom edge, each with its own seed, a sparse few in
+    /// each. The season's particles fall from the top instead (<see cref="StartLight"/>).</summary>
+    public bool StartAmbient(Effects.Moment moment, bool preview)
     {
+        if (moment != Effects.Moment.Night) return StartLight(moment, preview);
+        if (WeatherStopping) ResetWeather();
         if (!FXCatalog.All.TryGetValue(moment.Effect(), out var type) || frames.Count == 0
             || frames[0].Frame("idle", 0) is not { } standing || fxActors.Actor(standing) is not { } made) return false;
         var tileWidth = type.Meta.Size.W * AmbientScale * pixelScale;
         var count = Math.Max(1, HomeFrames.Sum(f => (int)Math.Ceiling(f.Width / tileWidth)));
+        // "How many" is for a whole monitor of the reference width: each tile flies its share.
+        var perTile = Math.Max(1, (int)Math.Round(Settings.SkyFirefliesCount * type.Meta.Size.W * AmbientScale / (Weather.ReferenceWidth * SkyScale)));
         var tiles = new List<EffectPlayer>();
         for (var k = 0; k < count; k++)
         {
             var p = new EffectPlayer(type, moment.Effect(), made.Actor, made.Box, 11 + k * 7, moment: moment);
             p.Instance.DropBackdrop();
+            p.Instance.SetFireflies(perTile);
             if (preview) { p.Until = Elapsed + 6; p.ByHand = true; }
             tiles.Add(p);
         }
         fxAmbient = (moment, tiles);
-        Trace?.Invoke($"fx {Elapsed:F2} moment {moment.Code()} along the bottom, {tiles.Count} tiles");
+        Trace?.Invoke($"fx {Elapsed:F2} moment {moment.Code()} along the bottom, {tiles.Count} tiles, {perTile} fireflies each");
         return true;
     }
 

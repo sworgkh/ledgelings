@@ -91,7 +91,12 @@ public sealed partial class AppSettings
     {
         Enabled = effectsEnabled,
         On = Effects.Styles.Where(s => EffectOn(s.Key())).ToHashSet(),
-        MomentsOn = Effects.Moments.Where(m => EffectOn(m.Key())).ToHashSet(),
+        // The fireflies and the season's particles have their own switches on Weather & Sky.
+        MomentsOn = Effects.Moments.Where(m => !m.Ambient() && EffectOn(m.Key()))
+            .Concat(new (bool On, Effects.Moment M)[] { (skyFireflies, Effects.Moment.Night), (skyWinterSnow, Effects.Moment.Winter),
+                                                        (skyAutumnLeaves, Effects.Moment.Autumn), (skySpringPetals, Effects.Moment.Spring) }
+                    .Where(x => x.On).Select(x => x.M))
+            .ToHashSet(),
         Frequency = effectsFrequency,
         ReduceMotion = effectsReduceMotion.IsOn(systemReduceMotion),
     };

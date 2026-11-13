@@ -1,41 +1,46 @@
 using System.Windows;
-using System.Windows.Controls;
 using Ledgelings.Core;
 
 namespace Ledgelings.UI;
 
-/// <summary>Settings › Weather (SPEC §7.20), the Mac's WeatherSettingsView: the switches and when it comes on the left;
-/// how deep, how heavy, how strong, and the umbrellas on the right. Each weather has Play now, which starts it at once,
-/// quiet screen or not; Clear sky eases it off.</summary>
+/// <summary>Settings › Weather &amp; Sky (SPEC §7.20), the Mac's <c>WeatherPageView</c>: the main switch, Open Weather &amp;
+/// Sky…, Stop now and Pause for today. Every aspect is in the Weather &amp; Sky window (<see cref="WeatherSkyPanel"/>),
+/// which the page opens as it comes up.</summary>
 public sealed partial class SettingsWindow
 {
-    /// <summary>Starts a weather by its code (<c>snow</c>, <c>storm</c>), or <c>clear</c>; false when it could not.</summary>
+    /// <summary>Starts a weather by its code (<c>snow</c>, <c>storm</c>, <c>autumn</c>, <c>night</c>), or <c>stop</c>,
+    /// <c>pause</c>, <c>resume</c>; false when it could not.</summary>
     public Func<string, bool>? PlayWeather { get; set; }
-
-    private sealed record WeatherChoice(string Title, int Index);
 
     private void InitWeather()
     {
-        WeatherReduceMotionBox.ItemsSource = Enum.GetValues<Effects.ReduceMotion>().Select(r => new WeatherChoice(r.Title(), (int)r)).ToList();
-        WeatherFrequencyBox.ItemsSource = Weather.Frequencies.Select(f => new WeatherChoice(f.Title(), (int)f)).ToList();
-        var levels = Weather.Levels.Select(l => new WeatherChoice(l.Title(), (int)l)).ToList();
-        WeatherSnowDepthBox.ItemsSource = levels;
-        WeatherRainBox2.ItemsSource = levels;
-        WeatherWindBox2.ItemsSource = levels;
-        foreach (var (button, box, kind) in new (Button, CheckBox?, Weather.Kind)[]
-                 {
-                     (WeatherPlaySnow, WeatherSnowBox, Weather.Kind.Snow), (WeatherPlayRain, WeatherRainBox, Weather.Kind.Rain),
-                     (WeatherPlayWind, WeatherWindBox, Weather.Kind.Wind), (WeatherPlayStorm, null, Weather.Kind.Storm),
-                 })
+        WeatherStopNow.ToolTip = L10n.Tr("The weather, the falling leaves and the fireflies fade out now, and the snow lying goes");
+        WeatherPauseToday.ToolTip = L10n.Tr("No weather, falling leaves, petals or fireflies until tomorrow; what is out now stops");
+        ShowWeatherPaused();
+        settings.PropertyChanged += (_, e) =>
         {
-            button.ToolTip = L10n.Tr("Start %@ now", kind.Title().ToLowerInvariant());
-            if (box is not null) box.ToolTip = kind.Detail();
-        }
+            if (e.PropertyName == nameof(AppSettings.WeatherPausedDay)) Dispatcher.BeginInvoke(ShowWeatherPaused);
+        };
     }
+
+    private void ShowWeatherPaused() =>
+        WeatherPauseToday.Content = settings.WeatherPausedToday ? L10n.Tr("Resume today") : L10n.Tr("Pause for today");
+
+    /// <summary>The Weather &amp; Sky window, with every aspect in it.</summary>
+    private void OpenWeatherWindow() => WeatherWindow.ShowWindow(settings, PlayWeather);
+
+    private void WeatherOpen_Click(object sender, RoutedEventArgs e) => OpenWeatherWindow();
 
     private void WeatherPlay_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string code } && PlayWeather?.Invoke(code) == true) return;
         System.Media.SystemSounds.Beep.Play();
+    }
+
+    private void WeatherPause_Click(object sender, RoutedEventArgs e)
+    {
+        var code = settings.WeatherPausedToday ? "resume" : "pause";
+        if (PlayWeather?.Invoke(code) != true) settings.PauseWeather(code == "pause", DateTime.Now);
+        ShowWeatherPaused();
     }
 }
