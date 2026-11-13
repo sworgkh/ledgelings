@@ -43,32 +43,21 @@ public class ActionsSheetTests
         Assert.True(ActionsTile.Sleep.Title(s) == "WAKE THEM UP" && ActionsTile.Sleep.Detail(s) == "dawn in 1:15");
     }
 
-    /// <summary>Everything the tray menu offers besides the actions is on the sheet too.</summary>
+    /// <summary>The two switches the tray menu keeps (talk, and hearing it) are on the sheet; every other
+    /// switch and choice is in Settings, as in the menu.</summary>
     [Fact]
-    public void TheMenusSwitchesSayHowTheyStandAndTheLinksAreThere()
+    public void TheSwitchesSayHowTheyStandAndTheLinksAreThere()
     {
         var s = new ActionsState();
-        Assert.True(ActionsSwitches.All.Count == 6 && ActionsLinks.All.Count == 4);
+        Assert.Equal(new[] { ActionsSwitch.Talk, ActionsSwitch.Voice, ActionsSwitch.Play }, ActionsSwitches.All);
+        Assert.Equal(4, ActionsLinks.All.Count);
         Assert.Contains("(K)", ActionsLinks.ToolsTooltip(""));                    // the Tools picture names its key
         Assert.True(ActionsSwitch.Talk.Title(s) == "TALK ON" && ActionsSwitch.Talk.IsOn(s));
         Assert.True(ActionsSwitch.Voice.Title(s) == "VOICE OFF" && !ActionsSwitch.Voice.IsOn(s));
-        Assert.Equal("CURSOR: A MENACE", ActionsSwitch.Cursor.Title(s));
-        Assert.Equal("ENGLISH", ActionsSwitch.Language.Title(s));
-        s = s with { TalkOn = false, RevengeOn = false, Mood = CursorMood.Good, Language = Language.Russian };
-        Assert.True(ActionsSwitch.Talk.Title(s) == "TALK OFF" && ActionsSwitch.Revenge.Title(s) == "REVENGE OFF");
-        Assert.Equal("CURSOR: A PLAYMATE", ActionsSwitch.Cursor.Title(s));
-        Assert.Equal("РУССКИЙ", ActionsSwitch.Language.Title(s));
+        s = s with { TalkOn = false };
+        Assert.Equal("TALK OFF", ActionsSwitch.Talk.Title(s));
         Assert.Equal("They keep quiet.", ActionsSwitch.Talk.Said(s));
         Assert.Equal(new[] { "SETTINGS", "CHATS", "QUIT" }, ActionsLinks.Footer.Select(l => l.Title()));  // Tools is the wrench, not a word
-    }
-
-    [Fact]
-    public void ASwitchOnTheSheetGoesRoundItsChoices()
-    {
-        Assert.Equal(CursorMood.Neutral, ActionsSwitches.Next(CursorMoods.All, CursorMood.Good));
-        Assert.Equal(CursorMoods.All[0], ActionsSwitches.Next(CursorMoods.All, CursorMoods.All[^1]));
-        Assert.Equal(Language.Russian, ActionsSwitches.Next(Languages.All, Language.English));
-        Assert.Equal(Language.English, ActionsSwitches.Next(Languages.All, Language.Russian));
     }
 
     /// <summary>With no sheet on screen there is nothing to put away, and asking is harmless.</summary>

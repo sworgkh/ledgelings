@@ -102,38 +102,38 @@ public sealed partial class App : Application
             var back = (int)Math.Ceiling(colony.Hideout.Remaining(colony.Elapsed));
             phase = back > 0 ? L10n.Tr("Hiding in the house \u2014 out in %@", $"{back / 60}:{back % 60:00}") : L10n.Tr("Coming home\u2026");
         }
+        // Things to do now and windows to open, in groups (docs/DESIGN.md). Every switch and choice
+        // (revenge, deeds, language, the cursor's mood, the monitor) is in Settings, where its search finds it.
+        // Where they stand: the day, the talk, the next reminder.
         items.Add(new TrayIcon.Item(phase, Enabled: false));
+        var status = colony.TalkStatus;
+        items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
+        AddNextReminder(items);
         items.Add(TrayIcon.Item.Separator);
-        // After a tab a menu draws the rest at the right, as it does for any shortcut.
+        // What the creatures do now. After a tab a menu draws the rest at the right, as it does for any shortcut.
         var keys = ShortcutTitle;
         items.Add(new TrayIcon.Item(L10n.Tr("Creature Actions\u2026") + (keys.Length > 0 ? "\t" + keys : ""), OpenActions));
         items.Add(new TrayIcon.Item(L10n.Tr("Activities\u2026"), OpenActivities));
         AddActivityItems(items);
         AddWeatherItem(items);
+        items.Add(TrayIcon.Item.Separator);
+        // The tools.
+        AddChatItem(items);
         AddToolsItem(items);
-        AddClipboardItems(items);
-        AddDictationItems(items);
         AddTranslateItems(items);
         AddReadAloudItems(items);
-        AddChatItem(items);
-        AddNextReminder(items);
+        AddDictationItems(items);
+        AddClipboardItems(items);
+        items.Add(TrayIcon.Item.Separator);
+        // The one switch kept here: flipped often, as talk out loud stops and starts being welcome.
         items.Add(new TrayIcon.Item(L10n.Tr("Hear Them Talk"), () => settings.VoiceEnabled = !settings.VoiceEnabled, Checked: settings.VoiceEnabled));
-        items.Add(new TrayIcon.Item(L10n.Tr("Cursor Revenge"), () => settings.RevengeEnabled = !settings.RevengeEnabled, Checked: settings.RevengeEnabled));
-        items.Add(new TrayIcon.Item(L10n.Tr("Deeds from Talk"), () => settings.DeedsEnabled = !settings.DeedsEnabled, Checked: settings.DeedsEnabled));
-        var status = colony.TalkStatus;
-        items.Add(new TrayIcon.Item("   " + (status.Length > 70 ? status[..70] : status), Enabled: false));
+        items.Add(TrayIcon.Item.Separator);
+        // Windows.
         items.Add(new TrayIcon.Item(L10n.Tr("Chat History\u2026"), () => OpenSettings(SettingsPage.Chats)));
         items.Add(new TrayIcon.Item(L10n.Tr("Relationships\u2026"), OpenRelationships));
         var s = spend.Summary;
         if (s.AllTime.Calls > 0)
             items.Add(new TrayIcon.Item(L10n.Tr("Spent: %@ today, %@ this month", Spend.Label(s.Today.Cost), Spend.Label(s.Month.Cost)), () => OpenSettings(SettingsPage.Costs)));
-        // Each language under its own name, so whoever cannot read the current one still finds theirs.
-        items.Add(new TrayIcon.Item(L10n.Tr("Language"), Children: Languages.All
-            .Select(l => new TrayIcon.Item(l.Title(), () => settings.Language = l, Checked: settings.Language == l)).ToList()));
-        items.Add(new TrayIcon.Item(L10n.Tr("The Cursor Is"), Children: CursorMoods.All
-            .Select(m => new TrayIcon.Item(m.Title(), () => settings.CursorMood = m, Checked: settings.CursorMood == m)).ToList()));
-        // Which monitor they live on; only with two or more attached.
-        if (ScreenChoice.IsOffered) items.Add(new TrayIcon.Item(L10n.Tr("Screen"), Children: ScreenChoice.Items(settings)));
         items.Add(new TrayIcon.Item(L10n.Tr("Settings\u2026"), () => OpenSettings(null)));
         items.Add(TrayIcon.Item.Separator);
         items.Add(new TrayIcon.Item(L10n.Tr("Quit Ledgelings"), Shutdown));

@@ -83,7 +83,8 @@ Nobody should have to remember what a letter on a button means.
 
 Screens drifted apart once: wrapped button words, lists running past their sheet,
 a font size per file. [docs/DESIGN.md](docs/DESIGN.md) is the look, and
-`Sources/Ledgelings/Design.swift` is the only place it is defined.
+`Sources/Ledgelings/Design.swift` is the only place it is defined (on Windows,
+`win/Ledgelings/UI/Design.cs` and the one ResourceDictionary `Design.xaml`).
 
 - A settings section: `SettingsHeader`, rows, a footer; buttons in a `ButtonRow`,
   a button in a list row is `rowAction()`, an empty list an `EmptyNote`.

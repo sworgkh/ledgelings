@@ -13,8 +13,7 @@ public sealed record ActionsState(
     bool IsNight = false, bool NightOff = false, int PhaseLeft = 0,
     bool TeaEnabled = true, bool TeaOn = false, bool PlaneInAir = false,
     int Planted = 0, bool Hiding = false, int HideLeft = 0,
-    bool TalkOn = true, bool VoiceOn = false, bool RevengeOn = true,
-    CursorMood Mood = CursorMood.Bad, Language Language = Language.English,
+    bool TalkOn = true, bool VoiceOn = false,
     bool PlayOn = true, IReadOnlySet<Plays.Kind>? PlaysOff = null, bool Playing = false,
     bool Diving = false, string StopShortcut = "")
 {
@@ -22,9 +21,10 @@ public sealed record ActionsState(
     public IReadOnlySet<Plays.Kind> Off => PlaysOff ?? new HashSet<Plays.Kind>();
 }
 
-/// <summary>The switches under the tiles: what the tray menu offers besides the actions,
-/// here too, so that nothing is lost when the icon is tucked away.</summary>
-public enum ActionsSwitch { Talk, Voice, Revenge, Cursor, Language, Play }
+/// <summary>The switches under the tiles: the two used most, here as in the tray menu
+/// (talk, and hearing it), and the games on the Activities page. Every other switch and
+/// choice is in Settings (docs/DESIGN.md).</summary>
+public enum ActionsSwitch { Talk, Voice, Play }
 
 public static class ActionsSwitches
 {
@@ -35,11 +35,7 @@ public static class ActionsSwitches
     {
         ActionsSwitch.Talk => s.TalkOn ? L10n.Tr("TALK ON") : L10n.Tr("TALK OFF"),
         ActionsSwitch.Voice => s.VoiceOn ? L10n.Tr("VOICE ON") : L10n.Tr("VOICE OFF"),
-        ActionsSwitch.Revenge => s.RevengeOn ? L10n.Tr("REVENGE ON") : L10n.Tr("REVENGE OFF"),
-        ActionsSwitch.Play => s.PlayOn ? L10n.Tr("PLAY ON") : L10n.Tr("PLAY OFF"),
-        ActionsSwitch.Cursor => L10n.Tr("CURSOR: %@", s.Mood.Title().ToUpperInvariant()),
-        // Under its own name, as in the menu, so whoever cannot read the current one still finds theirs.
-        _ => s.Language.Title().ToUpperInvariant(),
+        _ => s.PlayOn ? L10n.Tr("PLAY ON") : L10n.Tr("PLAY OFF"),
     };
 
     /// <summary>Drawn pressed in while it is on.</summary>
@@ -47,9 +43,7 @@ public static class ActionsSwitches
     {
         ActionsSwitch.Talk => s.TalkOn,
         ActionsSwitch.Voice => s.VoiceOn,
-        ActionsSwitch.Revenge => s.RevengeOn,
-        ActionsSwitch.Play => s.PlayOn,
-        _ => false,
+        _ => s.PlayOn,
     };
 
     /// <summary>The line under the tiles after a press.</summary>
@@ -57,19 +51,8 @@ public static class ActionsSwitches
     {
         ActionsSwitch.Talk => s.TalkOn ? L10n.Tr("They talk again.") : L10n.Tr("They keep quiet."),
         ActionsSwitch.Voice => s.VoiceOn ? L10n.Tr("You hear them talk.") : L10n.Tr("They talk in bubbles only."),
-        ActionsSwitch.Revenge => s.RevengeOn ? L10n.Tr("They may grab the cursor.") : L10n.Tr("They leave the cursor alone."),
-        ActionsSwitch.Play => s.PlayOn ? L10n.Tr("They play now and then.") : L10n.Tr("No more games."),
-        ActionsSwitch.Cursor => L10n.Tr("The cursor is: %@.", s.Mood.Title()),
-        _ => L10n.Tr("They speak %@ now.", s.Language.Title()),
+        _ => s.PlayOn ? L10n.Tr("They play now and then.") : L10n.Tr("No more games."),
     };
-
-    /// <summary>The choice after this one, round again after the last.</summary>
-    public static T Next<T>(IReadOnlyList<T> all, T value)
-    {
-        var at = -1;
-        for (int i = 0; i < all.Count; i++) if (EqualityComparer<T>.Default.Equals(all[i], value)) at = i;
-        return all[(at + 1) % all.Count];
-    }
 }
 
 /// <summary>Where the sheet can send you, as the menu did.</summary>
@@ -286,7 +269,6 @@ public sealed class ActionsSheet : Window
     private readonly Func<string> shortcut;
     private readonly List<(ActionsSwitch Switch, PixelButton Button)> switches = new();
     /// <summary>Which monitor they live on, at the right of the title line; hidden with one monitor.</summary>
-    private PixelButton? screenButton;
     /// <summary>The Tools screen, a wrench beside it; hidden while the screen is off.</summary>
     private PixelButton? toolsButton;
     private readonly Grid root = new() { Width = SheetWidth, Height = SheetHeight };
@@ -296,7 +278,7 @@ public sealed class ActionsSheet : Window
     /// <summary>The sheet, or its Activities page.</summary>
     private ActionsPage page;
     private readonly ContentControl line = new() { Height = 30, Margin = new Thickness(0, 0, 0, 12) };
-    private readonly TextBlock said = new() { FontFamily = mono, FontSize = 12, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock said = new() { FontFamily = mono, FontSize = Pixel.Body, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel hideRow = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromSeconds(0.5) };
     private ActionsState state = new();
@@ -444,7 +426,7 @@ public sealed class ActionsSheet : Window
         }
         hideRow.Children.Insert(0, new TextBlock
         {
-            Text = L10n.Tr("HIDE FOR"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = softInk,
+            Text = L10n.Tr("HIDE FOR"), FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = softInk,
             VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0),
         });
     }
@@ -471,14 +453,8 @@ public sealed class ActionsSheet : Window
         head.Children.Add(new TextBlock
         {
             Text = keeper is string name ? L10n.Tr("WHAT SHOULD THEY DO? · %@ IS WAITING", name.ToUpperInvariant()) : L10n.Tr("WHAT SHOULD THEY DO?"),
-            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center,
+            FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, VerticalAlignment = VerticalAlignment.Center,
         });
-        screenButton = new PixelButton
-        {
-            Small = true, FontSize = 10, MinHeight = 22, Padding = new Thickness(7, 0, 7, 0), MaxWidth = 220,
-            HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 2, 0),
-        };
-        screenButton.Click += (_, _) => ChooseScreen();
         var tip = ActionsLinks.ToolsTooltip(settings.ToolsScreenShortcutEnabled ? ShortcutKeys.Label(settings.ToolsScreenShortcut) : "");
         toolsButton = new PixelButton
         {
@@ -498,7 +474,7 @@ public sealed class ActionsSheet : Window
         };
         System.Windows.Automation.AutomationProperties.SetName(chatButton, chatTip);
         chatButton.Click += (_, _) => Follow(ActionsLink.Chat);
-        head.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { chatButton, toolsButton, screenButton } });
+        head.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { chatButton, toolsButton } });
         sheet.Children.Add(head);
         var grid = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
         for (int r = 0; r < ActionsTiles.All.Count; r += 4)
@@ -510,10 +486,22 @@ public sealed class ActionsSheet : Window
         }
         sheet.Children.Add(grid);
         sheet.Children.Add(line);
-        // The menu's quick switches, each saying how it stands; the language sits with the links below.
-        var flips = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 12) };
-        foreach (var flipped in ActionsSwitches.All.Where(f => f is not (ActionsSwitch.Language or ActionsSwitch.Play))) flips.Children.Add(Switch(flipped));
-        sheet.Children.Add(flips);
+        // Two rows, so no word wraps in Russian: the switches and the windows that open elsewhere;
+        // then the sheet's own pages, its settings, and Done (as on the Mac).
+        var flips = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left };
+        flips.Children.Add(Switch(ActionsSwitch.Talk));
+        flips.Children.Add(Switch(ActionsSwitch.Voice));
+        var away = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0) };
+        foreach (var link in new[] { ActionsLink.Chats, ActionsLink.Quit })
+        {
+            var button = new PixelButton { Content = link.Title(), Small = true, Margin = new Thickness(6, 0, 0, 0) };
+            button.Click += (_, _) => Follow(link);
+            away.Children.Add(button);
+        }
+        var first = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+        first.Children.Add(flips);
+        first.Children.Add(away);
+        sheet.Children.Add(first);
         var links = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
         var activities = new PixelButton { Content = L10n.Tr("ACTIVITIES…"), Small = true, Margin = new Thickness(0, 0, 6, 0) };
         activities.Click += (_, _) => GoTo(ActionsPage.Activities);
@@ -524,13 +512,9 @@ public sealed class ActionsSheet : Window
         var weather = new PixelButton { Content = L10n.Tr("WEATHER…"), Small = true, Margin = new Thickness(0, 0, 6, 0), ToolTip = ActivitiesTips.Weather };
         weather.Click += (_, _) => GoTo(ActionsPage.Weather);
         links.Children.Add(weather);
-        links.Children.Add(Switch(ActionsSwitch.Language));
-        foreach (var link in ActionsLinks.Footer)
-        {
-            var button = new PixelButton { Content = link.Title(), Small = true, Margin = new Thickness(0, 0, 6, 0) };
-            button.Click += (_, _) => Follow(link);
-            links.Children.Add(button);
-        }
+        var settingsButton = new PixelButton { Content = ActionsLink.Settings.Title(), Small = true, Margin = new Thickness(0, 0, 6, 0) };
+        settingsButton.Click += (_, _) => Follow(ActionsLink.Settings);
+        links.Children.Add(settingsButton);
         var done = new PixelButton { Content = L10n.Tr("DONE"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 24, 0) };
         done.Click += (_, _) => Close();
         var footer = new Grid();
@@ -538,22 +522,6 @@ public sealed class ActionsSheet : Window
         footer.Children.Add(done);
         sheet.Children.Add(footer);
         return sheet;
-    }
-
-    /// <summary>The screen button: the monitors, as the tray menu has them, under the pointer.</summary>
-    private void ChooseScreen()
-    {
-        if (folding || screenButton is null) return;
-        choosingHide = false;
-        var menu = new ContextMenu { PlacementTarget = screenButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
-        foreach (var item in ScreenChoice.Items(settings, after: () => { Refresh(); message = ScreenChoice.Said(settings); saidAt = DateTime.Now; Refresh(); }))
-        {
-            if (item.IsSeparator) { menu.Items.Add(new Separator()); continue; }
-            var entry = new MenuItem { Header = item.Text, IsChecked = item.Checked, IsEnabled = item.Enabled };
-            if (item.Action is { } act) entry.Click += (_, _) => act();
-            menu.Items.Add(entry);
-        }
-        menu.IsOpen = true;
     }
 
     private PixelButton Switch(ActionsSwitch flipped)
@@ -574,13 +542,7 @@ public sealed class ActionsSheet : Window
         {
             case ActionsSwitch.Talk: settings.TalkEnabled = !settings.TalkEnabled; break;
             case ActionsSwitch.Voice: settings.VoiceEnabled = !settings.VoiceEnabled; break;
-            case ActionsSwitch.Revenge: settings.RevengeEnabled = !settings.RevengeEnabled; break;
-            case ActionsSwitch.Play: settings.PlayEnabled = !settings.PlayEnabled; break;
-            case ActionsSwitch.Cursor: settings.CursorMood = ActionsSwitches.Next(CursorMoods.All, settings.CursorMood); break;
-            default:
-                settings.Language = ActionsSwitches.Next(Languages.All, settings.Language);
-                Build();      // every word on the sheet is in the old language
-                break;
+            default: settings.PlayEnabled = !settings.PlayEnabled; break;
         }
         Refresh();
         message = flipped.Said(state);
@@ -600,13 +562,13 @@ public sealed class ActionsSheet : Window
     {
         var title = new TextBlock
         {
-            FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Bold, Foreground = PixelBox.Rim,
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Bold, Foreground = PixelBox.Rim,
             TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Width = TileWidth - 16, MaxHeight = 28,
             HorizontalAlignment = HorizontalAlignment.Center,
         };
         var detail = new TextBlock
         {
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = softInk,
+            FontFamily = mono, FontSize = Pixel.Tile, FontWeight = FontWeights.SemiBold, Foreground = softInk,
             HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0),
         };
         var body = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
@@ -629,7 +591,7 @@ public sealed class ActionsSheet : Window
         face.Children.Add(body);
         face.Children.Add(new TextBlock
         {
-            Text = tile.Key().ToString(), FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Bold, Foreground = faintInk,
+            Text = tile.Key().ToString(), FontFamily = mono, FontSize = Pixel.Tile, FontWeight = FontWeights.Bold, Foreground = faintInk,
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 8, 9, 0),
         });
         var button = new PixelButton { Content = face, Padding = new Thickness(0), Margin = new Thickness(left, 0, 0, 0) };
@@ -646,8 +608,7 @@ public sealed class ActionsSheet : Window
             TeaEnabled: settings.TeaPartiesEnabled, TeaOn: colony.IsTeaOn, PlaneInAir: colony.IsPlaneInAir,
             Planted: colony.Garden.Beds.Count, Hiding: colony.IsHiding,
             HideLeft: colony.IsHiding ? (int)Math.Ceiling(colony.Hideout.Remaining(colony.Elapsed)) : 0,
-            TalkOn: settings.TalkEnabled, VoiceOn: settings.VoiceEnabled, RevengeOn: settings.RevengeEnabled,
-            Mood: settings.CursorMood, Language: settings.Language,
+            TalkOn: settings.TalkEnabled, VoiceOn: settings.VoiceEnabled,
             PlayOn: settings.PlayEnabled,
             PlaysOff: Plays.AllKinds.Where(k => !settings.PlayEnabled || !settings.EnabledPlays.Contains(k)).ToHashSet(),
             Playing: colony.CurrentPlay is not null,
@@ -657,14 +618,6 @@ public sealed class ActionsSheet : Window
         {
             button.Content = flipped.Title(state);
             button.Chosen = flipped.IsOn(state);
-        }
-        if (screenButton is not null)
-        {
-            var offered = ScreenChoice.IsOffered;
-            screenButton.Visibility = offered ? Visibility.Visible : Visibility.Collapsed;
-            var words = offered ? ScreenChoice.SheetTitle(settings) + " \u25BE" : "";
-            if (offered && (screenButton.Content as TextBlock)?.Text != words)
-                screenButton.Content = new TextBlock { Text = words, TextTrimming = TextTrimming.CharacterEllipsis };
         }
         if (state.Hiding) choosingHide = false;
         if (saidAt is DateTime at && (DateTime.Now - at).TotalSeconds > 5) { message = ""; saidAt = null; }
@@ -776,7 +729,7 @@ public sealed class ActionsSheet : Window
         sheet.Children.Add(new TextBlock
         {
             Text = L10n.Tr("ACTIVITIES · WHAT SHOULD THEY PLAY?"),
-            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
+            FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
         });
         var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
         foreach (var kind in Plays.AllKinds) list.Children.Add(ActivityRow(kind, list.Children.Count == 0 ? 0 : ActivityGap));
@@ -844,10 +797,10 @@ public sealed class ActionsSheet : Window
         // The name leads the line, so a row is two lines in all: eight rows share the page.
         var text = new TextBlock
         {
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = softInk,
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.SemiBold, Foreground = softInk,
             TextWrapping = TextWrapping.Wrap, MaxHeight = Math.Max(24, height - 8),
         };
-        text.Inlines.Add(new System.Windows.Documents.Run(title) { FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim });
+        text.Inlines.Add(new System.Windows.Documents.Run(title) { FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim });
         text.Inlines.Add(new System.Windows.Documents.Run("  "));
         text.Inlines.Add(new System.Windows.Documents.Run(what));
         words.Children.Add(text);
@@ -856,13 +809,13 @@ public sealed class ActionsSheet : Window
         var right = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 12, 0) };
         var action = new TextBlock
         {
-            Text = does, FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim,
+            Text = does, FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
         right.Children.Add(action);
         var detail = new TextBlock
         {
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = faintInk,
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.SemiBold, Foreground = faintInk,
             HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 2, 0, 0),
         };
         right.Children.Add(detail);
@@ -888,7 +841,7 @@ public sealed class ActionsSheet : Window
         sheet.Children.Add(new TextBlock
         {
             Text = L10n.Tr("STYLES · WHO WEARS WHAT?"),
-            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
+            FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
         });
         var who = new PixelButton
         {
@@ -943,7 +896,7 @@ public sealed class ActionsSheet : Window
         sheet.Children.Add(new TextBlock
         {
             Text = L10n.Tr("WEATHER · WHAT SHOULD IT DO?"),
-            FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
+            FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, Margin = new Thickness(0, 0, 0, 10),
         });
         var list = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
         for (var k = 0; k < WeatherRows.Count; k++)

@@ -99,6 +99,23 @@ to do (`PaperEmpty`).
 | Translate, Read aloud, Chat | 760×470 |
 | Tools | as many 124×128 tiles as there are tools, four to a row |
 
+## Windows
+
+The same parts, in two places: `win/Ledgelings/UI/Design.cs` holds the spacing scale
+(`Look.Xs…Xl`) and the paper's font sizes (`Pixel.Title`, `Pixel.Hint`… the table above, by the
+same names), and `win/Ledgelings/UI/Design.xaml` is the one `ResourceDictionary` of the ordinary
+windows' styles: `Footer`, `RowLabel`, `RowValue` (never wraps), `RowAction` (a button inside a list
+row) and the section (`GroupBox`) and `Slider` looks. The settings window and the Weather & Sky
+panel merge it; a page that needs wider labels overrides `RowLabel` only.
+
+- A paper sheet's keys line goes through `Pixel.AsHints`: the hint size, wrapping to a second line
+  between keys (`KeepingKeysWhole`), clear of the folded corner.
+- The clipboard picker's list sits in a well, clipped to it, with the row pictures in fixed slots.
+- The tray menu has the Mac menu's groups: the clock and status, things to do, the tools, Hear Them
+  Talk, the windows, Quit. Its switches and choices are in Settings.
+- `DesignTests` (in `Ledgelings.Tests`, run on Windows) checks the scale, the hint floor, the keys
+  line, and fails a paper file that sets a font size of its own.
+
 ## Checking
 
 - `--layout-check` (English and Russian): no settings page or the sidebar scrolls.

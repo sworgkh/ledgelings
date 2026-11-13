@@ -217,7 +217,7 @@ internal sealed class ToolsScreenWindow : Window
     private UIElement Sheet()
     {
         var stack = new DockPanel { Margin = new Thickness(33, 24, 33, 20), LastChildFill = true };
-        var top = new TextBlock { Text = L10n.Tr("TOOLS"), FontFamily = mono, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = faintInk, Height = 24 };
+        var top = new TextBlock { Text = L10n.Tr("TOOLS"), FontFamily = mono, FontSize = Pixel.Title, FontWeight = FontWeights.Bold, Foreground = faintInk, Height = 24 };
         DockPanel.SetDock(top, Dock.Top);
         stack.Children.Add(top);
         var count = controller.Tiles.Count;
@@ -225,8 +225,9 @@ internal sealed class ToolsScreenWindow : Window
         {
             Text = count == 0 ? L10n.Tr("No tools chosen: Settings › Tools › Tools screen.")
                 : L10n.Tr("1–%d START  ←→↑↓ CHOOSE  ENTER START  ESC CLOSE", Math.Min(count, 9)),
-            FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 8, 60, 0),
+            FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = faintInk, Margin = new Thickness(0, 8, 0, 0),
         };
+        Pixel.AsHints(footer);
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
         DockPanel.SetDock(grid, Dock.Top);
@@ -260,18 +261,18 @@ internal sealed class ToolsScreenWindow : Window
         words.Children.Add(picture);
         words.Children.Add(new TextBlock
         {
-            Text = tile.Tool.Title(), FontFamily = mono, FontSize = 10, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim,
+            Text = tile.Tool.Title(), FontFamily = mono, FontSize = Pixel.Hint, FontWeight = FontWeights.Heavy, Foreground = PixelBox.Rim,
             TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Width = ToolsScreenController.TileWidth - 16,
         });
         words.Children.Add(new TextBlock
         {
-            Text = tile.On ? tile.Shortcut ?? " " : L10n.Tr("off"), FontFamily = mono, FontSize = 9, FontWeight = FontWeights.SemiBold, Foreground = softInk,
+            Text = tile.On ? tile.Shortcut ?? " " : L10n.Tr("off"), FontFamily = mono, FontSize = Pixel.Tile, FontWeight = FontWeights.SemiBold, Foreground = softInk,
             TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 2, 0, 0),
         });
         face.Children.Add(words);
         face.Children.Add(new TextBlock
         {
-            Text = tile.Number <= 9 ? tile.Number.ToString() : " ", FontFamily = mono, FontSize = 9, FontWeight = FontWeights.Heavy, Foreground = faintInk,
+            Text = tile.Number <= 9 ? tile.Number.ToString() : " ", FontFamily = mono, FontSize = Pixel.Tile, FontWeight = FontWeights.Heavy, Foreground = faintInk,
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 8, 9, 0),
         });
         var box = new PixelBox

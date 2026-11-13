@@ -5,41 +5,23 @@
   <!-- Every aspect of the weather and the sky in three columns, the Mac's WeatherSettingsView: the whole thing and when
        weather comes; snow, and the wind with the storm; rain, and the season's light particles with the fireflies. -->
   <UserControl.Resources>
-    <Style x:Key="Footer" TargetType="TextBlock">
-      <Setter Property="TextWrapping" Value="Wrap"/>
-      <Setter Property="Foreground" Value="Gray"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Margin" Value="0,6,0,0"/>
-    </Style>
-    <Style x:Key="RowLabel" TargetType="TextBlock">
+    <ResourceDictionary>
+    <ResourceDictionary.MergedDictionaries>
+      <ResourceDictionary Source="Design.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+    <!-- Wider labels: three columns of about 450. -->
+    <Style x:Key="RowLabel" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
       <Setter Property="Width" Value="170"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
-    <Style x:Key="RowValue" TargetType="TextBlock">
-      <Setter Property="Width" Value="56"/>
-      <Setter Property="TextAlignment" Value="Right"/>
-      <Setter Property="VerticalAlignment" Value="Center"/>
+    <Style x:Key="Play" TargetType="Button" BasedOn="{StaticResource RowAction}">
       <Setter Property="DockPanel.Dock" Value="Right"/>
-    </Style>
-    <Style x:Key="Play" TargetType="Button">
-      <Setter Property="DockPanel.Dock" Value="Right"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Padding" Value="8,0"/>
-      <Setter Property="Margin" Value="8,0,0,0"/>
-      <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-    <Style TargetType="GroupBox">
-      <Setter Property="Padding" Value="8"/>
-      <Setter Property="Margin" Value="0,0,0,10"/>
-    </Style>
-    <Style TargetType="Slider">
-      <Setter Property="VerticalAlignment" Value="Center"/>
-      <Setter Property="IsSnapToTickEnabled" Value="True"/>
     </Style>
     <Style TargetType="DockPanel">
       <Setter Property="Margin" Value="0,2"/>
     </Style>
+    </ResourceDictionary>
   </UserControl.Resources>
   <Grid Margin="12">
     <Grid.ColumnDefinitions>

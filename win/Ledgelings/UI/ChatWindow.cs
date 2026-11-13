@@ -331,14 +331,13 @@ internal sealed class ChatSheetWindow : Window
         var stack = new DockPanel { Margin = new Thickness(27, 22, 27, 18), LastChildFill = true };
 
         var footer = Words(L10n.Tr("ENTER SEND  SHIFT+ENTER NEW LINE  CTRL+1–9 TO ONE  CTRL+0 EVERYONE  CTRL+, SETTINGS  ESC CLOSE"), 9, faintInk);
-        footer.TextWrapping = TextWrapping.NoWrap;
-        footer.TextTrimming = TextTrimming.CharacterEllipsis;
-        footer.Margin = new Thickness(0, 8, 60, 0);
+        footer.Margin = new Thickness(0, 8, 0, 0);
+        Pixel.AsHints(footer);
         DockPanel.SetDock(footer, Dock.Bottom);
         stack.Children.Add(footer);
 
         // The text box and Send, clear of the paper's folded corner.
-        box.FontFamily = mono; box.FontSize = 14; box.FontWeight = FontWeights.SemiBold; box.Foreground = ink; box.CaretBrush = ink;
+        box.FontFamily = mono; box.FontSize = Pixel.SmallField; box.FontWeight = FontWeights.SemiBold; box.Foreground = ink; box.CaretBrush = ink;
         box.Background = Brushes.Transparent; box.BorderThickness = new Thickness(0);
         box.AcceptsReturn = true; box.TextWrapping = TextWrapping.Wrap; box.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         box.TextChanged += (_, _) =>
@@ -357,7 +356,7 @@ internal sealed class ChatSheetWindow : Window
         stack.Children.Add(input);
 
         // One line under the talk: why nothing was sent, or (with no model) the way to the settings.
-        status.FontFamily = mono; status.FontSize = 11; status.FontWeight = FontWeights.Heavy; status.Foreground = PixelBox.Rim;
+        status.FontFamily = mono; status.FontSize = Pixel.Label; status.FontWeight = FontWeights.Heavy; status.Foreground = PixelBox.Rim;
         status.TextTrimming = TextTrimming.CharacterEllipsis; status.Margin = new Thickness(0, 6, 0, 0);
         var open = new PixelBox
         {

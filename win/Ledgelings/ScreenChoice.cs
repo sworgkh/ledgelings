@@ -24,29 +24,4 @@ public static class ScreenChoice
         var name = Attached().FirstOrDefault(m => m.Id == settings.HomeScreenId)?.Name ?? settings.HomeScreenName;
         return IsAway(settings) ? L10n.Tr("%@ (unplugged: all screens till it is back)", name) : name;
     }
-
-    /// <summary>What the Actions sheet says once the choice is made.</summary>
-    public static string Said(AppSettings settings) =>
-        settings.HomeScreenId == HomeScreen.All ? L10n.Tr("They live on every screen.") : L10n.Tr("They live on %@ only.", Current(settings));
-
-    /// <summary>The sheet's button: which monitor they live on, short enough for the title line.</summary>
-    public static string SheetTitle(AppSettings settings)
-    {
-        if (settings.HomeScreenId == HomeScreen.All || IsAway(settings)) return L10n.Tr("SCREEN: ALL");
-        return L10n.Tr("SCREEN: %@", Current(settings).ToUpperInvariant());
-    }
-
-    /// <summary>The menu of choices: All Screens, then each monitor, the chosen one ticked.</summary>
-    public static List<TrayIcon.Item> Items(AppSettings settings, Action? after = null)
-    {
-        var items = new List<TrayIcon.Item>
-        {
-            new(L10n.Tr("All Screens"), () => { settings.LiveOn(null); after?.Invoke(); }, Checked: settings.HomeScreenId == HomeScreen.All),
-            TrayIcon.Item.Separator,
-        };
-        foreach (var monitor in Attached())
-            items.Add(new(monitor.Name, () => { settings.LiveOn(monitor); after?.Invoke(); }, Checked: monitor.Id == settings.HomeScreenId));
-        if (IsAway(settings)) items.Add(new(L10n.Tr("%@ (unplugged)", settings.HomeScreenName), Enabled: false, Checked: true));
-        return items;
-    }
 }
