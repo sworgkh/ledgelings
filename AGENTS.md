@@ -2,7 +2,7 @@
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for building, testing and the macOS/Windows
 split, and [SPEC.md](SPEC.md), which is the product. The rules below are the ones
-that are easy to forget while adding a feature. Every change keeps all four.
+that are easy to forget while adding a feature. Every change keeps all five.
 
 ## 1. Every model call is priced, and says which feature made it
 
@@ -79,6 +79,26 @@ Nobody should have to remember what a letter on a button means.
 - A test that every control has its picture and a non-empty tooltip naming its key
   (`ShotButtonTests`).
 
+## 5. New screens use the shared look
+
+Screens drifted apart once: wrapped button words, lists running past their sheet,
+a font size per file. [docs/DESIGN.md](docs/DESIGN.md) is the look, and
+`Sources/Ledgelings/Design.swift` is the only place it is defined.
+
+- A settings section: `SettingsHeader`, rows, a footer; buttons in a `ButtonRow`,
+  a button in a list row is `rowAction()`, an empty list an `EmptyNote`.
+- Pixel paper: `PaperTitle`, `PaperHints`, `PaperEmpty`, `PixelBox`, `PixelButtonStyle`,
+  `PixelTag`, and the `Pixel.Font` sizes. No `.system(size:)` of its own, no
+  `minimumScaleFactor`, nothing below `Pixel.Font.hint`.
+- No gap outside the spacing scale (4, 8, 12, 16, 24).
+- Words never wrap or truncate on a button, in English or Russian: shorten them, or
+  use a picture with a tag (§4). `DesignTests` measures the pixel buttons.
+- No settings page scrolls: `--layout-check` in both languages. A page that outgrows
+  the window is split into two pages (as Voice and Character voices).
+- The menu bar menu holds things to do now and windows to open; a switch or a
+  choice belongs in Settings, findable by its search. The one exception is *Hear
+  Them Talk*, toggled often.
+
 ## Checking your work in the real app
 
 The owner judges the running app, not the diff: a change is done when it is built
@@ -86,9 +106,19 @@ with `scripts/make-app.sh`, installed and seen working.
 
 - `build/Ledgelings.app/Contents/MacOS/Ledgelings --settings <page> --snapshot out.png`
   writes a settings page to a PNG (pages: creatures, actions, sprites, beds, flowers, calendar, effects, moments, weather, chases, play, ballgames, surfing, diving,
-  talk, chatwithyou, voice, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, savedtranslations, readaloud, costs, chats;
+  talk, chatwithyou, voice, charactervoices, bonds, relationships, twists, tools, reminders, clipboard, screenshots, dictation, translate, savedtranslations, readaloud, costs, chats;
   `--settings-search <words>` searches and opens the first place; `weather` opens the Weather & Sky window and writes it, the page beside it as `out.page.png`;
   `productivity`, the old tools tab, still opens Reminders).
+- `--layout-check` opens every settings page in turn and prints whether a column scrolls
+  (`layout voice: fits, fits`, `layout sidebar: fits`); exit 1 if a page or the sidebar does
+  (Bonds, Costs and Chats are lists and may). Run it with `-language en` and `-language ru`.
+- `--menu` prints the menu bar menu as it would open now, one item a line (`---` a separator).
+- `--clip-picker [snippets] --snapshot out.png` writes the clipboard picker over the real
+  history; `--snippets --snapshot out.png` the Snippets editor.
+- For snapshots: `LEDGELINGS_APPEARANCE=light|dark` draws every window in that mode;
+  `LEDGELINGS_NO_KEYCHAIN=1` reads no secret, so a new build never waits on the keychain
+  prompt; `-language ru` (and any other saved key, `-brainProvider script`) overrides a
+  preference for that run only, writing nothing.
 - `--say "text"` speaks one line with the current voice settings, cues on stderr.
 - `--cast` casts everyone on screen with the brain model and prints the picks.
 - `--converse` starts one conversation and prints every line and voice cue with its

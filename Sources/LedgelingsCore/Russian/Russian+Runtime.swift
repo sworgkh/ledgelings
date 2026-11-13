@@ -80,6 +80,7 @@ extension Strings {
         "unexpected reply: %@": "неожиданный ответ: %@",
         "price unknown": "цена неизвестна",
         "free": "бесплатно",
+        "price varies": "цена по выбранной модели",
         "$%.2f in · $%.2f out per M": "$%.2f вход · $%.2f выход за млн",
         "$%.2f per M chars": "$%.2f за млн символов",
 

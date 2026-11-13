@@ -49,7 +49,7 @@ extension Strings {
         "Lines shown per pair": "Реплик на пару",
         "Check First": "Сначала проверить",
         "Read the Past In": "Прочитать прошлое",
-        "Open Relationships": "Открыть «Отношения»",
+        "Open Relationships": "«Отношения»…",
         "Reading…": "Читаю…",
         "Their past": "Их прошлое",
         "Met on %@ · %@ together on screen": "Знакомы с %@ · вместе на экране: %@",

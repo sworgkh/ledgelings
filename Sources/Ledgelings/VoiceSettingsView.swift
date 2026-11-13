@@ -3,7 +3,7 @@ import AppKit
 import LedgelingsCore
 import SwiftUI
 
-/// Settings › Voice: how they all sound on the left, each character on the right.
+/// Settings › Voice: which engine and voice on the left, how they all sound on the right.
 struct VoiceSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var voice: Voice
@@ -12,16 +12,41 @@ struct VoiceSettingsView: View {
         TwoColumns {
             VoiceSection(settings: settings, voice: voice)
         } right: {
-            CharacterVoicesSection(settings: settings, voice: voice)
+            VoiceSoundSection(settings: settings, voice: voice)
         }
     }
 }
 
-/// One card per character on screen: its own voice, speed and pitch, and a Test.
-private struct CharacterVoicesSection: View {
+/// Settings › Character voices: one card per character on screen, across both
+/// columns (a page of its own since the cast outgrew the Voice page's right side).
+struct CharacterVoicesSettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var voice: Voice
     @State private var names: [String] = []
+
+    var body: some View {
+        let half = (names.count + 1) / 2
+        TwoColumns {
+            CharacterVoicesSection(names: Array(names.prefix(half)), all: names, settings: settings, voice: voice, first: true)
+        } right: {
+            CharacterVoicesSection(names: Array(names.dropFirst(half)), all: names, settings: settings, voice: voice, first: false)
+        }
+        .onAppear {
+            var seen: [String] = []
+            for name in voice.cast() where !seen.contains(name) { seen.append(name) }
+            names = seen
+        }
+    }
+}
+
+/// One column of character cards: its own voice, speed and pitch, and a Test. The
+/// first column carries the heading; the second, Cast Everyone and what it does.
+private struct CharacterVoicesSection: View {
+    let names: [String]
+    let all: [String]
+    @ObservedObject var settings: AppSettings
+    @ObservedObject var voice: Voice
+    let first: Bool
     @State private var castingAll = false
     @State private var allNote: String?
 
@@ -29,7 +54,7 @@ private struct CharacterVoicesSection: View {
         castingAll = true
         defer { castingAll = false }
         var done: [String] = []
-        for name in names {
+        for name in all {
             allNote = tr("casting %@…", name)
             do { done.append("\(name): \(try await voice.castWithModel(name))") }
             catch { done.append("\(name): \(error)") }
@@ -38,26 +63,35 @@ private struct CharacterVoicesSection: View {
     }
 
     var body: some View {
-        Section {
-            if names.isEmpty { Text(tr("Nobody on screen right now.")).foregroundStyle(.secondary) }
-            ForEach(names, id: \.self) { CharacterVoiceRow(name: $0, settings: settings, voice: voice) }
-            HStack {
-                Button(castingAll ? tr("Casting…") : tr("Cast Everyone with Model")) { Task { await castEveryone() } }
-                    .disabled(castingAll || !settings.hasModel || names.isEmpty)
-                Spacer()
+        if first {
+            Section {
+                if all.isEmpty { EmptyNote(tr("Nobody on screen right now.")) }
+                ForEach(names, id: \.self) { CharacterVoiceRow(name: $0, settings: settings, voice: voice) }
+            } header: {
+                SettingsHeader("Characters")
             }
-            // Said once for every greyed Cast button, not hidden in a tooltip.
-            if !settings.hasModel { NeedsModelNote() }
-            if let allNote { Text(allNote).font(.caption).foregroundStyle(.secondary) }
-        } header: {
-            SettingsHeader("Characters")
-        } footer: {
-            Text(tr("The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends."))
-        }
-        .onAppear {
-            var seen: [String] = []
-            for name in voice.cast() where !seen.contains(name) { seen.append(name) }
-            names = seen
+        } else {
+            if !names.isEmpty {
+                Section {
+                    ForEach(names, id: \.self) { CharacterVoiceRow(name: $0, settings: settings, voice: voice) }
+                } header: {
+                    // Level with the first column's heading.
+                    Text(verbatim: " ")
+                }
+            }
+            Section {
+                ButtonRow {
+                    Button(castingAll ? tr("Casting…") : tr("Cast Everyone with Model")) { Task { await castEveryone() } }
+                        .disabled(castingAll || !settings.hasModel || all.isEmpty)
+                }
+                // Said once for every greyed Cast button, not hidden in a tooltip.
+                if !settings.hasModel { NeedsModelNote() }
+                if let allNote { Text(allNote).font(.caption).foregroundStyle(.secondary) }
+            } header: {
+                SettingsHeader("Cast with the model")
+            } footer: {
+                Text(tr("The characters on screen now. Each starts automatic: with \"Voices fit each character's personality\" on, their description and species choose the voice, pitch and speed (old and slow, tiny and quick, a robot, a ghost…); off, voices are only handed out to differ. \"Cast with Model\" asks the brain model instead, which understands any description, and keeps its choice as the character's own; it costs one call. A voice picked here is theirs alone; the automatic ones go round it. Speed and Pitch here multiply the overall sliders on the left; Speed follows pitch can be set for one character alone. \"Auto\" puts a character back to automatic. Settings follow the name, on every engine; an OpenRouter voice the chosen model does not have is ignored. With the Local server, \"Custom blend…\" mixes Kokoro voices, af_bella(2)+am_puck(1) being two parts Bella to one of Puck: endless voices from the 72, free. OpenRouter's Kokoro refuses blends."))
+            }
         }
     }
 }
@@ -215,17 +249,6 @@ struct VoiceSection: View {
             case .openRouter: openRouterFields
             case .local: localFields
             }
-            SliderRow(tr("Speed"), value: $settings.voiceSpeed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
-            SliderRow(tr("Pitch"), value: $settings.voicePitch, in: AppSettings.voicePitchRange, step: 0.05, unit: "×")
-            Toggle(tr("Speed follows pitch: no echo, higher talks a little faster"), isOn: $settings.speedFollowsPitch)
-            SliderRow(tr("Pause before the answer"), value: $settings.voiceTurnPause, in: AppSettings.voiceTurnPauseRange, step: 0.05, unit: tr(" s"))
-            SliderRow(tr("Volume"), value: $settings.voiceVolume, in: 0...1, step: 0.05, unit: "")
-            HStack {
-                Button(tr("Test")) { voice.introduce() }
-                Button(tr("Stop")) { voice.stop() }
-                Spacer()
-            }
-            LabeledContent(tr("Status")) { Text(voice.status).foregroundStyle(.secondary).textSelection(.enabled) }
         } header: {
             SettingsHeader("Voice")
         } footer: {
@@ -331,16 +354,42 @@ struct VoiceSection: View {
         catch { listProblem = tr("could not load OpenRouter's speech models: %@", "\(error)") }
     }
 
+    /// What the engine is, and how its lines are kept.
     private var footer: String {
-        let lines = tr("The built-in lines (and the Test lines) are saved once said, in the line-voices folder beside the chats, and played from there the next time the same words come in the same voice and speed, so each is made only once: no wait on the server, nothing paid again. Clear forgets them all; each is made again when next said.") + " "
-        let shared = tr("Out loud, each line of a conversation waits for the one before to be said, then follows after the pause set here, its sound fetched while the other was talking; the silent bubble timing is not used. Speed follows pitch: a higher voice also talks a little faster (by the square root of its lift: 1.18× at 1.4×), because a voice asked to talk slowly to make up for the lift smears into an echo. Off keeps the pace exact. Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off.")
+        let lines = " " + tr("The built-in lines (and the Test lines) are saved once said, in the line-voices folder beside the chats, and played from there the next time the same words come in the same voice and speed, so each is made only once: no wait on the server, nothing paid again. Clear forgets them all; each is made again when next said.")
         switch settings.voiceEngine {
         case .system:
-            return tr("The Mac's own voices: free, offline, instant. More, and better ones, are in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices. With a voice each and Cartoon voices on, they are the Mac's character voices (Grandma, Rocko, Shelley…) and talking novelty ones (Zarvox, Bubbles, Junior…), never the singing ones (Bells, Organ, Superstar…); off, the plain voices, each at a slightly different pitch.") + " " + shared
+            return tr("The Mac's own voices: free, offline, instant. More, and better ones, are in System Settings › Accessibility › Spoken Content › System Voice › Manage Voices. With a voice each and Cartoon voices on, they are the Mac's character voices (Grandma, Rocko, Shelley…) and talking novelty ones (Zarvox, Bubbles, Junior…), never the singing ones (Bells, Organ, Superstar…); off, the plain voices, each at a slightly different pitch.")
         case .local:
-            return tr("Any speech server on this Mac that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint.") + " " + lines + shared
+            return tr("Any speech server on this Mac that answers like OpenAI's /v1/audio/speech and lists voices at /v1/audio/voices, such as Kokoro-FastAPI (port 8880, model \"kokoro\", the same voices as OpenRouter's Kokoro). Free, offline once set up, and nothing is priced. \"Copy Setup Command\" puts Kokoro-FastAPI's install-and-start line on the clipboard; it needs git and uv, and downloads about a gigabyte the first time. LM Studio cannot speak: its server has no speech endpoint.") + lines
         case .openRouter:
-            return tr("Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this Mac as the clip plays, so it costs nothing extra.") + " " + lines + shared
+            return tr("Speech models on OpenRouter sound far more alive, and cost a little per line: Kokoro is about $0.00003 a line. Uses the same key as the brain. What each line cost goes to the spend file a few seconds after it is said. Kept lines are WAV files in the voices folder beside the chats, listed in voices.jsonl with who said what; a line already kept in the same voice and speed is played from there, free. A voice each takes the model's English voices where it says which they are, and with Cartoon voices the playful ones among them (MiniMax's AnimeCharacter or PlayfulGirl, Voxtral's excited and cheerful). The pitch is shifted on this Mac as the clip plays, so it costs nothing extra.") + lines
+        }
+    }
+}
+
+/// How every voice sounds, whatever the engine: speed, pitch, the pause, the volume,
+/// and a Test that lets the cast introduce themselves.
+struct VoiceSoundSection: View {
+    @ObservedObject var settings: AppSettings
+    @ObservedObject var voice: Voice
+
+    var body: some View {
+        Section {
+            SliderRow(tr("Speed"), value: $settings.voiceSpeed, in: AppSettings.voiceSpeedRange, step: 0.05, unit: "×")
+            SliderRow(tr("Pitch"), value: $settings.voicePitch, in: AppSettings.voicePitchRange, step: 0.05, unit: "×")
+            Toggle(tr("Speed follows pitch: no echo, higher talks a little faster"), isOn: $settings.speedFollowsPitch)
+            SliderRow(tr("Pause before the answer"), value: $settings.voiceTurnPause, in: AppSettings.voiceTurnPauseRange, step: 0.05, unit: tr(" s"))
+            SliderRow(tr("Volume"), value: $settings.voiceVolume, in: 0...1, step: 0.05, unit: "")
+            ButtonRow {
+                Button(tr("Test")) { voice.introduce() }
+                Button(tr("Stop")) { voice.stop() }
+            }
+            LabeledContent(tr("Status")) { Text(voice.status).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(3) }
+        } header: {
+            SettingsHeader("How they sound")
+        } footer: {
+            Text(tr("Out loud, each line of a conversation waits for the one before to be said, then follows after the pause set here, its sound fetched while the other was talking; the silent bubble timing is not used. Speed follows pitch: a higher voice also talks a little faster (by the square root of its lift: 1.18× at 1.4×), because a voice asked to talk slowly to make up for the lift smears into an echo. Off keeps the pace exact. Cartoon voices lifts every character's pitch by an amount of its own (1.15 to 1.6 times, on top of Pitch) and picks the playful voices first. Every bubble is read out, in order; when talk runs far ahead of the voice, lines are skipped rather than read late. \"Hear Them Talk\" in the menu turns it on and off.") + " " + tr("Each character's own voice is on the Character voices page."))
         }
     }
 }

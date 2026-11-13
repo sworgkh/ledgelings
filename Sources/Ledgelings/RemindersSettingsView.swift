@@ -92,8 +92,8 @@ struct RemindersSettingsView: View {
             }
             .opacity(reminder.isFinished ? 0.5 : 1)
             Spacer()
-            Button(tr("Send Now")) { send(reminder) }.buttonStyle(.link).font(.caption)
-            Button(tr("Delete")) { reminders.remove(reminder.id) }.buttonStyle(.link).font(.caption)
+            Button(tr("Send Now")) { send(reminder) }.rowAction()
+            Button(tr("Delete")) { reminders.remove(reminder.id) }.rowAction()
         }
     }
 

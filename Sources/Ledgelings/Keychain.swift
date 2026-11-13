@@ -34,6 +34,8 @@ struct Keychain: SecretStore {
     }
 
     func read(_ account: String) -> SecretRead {
+        // A snapshot or a check from a script: no keychain prompt for a new build, nothing found.
+        if ProcessInfo.processInfo.environment["LEDGELINGS_NO_KEYCHAIN"] != nil { return .missing }
         var query = base(account)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne

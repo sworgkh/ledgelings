@@ -104,7 +104,7 @@ extension Strings {
         "The wait between games is this many minutes, give or take, shortened by how close the closest pair on screen is: at 100 % the best of friends play twice as often. Close pairs (who have shared a few talks, tea parties, flowers) play tag and take turns at the hoop; strangers play alone.":
             "Между играми проходит примерно столько минут, и тем меньше, чем ближе самая дружная пара на экране: при 100 % лучшие друзья играют вдвое чаще. Близкие пары (у которых за плечами несколько разговоров, чаепитий, цветов) играют в салки и бросают в кольцо по очереди; незнакомцы играют поодиночке.",
         "Tag lasts": "Салки длятся",
-        "Parachute comes down at": "Парашют спускается со скоростью",
+        "Parachute comes down at": "Скорость парашюта",
         " pt/s": " тчк/с",
         "Ball keeps on each bounce": "Мяч сохраняет при отскоке",
         "Throws at the hoop each": "Бросков в кольцо у каждого",

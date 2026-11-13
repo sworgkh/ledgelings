@@ -111,7 +111,7 @@ extension Strings {
         "How many to keep": "Сколько хранить",
         "Open the drawer with the sheet": "Открывать ящик вместе с листом",
         "saved translation|saved translations": "%d сохранённый перевод|%d сохранённых перевода|%d сохранённых переводов",
-        "Delete All Saved…": "Удалить все сохранённые…",
+        "Delete All Saved…": "Удалить все…",
         "Delete every saved translation?": "Удалить все сохранённые переводы?",
         "Delete All": "Удалить все",
         "They cannot be brought back.": "Вернуть их будет нельзя.",

@@ -1088,28 +1088,4 @@ extension ActionsSheetView {
     }
 }
 
-/// A tile drawn as a `PixelBox` that sinks a pixel while pressed.
-struct PixelTileStyle: ButtonStyle {
-    var chosen: Bool
 
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(PixelBox(style: configuration.isPressed ? .pressed : chosen ? .chosen : .raised))
-            .offset(y: configuration.isPressed ? ReminderNoteController.pixel : 0)
-            .contentShape(Rectangle())
-    }
-}
-
-/// A pixel button smaller than the switches', for the title line: the screen choice.
-struct TinyPixelButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 10, weight: .heavy, design: .monospaced))
-            .foregroundStyle(PixelBox.rim)
-            .padding(.horizontal, 7)
-            .frame(minHeight: 22)
-            .background(PixelBox(style: configuration.isPressed ? .pressed : .raised))
-            .offset(y: configuration.isPressed ? ReminderNoteController.pixel : 0)
-            .contentShape(Rectangle())
-    }
-}

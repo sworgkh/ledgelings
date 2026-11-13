@@ -4,7 +4,7 @@ import SwiftUI
 /// The settings window's left side: a search box, then every page under its
 /// group's heading; while the box holds words, the places they were found instead.
 struct SettingsSidebar: View {
-    static let width: CGFloat = 220
+    static let width = Look.sidebarWidth
     @ObservedObject var navigation: SettingsNavigation
     @FocusState private var searching: Bool
 
@@ -15,7 +15,7 @@ struct SettingsSidebar: View {
                 .padding(.top, 12)
                 .padding(.bottom, 8)
             ScrollView {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     if navigation.query.trimmingCharacters(in: .whitespaces).isEmpty { pages } else { hits }
                 }
                 .padding(.horizontal, 8)
@@ -62,7 +62,7 @@ struct SettingsSidebar: View {
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.tertiary)
                 .padding(.leading, 8)
-                .padding(.top, group == SettingsGroup.allCases.first ? 2 : 12)
+                .padding(.top, group == SettingsGroup.allCases.first ? 2 : Look.Space.s)
                 .padding(.bottom, 2)
             ForEach(group.pages, id: \.self) { page in
                 row(selected: navigation.page == page, action: { navigation.page = page }) {
@@ -103,8 +103,8 @@ struct SettingsSidebar: View {
         Button(action: action) {
             label()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, Look.Space.s)
+                .padding(.vertical, 2)
                 .foregroundStyle(selected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .background(RoundedRectangle(cornerRadius: 5).fill(selected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.clear)))
                 .contentShape(Rectangle())

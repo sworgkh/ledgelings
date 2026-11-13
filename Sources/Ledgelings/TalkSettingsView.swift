@@ -146,23 +146,26 @@ private struct ScriptFields: View {
     var body: some View {
         TextEditor(text: $settings.script)
             .font(.system(.body, design: .monospaced))
-            .frame(height: 210)
+            .frame(height: 140)
             .scrollContentBackground(.hidden)
             .padding(4)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
         LabeledContent(tr("Status")) {
             Text(notice ?? status).foregroundStyle(isBroken ? .red : .secondary).textSelection(.enabled)
         }
-        HStack {
+        // Two rows: four buttons on one line wrapped in Russian.
+        ButtonRow {
             Button(tr("Import…")) { importFile() }
             Button(tr("Export…")) { exportFile() }
+        } trailing: {
+            Button(tr("Reset Lines")) { settings.resetScript() }
+        }
+        ButtonRow {
             Button(tr("Copy Agent Prompt")) {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(Script.agentPrompt(cast: cast), forType: .string)
                 flash(tr("the prompt is on the clipboard; paste it into any chat model and paste its answer here"))
             }
-            Spacer()
-            Button(tr("Reset Lines")) { settings.resetScript() }
         }
     }
 

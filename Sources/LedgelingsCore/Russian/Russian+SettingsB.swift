@@ -124,7 +124,7 @@ extension Strings {
         "In 5 min": "Через 5 мин",
         "In 30 min": "Через 30 мин",
         "In 1 hour": "Через час",
-        "Add Reminder": "Добавить напоминание",
+        "Add Reminder": "Добавить",
         "New reminder": "Новое напоминание",
         "When the time comes, one of the creatures folds it into a paper plane and throws it at you. A time already past is delivered straight away. Repeating reminders keep their time of day; weekdays skip Saturday and Sunday.":
             "Когда придёт время, одно из существ сложит напоминание в бумажный самолётик и бросит в вас. Уже прошедшее время доставляется сразу. Повторяющиеся напоминания сохраняют время суток; «по будням» пропускает субботу и воскресенье.",

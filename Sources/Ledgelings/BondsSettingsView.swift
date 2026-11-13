@@ -96,9 +96,9 @@ struct BondsSettingsView: View {
                 Text(bond.names.joined(separator: " & ")).font(.headline)
                 Spacer()
                 Button(tr("Reset Story")) { bonds.resetStory(Bonds.key(bond.names[0], bond.names[bond.names.count - 1])) }
-                    .buttonStyle(.link).font(.caption)
+                    .rowAction()
                 Button(tr("Forget")) { bonds.forget(Bonds.key(bond.names[0], bond.names[bond.names.count - 1])) }
-                    .buttonStyle(.link).font(.caption)
+                    .rowAction()
             }
             Text(details(bond)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
             if let summary = bond.summary { Text(summary).font(.callout) }
